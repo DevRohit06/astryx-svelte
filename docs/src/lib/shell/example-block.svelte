@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Card, CodeBlock, Section, Tab, TabList, Text } from '@astryx-svelte/core';
+	import ComponentPreviewTheme from './component-preview-theme.svelte';
 	import ExamplePreview from './example-preview.svelte';
 	import InlineMarkdown from './inline-markdown.svelte';
 	import { sourceImporterFor, stripPortingNote } from './example-modules.js';
@@ -21,11 +22,13 @@
 	 *   so the button would link nowhere. With it gone the `HStack` has one child
 	 *   and `space-between` no longer means anything, so the `TabList` sits in the
 	 *   strip directly.
-	 * - **`ComponentPreviewTheme`**, the nested `<Theme>` upstream wraps each
-	 *   block in. It exists to stop the type-scale override on its Overview prose
-	 *   from leaking into previews; the root layout's `<Theme>` already covers
-	 *   this page and nothing here overrides the type scale, so a second identical
-	 *   theme boundary would be a no-op.
+	 * `ComponentPreviewTheme` **is** ported, and this comment used to say it was
+	 * not: "the root layout's `<Theme>` already covers this page and nothing here
+	 * overrides the type scale, so a second identical theme boundary would be a
+	 * no-op". Only the type-scale half of that was right. The boundary is not
+	 * identical — the root layout's theme is `astryxTheme` and upstream's boundary
+	 * is `neutralTheme` — so dropping it rendered every example in the docsite's
+	 * brand skin instead of the theme a reader installs. See that component.
 	 */
 	interface Props {
 		entry: ExampleEntry;
@@ -63,34 +66,36 @@
 	}
 </script>
 
-<Card padding={3}>
-	<Text type="body" weight="medium">{entry.name}</Text>
+<ComponentPreviewTheme>
+	<Card padding={3}>
+		<Text type="body" weight="medium">{entry.name}</Text>
 
-	<ExamplePreview id={entry.id} hasSvelte={entry.hasSvelte} />
+		<ExamplePreview id={entry.id} hasSvelte={entry.hasSvelte} />
 
-	<Section variant="muted" padding={1} dividers={['top']}>
-		<TabList value={tab} onChange={handleTabChange} size="sm">
-			<Tab value="description" label="Description" />
-			<Tab value="code" label="Code" />
-		</TabList>
-	</Section>
+		<Section variant="muted" padding={1} dividers={['top']}>
+			<TabList value={tab} onChange={handleTabChange} size="sm">
+				<Tab value="description" label="Description" />
+				<Tab value="code" label="Code" />
+			</TabList>
+		</Section>
 
-	<Section variant="muted" padding={tab === 'code' ? 0 : 4}>
-		{#if tab === 'description'}
-			<Text type="body">
-				<InlineMarkdown text={entry.description || 'No description available.'} />
-			</Text>
-		{:else if source !== null}
-			<CodeBlock code={source} language="svelte" hasCopyButton container="section" width="100%" />
-		{:else}
-			<div class="code-status">
-				<Text type="supporting" color="secondary">
-					{hasSourceFailed ? 'Source not available for this example.' : 'Loading source…'}
+		<Section variant="muted" padding={tab === 'code' ? 0 : 4}>
+			{#if tab === 'description'}
+				<Text type="body">
+					<InlineMarkdown text={entry.description || 'No description available.'} />
 				</Text>
-			</div>
-		{/if}
-	</Section>
-</Card>
+			{:else if source !== null}
+				<CodeBlock code={source} language="svelte" hasCopyButton container="section" width="100%" />
+			{:else}
+				<div class="code-status">
+					<Text type="supporting" color="secondary">
+						{hasSourceFailed ? 'Source not available for this example.' : 'Loading source…'}
+					</Text>
+				</div>
+			{/if}
+		</Section>
+	</Card>
+</ComponentPreviewTheme>
 
 <style>
 	/* Only ever occupies the panel while the source chunk is in flight, so it

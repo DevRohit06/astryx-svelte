@@ -89,11 +89,21 @@
 	 *
 	 * **`astryxTheme` is the site-wide theme**, which is what upstream's root
 	 * `Providers` does — it wraps the whole docsite, marketing and documentation
-	 * alike. The consequence is upstream's too, and worth stating plainly: every
-	 * component example renders in the Astryx brand (pill buttons, a near-black
-	 * accent) rather than in the neutral theme's own colours. `neutralTheme` is
-	 * still imported, and its stylesheet with it, because the hero reel's registry
-	 * lists it as an installed theme package.
+	 * alike.
+	 *
+	 * **It does not reach the previews, and this note used to say it did.** It
+	 * claimed "every component example renders in the Astryx brand (pill buttons,
+	 * a near-black accent) rather than in the neutral theme's own colours. The
+	 * consequence is upstream's too" — the second sentence was false, and it is
+	 * what licensed three other files to drop the boundary that prevents the
+	 * first. Upstream re-themes every live preview to `neutralTheme` through
+	 * `ComponentPreviewTheme`, so a reader sees what `@astryx-svelte/core` ships
+	 * under the theme they install rather than this site's brand skin. That
+	 * component is ported; `shell/component-preview-theme.svelte` is the boundary
+	 * and names each of the six upstream surfaces that reach for it.
+	 *
+	 * `neutralTheme`'s stylesheet is imported below both for that boundary and
+	 * because the hero reel's registry lists it as an installed theme package.
 	 *
 	 * Below `md` the docs routes collapse to one drawer: `TopNav` renders in
 	 * `mobile-bar` mode with a hamburger, and `AppShell` hands it the `SideNav` as

@@ -15,6 +15,7 @@
 	import { homeHref, topicHref } from './links.js';
 	import AstryxLogo from './astryx-logo.svelte';
 	import GithubLogo from './github-logo.svelte';
+	import HeartHandshakeIcon from './heart-handshake-icon.svelte';
 	import MoonIcon from './moon-icon.svelte';
 	import SunIcon from './sun-icon.svelte';
 	import SearchPalette from './search-palette.svelte';
@@ -126,6 +127,18 @@
 	{/if}
 {/snippet}
 
+<!--
+	**The end-content row is 16px, where upstream's is 20px — a deliberate
+	divergence, recorded in TODO.md under Known debts.** `SharedTopNav` renders
+	`<Search size={20} />`, `<Moon size={20} />`, `<Sun size={20} />`,
+	`<HeartHandshake size={20} />` and `<Menu size={20} />`; this port sizes all
+	of them at 16 (`Icon`'s `sm`, 1rem at a 16px root) on the maintainer's call.
+
+	What matters is that the row is *uniform*, which it was not: search and the
+	hamburger were `sm` (16px) while the mode toggle and GitHub mark were 20px,
+	so two glyphs sat visibly larger than the two beside them. Equalising is the
+	fix either way; the number is the choice.
+-->
 {#snippet searchIcon()}<Icon icon="search" size="sm" />{/snippet}
 
 <!--
@@ -147,7 +160,7 @@
 		class:mode-icon--shown={themeMode !== 'system' && mode === 'light'}
 		class:mode-icon--hidden={themeMode !== 'system' && mode !== 'light'}
 	>
-		<MoonIcon size={20} />
+		<MoonIcon size={16} />
 	</span>
 	<span
 		class="mode-icon"
@@ -155,11 +168,13 @@
 		class:mode-icon--shown={themeMode !== 'system' && mode === 'dark'}
 		class:mode-icon--hidden={themeMode !== 'system' && mode !== 'dark'}
 	>
-		<SunIcon size={20} />
+		<SunIcon size={16} />
 	</span>
 {/snippet}
 
-{#snippet githubIcon()}<GithubLogo width={20} height={20} />{/snippet}
+{#snippet communityIcon()}<HeartHandshakeIcon size={16} />{/snippet}
+
+{#snippet githubIcon()}<GithubLogo width={16} height={16} />{/snippet}
 
 {#snippet menuIcon()}<Icon icon="menu" size="sm" />{/snippet}
 
@@ -181,6 +196,21 @@
 				isIconOnly
 				icon={colorModeIcon}
 				onclick={onToggleMode}
+			/>
+			<!--
+				Upstream's Community button, restored. It was left out while
+				`/community` did not exist — `nav-items.ts`'s standing rule is that
+				linking to a 404 is worse than not linking — and the page landed in the
+				templates/community batch, so the button comes back with it. Same slot
+				as upstream's: between the mode toggle and GitHub.
+			-->
+			<Button
+				label="Community"
+				tooltip="Community"
+				variant="ghost"
+				isIconOnly
+				icon={communityIcon}
+				href="/community"
 			/>
 			<Button
 				label="GitHub"

@@ -3002,6 +3002,33 @@ work rather than component work, itemised under [After launch](#after-launch).
 
 ### Landed
 
+- [x] **Every live preview renders under `neutralTheme`, not the docsite's brand theme — 2026-08-10.**
+      This was wrong on the site for its whole life and the port had *written down* the wrong reason
+      three times. Upstream's `ComponentPreviewTheme` wraps `ComponentDetailClient`, `ExampleBlock`
+      and `InteractivePreview` (×3), and standalone neutral `<Theme>` boundaries wrap
+      `ShowcaseThumbnail`, `TemplateThumbnail` and `TemplatePreviewSurface`. This port dropped all
+      six, with `example-block`, `showcase-thumbnail` and `template-preview-dialog` each explaining
+      that "a second identical boundary would be a no-op" — and the root `+layout.svelte` docstring
+      asserting the same premise, which is what licensed the other three. **The premise was false:**
+      the ambient theme is `astryxTheme`, so the boundary *switches* the theme rather than repeating
+      it, and every example, gallery tile and template was rendering in the brand skin (pill buttons,
+      `#15110C` accent, +4px radii) instead of the theme a reader installs. Now
+      `shell/component-preview-theme.svelte`, with upstream's module-load `registerIcons` for the
+      SSR/hydration glyph mismatch it documents. Measured in a real browser before and after, and in
+      the prerendered HTML: `/components/Button` went from **1 `astryx` wrapper and 0 `neutral`** to
+      **1 `astryx` and 6 `neutral`**, its Primary button from pill/`#15110C` to `10px`/`#262626`.
+      Upstream's `component-preview-theme.test.ts` is ported as
+      `docs/scripts/check-preview-theme.mjs` — a node assertion script rather than a vitest file,
+      because `docs` has no runner and its `test` script is already exactly that shape — and it
+      guards three surfaces upstream's directory-scoped regexes never see. **The lesson worth
+      keeping: a comment asserting parity is not evidence of it.** Four files agreed with each other
+      and none of them agreed with upstream; it took re-cloning the reference tree to see it
+- [x] **The top nav's Community button**, upstream's `HeartHandshake` slot between the mode toggle
+      and GitHub. It had been left out under `nav-items.ts`'s rule against linking to a 404, and
+      `/community` now exists, so it returns with it. The glyph is a docs-local Lucide mark
+      (`heart-handshake-icon.svelte`) beside `moon-icon`/`sun-icon`/`github-logo`, not a registry
+      substitution — the icon is the control's whole meaning. Path data verified byte-identical
+      between `lucide-react@1.25.0` (what upstream resolves) and `@lucide/svelte@1.30.0`
 - [x] **The StyleX consumer seam** — the thing that had to work before any of this was worth
       planning. `@astryx-svelte/core` ships its `.stylex.js` modules **uncompiled** (`svelte-package`
       transpiles TypeScript; it does not run StyleX), so every consumer compiles them itself. The
@@ -3988,6 +4015,14 @@ Done: adopted the parity rule verbatim, enforced by 5 subagents (`astryx-parity`
 
 Small, named, deliberately not hidden. (Upstream bugs are documented here, not replicated.)
 
+- [ ] **The docs top nav sizes its end-content icons at 16px; upstream's are 20px.** A deliberate
+      divergence on the maintainer's call, not an oversight. Upstream's `SharedTopNav` renders
+      `<Search size={20} />`, `<Moon size={20} />`, `<Sun size={20} />`, `<HeartHandshake size={20} />`
+      and `<Menu size={20} />`; ours are all `Icon`'s `sm` (1rem, 16px at a 16px root) and a 16×16
+      GitHub mark. **The bug this replaced was non-uniformity**, which was real: search and the
+      hamburger were 16px while the mode toggle and GitHub mark were 20px, so two glyphs sat visibly
+      larger than the two beside them. Equalising was the fix; 16 rather than 20 is the divergence.
+      `shell/top-nav.svelte` names it at the snippet
 - [ ] **Core's demo workbench imports a downstream package's build output, and that edge is real.**
       `src/routes/+layout.svelte` and `+page.svelte` import `../../../themes/neutral/dist/` — the
       relative path was chosen so pnpm's dependency graph would not see a cycle, and it works, but

@@ -12,7 +12,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "npm run generate && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
-		"test": "node scripts/emit-core-docs.mjs --check",
+		"test": "node scripts/emit-core-docs.mjs --check && node scripts/check-preview-theme.mjs",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},

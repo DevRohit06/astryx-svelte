@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Component } from 'svelte';
 	import { Skeleton, Text } from '@astryx-svelte/core';
+	import ComponentPreviewTheme from './component-preview-theme.svelte';
 
 	/**
 	 * A component's showcase block, shrunk to a gallery tile — upstream's
@@ -21,9 +22,13 @@
 	 * - The width is measured rather than assumed, because the scaler is
 	 *   absolutely positioned and so has no width of its own to inherit.
 	 *
-	 * Upstream additionally wraps the block in its own `<Theme>`; the root layout
-	 * already establishes that exact theme and mode for this page, so a second
-	 * identical boundary would be a no-op and is left out.
+	 * The block renders inside `ComponentPreviewTheme`, as upstream wraps both
+	 * `ShowcaseThumbnail` and `TemplateThumbnail` in a neutral `<Theme>`. This
+	 * comment used to claim the opposite — "the root layout already establishes
+	 * that exact theme and mode for this page, so a second identical boundary
+	 * would be a no-op" — which was wrong: the root layout's theme is
+	 * `astryxTheme`, so every tile in both galleries rendered in the brand skin.
+	 * The boundary is `display: contents`, so it adds nothing to the scaled box.
 	 */
 	interface Props {
 		/**
@@ -114,7 +119,7 @@
 					<Skeleton width="100%" height="100%" />
 				{:then module}
 					{@const Block = module.default}
-					<Block />
+					<ComponentPreviewTheme><Block /></ComponentPreviewTheme>
 				{:catch}
 					<div class="thumb-fallback">
 						<Text type="supporting" color="secondary">Preview unavailable</Text>

@@ -18,6 +18,7 @@
 	import ExampleBlock from '$lib/shell/example-block.svelte';
 	import InlineMarkdown from '$lib/shell/inline-markdown.svelte';
 	import PropsTable from '$lib/shell/props-table.svelte';
+	import ComponentPreviewTheme from '$lib/shell/component-preview-theme.svelte';
 	import ShowcasePreview from '$lib/shell/showcase-preview.svelte';
 	import type { PageProps } from './$types.js';
 
@@ -126,9 +127,11 @@
 {#snippet overview()}
 	<VStack gap={8}>
 		{#if showcase}
-			<Card variant="muted" padding={0}>
-				<ShowcasePreview id={showcase.id} hasSvelte={showcase.hasSvelte} />
-			</Card>
+			<ComponentPreviewTheme>
+				<Card variant="muted" padding={0}>
+					<ShowcasePreview id={showcase.id} hasSvelte={showcase.hasSvelte} />
+				</Card>
+			</ComponentPreviewTheme>
 		{/if}
 
 		{#if component.usage ?? component.description}

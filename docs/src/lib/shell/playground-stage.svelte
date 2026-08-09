@@ -2,6 +2,7 @@
 	import { Button, Card, Center, CodeBlock, Text, VStack } from '@astryx-svelte/core';
 	import type { PlaygroundConfig } from '$lib/generated/types.js';
 	import type { Knob } from './prop-control.js';
+	import ComponentPreviewTheme from './component-preview-theme.svelte';
 	import { previewComponentFor, textSnippet } from './preview-components.js';
 	import PreviewFailure from './preview-failure.svelte';
 
@@ -124,76 +125,78 @@
 	{/if}
 {/snippet}
 
-<Card variant="muted" padding={0}>
-	<div class="stage">
-		<div class="stage-toggle">
-			<Button
-				label={showCode ? 'Show preview' : 'Show code'}
-				tooltip={showCode ? 'Show preview' : 'Show code'}
-				isIconOnly
-				size="sm"
-				variant={showCode ? 'secondary' : 'ghost'}
-				onclick={() => (showCode = !showCode)}
-			>
-				{#snippet icon()}
-					<span class="stage-glyph" aria-hidden="true">&lt;&gt;</span>
-				{/snippet}
-			</Button>
-		</div>
-
-		{#if showCode}
-			<div class="stage-code">
-				<CodeBlock {code} language="svelte" container="section" width="100%" hasCopyButton />
+<ComponentPreviewTheme>
+	<Card variant="muted" padding={0}>
+		<div class="stage">
+			<div class="stage-toggle">
+				<Button
+					label={showCode ? 'Show preview' : 'Show code'}
+					tooltip={showCode ? 'Show preview' : 'Show code'}
+					isIconOnly
+					size="sm"
+					variant={showCode ? 'secondary' : 'ghost'}
+					onclick={() => (showCode = !showCode)}
+				>
+					{#snippet icon()}
+						<span class="stage-glyph" aria-hidden="true">&lt;&gt;</span>
+					{/snippet}
+				</Button>
 			</div>
-		{:else if missing.length > 0}
-			<!--
+
+			{#if showCode}
+				<div class="stage-code">
+					<CodeBlock {code} language="svelte" container="section" width="100%" hasCopyButton />
+				</div>
+			{:else if missing.length > 0}
+				<!--
 				Upstream's wording, and its reason: a required prop whose type has no
 				one-cell editor (a generic `T[]`, a `SearchSource`, a data model) cannot
 				be invented, and a component rendered without it throws or renders a
 				lie.
 			-->
-			{@render note([
-				'Interactive preview needs required props that cannot be generated automatically.',
-				`Missing: ${missing.join(', ')}`
-			])}
-		{:else if !Component}
-			{@render note([
-				`Interactive preview not available for ${name}.`,
-				'This entry documents a hook rather than a component, so there is nothing to render.'
-			])}
-		{:else}
-			<Center width="100%" minHeight={200}>
-				<div class="stage-preview">
-					<svelte:boundary>
-						{#if Wrapper}
-							<Wrapper {...wrapperProps}>{@render previewed()}</Wrapper>
-						{:else}
-							{@render previewed()}
-						{/if}
+				{@render note([
+					'Interactive preview needs required props that cannot be generated automatically.',
+					`Missing: ${missing.join(', ')}`
+				])}
+			{:else if !Component}
+				{@render note([
+					`Interactive preview not available for ${name}.`,
+					'This entry documents a hook rather than a component, so there is nothing to render.'
+				])}
+			{:else}
+				<Center width="100%" minHeight={200}>
+					<div class="stage-preview">
+						<svelte:boundary>
+							{#if Wrapper}
+								<Wrapper {...wrapperProps}>{@render previewed()}</Wrapper>
+							{:else}
+								{@render previewed()}
+							{/if}
 
-						{#if isClosedOverlay}
-							<VStack gap={2} style="align-items: center; text-align: center;">
-								<Text type="supporting" color="secondary">
-									Opens as a full-screen overlay — nothing renders while it is closed.
-								</Text>
-								<Button
-									label="Open preview"
-									variant="secondary"
-									size="sm"
-									onclick={() => onValueChange('isOpen', true)}
-								/>
-							</VStack>
-						{/if}
+							{#if isClosedOverlay}
+								<VStack gap={2} style="align-items: center; text-align: center;">
+									<Text type="supporting" color="secondary">
+										Opens as a full-screen overlay — nothing renders while it is closed.
+									</Text>
+									<Button
+										label="Open preview"
+										variant="secondary"
+										size="sm"
+										onclick={() => onValueChange('isOpen', true)}
+									/>
+								</VStack>
+							{/if}
 
-						{#snippet failed(error, reset)}
-							<PreviewFailure {name} {error} {reset} {token} {emptySlots} />
-						{/snippet}
-					</svelte:boundary>
-				</div>
-			</Center>
-		{/if}
-	</div>
-</Card>
+							{#snippet failed(error, reset)}
+								<PreviewFailure {name} {error} {reset} {token} {emptySlots} />
+							{/snippet}
+						</svelte:boundary>
+					</div>
+				</Center>
+			{/if}
+		</div>
+	</Card>
+</ComponentPreviewTheme>
 
 <!--
 	Not StyleX: CLAUDE.md forbids importing it from a `.svelte` file, and the docs

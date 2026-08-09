@@ -31,6 +31,7 @@
 		Tooltip,
 		VStack
 	} from '@astryx-svelte/core';
+	import ComponentPreviewTheme from './component-preview-theme.svelte';
 	import { templateImporterFor } from './example-modules.js';
 
 	/**
@@ -47,7 +48,13 @@
 	 * and the analytics calls are gone, what remains is one framed `<div>` with a
 	 * lazy import in it — and it has exactly one caller.
 	 *
-	 * **Three of upstream's mechanisms have no counterpart and are not faked:**
+	 * **Two of upstream's mechanisms have no counterpart and are not faked:**
+	 *
+	 * (A third bullet used to sit here claiming upstream's
+	 * `<Theme theme={neutralTheme}>` around the template was "a second boundary at
+	 * the same values", hence a no-op. It is not: this site's ambient theme is
+	 * `astryxTheme`, so the boundary *switches* the template to neutral. It is
+	 * ported, as `ComponentPreviewTheme`.)
 	 *
 	 * - `useTransition` + `useDeferredValue`, which keep the *previous* template
 	 *   on screen while the next one's chunk loads and paint a `Skeleton` overlay
@@ -59,10 +66,6 @@
 	 * - The `useEffect` that resets the copied flag on every index change. Keying
 	 *   the flag to the slug it was set for ({@link copiedSlug}) makes the reset
 	 *   fall out of a `$derived`, so there is no effect to keep in step.
-	 * - `<Theme theme={neutralTheme}>` around the rendered template. The root
-	 *   layout already establishes this site's theme and mode for the page the
-	 *   dialog opens over, so a second boundary at the same values is a no-op —
-	 *   the same call `ShowcaseThumbnail` documents.
 	 *
 	 * **"Open in Playground" is dropped**, in the header and on the gallery tile
 	 * alike: `/playground` is not in this port (TODO.md), and `nav-items.ts`'s
@@ -280,7 +283,7 @@
 									<Skeleton width="100%" height="100%" />
 								{:then module}
 									{@const Template = module.default}
-									<Template />
+									<ComponentPreviewTheme><Template /></ComponentPreviewTheme>
 								{:catch}
 									{@render unavailable()}
 								{/await}
