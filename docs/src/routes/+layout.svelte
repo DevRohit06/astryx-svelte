@@ -1,4 +1,17 @@
 <script lang="ts">
+	/**
+	 * The Astryx mark in this port's brand colour (`#ff3e00`), the same path
+	 * `shell/astryx-logo.svelte` draws in the header. It replaced SvelteKit's
+	 * scaffold favicon, which was still the plain Svelte logo — the tab named the
+	 * framework rather than the site, and `astryx-logo.svelte`'s docstring already
+	 * claimed the favicon carried this identity.
+	 *
+	 * The colour is a literal, not `currentColor`: a favicon renders outside the
+	 * page with no cascade to inherit from, so `--color-brand` has to be resolved
+	 * at author time. The reasoning lives here rather than inside the SVG because
+	 * Vite inlines that file as a base64 data URI into **every** prerendered page,
+	 * so a comment in it would ship a few hundred bytes 200-odd times.
+	 */
 	import favicon from '$lib/assets/favicon.svg';
 	// Layer order + `color-scheme`, which every `light-dark()` token depends on.
 	import '@astryx-svelte/core/base.css';
