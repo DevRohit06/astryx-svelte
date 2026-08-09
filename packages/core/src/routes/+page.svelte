@@ -134,7 +134,12 @@
 	import { defineTheme } from '$lib/theme/define-theme.js';
 	// The built neutral theme object, alongside the stylesheet `+layout.svelte`
 	// imports. Relative rather than by package name for the same reason the CSS
-	// is: the theme package depends on core, not the other way round.
+	// is: the theme package depends on core, not the other way round. See that
+	// file for why this pair keeps the workbench out of core's `build` script.
+	//
+	// Reading the theme's *source* instead would not help: `neutral-theme.ts`
+	// imports `@astryx-svelte/core/theme/define`, which resolves to core's own
+	// `dist/` — the thing core's build is in the middle of producing.
 	import { neutralTheme } from '../../../themes/neutral/dist/index.js';
 	import ChatDemos from './chat-demos.svelte';
 	import CommandPaletteDemos from './command-palette-demos.svelte';

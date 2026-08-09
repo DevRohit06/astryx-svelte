@@ -3,6 +3,17 @@
 	// Built artifact from packages/themes/neutral. Imported by relative path
 	// rather than package name so the workbench doesn't create a dependency
 	// cycle (the theme package depends on core, not the other way round).
+	//
+	// **The relative path dodges pnpm's graph, not the bundler's.** This is a
+	// real build-time edge from core back to a package that builds *after* it,
+	// and it is why `build` no longer runs `vite build` — see `build:demo` in
+	// package.json. On a clean checkout `themes/neutral/dist/` does not exist
+	// when core builds, so bundling the workbench there fails with rolldown's
+	// `UNRESOLVED_IMPORT` on this line and on `+page.svelte`'s sibling import.
+	// It passed locally only because a previous run had left the artifact on
+	// disk. Upstream has no such edge: its core `build` is a library build
+	// (babel + tsc + css + umd) that produces no app, and `theme-neutral` takes
+	// core as a *peer* dependency.
 	import '../../../themes/neutral/dist/theme.css';
 
 	let { children } = $props();

@@ -34,6 +34,17 @@ jobs:
       - name: Build
         run: pnpm -r build
 
+      # Core's demo workbench, built separately and *after* the topological
+      # build — never as part of `pnpm -r build`. Its routes import
+      # `packages/themes/neutral/dist/`, an artifact of a package that builds
+      # after core, so bundling it inside core's own `build` made the graph
+      # circular and failed on every clean checkout with `UNRESOLVED_IMPORT`.
+      # Nothing consumes the output; this step exists only because it is the
+      # one place the workbench is ever bundled in production mode, and losing
+      # that signal was the alternative to losing the build.
+      - name: Build the core demo workbench
+        run: pnpm -F @astryx-svelte/core build:demo
+
       - name: Typecheck
         run: pnpm -r check
 

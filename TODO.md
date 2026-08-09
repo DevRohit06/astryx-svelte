@@ -3988,6 +3988,21 @@ Done: adopted the parity rule verbatim, enforced by 5 subagents (`astryx-parity`
 
 Small, named, deliberately not hidden. (Upstream bugs are documented here, not replicated.)
 
+- [ ] **Core's demo workbench imports a downstream package's build output, and that edge is real.**
+      `src/routes/+layout.svelte` and `+page.svelte` import `../../../themes/neutral/dist/` — the
+      relative path was chosen so pnpm's dependency graph would not see a cycle, and it works, but
+      **the bundler's graph is not pnpm's**. Core's `build` used to run `vite build` (the workbench)
+      before `prepack` (the library), so on any clean checkout core's build demanded an artifact from
+      a package that builds *after* core, and rolldown failed with `UNRESOLVED_IMPORT` on both lines.
+      It passed on every developer machine because a previous run had left `themes/neutral/dist/` on
+      disk; it failed on the first CI run and the first Vercel deploy that ever built core.
+      **Fixed by making `build` a library build only** (`npm run prepack`), with the workbench moved
+      to `build:demo` and run by CI *after* `pnpm -r build`. That matches upstream, whose core
+      `build` is `babel + tsc + css + umd` and produces no app at all, and whose `theme-neutral`
+      takes core as a **peer** dependency. The debt is that the import still points at a build
+      artifact: `pnpm -F @astryx-svelte/core dev` on a fresh clone needs a prior `pnpm -r build`, and
+      reading the theme's *source* instead is not an escape — `neutral-theme.ts` imports
+      `@astryx-svelte/core/theme/define`, which is core's own `dist/`
 - [ ] **Page templates carry three unported dependencies, handled two different ways.** The split is
       principled, not accidental. `table-page-chart`, `table-page-heatmap-status` and
       `table-page-shoe-store-heatmap` import `Chart`/`ChartAxis`/`ChartGrid`/`ChartHeatmapGL` from
