@@ -43,6 +43,57 @@ export function sourceImporterFor(id: string): (() => Promise<string>) | null {
 }
 
 /**
+ * The **page** templates, as lazy importers keyed by slug.
+ *
+ * A second map rather than a second entry in the first: the two sets live in
+ * different packages and are addressed differently. Blocks are
+ * `<Component>/<Block>` under this app's `src/lib/examples/`; a page template is
+ * a slug under `packages/cli/assets/templates/pages/`, authored there because
+ * upstream ships page templates through the **CLI** as scaffolding assets and
+ * the docsite merely renders them (`planning/10-page-templates-and-community.md`
+ * §B1). Reaching out of `docs/` for them is therefore the arrangement, not a
+ * workaround — and it costs nothing at the module graph, because
+ * `@astryx-svelte/core` is already a devDependency of `packages/cli`, so a
+ * template resolves its imports from where it sits.
+ *
+ * Vite serves files above the project root only inside `server.fs.allow`, whose
+ * default is the workspace root it finds by walking up for `pnpm-workspace.yaml`
+ * — which is the monorepo root, above both packages. So no config is needed;
+ * this note exists because the failure, if that default ever changed, is a 403
+ * on the template chunk rather than anything the type system would catch.
+ *
+ * The glob resolves to `{}` while the directory is empty, so the gallery is
+ * correct before the transcription batches land rather than after: every slug
+ * gets a `null` importer and the registry's `hasSvelte` keeps them off the page.
+ */
+const templateModules = import.meta.glob<{ default: Component }>(
+	'../../../../packages/cli/assets/templates/pages/*/+page.svelte'
+);
+
+/**
+ * The same map, re-keyed by slug.
+ *
+ * `keyFor` below reconstructs a block's module path from its id, which works
+ * because the `$lib` alias gives that glob keys of a shape this file can spell.
+ * A *relative* glob is keyed by the pattern's own relative path, and rebuilding
+ * a `../../../../…` string to look one up would encode this file's depth in two
+ * places that must agree. Reading the slug back out of whatever keys Vite
+ * produced cannot drift.
+ */
+const templateModulesBySlug: Record<string, () => Promise<{ default: Component }>> =
+	Object.fromEntries(
+		Object.entries(templateModules).map(([key, load]) => {
+			const segments = key.split('/');
+			return [segments[segments.length - 2], load];
+		})
+	);
+
+/** The page template's importer, or null when its transcription has not landed. */
+export function templateImporterFor(slug: string): (() => Promise<{ default: Component }>) | null {
+	return templateModulesBySlug[slug] ?? null;
+}
+
+/**
  * Drops the porting note every block file opens with.
  *
  * Upstream shows its block sources verbatim, header comment and all — but its

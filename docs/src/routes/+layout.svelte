@@ -103,11 +103,16 @@
 	// The routes whose sidebar `docs-shell.svelte` used to own. Anything else —
 	// the home page, the gallery — gets no side panel and no drawer.
 	const hasSidebar = $derived(pathname.startsWith('/docs') || pathname.startsWith('/components'));
-	// Upstream's `(site)` route group — the landing page plus the two galleries
-	// that are not documentation. `/community` is not here: it is Meta's Discord
-	// and social accounts, which this port does not have (see `site-footer`).
+	// Upstream's `(site)` route group — the landing page, the two galleries and
+	// `/community`, none of which are documentation. `/community` used to be
+	// absent because it was Meta's Discord and social accounts; the page now
+	// exists with its actionable links retargeted at this repo and Meta's brand
+	// accounts still unshipped, so it takes its upstream slot here too.
 	const isMarketing = $derived(
-		pathname === '/' || pathname.startsWith('/templates') || pathname.startsWith('/themes')
+		pathname === '/' ||
+			pathname.startsWith('/templates') ||
+			pathname.startsWith('/themes') ||
+			pathname.startsWith('/community')
 	);
 
 	// In dev, StyleX serves its compiled CSS from a virtual module rather than a

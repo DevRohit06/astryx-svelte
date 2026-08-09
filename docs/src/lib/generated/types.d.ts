@@ -248,6 +248,49 @@ export interface ExampleRegistry {
 }
 
 /**
+ * One of upstream's **page** templates — a whole page, as opposed to the block
+ * templates above, which are one component's worth of markup.
+ *
+ * Upstream's counterpart carries a `source` field holding the entire `page.tsx`;
+ * it is dropped here, because the only thing that reads it is the "Open in
+ * Playground" button and this port has no playground. See `buildTemplateRegistry`.
+ *
+ * The CLI ships 43 page templates; 42 reach this registry, because upstream's
+ * generator skips the one marked `scaffold` and so does ours. The CLI still
+ * scaffolds it — see `buildTemplateRegistry`.
+ */
+export interface TemplateEntry {
+	/**
+	 * Directory name under `assets/templates/pages` — the CLI's argument
+	 * (`astryx-svelte template <slug>`), the gallery's `?preview=` value, and the
+	 * key the importer map in `shell/example-modules.ts` resolves.
+	 */
+	slug: string;
+	name: string;
+	/**
+	 * Upstream's authored display name. **Carried but not rendered**, and the
+	 * reason is that it is upstream's field rather than a derivation: its own
+	 * template registry drops it and its gallery captions with `name`, which is
+	 * what this port's gallery does too. Every template declares it equal to
+	 * `name` today, so rendering it would be indistinguishable — and inventing a
+	 * difference by preferring one over the other on some rows is worse than
+	 * carrying both.
+	 */
+	displayName: string;
+	description: string;
+	/** Functional category, e.g. `Dashboard - Analytics`. Empty when untagged. */
+	category: string;
+	/** Upstream's editorial call. A `false` template stays out of the gallery. */
+	isReady: boolean;
+	/** Upstream's second editorial call — CLI-available, gallery-hidden. */
+	isHiddenFromOverview: boolean;
+	/** `category` before the first ` - `; `Other` when untagged. */
+	group: string;
+	/** False until `packages/cli/assets/templates/pages/<slug>/+page.svelte` exists. */
+	hasSvelte: boolean;
+}
+
+/**
  * One published theme package, as `/themes` lists it.
  *
  * Deliberately thin: everything that can be read off the imported theme object
@@ -311,4 +354,8 @@ export interface Coverage {
 	unported: string[];
 	examplesPorted: number;
 	examplesPending: number;
+	/** Page templates with a `+page.svelte` under `packages/cli/assets/templates/pages`. */
+	templatesPorted: number;
+	/** The transcription backlog — counted over the whole registry, not the listed subset. */
+	templatesPending: number;
 }

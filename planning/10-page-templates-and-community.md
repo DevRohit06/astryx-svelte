@@ -1,5 +1,22 @@
 # 10 · Page templates and the community page
 
+> **Landed 2026-08-10. Three things in this spec were wrong, and the implementation is right rather
+> than this document.** Kept as written so the corrections are legible:
+>
+> 1. **The counts are 42/31, not 43/32.** Upstream's generator skips `doc.scaffold`
+>    (`generate-data.mjs:1118`, "starter templates, not showcases"), which drops `blank` from the
+>    docsite registry while leaving it shipped and scaffoldable by the CLI. §B2, §B7 and §B8 all
+>    predate that discovery.
+> 2. **§B4's group headings do not exist upstream.** `templates/page.tsx` renders one flat `Grid`
+>    and uses the group only to *order* it — its own comment says "so the single grid stays stable".
+>    Building headings would have been invented layout.
+> 3. **§B5's `redirect(308, …)` cannot be prerendered**, because the prerenderer also enqueues the
+>    redirect destination and this one carries a query string. It is a bounce page; see
+>    `TODO.md` → Known debts.
+>
+> §B6's icon row was also wrong in the prompts derived from it (it briefly said `@lucide/svelte`);
+> the repo's rule is registry stand-ins, as ~103 files in `docs/src/lib/examples/` already show.
+
 Design for two independent pieces of Phase 5 work, agreed 2026-08-09:
 
 - **A** — `/community`, upstream's contribution page, retargeted at this port.

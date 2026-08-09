@@ -1519,6 +1519,122 @@ async function buildExampleRegistry(portedNames) {
 }
 
 // ---------------------------------------------------------------------------
+// page templates
+// ---------------------------------------------------------------------------
+
+/** Upstream's `OTHER_GROUP` — where a template with no category lands. */
+const TEMPLATE_OTHER_GROUP = 'Other';
+
+/**
+ * Upstream's `groupOf`, from `app/(site)/templates/page.tsx`: the group is the
+ * text before the first ` - ` separator (`Dashboard - Analytics` →
+ * `Dashboard`), a category with no separator is its own group, and an empty
+ * category falls to `Other`.
+ *
+ * Derived **here** rather than in the page, because the group is a property of
+ * the metadata and three separate things want it — the gallery's sort, its
+ * filter chips, and the preview dialog's caption. One of them deriving it a
+ * second time is exactly the drift a generated registry exists to prevent. The
+ * *order* of the groups stays in the page, where upstream keeps `GROUP_ORDER`:
+ * that is a display decision, and nothing but the gallery reads it.
+ *
+ * @param {string} category
+ * @returns {string}
+ */
+function groupOf(category) {
+	if (!category) return TEMPLATE_OTHER_GROUP;
+	const index = category.indexOf(' - ');
+	return index === -1 ? category : category.slice(0, index);
+}
+
+/**
+ * Upstream's page templates — the whole-page scaffolds `astryx-svelte template
+ * <slug>` copies into a project, and the set upstream's `/templates` gallery is
+ * built from.
+ *
+ * **Metadata is upstream's**, read from the installed `@astryxdesign/cli` at the
+ * pinned exact version, for the reason `buildExampleRegistry` reads blocks from
+ * there: the prose is reused verbatim, and a CI checkout with no upstream clone
+ * has to generate byte-identical output. The **transcription** is this repo's
+ * and lands incrementally at
+ * `packages/cli/assets/templates/pages/<slug>/+page.svelte`, so `hasSvelte` is
+ * the same gap-is-countable device it is on a block: a template with no Svelte
+ * page yet is recorded and counted, and the gallery lists only the ones that
+ * have one.
+ *
+ * The one deliberate difference from upstream's `generateTemplateRegistry`:
+ * **`source` is not carried.** Upstream bakes each `page.tsx` into its registry
+ * so the tile's "Open in Playground" button can hand the playground a file. This
+ * port has no playground (TODO.md), and the bytes it would carry are React —
+ * 20,339 lines of it, in a module the gallery imports eagerly.
+ *
+ * Everything else is upstream's shape, **including the scaffold skip below**, so
+ * the counts are upstream's: 43 templates ship, 42 are recorded here, and 31 are
+ * listed. `planning/10-page-templates-and-community.md` §B7/§B8 says 43 and 32;
+ * those were written before the skip was found and are off by the one template
+ * it drops.
+ *
+ * @returns {Promise<Array<Record<string, any>>>}
+ */
+async function buildTemplateRegistry() {
+	const dir = path.join(UPSTREAM_CLI, 'assets', 'templates', 'pages');
+	// Not `isPrimaryDoc`: a page template's spec is always this one filename, and
+	// naming it means a stray `*.doc.mjs` beside a page cannot become a template.
+	const files = requireDocModules(dir, 'page templates', (name) => name === 'template.doc.mjs');
+
+	const pagesDir = path.join(WORKSPACE_ROOT, 'packages', 'cli', 'assets', 'templates', 'pages');
+
+	/** @type {Array<Record<string, any>>} */
+	const templates = [];
+
+	for (const file of files) {
+		const doc = await importDoc(file, 'doc');
+		// Upstream ships blocks and pages under one `assets/templates/` root and
+		// discriminates on `type`, so this guard is the pages half of the pair
+		// `buildExampleRegistry` makes for blocks.
+		if (!doc || doc.type !== 'page') continue;
+
+		// Skip scaffolds — these are starter templates, not showcases.
+		//
+		// Upstream's line, verbatim from `generate-data.mjs`, and it is worth being
+		// clear about how narrow it is: this excludes `blank` from the **docsite
+		// registry only**. `astryx-svelte template blank` still ships it, still
+		// scaffolds it, and `packages/cli/assets/templates/pages/blank/` is still
+		// transcribed — the CLI reads that directory, not this file. A gallery of
+		// finished pages is the wrong place to advertise an empty one; a scaffolding
+		// command is exactly the right place. Hence 43 shipped, 42 recorded here.
+		if (doc.scaffold) continue;
+
+		const slug = path.basename(path.dirname(file));
+		const category = doc.category ?? '';
+
+		templates.push({
+			slug,
+			name: doc.name || slug,
+			// Upstream's template registry carries no `displayName` at all, so
+			// there is no `requireDisplayName` gate to mirror here — the fallback
+			// chain is the honest translation of a field its own consumer treats
+			// as optional. All 43 shipped templates declare one today, and all 43
+			// declare it equal to `name`.
+			displayName: doc.displayName || doc.name || slug,
+			description: doc.description ?? '',
+			category,
+			isReady: doc.isReady ?? true,
+			isHiddenFromOverview: doc.isHiddenFromOverview ?? false,
+			group: groupOf(category),
+			hasSvelte: fs.existsSync(path.join(pagesDir, slug, '+page.svelte'))
+		});
+	}
+
+	// Upstream's order. The gallery re-sorts by group rank before rendering, so
+	// this only fixes the order of the emitted file — which is what keeps its
+	// diffs readable as templates land.
+	templates.sort((a, b) => a.name.localeCompare(b.name));
+	assertNoUpstreamSpecifiers(templates);
+	return templates;
+}
+
+// ---------------------------------------------------------------------------
 // emit
 // ---------------------------------------------------------------------------
 
@@ -1633,6 +1749,14 @@ export async function generate({ quiet = false } = {}) {
 	const examples = await buildExampleRegistry(new Set(entries.map((e) => e.name)));
 	log(`  examples    ${examples.portedCount} ported / ${examples.pendingCount} pending`);
 
+	const templates = await buildTemplateRegistry();
+	// Counted over the whole set, not over the gallery-visible subset: the
+	// backlog `TODO.md` tracks is every page still to transcribe, and a template
+	// upstream hides from its own overview is still one of them.
+	const templatesPorted = templates.filter((entry) => entry.hasSvelte).length;
+	const templatesPending = templates.length - templatesPorted;
+	log(`  templates   ${templatesPorted} ported / ${templatesPending} pending`);
+
 	const themes = buildThemeRegistry();
 	log(`  themes      ${themes.length} packages`);
 
@@ -1655,6 +1779,7 @@ export async function generate({ quiet = false } = {}) {
 		['component-groups.js', moduleSource('GroupedRegistry', grouped)],
 		['docs-registry.js', moduleSource('ReferenceTopic[]', topics)],
 		['example-registry.js', moduleSource('ExampleRegistry', examples)],
+		['template-registry.js', moduleSource('TemplateEntry[]', templates)],
 		['theme-registry.js', moduleSource('ThemePackage[]', themes)],
 		[
 			'package-registry.js',
@@ -1680,7 +1805,9 @@ export async function generate({ quiet = false } = {}) {
 				upstreamComponents: totalUpstream,
 				unported,
 				examplesPorted: examples.portedCount,
-				examplesPending: examples.pendingCount
+				examplesPending: examples.pendingCount,
+				templatesPorted,
+				templatesPending
 			})
 		]
 	];
@@ -1692,7 +1819,7 @@ export async function generate({ quiet = false } = {}) {
 
 	log(`  wrote       ${changed}/${outputs.length} file(s) changed`);
 
-	return { entries, grouped, topics, examples, themes, libraries, unported };
+	return { entries, grouped, topics, examples, templates, themes, libraries, unported };
 }
 
 // Run directly (`node scripts/generate-content.mjs`) as well as via the plugin.

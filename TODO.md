@@ -3428,7 +3428,16 @@ Still open from this pass:
       unported — the README-stripping rules (`stripIntro`, `stripSections`), the `PackageActions`
       install block, and the heading-id assignment that makes the outline anchors resolve; (3) the
       route needs a package branch, which `docs/[topic]/+page.ts` currently 404s instead
-- [ ] `/templates` (42) · `/blog` (5, mdsvex) · `/themes` browser
+- [x] **`/templates` (42) — landed 2026-08-10.** All **43** of upstream's page templates are
+      transcribed to `packages/cli/assets/templates/pages/<slug>/+page.svelte` + `template.doc.mjs`,
+      so the CLI ships and scaffolds them (`_adapter.mjs`'s discovery had been written and guarded
+      by `existsSync` since the CLI slice, and needed no change). The docs registry is upstream's
+      **42**, not 43: `generate-data.mjs:1118` skips `doc.scaffold`, which drops `blank` from the
+      gallery while leaving it scaffoldable. **31** are gallery-visible after
+      `isReady && !isHiddenFromOverview`, and the gallery is one flat `Grid` ordered by group —
+      upstream renders no group headings, so neither do we. Three self-retiring test fixtures
+      expired the same day and are restored to upstream's shape; see Known debts for the rest
+- [ ] `/blog` (5, mdsvex) · `/themes` browser
 - [ ] **`/playground`** — `svelte/compiler` in a Web Worker + CodeMirror 6. Deliberately last:
       `planning/04` §6.3 is right that this is a different problem in Svelte than upstream's
       `ts.transpileModule`, and mechanisms A + B cover nearly all the per-component docs value
@@ -3979,6 +3988,51 @@ Done: adopted the parity rule verbatim, enforced by 5 subagents (`astryx-parity`
 
 Small, named, deliberately not hidden. (Upstream bugs are documented here, not replicated.)
 
+- [ ] **Page templates carry three unported dependencies, handled two different ways.** The split is
+      principled, not accidental. `table-page-chart`, `table-page-heatmap-status` and
+      `table-page-shoe-store-heatmap` import `Chart`/`ChartAxis`/`ChartGrid`/`ChartHeatmapGL` from
+      `@astryxdesign/charts` and `@astryxdesign/lab`, both **first-party Astryx packages this port
+      will eventually have** (recorded above as "never started"). Their chart blocks are transcribed
+      in place as commented Svelte, data left live, to be uncommented when the packages land. The two
+      dashboards and `theme-showcase` instead use **`recharts`** and **`lucide-react`** — third-party
+      React libraries that will never gain an `@astryx-svelte` counterpart, so there is nothing to
+      wait for; those charts are hand-drawn as inline SVG driven by upstream's own recharts props,
+      element-by-element mapping in each file header. Neither arm invents placeholder content, and
+      neither leaves an import that would break the docs glob-build or a user's scaffolded project
+- [ ] **The 28-name icon registry cannot keep upstream's glyphs distinct in a page template.**
+      Templates follow the repo's standing rule — where upstream *imports* Heroicons, substitute a
+      registry name and document the map in the file header; where upstream *inlines* SVG paths,
+      transcribe them. At component-example scale that is nearly lossless; at page scale it is not.
+      `editor` alone maps **24 glyphs onto 28 names**, with seven names carrying two or more; the
+      worst reads are `SparklesIcon`→`info` and `LightBulbIcon`→`warning`, which render as status
+      glyphs they are not, and `product-detail`'s `PlusIcon` and outline `StarIcon` both landing on
+      `check`. Every collision is named in its file's header and every mapping is marked as retiring
+      with the registry. The fix is growing the registry, not per-file workarounds
+- [ ] **`/templates/blank` 404s, where upstream would bounce.** The registry skips `scaffold`
+      templates, so the slug is not in `entries`. Upstream's `[slug]` redirects any slug — including
+      one `generateStaticParams` never generated, since `dynamicParams` defaults true — landing the
+      reader on a gallery whose dialog silently cannot open. A 404 says more, but it *is* a
+      divergence rather than an improvement, and it is recorded as one
+- [ ] **`/templates/<slug>` is a bounce page, not an HTTP 308.** It was a `redirect(308, …)` and that
+      cannot be prerendered: on a redirect the prerenderer writes the redirect file **and enqueues
+      the destination** (`kit/src/core/postbuild/prerender.js:421`), so `/templates?preview=<slug>`
+      was saved as `templates?preview=<slug>.html` — junk on Linux, a hard `ENOENT` build failure on
+      Windows. The whole site is `prerender = true`, so there is no request-time branch. The route
+      now emits the `meta refresh` + `location.href` pair character-for-character as SvelteKit writes
+      it for prerendered redirects. Cost: `adapter-vercel` emits no redirect rule for these paths and
+      a crawler sees 200-then-refresh. Closing it means a `vercel.json` redirect rule or an adapter
+      that can express one
+- [ ] **Upstream's `AspectRatio` comments in three Gallery templates are stale.** They claim
+      `AspectRatio` exposes no `objectFit` or `radius` prop; upstream's own `AspectRatio.tsx` ships
+      `fit` and `shape`, and so does this port. The comments and the inline styles they justify are
+      transcribed verbatim under the reproduce-upstream rule. Worth re-checking when upstream next
+      touches that file
+- [ ] **`parseTemplate` rejects every core `.doc.mjs` template spec.** Not a regression from the
+      page templates — it rejects the already-landed ones identically, on `displayName`/`isReady`/
+      `isHiddenFromOverview`. Core specs load through `loadDocModule`, not `parseTemplate`, which
+      `_adapter.mjs:151` documents as the *integration* path, so nothing is broken today. But the
+      canonical `.template.*` schema and the legacy core spec shape have drifted apart, and the next
+      person to migrate core specs to `.template.ts` will hit it
 - [ ] **The class oracle cannot see a `stylex.create` function style, on either side.** A dynamic
       style — `dot: (color) => ({backgroundColor: color, …})` — compiles to an **arrow function**
       value rather than a `{propHash: "class", $$css: true}` object, and its hoisted static half

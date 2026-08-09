@@ -7,16 +7,22 @@
  *
  * 4, matching upstream `api/template/copy/copy.test.mjs` one for one.
  *
- * All four are **refixtured** off upstream's packaged `blank` page template
- * onto an integration-contributed page, because this port ships no template
- * assets (TODO.md — deferred). Nothing about what they test changes: a page
- * template scaffolded into a directory, the clobber refusal, the `overwrite`
- * escape hatch and the traversal rejection are properties of the copy leaf, not
- * of which template it copied. Pointed at a template that does not exist they
- * would have failed resolution instead, which is not the same test.
+ * All four used to be **refixtured** onto an integration-contributed page,
+ * because this port shipped no template assets. It ships them now:
+ * `assets/templates/pages/blank/` is transcribed, so these resolve the packaged
+ * core template exactly as upstream's do and the fixture is gone.
+ *
+ * Removing it was not optional. Discovery found the fixture's `blank` *and*
+ * core's, and every case failed with `ERR_AMBIGUOUS_TEMPLATE` — the refixture
+ * was self-retiring in the same way `template-integration.test.mjs`'s inverted
+ * assertion was, and it retired the same day.
  *
  * The one assertion that had to change value is upstream's `page.tsx`: a
  * SvelteKit route component is `+page.svelte`.
+ *
+ * The temp dir is `.astryx-*` under the package rather than upstream's
+ * `os.tmpdir()`, which is this suite's standing choice — `.gitignore` and the
+ * eslint config both carry that glob, so a crashed run leaves nothing tracked.
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
@@ -26,39 +32,10 @@ import { template } from '../template.mjs';
 
 const SLOW = 30_000;
 
-/**
- * Stand up a consumer project whose one integration contributes a `blank` page
- * template — the counterpart of upstream's packaged `blank`.
- * @param {string} dir
- */
-function installBlankTemplate(dir) {
-	fs.writeFileSync(path.join(dir, 'package.json'), JSON.stringify({ name: 'consumer' }));
-	fs.writeFileSync(
-		path.join(dir, 'astryx-svelte.config.mjs'),
-		`export default { integrations: ['@acme/widgets'] };\n`
-	);
-	const pkgDir = path.join(dir, 'node_modules', '@acme', 'widgets');
-	fs.mkdirSync(path.join(pkgDir, 'templates'), { recursive: true });
-	fs.writeFileSync(
-		path.join(pkgDir, 'package.json'),
-		JSON.stringify({ name: '@acme/widgets', version: '1.0.0' })
-	);
-	fs.writeFileSync(
-		path.join(pkgDir, 'astryx-svelte.integration.mjs'),
-		`export default { templates: './templates' };\n`
-	);
-	fs.writeFileSync(
-		path.join(pkgDir, 'templates', 'blank.template.mjs'),
-		`export default {type: 'page', name: 'Blank', description: 'Minimal page scaffold'};\n`
-	);
-	fs.writeFileSync(path.join(pkgDir, 'templates', 'blank.svelte'), '<p>New Page</p>\n');
-}
-
 describe('template.copy — overwrite + path safety', () => {
 	let dir;
 	beforeEach(() => {
 		dir = fs.mkdtempSync(path.join(process.cwd(), '.astryx-tmpl-copy-'));
-		installBlankTemplate(dir);
 	});
 	afterEach(() => fs.rmSync(dir, { recursive: true, force: true }));
 

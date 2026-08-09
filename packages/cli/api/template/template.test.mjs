@@ -6,19 +6,24 @@
  * 7, matching upstream `api/template/template.test.mjs` one for one. The six
  * `stripTemplateAssetRefs` cases are verbatim.
  *
- * The seventh is **refixtured, not weakened**. Upstream runs it against the
- * packaged `contact-form` page template; this port ships no template assets
- * (see TODO.md — the 1,329 of them are deferred), so the same template is
- * stood up as an integration contribution instead. Every assertion is
- * upstream's, including the `columns={{minWidth: 200}}` one that is the whole
- * point of the case: a spatial prop must survive into the skeleton verbatim,
- * braces and all. Left pointed at a template that does not exist, the case
- * would have thrown `ERR_UNKNOWN_TEMPLATE` rather than tested anything.
+ * The seventh used to be **refixtured**: upstream runs it against the packaged
+ * `contact-form` page template, and this port shipped no template assets, so
+ * the template was stood up as an integration contribution instead. It ships
+ * them now — `assets/templates/pages/contact-form/` is transcribed — so the
+ * case resolves the packaged template exactly as upstream's does, and the
+ * fixture is gone along with the `fs`/`path` plumbing it needed.
+ *
+ * Removing it was not optional. Discovery found the fixture's `contact-form`
+ * *and* core's, and the case failed with `ERR_AMBIGUOUS_TEMPLATE`.
+ *
+ * One assertion changes value, not meaning: upstream reads
+ * `columns={{minWidth: 200}}` out of the skeleton, and the transcribed template
+ * carries this repo's prettier spacing inside the object literal. What the case
+ * tests — that a spatial prop survives extraction verbatim, braces and all — is
+ * unchanged.
  */
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import * as fs from 'node:fs';
-import * as path from 'node:path';
+import { describe, expect, it } from 'vitest';
 import { stripTemplateAssetRefs, template } from './template.mjs';
 
 describe('stripTemplateAssetRefs', () => {
@@ -72,62 +77,13 @@ describe('stripTemplateAssetRefs', () => {
 	});
 });
 
-/**
- * The `contact-form` page upstream ships, re-authored as the Svelte markup a
- * template in this port really is: a Card wrapping a responsive Grid of
- * TextInputs. `columns={{minWidth: 200}}` is upstream's own expression.
- */
-const CONTACT_FORM_SOURCE = `<script>
-	import {Button, Card, Grid, Text, TextInput} from '@astryx-svelte/core';
-</script>
-
-<Card padding={6}>
-	<Text type="large">Contact us</Text>
-	<Grid columns={{minWidth: 200}} gap={4}>
-		<TextInput label="Name" />
-		<TextInput label="Email" />
-	</Grid>
-	<Button>Send</Button>
-</Card>
-`;
-
 describe('template --skeleton component extraction (prefix-agnostic)', () => {
 	// Regression guard: templates author bare component names post un-prefix
 	// migration (P2380608025). The extractors previously matched only the
 	// `XDS`-prefixed form, so `--skeleton` returned an empty components list and
 	// an empty skeleton body for bare templates.
-	let tmpDir;
-
-	beforeEach(() => {
-		tmpDir = fs.mkdtempSync(path.join(process.cwd(), '.astryx-template-skeleton-'));
-		fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'consumer' }));
-		fs.writeFileSync(
-			path.join(tmpDir, 'astryx-svelte.config.mjs'),
-			`export default { integrations: ['@acme/widgets'] };\n`
-		);
-		const pkgDir = path.join(tmpDir, 'node_modules', '@acme', 'widgets');
-		fs.mkdirSync(path.join(pkgDir, 'templates'), { recursive: true });
-		fs.writeFileSync(
-			path.join(pkgDir, 'package.json'),
-			JSON.stringify({ name: '@acme/widgets', version: '1.0.0' })
-		);
-		fs.writeFileSync(
-			path.join(pkgDir, 'astryx-svelte.integration.mjs'),
-			`export default { templates: './templates' };\n`
-		);
-		fs.writeFileSync(
-			path.join(pkgDir, 'templates', 'contact-form.template.mjs'),
-			`export default {type: 'page', name: 'Contact form', description: 'Contact form page'};\n`
-		);
-		fs.writeFileSync(path.join(pkgDir, 'templates', 'contact-form.svelte'), CONTACT_FORM_SOURCE);
-	});
-
-	afterEach(() => {
-		fs.rmSync(tmpDir, { recursive: true, force: true });
-	});
-
 	it('extracts components and a skeleton from a bare-named template', async () => {
-		const result = await template('contact-form', { skeleton: true, cwd: tmpDir });
+		const result = await template('contact-form', { skeleton: true });
 
 		expect(result.type).toBe('template.skeleton');
 		expect(Array.isArray(result.data.components)).toBe(true);
@@ -141,6 +97,10 @@ describe('template --skeleton component extraction (prefix-agnostic)', () => {
 		expect(result.data.skeleton).toMatch(/<[A-Z]\w+/);
 		expect(result.data.skeleton).not.toContain('<XDS');
 
-		expect(result.data.skeleton).toContain('columns={{minWidth: 200}}');
+		// Upstream asserts `columns={{minWidth: 200}}`; the transcribed template
+		// carries the repo's prettier spacing inside the object literal. The
+		// assertion is the same one — a spatial prop survives into the skeleton
+		// verbatim, braces and all — read off this port's own formatting.
+		expect(result.data.skeleton).toContain('columns={{ minWidth: 200 }}');
 	});
 });

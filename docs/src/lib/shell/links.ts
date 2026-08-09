@@ -29,6 +29,10 @@ export function themesHref(): string {
 	return resolve('/themes');
 }
 
+export function communityHref(): string {
+	return resolve('/community');
+}
+
 export function topicHref(topic: string): string {
 	return resolve('/docs/[topic]', { topic });
 }
