@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 import type { InputStatus } from '../field/types.js';
 
 /**

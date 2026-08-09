@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 
 /**
  * The two contexts a `CollapsibleGroup` provides, ported from upstream's

@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 
 /**
  * Ported from Astryx's `SideNav/SideNavRenderContext.ts`.
@@ -10,7 +10,7 @@ import { Context } from 'runed';
  * Unlike `SideNavCollapseContext`, the context **object** is public: upstream's
  * `SideNav/index.ts` exports `SideNavRenderContext` alongside
  * `useSideNavRenderMode`, so an app assembling its own shell can drive the modes
- * directly. The Svelte object is a `runed` `Context`, so `setSideNavRenderMode`
+ * directly. The Svelte object is a `Context` (`internal/context.ts`), so `setSideNavRenderMode`
  * is the writer where React writes `<SideNavRenderContext value="drawer">`.
  */
 export type SideNavRenderMode = 'default' | 'topbar' | 'drawer' | 'drawer-content';

@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../internal/context.js';
 import type { DefinedTheme } from './define-theme.js';
 import type { ThemeMode } from './types.js';
 

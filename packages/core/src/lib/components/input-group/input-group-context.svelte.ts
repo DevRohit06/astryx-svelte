@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 
 /**
  * Svelte equivalent of Astryx's `InputGroup/InputGroupContext.ts`.

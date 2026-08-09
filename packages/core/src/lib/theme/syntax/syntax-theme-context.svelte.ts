@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 import type { SyntaxThemeDefinition } from './define-syntax-theme.js';
 
 /**

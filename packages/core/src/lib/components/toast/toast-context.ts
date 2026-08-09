@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 import type { ToastEntry, ToastDismissReason } from './types.js';
 
 /**

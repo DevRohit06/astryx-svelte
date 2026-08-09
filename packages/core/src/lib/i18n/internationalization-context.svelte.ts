@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../internal/context.js';
 import type { Locale, MessagesByLocale, Overrides } from './types.js';
 
 /**

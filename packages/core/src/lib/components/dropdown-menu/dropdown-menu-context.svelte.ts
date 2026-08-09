@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 import type { DropdownMenuSize } from './dropdown-menu-item.stylex.js';
 
 /**

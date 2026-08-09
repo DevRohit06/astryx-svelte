@@ -822,7 +822,7 @@ export {
 // reader — which upstream also has, in `useTableCellStyles.ts` — is deliberately
 // module-public and barrel-absent. An earlier cut here had it backwards on the
 // theory that a Svelte context surfaces through its reader; that theory is
-// wrong, because `runed`'s `Context` *is* the value counterpart and this barrel
+// wrong, because a `Context` *is* the value counterpart and this barrel
 // already publishes ten of them. `resolveContextActions` lives in
 // `table-context-menu.svelte`'s module block, where upstream declares it in
 // `tableContextMenu.tsx`.

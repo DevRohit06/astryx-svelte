@@ -52,13 +52,13 @@ export const docs = {
 				},
 				{
 					type: 'prose',
-					text: 'Add the core package, a theme, and the CLI to your existing project.'
+					text: 'Add the core package, a theme, StyleX and the CLI to your existing project. `@stylexjs/stylex` is a peer dependency rather than a bundled one because your own bundler compiles it — two copies at different versions render unstyled with no error.'
 				},
 				{
 					type: 'code',
 					lang: 'bash',
 					label: 'Terminal',
-					code: `npm install @astryx-svelte/core @astryx-svelte/theme-neutral @astryx-svelte/cli`
+					code: `npm install @astryx-svelte/core @astryx-svelte/theme-neutral @stylexjs/stylex @astryx-svelte/cli\nnpm install -D @stylexjs/unplugin`
 				},
 				{
 					type: 'prose',

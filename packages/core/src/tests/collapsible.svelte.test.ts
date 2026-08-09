@@ -30,7 +30,7 @@ import CollapsibleGroupProbe from './fixtures/collapsible-group-probe.svelte';
  *
  * Translations (each noted at its case, assertions unchanged where possible):
  * - `exposes a displayName for devtools` — DROPPED. Svelte has no `displayName`
- *   surface; `runed`'s Context keeps its name private. Named per the count contract.
+ *   surface; `Context` keeps its name private. Named per the count contract.
  * - `forwards a ref to the root element` — COUNTERPART. There is no `ref` prop here;
  *   the way a consumer reaches the root is an attachment travelling through the rest
  *   props. It receives the element (asserted `instanceof HTMLDivElement`, matching

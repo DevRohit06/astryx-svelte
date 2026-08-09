@@ -2945,6 +2945,49 @@ console errors. Client JS **+558 B (+0.013%)**.
 - [ ] **Section anchors are a `#` text link; upstream's `AnchorHeading` is a ghost `IconButton`**
       that copies the deep link and reveals on hover/focus-within
 
+### Core's dependencies are upstream's again — 2026-08-09
+
+Prompted by a reader asking whether the port had drifted from Astryx's
+"dependency-free" claim. It had, in two places, and the manifests are what settled it —
+`@astryxdesign/core` declares **one** runtime dependency, `intl-messageformat`, and
+this port declared three.
+
+- [x] **`runed` is gone, and the cost was out of all proportion to the use.** It supplied exactly
+      one import — `Context` — across **39 modules**, and only `set()` and `getOr()` were ever
+      called. For that it brought **555 KB, three transitive dependencies** (`dequal`, `esm-env`,
+      `lz-string`) and, the part that actually mattered, **peer dependencies on `@sveltejs/kit`
+      and `zod`** — so a plain-Svelte consumer with no SvelteKit was being asked to satisfy a peer
+      for a framework they had not chosen. `internal/context.ts` now owns the class in ~40 lines
+      over Svelte's own `getContext`/`setContext`.
+      **The full `runed` API is implemented, not just the two methods used**, and that is not
+      speculative: the barrel **publishes ten of these instances as public values**
+      (`TableContext`, `SizeContext`, `AppShellMobileContext` …, which is upstream's own split —
+      the context object is exported and its reader is not), so a consumer holding one can call
+      anything the class exposes. Narrowing it would have been a breaking change dressed as a
+      cleanup. Behaviour matches `runed@0.37.1` member for member, `get()`'s throw-by-name
+      included
+- [x] **`@stylexjs/stylex` moved from `dependencies` to `peerDependencies`, which is where upstream
+      has it.** Not cosmetic: the consumer's own bundler compiles StyleX over core, so a second
+      copy resolving at a different version renders **unstyled with no error** — the failure mode
+      CLAUDE.md already names as this repo's nastiest. It is added to core's `devDependencies` at
+      the same range, since a package does not install its own peers and the build, tests and
+      class oracle all need it. `packages/core/README.md` already told consumers to install it, so
+      the manifest now agrees with the documentation instead of contradicting it;
+      `getting-started` gained the same line, which it had been missing
+- [x] **A ported test caught the peer change, correctly, and was sharpened rather than deleted.**
+      `svelte-version-sync`'s "core declares exactly one framework peer dependency" is this port's
+      stand-in for upstream's react/react-dom range check, and it failed on
+      `['@stylexjs/stylex', 'svelte']`. StyleX is not a framework peer and is not this port's
+      addition — upstream declares it too — so the case now excludes build-tool peers and still
+      asserts exactly one framework peer. **Mutation-checked**: adding `solid-js` fails it
+
+**Core's dependency set is now identical to upstream's**: `intl-messageformat` alone, with StyleX
+peered. The CLI is *lighter* than upstream's — same `commander`/`jiti`/`zod`, minus `jscodeshift`,
+plus `magic-string` and `zimmerframe`, both zero-dependency. `theme-*` carries `@lucide/svelte`
+where upstream carries `lucide-react`. Verified after the change: **class oracle 1,528 keys / 0
+mismatches**, core server 811/811, the three context suites 79/79, CLI 1,937 + 25 todo, both theme
+oracles clean, `build`/`check`/`lint` all 0.
+
 ### The v1 cut
 
 Scoped 2026-08-02 to _launchable_, not complete. In: the shell, the `/components` gallery and

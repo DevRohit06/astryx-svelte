@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 
 /**
  * Ported from Astryx's `MetadataList/MetadataListContext.tsx`, plus the two

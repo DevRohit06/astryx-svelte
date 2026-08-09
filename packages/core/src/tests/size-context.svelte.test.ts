@@ -18,7 +18,7 @@ import Siblings from './fixtures/size-siblings.svelte';
  * than behavioural:
  *
  *   - `exposes a displayName for devtools` — Svelte has no `displayName`
- *     surface, and `runed`'s `Context` keeps its name private (`#private`), so
+ *     surface, and `Context` keeps its name private (`#private`), so
  *     there is nothing to assert against.
  *   - `works with createElement (no JSX) call form` — there is no second
  *     construction form in Svelte. A component is a component.

@@ -16,7 +16,7 @@ import Provider from './fixtures/interactive-role-provider.svelte';
  * around it. Every assertion is upstream's.
  *
  * Two of upstream's twenty-one cases do not survive the port, both React-specific
- * rather than behavioural: `displayName` for devtools (runed's `Context` keeps
+ * rather than behavioural: `displayName` for devtools (our `Context` keeps
  * its name private, and it is not a devtools surface in Svelte), and the
  * `createElement` no-JSX provider form (there is no second construction form to
  * check — a component is a component).

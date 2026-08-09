@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../internal/context.js';
 import type { TableVerticalAlign } from './table-types.js';
 
 /**
@@ -25,7 +25,7 @@ export interface TableContextValue {
 
 /**
  * Published, as upstream publishes its `TableContext` from `Table/index.ts`.
- * A `runed` `Context` is the value counterpart of a React context object, and
+ * A `Context` (`internal/context.ts`) is the value counterpart of a React context object, and
  * this barrel already exports ten of them (`SizeContext`, `RadioListContext`,
  * `ThemeContext`, …). The *reader* is what stays private here — upstream has a
  * `useTableContext` too (in `useTableCellStyles.ts`) and deliberately keeps it

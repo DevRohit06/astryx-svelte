@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../../../internal/context.js';
 
 /** What the index cell needs in order to render one row's ordinal. */
 export interface RowIndexContextValue {

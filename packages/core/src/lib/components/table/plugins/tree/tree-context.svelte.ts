@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from '../../../../internal/context.js';
 import type { UseTableTreeDataConfig } from './use-table-tree-data.js';
 
 /**

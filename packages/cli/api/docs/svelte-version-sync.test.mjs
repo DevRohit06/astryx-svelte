@@ -61,9 +61,24 @@ describe('documented Svelte version matches the core peer dependency', () => {
 	const namesTheMajor = new RegExp(`Svelte ${major}(?!\\d)`);
 
 	it('core declares exactly one framework peer dependency', () => {
+		// Upstream's counterpart checks that its `react` and `react-dom` peer
+		// ranges agree. Core has one framework peer rather than two, so the
+		// equivalent guard is that it stays one — a second would mean every
+		// surface naming the supported version has a second version to name.
+		//
+		// `@stylexjs/stylex` is excluded because it is not a framework peer and
+		// not this port's addition: upstream declares it as a peer too
+		// (`@astryxdesign/core`'s peers are `@stylexjs/stylex`, `react`,
+		// `react-dom`). It is a peer rather than a dependency on purpose — the
+		// consumer's own bundler runs the StyleX compiler over core, so a second
+		// copy resolving at a different version renders unstyled with no error.
+		const BUILD_TOOL_PEERS = new Set(['@stylexjs/stylex']);
+		const frameworkPeers = Object.keys(pkg.peerDependencies).filter(
+			(name) => !BUILD_TOOL_PEERS.has(name)
+		);
 		expect(
-			Object.keys(pkg.peerDependencies),
-			`core acquired a second peer dependency; if that is intentional, ${SURFACES}`
+			frameworkPeers,
+			`core acquired a second framework peer dependency; if that is intentional, ${SURFACES}`
 		).toEqual(['svelte']);
 	});
 

@@ -1,4 +1,4 @@
-import { Context } from 'runed';
+import { Context } from './context.js';
 
 /**
  * Svelte equivalents of Astryx's React contexts.
