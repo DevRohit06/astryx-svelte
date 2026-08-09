@@ -1331,6 +1331,38 @@ async function buildDocsRegistry() {
  * {@link buildDocsRegistry} states: the assertion can only prove the rewrite was
  * unnecessary if the rewrite has already had its chance.
  */
+/**
+ * Discover, validate and sort the blog — upstream's `generateBlogRegistry()`.
+ *
+ * The work is not done here. `src/lib/blog/posts.mjs` is upstream's own module,
+ * ported verbatim, and it owns the frontmatter parser, the schema validation,
+ * the reading-time estimate and the latest-first ordering. This function is the
+ * thin caller upstream's is, so the two cannot drift: a post that builds here
+ * would build there.
+ *
+ * **Drafts follow `NODE_ENV`, as upstream's do** — included in dev, excluded
+ * from production output. That is the one line worth reading twice, because it
+ * means `pnpm dev` and `pnpm build` legitimately disagree about the post count,
+ * and a `draft: true` post that renders locally is *supposed* to vanish from the
+ * deploy.
+ *
+ * Validation failures throw, and nothing catches them: `generate()` runs before
+ * every dev server and every build, so a malformed post fails the build with a
+ * slug-prefixed message rather than shipping a broken page. That is what
+ * replaces upstream's `blog.test.ts`, which this port has no runner for.
+ */
+async function buildBlogRegistry() {
+	const postsDir = path.join(DOCS_ROOT, 'src', 'content', 'blog', 'posts');
+	const { discoverPosts, collectTypes, collectTags } = await import(
+		pathToFileURL(path.join(DOCS_ROOT, 'src', 'lib', 'blog', 'posts.mjs')).href
+	);
+
+	const includeDrafts = process.env.NODE_ENV !== 'production';
+	const posts = discoverPosts(postsDir, { includeDrafts });
+
+	return { posts, types: collectTypes(posts), tags: collectTags(posts) };
+}
+
 function buildLibraryPackages() {
 	const dir = path.join(WORKSPACE_ROOT, 'packages');
 	if (!fs.existsSync(dir)) {
@@ -1766,6 +1798,9 @@ export async function generate({ quiet = false } = {}) {
 			`${libraries.filter((pkg) => pkg.readme != null).length} with a README`
 	);
 
+	const blog = await buildBlogRegistry();
+	log(`  blog        ${blog.posts.length} posts, ${blog.types.length} type(s)`);
+
 	fs.mkdirSync(OUT_DIR, { recursive: true });
 
 	// The README text is split out of the registry on purpose. `package-registry`
@@ -1797,6 +1832,7 @@ export async function generate({ quiet = false } = {}) {
 				)
 			)
 		],
+		['blog-registry.js', moduleSource('BlogRegistry', blog)],
 		[
 			'coverage.js',
 			moduleSource('Coverage', {

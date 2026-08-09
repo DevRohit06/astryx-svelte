@@ -3002,6 +3002,26 @@ work rather than component work, itemised under [After launch](#after-launch).
 
 ### Landed
 
+- [x] **`/blog` and `/blog/<slug>` — 2026-08-10.** Upstream's blog surface, ported, with one post of
+      this repo's own. The split is worth stating because it decided the whole shape: the **content**
+      is Meta's prose and does not port (their seven posts stay theirs), but the **surface** ports
+      like anything else. `src/lib/blog/posts.mjs` is upstream's own module copied **verbatim** —
+      frontmatter parser, six-type schema, validation, reading-time estimate and latest-first
+      ordering — so a post that builds here builds there, and upstream's authoring README describes
+      this port exactly. `schema.ts` and `release.ts` likewise. Only `authors.ts`'s *entries* are
+      ours, since copying Meta's team into a port they did not write would misattribute it.
+      Components: `blog-index`, `blog-card`, `blog-article`, `author-byline`, `release-cover-art`.
+      **Two upstream behaviours are load-bearing and easy to lose** — the type filter only renders
+      when more than one type has posts (this port is the single-type case today), and the feature
+      card only appears under "All", because "featured" within a filtered subset is a claim the
+      ordering does not support. Three details worth keeping: drafts follow `NODE_ENV`, so `dev` and
+      `build` legitimately disagree about the post count; `headingLevelStart={2}` is what stops a
+      post body growing a second `h1`, and upstream's own posts use `##`, which lands them at `h3`;
+      and core's `Markdown` takes its source as `children: string`, so upstream's JSX child becomes
+      an attribute. Validation runs on every build in place of upstream's `blog.test.ts`, which has
+      no runner here — a malformed post fails the build with a slug-prefixed error. Verified in the
+      browser and in the prerendered output: `/blog` and `/blog/astryx-svelte-v0-3-0` both static,
+      body prose at the article's 17px override, three related-doc cards, three tag badges
 - [x] **Every live preview renders under `neutralTheme`, not the docsite's brand theme — 2026-08-10.**
       This was wrong on the site for its whole life and the port had *written down* the wrong reason
       three times. Upstream's `ComponentPreviewTheme` wraps `ComponentDetailClient`, `ExampleBlock`
@@ -4015,6 +4035,13 @@ Done: adopted the parity rule verbatim, enforced by 5 subagents (`astryx-parity`
 
 Small, named, deliberately not hidden. (Upstream bugs are documented here, not replicated.)
 
+- [ ] **`BlogCoverArt` is not ported, so a non-release post with no `coverImage` has no cover.**
+      Upstream's generative default cover (210 lines, deterministic from post `type` + `slug`) is the
+      one piece of the blog surface this port skipped. It is not exercised today — the only post is a
+      release post, so `release-cover-art.svelte` (ported) is what renders — but the gap is real the
+      moment a `guide` or `perspective` post lands without artwork. `blog-card.svelte` falls through
+      to the muted field rather than collapsing, so the failure is a blank cover and not a broken
+      grid. Port it before the second post, or the second post needs a `coverImage`
 - [ ] **The docs top nav sizes its end-content icons at 16px; upstream's are 20px.** A deliberate
       divergence on the maintainer's call, not an oversight. Upstream's `SharedTopNav` renders
       `<Search size={20} />`, `<Moon size={20} />`, `<Sun size={20} />`, `<HeartHandshake size={20} />`

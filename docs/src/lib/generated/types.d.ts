@@ -359,3 +359,21 @@ export interface Coverage {
 	/** The transcription backlog — counted over the whole registry, not the listed subset. */
 	templatesPending: number;
 }
+
+/**
+ * The blog, as `blog-registry.js` carries it.
+ *
+ * `BlogPost` itself is declared in `$lib/blog/schema.ts` rather than here,
+ * because unlike every other registry on this page the shape is not this
+ * generator's invention — it is upstream's validated post schema, and
+ * `posts.mjs` (ported verbatim) is what produces it. Re-declaring the fields
+ * here would give the contract two homes and let them disagree.
+ */
+export interface BlogRegistry {
+	/** Validated posts, latest first. Drafts only when NODE_ENV !== 'production'. */
+	posts: import('../blog/schema.js').BlogPost[];
+	/** Distinct types present, in `POST_TYPES` order. Drives the index filters. */
+	types: import('../blog/schema.js').BlogPostType[];
+	/** Distinct tags present, alphabetical. */
+	tags: string[];
+}

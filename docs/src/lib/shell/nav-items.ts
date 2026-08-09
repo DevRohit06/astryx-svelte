@@ -6,12 +6,20 @@
  * exist, and linking to a 404 is worse than not linking, so a missing route is
  * absent rather than dead.
  *
- * `/templates`, `/themes` and `/community` are now built, so both lists carry
- * them in upstream's slot and with upstream's label. Still absent:
+ * `/templates`, `/themes`, `/community` and `/blog` are now built, so both lists
+ * carry them in upstream's slot and with upstream's label. Still absent:
  * `/playground` (a `svelte/compiler` Web Worker, deliberately last — TODO.md →
- * Phase 5), `/blog` (Meta's posts) and `/changelog` (this port has published no
- * release, so there is nothing for the page to read; upstream's renders each
- * package's `CHANGELOG.md`).
+ * Phase 5) and `/changelog` (this port has published no release, so there is
+ * nothing for the page to read; upstream's renders each package's
+ * `CHANGELOG.md`).
+ *
+ * **`/blog` was on that absent list as "Meta's posts", and that reasoning only
+ * ever applied to the content.** The blog *surface* is upstream's and ports like
+ * anything else — the frontmatter schema, the validator and the discovery order
+ * are its own `posts.mjs`, ported verbatim. Upstream's seven posts are Meta's
+ * prose and are not portable, so this blog starts with one post of its own.
+ * Upstream carries Blog in the top nav and the footer alike, which this port's
+ * single merged list gives it in one entry.
  *
  * **`/community` was on that absent list, for the reason "Meta's content and
  * Meta's accounts".** Half of that reason still holds and the page is built
@@ -50,6 +58,7 @@ export const NAV_ITEMS: NavItem[] = [
 	{ label: 'Components', href: componentsHref(), activeOn: ['/components'] },
 	{ label: 'Templates', href: templatesHref(), activeOn: ['/templates'] },
 	{ label: 'Themes', href: themesHref(), activeOn: ['/themes'] },
+	{ label: 'Blog', href: '/blog', activeOn: ['/blog'] },
 	{ label: 'Community', href: communityHref(), activeOn: ['/community'] }
 ];
 
