@@ -1,0 +1,56 @@
+{
+	"name": "@astryx-svelte/theme-stone",
+	"version": "0.3.0",
+	"description": "Stone theme for astryx-svelte — warm stone and slate, earthy and understated.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/devrohit06/astryx-svelte.git",
+		"directory": "packages/themes/stone"
+	},
+	"bugs": {
+		"url": "https://github.com/devrohit06/astryx-svelte/issues"
+	},
+	"homepage": "https://github.com/devrohit06/astryx-svelte#readme",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"svelte": "./dist/index.js",
+			"import": "./dist/index.js"
+		},
+		"./tokens": {
+			"types": "./dist/tokens.d.ts",
+			"svelte": "./dist/tokens.js",
+			"import": "./dist/tokens.js"
+		},
+		"./theme.css": "./dist/theme.css"
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"scripts": {
+		"build": "node --experimental-strip-types scripts/build-theme.mjs",
+		"check": "tsc --noEmit -p tsconfig.json",
+		"lint": "prettier --check .",
+		"format": "prettier --write .",
+		"test:parity": "node scripts/compare-upstream.mjs",
+		"test:icons": "node scripts/check-icons.mjs",
+		"test": "npm run build && npm run test:parity && npm run test:icons"
+	},
+	"dependencies": {
+		"@lucide/svelte": "^1.25.0"
+	},
+	"peerDependencies": {
+		"svelte": "^5.0.0"
+	},
+	"devDependencies": {
+		"@astryx-svelte/core": "workspace:*",
+		"@astryxdesign/theme-stone": "0.3.0",
+		"prettier": "^3.8.3",
+		"prettier-plugin-svelte": "^4.1.0",
+		"svelte": "^5.56.1",
+		"typescript": "^6.0.3"
+	}
+}

@@ -1,0 +1,31 @@
+node_modules
+
+# Output
+.output
+.vercel
+.netlify
+.wrangler
+/.svelte-kit
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+!.env.example
+!.env.test
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# Derived by scripts/generate-content.mjs, which runs on buildStart and before
+# `check` — from upstream's `.doc.mjs` files for components and example blocks,
+# from `packages/cli/assets/docs` for the reference topics, and from
+# `packages/themes/*` for the theme list. Not committed: it is generated output,
+# and committing it would let the checked-in copy drift from the sources the app
+# actually reads (the pinned @astryxdesign/* versions, and this workspace).
+/src/lib/generated/*.js

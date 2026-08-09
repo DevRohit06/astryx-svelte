@@ -1,0 +1,152 @@
+/**
+ * @file swizzle command — thin wrapper around api/swizzle.
+ *
+ * Copies a component's source directory into the consumer project for
+ * customization (imports rewritten to the owner package's public entrypoints).
+ * All logic — owner resolution, the copy, import rewriting, StyleX detection,
+ * maintainer feedback — lives in api/swizzle; this file only parses flags,
+ * prints, and prefixes commands for the caller's package manager.
+ *
+ * Two renderer differences from upstream, both consequences of api/swizzle:
+ *
+ * - **No `XDSButton` example.** The `XDS` prefix is pre-rename residue; the API
+ *   no longer strips it, so advertising it would advertise an error.
+ * - **The StyleX note loses its Next.js paragraph and gains an
+ *   `unresolvedImports` sibling.** Upstream's note ends with "the StyleX Babel
+ *   plugin disables SWC and breaks next/font"; there is no Next.js here and the
+ *   Svelte answer is `@stylexjs/unplugin` in `vite.config.ts`. The rest of the
+ *   note stays, because it describes this port exactly: core ships its
+ *   `.stylex.js` uncompiled, so without a compiler the swizzled component
+ *   renders unstyled with **no error** — the same failure CLAUDE.md records for
+ *   the docs site.
+ */
+
+import { jsonOut } from '../../../foundation/response/json.mjs';
+import { emit, section, list, text, WARN } from '../formatters/index.mjs';
+import { cliError } from '../lib/cli-error.mjs';
+import { getCliInvocation } from '../../../foundation/env/package-manager.mjs';
+import { swizzle as swizzleApi } from '../../../api/swizzle/swizzle.mjs';
+
+/**
+ * @param {import('commander').Command} program
+ */
+export function registerSwizzle(program) {
+	program
+		.command('swizzle [component]')
+		.description('Copy component source for customization')
+		.option('--output <dir>', 'Output directory', './components/astryx')
+		.option('--package <pkg>', 'Scope to a specific owning package')
+		.option('--list', 'List available components')
+		.option('-f, --overwrite', 'Overwrite existing files without prompting')
+		.action(
+			async (
+				/** @type {string | undefined} */ component,
+				/** @type {{output: string, package?: string, list?: boolean, overwrite?: boolean}} */ options
+			) => {
+				const json = program.opts().json || false;
+				const run = getCliInvocation();
+
+				/** @type {import('../../../api/swizzle/swizzle.type.mjs').SwizzleListResponse | import('../../../api/swizzle/swizzle.type.mjs').SwizzleCopyResponse} */
+				let result;
+				try {
+					result = await swizzleApi(component, {
+						cwd: process.cwd(),
+						output: options.output,
+						package: options.package,
+						list: options.list,
+						overwrite: options.overwrite
+					});
+				} catch (e) {
+					const err = /** @type {import('../../../api/error.mjs').AstryxError} */ (e);
+					cliError(err.message, { suggestions: err.suggestions, code: err.code });
+					return;
+				}
+
+				if (json) return jsonOut(result);
+
+				if (result.type === 'swizzle.list') {
+					const components = result.data;
+					emit(
+						section(
+							'Available component directories',
+							'A swizzle copies a directory, so a family (avatar) carries every ' +
+								'component in it. An export name works too.'
+						),
+						list(components),
+						text(`Usage: ${run} swizzle <component>`),
+						text(
+							[
+								`Example: ${run} swizzle button`,
+								`         ${run} swizzle AvatarStatusDot  (copies avatar/)`
+							].join('\n')
+						)
+					);
+					return;
+				}
+
+				const {
+					package: ownerPackage,
+					outputDir,
+					filesCopied,
+					usesStyleX,
+					unresolvedImports,
+					feedback
+				} = result.data;
+
+				/** @type {import('../formatters/index.mjs').Block[]} */
+				const out = [
+					text(`[ok] Copied ${filesCopied} files to ${outputDir}/`),
+					text(
+						[
+							`Relative imports have been rewritten to use ${ownerPackage}.`,
+							'You can now customize the component source freely.'
+						].join('\n')
+					)
+				];
+
+				// StyleX build requirement — swizzled StyleX source renders unstyled with
+				// no error unless the consumer's build runs a StyleX compiler.
+				if (usesStyleX) {
+					out.push(
+						text(
+							[
+								`${WARN} These files use StyleX and require a StyleX compiler in your build.`,
+								'  Without one they render unstyled (no error). See setup:',
+								`  ${run} docs styling`
+							].join('\n')
+						)
+					);
+				}
+
+				// Imports the owner package does not publish. Left as written rather than
+				// rewritten into a specifier that would not resolve — see the
+				// `unresolvedImports` note in api/swizzle/swizzle.type.mjs.
+				if (unresolvedImports.length > 0) {
+					out.push(
+						text(
+							[
+								`${WARN} ${unresolvedImports.length} import(s) point at modules ${ownerPackage} does not publish,`,
+								'  and were left as written. Inline or replace them before building:',
+								...unresolvedImports.map((spec) => `    ${spec}`)
+							].join('\n')
+						)
+					);
+				}
+
+				// Maintainer feedback note (skipped when the owner ships no issues URL).
+				if (feedback) {
+					out.push(
+						text(
+							[
+								'Customizing a component often signals a gap in the design system.',
+								'Let the maintainers know what you needed:',
+								`  ${feedback.ghCommand || feedback.issuesUrl}`
+							].join('\n')
+						)
+					);
+				}
+
+				emit(...out);
+			}
+		);
+}

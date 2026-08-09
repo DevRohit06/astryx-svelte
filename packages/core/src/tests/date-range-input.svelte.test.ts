@@ -1,0 +1,669 @@
+import { describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
+import { render } from 'vitest-browser-svelte';
+import { createAttachmentKey } from 'svelte/attachments';
+import DateRangeInput from '$lib/components/date-range-input/date-range-input.svelte';
+import type { DateRangePreset } from '$lib/components/date-range-input/date-range-input.svelte';
+import Icon from '$lib/components/icon/icon.svelte';
+import { defineTheme } from '$lib/theme/define-theme.js';
+import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
+// `DateRange` comes from its declaration site. Upstream re-exports it from
+// `DateRangeInput.tsx` too, but a type re-export inside a `<script module>`
+// trips `no-import-assign`, so the root barrel names it from here instead — see
+// `calendar.svelte`. Same declaration, same published surface.
+import type { DateRange } from '$lib/utils/date-types.js';
+
+/**
+ * Astryx's `DateRangeInput/DateRangeInput.test.tsx`, ported case for case —
+ * **40** upstream cases at v0.3.0 (19 directly in `describe('DateRangeInput')`,
+ * 5 in `describe('hasClear')`, 2 in `describe('presets')`, 8 in
+ * `describe('disabledMessage')`, 2 in `describe('DateRangeInput statusVariant
+ * forwarding')` and 4 in `describe('DateRangeInput icon theme targets')`), **all
+ * 40 here**. There is no `displayName` case, no snapshot and no no-JSX
+ * construction form in the file, so nothing is React-only except the ref case,
+ * which gets a counterpart.
+ *
+ * ## The count, re-derived from the tag (the previous header was wrong)
+ *
+ * This header used to read "34 upstream cases … 34 here, none dropped".
+ * Upstream has **40**. The `DateRangeInput statusVariant forwarding` block and
+ * the four-case `DateRangeInput icon theme targets` block have both been ported
+ * since, closing the file. The last of those four swaps upstream's
+ * `generateThemeTestCSS` for this port's `generateThemeCss` — both return the
+ * flat stylesheet string, and it is the substitution `multi-selector` and
+ * `selector` already made.
+ *
+ * Upstream imports `getButton`/`queryButton` from `__tests__/fastRoleQueries`
+ * instead of `getByRole('button', {name})` purely for jsdom speed — its own
+ * header says the closed popover keeps ~85 accessible-name computations alive
+ * and that this suite took 34s for 34 tests before the helper existed. That is
+ * a jsdom cost, not a semantic one: the helper "keeps RTL's exact name
+ * algorithm" and only relaxes visibility filtering (its candidates come from
+ * `queryAllByRole('button', {hidden: true})`). A real browser computes those
+ * names natively, so every `getButton(x)` here is `getByRole('button', {name:
+ * x})`, plus `{includeHidden: true}` wherever the target lives inside the
+ * *closed* popover — which is the one place the helper's `hidden: true` is
+ * load-bearing. The popover content really is mounted here too: `Layer` renders
+ * its children unconditionally into a `popover` element, so a closed popover is
+ * `display: none` rather than unmounted, exactly as upstream's is.
+ *
+ * The helper's other trade-off — "first match wins, no tree-wide uniqueness
+ * check" — never bites, because every case that uses the loose `/Range/` passes
+ * `value={null}`, so the clear button (`aria-label="Clear Range"`, the only
+ * other button whose name contains "Range") is not rendered at all. Playwright's
+ * strict mode would catch it if that stopped being true.
+ *
+ * Upstream's `disabledMessage` `beforeEach` (`:367-374`) shims
+ * `showPopover`/`hidePopover` because jsdom implements neither, and its
+ * `h = {hidden: true}` exists because a jsdom popover is not "visible" to the
+ * accessibility tree. The browser project needs neither: Chromium has the real
+ * Popover API, so the open state is read with `matches(':popover-open')` and
+ * `{hidden: true}` survives as `{includeHidden: true}`. This is the arrangement
+ * `number-input`, `file-input` and `time-input` already set for the same block.
+ *
+ * `changeAction` never appears in the upstream file, so nothing here exercises
+ * `createOptimistic` (`internal/optimistic.svelte.ts`); `pagination.svelte.test.ts`
+ * is where that pattern is tested. No case clicks a day cell either, so the
+ * `Calendar` inside the popover is only ever asserted on for *not* being in the
+ * way.
+ *
+ * No case pins the clock. `formatRangeDisplay` drops the year only when the
+ * whole range sits inside the current year — but the sole display-text case
+ * asserts `/Mar/`, `/15/` and `/22/` against a March 15–22 range, and both
+ * branches ("Mar 15 – Mar 22" and "Mar 15, 2026 – Mar 22, 2026") satisfy all
+ * three. Faking `Date` to pin a branch would add a hazard the assertions cannot
+ * see.
+ *
+ * Counterpart, noted at the case:
+ * - **`forwards ref to trigger button` (`:67`)** — Svelte has no `ref` prop and
+ *   this port omits it. The seam a consumer actually uses is an attachment
+ *   through the rest props, and it checks more than upstream's: it receives the
+ *   element rather than only proving a callback ran.
+ *
+ * Restated, each noted at the case:
+ * - `getByText(...)` carries `{exact: true}` throughout. Playwright's text
+ *   engine is substring and case-insensitive by default, which would make
+ *   `getByText('Range')` also match the trigger's "Select date range".
+ * - the `disabledMessage` hover case — upstream's `fireEvent.mouseEnter`/
+ *   `mouseLeave` target the wrapper div, which a real pointer at that element's
+ *   centre cannot do (the trigger fills it), so the events are dispatched where
+ *   upstream dispatches them.
+ * - `keeps the trigger focusable via aria-disabled when a reason is provided` —
+ *   vitest-browser's `toBeDisabled` is Playwright's ARIA computation, not
+ *   jest-dom's native-attribute one, and they disagree by design on exactly the
+ *   `aria-disabled` this case requires.
+ * - `blocks activation while focusable-disabled` — Playwright refuses to click
+ *   an `aria-disabled` element at all, which would assert its actionability
+ *   heuristic rather than the component's guard.
+ */
+
+const noop = (): void => {};
+
+const range: DateRange = { start: '2026-03-15', end: '2026-03-22' };
+
+describe('DateRangeInput', () => {
+	it('renders with label', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Date range', value: null, onChange: noop }
+		});
+		// Restated: `{exact: true}`, since Playwright's text engine is substring
+		// and case-insensitive — "Date range" would otherwise also match the
+		// trigger's "Select date range".
+		await expect.element(screen.getByText('Date range', { exact: true })).toBeInTheDocument();
+	});
+
+	it('renders placeholder when value is null', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop }
+		});
+		await expect
+			.element(screen.getByText('Select date range', { exact: true }))
+			.toBeInTheDocument();
+	});
+
+	it('renders custom placeholder', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop, placeholder: 'Pick dates' }
+		});
+		await expect.element(screen.getByText('Pick dates', { exact: true })).toBeInTheDocument();
+	});
+
+	it('displays formatted range when value is set', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: range, onChange: noop, hasClear: false }
+		});
+		const trigger = screen.getByRole('button', { name: /Range:/ }).element();
+		expect(trigger.textContent).toMatch(/Mar/);
+		expect(trigger.textContent).toMatch(/15/);
+		expect(trigger.textContent).toMatch(/22/);
+	});
+
+	// Counterpart to upstream's `forwards ref to trigger button` (`:67`); see the
+	// file header. Upstream's `ref` lands on the trigger button while this port's
+	// rest props land on the wrapper `<div>` — an asymmetry the component itself
+	// records — so the assertion is written against the trigger's parent, which
+	// names the same element upstream's ref is adjacent to. Upstream asserts
+	// `expect.any(HTMLButtonElement)`; this receives the element itself, so the
+	// assertion is the stronger `toBe`.
+	it('hands the trigger wrapper to an attachment passed through rest props', async () => {
+		const attached = vi.fn();
+		const screen = await render(DateRangeInput, {
+			props: {
+				label: 'Range',
+				value: null,
+				onChange: noop,
+				[createAttachmentKey()]: attached
+			}
+		});
+
+		const trigger = screen.getByRole('button', { name: /Range:/ }).element();
+		expect(attached).toHaveBeenCalledOnce();
+		expect(attached.mock.calls[0][0]).toBe(trigger.parentElement);
+	});
+
+	it('visually hides label when isLabelHidden is true', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', isLabelHidden: true, value: null, onChange: noop }
+		});
+		await expect.element(screen.getByText('Range', { exact: true })).toBeInTheDocument();
+	});
+
+	it('sets aria-required when isRequired is true', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', isRequired: true, value: null, onChange: noop }
+		});
+		await expect
+			.element(screen.getByRole('button', { name: /Range/ }))
+			.toHaveAttribute('aria-required', 'true');
+	});
+
+	it('does not set aria-required when isRequired is false', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop }
+		});
+		await expect
+			.element(screen.getByRole('button', { name: /Range/ }))
+			.not.toHaveAttribute('aria-required');
+	});
+
+	it('disables trigger when isDisabled is true', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', isDisabled: true, value: null, onChange: noop }
+		});
+		await expect.element(screen.getByRole('button', { name: /Range/ })).toBeDisabled();
+	});
+
+	it('is not disabled by default', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop }
+		});
+		await expect.element(screen.getByRole('button', { name: /Range/ })).not.toBeDisabled();
+	});
+
+	it('trigger has aria-haspopup="dialog"', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop }
+		});
+		await expect
+			.element(screen.getByRole('button', { name: /Range/ }))
+			.toHaveAttribute('aria-haspopup', 'dialog');
+	});
+
+	it('trigger has aria-expanded=false by default', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop }
+		});
+		await expect
+			.element(screen.getByRole('button', { name: /Range/ }))
+			.toHaveAttribute('aria-expanded', 'false');
+	});
+
+	it('renders status icon for error status', async () => {
+		const screen = await render(DateRangeInput, {
+			props: {
+				label: 'Range',
+				value: null,
+				onChange: noop,
+				status: { type: 'error', message: 'Required' }
+			}
+		});
+		await expect
+			.element(screen.getByRole('button', { name: /Range/ }))
+			.toHaveAttribute('aria-invalid', 'true');
+	});
+
+	it('does not set aria-invalid for warning status', async () => {
+		const screen = await render(DateRangeInput, {
+			props: {
+				label: 'Range',
+				value: null,
+				onChange: noop,
+				status: { type: 'warning', message: 'Watch out' }
+			}
+		});
+		await expect
+			.element(screen.getByRole('button', { name: /Range/ }))
+			.not.toHaveAttribute('aria-invalid');
+	});
+
+	it('renders description', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', description: 'Pick a date range', value: null, onChange: noop }
+		});
+		await expect
+			.element(screen.getByText('Pick a date range', { exact: true }))
+			.toBeInTheDocument();
+	});
+
+	it('links status message via aria-describedby', async () => {
+		const screen = await render(DateRangeInput, {
+			props: {
+				label: 'Range',
+				value: null,
+				onChange: noop,
+				status: { type: 'error', message: 'Please select dates' }
+			}
+		});
+		const trigger = screen.getByRole('button', { name: /Range/ }).element();
+		const describedBy = trigger.getAttribute('aria-describedby')!;
+		const ids = describedBy.split(' ');
+		const found = ids.some((id) => {
+			const el = document.getElementById(id);
+			return el?.textContent?.includes('Please select dates');
+		});
+		expect(found).toBe(true);
+	});
+
+	it('calendar icon button is present', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop }
+		});
+		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeInTheDocument();
+	});
+
+	it('calendar icon button is disabled when isDisabled', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', isDisabled: true, value: null, onChange: noop }
+		});
+		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+	});
+
+	it('renders with size="lg"', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Date range', value: null, onChange: noop, size: 'lg' }
+		});
+		await expect.element(screen.getByText('Date range', { exact: true })).toBeInTheDocument();
+	});
+
+	describe('hasClear', () => {
+		it('shows clear button when hasClear is true and value exists', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: range, onChange: noop, hasClear: true }
+			});
+			await expect.element(screen.getByRole('button', { name: 'Clear Range' })).toBeInTheDocument();
+		});
+
+		it('does not show clear button when value is null', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: null, onChange: noop, hasClear: true }
+			});
+			expect(screen.getByRole('button', { name: 'Clear Range' }).query()).toBeNull();
+		});
+
+		it('does not show clear button when hasClear is false', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: range, onChange: noop, hasClear: false }
+			});
+			expect(screen.getByRole('button', { name: 'Clear Range' }).query()).toBeNull();
+		});
+
+		it('does not show clear button when disabled', async () => {
+			const screen = await render(DateRangeInput, {
+				props: {
+					label: 'Range',
+					value: range,
+					onChange: noop,
+					hasClear: true,
+					isDisabled: true
+				}
+			});
+			expect(screen.getByRole('button', { name: 'Clear Range' }).query()).toBeNull();
+		});
+
+		it('calls onChange with null when clear is clicked', async () => {
+			const onChange = vi.fn();
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: range, onChange, hasClear: true }
+			});
+
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Range' }));
+			expect(onChange).toHaveBeenCalledWith(null);
+		});
+	});
+
+	describe('presets', () => {
+		const presets: ReadonlyArray<DateRangePreset> = [
+			{
+				label: 'Last 7 days',
+				getRange: (): DateRange => ({ start: '2026-03-01', end: '2026-03-07' })
+			},
+			{
+				label: 'This month',
+				getRange: (): DateRange => ({ start: '2026-03-01', end: '2026-03-31' })
+			}
+		];
+
+		it('renders presets as a labeled group of buttons, not a listbox (forms-5)', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: null, onChange: noop, presets }
+			});
+			// The preset sidebar is a group of action buttons — not a listbox of
+			// options (which would announce a Tab-navigable listbox it isn't).
+			expect(screen.getByRole('listbox', { includeHidden: true }).query()).toBeNull();
+			expect(
+				screen.getByRole('group', { name: 'Preset date ranges', includeHidden: true }).element()
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole('button', { name: 'Last 7 days', includeHidden: true }).element()
+			).toBeInTheDocument();
+		});
+
+		it('marks the applied preset with aria-current, not aria-selected', async () => {
+			const screen = await render(DateRangeInput, {
+				props: {
+					label: 'Range',
+					value: { start: '2026-03-01', end: '2026-03-07' },
+					onChange: noop,
+					presets
+				}
+			});
+			const active = screen
+				.getByRole('button', { name: 'Last 7 days', includeHidden: true })
+				.element();
+			expect(active).toHaveAttribute('aria-current', 'true');
+			expect(active).not.toHaveAttribute('aria-selected');
+			const inactive = screen
+				.getByRole('button', { name: 'This month', includeHidden: true })
+				.element();
+			expect(inactive).not.toHaveAttribute('aria-current');
+		});
+	});
+
+	describe('disabledMessage', () => {
+		it('shows the reason tooltip on hover when disabled with a reason', async () => {
+			const screen = await render(DateRangeInput, {
+				props: {
+					label: 'Range',
+					value: null,
+					onChange: noop,
+					isDisabled: true,
+					disabledMessage: 'You need the Editor role'
+				}
+			});
+
+			const trigger = screen.getByRole('button', { name: /Range:/ }).element();
+			const container = trigger.parentElement as HTMLElement;
+			const tooltip = screen.getByRole('tooltip', { includeHidden: true }).element();
+			expect(tooltip).toHaveTextContent('You need the Editor role');
+
+			// Upstream's `fireEvent.mouseEnter`/`mouseLeave`, dispatched the same way:
+			// a real pointer moved to the wrapper's centre would be over the trigger,
+			// and `unhover` parks it at the viewport origin — both would assert where
+			// Playwright puts the mouse rather than what the wrapper listens for.
+			container.dispatchEvent(new MouseEvent('mouseenter'));
+			await vi.waitFor(() => {
+				// `:popover-open` rather than upstream's `popover-open` attribute,
+				// which its jsdom shim invents; Chromium has the real thing.
+				expect(tooltip.matches(':popover-open')).toBe(true);
+			});
+
+			container.dispatchEvent(new MouseEvent('mouseleave'));
+			await vi.waitFor(() => {
+				expect(tooltip.matches(':popover-open')).toBe(false);
+			});
+		});
+
+		it('shows the reason tooltip on keyboard focus', async () => {
+			const screen = await render(DateRangeInput, {
+				props: {
+					label: 'Range',
+					value: null,
+					onChange: noop,
+					isDisabled: true,
+					disabledMessage: 'You need the Editor role'
+				}
+			});
+
+			const tooltip = screen.getByRole('tooltip', { includeHidden: true }).element();
+			await userEvent.tab();
+			await expect.element(screen.getByRole('button', { name: /Range:/ })).toHaveFocus();
+			await vi.waitFor(() => {
+				expect(tooltip.matches(':popover-open')).toBe(true);
+			});
+		});
+
+		it('does not render a tooltip when not disabled', async () => {
+			const screen = await render(DateRangeInput, {
+				props: {
+					label: 'Range',
+					value: null,
+					onChange: noop,
+					disabledMessage: 'You need the Editor role'
+				}
+			});
+			expect(screen.getByRole('tooltip', { includeHidden: true }).query()).toBeNull();
+		});
+
+		it('does not render a tooltip when disabled without a reason', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: null, onChange: noop, isDisabled: true }
+			});
+			expect(screen.getByRole('tooltip', { includeHidden: true }).query()).toBeNull();
+		});
+
+		it('keeps the trigger focusable via aria-disabled when a reason is provided', async () => {
+			const screen = await render(DateRangeInput, {
+				props: {
+					label: 'Range',
+					value: null,
+					onChange: noop,
+					isDisabled: true,
+					disabledMessage: 'You need the Editor role'
+				}
+			});
+			const trigger = screen.getByRole('button', { name: /Range:/ });
+			// Restated: upstream's `not.toBeDisabled()` is jest-dom's, which reads the
+			// *native* disabled state only. vitest-browser's matcher of that name is
+			// Playwright's ARIA computation, which counts `aria-disabled="true"` as
+			// disabled — so it answers "true" on the very attribute the next line
+			// requires. Upstream's question is asked directly instead: no native
+			// `disabled`, which is what keeps the control in the tab order.
+			await expect.element(trigger).not.toHaveAttribute('disabled');
+			expect((trigger.element() as HTMLButtonElement).disabled).toBe(false);
+			await expect.element(trigger).toHaveAttribute('aria-disabled', 'true');
+		});
+
+		it('links the reason tooltip from the trigger via aria-describedby', async () => {
+			const screen = await render(DateRangeInput, {
+				props: {
+					label: 'Range',
+					value: null,
+					onChange: noop,
+					isDisabled: true,
+					disabledMessage: 'You need the Editor role'
+				}
+			});
+			const trigger = screen.getByRole('button', { name: /Range:/ }).element();
+			const tooltip = screen.getByRole('tooltip', { includeHidden: true }).element();
+			expect(trigger.getAttribute('aria-describedby')).toContain(tooltip.id);
+		});
+
+		it('blocks activation while focusable-disabled', async () => {
+			const screen = await render(DateRangeInput, {
+				props: {
+					label: 'Range',
+					value: null,
+					onChange: noop,
+					isDisabled: true,
+					disabledMessage: 'You need the Editor role'
+				}
+			});
+
+			const trigger = screen.getByRole('button', { name: /Range:/ }).element() as HTMLElement;
+			// Restated in how the click is delivered: Playwright's actionability check
+			// reads `aria-disabled="true"` as "not enabled" and refuses to click at
+			// all, which would assert its heuristic instead of the guard. Upstream's
+			// click event is dispatched directly; the keyboard half is real, since the
+			// control *is* focusable — that is the case's premise.
+			trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			expect(trigger).toHaveAttribute('aria-expanded', 'false');
+
+			trigger.focus();
+			await userEvent.keyboard('{Enter}');
+			expect(trigger).toHaveAttribute('aria-expanded', 'false');
+		});
+
+		it('remains natively disabled when disabled without a reason', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: null, onChange: noop, isDisabled: true }
+			});
+			const trigger = screen.getByRole('button', { name: /Range:/ });
+			await expect.element(trigger).toBeDisabled();
+			await expect.element(trigger).not.toHaveAttribute('aria-disabled');
+		});
+	});
+});
+
+describe('DateRangeInput statusVariant forwarding', () => {
+	it('defaults to attached (status renders with data-variant="attached")', async () => {
+		const screen = await render(DateRangeInput, {
+			props: {
+				label: 'Range',
+				value: null,
+				onChange: noop,
+				status: { type: 'error', message: 'Required' }
+			}
+		});
+		expect(screen.container.querySelector('.astryx-field-status')).toHaveAttribute(
+			'data-variant',
+			'attached'
+		);
+	});
+
+	it('forwards statusVariant="detached" to the underlying Field status', async () => {
+		const screen = await render(DateRangeInput, {
+			props: {
+				label: 'Range',
+				value: null,
+				onChange: noop,
+				status: { type: 'error', message: 'Required' },
+				statusVariant: 'detached'
+			}
+		});
+		expect(screen.container.querySelector('.astryx-field-status')).toHaveAttribute(
+			'data-variant',
+			'detached'
+		);
+	});
+});
+
+describe('DateRangeInput icon theme targets', () => {
+	// Resolve a glyph span (the astryx-icon element) inside a given button,
+	// independent of the theme target class.
+	const iconIn = (button: HTMLElement): HTMLElement => {
+		const icon = button.querySelector('.astryx-icon');
+		if (icon == null) {
+			throw new Error('icon not found');
+		}
+		return icon as HTMLElement;
+	};
+
+	it('renders astryx-date-range-input-clear-icon on the clear glyph', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: range, onChange: noop, hasClear: true }
+		});
+		// The stable target lands on the icon element itself (not the button), so a
+		// theme can restyle just this glyph (color, size, hover) via defineTheme —
+		// a button-level target could not reach the icon's own color/size.
+		const clearLoc = screen.getByRole('button', { name: 'Clear Range' });
+		await expect.element(clearLoc).toBeInTheDocument();
+		const icon = iconIn(clearLoc.element() as HTMLElement);
+		expect(icon).toHaveClass('astryx-date-range-input-clear-icon');
+		expect(icon).toHaveClass('astryx-icon');
+	});
+
+	it('renders astryx-date-range-input-toggle-icon on the calendar-toggle glyph, reflecting state', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop }
+		});
+		const toggleLoc = screen.getByRole('button', { name: 'Open calendar' });
+		await expect.element(toggleLoc).toBeInTheDocument();
+		const icon = iconIn(toggleLoc.element() as HTMLElement);
+		expect(icon).toHaveClass('astryx-date-range-input-toggle-icon');
+		expect(icon).toHaveClass('astryx-icon');
+		// Closed by default → data-state="collapsed".
+		expect(icon).toHaveAttribute('data-state', 'collapsed');
+	});
+
+	it('renders the default icons (secondary color, sm size) byte-identically', async () => {
+		// Pixel-identical default guard: the glyphs must carry the exact same
+		// StyleX color/size classes as a standalone secondary/sm icon. The added
+		// target class is purely additive — it changes nothing until a theme
+		// targets it.
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: range, onChange: noop, hasClear: true }
+		});
+		const clearLoc = screen.getByRole('button', { name: 'Clear Range' });
+		await expect.element(clearLoc).toBeInTheDocument();
+		const clearIcon = iconIn(clearLoc.element() as HTMLElement);
+
+		const refScreen = await render(Icon, {
+			props: { icon: 'close', size: 'sm', color: 'secondary' }
+		});
+		const refIcon = refScreen.container.querySelector('.astryx-icon') as HTMLElement;
+
+		const styleClasses = (el: HTMLElement) =>
+			el.className
+				.split(' ')
+				.filter(
+					(c) =>
+						c !== 'astryx-date-range-input-clear-icon' &&
+						c !== 'astryx-date-range-input-toggle-icon'
+				)
+				.sort();
+
+		expect(styleClasses(clearIcon)).toEqual(styleClasses(refIcon));
+	});
+
+	it('exposes the icon targets so a theme reaches icon color, size, and hover', () => {
+		// The DOM-class assertions above (targets land on the icon elements) plus
+		// this generation assertion (the theme emits same-element icon rules in
+		// `@layer astryx-theme`) together prove the seam: a same-element theme rule
+		// wins over the icon's own base-layer color/size. `generateThemeCss` is
+		// this port's counterpart to upstream's `generateThemeTestCSS` — both
+		// return the flat stylesheet string.
+		const theme = defineTheme({
+			name: 'date-range-input-icon-test',
+			components: {
+				'date-range-input-clear-icon': {
+					base: {
+						width: '12px',
+						height: '12px',
+						fontSize: '12px',
+						color: 'var(--color-icon-secondary)',
+						':hover': { color: 'var(--color-icon-primary)' }
+					}
+				},
+				'date-range-input-toggle-icon': {
+					base: { width: '14px', height: '14px', fontSize: '14px' }
+				}
+			}
+		});
+		const css = generateThemeCss(theme);
+		expect(css).toContain('.astryx-date-range-input-clear-icon');
+		expect(css).toContain('.astryx-date-range-input-toggle-icon');
+		expect(css).toContain(':hover');
+		expect(css).toContain('12px');
+		expect(css).toContain('14px');
+	});
+});

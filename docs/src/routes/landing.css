@@ -1,0 +1,179 @@
+/*
+ * Landing-page chrome, ported from the marketing half of upstream's
+ * `apps/docsite/src/app/globals.css`.
+ *
+ * Kept apart from `docs.css` because the two have different contracts. `docs.css`
+ * says nothing in the docs app may restyle a component; these rules deliberately
+ * do reach `.astryx-top-nav`, because the home page's whole nav treatment is a
+ * page-chrome effect — a transparent bar over a themed band that retints with
+ * the hero reel — and upstream implements it exactly this way, in its global
+ * stylesheet, against the same stable class surface a theme package targets.
+ * Naming the file for the page it serves keeps that exception visible rather
+ * than smuggling it into the docs contract.
+ *
+ * Declared in the `product` layer, which base.css orders last, so these sit
+ * above the theme without specificity hacks.
+ */
+
+@layer product {
+	/* Disable overscroll bounce so the home hero's position:fixed layers can't
+     show through past the top/bottom of the page. */
+	html {
+		overscroll-behavior-y: none;
+	}
+
+	/* Marketing-only custom properties for the home page. These are NOT Astryx
+     theming tokens — they're docsite-specific values that back the landing
+     page's bento feature cards + section rhythm — so they live here rather than
+     in the Astryx theme (which should only override real Astryx semantic
+     tokens). Each is a light-dark() pair so dark mode is handled by the value
+     itself, no consumer logic required. */
+	:root {
+		/* AppShell measures its header post-hydration and sets
+       --appshell-header-height on the shell element. Until that runs, every
+       consumer (the hero's fixed `top`, the nav backdrop, the docs content
+       padding) falls back to mismatched literals, so the top spacing visibly
+       pops in on load. Seed the auto-mode header height (--spacing-12 = 48px)
+       here so the very first paint already reserves the right offset; the
+       AppShell then overwrites it with the measured value (identical, no jump). */
+		--appshell-header-height: var(--spacing-12, 48px);
+
+		/* Feature card backdrop. Soft pastel blue in light mode, deep navy in dark
+       mode. Consumed by FeaturesShowcase's bento cards. Picked specifically
+       because the stock --color-background-blue is a 20%-alpha saturated wash
+       that prints too vivid against the showcase's white surface; this gives the
+       cards a soft pastel band the eye reads as a single related group. */
+		--astryx-marketing-feature-card-bg: light-dark(#e6f0ff, #1a2333);
+
+		/* Spacing between major home-page sections (the Astryx scale tops out at
+       48px, too tight for a section break). Shrinks on mobile (below). */
+		--astryx-marketing-section-gap: 100px;
+
+		/* Upstream declares these with `stylex.defineConsts` in `layout.stylex.ts`
+       so one value can be used inside `stylex.create` and as a component prop.
+       This app authors its chrome in scoped CSS rather than StyleX, so the
+       consts are custom properties instead; `lib/landing/layout.ts` carries the
+       same two numbers for the props that need a number. */
+		--docs-content-max-width: 1200px;
+		--docs-prose-max-width: 800px;
+	}
+
+	@media (max-width: 767px) {
+		:root {
+			--astryx-marketing-section-gap: var(--spacing-12, 48px);
+		}
+	}
+
+	/* AppShell sets a sticky top nav but its main content area sits at the same
+     top edge — so the first child of any page can end up covered by the nav.
+     Reserve scroll-padding-top equal to the measured header height so anchor
+     scrolling clears the nav, and add an actual padding-top so the first paint
+     already has the offset in place. */
+	#astryx-app-shell-main {
+		scroll-padding-top: var(--appshell-header-height, 64px);
+		padding-top: var(--appshell-header-height, 64px);
+	}
+
+	/* The home page is excluded from the padding rule above — its hero
+     (data-home-page) is already positioned flush under the nav by its own
+     `top: var(--appshell-header-height, 0px)` rule, and the extra padding here
+     would introduce a visible cream-coloured gap between the nav and the hero.
+     scroll-padding-top is kept for anchor-link scrolling. */
+	body:has([data-home-page]) #astryx-app-shell-main {
+		padding-top: 0;
+	}
+
+	/* Translucent top nav — frosted glass.
+	 *
+	 * The :where(:not(.astryx-app-shell .astryx-app-shell *)) guard scopes every
+	 * frost rule to the OUTERMOST AppShell only: any nav inside a *nested*
+	 * AppShell (the AppShell/TopNav example previews, which this site renders
+	 * live) matches `.astryx-app-shell .astryx-app-shell *` — it has two AppShell
+	 * ancestors — and is therefore excluded, so it keeps its own solid background
+	 * and stays seamless with its sidenav.
+	 *
+	 * The guard lives inside :where() so it adds ZERO specificity. The frost
+	 * subject stays at (0,1,0) — identical to a bare `.astryx-top-nav` — so the
+	 * home-page and nav-mode overrides below keep winning. (Putting the :not() on
+	 * the outer shell instead does NOT work: the nested nav is still an
+	 * unrestricted descendant of the outer layout.) */
+	.astryx-layout-header:where(:not(.astryx-app-shell .astryx-app-shell *)),
+	:has(> .astryx-layout-header):where(:not(.astryx-app-shell .astryx-app-shell *)) {
+		background: transparent !important;
+	}
+
+	.astryx-top-nav:where(:not(.astryx-app-shell .astryx-app-shell *)) {
+		background: color-mix(in srgb, var(--color-background-surface) 80%, transparent);
+		backdrop-filter: blur(12px);
+		transition: background 300ms ease;
+	}
+
+	/* On the home page only, make the top nav transparent so the slide-themed
+     navBackdrop band rendered behind it (inside the hero reel's themed scope)
+     shows through and retints the nav strip with the ACTIVE theme's body colour.
+     Without this the nav would paint the docsite's default body colour and never
+     follow the reel. The backdrop-filter blur above is preserved. */
+	body:has([data-home-page]) .astryx-top-nav:where(:not(.astryx-app-shell .astryx-app-shell *)) {
+		background: transparent;
+	}
+
+	/* When the home page's scroll listener detects the showcase has reached the
+     top, switch the nav back to a surface-tinted frosted bar. */
+	body[data-nav-mode='surface'] .astryx-top-nav:where(:not(.astryx-app-shell .astryx-app-shell *)) {
+		background: color-mix(in srgb, var(--color-background-surface) 80%, transparent);
+	}
+
+	/* Light ink for hero text + nav on a dark slide's backdrop. They live in the
+     Astryx context, so they can't pull the dark slide's own light tokens —
+     define one var here (inherited by both) instead of literals. */
+	body[data-hero-dark] {
+		--hero-on-dark: #e8e3da;
+	}
+
+	/* Dark hero slide: switch the transparent nav's text to that light ink.
+     Skipped in surface mode (scrolled past the hero onto the showcase). */
+	body[data-hero-dark]:not([data-nav-mode='surface'])
+		.astryx-top-nav:where(:not(.astryx-app-shell .astryx-app-shell *)) {
+		color: var(--hero-on-dark);
+	}
+
+	body[data-hero-dark]:not([data-nav-mode='surface'])
+		.astryx-top-nav:where(:not(.astryx-app-shell .astryx-app-shell *))
+		a,
+	body[data-hero-dark]:not([data-nav-mode='surface'])
+		.astryx-top-nav:where(:not(.astryx-app-shell .astryx-app-shell *))
+		button {
+		color: var(--hero-on-dark);
+	}
+
+	/* The primary "Get started" CTA paints its own accent fill, so its label must
+     track the fill's on-accent ink (a light-dark() token) rather than the hero's
+     static light nav ink — otherwise it's light-on-light and vanishes in dark
+     mode. Higher specificity than the blanket a/button rule above. */
+	body[data-hero-dark]:not([data-nav-mode='surface'])
+		.astryx-top-nav:where(:not(.astryx-app-shell .astryx-app-shell *))
+		[data-variant='primary'] {
+		color: var(--color-on-accent);
+	}
+
+	/* Hide the prev/next chevron buttons inside the home page's hero theme
+     switcher pagination so only the dot indicators show. Pagination's
+     variant="dots" ships with chevrons by default; the hero wants a minimal
+     indicator-only treatment. Scoped to [data-home-page] so other Pagination
+     instances across the site stay untouched. */
+	[data-home-page] .astryx-pagination button[aria-label='Go to previous page'],
+	[data-home-page] .astryx-pagination button[aria-label='Go to next page'] {
+		display: none;
+	}
+
+	/* On dark hero slides the dots render in Astryx, whose --color-accent is a
+     near-black ink — invisible on the dark backdrop, so the active dot and the
+     keyboard focus ring disappear. Repaint both with the light hero ink. */
+	body[data-hero-dark] [data-home-page] .astryx-pagination-dot.active {
+		background-color: var(--hero-on-dark);
+	}
+
+	body[data-hero-dark] [data-home-page] .astryx-pagination-dot:focus-visible {
+		outline-color: var(--hero-on-dark);
+	}
+}

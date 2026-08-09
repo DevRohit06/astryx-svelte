@@ -1,0 +1,68 @@
+import { parseMarkdown, type InlineNode } from '../markdown/parser.js';
+import type { OutlineItem } from './types.js';
+
+/**
+ * Extract heading items from a Markdown string, ported from Astryx's
+ * `Outline/parseOutlineFromMarkdown.ts`.
+ *
+ * Deferred with `Outline` in batch 9 — it needs the markdown parser, which
+ * landed with `Markdown` in batch 11. Pure, so this is a transcription.
+ */
+
+function inlineText(nodes: InlineNode[]): string {
+	return nodes
+		.map((node) => {
+			switch (node.type) {
+				case 'text':
+				case 'code':
+					return node.content;
+				case 'bold':
+				case 'italic':
+				case 'strikethrough':
+				case 'link':
+					return inlineText(node.children);
+				case 'image':
+					return node.alt;
+				case 'citation':
+				case 'break':
+					return '';
+			}
+		})
+		.join('');
+}
+
+function slugify(value: string): string {
+	return value
+		.trim()
+		.toLowerCase()
+		.replace(/['"]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '');
+}
+
+function uniqueSlug(baseSlug: string, counts: Map<string, number>): string {
+	const fallbackSlug = baseSlug || 'section';
+	const count = counts.get(fallbackSlug) ?? 0;
+	counts.set(fallbackSlug, count + 1);
+	return count === 0 ? fallbackSlug : `${fallbackSlug}-${count}`;
+}
+
+/**
+ * Extract heading items from a Markdown string.
+ *
+ * Uses Markdown's parser so fenced code blocks, tables, lists, and inline
+ * formatting are interpreted consistently with rendered Markdown output.
+ */
+export function parseOutlineFromMarkdown(markdown: string): OutlineItem[] {
+	const counts = new Map<string, number>();
+	return parseMarkdown(markdown)
+		.filter((block) => block.type === 'heading')
+		.map((block) => {
+			const label = inlineText(block.children).trim();
+			return {
+				id: uniqueSlug(slugify(label), counts),
+				label,
+				level: block.level
+			};
+		});
+}

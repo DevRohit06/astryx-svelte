@@ -1,0 +1,8 @@
+packages:
+  - 'packages/*'
+  # Themes nest one level deeper than the other packages, so `packages/*` misses
+  # them. Without this line @astryx-svelte/theme-neutral is not a workspace
+  # project at all — its devDependencies never install, and its parity oracle
+  # never runs under `pnpm -r`.
+  - 'packages/themes/*'
+  - 'docs'

@@ -1,0 +1,46 @@
+node_modules
+.DS_Store
+.env
+.env.*
+!.env.example
+
+# Build output
+dist
+.svelte-kit
+.vercel
+# Adapter output, anchored. A bare `build` matches a directory of that name at
+# ANY depth, and the CLI has two of them — `packages/cli/api/build/` (the page
+# composition assistant) and `packages/cli/api/theme/build/` (the theme
+# compiler), both upstream's own paths. Unanchored, git silently refuses to add
+# either one and the loss looks like nothing at all.
+/build
+/packages/*/build
+/docs/build
+
+# Transient fixture directories. Suites that need a scratch dir inside a package
+# (rather than os.tmpdir()) name it `.astryx-*`; one glob covers every suite, so
+# a new one needs no entry here and cannot be forgotten. The CLI's eslint config
+# ignores the same glob.
+.astryx-*
+
+# Upstream Astryx clone, kept locally as porting reference only.
+reference/
+
+# A second lockfile. `package.json` pins `packageManager: pnpm@10.14.0`, and the
+# repo's own docs tell contributors to use pnpm; a committed bun.lock would give
+# CI and newcomers a second, silently divergent dependency graph to resolve
+# against. The file is left on disk — only ignored.
+bun.lock
+
+# Comparison screenshots and scratch from porting sessions. Ports are verified by
+# putting our render beside upstream's, which leaves PNGs at the root; none of
+# them is a docs asset (those live under docs/src and docs/static).
+/*.png
+/.full.log
+/snip.svelte
+.playwright-mcp/
+
+# Per-machine Claude Code permission grants. `.claude/settings.json` (the shared
+# prettier hook) and `.claude/agents/` are project configuration and are tracked;
+# this one is a local allow-list and differs per contributor.
+.claude/settings.local.json

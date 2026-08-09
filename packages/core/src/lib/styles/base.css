@@ -1,0 +1,374 @@
+/**
+ * Base stylesheet — everything StyleX cannot emit itself.
+ *
+ * The token values live in `tokens.stylex.ts` and are emitted by `defineVars`
+ * during compilation. What remains here is the cascade scaffolding:
+ *
+ * 1. Layer order. Declared once, up front. Themes publish into `astryx-theme`,
+ *    so component styles must sit in a lower layer — unlayered CSS beats layered
+ *    CSS regardless of specificity and would silently defeat theming.
+ * 2. `color-scheme`, without which every `light-dark()` token is inert.
+ *
+ * StyleX cannot author `@layer` from `stylex.create` (it compiles but emits
+ * invalid CSS), which is exactly why this file exists.
+ */
+
+@layer reset, astryx-base, astryx-theme, product;
+
+:root {
+	/* Declares support for both modes so `light-dark()` resolves. */
+	color-scheme: light dark;
+}
+
+/* Pin the mode for a subtree. The Theme component sets this attribute. */
+[data-theme='light'] {
+	color-scheme: light;
+}
+
+[data-theme='dark'] {
+	color-scheme: dark;
+}
+
+/*
+ * Upstream's `reset.css`, ported. Upstream ships it as a separate opt-in
+ * import (`@astryxdesign/core/reset.css`), but its components are authored
+ * against it and misrender without it — `<dialog>` and `[popover]` both carry
+ * a UA `border: solid` (medium = 3px) that only the universal border reset
+ * below clears, because StyleX drops the `border: 'none'` shorthand those
+ * components declare. So it lives here, in the one stylesheet every consumer
+ * already loads, rather than being optional.
+ *
+ * Rules are verbatim from upstream apart from `color-scheme`, which this repo
+ * pins per-subtree above rather than on `html` only (see the `[data-theme]`
+ * block); upstream's `:where(html[data-theme=…])` variants would be redundant
+ * with it. The prose defaults (`h1`–`h6`/`p`/`small` sizing) are not part of
+ * this file upstream either — they come from the theme (see TODO, Phase 3).
+ */
+@layer reset {
+	/* =======================================================================
+	   Box Model
+	   ======================================================================= */
+
+	/*
+	 * Use border-box globally. Prevents padding/border from affecting
+	 * element dimensions — the single most impactful reset.
+	 */
+	:where(*, *::before, *::after) {
+		box-sizing: border-box;
+	}
+
+	/*
+	 * Reset borders to 0-width solid. This lets you add a border by just
+	 * setting border-width — no need to also specify border-style.
+	 */
+	:where(*, *::before, *::after) {
+		border-width: 0;
+		border-style: solid;
+		border-color: currentColor;
+	}
+
+	/* =======================================================================
+	   Document
+	   ======================================================================= */
+
+	/*
+	 * Consistent line-height, prevent text size adjustment on orientation
+	 * change in iOS, and set a readable tab size.
+	 */
+	:where(html) {
+		line-height: 1.5;
+		-webkit-text-size-adjust: 100%;
+		tab-size: 4;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	/*
+	 * Remove default body margin and set font smoothing for sharper text
+	 * rendering on macOS/iOS.
+	 */
+	:where(body) {
+		margin: 0;
+		line-height: inherit;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+	}
+
+	/* =======================================================================
+	   Typography
+	   ======================================================================= */
+
+	/*
+	 * Reset headings to inherit size and weight. Headings should be styled
+	 * intentionally — not rely on browser defaults that vary across browsers.
+	 * The `Heading` component sets its own via StyleX in `astryx-base`, which
+	 * beats this zero-specificity reset.
+	 */
+	:where(h1, h2, h3, h4, h5, h6) {
+		font-size: inherit;
+		font-weight: inherit;
+	}
+
+	/*
+	 * Remove default margins on all block-level text elements. Without this, a
+	 * `<Heading>` inside overlay content (Popover, HoverCard, …) keeps the
+	 * browser's default `<h_n>` margin, which shows as stray gaps.
+	 */
+	:where(h1, h2, h3, h4, h5, h6, p, blockquote, figure, pre, dl, dd) {
+		margin: 0;
+	}
+
+	/*
+	 * Links inherit color and text-decoration. Style them intentionally
+	 * rather than relying on browser-default blue/purple.
+	 */
+	:where(a) {
+		color: inherit;
+		text-decoration: inherit;
+	}
+
+	/*
+	 * Correct font-weight rendering in Chrome and Safari.
+	 */
+	:where(b, strong) {
+		font-weight: bolder;
+	}
+
+	/*
+	 * Use the configured monospace font stack and fix the odd em sizing
+	 * that browsers apply to code elements.
+	 */
+	:where(code, kbd, samp, pre) {
+		font-family:
+			ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+			monospace;
+		font-size: 1em;
+	}
+
+	/*
+	 * Correct font-size for small elements.
+	 */
+	:where(small) {
+		font-size: 80%;
+	}
+
+	/*
+	 * Prevent sub and sup from affecting line-height.
+	 */
+	:where(sub, sup) {
+		font-size: 75%;
+		line-height: 0;
+		position: relative;
+		vertical-align: baseline;
+	}
+
+	:where(sub) {
+		bottom: -0.25em;
+	}
+
+	:where(sup) {
+		top: -0.5em;
+	}
+
+	/* =======================================================================
+	   Lists
+	   ======================================================================= */
+
+	/*
+	 * Remove default list styles, margin, and padding. Lists used for
+	 * navigation or layout shouldn't carry prose styling by default.
+	 * Use explicit styles for prose lists.
+	 */
+	:where(ol, ul, menu) {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+
+	/* =======================================================================
+	   Media
+	   ======================================================================= */
+
+	/*
+	 * Make replaced elements block-level. Eliminates the "mystery gap"
+	 * below inline images and aligns with how these elements are
+	 * actually used in modern layouts.
+	 */
+	:where(img, svg, video, canvas, audio, iframe, embed, object) {
+		display: block;
+		vertical-align: middle;
+	}
+
+	/*
+	 * Constrain images and video to their container. Responsive by default.
+	 */
+	:where(img, video) {
+		max-width: 100%;
+		height: auto;
+	}
+
+	/* =======================================================================
+	   AspectRatio Fit Baseline
+	   ======================================================================= */
+
+	/*
+	 * Marks the child's direct parent with `data-astryx-aspect-ratio-override`,
+	 * carrying the fit value, and these direct-child rules size the child — so
+	 * consumers don't hand-write width/height/object-fit on every media child.
+	 * The marker sits on the parent, so the rules don't depend on AspectRatio's
+	 * internal structure. `fit="center"` needs no rule here — the component
+	 * centres from its wrapper.
+	 */
+	:where([data-astryx-aspect-ratio-override='cover'], [data-astryx-aspect-ratio-override='contain'])
+		> :where(*) {
+		width: 100%;
+		height: 100%;
+	}
+
+	:where([data-astryx-aspect-ratio-override='cover']) > :where(img, video) {
+		object-fit: cover;
+	}
+
+	:where([data-astryx-aspect-ratio-override='contain']) > :where(img, video) {
+		object-fit: contain;
+	}
+
+	/* =======================================================================
+	   Forms
+	   ======================================================================= */
+
+	/*
+	 * Form elements should inherit font styles from their parent rather
+	 * than using the browser's default font stack.
+	 */
+	:where(button, input, optgroup, select, textarea) {
+		font: inherit;
+		color: inherit;
+		margin: 0;
+		padding: 0;
+	}
+
+	/*
+	 * Remove default button styling. Buttons should be styled intentionally.
+	 */
+	:where(button, [type='button'], [type='reset'], [type='submit']) {
+		-webkit-appearance: button;
+		appearance: button;
+		background-color: transparent;
+		background-image: none;
+	}
+
+	/*
+	 * Pointer cursor for interactive elements.
+	 */
+	:where(button, [role='button']) {
+		cursor: pointer;
+	}
+
+	/*
+	 * Default cursor for disabled elements.
+	 */
+	:where(:disabled) {
+		cursor: default;
+	}
+
+	/*
+	 * Only allow vertical resizing of textareas to prevent layout breakage.
+	 */
+	:where(textarea) {
+		resize: vertical;
+	}
+
+	/*
+	 * Normalize placeholder opacity (Firefox renders at reduced opacity)
+	 * and set a sensible default color using the Astryx text-placeholder token.
+	 */
+	:where(input::placeholder, textarea::placeholder) {
+		opacity: 1;
+		color: var(--color-text-secondary, #9ca3af);
+	}
+
+	/*
+	 * Remove the inner padding and cancel buttons in search inputs
+	 * for Chrome and Safari.
+	 */
+	:where(
+		[type='search']::-webkit-search-decoration,
+		[type='search']::-webkit-search-cancel-button
+	) {
+		-webkit-appearance: none;
+	}
+
+	/*
+	 * Remove default fieldset styles.
+	 */
+	:where(fieldset) {
+		margin: 0;
+		padding: 0;
+	}
+
+	:where(legend) {
+		padding: 0;
+	}
+
+	/* =======================================================================
+	   Tables
+	   ======================================================================= */
+
+	/*
+	 * Collapse table borders and fix text-indent/border-color inheritance.
+	 */
+	:where(table) {
+		text-indent: 0;
+		border-color: inherit;
+		border-collapse: collapse;
+	}
+
+	/* =======================================================================
+	   Misc
+	   ======================================================================= */
+
+	/*
+	 * Simplify hr to a single border-top line.
+	 */
+	:where(hr) {
+		height: 0;
+		color: inherit;
+		border-top-width: 1px;
+	}
+
+	/*
+	 * Correct display for summary elements.
+	 */
+	:where(summary) {
+		display: list-item;
+	}
+
+	/*
+	 * Reset dialog padding and outline.
+	 */
+	:where(dialog) {
+		padding: 0;
+		outline: none;
+	}
+
+	/*
+	 * Ensure hidden elements are actually hidden.
+	 */
+	:where([hidden]) {
+		display: none;
+	}
+
+	/*
+	 * The `color-scheme` flip for `[data-astryx-media]`, so a `<MediaTheme>`
+	 * resolves the `light-dark()` base tokens for its surface even with no theme
+	 * present. The token overrides that go with it (text, icon, accent) are
+	 * theme-level and come from `generateOnMediaCss`.
+	 */
+	:where([data-astryx-media='dark']) {
+		color-scheme: dark;
+	}
+
+	:where([data-astryx-media='light']) {
+		color-scheme: light;
+	}
+}

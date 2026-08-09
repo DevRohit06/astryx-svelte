@@ -1,0 +1,55 @@
+{
+	"name": "@astryx-svelte/theme-liquid-glass",
+	"version": "0.3.0",
+	"description": "Liquid Glass theme for astryx-svelte — macOS translucent materials, capsule controls and the Apple system palette. Has no upstream Astryx counterpart.",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/devrohit06/astryx-svelte.git",
+		"directory": "packages/themes/liquid-glass"
+	},
+	"bugs": {
+		"url": "https://github.com/devrohit06/astryx-svelte/issues"
+	},
+	"homepage": "https://github.com/devrohit06/astryx-svelte#readme",
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"svelte": "./dist/index.js",
+			"import": "./dist/index.js"
+		},
+		"./tokens": {
+			"types": "./dist/tokens.d.ts",
+			"svelte": "./dist/tokens.js",
+			"import": "./dist/tokens.js"
+		},
+		"./theme.css": "./dist/theme.css"
+	},
+	"files": [
+		"dist",
+		"src"
+	],
+	"scripts": {
+		"build": "node --experimental-strip-types scripts/build-theme.mjs",
+		"check": "tsc --noEmit -p tsconfig.json",
+		"lint": "prettier --check .",
+		"format": "prettier --write .",
+		"test:self": "node --experimental-strip-types scripts/check-theme.mjs",
+		"test:icons": "node scripts/check-icons.mjs",
+		"test": "npm run build && npm run test:self && npm run test:icons"
+	},
+	"dependencies": {
+		"@lucide/svelte": "^1.25.0"
+	},
+	"peerDependencies": {
+		"svelte": "^5.0.0"
+	},
+	"devDependencies": {
+		"@astryx-svelte/core": "workspace:*",
+		"prettier": "^3.8.3",
+		"prettier-plugin-svelte": "^4.1.0",
+		"svelte": "^5.56.1",
+		"typescript": "^6.0.3"
+	}
+}

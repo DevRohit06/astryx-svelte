@@ -1,0 +1,13 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Miscellaneous
+/static/
+
+# Vendored verbatim from @astryxdesign/core's `locales/`. Reformatting would be
+# drift from the upstream bytes, which is the whole point of copying it.
+/src/lib/locales/

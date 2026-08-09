@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "generatedBy": "scripts/generate-cli-themes.mjs",
+  "themes": [
+    {
+      "slug": "butter",
+      "displayName": "Butter",
+      "description": "Butter theme for astryx-svelte — warm, creamy yellows with a friendly blue accent.",
+      "maintained": false,
+      "entry": "butter-theme.ts",
+      "exportName": "butterTheme",
+      "files": [
+        "butter-theme.ts",
+        "icons.svelte"
+      ]
+    },
+    {
+      "slug": "chocolate",
+      "displayName": "Chocolate",
+      "description": "Chocolate theme for astryx-svelte — rich, cozy browns with Fraunces headings.",
+      "maintained": false,
+      "entry": "chocolate-theme.ts",
+      "exportName": "chocolateTheme",
+      "files": [
+        "chocolate-theme.ts",
+        "icons.svelte"
+      ]
+    },
+    {
+      "slug": "gothic",
+      "displayName": "Gothic",
+      "description": "Gothic theme for astryx-svelte — deep blue-grays and a signature display serif.",
+      "maintained": false,
+      "entry": "gothic-theme.ts",
+      "exportName": "gothicTheme",
+      "files": [
+        "gothic-theme.ts",
+        "icons.svelte"
+      ]
+    },
+    {
+      "slug": "liquid-glass",
+      "displayName": "Liquid Glass",
+      "description": "Liquid Glass theme for astryx-svelte — macOS translucent materials, capsule controls and the Apple system palette. Has no upstream Astryx counterpart.",
+      "maintained": false,
+      "entry": "liquid-glass-theme.ts",
+      "exportName": "liquidGlassTheme",
+      "files": [
+        "liquid-glass-theme.ts",
+        "icons.svelte"
+      ]
+    },
+    {
+      "slug": "matcha",
+      "displayName": "Matcha",
+      "description": "Matcha theme for astryx-svelte — earthy greens with a calm, organic feel.",
+      "maintained": false,
+      "entry": "matcha-theme.ts",
+      "exportName": "matchaTheme",
+      "files": [
+        "matcha-theme.ts",
+        "icons.svelte"
+      ]
+    },
+    {
+      "slug": "neutral",
+      "displayName": "Neutral",
+      "description": "Neutral theme for astryx-svelte — the default Astryx look.",
+      "maintained": true,
+      "entry": "neutral-theme.ts",
+      "exportName": "neutralTheme",
+      "files": [
+        "neutral-theme.ts",
+        "icons.svelte"
+      ]
+    },
+    {
+      "slug": "stone",
+      "displayName": "Stone",
+      "description": "Stone theme for astryx-svelte — warm stone and slate, earthy and understated.",
+      "maintained": false,
+      "entry": "stone-theme.ts",
+      "exportName": "stoneTheme",
+      "files": [
+        "stone-theme.ts",
+        "icons.svelte"
+      ]
+    },
+    {
+      "slug": "y2k",
+      "displayName": "Y2K",
+      "description": "Y2K theme for astryx-svelte — hot pinks, lime greens, and Poppins.",
+      "maintained": false,
+      "entry": "y2k-theme.ts",
+      "exportName": "y2kTheme",
+      "files": [
+        "y2k-theme.ts",
+        "icons.svelte"
+      ]
+    }
+  ]
+}

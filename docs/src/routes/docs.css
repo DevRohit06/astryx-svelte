@@ -1,0 +1,31 @@
+/*
+ * Docs-app chrome only. Component styling belongs to @astryx-svelte/core and
+ * the theme; nothing here may restyle a component.
+ *
+ * Declared in the `product` layer, which base.css orders last, so these rules
+ * sit above the theme without needing specificity hacks.
+ */
+
+@layer product {
+	:root {
+		/*
+		 * This port's brand colour — Svelte orange, matching the favicon, which is
+		 * the Svelte logo. Deliberately *not* `--color-accent`: that token belongs
+		 * to the theme, is byte-matched against upstream by the theme oracle, and
+		 * every documented component renders from it. Recolouring the accent would
+		 * make every example preview stop showing Astryx's own colours, which is
+		 * the one thing a fidelity-focused docs site must not do. So the brand
+		 * colour is a docs-chrome token and reaches only the chrome.
+		 */
+		--color-brand: #ff3e00;
+	}
+
+	html {
+		-webkit-text-size-adjust: 100%;
+	}
+
+	body {
+		margin: 0;
+		font-family: var(--font-family-base, system-ui, sans-serif);
+	}
+}

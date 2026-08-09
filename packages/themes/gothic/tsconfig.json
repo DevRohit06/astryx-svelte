@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["ES2022"],
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		// The theme source is pure data — no ambient globals, and nothing from
+		// Node. Empty rather than omitted so a stray @types package in the store
+		// can't drift into scope.
+		"types": [],
+		"strict": true,
+		"noEmit": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true
+	},
+	// The theme is authored against the compiler's own types, which it reaches
+	// through core's built `dist/`. So `check` here depends on core having been
+	// built — pnpm's topological ordering guarantees that, since this package
+	// devDepends on `@astryx-svelte/core`.
+	"include": ["src/**/*.ts"]
+}

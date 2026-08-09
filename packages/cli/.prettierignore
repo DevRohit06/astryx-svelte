@@ -1,0 +1,17 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Scaffold sources are copied into user projects verbatim; reformatting them
+# changes what a user receives. Named per subtree rather than as a bare
+# `/assets/`: `assets/codemods/` is the upgrade runner — real source on the
+# import graph, not content — and a blanket ignore quietly took it out of the
+# formatter the moment it landed.
+/assets/docs/
+/assets/templates/
+
+# Transient test fixture dirs — see the note in .gitignore.
+.astryx-*/

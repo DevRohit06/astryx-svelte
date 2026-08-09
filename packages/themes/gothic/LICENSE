@@ -1,0 +1,41 @@
+MIT License
+
+Copyright (c) 2026 Meta Platforms, Inc.
+Copyright (c) 2026 Rohit Kushwaha
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Attribution
+
+astryx-svelte is an unofficial, community-led Svelte port of Astryx
+(https://astryx.atmeta.com/), Meta's open-source design system, which is
+released under the MIT License. Meta's copyright notice is reproduced above
+verbatim, as that license requires.
+
+Material derived from Astryx includes the component APIs and prop contracts,
+the design tokens and their values, the documentation prose, and the test
+suites, which are ported case for case. The Svelte 5 implementation, the
+StyleX-to-Svelte adapter layer, and the CLI's codemod runner are this project's
+own work.
+
+This project is not affiliated with, endorsed by, or sponsored by Meta. It
+ships none of Meta's trademarks or logos; "Astryx" is used descriptively, to
+name the design system this is a port of.

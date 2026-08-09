@@ -1,0 +1,17 @@
+node_modules/
+
+# Transient fixture dirs written by the suites — `module-loader`, `project`,
+# `integrations`, `integration-warnings`, `config-cache`, `validate-integration`
+# and their successors. They are created and removed per test run, and ignored
+# (as upstream ignores its own `.codemod-tsc-*/`) so a crashed run cannot leave
+# a stray `.mjs` behind for `prettier --check` and `eslint` to trip over.
+#
+# One glob rather than a growing list: a new prefix arrives with roughly every
+# slice, and the enumerated form had already missed two by the time it was three
+# entries long. Nothing real in this package starts with `.astryx-`.
+#
+# They are repo-local rather than under the OS temp dir purely for parity with
+# upstream, whose comment explains it as Vite refusing a dynamic import from
+# /tmp. That reason does **not** hold here — an absolute `file://` import from
+# the OS temp dir works fine in this setup — so do not repeat it as fact.
+.astryx-*/

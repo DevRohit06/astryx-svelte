@@ -1,0 +1,84 @@
+{
+	// The CLI is JavaScript with JSDoc types, exactly as upstream's is — the
+	// published surface is `.mjs` plus hand-written `.d.ts` declarations, so
+	// there is no emit step and no build artifact. `checkJs` is what makes the
+	// JSDoc load-bearing: it is the only thing type-checking the manifest
+	// builder, the JSON envelopes, and every `@param` in `api/`.
+	//
+	// `moduleResolution: bundler` mirrors upstream's root tsconfig, and is not
+	// incidental: the JSDoc type references are extensionless
+	// (`import('./manifest').CLIManifest`) because they point at a sibling
+	// `.d.ts` with no runtime file behind it. Under `nodenext` every one of them
+	// is an error demanding a `.mjs` extension that would not resolve. Runtime
+	// imports keep their real `.mjs` extensions regardless, so Node is unaffected
+	// — nothing here is ever emitted or bundled.
+	//
+	// Upstream splits this across four tsconfigs (`tsconfig.strict.json`,
+	// `tsconfig.json-api.json`, `tsconfig.authoring-contract.json`,
+	// `tsconfig.template-docs.json`) because it type-checks different subsets at
+	// different strictness. This port starts strict everywhere and has no legacy
+	// subset to carve out, so one config covers it.
+	"compilerOptions": {
+		"target": "es2023",
+		"lib": ["es2023"],
+		"module": "esnext",
+		"moduleResolution": "bundler",
+		"types": ["node"],
+
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true,
+
+		"strict": true,
+		"skipLibCheck": true,
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true
+	},
+	// `authoring/**` is not optional here, and not merely for coverage. Three
+	// parsers carry a compile-time drift-lock — a JSDoc `@typedef` of
+	// `Expect<Equal<…>>` asserting the sealed zod schema still infers exactly the
+	// public type. Those only fire under `checkJs`, so leaving the directory out
+	// of `include` compiles them as dead comments and the schema-to-type lock
+	// silently does nothing. Upstream isolates this in a fourth tsconfig
+	// (`tsconfig.authoring-contract.json`); this config is already strict
+	// everywhere, so one glob covers it.
+	"include": [
+		"api/**/*",
+		"authoring/**/*",
+		"clients/**/*",
+		"foundation/**/*",
+		"bin/**/*",
+		"scripts/**/*"
+	],
+	// Suites and the in-process harness are excluded, as upstream's
+	// `tsconfig.strict.json` excludes `**/*.test.mjs`. They monkeypatch
+	// `process.exit`/`console`/`stdout` and read Commander internals off untyped
+	// objects; type-checking them would mean either casts on nearly every line or
+	// a second, looser config. eslint still covers them.
+	//
+	// `**/*.d.mts` is excluded for a reason that is nearly invisible and that
+	// silently disarmed every drift-lock in `authoring/` the day they landed.
+	// TypeScript groups extensions as `[.mts, .d.mts, .mjs]` and, for a
+	// *wildcard-matched* path, keeps only the highest-priority extension sharing
+	// a basename. So `authoring/config/parse.d.mts` **evicts**
+	// `authoring/config/parse.mjs` from the program entirely — the file is not
+	// checked, its `Expect<Equal<…>>` typedef is a dead comment, and mutating the
+	// schema it guards produces no error at all. Adding `authoring/**` to
+	// `include` (see above) was necessary and not sufficient; `--listFiles`
+	// showed the three `.d.mts` present and not one `parse.mjs`.
+	//
+	// Excluding the declaration files restores all of them. They cannot simply be
+	// deleted — `authoring/index.d.ts` re-exports value bindings from `./*.mjs`
+	// and a downstream build without `allowJs` needs them to resolve — and
+	// `exclude` is preferred over upstream's include-shape
+	// (`authoring/**/*.mjs` + `authoring/**/*.ts`, which never matches `.d.mts`)
+	// because it also covers `authoring/doctypes/*/parse.d.mts` and any future
+	// `api/**/*.d.mts` without a second edit.
+	//
+	// Verified by mutation, not by reading: with this line, changing
+	// `integrations: z.array(z.string())` to `z.array(z.number())` fails
+	// `authoring/config/parse.mjs` with TS2344 "Type 'false' does not satisfy the
+	// constraint 'true'". Without it, the same mutation typechecks clean.
+	"exclude": ["node_modules", "**/*.test.mjs", "**/*.d.mts", "test-utils"]
+}

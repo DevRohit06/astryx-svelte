@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="text-scale" content="scale" />
+
+		<!--
+			**The authoritative cascade layer order, and it has to be declared here.**
+
+			Upstream's docsite consumes `@astryxdesign/core/astryx.css` — core's StyleX
+			*pre-compiled*, and every atomic class in it sits inside one `@layer
+			astryx-base` block. Theme packages then publish into `astryx-theme`, after
+			it, so a theme's `components:` overrides beat the component's own styles;
+			the docsite's product rules are unlayered, so they beat both.
+
+			This port has no pre-compiled stylesheet to consume: `dist/` ships
+			`.stylex.js` uncompiled and `vite.config.ts` runs the compiler here (see
+			CLAUDE.md). `@stylexjs/unplugin` with `useCSSLayers: true` emits its own
+			`@layer priority1 … priority9`, and — because layer order is order of first
+			appearance and StyleX's stylesheet is injected *last* — those nine landed
+			after `astryx-theme` and `product`, inverting upstream's cascade. Measured
+			consequences, all silent: the Astryx theme's `top-nav-item.selected`
+			override could not remove the selected pill, its `pagination-dot` ring/pill
+			treatment never reached the hero dots, and `docs.css`/`landing.css`'s
+			`#astryx-app-shell-main { padding-top }` lost to `padding__paddingStyles.0`
+			— which is the whole 48px the docs pages were missing at the top.
+
+			Declaring the full order *before* anything else loads fixes it: `product`
+			and `astryx-theme` are named after the priority layers, so they win, and
+			core's compiled StyleX sits exactly where upstream's `astryx-base` puts it.
+			`base.css`'s own `@layer reset, astryx-base, astryx-theme, product;` then
+			re-states an order that already exists and changes nothing.
+
+			**Nine priority layers are emitted today; sixteen are named for headroom.**
+			The count is `Math.floor(priority / 1000)` bucket occupancy, so a new bucket
+			would add `priority10`. Unnamed layers append at the *end* — after `product`
+			— which is the failure this comment exists to prevent, so check it with
+			`grep -o '@layer priority[0-9]*' docs/.svelte-kit/output/client/_app/immutable/assets/*.css | sort -u`
+			after any StyleX upgrade. Naming a layer that is never used costs nothing.
+		-->
+		<style>
+			@layer reset, astryx-base, priority1, priority2, priority3, priority4, priority5,
+				priority6, priority7, priority8, priority9, priority10, priority11, priority12,
+				priority13, priority14, priority15, priority16, astryx-theme, product;
+
+			/*
+				Half of the no-flash pair below. `base.css` maps `<html data-theme>` to
+				`color-scheme`, but `color-scheme` is *overridden*, not inherited past, a
+				`<Theme>` wrapper — and the server always renders that wrapper in its
+				`system` state (`color-scheme: light dark`), because SSR cannot read
+				`localStorage`. So stamping `<html>` alone would repaint the browser
+				chrome and leave every `light-dark()` token following the OS.
+
+				`:not([data-theme])` is what makes this self-retiring: the root wrapper
+				gains `data-theme` the moment `Theme`'s pre-effect runs, and a *nested*
+				`<Theme mode="light">` carries its own, so both stop matching. Only a
+				scope still in the unresolved `system` state is forced, which is exactly
+				the pre-hydration window. Unlayered on purpose — it has to beat the
+				StyleX class that sets `light dark`.
+			*/
+			html[data-theme='dark'] [data-astryx-theme]:not([data-theme]) {
+				color-scheme: dark;
+			}
+
+			html[data-theme='light'] [data-astryx-theme]:not([data-theme]) {
+				color-scheme: light;
+			}
+		</style>
+
+		<!--
+			**The other half: stamp the stored colour mode before the first paint.**
+
+			`Theme`'s own docstring asks for this — "For SSR, set `data-theme` on
+			`<html>` in the root layout so there is no flash of the wrong mode before
+			hydration" — and this app never did, so a reader whose stored preference
+			disagrees with their OS saw the OS mode paint first and swap at hydration.
+			Measured on `/docs/tokens` with `prefers-color-scheme: light` and a stored
+			`dark`: `data-theme` null, `color-scheme` `light dark` and the page
+			background `rgb(248, 244, 237)` — the light cream — for the whole
+			pre-hydration window, then dark.
+
+			Upstream has no such flash because it has no such preference: its
+			`providers.tsx` says a fully SSR-correct manual toggle needs a server-read
+			cookie and leaves persistence out, so its mode always starts at the OS
+			value and never contradicts it. This port *added* `localStorage`
+			persistence deliberately (see `color-mode.svelte.ts`), and a blocking
+			stamp is that decision's other half — not an embellishment on upstream's.
+			A cookie could not replace it here either: the docs pages are prerendered,
+			so no request-time value can reach their HTML.
+
+			Deliberately minimal, because it blocks parsing: no `data-astryx-theme`
+			(the root `Theme` mirrors that for top-layer elements, which cannot exist
+			before hydration anyway), and nothing written when the reader has no stored
+			preference — `system` is then already correct and there is nothing to fix.
+
+			`data-color-mode-key` publishes the key this script read so
+			`color-mode.svelte.ts` can fail loudly in dev if the two ever drift; the
+			literal has to be duplicated here because a blocking inline script cannot
+			import the module that owns it.
+		-->
+		<script>
+			(function () {
+				var key = 'astryx-svelte:color-mode';
+				document.documentElement.setAttribute('data-color-mode-key', key);
+				try {
+					var stored = localStorage.getItem(key);
+					if (stored === 'light' || stored === 'dark') {
+						document.documentElement.setAttribute('data-theme', stored);
+					}
+				} catch (error) {
+					/* Storage can be blocked; `system` is a correct fallback. */
+				}
+			})();
+		</script>
+
+		<!--
+			The typefaces the installed themes name. Without them the design system
+			renders in the wrong face — Figtree alone covers the Astryx and neutral
+			themes, and the hero reel's other four slides each bring their own.
+
+			Loaded from Google Fonts by <link>, which is exactly what upstream's
+			docsite does (its `layout.tsx` links one combined stylesheet for the same
+			reason), transcribed from that URL with each family's axis spec kept as
+			upstream writes it. `display=swap` keeps text visible while it loads.
+
+			Upstream requests fifteen families; this is fourteen. Albert Sans,
+			Fraunces and Montserrat arrived with the chocolate and stone packages,
+			exactly as this note said they would. The one still left out is PT Serif,
+			which belongs only to the playground's theme editor — unported, so
+			requesting it would download a face nothing on the site can select.
+
+			Per theme:
+			  Figtree              astryx + neutral (body/heading/display)
+			  DM Sans, Playwrite US Trad                            matcha
+			  Outfit, Sarina                                        butter
+			  Fustat, Manufacturing Consent, UnifrakturMaguntia     gothic
+			  Poppins, Crimson Text                                 y2k
+			  Albert Sans, Fraunces                                 chocolate
+			  Montserrat                                            stone
+			  JetBrains Mono       the code face in all of them, and Figtree is
+			                       stone's body/heading face as well as neutral's
+
+			Self-hosting would drop the third-party request and work offline — these
+			are OFL, so redistribution is allowed — but it means binary font files in
+			the repo, and it is not what upstream does. Recorded in TODO.md rather
+			than decided here.
+		-->
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+		<link
+			rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Albert+Sans:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400;1,600;1,700&family=DM+Sans:wght@400;500;600;700&family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Fustat:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Manufacturing+Consent&family=Montserrat:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&family=Playwrite+US+Trad:wght@100..400&family=Poppins:wght@400;500;600;700&family=Sarina&family=UnifrakturMaguntia&display=swap"
+		/>
+
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

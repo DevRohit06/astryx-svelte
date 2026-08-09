@@ -1,0 +1,647 @@
+import type { Component, Snippet } from 'svelte';
+import type { HTMLAttributes, HTMLTdAttributes, HTMLThAttributes } from 'svelte/elements';
+import type { StyleArg } from '../../internal/sx.js';
+import type { BaseProps } from '../../base-props.js';
+import type { TableFilterFieldRef } from './plugins/filtering/use-table-filtering.js';
+
+/**
+ * Ported from Astryx's `Table/types.ts`.
+ *
+ * Three translations recur through this file and are stated once here rather
+ * than at every member:
+ *
+ * - **`ReactNode` → `Snippet`.** A render-prop that produces markup becomes a
+ *   snippet; a slot whose every upstream call site passes a string is
+ *   `string | Snippet`, the port's settled leaf-slot shape.
+ * - **`Ref<T>` → `Attachment<T>`.** Plugins attach to a DOM node by putting an
+ *   attachment in the `htmlProps` bag under a `createAttachmentKey()` symbol —
+ *   Svelte resolves attachments out of a spread object, so the bag stays a
+ *   plain props spread exactly as upstream's does. That is why
+ *   `ScrollWrapperRenderProps.htmlProps` and `BodyRowRenderProps` carry no
+ *   separate `ref` member: there is nothing to thread it through.
+ * - **`ComponentType<P>` → `Component<P>`.** `scrollWrapper` is a component
+ *   *constructor* on both sides, not an element.
+ *
+ * `TableFilterFieldRef` was declared here while the filtering plugin was
+ * deferred; it now lives in `plugins/filtering/use-table-filtering.ts`, where
+ * upstream declares it, and is imported back for `TableColumn.filter` exactly as
+ * upstream's `Table/types.ts` imports it. Type-only on both sides, so the
+ * import cycle it forms is erased.
+ */
+
+// =============================================================================
+// Column Width
+// =============================================================================
+
+/**
+ * A proportional (fr-like) column width.
+ * Use the `proportional()` helper to create.
+ */
+export interface ProportionalWidth {
+	type: 'proportional';
+	value: number;
+	/** Minimum width in pixels. Prevents the column from shrinking below this size. */
+	minWidth?: number;
+}
+
+/**
+ * A fixed pixel column width.
+ * Use the `pixel()` helper to create.
+ */
+export interface PixelWidth {
+	type: 'pixel';
+	value: number;
+}
+
+/** Column width — either proportional or fixed pixel */
+export type ColumnWidth = ProportionalWidth | PixelWidth;
+
+// =============================================================================
+// Sortable Column Config
+// =============================================================================
+
+/**
+ * Sortable column configuration.
+ * Added to TableColumn<T> via the `sortable` field.
+ */
+export interface TableSortableColumnConfig {
+	/**
+	 * The sort key for this column. Must match a key used in TableSortState.
+	 * Allows decoupling column identity from sort identity (e.g., a "Full Name"
+	 * column might sort by `'lastName'`).
+	 *
+	 * @default column.key — if omitted, uses the column's `key` property
+	 */
+	sortKey?: string;
+}
+
+// =============================================================================
+// Column Alignment
+// =============================================================================
+
+/**
+ * Horizontal text alignment for a table column.
+ * Applied to both the `<th>` and `<td>` elements.
+ *
+ * @default 'start'
+ */
+export type TableColumnAlign = 'start' | 'center' | 'end';
+
+// =============================================================================
+// Row Vertical Alignment
+// =============================================================================
+
+/**
+ * Vertical alignment for table body row cells.
+ * Controls `vertical-align` on `<td>` elements.
+ *
+ * @default 'middle'
+ */
+export type TableVerticalAlign = 'middle' | 'top' | 'bottom';
+
+// =============================================================================
+// Column Definition
+// =============================================================================
+
+/**
+ * Column definition for data-driven table rendering.
+ *
+ * @template T - The row data type
+ */
+export interface TableColumn<T extends Record<string, unknown>> {
+	/** Unique key identifying this column. Used as the `{#each}` key and to access data. */
+	key: string;
+	/** Header text displayed in `<th>`. Defaults to capitalized `key`. */
+	header?: string | Snippet;
+	/**
+	 * Column width. Use `proportional()` for flexible columns or `pixel()` for fixed.
+	 *
+	 * - `proportional(1)` — shares space equally with other proportional columns.
+	 *   Enforces a 120px minimum width to prevent squishing on narrow viewports.
+	 * - `proportional(2)` — gets twice the space of `proportional(1)`.
+	 * - `pixel(200)` — fixed 200px width.
+	 * - Omitted — treated as `proportional(1)` for distribution, but with **no**
+	 *   minimum width. Prefer explicit `proportional(1)` for text-heavy columns
+	 *   so they don't collapse on mobile.
+	 *
+	 * @example
+	 * ```ts
+	 * { key: 'name', header: 'Name', width: proportional(1) }
+	 * { key: 'bio', header: 'Bio', width: proportional(2) }
+	 * { key: 'age', header: 'Age', width: pixel(80) }
+	 * ```
+	 */
+	width?: ColumnWidth;
+	/**
+	 * Horizontal text alignment for this column.
+	 * Applied to both the header `<th>` and body `<td>` cells.
+	 *
+	 * @default 'start'
+	 *
+	 * @example
+	 * ```ts
+	 * // Right-align a numeric column
+	 * { key: 'amount', header: 'Amount', align: 'end' }
+	 *
+	 * // Center-align a status column
+	 * { key: 'status', header: 'Status', align: 'center' }
+	 * ```
+	 */
+	align?: TableColumnAlign;
+	/**
+	 * Whether this column can be resized by dragging its header border.
+	 * Defaults to `true`. Set to `false` to lock the column width.
+	 *
+	 * @example
+	 * ```ts
+	 * // Non-resizable fixed column
+	 * { key: 'actions', header: '', width: pixel(48), resizable: false }
+	 * ```
+	 */
+	resizable?: boolean;
+	/**
+	 * Sortable configuration for this column.
+	 * Set to `true` for default behavior (sortKey = column.key),
+	 * or provide an object with a custom sortKey.
+	 * Omit or set to `undefined`/`false` to make the column non-sortable.
+	 *
+	 * @example
+	 * ```ts
+	 * // Simple: sort key matches column key
+	 * { key: 'name', header: 'Name', sortable: true }
+	 *
+	 * // Custom sort key
+	 * { key: 'fullName', header: 'Full Name', sortable: { sortKey: 'lastName' } }
+	 * ```
+	 */
+	sortable?: boolean | TableSortableColumnConfig;
+	/**
+	 * Filter configuration for this column.
+	 *
+	 * References a field in the shared `PowerSearchConfig` passed to
+	 * `useTableFiltering`. The plugin resolves the operator's value
+	 * type and renders the matching control.
+	 *
+	 * Accepts:
+	 * - **Field key** — `'status'` — uses the field's `defaultOperator`
+	 * - **Field ref** — `{ field: 'status', operator: 'is_not' }` — explicit operator
+	 *
+	 * @example
+	 * ```ts
+	 * // Field key (uses defaultOperator)
+	 * { key: 'status', header: 'Status', filter: 'status' }
+	 *
+	 * // Field + explicit operator
+	 * { key: 'status', header: 'Status', filter: { field: 'status', operator: 'is_not' } }
+	 * ```
+	 */
+	filter?: TableFilterFieldRef | string;
+	/**
+	 * Custom cell renderer. Receives the row item and renders rich content.
+	 * Defaults to `String(item[key])` — use `renderCell` for rich content like
+	 * badges, status dots, formatted text, icons, or composed layouts.
+	 *
+	 * @compositionHint Use renderCell to compose rich table cells:
+	 * - Badge for status labels (success/warning/error variants)
+	 * - StatusDot for colored indicators
+	 * - Text with color="success"|"error" for formatted values
+	 * - HStack to combine multiple elements in a cell
+	 * - Avatar for user/entity cells
+	 *
+	 * @example
+	 * ```svelte
+	 * {#snippet statusCell(item)}
+	 *   <HStack gap={2} align="center">
+	 *     <StatusDot status={item.isActive ? 'success' : 'error'} />
+	 *     <Badge variant={item.isActive ? 'success' : 'error'} label={item.isActive ? 'Active' : 'Inactive'} />
+	 *   </HStack>
+	 * {/snippet}
+	 * ```
+	 */
+	renderCell?: Snippet<[T]>;
+}
+
+// =============================================================================
+// Render Props (Plugin Transform Targets)
+// =============================================================================
+
+/** Props passed through the plugin pipeline for the `<table>` element */
+export interface TableRenderProps {
+	htmlProps: HTMLAttributes<HTMLTableElement>;
+	xstyle: StyleArg[];
+}
+
+/** Props passed through the plugin pipeline for the header `<tr>` */
+export interface HeaderRowRenderProps {
+	htmlProps: HTMLAttributes<HTMLTableRowElement>;
+	xstyle: StyleArg[];
+	children: Snippet;
+}
+
+/**
+ * Props passed through the plugin pipeline for each `<th>`.
+ *
+ * Uses named slots so multiple plugins can contribute content without
+ * conflicts. Each plugin writes to its own slot; BaseTable renders
+ * them in order: `before | content | after`, with `overlay` positioned
+ * absolutely on top and `below` underneath the header row.
+ *
+ * Slot semantics:
+ * - **before** — content before the label (e.g. selection checkbox)
+ * - **content** — the header label; plugins may wrap (e.g. sort button)
+ * - **after** — content after the label (e.g. sort icon, filter icon)
+ * - **overlay** — absolutely positioned layer (e.g. resize handle)
+ * - **below** — content below the header label row (e.g. inline filter controls)
+ */
+export interface HeaderCellRenderProps {
+	htmlProps: HTMLThAttributes;
+	xstyle: StyleArg[];
+	/** Content rendered before the header label. */
+	before?: Snippet;
+	/** The header label content. Initialized from `column.header ?? column.key`. Plugins may wrap or replace. */
+	content?: string | Snippet;
+	/** Content rendered after the header label (e.g. sort icon, filter trigger). */
+	after?: Snippet;
+	/** Absolutely positioned overlay content (e.g. resize handle). */
+	overlay?: Snippet;
+	/** Content rendered below the header label row (e.g. inline filter controls). */
+	below?: Snippet;
+	/**
+	 * Right-click context-menu actions for this header cell. Plugins append
+	 * their actions in `transformHeaderCell`; BaseTable concatenates the arrays
+	 * across plugins (never overridden) and renders one menu per header cell.
+	 */
+	contextMenuActions?: TableContextActions;
+	/**
+	 * Index of this column within the final, ordered list of rendered columns
+	 * (after column injection/reordering by other plugins). Populated by
+	 * BaseTable. Optional for backward compatibility with hand-constructed
+	 * renders in tests.
+	 */
+	columnIndex?: number;
+	/**
+	 * The full, final ordered list of columns being rendered (after column
+	 * injection/reordering by other plugins). Populated by BaseTable so plugins
+	 * can reason about column position — e.g. cumulative sticky offsets. Optional
+	 * for backward compatibility.
+	 */
+	columns?: ReadonlyArray<TableColumn<Record<string, unknown>>>;
+}
+
+/**
+ * Props passed through the plugin pipeline for each body `<tr>`.
+ *
+ * Upstream's `ref` member is absent by construction: a plugin reaching the
+ * `<tr>` puts an attachment in `htmlProps` under a `createAttachmentKey()`
+ * symbol, which the spread resolves.
+ */
+export interface BodyRowRenderProps {
+	htmlProps: HTMLAttributes<HTMLTableRowElement>;
+	xstyle: StyleArg[];
+	children: Snippet;
+}
+
+/** Props passed through the plugin pipeline for each body `<td>` */
+export interface BodyCellRenderProps {
+	htmlProps: HTMLTdAttributes;
+	xstyle: StyleArg[];
+	/**
+	 * Right-click context-menu actions for this body cell. Plugins append their
+	 * actions in `transformBodyCell`; BaseTable concatenates the arrays across
+	 * plugins and across the row's cells (never overridden) and renders one menu
+	 * per row.
+	 */
+	contextMenuActions?: TableContextActions;
+	/**
+	 * Index of this cell's column within the final ordered column list.
+	 * Mirrors the `columnIndex` passed to `transformHeaderCell`. Populated by
+	 * BaseTable. Optional for backward compatibility with hand-constructed
+	 * renders in tests.
+	 */
+	columnIndex?: number;
+	/**
+	 * The full, final ordered list of columns being rendered. Populated by
+	 * BaseTable so plugins can reason about column position — e.g. cumulative
+	 * sticky offsets. Optional for backward compatibility.
+	 */
+	columns?: ReadonlyArray<TableColumn<Record<string, unknown>>>;
+}
+
+/**
+ * Props passed through the plugin pipeline for the scroll-wrapper region — the
+ * `<div>` wrapping the `<table>` element (the horizontal scroll container, see
+ * the `scrollWrapper` prop on `BaseTableProps`). Lets plugins attach to the
+ * scrollable element (e.g. for scroll-aware sticky-column shadows or
+ * virtualization) and inject chrome before/after the table.
+ *
+ * Named after `scrollWrapper` (not "layout") to avoid ambiguity: it transforms
+ * the wrapper element, not the internal header/body/footer layout of `<table>`.
+ *
+ * Runs after `transformTable`/cell transforms but inside `transformTableContext`,
+ * so plugin chrome added here stays within any context providers but wraps the
+ * scroll area.
+ */
+export interface ScrollWrapperRenderProps {
+	/**
+	 * HTML attributes applied to the scroll container `<div>`. A plugin that
+	 * needs the element itself adds an attachment under a
+	 * `createAttachmentKey()` symbol — attachments compose, so plugins never
+	 * have to merge each other's the way upstream's ref-composition does.
+	 */
+	htmlProps: HTMLAttributes<HTMLDivElement>;
+	xstyle: StyleArg[];
+	/** Content rendered before the `<table>`, inside the scroll container. */
+	beforeTable?: Snippet;
+	/** Content rendered after the `<table>`, inside the scroll container. */
+	afterTable?: Snippet;
+}
+
+// =============================================================================
+// Context-menu actions
+// =============================================================================
+
+/**
+ * A single right-click context-menu action contributed by a plugin.
+ *
+ * Plugins contribute actions via the `contextMenuActions` field on
+ * `HeaderCellRenderProps` / `BodyCellRenderProps` (set in
+ * `transformHeaderCell` / `transformBodyCell`); the table aggregates actions
+ * from every enabled plugin into a single menu per header cell / row.
+ */
+export interface TableContextAction {
+	/** Stable identifier, unique within a single menu. */
+	id: string;
+	/** Visible label for the menu item. */
+	label: string | Snippet;
+	/** Optional leading icon. */
+	icon?: Snippet;
+	/** Invoked when the item is selected. */
+	onSelect: () => void;
+	/** When true, the item is rendered but not selectable. */
+	disabled?: boolean;
+	/**
+	 * Group key used to cluster related actions and insert a divider between
+	 * groups (e.g. 'sort', 'selection'). Actions without a group form a trailing
+	 * group. Group order follows first-seen order across the aggregated list.
+	 */
+	group?: string;
+	/** When true, the item renders as checked (e.g. the active sort direction). */
+	checked?: boolean;
+}
+
+/**
+ * Context-menu actions for a cell — either a static array, or a getter that
+ * returns the actions lazily. Prefer the getter for actions derived from state
+ * (e.g. the active sort direction): it's only invoked when the menu is opened,
+ * so the plugin doesn't build an action array (with closures) for every cell on
+ * every render.
+ */
+export type TableContextActions = TableContextAction[] | (() => TableContextAction[]);
+
+// =============================================================================
+// Plugin Interface
+// =============================================================================
+
+/**
+ * Table plugin — transforms render props at each structural level.
+ * Plugins compose by sequential application (first plugin's output feeds next).
+ *
+ * ## Pipeline order
+ *
+ * 1. `transformColumns` — filter, reorder, or inject columns before rendering
+ * 2. `transformTable` — transform the root `<table>` element props
+ * 3. `transformHeaderRow` — transform the header `<tr>` props
+ * 4. `transformHeaderCell` — transform each `<th>` props
+ * 5. `transformBodyRow` — transform each body `<tr>` props
+ * 6. `transformBodyCell` — transform each body `<td>` props
+ * 7. `transformScrollWrapper` — transform the scroll-container wrapper around the table
+ * 8. `transformTableContext` — wrap the table output in context providers
+ *
+ * Plugins may also contribute right-click menu actions by appending to
+ * `contextMenuActions` in `transformHeaderCell` / `transformBodyCell`
+ * (aggregated into one menu per header cell / row).
+ */
+export interface TablePlugin<T extends Record<string, unknown> = Record<string, unknown>> {
+	/**
+	 * Transform the column definitions before rendering.
+	 * Runs before any element-level transforms. Use to filter, reorder,
+	 * or inject synthetic columns (e.g. a selection checkbox column).
+	 */
+	transformColumns?: (columns: TableColumn<T>[]) => TableColumn<T>[];
+	/** Transform the root `<table>` element props */
+	transformTable?: (props: TableRenderProps) => TableRenderProps;
+	/** Transform the header `<tr>` props */
+	transformHeaderRow?: (props: HeaderRowRenderProps) => HeaderRowRenderProps;
+	/**
+	 * Transform each `<th>` props.
+	 *
+	 * `columnIndex` and the full `columns` list are provided for plugins that
+	 * need to reason about column position (e.g. cumulative sticky offsets).
+	 */
+	transformHeaderCell?: (
+		props: HeaderCellRenderProps,
+		column: TableColumn<T>,
+		columnIndex: number,
+		columns: ReadonlyArray<TableColumn<T>>
+	) => HeaderCellRenderProps;
+	/** Transform each body `<tr>` props */
+	transformBodyRow?: (props: BodyRowRenderProps, item: T, index: number) => BodyRowRenderProps;
+	/**
+	 * Transform each body `<td>` props.
+	 *
+	 * `columnIndex` and the full `columns` list are provided for plugins that
+	 * need to reason about column position (e.g. cumulative sticky offsets).
+	 */
+	transformBodyCell?: (
+		props: BodyCellRenderProps,
+		column: TableColumn<T>,
+		item: T,
+		columnIndex: number,
+		columns: ReadonlyArray<TableColumn<T>>
+	) => BodyCellRenderProps;
+	/**
+	 * Transform the scroll-wrapper region — the `<div>` wrapping the `<table>`
+	 * (see the `scrollWrapper` prop). Use to attach to the scrollable element
+	 * (scroll-aware shadows, virtualization) or to inject chrome before/after
+	 * the table.
+	 */
+	transformScrollWrapper?: (props: ScrollWrapperRenderProps) => ScrollWrapperRenderProps;
+	/**
+	 * Wrap the table output in context providers.
+	 *
+	 * Svelte reads context at component *init*, so a provider is a component
+	 * rather than a function of its children: a plugin returns the component to
+	 * wrap in, and `BaseTable` renders the chain around the table. This is the
+	 * scope-component shape the nav family established in batch 10.
+	 */
+	transformTableContext?: () => TableContextProvider;
+}
+
+/**
+ * A context provider component returned by `TablePlugin.transformTableContext`.
+ * Renders its `children` snippet inside whatever context it sets, and no DOM of
+ * its own.
+ */
+export type TableContextProvider = Component<{ children: Snippet }>;
+
+// =============================================================================
+// Component Interfaces (for the components a plugin may substitute)
+// =============================================================================
+
+/** Props for row components used in the components prop */
+export interface TableRowComponentProps extends HTMLAttributes<HTMLTableRowElement> {
+	children: Snippet;
+	xstyle?: StyleArg[];
+	/**
+	 * Whether this row is the header row. Header rows skip the striped/hover
+	 * row styling, which is only meant for body rows.
+	 */
+	isHeaderRow?: boolean;
+}
+
+/** Props for cell components used in the components prop */
+export interface TableCellComponentProps extends HTMLTdAttributes {
+	children?: Snippet;
+	xstyle?: StyleArg | StyleArg[];
+	/**
+	 * Right-click actions to render as a context menu around the cell content.
+	 * The cell owns the menu wrapper so it can control how it interacts with
+	 * padding / content sizing. Empty/undefined renders no menu (native passes
+	 * through).
+	 */
+	contextMenuActions?: TableContextActions;
+}
+
+/** Props for header cell components used in the components prop */
+export interface TableHeaderCellComponentProps extends HTMLThAttributes {
+	children?: Snippet;
+	xstyle?: StyleArg | StyleArg[];
+	/**
+	 * Right-click actions to render as a context menu around the header content.
+	 * The cell owns the menu wrapper so it can control how it interacts with
+	 * padding / content sizing. Empty/undefined renders no menu.
+	 */
+	contextMenuActions?: TableContextActions;
+}
+
+// =============================================================================
+// The scroll-wrapper component contract
+// =============================================================================
+
+/** Props a `scrollWrapper` component receives. */
+export interface TableScrollWrapperProps {
+	children: Snippet;
+	htmlProps?: HTMLAttributes<HTMLDivElement>;
+	xstyle?: StyleArg[];
+	beforeTable?: Snippet;
+	afterTable?: Snippet;
+}
+
+// =============================================================================
+// BaseTable Props
+// =============================================================================
+
+/**
+ * Props for the unstyled BaseTable component.
+ *
+ * @template T - The row data type
+ */
+export interface BaseTableProps<
+	T extends Record<string, unknown>
+> extends BaseProps<HTMLTableElement> {
+	/** Array of data items to render as rows */
+	data?: T[];
+	/** Column definitions. If omitted, auto-generated from data keys. */
+	columns?: TableColumn<T>[];
+	/**
+	 * Row key for keyed `{#each}` reconciliation.
+	 * - `string` — property name to use as key (e.g. `"id"`), must be a key of `T`
+	 * - `function` — custom extractor (e.g. `(item) => item.id`)
+	 * - omitted — falls back to row index
+	 */
+	idKey?: (keyof T & string) | ((item: T) => string | number);
+	/** Plugins to transform render props at each level */
+	plugins?: TablePlugin<T>[];
+
+	/** Children mode — render `<tr>`/`<td>` directly instead of data-driven */
+	children?: Snippet;
+	/**
+	 * Optional wrapper rendered around the `<table>` element, inside the
+	 * plugin `transformTableContext` layer. Used by `Table` to add a
+	 * horizontal scroll container so plugin chrome (pagination, toolbars)
+	 * stays outside the scrollable area.
+	 *
+	 * Receives `htmlProps` and `xstyle` produced by the plugin
+	 * `transformScrollWrapper` pipeline, plus `beforeTable`/`afterTable`
+	 * chrome. The wrapper must spread `htmlProps` (and apply `xstyle`) onto its
+	 * scroll-container element so plugin attachments and scroll listeners land.
+	 */
+	scrollWrapper?: Component<TableScrollWrapperProps>;
+	/**
+	 * How default-rendered body cell text behaves when it exceeds column width.
+	 *
+	 * - `'wrap'` (default) — text wraps and the row grows taller
+	 * - `'truncate'` — text is clipped with an ellipsis; default-rendered cells
+	 *   show a tooltip on hover when truncated
+	 *
+	 * Only affects cells using the default renderer (no `renderCell`).
+	 * Cells with `renderCell` control their own overflow behavior.
+	 *
+	 * @default 'wrap'
+	 */
+	textOverflow?: 'wrap' | 'truncate';
+	/**
+	 * ARIA row index (1-based) assigned to the **first** rendered body row.
+	 *
+	 * The row ordinal is an accessibility concern independent of any visible
+	 * index column: `aria-rowindex` on each `<tr>` should reflect the row's
+	 * position in the **full** dataset, not just the current page. For a
+	 * paginated / windowed view, pass the offset of the first visible row,
+	 * e.g. `(page - 1) * pageSize + 1`.
+	 *
+	 * Setting this (or {@link BaseTableProps.rowCount}) opts the table into
+	 * emitting `aria-rowindex` on body rows and `aria-rowcount` on the
+	 * `<table>`. Data rows are numbered from this value; the header row keeps
+	 * native table semantics and is not assigned an ARIA row index (so the
+	 * visible `useTableRowIndex` numbering and `aria-rowindex` stay in
+	 * agreement).
+	 *
+	 * Applies to data-driven mode only (ignored in children mode).
+	 *
+	 * @default 1
+	 */
+	rowIndexStart?: number;
+	/**
+	 * Total number of body rows across **all** pages/windows, used for
+	 * `aria-rowcount` on the `<table>`. Provide this for paginated data so
+	 * assistive tech can announce "row X of Y" against the full dataset.
+	 *
+	 * When omitted but {@link BaseTableProps.rowIndexStart} is set (a windowed
+	 * view with an unknown total, e.g. cursor pagination), `aria-rowcount` is
+	 * set to `-1` per the ARIA convention for an unknown row count.
+	 *
+	 * Applies to data-driven mode only (ignored in children mode).
+	 */
+	rowCount?: number;
+	/**
+	 * Content displayed when `data` is an empty array.
+	 * Rendered as a full-width row spanning all columns.
+	 *
+	 * - **Omit or `undefined`** — renders a default compact "No data" empty state
+	 * - **`Snippet`** — renders your custom content (e.g. an `<EmptyState>`)
+	 * - **`false`** — disables the empty state entirely (renders empty `<tbody>`)
+	 *
+	 * @default a compact `EmptyState` titled "No data"
+	 *
+	 * @example
+	 * ```svelte
+	 * {#snippet noResults()}
+	 *   <EmptyState title="No results" description="Try adjusting your filters." />
+	 * {/snippet}
+	 * <Table data={filteredUsers} {columns} emptyState={noResults} />
+	 * ```
+	 */
+	emptyState?: Snippet | false;
+	/** Test ID for testing frameworks. */
+	'data-testid'?: string;
+}

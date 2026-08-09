@@ -1,0 +1,26 @@
+{
+  "name": "astryx-svelte",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A Svelte 5 port of Astryx, Meta's open source design system. Unofficial and not affiliated with Meta.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@10.14.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @astryx-svelte/core dev",
+    "dev:docs": "pnpm --filter docs dev",
+    "build": "pnpm -r build",
+    "check": "pnpm -r check",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format"
+  },
+  "workspaces": [
+    "packages/*",
+    "packages/themes/*",
+    "docs"
+  ]
+}

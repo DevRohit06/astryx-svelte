@@ -1,0 +1,15 @@
+# Package Managers
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+bun.lock
+bun.lockb
+
+# Miscellaneous
+/static/
+
+# Generated content registries and the compiled Astryx theme — the generators
+# own their formatting, and both compare exact text before writing, so
+# reformatting them would make every run report a change.
+/src/lib/generated/*.js
+/src/lib/generated/*.css

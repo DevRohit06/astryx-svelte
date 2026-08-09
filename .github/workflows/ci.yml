@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          # Root `engines` asks for >=22. Kept unpinned within the major so a
+          # patch bump doesn't need a commit here.
+          node-version: 22
+          cache: pnpm
+
+      # Deliberately a full install — no --prod, no NODE_ENV=production.
+      # Both fidelity oracles read the upstream Astryx packages, which are
+      # devDependencies; pruning them turns the checks into no-ops that still
+      # report green. Each oracle now fails loudly if its upstream is missing,
+      # so a regression here is caught rather than silently tolerated.
+      - run: pnpm install --frozen-lockfile
+
+      # Build first: @astryx-svelte/theme-neutral typechecks against the theme
+      # compiler's types, which it reaches through core's built `dist/`. pnpm
+      # orders `-r` topologically, so core builds before the theme.
+      - name: Build
+        run: pnpm -r build
+
+      - name: Typecheck
+        run: pnpm -r check
+
+      - name: Lint
+        run: pnpm -r lint
+
+      # `pnpm -r test` runs both fidelity oracles and the packaging assertion:
+      #  - @astryx-svelte/core          → compare-upstream-classes.mjs (component classes)
+      #  - @astryx-svelte/theme-neutral → compare-upstream.mjs (theme declarations)
+      #  - @astryx-svelte/cli           → assert-core-ships-src.mjs (core publishes src/)
+      # The two oracles build what they need first, so they are order-independent.
+      # The CLI assertion is not: it runs `npm pack --dry-run` over core with
+      # `--ignore-scripts`, so it needs the Build step above to have produced
+      # core's dist/. That ordering already holds here; it fails loudly rather
+      # than silently if it ever stops holding.
+      - name: Test, fidelity oracles and packaging assertion
+        run: pnpm -r test
