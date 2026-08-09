@@ -1,0 +1,67 @@
+name: Parity bug
+description: We diverge from upstream Astryx.
+title: '[Parity]: '
+labels: ['bug', 'parity']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most valuable kind of report this project gets.
+
+        The parity rule is **if it's not in Astryx, it's not here** — so anywhere our API, markup,
+        CSS or behaviour differs from upstream's is a defect, even when ours looks nicer. The
+        fidelity oracles catch CSS drift automatically and the ported test suites catch behavioural
+        drift, so a divergence you found by hand is one that slipped past both.
+
+        **Upstream bugs are not parity bugs.** If upstream does something wrong and we do the same
+        wrong thing, that's correct behaviour here — it belongs in `TODO.md` under "Known debts",
+        not in this form.
+
+  - type: input
+    id: component
+    attributes:
+      label: Component, hook or template
+      placeholder: e.g. Button, useResizable, templates/pages/login-split
+    validations:
+      required: true
+
+  - type: textarea
+    id: upstream
+    attributes:
+      label: What upstream does
+      description: >
+        Quote it, and say where you read it — a path in `reference/astryx-upstream/`, a `.doc.mjs`,
+        an upstream test, the compiled `dist/`, or a page on astryx.atmeta.com.
+    validations:
+      required: true
+
+  - type: textarea
+    id: ours
+    attributes:
+      label: What we do instead
+    validations:
+      required: true
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of divergence?
+      options:
+        - Prop — missing, extra, renamed, or wrong default
+        - Rendered markup — wrong element, attribute, or nesting
+        - CSS — different class, token, or computed style
+        - Behaviour — different interaction, focus, or keyboard handling
+        - Exported API — missing or extra export, or a wrong type
+        - Documentation or demo content
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: >
+        If you think the divergence was deliberate, say so — some are, and they carry a comment
+        explaining why. Pointing at a comment that no longer holds is itself a useful report.
+    validations:
+      required: false

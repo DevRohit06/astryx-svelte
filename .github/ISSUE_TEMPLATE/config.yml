@@ -1,0 +1,18 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Astryx design system documentation
+    url: https://astryx.atmeta.com/
+    about: >
+      Questions about the design system itself — a component's intended behaviour, its API, or the
+      design rationale — are answered upstream. This repository is the Svelte port; the system is
+      Meta's.
+
+  - name: Upstream Astryx (React)
+    url: https://github.com/facebook/astryx
+    about: >
+      Bugs in the React implementation, or proposals to change a component's API, belong upstream.
+      If upstream changes, this port follows.
+
+  - name: Astryx Discord
+    url: https://discord.com/invite/XnsUcFykEP
+    about: The design system's community. Useful whichever implementation you're using.

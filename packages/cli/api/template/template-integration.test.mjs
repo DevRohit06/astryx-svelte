@@ -14,12 +14,16 @@
  * — plus the one that is not mechanical: a scaffolded page is `+page.svelte`,
  * SvelteKit's route component, where upstream writes Next.js' `page.tsx`.
  *
- * "always reports core templates under @astryx-svelte/core" is the one case
- * whose assertion had to be **inverted**, and it is the honest form rather than
- * a weakening: upstream asserts core contributes at least one template, and
- * this port ships no template assets at all (TODO.md). Asserting the count is
- * zero keeps the case live and makes it *fail* the day the assets land, which
- * is exactly when someone should come back and restore upstream's assertion.
+ * "always reports core templates under @astryx-svelte/core" carried an
+ * **inverted** assertion until the page-template assets landed: this port
+ * shipped none, so the case asserted a count of zero specifically so it would
+ * fail the day they arrived. It did. Upstream's `toBeGreaterThan(0)` is now
+ * restored and all 10 cases match upstream one for one.
+ *
+ * The bound stays `> 0` rather than a literal count, which is upstream's own
+ * shape: the transcription lands in batches, so an exact number would have to
+ * be edited with each one and would assert the batch schedule rather than the
+ * behaviour under test — that core contributes its bundled templates at all.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -113,13 +117,12 @@ describe('integration template discovery', () => {
 	});
 
 	it('always reports core templates under @astryx-svelte/core', async () => {
-		// Inverted, deliberately — see the file header. Core contributes nothing
-		// because `assets/templates/` ships only the bundled themes; when the page
-		// and block assets land, this line fails and upstream's
-		// `toBeGreaterThan(0)` is the replacement.
+		// Upstream's assertion, restored: `assets/templates/pages/` now carries
+		// the transcribed page templates, so core contributes discoverable
+		// templates and the inverted form this case used to hold has retired.
 		const result = await template(undefined, { list: true, cwd: tmpDir });
 		const core = result.data.filter((t) => t.package === '@astryx-svelte/core');
-		expect(core.length).toBe(0);
+		expect(core.length).toBeGreaterThan(0);
 	});
 
 	it('--package narrows the listing', async () => {

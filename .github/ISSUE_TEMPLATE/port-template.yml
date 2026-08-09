@@ -1,0 +1,64 @@
+name: Claim a page template to port
+description: Take one of upstream's page templates and transcribe it to Svelte.
+title: '[Template]: port '
+labels: ['templates', 'good first issue']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Upstream ships 43 whole-page templates under `assets/templates/pages/`. Each one is a
+        self-contained React page that needs transcribing to Svelte.
+
+        **This is a good first contribution.** Every component and hook the templates need is
+        already exported from `@astryx-svelte/core` — including `Table`, `Resizable`, `PowerSearch`,
+        `Chat`, `TreeList` and `CommandPalette` — so it is transcription work, not component work.
+
+        Open one issue per template so two people don't do the same one. Check the existing
+        [`templates` issues](https://github.com/devrohit06/astryx-svelte/labels/templates) first.
+
+  - type: input
+    id: slug
+    attributes:
+      label: Template slug
+      description: The directory name under `assets/templates/pages/`.
+      placeholder: e.g. kanban-board
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: understood
+    attributes:
+      label: Before you start
+      description: >
+        These are the rules that make a template port land first time. Full detail is in
+        [CONTRIBUTING.md](https://github.com/devrohit06/astryx-svelte/blob/main/CONTRIBUTING.md).
+      options:
+        - label: >
+            I'll read upstream's `page.tsx` in `reference/astryx-upstream/` first, and transcribe
+            it rather than re-author it — same structure, same copy, same data arrays, same order.
+          required: true
+        - label: >
+            I'll write `packages/cli/assets/templates/pages/<slug>/+page.svelte` (SvelteKit's route
+            component name, not upstream's `page.tsx`) plus a `template.doc.mjs` carrying upstream's
+            metadata verbatim, including any `isReady: false` or `isHiddenFromOverview: true` flags.
+          required: true
+        - label: >
+            I understand StyleX may never be imported from a `.svelte` file, and that a `class`
+            passed to an Astryx component is **not** scoped — a plain scoped selector targeting one
+            is silently dropped, so it needs `:global()` bounded by a scoped ancestor.
+          required: true
+        - label: >
+            Where upstream imports Heroicons, I'll substitute a name from core's 28-entry `Icon`
+            registry and document the mapping in the file header. Where upstream inlines SVG paths,
+            I'll transcribe the paths as-is.
+          required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything you want to flag first?
+      description: >
+        If you've already read the upstream file and spotted something that won't translate
+        cleanly, say so here — it's much cheaper to settle before you write it.
+    validations:
+      required: false

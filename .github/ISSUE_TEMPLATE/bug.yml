@@ -1,0 +1,71 @@
+name: Bug report
+description: Something in astryx-svelte is broken.
+title: '[Bug]: '
+labels: ['bug']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing this.
+
+        **If the bug is that we differ from upstream Astryx** — a prop, a rendered element, a
+        class, a behaviour — please use the [Parity bug](?template=parity.yml) form instead. Those
+        are triaged differently, because matching upstream is this project's whole contract.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you see, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction
+      description: >
+        The smallest component or page that shows the problem. A link to a repo or a REPL is ideal;
+        an inline snippet is fine. Please include the component's props as you passed them.
+      render: svelte
+    validations:
+      required: true
+
+  - type: input
+    id: component
+    attributes:
+      label: Which component or hook?
+      placeholder: e.g. Button, useResizable, Table
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The `@astryx-svelte/core` version, or the commit SHA if you're on a checkout.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Where does it happen?
+      options:
+        - Browser only
+        - SSR only
+        - Both SSR and browser
+        - During build
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment-detail
+    attributes:
+      label: Environment
+      description: >
+        Svelte and SvelteKit versions, package manager, browser, OS. Paste the output of
+        `pnpm ls svelte @astryx-svelte/core` if that's easiest.
+      render: shell
+    validations:
+      required: false
