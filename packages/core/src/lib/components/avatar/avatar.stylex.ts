@@ -181,15 +181,13 @@ const dynamicStyles = stylex.create({
 	}),
 	statusPosition: (size: number) => ({
 		bottom: size * CIRCLE_EDGE_OFFSET_RATIO,
-		// Physical `right`, matching upstream 0.2.0, which left it physical while
-		// migrating the rest of the release. The status dot sits bottom-right in
-		// both directions — it marks the avatar, not the reading order — and the
-		// `translate(50%, 50%)` that pushes it onto the circle's edge is physical
-		// too, so a logical inset here would move the dot without moving the
-		// translate and break the 45° placement.
-		// eslint-disable-next-line astryx/no-physical-properties -- see above
-		right: size * CIRCLE_EDGE_OFFSET_RATIO,
-		transform: 'translate(50%, 50%)'
+		insetInlineEnd: size * CIRCLE_EDGE_OFFSET_RATIO,
+		// `insetInlineEnd` anchors to the right edge in LTR / left in RTL, so the
+		// outward push must mirror too: +X in LTR, −X in RTL (Y is unaffected).
+		transform: {
+			default: 'translate(50%, 50%)',
+			':is([dir="rtl"] *)': 'translate(-50%, 50%)'
+		}
 	})
 });
 
