@@ -94,16 +94,26 @@ jobs:
       # theme manifests is rewritten to a real range by pnpm at pack time; npm
       # would publish the protocol literally, which is why this must be pnpm.
       #
-      # `--provenance` needs a public repository and a `repository` field that
-      # matches it; both hold today. If npm ever rejects the attestation, drop
-      # the flag and the env var — provenance is an attestation about the build,
-      # not a condition of publishing.
+      # **No `--provenance`, because this repository is private.** npm signs the
+      # statement and publishes it to the Sigstore transparency log first, then
+      # the registry rejects the upload:
+      #
+      #   npm error 422 Unprocessable Entity … Error verifying sigstore
+      #   provenance bundle: Unsupported GitHub Actions source repository
+      #   visibility: "private". Only public source repositories are supported
+      #   when publishing with provenance.
+      #
+      # Nothing publishes when that happens, but it fails at the last step of a
+      # 20-minute job. Provenance is an attestation *about* the build, not a
+      # condition of publishing, so it comes out rather than blocking the
+      # release. **Restore `--provenance` and `NPM_CONFIG_PROVENANCE: 'true'`
+      # if this repository is ever made public** — the `id-token: write`
+      # permission above is already in place for it.
       - name: Publish to npm
         if: steps.version.outputs.dry_run == 'false'
-        run: pnpm publish -r --access public --provenance --no-git-checks
+        run: pnpm publish -r --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'
 
       - name: Publish (dry run)
         if: steps.version.outputs.dry_run == 'true'
