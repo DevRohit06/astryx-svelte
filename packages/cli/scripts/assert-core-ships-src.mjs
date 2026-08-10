@@ -191,6 +191,26 @@ if (leakedTests.length > 0) {
 	);
 }
 
+// 5. `src/` is published for `swizzle` and friends, which read `src/lib` and
+//    nothing else. Everything beside it under `src/` is this repo's own
+//    workbench, and it shipped for the whole pre-release life of the package:
+//    248 test fixtures (none matching the `*.test.*` denylist above, so rule 4
+//    saw nothing) and 35 demo routes, one of which imports
+//    `../../../themes/neutral/dist/` — a relative path that resolves inside
+//    this monorepo and points outside the tarball anywhere else.
+const NON_LIB_SRC = /^src\/(?!lib\/)/;
+const leakedNonLib = [...files].filter((p) => NON_LIB_SRC.test(p) && !p.endsWith('.d.ts'));
+if (leakedNonLib.length > 0) {
+	problems.push(
+		`${leakedNonLib.length} file(s) under src/ but outside src/lib leaked into the tarball:\n` +
+			leakedNonLib
+				.slice(0, 10)
+				.map((p) => `    ${p}`)
+				.join('\n') +
+			(leakedNonLib.length > 10 ? `\n    … and ${leakedNonLib.length - 10} more` : '')
+	);
+}
+
 if (problems.length > 0) {
 	fail(
 		problems.map((p) => `  - ${p}`).join('\n\n') +

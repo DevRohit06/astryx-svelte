@@ -12,6 +12,9 @@
 		"url": "https://github.com/devrohit06/astryx-svelte/issues"
 	},
 	"homepage": "https://github.com/devrohit06/astryx-svelte#readme",
+	"publishConfig": {
+		"access": "public"
+	},
 	"description": "Svelte 5 components for Astryx, Meta's open source design system.",
 	"scripts": {
 		"dev": "vite dev",
@@ -34,7 +37,10 @@
 		"!dist/**/*.test.*",
 		"!dist/**/*.spec.*",
 		"!src/**/*.test.*",
-		"!src/**/*.spec.*"
+		"!src/**/*.spec.*",
+		"!src/tests",
+		"!src/routes",
+		"!src/app.html"
 	],
 	"sideEffects": [
 		"**/*.stylex.ts",

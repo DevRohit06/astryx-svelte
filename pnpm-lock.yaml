@@ -6,7 +6,11 @@ settings:
 
 importers:
 
-  .: {}
+  .:
+    devDependencies:
+      publint:
+        specifier: ^0.3.21
+        version: 0.3.21
 
   docs:
     dependencies:

@@ -16,11 +16,15 @@
     "check": "pnpm -r check",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
-    "format": "pnpm -r format"
+    "format": "pnpm -r format",
+    "check:publish": "node scripts/check-publish.mjs"
   },
   "workspaces": [
     "packages/*",
     "packages/themes/*",
     "docs"
-  ]
+  ],
+  "devDependencies": {
+    "publint": "^0.3.21"
+  }
 }

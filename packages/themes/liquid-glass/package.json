@@ -12,6 +12,9 @@
 		"url": "https://github.com/devrohit06/astryx-svelte/issues"
 	},
 	"homepage": "https://github.com/devrohit06/astryx-svelte#readme",
+	"publishConfig": {
+		"access": "public"
+	},
 	"type": "module",
 	"exports": {
 		".": {
@@ -43,6 +46,7 @@
 		"@lucide/svelte": "^1.25.0"
 	},
 	"peerDependencies": {
+		"@astryx-svelte/core": "workspace:^",
 		"svelte": "^5.0.0"
 	},
 	"devDependencies": {

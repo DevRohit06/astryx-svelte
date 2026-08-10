@@ -62,3 +62,11 @@ jobs:
       # than silently if it ever stops holding.
       - name: Test, fidelity oracles and packaging assertion
         run: pnpm -r test
+
+      # The same manifest gate the release runs, minus the version pin: publint
+      # over every publishable package, plus the README check that caught all
+      # eight theme packages shipping an empty npm page. Here rather than only
+      # at release time, because a manifest that stops resolving is cheap to
+      # catch on the PR that breaks it and expensive to discover mid-publish.
+      - name: Every package is still fit to publish
+        run: node scripts/check-publish.mjs

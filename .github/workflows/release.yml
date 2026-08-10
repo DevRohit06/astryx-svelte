@@ -1,0 +1,97 @@
+name: Release
+
+# Publishing is tag-driven: every package in this workspace carries the version
+# of the upstream Astryx release it ports, and they move together, so one tag
+# names the whole release. `check:publish --version` re-asserts that below
+# rather than trusting it — a tag and a manifest that disagree is the one thing
+# no other gate in this repo can see.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Version to dry-run, e.g. 0.3.0. Never publishes.'
+        required: true
+
+permissions:
+  contents: read
+  # Required for npm provenance. Without it `--provenance` fails at publish
+  # time, which is after the gates below have already passed.
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+          # Writes an .npmrc that reads NODE_AUTH_TOKEN. pnpm honours npm's
+          # config hierarchy, so `pnpm publish` picks the credential up from it.
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Resolve the version being released
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+            echo "dry_run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+            echo "dry_run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Deliberately a full install — no --prod, no NODE_ENV=production. Both
+      # fidelity oracles read the upstream Astryx packages, which are
+      # devDependencies; pruning them turns the checks into no-ops that still
+      # report green.
+      - run: pnpm install --frozen-lockfile
+
+      # The same gates as CI, re-run here rather than trusted from the commit's
+      # own run: a tag can be pushed at any commit, including one CI never saw.
+      - name: Build
+        run: pnpm -r build
+
+      - name: Typecheck
+        run: pnpm -r check
+
+      - name: Lint
+        run: pnpm -r lint
+
+      - name: Test, fidelity oracles and packaging assertion
+        run: pnpm -r test
+
+      # Manifests, entry points and READMEs, over the built tree. Also asserts
+      # every publishable package is at the version this tag names.
+      - name: Verify every package is fit to publish
+        run: node scripts/check-publish.mjs --version "${{ steps.version.outputs.value }}"
+
+      # `--no-git-checks` because a tag build is a detached HEAD, which pnpm
+      # otherwise refuses as "not on the publish branch". `workspace:^` in the
+      # theme manifests is rewritten to a real range by pnpm at pack time; npm
+      # would publish the protocol literally, which is why this must be pnpm.
+      #
+      # `--provenance` needs a public repository and a `repository` field that
+      # matches it; both hold today. If npm ever rejects the attestation, drop
+      # the flag and the env var — provenance is an attestation about the build,
+      # not a condition of publishing.
+      - name: Publish to npm
+        if: steps.version.outputs.dry_run == 'false'
+        run: pnpm publish -r --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+
+      - name: Publish (dry run)
+        if: steps.version.outputs.dry_run == 'true'
+        run: pnpm publish -r --access public --no-git-checks --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
