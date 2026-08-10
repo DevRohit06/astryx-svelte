@@ -2,14 +2,13 @@
 	Ported from upstream's `assets/templates/pages/shell-side-nav/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`SparklesIcon` → `wrench`, `PlusIcon` → `check` (the registry ships no plus —
-	TODO.md records the gap), `MagnifyingGlassIcon` → `search`, `BookOpenIcon` →
-	`copy`, `Cog6ToothIcon` → `wrench`, `UserCircleIcon` → `info`, `UserIcon` →
-	`info`, `BuildingOffice2Icon` → `stop`, `CodeBracketIcon` → `wrench`. Only
-	`search` is a true match, and the 28-name registry cannot keep nine glyphs
-	distinct — `wrench` and `info` each stand in twice over. Retires with the
-	icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `ConversationItem` is a component with two `useState`s; a page
 	template is a single `+page.svelte` (the CLI copies `PAGE_SOURCE_FILE` and
@@ -40,6 +39,7 @@
 		type IconName,
 		type StatusDotVariant
 	} from '@astryx-svelte/core';
+	import { SparklesIcon } from '@fvilers/heroicons-svelte/24/outline';
 
 	type Conversation = {
 		label: string;
@@ -127,7 +127,7 @@
 	</Stack>
 {/snippet}
 
-{#snippet sparklesIcon()}<Icon icon="wrench" size="sm" />{/snippet}
+{#snippet sparklesIcon()}<Icon icon={SparklesIcon} size="sm" />{/snippet}
 {#snippet headingIcon()}<NavIcon icon={sparklesIcon} />{/snippet}
 
 {#snippet header()}

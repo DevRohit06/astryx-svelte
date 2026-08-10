@@ -2,12 +2,13 @@
 	Ported from upstream's `assets/templates/pages/login-split/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here rather than inlining the SVGs, so the icons
-	are registry substitutions: `SquaresPlusIcon` → `stop`, `CheckCircleIcon` →
-	`success`. Only `success` is a true match; the registry has no squares/plus
-	glyph, so the logo reuses the `stop` square the repo already stands in for
-	`CubeIcon` in the sibling Login templates. Retires with the icon registry
-	(TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 -->
 <script lang="ts">
 	import {
@@ -26,6 +27,7 @@
 		TextInput,
 		VStack
 	} from '@astryx-svelte/core';
+	import { CheckCircleIcon, SquaresPlusIcon } from '@fvilers/heroicons-svelte/24/outline';
 
 	const COVER_IMAGE_URL =
 		'https://lookaside.facebook.com/assets/astryx/light-working-vertical-1.png';
@@ -68,7 +70,7 @@
 </script>
 
 {#snippet successIcon()}
-	<Icon icon="success" size="lg" />
+	<Icon icon={CheckCircleIcon} size="lg" />
 {/snippet}
 
 {#snippet appleLogo()}
@@ -93,7 +95,7 @@
 					<Section variant="transparent" padding={0} height="100%">
 						<VStack gap={4} height="100%">
 							<HStack gap={2} vAlign="center">
-								<Icon icon="stop" />
+								<Icon icon={SquaresPlusIcon} />
 								<Text type="body" weight="bold">Product Inc.</Text>
 							</HStack>
 

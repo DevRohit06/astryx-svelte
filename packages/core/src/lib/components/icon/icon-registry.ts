@@ -1,5 +1,4 @@
 import type { Component, Snippet } from 'svelte';
-import type { SVGAttributes } from 'svelte/elements';
 import type { DefinedTheme } from '../../theme/define-theme.js';
 import { getRegisteredTheme } from '../../theme/theme-registry.js';
 import { warnOnce } from '../../utils/dev-warning.js';
@@ -91,8 +90,35 @@ export type IconRegistrySource = DefinedTheme | string | null | undefined;
  * the same type instead of restating it. Note this is deliberately *not*
  * `IconRegistry`'s value type — the prop takes a component, the registry holds a
  * rendered snippet, which is upstream's split too.
+ *
+ * ## Why this is a bare `Component`
+ *
+ * Upstream is `ComponentType<SVGProps<SVGSVGElement>>`, and the literal
+ * translation — `Component<SVGAttributes<SVGSVGElement>>` — typechecks against
+ * nothing a consumer can actually pass. Component props are contravariant, and
+ * the element parameter reaches the event handlers in `DOMAttributes<T>`, so a
+ * package declaring `SVGAttributes<SVGElement>` and one declaring
+ * `SVGAttributes<SVGSVGElement>` are mutually unassignable. Every real Svelte
+ * icon package was measured against the strict form and every one failed:
+ * `@fvilers/heroicons-svelte` on the element parameter, `@lucide/svelte`
+ * (already this repo's own theme dependency) on a narrowed `name`,
+ * `svelte-heros-v2` on a narrowed `focusable`, and `heroicons-svelte` on being
+ * Svelte 4 classes rather than Svelte 5 components.
+ *
+ * The strictness is an artefact of the translation, not of upstream's intent.
+ * `@heroicons/react` accepts the *full* `SVGProps<SVGSVGElement>` and only adds
+ * optional extras, so upstream's type admits its own icon set; no Svelte icon
+ * package is written that way. Keeping the literal form would mean core's
+ * published `Icon` accepts no icon library at all — which is what pushed the
+ * page templates onto the 28-name semantic registry and the wrong glyphs that
+ * implies.
+ *
+ * A bare `Component` is the same call shadcn-svelte makes for the same reason.
+ * `Icon` passes only SVG attributes to whatever it renders, so the shape this
+ * name documents is unchanged; what is dropped is the element parameter that
+ * no package can satisfy.
  */
-export type IconType = Component<SVGAttributes<SVGSVGElement>>;
+export type IconType = Component;
 
 // Keyed by plain `string`, not `IconName`: since 0.3.0 a library may register
 // its own extension keys alongside the built-ins.

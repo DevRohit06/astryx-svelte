@@ -2,17 +2,13 @@
 	Ported from upstream's `assets/templates/pages/shell-top-nav/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`ShoppingBagIcon` → `stop`, `ShoppingCartIcon` → `checkDouble`,
-	`MagnifyingGlassIcon` → `search`, `SparklesIcon` → `wrench`, `SwatchIcon` →
-	`viewColumns`, `TagIcon` → `funnel`, `HomeModernIcon` → `menu`,
-	`FaceSmileIcon` → `info`, `ReceiptPercentIcon` → `copy`, `GiftIcon` →
-	`calendar`, `CloudIcon` → `arrowsUpDown`, `BoltIcon` → `arrowUp`, `SunIcon` →
-	`success`, `StarIcon` → `check`, `FireIcon` → `error`, `GlobeAltIcon` →
-	`externalLink`, `MoonIcon` → `clock`. Only `search` is a true match; the rest
-	are stand-ins, the same ones the example blocks make, and `MegaItem.icon` is
-	an `IconName` rather than upstream's `IconType` because of it. Retires with
-	the icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's three `stylex.create` styles become `style` strings. StyleX may
 	not be imported from a `.svelte` file, and a scoped `<style>` class never
@@ -40,6 +36,11 @@
 		VStack,
 		type IconName
 	} from '@astryx-svelte/core';
+	import {
+		MagnifyingGlassIcon,
+		ShoppingBagIcon,
+		ShoppingCartIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	const styles = {
 		// Cap + center the page body so wide screens show whitespace gutters.
@@ -158,7 +159,7 @@
 	})}
 {/snippet}
 
-{#snippet shoppingBagIcon()}<Icon icon="stop" size="sm" />{/snippet}
+{#snippet shoppingBagIcon()}<Icon icon={ShoppingBagIcon} size="sm" />{/snippet}
 {#snippet logo()}<NavIcon icon={shoppingBagIcon} />{/snippet}
 
 {#snippet heading()}
@@ -172,8 +173,8 @@
 	<TopNavItem label="Service" href="#" />
 {/snippet}
 
-{#snippet magnifyingGlassIcon()}<Icon icon="search" size="sm" />{/snippet}
-{#snippet shoppingCartIcon()}<Icon icon="checkDouble" size="sm" />{/snippet}
+{#snippet magnifyingGlassIcon()}<Icon icon={MagnifyingGlassIcon} size="sm" />{/snippet}
+{#snippet shoppingCartIcon()}<Icon icon={ShoppingCartIcon} size="sm" />{/snippet}
 <!-- `Badge.label` is `string | Snippet` here; upstream's `label={3}` is `ReactNode`. -->
 {#snippet cartCount()}<Badge label="3" />{/snippet}
 

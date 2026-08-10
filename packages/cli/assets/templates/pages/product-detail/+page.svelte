@@ -2,13 +2,13 @@
 	Ported from upstream's `assets/templates/pages/product-detail/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`MinusIcon` → `close`, `PlusIcon` → `check` (the registry ships no plus —
-	TODO.md records the gap), outline `StarIcon` → `check`, solid `StarIcon` →
-	`success`. None is a true match, and the 28-name registry cannot keep four
-	glyphs distinct — `check` stands in twice over, so the increment button and
-	an unfilled rating star draw the same glyph. Retires with the icon registry
-	(TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `StarRating`, `ImageGallery` and `ProductInfo` are components; a
 	page template is a single `+page.svelte` (the CLI copies `PAGE_SOURCE_FILE`
@@ -26,7 +26,6 @@
 		AspectRatio,
 		Badge,
 		Button,
-		Card,
 		Center,
 		Collapsible,
 		CollapsibleGroup,
@@ -44,6 +43,8 @@
 		Text,
 		VStack
 	} from '@astryx-svelte/core';
+	import { MinusIcon, PlusIcon, StarIcon } from '@fvilers/heroicons-svelte/24/outline';
+	import { StarIcon as StarIconSolid } from '@fvilers/heroicons-svelte/24/solid';
 
 	// Custom CSS here is limited to what Astryx components can't express today:
 	// - image fill + corner radius (no Image primitive — #2582)
@@ -118,10 +119,10 @@
 	{@const empty = 5 - filled}
 	<HStack gap={1} vAlign="center">
 		{#each Array.from({ length: filled }) as _, i (`full-${i}`)}
-			<Icon icon="success" size="sm" />
+			<Icon icon={StarIconSolid} size="sm" />
 		{/each}
 		{#each Array.from({ length: empty }) as _, i (`empty-${i}`)}
-			<Icon icon="check" size="sm" />
+			<Icon icon={StarIcon} size="sm" />
 		{/each}
 		<Text type="body" color="secondary">{rating} ({count})</Text>
 	</HStack>
@@ -156,8 +157,8 @@
 {/snippet}
 
 <!-- ─── Product Info ──────────────────────────────────────────────────────── -->
-{#snippet minusIcon()}<Icon icon="close" size="sm" />{/snippet}
-{#snippet plusIcon()}<Icon icon="check" size="sm" />{/snippet}
+{#snippet minusIcon()}<Icon icon={MinusIcon} size="sm" />{/snippet}
+{#snippet plusIcon()}<Icon icon={PlusIcon} size="sm" />{/snippet}
 {#snippet compositionTrigger()}<Heading level={3}>Composition</Heading>{/snippet}
 {#snippet deliveryTrigger()}<Heading level={3}>Delivery &amp; Returns</Heading>{/snippet}
 {#snippet dimensionsTrigger()}<Heading level={3}>Dimensions</Heading>{/snippet}

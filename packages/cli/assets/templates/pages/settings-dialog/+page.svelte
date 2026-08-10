@@ -2,18 +2,13 @@
 	Ported from upstream's `assets/templates/pages/settings-dialog/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here rather than inlining the SVGs, so every icon
-	is a registry substitution: `UserIcon` → `info`, `LockClosedIcon` → `stop`,
-	`ShieldCheckIcon` → `success`, `BellIcon` → `warning`, `DocumentTextIcon` →
-	`copy`, `CreditCardIcon` → `viewColumns`, `GlobeAltIcon` → `clock`,
-	`BriefcaseIcon` → `calendar`, `WrenchScrewdriverIcon` → `wrench`,
-	`ComputerDesktopIcon` → `stop`, `PencilSquareIcon` → `copy`, `ShareIcon` →
-	`externalLink`. Twelve glyphs will not fit a 28-name *semantic* registry
-	without collisions: `stop` stands in for both the padlock and the desktop,
-	and `copy` for both the document and the pencil. The sidebar's eight stay
-	distinct from one another, which is where a collision would actually read as
-	a mistake. Only `wrench` is close to a true match. Retires with the icon
-	registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `iconBox`/`headerSticky`/`contentMaxWidth`/`sideNavHeading`/
 	`dialogHeight` are `CSSProperties` objects handed to `style`; Svelte's `style`
@@ -55,6 +50,14 @@
 		VStack,
 		type IconName
 	} from '@astryx-svelte/core';
+	import {
+		ComputerDesktopIcon,
+		LockClosedIcon,
+		PencilSquareIcon,
+		ShareIcon,
+		ShieldCheckIcon,
+		WrenchScrewdriverIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	const iconBox =
 		'border-radius: var(--radius-container); ' +
@@ -210,7 +213,7 @@
 	<Divider />
 {/snippet}
 
-{#snippet hostingToolsIcon()}<Icon icon="wrench" />{/snippet}
+{#snippet hostingToolsIcon()}<Icon icon={WrenchScrewdriverIcon} />{/snippet}
 
 {#snippet legalNameInput()}
 	<TextInput
@@ -430,7 +433,7 @@
 							<VStack gap={4}>
 								<HStack gap={3} vAlign="start">
 									<Center width={48} height={48} style={iconBox}>
-										<Icon icon="stop" />
+										<Icon icon={LockClosedIcon} />
 									</Center>
 									<VStack gap={0}>
 										<Text type="body" weight="semibold" display="block">
@@ -444,7 +447,7 @@
 								<Divider />
 								<HStack gap={3} vAlign="start">
 									<Center width={48} height={48} style={iconBox}>
-										<Icon icon="copy" />
+										<Icon icon={PencilSquareIcon} />
 									</Center>
 									<VStack gap={0}>
 										<Text type="body" weight="semibold" display="block">
@@ -460,7 +463,7 @@
 								<Divider />
 								<HStack gap={3} vAlign="start">
 									<Center width={48} height={48} style={iconBox}>
-										<Icon icon="externalLink" />
+										<Icon icon={ShareIcon} />
 									</Center>
 									<VStack gap={0}>
 										<Text type="body" weight="semibold" display="block">
@@ -506,7 +509,7 @@
 									<Divider />
 									{#each DEVICE_ROWS as device, i (i)}
 										<HStack gap={3} vAlign="start">
-											<Icon icon="stop" />
+											<Icon icon={ComputerDesktopIcon} />
 											<StackItem size="fill">
 												<VStack gap={0}>
 													<HStack gap={2} vAlign="center">
@@ -562,7 +565,7 @@
 								<Card variant="muted">
 									<HStack gap={4} vAlign="start">
 										<Center width={48} height={48} style={iconBox}>
-											<Icon icon="stop" />
+											<Icon icon={LockClosedIcon} />
 										</Center>
 										<VStack gap={1}>
 											<Text type="body" weight="bold">
@@ -715,7 +718,7 @@
 								<Card variant="muted">
 									<HStack gap={4} vAlign="start">
 										<Center width={48} height={48} style={iconBox}>
-											<Icon icon="success" />
+											<Icon icon={ShieldCheckIcon} />
 										</Center>
 										<VStack gap={1}>
 											<Text type="body" weight="bold">Committed to privacy</Text>

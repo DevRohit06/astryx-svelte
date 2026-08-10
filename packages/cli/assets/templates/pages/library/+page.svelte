@@ -2,11 +2,13 @@
 	Ported from upstream's `assets/templates/pages/library/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports one Heroicon here, and it is a registry substitution:
-	`MagnifyingGlassIcon` → `search` — a true match, the only kind the 28-name
-	registry manages often. `TextInput.startIcon` is a `Snippet` rather than
-	upstream's `ReactNode | IconType`, so the caller sets the `size="sm"
-	color="secondary"` upstream applies for you.
+	The one Heroicon here is upstream's own, from `@fvilers/heroicons-svelte` —
+	the Heroicons set built for Svelte 5, keeping upstream's component names and
+	entry points.
+
+	`TextInput.startIcon` is a `Snippet` rather than upstream's
+	`ReactNode | IconType`, so the caller sets the `size="sm" color="secondary"`
+	upstream applies for you.
 
 	`OverflowList` is compositional upstream — `children` is arbitrary elements,
 	sliced through `Children.toArray`. A Svelte snippet is one opaque unit that
@@ -45,6 +47,7 @@
 		VStack,
 		type OverflowItem
 	} from '@astryx-svelte/core';
+	import { MagnifyingGlassIcon } from '@fvilers/heroicons-svelte/24/outline';
 
 	interface LibraryItem {
 		id: string;
@@ -411,7 +414,7 @@
 	</VStack>
 {/snippet}
 
-{#snippet searchIcon()}<Icon icon="search" size="sm" color="secondary" />{/snippet}
+{#snippet searchIcon()}<Icon icon={MagnifyingGlassIcon} size="sm" color="secondary" />{/snippet}
 
 {#snippet categoryToggle(cat: string)}
 	<ToggleButton label={cat} value={cat} size="lg" />

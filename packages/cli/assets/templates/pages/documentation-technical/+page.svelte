@@ -2,11 +2,13 @@
 	Ported from upstream's `assets/templates/pages/documentation-technical/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`SparklesIcon` → `wrench`, `ClipboardDocumentIcon` → `copy` (an exact match),
-	`ChevronDownIcon` → `chevronDown` (a true match). Only `wrench` is a stand-in,
-	the same one the `ChatComposer` and `ChatSendButton` examples make. Retires
-	with the icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `outlinePanel` is a `CSSProperties` const applied through the
 	`style` prop; here it is a string of the same declarations, because Svelte's
@@ -37,6 +39,11 @@
 		useMediaQuery,
 		type OutlineItem
 	} from '@astryx-svelte/core';
+	import {
+		ChevronDownIcon,
+		ClipboardDocumentIcon,
+		SparklesIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	// ---------------------------------------------------------------------------
 	// Main component
@@ -70,8 +77,8 @@
 	}
 </script>
 
-{#snippet clipboardDocumentIcon()}<Icon icon="copy" />{/snippet}
-{#snippet chevronDownIcon()}<Icon icon="chevronDown" />{/snippet}
+{#snippet clipboardDocumentIcon()}<Icon icon={ClipboardDocumentIcon} />{/snippet}
+{#snippet chevronDownIcon()}<Icon icon={ChevronDownIcon} />{/snippet}
 
 {#snippet outlineEnd()}
 	<LayoutPanel isScrollable={false} label="On this page" role="complementary" style={outlinePanel}>
@@ -102,7 +109,7 @@
 					<HStack gap={2} vAlign="center">
 						<StackItem size="fill">
 							<HStack gap={2} vAlign="center">
-								<Icon icon="wrench" size="sm" color="secondary" />
+								<Icon icon={SparklesIcon} size="sm" color="secondary" />
 								<Text type="body" weight="semibold">AI Assistance</Text>
 							</HStack>
 						</StackItem>

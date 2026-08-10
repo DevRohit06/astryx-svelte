@@ -2,15 +2,13 @@
 	Ported from upstream's `assets/templates/pages/payment-form/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here rather than inlining the SVGs, so the four
-	glyphs are registry substitutions: `CheckCircleIcon` → `success` (a true
-	match — the registry's `success` is a checkmark in a circle),
-	`ShieldCheckIcon` → `check`, `LockClosedIcon` → `eyeSlash`, `TruckIcon` →
-	`arrowDown`. The last three are stand-ins: the registry ships 28 semantic
-	names and no shield, padlock or truck, so the shield keeps its checkmark and
-	loses the shield, the padlock borrows the concealment glyph, and the
-	delivery truck borrows the incoming-arrow. Retires with the icon registry
-	(TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Other translations:
 	  - `Layout content={<…>}` → a `content` snippet passed as that prop.
@@ -56,6 +54,12 @@
 		VStack,
 		useMediaQuery
 	} from '@astryx-svelte/core';
+	import {
+		CheckCircleIcon,
+		LockClosedIcon,
+		ShieldCheckIcon,
+		TruckIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	// ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -258,7 +262,7 @@
 {/snippet}
 
 {#snippet freeShippingIcon()}
-	<Icon icon="arrowDown" size="sm" />
+	<Icon icon={TruckIcon} size="sm" />
 {/snippet}
 
 {#snippet content()}
@@ -668,15 +672,15 @@
 								<VStack gap={4}>
 									<HStack gap={5} hAlign="center" wrap="wrap">
 										<HStack gap={1} vAlign="center">
-											<Icon icon="check" size="sm" color="secondary" />
+											<Icon icon={ShieldCheckIcon} size="sm" color="secondary" />
 											<Text type="supporting" color="secondary">Secure Payment</Text>
 										</HStack>
 										<HStack gap={1} vAlign="center">
-											<Icon icon="eyeSlash" size="sm" color="secondary" />
+											<Icon icon={LockClosedIcon} size="sm" color="secondary" />
 											<Text type="supporting" color="secondary">SSL Encrypted</Text>
 										</HStack>
 										<HStack gap={1} vAlign="center">
-											<Icon icon="success" size="sm" color="secondary" />
+											<Icon icon={CheckCircleIcon} size="sm" color="secondary" />
 											<Text type="supporting" color="secondary">Free Returns</Text>
 										</HStack>
 									</HStack>

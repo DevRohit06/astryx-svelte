@@ -2,9 +2,13 @@
 	Ported from upstream's `assets/templates/pages/product-gallery/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons' `ArrowRightIcon`. The icon registry ships no
-	right-pointing arrow, so this is a registry substitution to `chevronRight` —
-	the same stand-in the docs examples make. Retires with the icon registry.
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	`ProductCard` is a local sub-component upstream; here it is a snippet.
 -->
@@ -21,6 +25,7 @@
 		Text,
 		VStack
 	} from '@astryx-svelte/core';
+	import { ArrowRightIcon } from '@fvilers/heroicons-svelte/24/outline';
 
 	// ─── Styles ─────────────────────────────────────────────────────────────────
 	// The only custom CSS is the image fill — there is no Image primitive to
@@ -92,7 +97,7 @@
 	const fmt = (n: number) => `$${n.toFixed(2)}`;
 </script>
 
-{#snippet arrowRightIcon()}<Icon icon="chevronRight" color="inherit" />{/snippet}
+{#snippet arrowRightIcon()}<Icon icon={ArrowRightIcon} color="inherit" />{/snippet}
 
 <!-- ─── Product Card ─────────────────────────────────────────────────────────── -->
 

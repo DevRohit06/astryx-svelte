@@ -5,9 +5,13 @@
 	Two upstream dependencies have no Svelte counterpart, and both are handled
 	the way this repo already handles them elsewhere.
 
-	1. Icons. Upstream imports Heroicons; the registry substitutions are
-	   `ArrowUpIcon` → `arrowUp` and `ArrowDownIcon` → `arrowDown`, which are
-	   both true matches rather than stand-ins. Retires with the icon registry.
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	2. Charts. Upstream draws with `recharts`, a React-only library — there is
 	   no Svelte build of it, and adding one is not something a scaffolded

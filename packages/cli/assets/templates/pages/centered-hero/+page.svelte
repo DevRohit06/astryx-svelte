@@ -2,9 +2,13 @@
 	Ported from upstream's `assets/templates/pages/centered-hero/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons' `ArrowRightIcon`. The icon registry ships no
-	right-pointing arrow, so this is a registry substitution to `chevronRight` —
-	the same stand-in the docs examples make. Retires with the icon registry.
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's two `CSSProperties` objects become inline `style` strings; the
 	values are unchanged, and `maxWidth: 1200` picks up React's implicit `px`.
@@ -22,6 +26,7 @@
 		Text,
 		VStack
 	} from '@astryx-svelte/core';
+	import { ArrowRightIcon } from '@fvilers/heroicons-svelte/20/solid';
 
 	const IMAGE_URL = 'https://lookaside.facebook.com/assets/astryx/light-scene-horizontal-1.png';
 
@@ -29,7 +34,7 @@
 	const heroFrame = 'max-width: 1200px; margin-inline: auto; border-radius: var(--radius-page);';
 </script>
 
-{#snippet arrowRightIcon()}<Icon icon="chevronRight" size="sm" color="inherit" />{/snippet}
+{#snippet arrowRightIcon()}<Icon icon={ArrowRightIcon} size="sm" color="inherit" />{/snippet}
 
 {#snippet content()}
 	<LayoutContent padding={6}>

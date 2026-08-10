@@ -2,22 +2,20 @@
 	Ported from upstream's `assets/templates/pages/theme-showcase/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Icons. Upstream imports `lucide-react`, which has no Svelte build and is not
-	a dependency a scaffolded template may assume, so every glyph is a name from
-	core's `Icon` registry — the same substitution the `docs/` examples make for
-	Heroicons. True matches: `Search` → `search`, `Mic` → `microphone`,
-	`X` → `close`. Established stand-ins: `Folder` → `calendar`,
-	`User` → `info`, `Lock` → `stop`. The rest are stand-ins picked here, with
-	their collisions named: `Plus` → `check`; `Tag` → `funnel`;
-	`MapPin` → `info` (collides with `User`); `List` → `menu`;
-	`LayoutGrid` → `viewColumns`; `ShoppingBag` and `CreditCard` → `copy`;
-	`Banknote` and `Wallet` → `wrench`; `Smartphone` → `stop` (collides with
-	`Lock`); `Download` → `arrowDown`. Sizes map onto the `Icon` scale:
-	`size={16}` → `size="sm"` (16px) and `size={20}` → `size="md"` (20px);
-	`size={18}` has no step, so the two view-toggle buttons round to `md`. The
-	three filter `Selector`s pass the registry *name* rather than a snippet —
-	`Selector.startIcon` accepts `IconName` and renders it at `size="sm"`, which
-	is upstream's 16 exactly. Retires with the icon registry.
+	Icons. This page is the one that draws with Lucide rather than Heroicons, as
+	upstream's does: `@lucide/svelte` is `lucide-react`'s Svelte build and the
+	names match, so the import below is upstream's with the package name
+	changed. It is already this repo's own dependency — the shipped themes build
+	their icon registries from it.
+
+	Sizes map onto the `Icon` scale: `size={16}` → `size="sm"` (16px) and
+	`size={20}` → `size="md"` (20px); `size={18}` has no step, so the two
+	view-toggle buttons round to `md`.
+
+	`Selector.startIcon` is `IconName | Snippet` here where upstream's takes the
+	element, so the three inventory filters go through the `Snippet` arm. A
+	snippet does not exist while `<script>` runs, so `INVENTORY_FILTERS` is
+	`$derived.by` — the same move the column arrays in this file make.
 
 	Four shape changes the Svelte port forces.
 
@@ -134,9 +132,27 @@
 		pixel,
 		proportional,
 		useAppShellMobile,
-		type IconName,
 		type TableColumn
 	} from '@astryx-svelte/core';
+	import {
+		Banknote,
+		CreditCard,
+		Download,
+		Folder,
+		LayoutGrid,
+		List,
+		Lock,
+		MapPin,
+		Mic,
+		Plus,
+		Search,
+		ShoppingBag,
+		Smartphone,
+		Tag,
+		User,
+		Wallet,
+		X
+	} from '@lucide/svelte';
 
 	// Styles passed to Astryx components via their `style` prop. Astryx components
 	// forward the DOM `style` prop, so these work with no CSS compiler — in
@@ -505,30 +521,30 @@
 	interface FilterSpec {
 		label: string;
 		placeholder: string;
-		startIcon: IconName;
+		startIcon: Snippet;
 		options: string[];
 	}
 
-	const INVENTORY_FILTERS: FilterSpec[] = [
+	const INVENTORY_FILTERS = $derived.by<FilterSpec[]>(() => [
 		{
 			label: 'Categories',
 			placeholder: 'Categories',
-			startIcon: 'calendar',
+			startIcon: folderIcon16,
 			options: ['Wearables', 'Audio', 'Bags', 'Drinkware', 'Home']
 		},
 		{
 			label: 'Locations',
 			placeholder: 'Locations',
-			startIcon: 'info',
+			startIcon: mapPinIcon16,
 			options: ['Aisle 1', 'Aisle 2', 'Aisle 3', 'Aisle 4', 'Aisle 5', 'Aisle 6']
 		},
 		{
 			label: 'Tags',
 			placeholder: 'Tags',
-			startIcon: 'funnel',
+			startIcon: tagIcon16,
 			options: ['New', 'Popular', 'Limited', 'Leather', 'Drinkware', 'Home']
 		}
-	];
+	]);
 
 	const inventoryColumns = $derived.by<TableColumn<InventoryRow>[]>(() => [
 		{
@@ -584,24 +600,26 @@
 <!-- ─── Icons ─────────────────────────────────────────────────────────────────
      One snippet per upstream glyph + size. See the header comment for the map. -->
 
-{#snippet searchIcon20()}<Icon icon="search" size="md" />{/snippet}
-{#snippet userIcon20()}<Icon icon="info" size="md" />{/snippet}
-{#snippet shoppingBagIcon20()}<Icon icon="copy" size="md" />{/snippet}
-{#snippet creditCardIcon20()}<Icon icon="copy" size="md" />{/snippet}
-{#snippet smartphoneIcon20()}<Icon icon="stop" size="md" />{/snippet}
-{#snippet walletIcon20()}<Icon icon="wrench" size="md" />{/snippet}
-{#snippet listIcon18()}<Icon icon="menu" size="md" />{/snippet}
-{#snippet layoutGridIcon18()}<Icon icon="viewColumns" size="md" />{/snippet}
-{#snippet plusIcon16()}<Icon icon="check" size="sm" />{/snippet}
-{#snippet searchIcon16()}<Icon icon="search" size="sm" />{/snippet}
-{#snippet tagIcon16()}<Icon icon="funnel" size="sm" />{/snippet}
-{#snippet creditCardIcon16()}<Icon icon="copy" size="sm" />{/snippet}
-{#snippet lockIcon16()}<Icon icon="stop" size="sm" />{/snippet}
-{#snippet downloadIcon16()}<Icon icon="arrowDown" size="sm" />{/snippet}
-{#snippet closeIcon16()}<Icon icon="close" size="sm" />{/snippet}
-{#snippet micIcon16()}<Icon icon="microphone" size="sm" />{/snippet}
-{#snippet shoppingBagIcon16()}<Icon icon="copy" size="sm" />{/snippet}
-{#snippet banknoteIcon16()}<Icon icon="wrench" size="sm" />{/snippet}
+{#snippet searchIcon20()}<Icon icon={Search} size="md" />{/snippet}
+{#snippet userIcon20()}<Icon icon={User} size="md" />{/snippet}
+{#snippet shoppingBagIcon20()}<Icon icon={ShoppingBag} size="md" />{/snippet}
+{#snippet creditCardIcon20()}<Icon icon={CreditCard} size="md" />{/snippet}
+{#snippet smartphoneIcon20()}<Icon icon={Smartphone} size="md" />{/snippet}
+{#snippet walletIcon20()}<Icon icon={Wallet} size="md" />{/snippet}
+{#snippet listIcon18()}<Icon icon={List} size="md" />{/snippet}
+{#snippet layoutGridIcon18()}<Icon icon={LayoutGrid} size="md" />{/snippet}
+{#snippet plusIcon16()}<Icon icon={Plus} size="sm" />{/snippet}
+{#snippet searchIcon16()}<Icon icon={Search} size="sm" />{/snippet}
+{#snippet tagIcon16()}<Icon icon={Tag} size="sm" />{/snippet}
+{#snippet folderIcon16()}<Icon icon={Folder} size="sm" />{/snippet}
+{#snippet mapPinIcon16()}<Icon icon={MapPin} size="sm" />{/snippet}
+{#snippet creditCardIcon16()}<Icon icon={CreditCard} size="sm" />{/snippet}
+{#snippet lockIcon16()}<Icon icon={Lock} size="sm" />{/snippet}
+{#snippet downloadIcon16()}<Icon icon={Download} size="sm" />{/snippet}
+{#snippet closeIcon16()}<Icon icon={X} size="sm" />{/snippet}
+{#snippet micIcon16()}<Icon icon={Mic} size="sm" />{/snippet}
+{#snippet shoppingBagIcon16()}<Icon icon={ShoppingBag} size="sm" />{/snippet}
+{#snippet banknoteIcon16()}<Icon icon={Banknote} size="sm" />{/snippet}
 
 <!-- ─── Store preview ─────────────────────────────────────────────────────── -->
 

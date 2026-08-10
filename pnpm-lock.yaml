@@ -126,6 +126,12 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.7.0(jiti@2.7.0))
+      '@fvilers/heroicons-svelte':
+        specifier: 2.1.5-fix.3
+        version: 2.1.5-fix.3(svelte@5.56.7(@typescript-eslint/types@8.65.0))
+      '@lucide/svelte':
+        specifier: ^1.25.0
+        version: 1.30.0(svelte@5.56.7(@typescript-eslint/types@8.65.0))
       '@types/node':
         specifier: ^22
         version: 22.20.1
@@ -913,6 +919,11 @@ packages:
 
   '@formatjs/icu-skeleton-parser@2.1.11':
     resolution: {integrity: sha512-j8cUmOJzVgkHuS0QiQ6ga76UIoLOFSAMWhs7aZJztH3aAdCOAE6vpC8KVvFB4cU10ON0y2/5oOVmPJ43s2lTwA==}
+
+  '@fvilers/heroicons-svelte@2.1.5-fix.3':
+    resolution: {integrity: sha512-YULvWz+ik0ZHTUlLp4Psh1lI2B2X2ndXnK36rmVSHMe5bz8tTWSU5ODcDTcN1Ddx7f9KOQ9zVOBrx1vJvidpxQ==}
+    peerDependencies:
+      svelte: ^5.0.0
 
   '@humanfs/core@0.19.2':
     resolution: {integrity: sha512-UhXNm+CFMWcbChXywFwkmhqjs3PRCmcSa/hfBgLIb7oQ5HNb1wS0icWsGtSAUNgefHeI+eBrA8I1fxmbHsGdvA==}
@@ -2856,6 +2867,10 @@ snapshots:
       '@formatjs/icu-skeleton-parser': 2.1.11
 
   '@formatjs/icu-skeleton-parser@2.1.11': {}
+
+  '@fvilers/heroicons-svelte@2.1.5-fix.3(svelte@5.56.7(@typescript-eslint/types@8.65.0))':
+    dependencies:
+      svelte: 5.56.7(@typescript-eslint/types@8.65.0)
 
   '@humanfs/core@0.19.2':
     dependencies:

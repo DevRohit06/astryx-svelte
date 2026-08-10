@@ -2,15 +2,13 @@
 	Ported from upstream's `assets/templates/pages/detail-page/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`ArrowLeftIcon` → `chevronLeft`, `CalendarIcon` → `calendar`, `FunnelIcon` →
-	`funnel`, `ViewColumnsIcon` → `viewColumns`, `HandThumbUpIcon` → `success`,
-	`FlagIcon` → `warning`, `HeartIcon` → `info`, `PencilSquareIcon` → `copy`.
-	The first four are true matches (`chevronLeft` a near-direct swap); the last
-	four are stand-ins the 28-name registry cannot do better on — `info` is the
-	registry's general-purpose filler and `copy` repeats the substitution the
-	`messaging-shell` template makes for the same pencil glyph. Retires with the
-	icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `Bullet`, `PageHeader`, `ItemsCard`, `InvoiceCard`,
 	`TimelineSection`, `PanelContent` and `RightPanel` are components; a page
@@ -57,6 +55,16 @@
 		VStack,
 		useMediaQuery
 	} from '@astryx-svelte/core';
+	import {
+		ArrowLeftIcon,
+		CalendarIcon,
+		FlagIcon,
+		FunnelIcon,
+		HandThumbUpIcon,
+		HeartIcon,
+		PencilSquareIcon,
+		ViewColumnsIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	// ─── Styles ─────────────────────────────────────────────────────────────────
 
@@ -182,7 +190,7 @@
 {/snippet}
 
 <!-- ─── Page Header ───────────────────────────────────────────────────────── -->
-{#snippet viewColumnsIcon()}<Icon icon="viewColumns" size="sm" />{/snippet}
+{#snippet viewColumnsIcon()}<Icon icon={ViewColumnsIcon} size="sm" />{/snippet}
 
 {#snippet pageHeader()}
 	<LayoutHeader hasDivider padding={4}>
@@ -192,7 +200,7 @@
 					<VStack gap={0}>
 						<Link href="#" color="secondary">
 							<HStack gap={1} vAlign="center">
-								<Icon icon="chevronLeft" size="sm" color="inherit" />
+								<Icon icon={ArrowLeftIcon} size="sm" color="inherit" />
 								All orders
 							</HStack>
 						</Link>
@@ -213,12 +221,12 @@
 								</HStack>
 								<HStack gap={1} vAlign="center">
 									{@render bullet()}
-									<Icon icon="calendar" size="sm" color="secondary" />
+									<Icon icon={CalendarIcon} size="sm" color="secondary" />
 									<Text type="body" maxLines={1}>02/23/2026</Text>
 								</HStack>
 								<HStack gap={1} vAlign="center">
 									{@render bullet()}
-									<Icon icon="warning" size="sm" color="secondary" />
+									<Icon icon={FlagIcon} size="sm" color="secondary" />
 									<Text type="body" maxLines={1}>Needs attention</Text>
 								</HStack>
 								<HStack gap={1} vAlign="center">
@@ -410,7 +418,7 @@
 {/snippet}
 
 <!-- ─── Timeline ──────────────────────────────────────────────────────────── -->
-{#snippet funnelIcon()}<Icon icon="funnel" />{/snippet}
+{#snippet funnelIcon()}<Icon icon={FunnelIcon} />{/snippet}
 
 {#snippet timelineSection()}
 	<Section>
@@ -437,7 +445,7 @@
 												<VStack gap={1}>
 													{#each item.changes as change, j (j)}
 														<HStack gap={2} vAlign="center">
-															<Icon icon="copy" size="sm" color="secondary" />
+															<Icon icon={PencilSquareIcon} size="sm" color="secondary" />
 															<Text type="supporting" color="secondary">{change}</Text>
 														</HStack>
 													{/each}
@@ -447,8 +455,8 @@
 									</Card>
 									<HStack gap={3} vAlign="center">
 										<HStack gap={1} vAlign="center">
-											<Icon icon="success" size="xsm" color="secondary" />
-											<Icon icon="info" size="xsm" color="secondary" />
+											<Icon icon={HandThumbUpIcon} size="xsm" color="secondary" />
+											<Icon icon={HeartIcon} size="xsm" color="secondary" />
 											<Text type="supporting" color="secondary">{item.reactions}</Text>
 										</HStack>
 										<Text type="supporting" color="secondary">Like</Text>

@@ -2,10 +2,13 @@
 	Ported from upstream's `assets/templates/pages/incident-console/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports two Heroicons, so both are registry substitutions:
-	`BellAlertIcon` → `warning` and `PlusIcon` → `check` (the registry ships no
-	plus — the same stand-in `shell-side-nav` takes, and TODO.md records the
-	gap). Neither is a true match. Retires with the icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	`useResizable`, `useMediaQuery` and `usePowerSearchConfig` all take their
 	config as a **getter** here, against upstream's plain value, and all three
@@ -72,6 +75,7 @@
 		useResizable,
 		type PowerSearchFilter
 	} from '@astryx-svelte/core';
+	import { BellAlertIcon, PlusIcon } from '@fvilers/heroicons-svelte/24/outline';
 
 	const styles: Record<string, string> = {
 		contentFill: 'height: 100%; min-height: 0;',
@@ -346,8 +350,8 @@
 	const openCount = INCIDENTS.filter((incident) => incident.status === 'investigating').length;
 </script>
 
-{#snippet bellAlertIcon()}<Icon icon="warning" size="lg" />{/snippet}
-{#snippet plusIcon()}<Icon icon="check" size="sm" />{/snippet}
+{#snippet bellAlertIcon()}<Icon icon={BellAlertIcon} size="lg" />{/snippet}
+{#snippet plusIcon()}<Icon icon={PlusIcon} size="sm" />{/snippet}
 
 {#snippet incidentRows(
 	incidents: Incident[],

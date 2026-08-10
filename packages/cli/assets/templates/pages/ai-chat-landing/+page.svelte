@@ -2,14 +2,13 @@
 	Ported from upstream's `assets/templates/pages/ai-chat-landing/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons, which has no Svelte build, so every icon is a
-	registry substitution: `MagnifyingGlassIcon` → `search` and `ClockIcon` →
-	`clock` are true matches; the rest are stand-ins with no registry glyph —
-	`Cog6ToothIcon` → `wrench`, `AtSymbolIcon` → `moreHorizontal`, `SparklesIcon`
-	→ `info`, `PencilSquareIcon` → `copy`, `CodeBracketIcon` → `chevronsRight`,
-	`LockClosedIcon` → `eyeSlash`, `LightBulbIcon` → `warning`. `SparklesIcon`
-	and `LightBulbIcon` land on `info`/`warning` purely for shape; both read as
-	status glyphs they are not. Retires with the icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's three `CSSProperties` consts become `style` strings under the same
 	names and key order, because Svelte's `style` prop is a string.
@@ -50,6 +49,7 @@
 		type ChatComposerTrigger,
 		type SearchableItem
 	} from '@astryx-svelte/core';
+	import { AtSymbolIcon, Cog6ToothIcon, SparklesIcon } from '@fvilers/heroicons-svelte/24/outline';
 
 	// Fill the content area so the greeting and composer stay vertically centered.
 	const pageStyle = 'min-height: 100%;';
@@ -331,7 +331,7 @@
 	</ChatComposerDrawer>
 {/snippet}
 
-{#snippet referenceIcon()}<Icon icon="moreHorizontal" size="sm" />{/snippet}
+{#snippet referenceIcon()}<Icon icon={AtSymbolIcon} size="sm" />{/snippet}
 
 {#snippet headerActions()}
 	<DropdownMenu
@@ -357,7 +357,7 @@
 
 {#snippet activeModeIcon()}<Icon icon={activeMode.icon} size="sm" />{/snippet}
 {#snippet activeModeLabel()}{activeMode.label}{/snippet}
-{#snippet settingsIcon()}<Icon icon="wrench" size="sm" />{/snippet}
+{#snippet settingsIcon()}<Icon icon={Cog6ToothIcon} size="sm" />{/snippet}
 {#snippet settingsLabel()}Settings{/snippet}
 
 {#snippet footerActions()}
@@ -423,7 +423,7 @@
 			<!-- Greeting -->
 			<VStack gap={1}>
 				<HStack gap={2} vAlign="center">
-					<Icon icon="info" size="md" color="accent" />
+					<Icon icon={SparklesIcon} size="md" color="accent" />
 					<Text type="large" as="h2">Hi, Andrew</Text>
 				</HStack>
 				<Text type="display-2" as="h1">Where should we start?</Text>

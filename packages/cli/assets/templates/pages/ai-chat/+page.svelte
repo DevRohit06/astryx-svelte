@@ -2,13 +2,13 @@
 	Ported from upstream's `assets/templates/pages/ai-chat/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons, which has no Svelte build, so every icon is a
-	registry substitution: `XMarkIcon` → `close` and `ChevronRightIcon` →
-	`chevronRight` are true matches, `ClipboardDocumentIcon` → `copy` is near
-	enough; the rest are stand-ins with no registry glyph — `DocumentTextIcon` →
-	`menu` (ruled lines, but it reads as a hamburger), `ShareIcon` →
-	`externalLink`, `AtSymbolIcon` → `moreHorizontal`, `PaperClipIcon` →
-	`arrowUp`. Retires with the icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `CSSProperties` consts become `style` strings under the same names
 	and key order, because Svelte's `style` prop is a string; that includes
@@ -73,6 +73,15 @@
 		VStack,
 		useResizable
 	} from '@astryx-svelte/core';
+	import {
+		AtSymbolIcon,
+		ChevronRightIcon,
+		ClipboardDocumentIcon,
+		DocumentTextIcon,
+		PaperClipIcon,
+		ShareIcon,
+		XMarkIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	// Below this width the split-pane collapses to a single chat column. Shared by
 	// the CSS container query and the JS check in openArtifact so they can't drift.
@@ -228,9 +237,9 @@ The fix is to catch \`TokenExpiredError\` specifically and attempt a refresh bef
 
 <!-- Artifact subviews -->
 
-{#snippet copyIcon()}<Icon icon="copy" size="sm" />{/snippet}
-{#snippet shareIcon()}<Icon icon="externalLink" size="sm" />{/snippet}
-{#snippet closeIcon()}<Icon icon="close" size="sm" />{/snippet}
+{#snippet copyIcon()}<Icon icon={ClipboardDocumentIcon} size="sm" />{/snippet}
+{#snippet shareIcon()}<Icon icon={ShareIcon} size="sm" />{/snippet}
+{#snippet closeIcon()}<Icon icon={XMarkIcon} size="sm" />{/snippet}
 
 <!--
 	Header actions: version menu, copy, share. Pass `onClose` for the desktop
@@ -301,7 +310,7 @@ The fix is to catch \`TokenExpiredError\` specifically and attempt a refresh bef
 		style={artifactCard}
 	>
 		<HStack gap={3} vAlign="center" width="100%">
-			<Icon icon="menu" size="md" color="secondary" />
+			<Icon icon={DocumentTextIcon} size="md" color="secondary" />
 			<StackItem size="fill">
 				<VStack gap={0}>
 					<Text type="label" weight="semibold">
@@ -310,7 +319,7 @@ The fix is to catch \`TokenExpiredError\` specifically and attempt a refresh bef
 					<Text type="supporting" color="secondary">Document</Text>
 				</VStack>
 			</StackItem>
-			<Icon icon="chevronRight" size="sm" color="secondary" />
+			<Icon icon={ChevronRightIcon} size="sm" color="secondary" />
 		</HStack>
 	</ClickableCard>
 {/snippet}
@@ -318,8 +327,8 @@ The fix is to catch \`TokenExpiredError\` specifically and attempt a refresh bef
 <!-- Composer -->
 
 {#snippet composerInputSlot()}<ChatComposerInput />{/snippet}
-{#snippet mentionIcon()}<Icon icon="moreHorizontal" size="sm" />{/snippet}
-{#snippet attachIcon()}<Icon icon="arrowUp" size="sm" />{/snippet}
+{#snippet mentionIcon()}<Icon icon={AtSymbolIcon} size="sm" />{/snippet}
+{#snippet attachIcon()}<Icon icon={PaperClipIcon} size="sm" />{/snippet}
 
 {#snippet composerHeaderActions()}
 	<Button label="Mention" variant="ghost" size="sm" icon={mentionIcon} isIconOnly />
@@ -395,7 +404,7 @@ The fix is to catch \`TokenExpiredError\` specifically and attempt a refresh bef
 
 {#snippet toolbarStartContent()}
 	<HStack gap={3} vAlign="center">
-		<Icon icon="menu" size="sm" color="secondary" />
+		<Icon icon={DocumentTextIcon} size="sm" color="secondary" />
 		<VStack gap={0}>
 			<Text type="label" weight="semibold">
 				{ARTIFACT_TITLE}
