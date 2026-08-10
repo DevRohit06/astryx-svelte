@@ -2,7 +2,7 @@
 
 Every package in this workspace carries the version of the upstream
 [Astryx](https://astryx.atmeta.com/) release it ports, and they are published together. So this one
-file covers all nine: a version here means "at parity with Astryx of the same number", and the
+file covers all ten: a version here means "at parity with Astryx of the same number", and the
 per-package sections below say only what differs between them.
 
 ## 0.3.0

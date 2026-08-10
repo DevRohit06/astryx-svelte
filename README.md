@@ -15,9 +15,9 @@ Svelte 4 compatibility mode.
 | [`@astryx-svelte/theme-*`](packages/themes)                | Eight theme packages, `neutral` being the default Astryx look             |
 | [`docs`](docs)                                             | The documentation site, built out of the same docs the CLI serves         |
 
-Nine packages ship together at **`0.3.0`**, which is the Astryx release they port — the versions
+Ten packages ship together at **`0.3.0`**, which is the Astryx release they port — the versions
 track upstream's rather than counting this port's own history, so `0.3.0` here means "at parity
-with Astryx 0.3.0". `docs` is the tenth workspace package and is not published.
+with Astryx 0.3.0". `docs` is the eleventh workspace package and is not published.
 
 ```bash
 npm install @astryx-svelte/core @astryx-svelte/theme-neutral @stylexjs/stylex
