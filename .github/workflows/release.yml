@@ -36,6 +36,15 @@ jobs:
           cache: pnpm
           # Writes an .npmrc that reads NODE_AUTH_TOKEN. pnpm honours npm's
           # config hierarchy, so `pnpm publish` picks the credential up from it.
+          #
+          # NPM_TOKEN must be an **Automation** token (classic) or a **Granular
+          # Access Token** with write access to the @astryx-svelte scope. A
+          # classic *Publish* token does not work on an account with 2FA
+          # enforced for writes: the publish authenticates, uploads the tarball,
+          # signs the provenance statement, and only then fails with `EOTP —
+          # This operation requires a one-time password`. Nothing is published
+          # when that happens, but it fails at the last possible step, after the
+          # full gate has run.
           registry-url: 'https://registry.npmjs.org'
 
       - name: Resolve the version being released
