@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -45,11 +46,12 @@
 	});
 </script>
 
+<!-- Nothing should index a shim that exists only to forward, but it should still
+	 be followed so the destination is discovered. -->
+<Seo title="{data.slug} · Templates" noindex />
+
 <svelte:head>
-	<title>{data.slug} · Templates · astryx-svelte</title>
 	<meta http-equiv="refresh" content="0;url={relative}" />
-	<!-- Nothing should index a shim that exists only to forward. -->
-	<meta name="robots" content="noindex" />
 </svelte:head>
 
 <Section padding={6}>

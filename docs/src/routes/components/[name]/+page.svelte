@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import {
@@ -117,12 +118,16 @@
 	}
 </script>
 
-<svelte:head>
-	<title>{component.displayName} · astryx-svelte</title>
-	{#if component.usage?.description}
-		<meta name="description" content={component.usage.description.split('\n')[0]} />
-	{/if}
-</svelte:head>
+<!--
+	The description falls back rather than going missing: a component whose
+	`.doc.mjs` has no usage prose would otherwise inherit the site-wide default,
+	which says nothing about the component someone searched for.
+-->
+<Seo
+	title="{component.displayName} — Svelte 5 component"
+	description={component.usage?.description?.split('\n')[0] ??
+		`${component.displayName} for Svelte 5, ported 1:1 from Meta's Astryx design system. Props, examples, accessibility notes and theming.`}
+/>
 
 {#snippet overview()}
 	<VStack gap={8}>

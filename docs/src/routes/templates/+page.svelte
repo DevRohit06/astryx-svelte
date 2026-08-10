@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
 	import { replaceState } from '$app/navigation';
 	import { page } from '$app/state';
 	import {
@@ -212,13 +213,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Templates · astryx-svelte</title>
-	<meta
-		name="description"
-		content="Ready-to-use page templates from the Astryx template set, transcribed to Svelte and previewable live."
-	/>
-</svelte:head>
+<Seo
+	title="Page Templates"
+	description="Full page layouts built from Astryx components — dashboards, chat, settings, auth and more. Preview them live, then scaffold one with a single CLI command."
+/>
 
 <Section maxWidth={1200} padding={6} style="margin-inline: auto;">
 	<VStack gap={10}>

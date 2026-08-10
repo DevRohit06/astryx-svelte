@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
 	import {
 		Card,
 		CodeBlock,
@@ -96,13 +97,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Themes · astryx-svelte</title>
-	<meta
-		name="description"
-		content="Browse and preview every astryx-svelte theme and see how design tokens, type, and components restyle across the library."
-	/>
-</svelte:head>
+<Seo
+	title="Themes"
+	description="Eight installable themes for Svelte 5 — swap one import and 184 design tokens restyle every component. Preview each one live before you install."
+/>
 
 <Section maxWidth={1200} padding={6} style="margin-inline: auto;">
 	<VStack gap={10}>

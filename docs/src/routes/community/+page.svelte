@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
 	import {
 		Button,
 		Card,
@@ -415,13 +416,10 @@
 	}
 </script>
 
-<svelte:head>
-	<title>Community · astryx-svelte</title>
-	<meta
-		name="description"
-		content="Contribute to the Svelte port of Astryx: file issues, port a page template, or build a theme. Unofficial and not affiliated with Meta."
-	/>
-</svelte:head>
+<Seo
+	title="Community"
+	description="Help port Astryx to Svelte: claim a component, port a page template, or build a theme. Every contribution is checked against upstream by the same oracles CI runs."
+/>
 
 <!--
 	The four marks the resource rows draw.
