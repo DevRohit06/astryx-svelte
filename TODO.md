@@ -3552,6 +3552,16 @@ upstream's type admits its own icon set and ours admitted nothing. `IconType` is
 
 Non-obvious things established by building it. Each would otherwise be rediscovered the hard way.
 
+- **The generator's output depended on `readdirSync` order, and therefore on the OS** (found
+  2026-08-10, on the first CI run that ever reached the docs test step). Four emitted docs —
+  `HStack`, `VStack`, `StackItem`, `VisuallyHidden` — differed between Windows and Ubuntu in exactly
+  one position: where `'map'` sits inside the `as` prop's 120-member union of HTML tag names. That is
+  TypeScript's union member order, which follows the order the checker reached the declarations,
+  which followed filesystem order. **Reversing the declaration walk makes 35 docs stale**, so the
+  four are the subset where two platforms happened to disagree rather than the size of the exposure.
+  All three walks (`collectDeclarations`, `findDocModules`, `findEmitted`) now sort by name, with a
+  code-unit comparison rather than `localeCompare`, which is locale-dependent — the same class of
+  problem one layer up. Generated-and-committed output has to be a function of the tree alone
 - **Consumers must run the StyleX compiler.** Covered above. The two settings that are easy to miss
   are `optimizeDeps.exclude` and `ssr.noExternal`; both fail _silently_ (unstyled output, no error)
 - **Token names are literal, not hashed.** `tokens.stylex.ts` keys start with `--`, so StyleX emits
