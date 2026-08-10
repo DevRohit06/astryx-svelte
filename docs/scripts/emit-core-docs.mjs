@@ -485,6 +485,39 @@ export async function emitCoreDocs({ check = false, quiet = false } = {}) {
 	const existing = findEmitted(CORE_SRC);
 	const stale = existing.filter((file) => !planned.has(file));
 
+	/**
+	 * The differing lines, for a `--check` failure.
+	 *
+	 * "stale" on its own is only actionable where you can re-run the emitter and
+	 * read the diff yourself. It is not actionable in CI, where the emitted
+	 * output is the thing that differs from the committed file and the run that
+	 * produced it is gone — which is exactly the case this was added for: four
+	 * docs that are current on one machine and stale on another, with nothing in
+	 * the message to say what moved.
+	 *
+	 * @param {string} file
+	 * @param {string} planned  what this run would write
+	 * @returns {string}
+	 */
+	function diffFor(file, planned) {
+		const before = fs.readFileSync(file, 'utf8').split('\n');
+		const after = planned.split('\n');
+		/** @type {string[]} */
+		const lines = [];
+
+		for (let i = 0; i < Math.max(before.length, after.length) && lines.length < 24; i++) {
+			if (before[i] === after[i]) continue;
+			if (before[i] !== undefined) lines.push(`      -${i + 1}: ${before[i]}`);
+			if (after[i] !== undefined) lines.push(`      +${i + 1}: ${after[i]}`);
+		}
+
+		return (
+			`\n\n  ${path.relative(WORKSPACE_ROOT, file)} — committed (-) vs emitted (+):\n` +
+			lines.join('\n') +
+			(lines.length >= 24 ? '\n      … truncated' : '')
+		);
+	}
+
 	if (check) {
 		const missing = [...planned.keys()].filter((file) => !fs.existsSync(file));
 		const changed = [...planned].filter(
@@ -499,6 +532,7 @@ export async function emitCoreDocs({ check = false, quiet = false } = {}) {
 			throw new Error(
 				`[emit-core-docs] ${problems.length} file(s) out of date:\n` +
 					problems.map((p) => `    ${p}`).join('\n') +
+					changed.map(([file, contents]) => diffFor(file, contents)).join('') +
 					`\n  Run \`pnpm -F docs emit-core-docs\` and commit the result.`
 			);
 		}
