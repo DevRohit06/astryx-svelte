@@ -28,6 +28,16 @@ jobs:
       # so a regression here is caught rather than silently tolerated.
       - run: pnpm install --frozen-lockfile
 
+      # The client vitest project runs in a real headless Chromium through
+      # Playwright, and `pnpm install` does not fetch browser binaries — they
+      # live in ~/.cache/ms-playwright, outside node_modules. Without this the
+      # whole client project (162 files, 4,255 cases) fails to launch with
+      # "Executable doesn't exist", which is how it went unrun in CI for its
+      # entire life: the Typecheck step above was failing first, so the Test
+      # step never got the chance to say so.
+      - name: Install the browser the client test project needs
+        run: pnpm -F @astryx-svelte/core exec playwright install --with-deps chromium
+
       # Build first: @astryx-svelte/theme-neutral typechecks against the theme
       # compiler's types, which it reaches through core's built `dist/`. pnpm
       # orders `-r` topologically, so core builds before the theme.

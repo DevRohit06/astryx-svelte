@@ -55,6 +55,12 @@ jobs:
       # report green.
       - run: pnpm install --frozen-lockfile
 
+      # Browser binaries live in ~/.cache/ms-playwright, not node_modules, so
+      # `pnpm install` does not fetch them and the client test project cannot
+      # launch without this.
+      - name: Install the browser the client test project needs
+        run: pnpm -F @astryx-svelte/core exec playwright install --with-deps chromium
+
       # The same gates as CI, re-run here rather than trusted from the commit's
       # own run: a tag can be pushed at any commit, including one CI never saw.
       - name: Build

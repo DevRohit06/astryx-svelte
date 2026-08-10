@@ -4171,6 +4171,21 @@ count checked back against the files on disk. The blog post said **4,760** befor
 Status table said 5,066; the Status table was right, and the post is corrected — **two numbers for
 one measurement means at least one of them was never re-derived.**
 
+**And every one of those green numbers was measured on a tree CI could not reproduce.** Pushing to
+`main` showed CI had failed on _every_ run since the CLI landed — 22 typecheck errors in
+`packages/cli`, in files no diff had touched — because `.gitignore`'s unanchored `reference/` (meant
+for the upstream clone) also matched `packages/cli/authoring/doctypes/reference/`, upstream's own
+path for the reference doctype. Three source files were never tracked; `git add` refused them and
+said nothing. Anchored to `/reference/` and the files committed.
+
+Two things worth carrying from it. **`/build` two lines above carries a comment explaining exactly
+this hazard**, written when the same mistake ate two CLI directories — and it did not generalise to
+the next pattern added below it, so the lesson was recorded and then repeated. And **it explains why
+a local gate is not a substitute for CI here**: `check`, `lint`, `test` and `check:publish` all read
+the working tree, where the files were present, so every local measurement in the table above was
+honest and none of them could see it. `git archive HEAD` is what shows the difference, and it is now
+the thing to run when local and CI disagree.
+
 ---
 
 ## Known debts
