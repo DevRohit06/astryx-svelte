@@ -581,18 +581,74 @@ const VITE_CONFIGS = [
 ];
 
 /**
- * Check 8 — the bundler actually runs the StyleX compiler.
+ * Whether the project imports `@astryx-svelte/core/astryx.css` anywhere under
+ * `src/`.
+ *
+ * A text scan, like the rest of this check, and bounded: the engine's contract
+ * is to read rather than execute, and `doctor` runs on a developer's machine
+ * where an unbounded walk of an arbitrary tree is a hazard of its own. It stops
+ * at the first hit, skips `node_modules`, and gives up after `FILE_BUDGET`
+ * files — a project whose stylesheet import is past that will simply fall
+ * through to the config-based branches below, which is the pre-existing
+ * behaviour rather than a wrong answer.
+ *
+ * @param {string} cwd
+ */
+function importsPrebuiltStylesheet(cwd) {
+	const FILE_BUDGET = 400;
+	const EXTENSIONS = new Set(['.svelte', '.ts', '.js', '.css', '.mjs']);
+	const roots = ['src', 'app'].map((dir) => path.join(cwd, dir)).filter((p) => fs.existsSync(p));
+	let budget = FILE_BUDGET;
+
+	/** @param {string} dir */
+	const scan = (dir) => {
+		if (budget <= 0) return false;
+		let entries;
+		try {
+			entries = fs.readdirSync(dir, { withFileTypes: true });
+		} catch {
+			return false;
+		}
+		for (const entry of entries) {
+			if (budget <= 0) return false;
+			const full = path.join(dir, entry.name);
+			if (entry.isDirectory()) {
+				if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue;
+				if (scan(full)) return true;
+				continue;
+			}
+			if (!EXTENSIONS.has(path.extname(entry.name))) continue;
+			budget--;
+			try {
+				if (fs.readFileSync(full, 'utf-8').includes('@astryx-svelte/core/astryx.css')) return true;
+			} catch {
+				// Unreadable file: not evidence either way.
+			}
+		}
+		return false;
+	};
+
+	return roots.some((root) => scan(root));
+}
+
+/**
+ * Check 8 — the components will actually be styled.
  *
  * **The most common way to get this package wrong, and the only one that
- * produces no error at all.** `@astryx-svelte/core` ships its `.stylex.js`
- * modules uncompiled, so a project whose bundler never runs StyleX renders
- * every component with correct markup and no styling. Nothing throws, the build
- * succeeds, and the page looks like a stylesheet import was forgotten.
+ * produces no error at all.** There are two ways to be right, and the check
+ * accepts either.
  *
- * Three things have to be present, and two of them exist only because Vite has
- * two separate ways to route a dependency around its own plugin pipeline. The
- * preset (`@astryx-svelte/core/vite`) supplies all three, so finding it is a
- * pass on its own.
+ * The first is the pre-built stylesheet: `core`'s `dist` ships compiled, so
+ * importing `@astryx-svelte/core/astryx.css` styles everything with no bundler
+ * configuration whatsoever. Finding that import is a pass, and it is tested
+ * first — otherwise a correctly configured project would be told it is broken
+ * for lacking a compiler it does not need.
+ *
+ * The second is compiling the package yourself, from the `source` export
+ * condition. That needs three things present, two of which exist only because
+ * Vite has two separate ways to route a dependency around its own plugin
+ * pipeline. The preset (`@astryx-svelte/core/vite`) supplies all three, so
+ * finding it is a pass on its own.
  *
  * Deliberately a **text scan**, not an import: a `vite.config.ts` is TypeScript
  * that may import project-local modules and read env vars, and this engine's
@@ -618,6 +674,21 @@ export function checkStyleXSetup(ctx) {
 
 	const source = fs.readFileSync(found, 'utf-8');
 	const rel = path.relative(ctx.cwd, found) || found;
+
+	// The pre-built stylesheet makes the compiler optional: `core`'s `dist` ships
+	// compiled, so a project that imports `astryx.css` is correctly set up with no
+	// StyleX wiring at all. Checking the config alone would tell those projects
+	// they are broken when they are not.
+	if (importsPrebuiltStylesheet(ctx.cwd)) {
+		return {
+			id: 'stylex-setup',
+			label,
+			status: 'pass',
+			message:
+				'This project imports @astryx-svelte/core/astryx.css, so the components are ' +
+				'styled from the pre-built stylesheet and need no StyleX wiring.'
+		};
+	}
 
 	if (/@astryx-svelte\/core\/vite/.test(source)) {
 		return {

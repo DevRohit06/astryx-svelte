@@ -98,6 +98,32 @@ describe('doctor — checkStyleXSetup', () => {
 		expect(result.message).toContain('ssr.noExternal');
 	});
 
+	it('passes a project that imports the pre-built stylesheet and has no StyleX wiring', () => {
+		// The route that needs no compiler at all. Before this branch existed, this
+		// exact project — correctly set up — was told its components would render
+		// unstyled.
+		const dir = project(PLUGIN_ONLY);
+		fs.mkdirSync(path.join(dir, 'src', 'routes'), { recursive: true });
+		fs.writeFileSync(
+			path.join(dir, 'src', 'routes', '+layout.svelte'),
+			"<script>import '@astryx-svelte/core/astryx.css';</script>"
+		);
+		const result = checkStyleXSetup({ cwd: dir });
+		expect(result.status).toBe('pass');
+		expect(result.message).toContain('pre-built stylesheet');
+	});
+
+	it('still warns when a nearby file mentions the package but not the stylesheet', () => {
+		// Guards the scan against matching on the package name alone.
+		const dir = project(PLUGIN_ONLY);
+		fs.mkdirSync(path.join(dir, 'src'), { recursive: true });
+		fs.writeFileSync(
+			path.join(dir, 'src', 'app.ts'),
+			"import { Button } from '@astryx-svelte/core';\nimport '@astryx-svelte/core/base.css';"
+		);
+		expect(checkStyleXSetup({ cwd: dir }).status).toBe('warn');
+	});
+
 	it('is informational, not a failure, when there is no vite config at all', () => {
 		// A consumer on another bundler is not misconfigured; doctor only knows
 		// how to read Vite, and says so rather than guessing.
