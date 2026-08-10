@@ -118,15 +118,19 @@ every commit.
   labelled as the port's own addition rather than smuggled in as parity
 - **626 example blocks** on the docs site, transcribed from upstream's own blocks rather than
   re-authored, each naming its source
-- Upstream's **42 page templates**, ported as real SvelteKit routes
+- Upstream's **43 page templates**, ported as real SvelteKit routes and shipped by
+  `@astryx-svelte/cli`, which scaffolds them into your project
 
 ## What is not
 
-The CLI is a placeholder and is marked private — it is not in this release. `lab`, `charts`, `vega`
-and `richtext` have not been started. And the full browser test suite does not yet complete in one
-run: 4,760 tests pass with zero failures, but the shared Chromium instance dies late in the run and
-takes the remaining files with it. That is infrastructure rather than product, and it is the next
-thing to fix.
+`lab`, `charts`, `vega` and `richtext` have not been started. **434 upstream test cases still have
+no counterpart here** — ported suites are case-for-case and the count is the contract, but a suite
+with no ported file has no header to be wrong, and that blindness had already let a real
+`ChatComposer` bug ship. And the full browser suite does not yet complete in one run: **5,066 core
+tests pass with zero failures** — 4,255 in the browser across 162 files, 811 in node across 34 —
+but only in chunks, because the shared Chromium instance dies late in an unchunked run and takes
+the remaining files with it. That is infrastructure rather than product, and it is the next thing
+to fix.
 
 Upstream bugs are reproduced, not corrected, and each is written down. A port that fixes things
 quietly is a fork with extra steps.

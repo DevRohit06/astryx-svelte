@@ -6,21 +6,20 @@ and upgrade codemods, all reachable as terminal commands, as a typed JSON API, o
 imports. AI agents and build tools use the same API that powers the CLI, so an agent can run an
 end-to-end frontend loop without scraping `--help`.
 
-> **This package is not on npm yet.** It is versioned `0.3.0` and ready to publish, but until the
-> first `npm publish` lands `npm install -D @astryx-svelte/cli` will not resolve. Run it from a
-> clone of [the repository](https://github.com/devrohit06/astryx-svelte) meanwhile:
->
-> ```bash
-> pnpm install
-> node packages/cli/bin/astryx-svelte.mjs --help
-> ```
->
-> Everything below is written as `pnpm exec astryx-svelte …`, which is the form that will work
-> once the package is a dependency of your project — and is what the CLI itself prints in its
-> follow-up commands.
+```bash
+npm install -D @astryx-svelte/cli
+```
+
+Everything below is written as `pnpm exec astryx-svelte …`, which is the form that works once the
+package is a dependency of your project, and is what the CLI itself prints in its follow-up
+commands. From a clone of [the repository](https://github.com/devrohit06/astryx-svelte), the
+equivalent is `node packages/cli/bin/astryx-svelte.mjs …`.
 
 The binary is `astryx-svelte`, not `astryx`. Astryx's own CLI publishes `astryx`, and bare `astryx`
 on npm is an unrelated package; a distinct name means both can be installed in the same project.
+
+Everything the CLI prints is also on [the documentation site](https://astryx-svelte.rohitk06.in/) —
+both read the same `.doc.mjs` modules, so the two cannot drift.
 
 ## Finding things: `astryx-svelte search`
 

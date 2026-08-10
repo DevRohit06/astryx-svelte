@@ -62,7 +62,7 @@ export const docs = {
 				},
 				{
 					type: 'prose',
-					text: 'These packages are versioned `0.3.0` and ready to publish, but they are **not on npm yet** — nothing resolves until the first `npm publish`. Until then, work from a clone of [the repository](https://github.com/devrohit06/astryx-svelte): `pnpm install`, then `node packages/cli/bin/astryx-svelte.mjs <command>`.'
+					text: 'Every package here carries the version of the Astryx release it ports and they publish together, so `0.3.0` means "at parity with Astryx 0.3.0" rather than a count of this port\'s own releases. Install them at matching versions. To work against the source instead, clone [the repository](https://github.com/devrohit06/astryx-svelte): `pnpm install`, then `node packages/cli/bin/astryx-svelte.mjs <command>`.'
 				},
 				{
 					type: 'prose',

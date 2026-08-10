@@ -12,7 +12,7 @@ below.
 >
 > `init` writes the Astryx component index into your `AGENTS.md`/`CLAUDE.md` so your agent
 > discovers components, utils, and design tokens instead of guessing. See
-> [Astryx CLI](#astryx-cli) for how to invoke it before the package is published.
+> [Astryx CLI](#astryx-cli) for the rest of what it does.
 
 ## Your bundler must run the StyleX compiler
 
@@ -127,12 +127,12 @@ pnpm exec astryx-svelte swizzle Button      # eject component source
 pnpm exec astryx-svelte doctor              # diagnose a project's setup
 ```
 
-The CLI is **not on npm yet** — it is versioned `0.3.0` and ready to publish, but nothing resolves
-until the first `npm publish`. Run it from a clone of
-[the repository](https://github.com/devrohit06/astryx-svelte) (`pnpm install`, then
-`node packages/cli/bin/astryx-svelte.mjs <command>`) meanwhile. When it lands, the binary is
-`astryx-svelte`, not `astryx`: `astryx` on npm is an unrelated package and Astryx's own CLI already
-claims it.
+```bash
+npm install -D @astryx-svelte/cli
+```
+
+The binary is `astryx-svelte`, not `astryx`: `astryx` on npm is an unrelated package and Astryx's
+own CLI already claims it, so a distinct name means both can be installed in one project.
 
 ## Related Packages
 
@@ -150,6 +150,8 @@ claims it.
 
 ## Resources
 
+- [The documentation site](https://astryx-svelte.rohitk06.in/) — every component page, reference
+  topic and example, rendering live Svelte from the files in this repository
 - [Astryx](https://astryx.atmeta.com/) — the design system this ports, and the source of every
   documented behaviour
 - [The repository](https://github.com/devrohit06/astryx-svelte)

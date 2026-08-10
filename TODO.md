@@ -7,10 +7,18 @@ Detailed research lives in [`planning/`](./planning); the design rationale behin
 landed item lives in git history. This file is the **live status and backlog** only —
 what's ported, what's next, known debts.
 
-> **Current goal: cut the first npm release at core + themes parity** (decided 2026-08-07). Core is
-> done — **101 / 101** upstream component dirs, zero invented. What gates the release is the theme
-> set: `chocolate` and `stone` (the last two upstream themes) and the six icon registries. Then
-> nine packages ship, and `CLI` and `lab` follow as later minor releases.
+> **Current goal: cut the first npm release** (decided 2026-08-07). Core is done — **101 / 101**
+> upstream component dirs, zero invented — and so is what used to gate it: `chocolate`, `stone` and
+> all six icon registries landed, so the theme set is **7 / 7 upstream plus `liquid-glass`**.
+> `packages/cli` is no longer a placeholder either (Phase 4 closed 2026-08-09, and it is what ships
+> the 43 page templates), so **nine packages go out together at `0.3.0`**, not eight. `lab` follows
+> as a later release.
+>
+> **What is left is one command.** The publish pipeline, the manifest gate, the eight theme READMEs
+> and the `CHANGELOG` landed 2026-08-10; the gates were re-run over the tree that will be tagged;
+> the docs site is [live](https://astryx-svelte.rohitk06.in/); and `NPM_TOKEN` is configured. What
+> remains is merging this branch and pushing `v0.3.0`, which is what publishes. See
+> [Release & governance](#release--governance).
 >
 > Read [Pre-flight](#pre-flight--read-this-before-starting-a-batch) before picking up a batch —
 > every item in it is a rework this port already paid for — and see [Roadmap](#roadmap) for what
@@ -18,27 +26,32 @@ what's ported, what's next, known debts.
 >
 > _Superseded goals, kept because the ordering they forced still explains the batch history:_ "get
 > the docs site live" (2026-08-02) reordered batches 9–13 around `Theme` being the one real blocker;
-> "finish the component set" preceded it. The docs site is built and dogfooded but
-> [not hosted](#phase-5--docs-site-the-current-goal), which is no longer on the release path.
+> "finish the component set" preceded it. That goal is **met**: the docs site is built, dogfooded and
+> [live](https://astryx-svelte.rohitk06.in/) as of 2026-08-10.
 
 ---
 
 ## Roadmap
 
-Four fronts remain. Sizes are measured from `git show v0.3.0:` in the upstream clone, not estimated
-— and the count that matters for scheduling is the one in the third column, since assets and
-generated files dominate the raw file counts.
+Two fronts remain, both after the release. Sizes are measured from `git show v0.3.0:` in the
+upstream clone, not estimated — and the count that matters for scheduling is the one in the third
+column, since assets and generated files dominate the raw file counts.
 
-| Front                                    | Upstream size                                                                         | State                                 | Gates the release?      |
-| ---------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------- |
-| **Themes**                               | `chocolate` 226 + `stone` 652 lines, 81-line `icons.tsx` ×6                           | 6 / 8 packages; icon registries 0 / 6 | **yes**                 |
-| **CLI**                                  | 1,809 files / 4.3 MB — but **293 code files** (1.5 MB); the other 1,502 are `assets/` | placeholder only, `private: true`     | no — next after release |
-| **`lab`**                                | 180 files / ~995 KB, **17 component dirs**                                            | never started                         | no                      |
-| `charts` / `vega` / `richtext` / `build` | 35 / 5 / 1 / 7 files                                                                  | never started                         | no                      |
+| Front                                    | Upstream size                                                                         | State                                          | Gates the release?      |
+| ---------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------- | ----------------------- |
+| ~~**Themes**~~                           | `chocolate` 226 + `stone` 652 lines, 81-line `icons.tsx` ×6                           | **8 / 8 packages, 6 / 6 icon registries**      | ~~yes~~ — **done**      |
+| ~~**CLI**~~                              | 1,809 files / 4.3 MB — but **293 code files** (1.5 MB); the other 1,502 are `assets/` | **Phase 4 complete**, and it ships in `0.3.0` | ~~no~~ — **in the release** |
+| **`lab`**                                | 180 files / ~995 KB, **17 component dirs**                                            | never started                                  | no                      |
+| `charts` / `vega` / `richtext` / `build` | 35 / 5 / 1 / 7 files                                                                  | never started                                  | no                      |
 
 **Why the release goes first.** It establishes the publish pipeline on the smallest surface that is
-actually finished, so the CLI and lab ship into an existing release process rather than inventing one
-under pressure. The standing test gap ships as a documented known limitation.
+actually finished, so `lab` ships into an existing release process rather than inventing one under
+pressure. The standing test gap ships as a documented known limitation.
+
+**The CLI moved into the release rather than after it**, and the reason is the page templates: they
+are CLI assets, so holding the CLI back would have announced 43 templates a reader could not obtain.
+That decision is what the two release-mechanics fronts below were sized against — nine packages, not
+eight.
 
 **`lab` needs decisions before it needs porting.** Four of its seventeen components (`CodeEditor`,
 `RichTextEditor`, `ThreeD`, `Sankey`) wrap heavy third-party React libraries with no drop-in Svelte
@@ -51,14 +64,14 @@ there is no upstream Svelte answer to copy. Scope `lab` only after that is settl
 
 |                   |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Components ported | **101 / 101** upstream component dirs at 0.3.0 — **the set is complete**, and nothing here is invented (a bidirectional diff finds no directory of ours without an upstream counterpart). Ours are 97 directories because `HStack`/`VStack` fold into `stack/` and `SizeContext`/`InteractiveRoleContext` into context modules; all four are exported. The figure read "100 / 100 at 0.1.7" for several batches — upstream 0.3.0 has 101, so re-measure this against the tag rather than carrying it forward. Themes: **7 / 7 upstream** — butter, chocolate, gothic, matcha, neutral, stone, y2k — **plus `liquid-glass`, which ports nothing**: a macOS/Liquid Glass theme with no upstream counterpart, and the port's one deliberate addition to the published surface. See [Known debts](#known-debts) for why it is allowed to exist. Every theme now ships its `<name>IconRegistry`; `@astryx-svelte/cli` is a **placeholder marked `private`** and is not in the first release                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Components ported | **101 / 101** upstream component dirs at 0.3.0 — **the set is complete**, and nothing here is invented (a bidirectional diff finds no directory of ours without an upstream counterpart). Ours are 97 directories because `HStack`/`VStack` fold into `stack/` and `SizeContext`/`InteractiveRoleContext` into context modules; all four are exported. The figure read "100 / 100 at 0.1.7" for several batches — upstream 0.3.0 has 101, so re-measure this against the tag rather than carrying it forward. Themes: **7 / 7 upstream** — butter, chocolate, gothic, matcha, neutral, stone, y2k — **plus `liquid-glass`, which ports nothing**: a macOS/Liquid Glass theme with no upstream counterpart, and the port's one deliberate addition to the published surface. See [Known debts](#known-debts) for why it is allowed to exist. Every theme now ships its `<name>IconRegistry`. `@astryx-svelte/cli` **is in the first release** — the placeholder note this row used to carry predates Phase 4 closing, and the CLI is what ships the 43 page templates, so **nine packages publish together at `0.3.0`**                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | Tokens            | **184 / 184** at upstream 0.3.0, verified against source — down from 186 because 0.3.0's "remove long-deprecated compatibility APIs" deleted the `--transition-fast` / `--transition-normal` shorthand pair (and `transitionDefaults` / `transitionVars` / `TransitionVarName` with it). The published 0.3.0 dist carries no `transition` token at all; ours had no consumer and reached no barrel, so removal was clean. `liquid-glass`'s `check-theme.mjs` reads the count out of core's **built `dist/`** and reports 184, 0 unknown — which is what proves it. Note that 184 is the _ambient vocabulary_ of known token names, not a per-theme declared count (liquid-glass itself declares 106). The **`en` catalog is 250 / 250**, byte-identical to upstream and prettier-ignored to stay that way, alongside `fr-FR` (upstream's own 3-key partial) and `pseudo`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | Theme output      | **2,418 declarations match upstream across seven theme packages, 0 mismatches** (2026-08-08) — butter 430/433, chocolate 289/292, gothic **345/345**, matcha 303/306, neutral 339/342, stone 355/358, y2k 357/360. The oracle is **bidirectional**: a missing declaration, a wrong value, an invented one or a stale allowlist entry all **fail the run**. The 3-per-theme remainder is the `color-scheme` rules `base.css` owns, so the arithmetic checks itself — 2,436 upstream − 18 = 2,418, and **gothic needs no allowlist at all**, because a dark-only theme declares no `[light, dark]` pairs and upstream emits no `html[data-theme=…]` block for it. Both `chocolate` and `stone` were green on their first run. **The eighth package, `liquid-glass`, is not in that total** — it ports nothing, so there is no upstream CSS to diff. It carries `scripts/check-theme.mjs` instead, asserting every token name it declares is one of core's 184 and every component it overrides is a real `themeProps()` name, both read out of core's **built `dist/`**. Those are the two failures the diff oracle catches for free everywhere else, and neither fails loudly alone: `defineTheme` accepts any string and `generateThemeRules` emits a rule for any string, so a typo compiles to CSS that parses, loads and styles nothing. It caught one on its first run — see the `chat` entry under Known debts                                                                                                                                    |
 | Component classes | **1,528 style keys (19 as marker-normalised CSS) + 615 inline call sites, 0 skips, 0 mismatches**, re-derived 2026-08-08. The skip list is **empty** — every "published dist lags source" deferral the port ever wrote retired itself when the pin moved to 0.3.0, and the last three (RTL keyframes) went when explicit `enterEndRtl`/`enterStartRtl`/`indeterminateSlideRtl` landed. **But read what a clean run does and does not claim:** it covers every _static_ style and **no function style at all**, because a `stylex.create` arrow value carries no `$$css` for `extractGroups` to find — 54 of them across 32 modules, recorded under [Known debts](#known-debts). Batch 18 proved that blindness rather than asserting it: **inverting the `!isDisabled` status-hover guard in `text-input` left the oracle at 0 mismatches, exit 0**, while the bug was live in 13 call sites. Three rules the oracle work has settled: **where upstream keeps its styles decides which oracle mode applies** (a separate style module defeats StyleX's fold, so it is object-mode only — batch 12/`Calendar`); **an unused declaration needs a skip only if our build still emits the class**, which with the attrs-function convention it usually does not (batch 14); and **a module that only composes already-verified components adds no atomic CSS at all** (batch 15). A component can be in _both_ modes at once — declaring only the object side leaves the folded literals unaccounted for, which is what the leftover check exists to catch |
 | Typecheck / lint  | `pnpm -r check` clean (**core 2,121 files, 0 errors, 32 warnings, 20 files with problems; docs 1,505 files, 0 errors, 0 warnings**); `pnpm -r lint` clean, exit 0; `pnpm -r build` exit 0. All re-derived 2026-08-08. Two lessons this gate cost, both still live: **a lint gate chained with `&&` reports "failed" identically whether one stage failed or both ran** — `prettier --check . && eslint .` meant a stray scratch file short-circuited eslint entirely, hiding six real errors for several batches; and **the gate is only as trustworthy as the tree is quiet**, since a scratch file deleted between eslint's enumeration and its read fails the run on a path that no longer exists. A batch that leaves `zz-*.mjs` in a package root has not finished A third, found 2026-08-08: **the root `TODO.md` and `PORTED.md` are not in the lint gate at all** — `pnpm -r lint` runs `prettier --check .` inside each *package*, and nothing checks the repo root, which is how malformed blocks accumulated here unnoticed. Worse, `prettier --write` does **not converge** on this file: a multi-paragraph list item has its continuation paragraphs re-indented deeper on every pass (6 → 10 → … → 30 spaces observed), and past ~4 extra spaces markdown renders them as an indented *code block* rather than prose. The stable form for extra detail under a `- [ ]` item is a nested `  - ` bullet, which round-trips; 57 lines were normalised back. Do not run `prettier --write` here expecting a fixed point. |
 | Public types      | every component exports its props type (in `<script module>`, re-exported from `index.ts`, carried into `.d.ts`). **Now load-bearing beyond typing**: the docs generator reads the props table out of `dist/**/*.d.ts`, so a component that stops exporting its interface silently loses its documented types. The theme packages' generated `.d.ts` is on the same footing and was **wrong in shipped packages** until batch 18 — `literalType()` guarded on `typeof value === 'string'`, so numeric palette values emitted `readonly hue: { }` instead of `readonly hue: 291`. Nothing caught it: the runtime value was always right, `{}` is valid TS so `check` stayed green, and the theme oracles diff CSS declarations rather than declaration files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| Docs site         | **626 example blocks live, 0 pending**; **209 of 210** upstream doc entries documented and **0 documented props core does not declare**, 149 sidebar entries + 25 utilities, 20 topics, against **501 core exports and 457 props interfaces** (re-derived 2026-08-08). **That 0 is a different 0 from the one this row used to report**, and the difference is the whole props-page audit below: the old one was an artefact of a report that could not see the case it existed for, while 85 rows rendered "not declared by core"; the new one is 1,876 rows with every type from the compiler, 56 unverified rows all carrying a stated reason, and the interface count up 417 → 457. **The one undocumented entry is the umbrella `Chat` page**, a docs-site gap rather than a component one — upstream ships no `Chat.tsx`, so `Chat.doc.mjs` is a family-overview entry whose `displayName` matches no export, and the generator's ported-check drops it. All 15 real Chat components have their own pages. The shell is fully dogfooded: a real `AppShell`/`TopNav`/`SideNav`, a `CommandPalette` for `⌘K` and an `Outline` for the on-this-page aside. **All 8 themes are wired and verified on `vite dev`** — nine `@scope ([data-astryx-theme=…])` blocks live in the CSSOM, 0 console errors. **Not hosted yet.** Two rules this row cost: **porting a component reopens this backlog**, because a newly documented component drags its blocks in with it; and **`hasSvelte` is per registry _target_**, so a block reached through `alsoExampleFor` needs a copy under _each_ target directory. **Run `pnpm -F docs generate` and read the number; do not predict it**                                                                                                                                                                                                                                                                                           |
-| Tests             | **196 files, 5,066 passed, 0 failed** — client **162 files / 4,255 passed** and server **34 files / 811 passed** (2026-08-08). **The client number is a chunked pass reconciled two ways**, which is the honest form: 14 chunks of 12, all exit 0, 159 files counted back against 159 on disk, _and_ the summed case total matching `vitest list`'s collected 4,190 exactly — that pair was measured before the four suites below added 65 more — a tally summed from chunk logs is only as complete as the loop that wrote it. Suites are ported **case for case and the count is the contract**. Batch 18 closed 22 wrong headers (~59 cases restored, all passing first run) and then 88 more across eleven files, which exposed two live bugs. **But the honest figure is the one in [Testing](#testing): 434 upstream cases are still missing**, and no header audit could have found them, because a suite with no counterpart file here has no header to be wrong — that blindness had already let a real `ChatComposer` bug ship. Five rules the suites have cost: **the contract has to be re-derived from the upstream source**, never from a brief or a grep; **a restatement can make a vacuous upstream assertion load-bearing**; **"this assertion is vacuous" is itself a claim to mutation-check**; **pure modules stay in the _server_ project**; and **coverage beyond upstream needs a hazard with no upstream analogue**                                                                                                                                                                               |
+| Docs site         | **629 example blocks live, 0 pending**; **211 of 213** upstream doc entries documented and **0 documented props core does not declare**, 72 sidebar entries + 26 utilities, 20 topics, 42 page templates, 8 theme packages, 1 blog post, against **502 core exports and 457 props interfaces** (re-derived 2026-08-10 — every figure in this row moved since 2026-08-08, so read them from `pnpm -F docs generate` rather than from here). **That 0 is a different 0 from the one this row used to report**, and the difference is the whole props-page audit below: the old one was an artefact of a report that could not see the case it existed for, while 85 rows rendered "not declared by core"; the new one is 1,876 rows with every type from the compiler, 56 unverified rows all carrying a stated reason, and the interface count up 417 → 457. **Both undocumented entries are umbrella family pages, not components** — `Chat` and `Resizable`. Upstream ships no `Chat.tsx` and no `Resizable.tsx`; each `.doc.mjs` is a family-overview entry whose `displayName` matches no export, so the generator's ported-check drops it while documenting every member it names. All 15 Chat components have their own pages, as do `ResizeHandle` and `useResizable`. The pair is a docs-site gap, not a port gap. **The upstream total moved 210 → 213 and the cause is not established**: the counting expression (`normalised.length`) has not changed since the initial commit and the `@astryxdesign/core` pin is exact at 0.3.0, so the 210 recorded on 2026-08-08 was measured against a different `docs/node_modules` state. Re-derive this figure; do not carry it forward. The shell is fully dogfooded: a real `AppShell`/`TopNav`/`SideNav`, a `CommandPalette` for `⌘K` and an `Outline` for the on-this-page aside. **All 8 themes are wired and verified on `vite dev`** — nine `@scope ([data-astryx-theme=…])` blocks live in the CSSOM, 0 console errors. **Live at <https://astryx-svelte.rohitk06.in/> since 2026-08-10**, built from `main` — so a doc fix reaches readers only on redeploy. Two rules this row cost: **porting a component reopens this backlog**, because a newly documented component drags its blocks in with it; and **`hasSvelte` is per registry _target_**, so a block reached through `alsoExampleFor` needs a copy under _each_ target directory. **Run `pnpm -F docs generate` and read the number; do not predict it**                                                                                                                                                                                                                                                                                           |
+| Tests             | **196 files, 5,066 passed, 0 failed** — client **162 files / 4,255 passed** and server **34 files / 811 passed** (re-derived 2026-08-10, unchanged from 2026-08-08; `@astryx-svelte/cli` adds **102 files / 1,937 passed**, 1 file skipped and 25 todo). **The client number is a chunked pass reconciled two ways**, which is the honest form: 14 chunks of 12, all exit 0, 159 files counted back against 159 on disk, _and_ the summed case total matching `vitest list`'s collected 4,190 exactly — that pair was measured before the four suites below added 65 more — a tally summed from chunk logs is only as complete as the loop that wrote it. Suites are ported **case for case and the count is the contract**. Batch 18 closed 22 wrong headers (~59 cases restored, all passing first run) and then 88 more across eleven files, which exposed two live bugs. **But the honest figure is the one in [Testing](#testing): 434 upstream cases are still missing**, and no header audit could have found them, because a suite with no counterpart file here has no header to be wrong — that blindness had already let a real `ChatComposer` bug ship. Five rules the suites have cost: **the contract has to be re-derived from the upstream source**, never from a brief or a grep; **a restatement can make a vacuous upstream assertion load-bearing**; **"this assertion is vacuous" is itself a claim to mutation-check**; **pure modules stay in the _server_ project**; and **coverage beyond upstream needs a hazard with no upstream analogue**                                                                                                                                                                               |
 
 **Why the port is tractable:** we author `stylex.create` with the same token references
 Astryx uses, so StyleX's content-derived hashes make the compiler emit _byte-identical_
@@ -3453,10 +3466,18 @@ Still open from this pass:
 - [x] **In-bundle static search** over the generated registries (no Algolia/Pagefind), as upstream —
       `shell/search-index.ts`, ranked prefix → substring → keyword → description, shared by the
       `⌘K` palette
-- [ ] **Host it** so it cannot drift from what it documents. **The site now builds to 165 static
-      pages** (`adapter-vercel`, everything prerendered), so this is a deploy rather than a build.
-      All 165 were loaded and checked in a real browser (see the hydration sweep above): none
-      throws, none fails to hydrate, and every image the example blocks reference renders
+- [x] **Host it** so it cannot drift from what it documents — **live at
+      <https://astryx-svelte.rohitk06.in/> since 2026-08-10** (`adapter-vercel`, all 165 pages
+      prerendered). All 165 were loaded and checked in a real browser before the deploy (see the
+      hydration sweep above): none throws, none fails to hydrate, and every image the example blocks
+      reference renders.
+
+      **The live site is built from `main`, and that is now a publishing surface with its own
+      staleness.** The deployed release post still carries the two claims corrected in this batch —
+      "the CLI is a placeholder and is marked private" and "4,760 tests" — because they were true of
+      the commit that was deployed and are false of the tree. Verified by reading the live page, not
+      assumed. **A doc fix is not shipped until the site redeploys**, which is a new failure mode
+      this repo did not have while the site was local-only
 
 ### Page-template icons — real glyphs, and the `IconType` that blocked them (2026-08-10)
 
@@ -4059,11 +4080,96 @@ warnings; the only failed request is the pre-existing deliberate `/nope.png` bro
 Done: adopted the parity rule verbatim, enforced by 5 subagents (`astryx-parity`,
 `astryx-idiom`, `astryx-test-parity`, `astryx-oracle`, `astryx-surface`).
 
-- [ ] MIT `LICENSE.md` carrying Meta Platforms' copyright (as huntabyte did for shadcn)
-- [ ] Explicit "unofficial / not affiliated with Meta" notice; no Meta trademarks
+**Four of the five boxes below were already done and stayed unchecked for several batches** —
+`LICENSE`, the unaffiliated notice, CI, and the `parity` issue template all exist in the tree. That
+is its own lesson and the reason this section is now audited rather than carried forward: a
+checklist nobody re-reads against the repo describes the day it was written.
+
+- [x] MIT `LICENSE` carrying Meta Platforms' copyright (as huntabyte did for shadcn) — at the repo
+      root, and npm packs it into every tarball automatically
+- [x] Explicit "unofficial / not affiliated with Meta" notice; no Meta trademarks — in `README.md`,
+      every package README, and the release post
+- [x] **The publish pipeline — landed 2026-08-10, and it is a tag, not changesets.** Every package
+      carries the version of the upstream Astryx release it ports and they publish together, so
+      per-package changelog machinery has nothing to decide: one tag names the whole release.
+      `.github/workflows/release.yml` fires on `v*`, re-runs the full CI gate (a tag can be pushed
+      at any commit, including one CI never saw), then `pnpm publish -r --access public
+      --provenance --no-git-checks`. **It must be pnpm, not npm**: the theme manifests now carry
+      `"@astryx-svelte/core": "workspace:^"` as a peer, and only pnpm rewrites the `workspace:`
+      protocol to a real range at pack time — verified by packing `theme-neutral` and reading
+      `^0.3.0` back out of the tarball. `workflow_dispatch` runs the same job as a `--dry-run`.
+- [x] **`scripts/check-publish.mjs` + `pnpm check:publish`** — publint over all ten publishable
+      packages plus two things publint does not check: a package with **no README** (npm renders a
+      blank page and nothing else here would ever notice — all eight themes were in that state), and
+      a manifest whose version disagrees with the tag being released (`--version 0.3.0`).
+      Mutation-checked in three directions: a removed README, a broken `exports` target and a
+      mismatched version each fail with exit 1.
+- [x] `NPM_TOKEN` configured in the repository's Actions secrets (2026-08-10); `id-token: write` is
+      already in the workflow for provenance
+- [ ] **Push the tag** — the last step, and the only one that publishes.
+      `git tag v0.3.0 && git push origin v0.3.0`, from a merged `main`. Worth a
+      `workflow_dispatch` dry run first: it runs the identical job with `--dry-run`, so a manifest
+      or credential problem surfaces without burning a version number, which npm does not let you
+      re-use
 - [ ] Consider asking the Astryx maintainers for a blessing
-- [ ] Changesets + release pipeline
-- [ ] Enforce the parity rule in CI, with a `parity` label on issues/PRs
+- [x] Enforce the parity rule in CI, with a `parity` label on issues/PRs — `.github/ISSUE_TEMPLATE`
+      carries `parity.yml`, `bug.yml` and `port-template.yml`; CI runs both fidelity oracles on
+      every PR, which is the enforcement that matters
+
+#### What the first `npm pack` found — 2026-08-10
+
+Three things, none of which any existing gate could see, because **every gate in this repo reads the
+working tree and npm reads the `files` field**. The whole class only becomes visible the first time
+someone asks npm what it would actually publish.
+
+- **All eight theme packages had no README**, so all eight would have published a blank npm page.
+  Nothing anywhere reads a theme's README — the docs site's `package-readmes.js` covers `core` and
+  `cli` only, which is why its "2 packages, 2 with a README" line looked healthy. Eight are written
+  now, each carrying its own oracle number (butter 430/433, chocolate 289/292, gothic **345/345**,
+  matcha 303/306, neutral 339/342, stone 355/358, y2k 357/360), which are claims a reader can
+  re-run. Gothic's equal pair is the dark-only case: no `[light, dark]` pairs, so upstream emits no
+  `html[data-theme=…]` block and there is no three-declaration `color-scheme` remainder.
+- **Core's tarball carried 283 files that are not library source** — 248 test fixtures under
+  `src/tests/fixtures/` and 35 demo routes. The `files` denylist excluded `*.test.*`, and a fixture
+  is not named `*.test.*`; `assert-core-ships-src.mjs`'s leak rule tested the same pattern, so both
+  agreed. One of the demo routes is `src/routes/+layout.svelte`, which imports
+  `../../../themes/neutral/dist/` — a relative path that resolves inside this monorepo and points at
+  nothing anywhere else. `files` now denies `src/tests`, `src/routes` and `src/app.html` (2,996 →
+  2,712 files), and the assertion has a **fifth rule**: anything under `src/` but outside `src/lib`,
+  `.d.ts` aside, fails the run. Mutation-checked by removing the deny and watching it fail.
+- **A scoped package does not publish public by default.** Without `publishConfig.access`, the first
+  publish of `@astryx-svelte/*` fails with E402 — at the end of a workflow that has already built,
+  typechecked, linted and tested. All ten now declare it.
+
+And one thing the pack **proved rather than assumed**: `pnpm pack` rewrites the new
+`"@astryx-svelte/core": "workspace:^"` peer to `^0.3.0` in the packed manifest. That was read out of
+the tarball, not inferred from documentation — it is the reason the publish step must be `pnpm` and
+not `npm`, which would ship the `workspace:` protocol literally.
+
+#### The release gate — every axis re-measured 2026-08-10, over the tree that will be tagged
+
+The previous full measurement was 2026-08-08 and five commits back, which included the `IconType`
+widening in core, the docs preview-theme fix, the core build split, the blog surface and the
+template icons. None of them moved a number here, but **that is a finding of this run, not an
+assumption it was allowed to make**.
+
+|                                    | result                                                                                    |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| `pnpm -r build` / `check` / `lint` | exit 0 — core **2,062 files, 0 errors, 32 warnings**; docs **1,492 files, 0 errors**      |
+| class oracle                       | **1,528 style keys (19 marker-normalised) + 615 inline call sites, 0 skips, 0 mismatches** |
+| theme oracles (7)                  | **2,418 declarations, 0 mismatches** — butter 430/433, chocolate 289/292, gothic 345/345, matcha 303/306, neutral 339/342, stone 355/358, y2k 357/360 |
+| theme icon registries (8)          | 28 names → 28 Lucide glyphs, all resolved, in every package                               |
+| tests — core client                | **162 files, 4,255 passed**, 14 chunks, all exit 0, **162 counted back against 162 on disk** |
+| tests — core server                | **34 files, 811 passed**                                                                  |
+| tests — CLI                        | **102 files passed, 1 skipped; 1,937 passed, 25 todo**                                    |
+| packaging assertions               | `assert-core-ships-src` 97 components / 906 src files / 2,712 total; themes bundle up to date; `check:publish` 10/10 |
+| `pnpm -F docs generate`            | **211 / 213** documented, **0** documented props core lacks, 629 examples / 0 pending, 42 templates, 8 themes |
+
+**5,066 core tests and 1,937 CLI tests pass, 0 failures.** The client figure is the reconciled kind
+this repo insists on rather than a sum of chunk logs: 14 chunks, every one exit 0, and the files-run
+count checked back against the files on disk. The blog post said **4,760** before this run; the
+Status table said 5,066; the Status table was right, and the post is corrected — **two numbers for
+one measurement means at least one of them was never re-derived.**
 
 ---
 

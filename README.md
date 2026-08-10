@@ -15,8 +15,19 @@ Svelte 4 compatibility mode.
 | [`@astryx-svelte/theme-*`](packages/themes)                | Eight theme packages, `neutral` being the default Astryx look             |
 | [`docs`](docs)                                             | The documentation site, built out of the same docs the CLI serves         |
 
-Neither package is published to npm yet. Both are `0.0.0`, and `packages/cli` is still marked
-`private`.
+Nine packages ship together at **`0.3.0`**, which is the Astryx release they port — the versions
+track upstream's rather than counting this port's own history, so `0.3.0` here means "at parity
+with Astryx 0.3.0". `docs` is the tenth workspace package and is not published.
+
+```bash
+npm install @astryx-svelte/core @astryx-svelte/theme-neutral @stylexjs/stylex
+npm install -D @stylexjs/unplugin
+```
+
+**Your bundler must run the StyleX compiler**, and getting that wrong fails without an error — the
+components render, unstyled. [`packages/core/README.md`](packages/core#your-bundler-must-run-the-stylex-compiler)
+has the setup, and [`CHANGELOG.md`](CHANGELOG.md) what is in the release and what its known
+limitations are.
 
 ## The parity rule
 
@@ -33,9 +44,12 @@ and two oracles diff our compiled output against the already-compiled classes in
 
 ## The docs site
 
-Every component page, reference topic and example on the site is generated from the same
-`.doc.mjs` modules the CLI reads, so the site cannot drift from what the CLI prints. It is not
-hosted yet; run it locally:
+**[astryx-svelte.rohitk06.in](https://astryx-svelte.rohitk06.in/)** — every component page,
+reference topic and example on it is generated from the same `.doc.mjs` modules the CLI reads, so
+the site cannot drift from what the CLI prints. Every example is a real file in this repository,
+rendering live Svelte rather than a screenshot.
+
+To run it locally:
 
 ```sh
 pnpm install
