@@ -2,12 +2,15 @@
 	Ported from upstream's `assets/templates/pages/settings/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports one Heroicon here rather than inlining the SVG, so it is a
-	registry substitution: `MagnifyingGlassIcon` → `search`. That one is a true
-	match rather than a stand-in, so nothing retires with the icon registry
-	(TODO.md). Upstream hands `Typeahead.startIcon` the component; the prop takes
-	`IconName | Snippet` here, and a registry name is the closer of the two —
-	`Typeahead` then applies the `size="sm" color="secondary"` upstream applies.
+	The one Heroicon here is upstream's own, from `@fvilers/heroicons-svelte` —
+	the Heroicons set built for Svelte 5, keeping upstream's component names and
+	entry points.
+
+	`Typeahead.startIcon` is `IconName | Snippet` here where upstream's is
+	`ReactNode | IconType`, so the component goes through the `Snippet` arm
+	rather than being passed directly. That arm renders raw, so the snippet
+	supplies the `size="sm" color="secondary"` that `Typeahead` applies for the
+	`IconName` arm — the same values, and the same rendering as upstream.
 -->
 <script lang="ts">
 	import {
@@ -17,6 +20,7 @@
 		Grid,
 		HStack,
 		Heading,
+		Icon,
 		Layout,
 		LayoutContent,
 		LayoutHeader,
@@ -34,6 +38,7 @@
 		type SearchSource,
 		type SearchableItem
 	} from '@astryx-svelte/core';
+	import { MagnifyingGlassIcon } from '@fvilers/heroicons-svelte/24/outline';
 
 	const NAV_ITEMS = ['Profile', 'Account', 'Members', 'Billing', 'Invoices', 'API'];
 
@@ -69,6 +74,8 @@
 	let searchValue = $state<SearchableItem | null>(null);
 </script>
 
+{#snippet searchIcon()}<Icon icon={MagnifyingGlassIcon} size="sm" color="secondary" />{/snippet}
+
 {#snippet header()}
 	<LayoutHeader hasDivider>
 		<HStack vAlign="center">
@@ -83,7 +90,7 @@
 				value={searchValue}
 				onChange={(item) => (searchValue = item)}
 				hasEntriesOnFocus
-				startIcon="search"
+				startIcon={searchIcon}
 			/>
 		</HStack>
 	</LayoutHeader>

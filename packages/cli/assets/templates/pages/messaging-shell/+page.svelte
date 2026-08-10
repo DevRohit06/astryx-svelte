@@ -2,13 +2,13 @@
 	Ported from upstream's `assets/templates/pages/messaging-shell/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`HomeIcon` → `viewColumns`, `ChatBubbleLeftRightIcon` → `moreHorizontal`,
-	`BellIcon` → `warning`, `BookmarkIcon` → `stop`, `Cog6ToothIcon` → `wrench`,
-	`PencilSquareIcon` → `copy`, `HashtagIcon` → `menu`, `UserGroupIcon` →
-	`info`, `InboxIcon` → `arrowDown`. `MagnifyingGlassIcon` → `search` and
-	`XMarkIcon` → `close` are true matches; the rest are stand-ins. Retires with
-	the icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `styles` is a `Record<string, CSSProperties>` applied through the
 	`style` prop; here it is a `Record<string, string>` of the same declarations,
@@ -73,6 +73,15 @@
 		useMediaQuery,
 		type IconName
 	} from '@astryx-svelte/core';
+	import {
+		Cog6ToothIcon,
+		HashtagIcon,
+		InboxIcon,
+		MagnifyingGlassIcon,
+		PencilSquareIcon,
+		UserGroupIcon,
+		XMarkIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	// ---------------------------------------------------------------------------
 	// Styles — plain CSS properties with semantic tokens only.
@@ -336,7 +345,7 @@
 {/snippet}
 
 {#snippet youStatus()}<AvatarStatusDot variant="success" label="Online" />{/snippet}
-{#snippet settingsIcon()}<Icon icon="wrench" size="sm" color="inherit" />{/snippet}
+{#snippet settingsIcon()}<Icon icon={Cog6ToothIcon} size="sm" color="inherit" />{/snippet}
 
 {#snippet workspaceRail()}
 	<VStack gap={2} style={styles.rail}>
@@ -363,8 +372,8 @@
 	</VStack>
 {/snippet}
 
-{#snippet newMessageIcon()}<Icon icon="copy" size="sm" color="inherit" />{/snippet}
-{#snippet jumpToIcon()}<Icon icon="search" size="sm" />{/snippet}
+{#snippet newMessageIcon()}<Icon icon={PencilSquareIcon} size="sm" color="inherit" />{/snippet}
+{#snippet jumpToIcon()}<Icon icon={MagnifyingGlassIcon} size="sm" />{/snippet}
 {#snippet channelsHeader()}
 	<Text type="label" size="sm" color="secondary">Channels</Text>
 {/snippet}
@@ -401,7 +410,7 @@
 		<StackItem size="fill" style={styles.sidebarScroll}>
 			<List density="compact" hasDividers={false} header={channelsHeader}>
 				{#each visibleChannels as channel (channel.id)}
-					{#snippet hashtagIcon()}<Icon icon="menu" size="sm" color="secondary" />{/snippet}
+					{#snippet hashtagIcon()}<Icon icon={HashtagIcon} size="sm" color="secondary" />{/snippet}
 					{#snippet unreadBadge()}<Badge label={String(channel.unread)} variant="neutral" />{/snippet}
 					<ListItem
 						label={channel.name}
@@ -442,8 +451,8 @@
 	</Stack>
 {/snippet}
 
-{#snippet membersIcon()}<Icon icon="info" size="sm" color="inherit" />{/snippet}
-{#snippet inboxIcon()}<Icon icon="arrowDown" size="lg" />{/snippet}
+{#snippet membersIcon()}<Icon icon={UserGroupIcon} size="sm" color="inherit" />{/snippet}
+{#snippet inboxIcon()}<Icon icon={InboxIcon} size="lg" />{/snippet}
 
 {#snippet streamComposer()}
 	<ChatComposer placeholder={`Message #${selectedChannel.name}`} onSubmit={() => {}} />
@@ -460,7 +469,7 @@
 {#snippet messageStream()}
 	<Stack direction="vertical" style={styles.streamColumn}>
 		<HStack gap={3} style={styles.streamHeader}>
-			<Icon icon="menu" size="sm" color="secondary" />
+			<Icon icon={HashtagIcon} size="sm" color="secondary" />
 			<Heading level={5}>{selectedChannel.name}</Heading>
 			<StackItem size="fill" style={styles.streamTopic}>
 				<Text type="supporting" color="secondary" maxLines={1}>
@@ -496,7 +505,7 @@
 	</Stack>
 {/snippet}
 
-{#snippet closeThreadIcon()}<Icon icon="close" size="sm" color="inherit" />{/snippet}
+{#snippet closeThreadIcon()}<Icon icon={XMarkIcon} size="sm" color="inherit" />{/snippet}
 {#snippet threadRootAvatar()}<Avatar name={USERS[THREAD_ROOT.userId].name} size="md" />{/snippet}
 {#snippet threadRootTimestamp()}<Timestamp value={THREAD_ROOT.time} format="time" />{/snippet}
 {#snippet threadRootMetadata()}<ChatMessageMetadata timestamp={threadRootTimestamp} />{/snippet}

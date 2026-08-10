@@ -5,12 +5,13 @@
 	Two upstream dependencies have no Svelte counterpart, and both are handled
 	the way this repo already handles them elsewhere.
 
-	1. Icons. Upstream imports Heroicons. `ArrowUpIcon` → `arrowUp` and
-	   `ArrowDownIcon` → `arrowDown` are true matches; the solid `StopIcon` →
-	   `stop` is too (the registry's `stop` is a filled rounded square, the same
-	   glyph the legend swatches want). `ArrowPathIcon` → `arrowsUpDown` is a
-	   registry stand-in, the same one `ChatMessageMetadataFooter` makes.
-	   Retires with the icon registry.
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	2. Charts. Upstream draws with `recharts`, a React-only library — there is
 	   no Svelte build of it, and adding one is not something a scaffolded
@@ -69,6 +70,8 @@
 		proportional,
 		type TableColumn
 	} from '@astryx-svelte/core';
+	import { ArrowDownIcon, ArrowPathIcon, ArrowUpIcon } from '@fvilers/heroicons-svelte/24/outline';
+	import { StopIcon } from '@fvilers/heroicons-svelte/24/solid';
 
 	// ============= DATA =============
 
@@ -531,7 +534,7 @@
 
 {#snippet chartLegendItem(color: string, label: string)}
 	<HStack gap={2} vAlign="center">
-		<Icon icon="stop" size="xsm" style="color: {color};" />
+		<Icon icon={StopIcon} size="xsm" style="color: {color};" />
 		<Text type="supporting" color="secondary">{label}</Text>
 	</HStack>
 {/snippet}
@@ -542,7 +545,7 @@
 			<Text type="supporting" color="secondary">{point?.label ?? ''}</Text>
 			{#each activeSeries as entry (entry.name)}
 				<HStack gap={2} vAlign="center">
-					<Icon icon="stop" size="xsm" style="color: {entry.color};" />
+					<Icon icon={StopIcon} size="xsm" style="color: {entry.color};" />
 					<Text type="supporting">{entry.name}: {point[entry.dataKey]}</Text>
 				</HStack>
 			{/each}
@@ -651,9 +654,9 @@
 				<Heading level={2}>{metric.value}</Heading>
 				<HStack gap={1} vAlign="center">
 					{#if metric.positive}
-						<Icon icon="arrowUp" size="xsm" color="success" />
+						<Icon icon={ArrowUpIcon} size="xsm" color="success" />
 					{:else}
-						<Icon icon="arrowDown" size="xsm" color="error" />
+						<Icon icon={ArrowDownIcon} size="xsm" color="error" />
 					{/if}
 					<Text type="body" color="secondary">{metric.change}</Text>
 				</HStack>
@@ -685,7 +688,7 @@
 				{#each data as d (d.label)}
 					<VStack gap={0}>
 						<HStack gap={2} vAlign="center">
-							<Icon icon="stop" size="xsm" style="color: {d.color};" />
+							<Icon icon={StopIcon} size="xsm" style="color: {d.color};" />
 							<Text type="supporting">{d.label}</Text>
 						</HStack>
 						<Text type="supporting" color="secondary">
@@ -758,7 +761,7 @@
 <!-- ============= MAIN COMPONENT ============= -->
 
 {#snippet reloadIcon()}
-	<Icon icon="arrowsUpDown" size="sm" />
+	<Icon icon={ArrowPathIcon} size="sm" />
 {/snippet}
 
 {#snippet content()}

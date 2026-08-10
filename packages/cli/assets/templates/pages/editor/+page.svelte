@@ -18,16 +18,13 @@
 	`ChatBubbleLeftIcon` → `moreHorizontal`, `PlayCircleIcon` → `chevronRight`,
 	`LockClosedIcon` → `warning`.
 
-	Twenty-four glyphs cannot stay distinct across a 28-name registry, so seven
-	names carry two or more: `viewColumns` covers Squares2X2 and ViewColumns;
-	`copy` covers DocumentText, DeviceTablet and Banknotes; `arrowUp` covers
-	CursorArrowRays and ChevronUp; `close` covers Trash and XMark; `wrench`
-	covers Sparkles and AdjustmentsHorizontal; `moreHorizontal` covers
-	ChatBubbleLeft and EllipsisHorizontal; `stop` covers ComputerDesktop and
-	ShoppingBag. The three
-	device glyphs of the viewport control get three *different* stand-ins on
-	purpose — the items are `isLabelHidden`, so identical icons would make them
-	untellable. Retires with the icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `IconComponent` alias goes with the Heroicons: an icon here is an
 	`IconName`, which is what `BLOCK_META.icon` and `CATEGORY_ICONS` now hold.
@@ -98,6 +95,21 @@
 		type IconName,
 		type TableColumn
 	} from '@astryx-svelte/core';
+	import {
+		AdjustmentsHorizontalIcon,
+		ChevronDownIcon,
+		ChevronUpIcon,
+		ComputerDesktopIcon,
+		DevicePhoneMobileIcon,
+		DeviceTabletIcon,
+		EllipsisHorizontalIcon,
+		EyeIcon,
+		LockClosedIcon,
+		PhotoIcon,
+		PlusCircleIcon,
+		TrashIcon,
+		XMarkIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	type BlockType = 'hero' | 'text' | 'image' | 'button' | 'cards' | 'features' | 'cta';
 
@@ -384,18 +396,18 @@
 	}
 </script>
 
-{#snippet ellipsisHorizontalIcon()}<Icon icon="moreHorizontal" size="sm" />{/snippet}
-{#snippet photoIcon()}<Icon icon="calendar" />{/snippet}
-{#snippet plusCircleIcon()}<Icon icon="check" />{/snippet}
-{#snippet chevronUpIcon()}<Icon icon="arrowUp" size="sm" />{/snippet}
-{#snippet chevronDownIcon()}<Icon icon="chevronDown" size="sm" />{/snippet}
-{#snippet trashIcon()}<Icon icon="close" size="sm" />{/snippet}
-{#snippet computerDesktopIcon()}<Icon icon="stop" size="sm" />{/snippet}
-{#snippet deviceTabletIcon()}<Icon icon="copy" size="sm" />{/snippet}
-{#snippet devicePhoneMobileIcon()}<Icon icon="menu" size="sm" />{/snippet}
-{#snippet eyeIcon()}<Icon icon="eyeSlash" size="sm" />{/snippet}
-{#snippet adjustmentsHorizontalIcon()}<Icon icon="wrench" size="sm" />{/snippet}
-{#snippet xMarkIcon()}<Icon icon="close" size="sm" />{/snippet}
+{#snippet ellipsisHorizontalIcon()}<Icon icon={EllipsisHorizontalIcon} size="sm" />{/snippet}
+{#snippet photoIcon()}<Icon icon={PhotoIcon} />{/snippet}
+{#snippet plusCircleIcon()}<Icon icon={PlusCircleIcon} />{/snippet}
+{#snippet chevronUpIcon()}<Icon icon={ChevronUpIcon} size="sm" />{/snippet}
+{#snippet chevronDownIcon()}<Icon icon={ChevronDownIcon} size="sm" />{/snippet}
+{#snippet trashIcon()}<Icon icon={TrashIcon} size="sm" />{/snippet}
+{#snippet computerDesktopIcon()}<Icon icon={ComputerDesktopIcon} size="sm" />{/snippet}
+{#snippet deviceTabletIcon()}<Icon icon={DeviceTabletIcon} size="sm" />{/snippet}
+{#snippet devicePhoneMobileIcon()}<Icon icon={DevicePhoneMobileIcon} size="sm" />{/snippet}
+{#snippet eyeIcon()}<Icon icon={EyeIcon} size="sm" />{/snippet}
+{#snippet adjustmentsHorizontalIcon()}<Icon icon={AdjustmentsHorizontalIcon} size="sm" />{/snippet}
+{#snippet xMarkIcon()}<Icon icon={XMarkIcon} size="sm" />{/snippet}
 {#snippet syncingSpinner()}<Spinner />{/snippet}
 
 <!-- Transaction table cells — `renderCell` is a `Snippet<[Transaction]>` here. -->
@@ -610,7 +622,7 @@
 		<Card padding={6} style={cardStyle} onclick={onSelect}>
 			<HStack gap={4} vAlign="start">
 				<Center width={40} height={40} style={iconCircle}>
-					<Icon icon="warning" color="secondary" />
+					<Icon icon={LockClosedIcon} color="secondary" />
 				</Center>
 				<VStack gap={1}>
 					<Text type="label" weight="semibold">{(props.heading as string) || 'Notice'}</Text>

@@ -2,15 +2,13 @@
 	Ported from upstream's `assets/templates/pages/kanban-board/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`ArrowsUpDownIcon` → `arrowsUpDown`, `FunnelIcon` → `funnel`,
-	`MagnifyingGlassIcon` → `search`, `InformationCircleIcon` → `info` and
-	`CheckCircleIcon` → `success` are true matches. The rest are stand-ins:
-	`PlusIcon` → `check` (the registry ships no plus — the same call
-	`shell-side-nav` makes, and TODO.md records the gap), `ArrowPathIcon` →
-	`clock`, `InboxIcon` → `arrowDown` (as `messaging-shell` takes it), and
-	`ClipboardDocumentCheckIcon` → `checkDouble`. No two collide here. Retires
-	with the icon registry (TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream authors its styles in `stylex.create`. StyleX may not be imported
 	from a `.svelte` file, so the static ones become `style` strings and the two
@@ -64,6 +62,13 @@
 		VStack,
 		type IconName
 	} from '@astryx-svelte/core';
+	import {
+		ArrowsUpDownIcon,
+		FunnelIcon,
+		InformationCircleIcon,
+		MagnifyingGlassIcon,
+		PlusIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 	import type { Snippet } from 'svelte';
 	import type { Attachment } from 'svelte/attachments';
 
@@ -476,10 +481,10 @@
 	};
 </script>
 
-{#snippet arrowsUpDownIcon()}<Icon icon="arrowsUpDown" size="sm" />{/snippet}
-{#snippet funnelIcon()}<Icon icon="funnel" size="sm" />{/snippet}
-{#snippet magnifyingGlassIcon()}<Icon icon="search" size="sm" />{/snippet}
-{#snippet plusIcon()}<Icon icon="check" size="sm" />{/snippet}
+{#snippet arrowsUpDownIcon()}<Icon icon={ArrowsUpDownIcon} size="sm" />{/snippet}
+{#snippet funnelIcon()}<Icon icon={FunnelIcon} size="sm" />{/snippet}
+{#snippet magnifyingGlassIcon()}<Icon icon={MagnifyingGlassIcon} size="sm" />{/snippet}
+{#snippet plusIcon()}<Icon icon={PlusIcon} size="sm" />{/snippet}
 
 <!-- ============= CARD BODY ============= -->
 
@@ -545,7 +550,7 @@
 					<StatusDot variant={meta.variant} label={`${meta.title} status`} />
 					<Heading level={4}>{meta.title}</Heading>
 					<Tooltip content={meta.tooltip}>
-						<Icon icon="info" size="sm" color="secondary" />
+						<Icon icon={InformationCircleIcon} size="sm" color="secondary" />
 					</Tooltip>
 				</HStack>
 				<Text type="supporting" color="secondary" hasTabularNumbers>{count}</Text>

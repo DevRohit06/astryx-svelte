@@ -2,16 +2,13 @@
 	Ported from upstream's `assets/templates/pages/table-grouped/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons, which have no Svelte build, so each is a stand-in
-	from core's 28-name `Icon` registry. Only the two chevrons are true matches:
-	`ChevronDownIcon` → `chevronDown`, `ChevronRightIcon` → `chevronRight`,
-	`XMarkIcon` → `close`, `EllipsisHorizontalIcon` → `moreHorizontal`,
-	`ChartBarIcon` → `viewColumns`, `PencilIcon` → `wrench`, `UserIcon` → `info`,
-	`TagIcon` → `stop`, `DocumentDuplicateIcon` → `copy`, `ArrowRightIcon` →
-	`chevronRight` (**a collision** — the same glyph the collapsed group header
-	uses), `TrashIcon` → `error` (the registry ships no trash; `error` is the
-	nearest destructive-action glyph and avoids a second `close`). Retires with
-	the icon registry.
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Three structural translations:
 
@@ -77,6 +74,8 @@
 		resolveColumnWidths,
 		useResizable
 	} from '@astryx-svelte/core';
+	import { ChartBarIcon } from '@fvilers/heroicons-svelte/24/solid';
+	import { EllipsisHorizontalIcon, XMarkIcon } from '@fvilers/heroicons-svelte/24/outline';
 	import type {
 		PowerSearchConfig,
 		PowerSearchFilter,
@@ -811,8 +810,8 @@
 	}
 </script>
 
-{#snippet closeIcon()}<Icon icon="close" size="sm" />{/snippet}
-{#snippet ellipsisIcon()}<Icon icon="moreHorizontal" size="sm" />{/snippet}
+{#snippet closeIcon()}<Icon icon={XMarkIcon} size="sm" />{/snippet}
+{#snippet ellipsisIcon()}<Icon icon={EllipsisHorizontalIcon} size="sm" />{/snippet}
 
 {#snippet taskDetailPanel(
 	task: TaskRow | null,
@@ -860,7 +859,7 @@
 					</MetadataListItem>
 					<MetadataListItem label="Priority">
 						<HStack gap={2} vAlign="center">
-							<Icon icon="viewColumns" size="sm" color={PRIORITY_COLOR[task.priority]} />
+							<Icon icon={ChartBarIcon} size="sm" color={PRIORITY_COLOR[task.priority]} />
 							<Text type="body">{PRIORITY_LABEL[task.priority]}</Text>
 						</HStack>
 					</MetadataListItem>
@@ -989,7 +988,7 @@
 								</TableCell>
 								<TableCell>
 									<HStack gap={3} vAlign="center">
-										<Icon icon="viewColumns" size="sm" color={PRIORITY_COLOR[task.priority]} />
+										<Icon icon={ChartBarIcon} size="sm" color={PRIORITY_COLOR[task.priority]} />
 										<Text type="supporting" color="secondary">{task.taskId}</Text>
 										<Text type="body" maxLines={1}>{task.title}</Text>
 										{#if task.subtitle}

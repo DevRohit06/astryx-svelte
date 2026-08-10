@@ -2,13 +2,13 @@
 	Ported from upstream's `assets/templates/pages/login-card/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream splits two ways on icons here. The logo *imports* Heroicons, so it is
-	a registry substitution: `CubeIcon` → `stop`. A stand-in rather than a true
-	match — the registry has no cube glyph and `stop` is its square — and the same
-	one the demo routes make. Retires with the icon registry (TODO.md). The two
-	brand marks are *inlined* SVG paths upstream, so they transcribe as-is; they
-	are local components there and snippets here, since `Button.icon` is a
-	`Snippet`.
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 -->
 <script lang="ts">
 	import {
@@ -23,6 +23,7 @@
 		TextInput,
 		VStack
 	} from '@astryx-svelte/core';
+	import { CubeIcon } from '@fvilers/heroicons-svelte/24/outline';
 
 	// Standalone auth page paints its own body background (no host shell).
 	const pageStyle =
@@ -84,7 +85,7 @@
 	<VStack gap={4} hAlign="center" style={contentStyle}>
 		<!-- Logo -->
 		<VStack gap={2} hAlign="center">
-			<Icon icon="stop" size="lg" />
+			<Icon icon={CubeIcon} size="lg" />
 			<Text type="body" weight="bold" size="lg">Product Inc.</Text>
 		</VStack>
 

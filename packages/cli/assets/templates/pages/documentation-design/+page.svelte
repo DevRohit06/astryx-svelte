@@ -2,12 +2,13 @@
 	Ported from upstream's `assets/templates/pages/documentation-design/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`ArrowTopRightOnSquareIcon` → `externalLink` (a true match),
-	`ArrowsPointingOutIcon` → `arrowsUpDown`, `PlusIcon` → `check` (the registry
-	ships no plus — TODO.md records the gap, and the `Toolbar` example makes the
-	same swap). The last two are stand-ins. Retires with the icon registry
-	(TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's `DialogPreview` is a component with one `useState`, and
 	`ComponentDetailView` is a second component the page renders with
@@ -62,6 +63,11 @@
 		useMediaQuery,
 		type OutlineItem
 	} from '@astryx-svelte/core';
+	import {
+		ArrowTopRightOnSquareIcon,
+		ArrowsPointingOutIcon,
+		PlusIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	const tabListFlush = 'margin-inline-start: -12px;';
 	const outlinePanel =
@@ -530,9 +536,9 @@
 	const docs = $derived(getComponentDocs(activeNav));
 </script>
 
-{#snippet plusIcon()}<Icon icon="check" />{/snippet}
-{#snippet arrowTopRightOnSquareIcon()}<Icon icon="externalLink" />{/snippet}
-{#snippet arrowsPointingOutIcon()}<Icon icon="arrowsUpDown" />{/snippet}
+{#snippet plusIcon()}<Icon icon={PlusIcon} />{/snippet}
+{#snippet arrowTopRightOnSquareIcon()}<Icon icon={ArrowTopRightOnSquareIcon} />{/snippet}
+{#snippet arrowsPointingOutIcon()}<Icon icon={ArrowsPointingOutIcon} />{/snippet}
 {#snippet newBadge()}<Badge label="New" variant="info" />{/snippet}
 
 {#snippet dialogPreview()}

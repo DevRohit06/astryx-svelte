@@ -15,13 +15,13 @@
 	must build. `revenueData` is transcribed live and is currently read only by
 	that block. Uncomment when `charts` lands.
 
-	Upstream imports Heroicons, which have no Svelte build, so each is a stand-in
-	from core's 28-name `Icon` registry: `FunnelIcon` → `funnel` (the one true
-	match), `ArrowDownTrayIcon` → `arrowDown` (the registry ships no download
-	glyph), `PlusIcon` → `check` (it ships no plus either — the same substitution
-	`TabList`'s _New item_ block and the `shell-side-nav` template already make).
-	Retires with the icon registry. `shoeSvg`'s inlined path data is upstream's
-	own and transcribes untouched.
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	`TableColumn.renderCell` is a `Snippet<[T]>` here where upstream's is
 	`(item: T) => ReactNode`; a template snippet does not exist yet while
@@ -51,6 +51,7 @@
 		pixel,
 		proportional
 	} from '@astryx-svelte/core';
+	import { ArrowDownTrayIcon, FunnelIcon, PlusIcon } from '@fvilers/heroicons-svelte/24/outline';
 	import type { TableColumn } from '@astryx-svelte/core';
 
 	// ============= DATA =============
@@ -909,9 +910,9 @@
 	<Text type="body">{item.date}</Text>
 {/snippet}
 
-{#snippet funnelIcon()}<Icon icon="funnel" size="sm" />{/snippet}
-{#snippet exportIcon()}<Icon icon="arrowDown" size="sm" />{/snippet}
-{#snippet plusIcon()}<Icon icon="check" size="sm" />{/snippet}
+{#snippet funnelIcon()}<Icon icon={FunnelIcon} size="sm" />{/snippet}
+{#snippet exportIcon()}<Icon icon={ArrowDownTrayIcon} size="sm" />{/snippet}
+{#snippet plusIcon()}<Icon icon={PlusIcon} size="sm" />{/snippet}
 
 {#snippet header()}
 	<LayoutHeader hasDivider>

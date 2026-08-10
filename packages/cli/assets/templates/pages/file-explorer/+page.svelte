@@ -2,18 +2,13 @@
 	Ported from upstream's `assets/templates/pages/file-explorer/page.tsx`.
 	Transcribed, not re-authored: the parity rule covers template content too.
 
-	Upstream imports Heroicons here, so every icon is a registry substitution:
-	`ChevronLeftIcon` → `chevronLeft`, `ChevronRightIcon` → `chevronRight`,
-	`MagnifyingGlassIcon` → `search`, `EllipsisHorizontalIcon` →
-	`moreHorizontal` and `ViewColumnsIcon` → `viewColumns` are true matches. The
-	rest are stand-ins: `ShareIcon` → `externalLink`, `TagIcon` → `funnel`,
-	`Squares2X2Icon` → `stop`, `Bars4Icon` → `menu`, `TableCellsIcon` →
-	`calendar`, `AdjustmentsHorizontalIcon` → `wrench`, `DocumentIcon` → `copy`,
-	and the solid `FolderIcon` → `menu` — the same folder/document pair
-	`shell-nav` takes, because the registry has neither glyph. `Bars4Icon` and
-	`FolderIcon` therefore collide on `menu`; they never appear side by side (one
-	is a view-mode toggle, the other a row icon). Retires with the icon registry
-	(TODO.md).
+	Icons are Heroicons, upstream's own set: `@fvilers/heroicons-svelte` is that
+	set built for Svelte 5, and it keeps upstream's component names and its
+	`24/outline` / `20/solid` / `24/solid` entry points. The imports below are
+	upstream's with the package name changed, so each glyph is the one upstream
+	draws rather than a stand-in from core's 28-name `Icon` registry — that
+	registry names theme-swappable UI affordances and was never meant to carry
+	arbitrary artwork.
 
 	Upstream's five `CSSProperties` objects become strings, because Svelte's
 	`style` prop is a string; the const names and declaration order are
@@ -45,6 +40,19 @@
 		Toolbar,
 		VStack
 	} from '@astryx-svelte/core';
+	import {
+		AdjustmentsHorizontalIcon,
+		Bars4Icon,
+		ChevronLeftIcon,
+		ChevronRightIcon,
+		EllipsisHorizontalIcon,
+		MagnifyingGlassIcon,
+		ShareIcon,
+		Squares2x2Icon,
+		TableCellsIcon,
+		TagIcon,
+		ViewColumnsIcon
+	} from '@fvilers/heroicons-svelte/24/outline';
 
 	interface FileSystemItem {
 		id: string;
@@ -333,17 +341,17 @@
 	};
 </script>
 
-{#snippet chevronLeftIcon()}<Icon icon="chevronLeft" size="sm" />{/snippet}
-{#snippet chevronRightIcon()}<Icon icon="chevronRight" size="sm" />{/snippet}
-{#snippet squares2X2Icon()}<Icon icon="stop" size="sm" />{/snippet}
-{#snippet bars4Icon()}<Icon icon="menu" size="sm" />{/snippet}
-{#snippet viewColumnsIcon()}<Icon icon="viewColumns" size="sm" />{/snippet}
-{#snippet tableCellsIcon()}<Icon icon="calendar" size="sm" />{/snippet}
-{#snippet adjustmentsHorizontalIcon()}<Icon icon="wrench" size="sm" />{/snippet}
-{#snippet shareIcon()}<Icon icon="externalLink" size="sm" />{/snippet}
-{#snippet tagIcon()}<Icon icon="funnel" size="sm" />{/snippet}
-{#snippet ellipsisHorizontalIcon()}<Icon icon="moreHorizontal" size="sm" />{/snippet}
-{#snippet magnifyingGlassIcon()}<Icon icon="search" size="sm" />{/snippet}
+{#snippet chevronLeftIcon()}<Icon icon={ChevronLeftIcon} size="sm" />{/snippet}
+{#snippet chevronRightIcon()}<Icon icon={ChevronRightIcon} size="sm" />{/snippet}
+{#snippet squares2X2Icon()}<Icon icon={Squares2x2Icon} size="sm" />{/snippet}
+{#snippet bars4Icon()}<Icon icon={Bars4Icon} size="sm" />{/snippet}
+{#snippet viewColumnsIcon()}<Icon icon={ViewColumnsIcon} size="sm" />{/snippet}
+{#snippet tableCellsIcon()}<Icon icon={TableCellsIcon} size="sm" />{/snippet}
+{#snippet adjustmentsHorizontalIcon()}<Icon icon={AdjustmentsHorizontalIcon} size="sm" />{/snippet}
+{#snippet shareIcon()}<Icon icon={ShareIcon} size="sm" />{/snippet}
+{#snippet tagIcon()}<Icon icon={TagIcon} size="sm" />{/snippet}
+{#snippet ellipsisHorizontalIcon()}<Icon icon={EllipsisHorizontalIcon} size="sm" />{/snippet}
+{#snippet magnifyingGlassIcon()}<Icon icon={MagnifyingGlassIcon} size="sm" />{/snippet}
 {#snippet informationTitle()}Information{/snippet}
 
 {#snippet toolbarStart()}
@@ -416,7 +424,7 @@
 								/>
 							{/snippet}
 							{#snippet itemChevron()}
-								<Icon icon="chevronRight" size="xsm" color="secondary" />
+								<Icon icon={ChevronRightIcon} size="xsm" color="secondary" />
 							{/snippet}
 							<ListItem
 								label={item.name}

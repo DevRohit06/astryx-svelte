@@ -3458,6 +3458,42 @@ Still open from this pass:
       All 165 were loaded and checked in a real browser (see the hydration sweep above): none
       throws, none fails to hydrate, and every image the example blocks reference renders
 
+### Page-template icons — real glyphs, and the `IconType` that blocked them (2026-08-10)
+
+The 43 page templates drew the **wrong pictures**. 69 documented substitutions across **37 of
+43** files mapped upstream's ~85 distinct Heroicons onto core's **28-name semantic registry** —
+`PlusIcon` → `check` (×8, so "Add" buttons drew a checkmark), `StarIcon` → `check` (rating stars
+drew checkmarks), `PencilSquareIcon` → `copy`, `SparklesIcon` → `wrench`, `FolderIcon` → `menu`.
+The same upstream icon was mapped inconsistently across files (`LockClosedIcon` reached `stop`,
+`eyeSlash` _and_ `warning`). Styles were never involved: the class oracle read 0 mismatches
+before and after.
+
+**The header comments blamed the wrong thing.** They asserted Heroicons "has no Svelte build".
+The real blocker was one line of core: `IconType = Component<SVGAttributes<SVGSVGElement>>`, the
+literal translation of upstream's `ComponentType<SVGProps<SVGSVGElement>>`. Component props are
+contravariant and the element parameter reaches `DOMAttributes<T>`'s handlers, so **every** real
+Svelte icon package failed it — measured, not assumed: `@fvilers/heroicons-svelte` on the element
+parameter, `@lucide/svelte` (already this repo's theme dependency) on a narrowed `name`,
+`svelte-heros-v2` on a narrowed `focusable`, `heroicons-svelte` on being Svelte 4 classes.
+`@heroicons/react` accepts the _full_ `SVGProps` and only adds optional extras, which is why
+upstream's type admits its own icon set and ours admitted nothing. `IconType` is now a bare
+`Component`, which is the call shadcn-svelte makes for the same reason.
+
+- **All 149 icon sites now draw upstream's glyph.** `@fvilers/heroicons-svelte` mirrors
+  `@heroicons/react`'s entry points (`24/outline`, `20/solid`, `24/solid`) _and_ its `XxxIcon`
+  export names, so the imports are upstream's with the package name changed. `theme-showcase` is
+  the one page upstream draws with Lucide, and it uses `@lucide/svelte` for the same reason.
+  Both are `packages/cli` devDependencies — the templates are CLI assets, so resolution has to
+  work from that path, and upstream's arrangement is the same (its sandbox declares
+  `@heroicons/react`; its CLI declares nothing)
+- **One export name differs**: heroicons-react's `Squares2X2Icon` is `Squares2x2Icon` here
+- **Three `Selector.startIcon`s in `theme-showcase`** went through the `Snippet` arm, so
+  `INVENTORY_FILTERS` became `$derived.by` — a snippet does not exist while `<script>` runs
+- [ ] **Templates are not typechecked, and this is how the substitutions survived.**
+      Mutation-checked: a deliberate type error in a template produces **0** `svelte-check`
+      errors, because `assets/` is outside every tsconfig include. It matters more now that
+      templates import real packages — a scaffolded app _does_ typecheck what it received
+
 ### After launch
 
 - [x] **The shell is fully dogfooded** — palette and outline in batch 9, then frame, header and
