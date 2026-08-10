@@ -72,9 +72,19 @@ describe('documented Svelte version matches the core peer dependency', () => {
 		// `react-dom`). It is a peer rather than a dependency on purpose — the
 		// consumer's own bundler runs the StyleX compiler over core, so a second
 		// copy resolving at a different version renders unstyled with no error.
+		//
+		// Optional peers are excluded on the same reasoning, mechanically rather
+		// than by name. A framework peer cannot be optional — the framework is
+		// what the package is written against, and a consumer without it has
+		// nothing to run. So `peerDependenciesMeta[name].optional` is a reliable
+		// signal that a peer is tooling, and it keeps this guard from firing every
+		// time core declares another one. `vite` and `@stylexjs/unplugin` arrived
+		// that way with the Vite preset: needed to *compile* core from source,
+		// irrelevant to anyone importing the pre-built stylesheet.
 		const BUILD_TOOL_PEERS = new Set(['@stylexjs/stylex']);
+		const optional = pkg.peerDependenciesMeta ?? {};
 		const frameworkPeers = Object.keys(pkg.peerDependencies).filter(
-			(name) => !BUILD_TOOL_PEERS.has(name)
+			(name) => !BUILD_TOOL_PEERS.has(name) && optional[name]?.optional !== true
 		);
 		expect(
 			frameworkPeers,
