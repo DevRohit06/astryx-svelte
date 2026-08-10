@@ -155,8 +155,8 @@ for (const [index, chunk] of chunks.entries()) {
 
 if (failed.length > 0) {
 	console.error('');
-	for (const { label, chunk, status } of failed) {
-		console.error(`  ${label} exited ${status}, over:`);
+	for (const { label, chunk, code } of failed) {
+		console.error(`  ${label} exited ${code}, over:`);
 		for (const file of chunk) console.error(`      ${file}`);
 	}
 	console.error(
