@@ -40,16 +40,19 @@ import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
+import { isInfrastructureFailure } from './lib/classify-chunk-failure.mjs';
+
 const CORE = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const TESTS = path.join(CORE, 'src', 'tests');
 
 /**
- * Files per chunk. Well under the earliest observed crash (82) so a run has
- * margin rather than sitting at the edge of one. Raising it trades that margin
- * for wall clock; lowering it pays another browser launch. `CLIENT_CHUNK_SIZE`
- * overrides it for bisecting a crash.
+ * Files per chunk. 20 was not enough margin: one CI run passed every chunk and
+ * the next lost chunk 5 at 13 of 20 files, on the same commit. 12 is the size
+ * the local 14-chunk pass has always cleared. Raising it trades margin for wall
+ * clock; lowering it pays another browser launch. `CLIENT_CHUNK_SIZE` overrides
+ * it for bisecting a crash.
  */
-const SIZE = Number(process.env.CLIENT_CHUNK_SIZE ?? 20);
+const SIZE = Number(process.env.CLIENT_CHUNK_SIZE ?? 12);
 
 /**
  * Vitest's entry resolved as a JS file and run through `process.execPath`,
@@ -82,6 +85,8 @@ console.log(`  client suite: ${files.length} files in ${chunks.length} chunks of
 let ranFiles = 0;
 let ranCases = 0;
 const failed = [];
+/** Chunks that lost their browser and were re-run. Reported, never silent. */
+const retried = [];
 
 /**
  * Output is streamed **and** captured: streamed because a captured 25-minute
@@ -130,17 +135,21 @@ for (const [index, chunk] of chunks.entries()) {
 	const label = `chunk ${index + 1}/${chunks.length}`;
 	console.log(`\n──────── ${label} ────────`);
 
-	const { code, output } = await runChunk([
-		vitestBin,
-		'--run',
-		'--project=client',
-		...chunk,
-		...process.argv.slice(2)
-	]);
+	const args = [vitestBin, '--run', '--project=client', ...chunk, ...process.argv.slice(2)];
 
-	const plain = stripAnsi(output);
-	const fileLine = plain.match(/Test Files\s+(\d+) passed\s+\((\d+)\)/);
-	const caseLine = plain.match(/Tests\s+(\d+) passed\s+\((\d+)\)/);
+	let { code, output } = await runChunk(args);
+	let plain = stripAnsi(output);
+	let fileLine = plain.match(/Test Files\s+(\d+) passed\s+\((\d+)\)/);
+	let caseLine = plain.match(/Tests\s+(\d+) passed\s+\((\d+)\)/);
+
+	if ((code !== 0 || !fileLine || !caseLine) && isInfrastructureFailure(plain)) {
+		console.log(`\n  ${label} lost its browser, not a case — retrying once.\n`);
+		({ code, output } = await runChunk(args));
+		plain = stripAnsi(output);
+		fileLine = plain.match(/Test Files\s+(\d+) passed\s+\((\d+)\)/);
+		caseLine = plain.match(/Tests\s+(\d+) passed\s+\((\d+)\)/);
+		retried.push(label);
+	}
 
 	if (code !== 0 || !fileLine || !caseLine) {
 		failed.push({ label, chunk, code });
@@ -177,3 +186,10 @@ if (ranFiles !== files.length) {
 }
 
 console.log(`\n  client: ${ranFiles}/${files.length} files, ${ranCases} cases passed, 0 failed`);
+
+// Never a silent retry. A green run that needed one is a different fact from a
+// green run that did not, and the frequency is the measurement that says
+// whether the chunk size is still right.
+if (retried.length > 0) {
+	console.log(`  ${retried.length} chunk(s) lost a browser and were re-run: ${retried.join(', ')}`);
+}
