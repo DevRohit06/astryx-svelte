@@ -53,12 +53,31 @@ export function createPropsTypeIndex(coreDistDir) {
 	// `SyntaxThemeProps` module-private and the port matches that — but the
 	// per-component `.d.ts` still declares them, and they describe real props
 	// that belong in the table.
-	/** @param {string} dir @returns {string[]} */
+	/**
+	 * **Sorted, and that is load-bearing rather than tidy.** `readdirSync`
+	 * returns filesystem order, which differs between platforms, and this list
+	 * is the program's entry points — so it decides which declaration the
+	 * checker reaches first, which is what the `typeByName` precedence below is
+	 * built on. Unsorted, the same commit emits different docs on Windows and on
+	 * Ubuntu: four (`HStack`, `VStack`, `StackItem`, `VisuallyHidden`) were
+	 * current locally and stale in CI, on a repo where the emitted files are
+	 * committed and checked. Measured rather than reasoned about — reversing
+	 * this walk makes **35** docs stale.
+	 *
+	 * `localeCompare` is deliberately not used: it is locale-dependent, which is
+	 * the same class of problem one layer up.
+	 *
+	 * @param {string} dir
+	 * @returns {string[]}
+	 */
 	const collectDeclarations = (dir) => {
 		if (!fs.existsSync(dir)) return [];
 		/** @type {string[]} */
 		const found = [];
-		for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+		const entries = fs
+			.readdirSync(dir, { withFileTypes: true })
+			.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+		for (const entry of entries) {
 			const full = path.join(dir, entry.name);
 			if (entry.isDirectory()) found.push(...collectDeclarations(full));
 			else if (entry.isFile() && entry.name.endsWith('.d.ts')) found.push(full);

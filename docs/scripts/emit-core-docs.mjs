@@ -371,7 +371,14 @@ async function render(doc, file, prettierOptions) {
  * @returns {string[]}
  */
 function findEmitted(dir, found = []) {
-	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+	// Sorted, as every walk in this pipeline now is: the orphan list this feeds
+	// is printed and deleted from, and neither should depend on the filesystem's
+	// idea of order.
+	const entries = fs
+		.readdirSync(dir, { withFileTypes: true })
+		.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+
+	for (const entry of entries) {
 		const full = path.join(dir, entry.name);
 		if (entry.isDirectory()) findEmitted(full, found);
 		else if (entry.isFile() && entry.name.endsWith('.doc.mjs')) found.push(full);

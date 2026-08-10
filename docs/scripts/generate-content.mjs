@@ -73,7 +73,15 @@ function findDocModules(dir, accept = (name) => name.endsWith('.doc.mjs')) {
 	/** @type {string[]} */
 	const found = [];
 
-	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+	// Sorted for the reason `collectDeclarations` in lib/props-types.mjs is:
+	// `readdirSync` returns filesystem order, which differs between platforms,
+	// and a generated artefact that is committed and checked cannot depend on
+	// which machine ran the generator.
+	const entries = fs
+		.readdirSync(dir, { withFileTypes: true })
+		.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
+
+	for (const entry of entries) {
 		const full = path.join(dir, entry.name);
 		if (entry.isDirectory()) {
 			found.push(...findDocModules(full, accept));
