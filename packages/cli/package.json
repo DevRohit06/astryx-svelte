@@ -1,7 +1,7 @@
 {
 	"name": "@astryx-svelte/cli",
 	"displayName": "CLI",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Scaffold projects, browse templates, generate themes, and get agent-ready docs from the command line.",
 	"type": "module",
 	"license": "MIT",

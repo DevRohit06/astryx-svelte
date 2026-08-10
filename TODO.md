@@ -109,7 +109,41 @@ instead — `<dialog>` and `[popover]` both ship `border: solid` (medium = 3px).
       opt-in); ours is folded into the always-loaded `base.css` because the components
       genuinely require it. Revisit if the published surface should mirror upstream's split
 
-- [ ] Align `useCSSLayers` output with upstream's form (ours emits `@layer priorityN`, upstream ships `:not(#\#)` specificity hacks)
+- [x] Align `useCSSLayers` output with upstream's form — **done for the shipped stylesheet.**
+      `dist/astryx.css` is built with `processStylexRules(rules, false)`, so it carries upstream's
+      `:not(#\#)` padding inside one `@layer astryx-base`, byte-comparable to theirs.
+      `compare-upstream-css.mjs` proves it: 1,463 shared classes, 0 differing rules.
+- [ ] The _compiler_ path still emits `@layer priority1…9`, and it must: with `useCSSLayers: false`
+      the plugin emits **unlayered** rules, which beat every layered rule and would defeat theming
+      outright (upstream avoids this only by wrapping at build time, which a consumer's build does
+      not do). `base.css` therefore names `priority1…16` between `astryx-base` and `astryx-theme`.
+      Revisit only if StyleX gains a way to emit into a named layer.
+      → Before this, `base.css` declared four layers and the nine real ones sorted _after_ `product`,
+      silently inverting the cascade for every consumer on the compiler path. Fixed 2026-08-11
+- [x] **`astryx.css` stands alone: `dist` is compiled at publish time.** Shipping the stylesheet was
+      not enough — `stylex.create` **throws** at runtime rather than degrading, so importing the
+      sheet without a compiler crashed. `scripts/compile-dist-stylex.mjs` runs in `prepack` and
+      compiles the 200 `dist/**/*.stylex.js` modules. Only `create`/`defineVars`/`keyframes` are
+      compile-time; `props` is a real runtime function and `.svelte` files reach StyleX only through
+      `sx()` → `props`, so nothing else needs it.
+      It compiles each module under its **source** identity, not its dist path: StyleX hashes
+      `defineVars` companion classes from the module path, and the first run mismatched 26 classes
+      against `astryx.css` because of it. The script asserts every class dist references is in the
+      stylesheet, so that class of drift cannot ship.
+      Both routes are alive, as upstream has them: the pre-built sheet by default, and a `"source"`
+      export condition on all 9 non-CSS subpaths for bundlers that would rather compile and
+      tree-shake.
+      **This was a breaking delivery change**, and a silent one: a precompiled `dist` gives a
+      consumer's StyleX plugin nothing to compile. The docs site hit it exactly — its CSS fell from
+      ~250 kB to 161 kB with no error — and is now the dogfood for route 1. `doctor`'s check accepts
+      either route rather than reporting route 1 as broken
+
+- [ ] **Upstream bug, not replicated: `astryx.css` carries their ESLint fixture.**
+      `packages/core/src/Badge/Badge.test-violations.tsx` is a file of deliberate token violations
+      ("VIOLATION: hardcoded color"). Their `build-css.mjs` ignores `**/*.test.*`, which
+      `.test-violations.` does not match, so ten junk classes — `color:#FF0000`, `margin:8px`,
+      `font-size:14px` … — ship in every consumer's stylesheet. Recorded as the ten named skips in
+      `compare-upstream-css.mjs`, which retire themselves when upstream fixes the glob
 - [ ] **Babel 7 pin** in `packages/core` (`@babel/core@8` needs Node ≥22.18; dev machine on 22.17.0). Revisit on next Node bump
 
 ---
@@ -4147,6 +4181,18 @@ checklist nobody re-reads against the repo describes the day it was written.
       or credential problem surfaces without burning a version number, which npm does not let you
       re-use
 - [ ] Consider asking the Astryx maintainers for a blessing
+- [ ] **The version scheme cannot express a release of our own, and 0.3.1 is the first proof.**
+      Decided 2026-08-10, with the collision accepted deliberately rather than missed: versions stay
+      in lockstep with the upstream release they port, so a port-local fix — the Vite preset, the
+      `doctor` check — takes the next patch number regardless of whether upstream has used it.
+      **Upstream will very likely publish its own 0.3.1**: it shipped ten patches across the 0.1.x
+      line, so this is likely rather than hypothetical. The rule when it happens, written down now
+      so it is not improvised then: **skip to the next free patch and state the parity target in the
+      `CHANGELOG` heading** — if upstream ships 0.3.1 we release 0.3.2 and say it ports 0.3.1. The
+      machine-readable parity target is already exact and already in the tree: the
+      `@astryxdesign/*` pin in each package's devDependencies. The alternative considered and
+      rejected was decoupling to our own semver with parity as metadata, which costs the
+      "version means parity" property that the README, the CHANGELOG and the tag all lean on
 - [x] Enforce the parity rule in CI, with a `parity` label on issues/PRs — `.github/ISSUE_TEMPLATE`
       carries `parity.yml`, `bug.yml` and `port-template.yml`; CI runs both fidelity oracles on
       every PR, which is the enforcement that matters
@@ -5440,11 +5486,18 @@ directory's worth of work:**
       the batch-close surface sweep. Worth remembering because the same reasoning would have
       mis-shaped `DropdownMenuContext` and `FormLayoutContext`, which are two of the seven names
       still recorded as missing
-- [ ] **`./base.css` is the one subpath we ship with no upstream counterpart.** Upstream ships
-      `./reset.css`, `./astryx.css` and `./tailwind-theme.css`; we ship none of those and ship this
-      instead. It is a genuine StyleX-port necessity — `@layer` ordering and `color-scheme`, neither
-      of which StyleX can emit — and Phase 0 already records _why the reset is folded into it_, but
-      nowhere until now recorded that the entry point itself is ours alone
+- [ ] **`./base.css` is a subpath we ship with no upstream counterpart.** Upstream ships
+      `./reset.css`, `./astryx.css` and `./tailwind-theme.css`; we ship this instead. It is a
+      genuine StyleX-port necessity — `@layer` ordering and `color-scheme`, neither of which StyleX
+      can emit — and Phase 0 already records _why the reset is folded into it_, but nowhere until
+      now recorded that the entry point itself is ours alone.
+      **Updated 2026-08-11:** `./astryx.css` is no longer missing — upstream's `build-css.mjs` is
+      ported and the stylesheet ships. `./reset.css` stays folded in; `./tailwind-theme.css` is
+      still absent (9.2 kB, ~120 `@theme inline` mappings)
+- [x] **No package declared `main`.** Upstream's every package does; ours had none, so any resolver
+      that does not read `exports` could not resolve core or a theme at all. `exports` masks it from
+      Node and every modern bundler, which is why nothing caught it — publint included. Added to
+      core and all eight themes 2026-08-11. The CLI correctly has none, matching upstream
 - [ ] **`TableHeaderCellProps` publishes `scope` and `title` only.** A `<th>` accepts
       `colspan`/`rowspan`/`abbr` too and Svelte's `HTMLThAttributes` types them, but upstream's
       `TableHeaderCellProps` declares none of the three, so neither do we — a plugin sets them

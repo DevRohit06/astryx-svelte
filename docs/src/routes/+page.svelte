@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
+	import { GITHUB_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '$lib/seo/site.js';
 	import { getColorModeContext } from '$lib/shell/color-mode.svelte.js';
 	import HeroReelProvider from '$lib/landing/hero/hero-reel-provider.svelte';
 	import HeroReelCards from '$lib/landing/hero/hero-reel-cards.svelte';
@@ -93,13 +95,28 @@
 	});
 </script>
 
-<svelte:head>
-	<title>astryx-svelte</title>
-	<meta
-		name="description"
-		content="A Svelte 5 port of Astryx, Meta's open source design system. Unofficial and not affiliated with Meta."
-	/>
-</svelte:head>
+<!--
+	The home page's title is the one place the site gets to say what it is to
+	someone who has never heard of Astryx, so it names Meta rather than assuming
+	the brand carries. `bare` keeps it from becoming "… · astryx-svelte".
+-->
+<Seo
+	bare
+	title="astryx-svelte — Meta’s Astryx design system, ported to Svelte 5"
+	description={SITE_DESCRIPTION}
+	schema={{
+		'@context': 'https://schema.org',
+		'@type': 'SoftwareSourceCode',
+		name: SITE_NAME,
+		description: SITE_DESCRIPTION,
+		url: SITE_URL,
+		codeRepository: GITHUB_URL,
+		programmingLanguage: ['Svelte', 'TypeScript'],
+		license: 'https://opensource.org/licenses/MIT',
+		runtimePlatform: 'Svelte 5',
+		isBasedOn: 'https://astryx.atmeta.com/'
+	}}
+/>
 
 <div class="hero-scope" bind:this={heroScope}>
 	<!--

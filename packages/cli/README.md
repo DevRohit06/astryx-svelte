@@ -1,3 +1,16 @@
+<!--
+	Absolute, and pinned to a commit rather than to a relative path: this file is
+	published to npm, where a repo-relative `src` has nothing to resolve against.
+	The target is the same SVG the docs site imports as its favicon.
+-->
+
+<img
+	src="https://raw.githubusercontent.com/DevRohit06/astryx-svelte/37d3aebd2335e38015274448b541c3b2a746a710/docs/src/lib/assets/favicon.svg"
+	alt=""
+	width="64"
+	height="64"
+/>
+
 # @astryx-svelte/cli
 
 The CLI is the primary interface for working with the design system, for humans and machines alike.
@@ -528,12 +541,9 @@ pnpm exec astryx-svelte docs cli-integrations
 
 ## What is empty, and why
 
-Three surfaces are real mechanisms over genuinely empty data sets. None of them is a stub, and none
-of them will silently pretend otherwise.
+Two surfaces are real mechanisms over genuinely empty data sets. Neither is a stub, and neither will
+silently pretend otherwise.
 
-- **`template --list` finds nothing from core.** Astryx's 1,329 template assets are React source and
-  are deferred, so core contributes no page or block templates yet. Templates contributed by an
-  integration or by another installed package are discovered, listed and injected normally.
 - **`upgrade` has no codemods to apply.** A codemod migrates between two releases, and this port has
   had one. The version registry is empty, which routes every range to the "no codemods" result —
   the same path Astryx takes for a range with nothing registered. The first real entry lands with

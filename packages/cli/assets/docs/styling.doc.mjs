@@ -433,16 +433,17 @@ export const styles = stylex.create({
 					type: 'code',
 					lang: 'ts',
 					label: 'vite.config.ts',
-					code: `import { sveltekit } from '@sveltejs/kit/vite';
-import styleX from '@stylexjs/unplugin/vite';
+					code: `import { astryx } from '@astryx-svelte/core/vite';
+import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
+// The preset is the StyleX plugin plus the two settings Vite would otherwise
+// use to route the package around it: the published .stylex.js is UNCOMPILED,
+// so the dev pre-bundler and the SSR externaliser both have to be told to
+// leave it on the transform path. Hand-rolling the three is still supported;
+// \`astryx-svelte doctor\` reports whichever piece a config is missing.
 export default defineConfig({
-	plugins: [styleX(), sveltekit()],
-	// The published package ships .stylex.js UNCOMPILED, so Vite's pre-bundler
-	// and the SSR externaliser must be told to route it through the plugin.
-	optimizeDeps: { exclude: ['@astryx-svelte/core'] },
-	ssr: { noExternal: ['@astryx-svelte/core'] }
+	plugins: [astryx(), sveltekit()]
 });`
 				},
 				{
@@ -450,7 +451,8 @@ export default defineConfig({
 					style: 'unordered',
 					items: [
 						'Symptom of a missing compiler: a swizzled component renders with no styles, but no build or runtime error.',
-						'Symptom of a missing optimizeDeps/ssr entry: the same silence, but only for styles that come from the package rather than from your own source.',
+						'Symptom of a missing optimizeDeps/ssr entry: the same silence, but only for styles that come from the package rather than from your own source. Missing only ssr.noExternal is the nastiest shape — dev looks right and the production build ships unstyled.',
+						'Run `astryx-svelte doctor` when styles go missing: it reads vite.config.* and names the piece that is absent.',
 						'Never import @stylexjs/stylex from a .svelte file. Author styles in a .stylex.ts sibling.',
 						'Pure theming (defineTheme + astryx-svelte theme build) needs NO StyleX compiler; only swizzled/authored StyleX source does.'
 					]

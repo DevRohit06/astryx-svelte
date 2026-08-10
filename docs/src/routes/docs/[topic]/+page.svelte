@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
 	import PackageStubPage from '$lib/shell/package-stub-page.svelte';
 	import ReferenceDocView from '$lib/shell/reference-doc-view.svelte';
 	import type { PageProps } from './$types.js';
@@ -14,15 +15,11 @@
 	const { data }: PageProps = $props();
 </script>
 
-<svelte:head>
-	{#if data.kind === 'package'}
-		<title>{data.pkg.displayName} · astryx-svelte</title>
-		<meta name="description" content={data.pkg.description} />
-	{:else}
-		<title>{data.topic.title} · astryx-svelte</title>
-		<meta name="description" content={data.topic.description} />
-	{/if}
-</svelte:head>
+{#if data.kind === 'package'}
+	<Seo title={data.pkg.displayName} description={data.pkg.description} />
+{:else}
+	<Seo title={data.topic.title} description={data.topic.description} />
+{/if}
 
 {#if data.kind === 'package'}
 	<PackageStubPage

@@ -15,6 +15,11 @@
 	import favicon from '$lib/assets/favicon.svg';
 	// Layer order + `color-scheme`, which every `light-dark()` token depends on.
 	import '@astryx-svelte/core/base.css';
+	// Every component's styles, pre-built. `core`'s `dist` ships compiled now, so
+	// there is nothing left in it for this site's StyleX plugin to emit — the
+	// plugin still runs, but only over the docs site's *own* `.stylex.ts` modules.
+	// Dropping this line does not error; it renders the whole site unstyled.
+	import '@astryx-svelte/core/astryx.css';
 	// Every installed theme package's `@scope ([data-astryx-theme="…"])` block.
 	// None of these is the site theme, but each is in `THEME_OBJECTS`, and a
 	// `__built` theme injects nothing at runtime — so anything that selects one

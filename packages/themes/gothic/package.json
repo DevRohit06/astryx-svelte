@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-gothic",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Gothic theme for astryx-svelte — deep blue-grays and a signature display serif.",
 	"license": "MIT",
 	"repository": {
@@ -16,6 +16,7 @@
 		"access": "public"
 	},
 	"type": "module",
+	"main": "./dist/index.js",
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",

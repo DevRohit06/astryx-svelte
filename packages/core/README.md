@@ -1,3 +1,16 @@
+<!--
+	Absolute, and pinned to a commit rather than to a relative path: this file is
+	published to npm, where a repo-relative `src` has nothing to resolve against.
+	The target is the same SVG the docs site imports as its favicon.
+-->
+
+<img
+	src="https://raw.githubusercontent.com/DevRohit06/astryx-svelte/37d3aebd2335e38015274448b541c3b2a746a710/docs/src/lib/assets/favicon.svg"
+	alt=""
+	width="64"
+	height="64"
+/>
+
 # @astryx-svelte/core
 
 Svelte 5 components, theme system, and utilities for Astryx — a port of Meta's open source design
@@ -14,27 +27,72 @@ below.
 > discovers components, utils, and design tokens instead of guessing. See
 > [Astryx CLI](#astryx-cli) for the rest of what it does.
 
-## Your bundler must run the StyleX compiler
+## Styles: import a stylesheet, or compile it yourself
 
-This is the one setup fact that has no upstream counterpart, and getting it wrong fails **without
-an error**: the components render, and they render unstyled.
+Components are styled with [StyleX](https://stylexjs.com/), and there are two ways to get their CSS.
+Pick one.
 
-Astryx's own package ships pre-built CSS, so a consumer imports a stylesheet and is done. This one
-cannot. Components are styled with [StyleX](https://stylexjs.com/), and `svelte-package` — which
-builds this package — transpiles TypeScript but does not run StyleX. So `dist/**/*.stylex.js` is
-published **uncompiled**, and every consumer compiles it as part of their own build. That is the
-same property that makes the port verifiable: the compiler derives its class names from the source,
-so authoring against Astryx's token references emits byte-identical atomic CSS.
+### 1. Import the pre-built stylesheet — no bundler configuration at all
 
-For Vite (and therefore SvelteKit), that is three things — the plugin, and two settings that exist
-because Vite has two ways to route a dependency _around_ the plugin pipeline:
+The same thing Astryx's own package does, and what most projects should do:
+
+```ts
+import '@astryx-svelte/core/base.css';
+import '@astryx-svelte/core/astryx.css';
+import '@astryx-svelte/theme-neutral/theme.css';
+```
+
+That is the entire setup. `dist` ships compiled, so nothing needs to run StyleX.
+
+`astryx.css` carries every component's styles — 131 kB, one `@layer astryx-base`, checked against
+`@astryxdesign/core`'s published stylesheet on every test run: 1,463 shared atomic classes, zero
+differing rules. The cost is that you ship every component's CSS whether you use it or not.
+
+### 2. Compile it yourself, from `source`
+
+Every subpath also publishes a `source` condition pointing at the TypeScript. Ask your bundler for
+it and compile the package yourself, and you emit only the atomic classes your app actually reaches
+— smaller than the whole stylesheet, at the cost of configuration:
+
+```ts
+// vite.config.ts — alongside the preset below
+export default defineConfig({
+	plugins: [astryx(), sveltekit()],
+	resolve: { conditions: ['source'] }
+});
+```
+
+This is also the property that makes the port verifiable: the compiler derives class names from the
+source, so authoring against Astryx's token references emits byte-identical atomic CSS.
+
+Getting this route wrong fails **without an error**: the components render, and they render
+unstyled. If that happens, run `pnpm exec astryx-svelte doctor` — it accepts either route, and names
+whichever piece is missing.
+
+For Vite (and therefore SvelteKit), **use the preset**:
 
 ```ts
 // vite.config.ts
+import { astryx } from '@astryx-svelte/core/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
-import stylex from '@stylexjs/unplugin/vite';
 import { defineConfig } from 'vite';
 
+export default defineConfig({
+	plugins: [astryx(), sveltekit()]
+});
+```
+
+That is the whole setup. `astryx()` takes `include` (further packages that ship uncompiled
+`.stylex.js`), `rootDir` (the StyleX module-resolution root — a monorepo importing `.stylex`
+modules across packages wants the workspace root, not the default `process.cwd()`), and `dev`.
+
+<details>
+<summary>What the preset does, and why it is three things rather than one</summary>
+
+The plugin compiles the styles. The other two exist because Vite has **two separate ways to route a
+dependency _around_ its own plugin pipeline**, and each defeats the compiler on its own:
+
+```ts
 export default defineConfig({
 	plugins: [
 		stylex({
@@ -61,6 +119,12 @@ export default defineConfig({
 	ssr: { noExternal: ['@astryx-svelte/core'] }
 });
 ```
+
+Written by hand, these options must match this package's own build **exactly**, or the atomic CSS
+you compile differs from the output verified against upstream. The preset is the only form in which
+"exactly" stays true without anyone maintaining it.
+
+</details>
 
 Both `optimizeDeps.exclude` and `ssr.noExternal` fail silently when missing. If a page renders with
 the right markup and none of the styling, check those two first.
@@ -93,7 +157,9 @@ non-component surfaces:
 | `@astryx-svelte/core/naming`       | The class-name helpers themes and integrations build against |
 | `@astryx-svelte/core/i18n`         | The message catalog runtime                                  |
 | `@astryx-svelte/core/locales/*`    | The shipped catalogs (`en`, `fr-FR`, `pseudo`)               |
-| `@astryx-svelte/core/base.css`     | The one stylesheet — see below                               |
+| `@astryx-svelte/core/vite`         | The `astryx()` Vite preset, for compiling from `source`      |
+| `@astryx-svelte/core/base.css`     | Layer order and `color-scheme` — always needed               |
+| `@astryx-svelte/core/astryx.css`   | Every component's styles, pre-built — see above              |
 
 ## Page Layouts
 
@@ -105,10 +171,14 @@ pnpm exec astryx-svelte template --list       # browse page and block templates
 pnpm exec astryx-svelte template <id> --skeleton
 ```
 
-**Core contributes none of them yet.** Astryx's 1,329 template assets are React source and are
-deferred, so `template --list` finds nothing from this package today. The command is not a stub —
-templates contributed by an integration package, or by any other installed package, are discovered
-and injected normally — but do not plan on scaffolding a dashboard out of core.
+**43 page templates ship today** — dashboards, chat, settings, auth, pricing and more — and every id
+matches upstream's. `template <id> --skeleton` prints the structure; without it you get the whole
+page.
+
+Upstream also ships ~614 _block_ templates, the smaller compositions you drop inside a page. Those
+are React source and are still being ported, so `--list` shows the page set only. Templates
+contributed by an integration or by any other installed package are discovered and injected the same
+way.
 
 ## Astryx CLI
 
@@ -165,33 +235,33 @@ Install the library, a theme, and StyleX:
 
 ```bash
 npm install @astryx-svelte/core @astryx-svelte/theme-neutral @stylexjs/stylex
-npm install -D @stylexjs/unplugin
 ```
 
-### 1. Configure the compiler
-
-See [Your bundler must run the StyleX compiler](#your-bundler-must-run-the-stylex-compiler) above.
-Nothing else in this guide works without it, and nothing else in this guide errors when it is
-missing.
-
-### 2. Import the stylesheets
+### 1. Import the stylesheets
 
 ```css
 /* src/app.css */
 @import '@astryx-svelte/core/base.css';
+@import '@astryx-svelte/core/astryx.css';
 @import '@astryx-svelte/theme-neutral/theme.css';
 ```
 
-`base.css` is **one file, not two**. Astryx splits its reset out as an opt-in
+There is no step for configuring a compiler — `astryx.css` is pre-built. (If you would rather
+compile and tree-shake, see [route 2](#2-compile-it-yourself-from-source) above.)
+
+Import them **in that order**. `base.css` declares the cascade layer order, and a layer's position is
+fixed by where it is first named — so a stylesheet that loads before it can put the layers in the
+wrong sequence and quietly invert which rules win.
+
+`base.css` is also **one file, not two**. Astryx splits its reset out as an opt-in
 `@astryxdesign/core/reset.css`; here the components are authored against the reset and misrender
-without it, so it is folded in and is not optional. The file also declares the cascade layer
-order — `reset, astryx-base, astryx-theme, product` — and sets `color-scheme`, without which every
+without it, so it is folded in and is not optional. It sets `color-scheme` too, without which every
 `light-dark()` token is inert.
 
 If your project has existing global CSS, a legacy reset, or Tailwind, assign every stylesheet to a
 layer deliberately: unlayered rules beat layered ones regardless of specificity.
 
-### 3. Wrap the app in a theme
+### 2. Wrap the app in a theme
 
 ```svelte
 <!-- src/routes/+layout.svelte -->
@@ -212,7 +282,7 @@ To route every `Link` and `Button href` through your router, wrap the tree in `L
 well — SvelteKit needs no wrapper for plain `<a>` navigation, so this is only for a custom link
 component.
 
-### 4. Use a component
+### 3. Use a component
 
 ```svelte
 <script lang="ts">
@@ -269,11 +339,10 @@ them.
 
 ### What is not here
 
-Astryx's README documents three delivery paths this package does not have, and they are absent
+Astryx's README documents two delivery paths this package does not have, and they are absent
 because of what it ships rather than by preference:
 
-- **A pre-built stylesheet.** There is no `astryx.css`; the compiler emits it into your build.
-- **A UMD global and an esm.sh entry.** `dist` is Svelte components plus uncompiled StyleX, so
-  there is no bundler-free `<script src>` story. A CDN copy would render unstyled.
+- **A UMD global and an esm.sh entry.** `dist` is Svelte components, so there is no bundler-free
+  `<script src>` story. A CDN copy would render unstyled.
 - **A Tailwind token bridge.** `tailwind-theme.css` has no counterpart; the tokens are plain CSS
   custom properties, so reference them directly (`bg-[var(--color-background-surface)]`).

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
 	import {
 		Button,
 		Card,
@@ -86,13 +87,10 @@
 	);
 </script>
 
-<svelte:head>
-	<title>Components · astryx-svelte</title>
-	<meta
-		name="description"
-		content="Browse every ported Astryx component with copy-ready examples for each variant, state, and pattern."
-	/>
-</svelte:head>
+<Seo
+	title="Components"
+	description="All 101 Astryx components in Svelte 5 — accessible, themeable, and checked against upstream's compiled CSS. Copy-ready examples for every variant and state."
+/>
 
 {#snippet installSteps()}
 	<VStack gap={3}>

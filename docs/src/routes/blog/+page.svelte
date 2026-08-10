@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Seo from '$lib/seo/seo.svelte';
 	import BlogIndex from '$lib/blog/blog-index.svelte';
 
 	/**
@@ -14,12 +15,9 @@
 	const { data } = $props();
 </script>
 
-<svelte:head>
-	<title>Blog · astryx-svelte</title>
-	<meta
-		name="description"
-		content="Releases, notes and the occasional deep dive on porting Astryx to Svelte."
-	/>
-</svelte:head>
+<Seo
+	title="Blog"
+	description="Release notes and deep dives on porting a design system: what the class oracles catch, what they miss, and the bugs found along the way."
+/>
 
 <BlogIndex posts={data.posts} availableTypes={data.availableTypes} />
