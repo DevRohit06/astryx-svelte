@@ -28,8 +28,9 @@
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"test:unit": "vitest",
+		"test:client": "node scripts/run-client-tests.mjs",
 		"test:parity": "node scripts/compare-upstream-classes.mjs",
-		"test": "npm run test:unit -- --run && npm run test:parity"
+		"test": "npm run test:unit -- --run --project=server && npm run test:client && npm run test:parity"
 	},
 	"files": [
 		"dist",

@@ -55,6 +55,15 @@ pnpm -F @astryx-svelte/core test:unit --run src/tests/foo.svelte.test.ts   # one
 #   `"--" "--run" "<path>"`, ignores both the flag and the filter, and starts a
 #   full run in *watch mode* that never exits. It looks exactly like a hang.
 #   `--project=client` / `--project=server` narrows to one vitest project.
+pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see below
+#   The client project cannot be run in one process: it dies partway through with
+#   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
+#   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a
+#   different file each time. `scripts/run-client-tests.mjs` runs it in batches of 20
+#   (`CLIENT_CHUNK_SIZE` overrides) and reconciles files-run against files-on-disk, so
+#   a chunk that collected nothing fails the run instead of shrinking the total. This
+#   is what `core`'s `test` script and CI both use; a bare `--project=client` over all
+#   162 files is not a measurement.
 pnpm dev          # core's demo routes;  pnpm dev:docs for the docs site
 pnpm -F docs generate   # regenerate the docs content registries (runs automatically on dev/build)
 ```

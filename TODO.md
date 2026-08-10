@@ -3669,7 +3669,29 @@ suites**; the other 24 ABSENT files were classified by coverage alone, so there 
 bugs among them. Full table:
 `scratchpad/agent-triage/triage.md` (session-local; regenerate rather than trust it later).
 
-### The client full-run flake (measured 2026-08-05; re-measured 2026-08-07)
+### The client full-run flake (measured 2026-08-05; re-measured 2026-08-07 and 2026-08-10)
+
+**2026-08-10 — it is not a Windows problem, and chunking is now the committed entry point.** The
+first CI run that ever reached the test step (browsers were never installed on the runner; see the
+release notes above) died on Ubuntu in the same shape: **82 files in**, then
+`TypeError: Cannot read properties of undefined (reading 'wrapDynamicImport')` — Vite's module
+runner, not an assertion — with `table-tree-state` as the innocent victim. Five months of local
+measurement had left open whether this was one machine's problem. It is not.
+
+So `packages/core/scripts/run-client-tests.mjs` replaces the scratchpad loop this section used to
+point at, and `pnpm -F @astryx-svelte/core test` runs it: server project unchunked, client project
+in batches of 20 (`CLIENT_CHUNK_SIZE` overrides), then the class oracle. **State the cost rather
+than calling it a fix**: cross-file leakage across a chunk boundary is no longer exercised, and each
+boundary pays ~15 s of browser and Vite start-up. What it buys is a gate that can pass at all — the
+release workflow re-runs `pnpm -r test`, so an unchunked client project meant a tag that could never
+publish.
+
+Two implementation notes worth keeping. The runner **streams and captures** each chunk, because a
+captured 25-minute step with no output is indistinguishable from a hung one in a CI log. And its
+counts come from the printed summary, not `--reporter=json`: measured on a two-file chunk, the JSON
+report filed all 42 cases under a **single** `testResults` entry naming one of the two files, so
+`testResults.length` is not a file count and the reconciliation — the whole reason the script exists
+— would have compared 1 against 2 and failed a passing run.
 
 **2026-08-07 update — the flake now has a _second_ shape, and the distinction matters.** Three full
 runs at batch 17b's close: run 1 aborted the old way (`Browser connection was closed`, at
