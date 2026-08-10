@@ -48,7 +48,7 @@ pnpm -r build     # must run before check — theme-neutral typechecks against c
                   #   and the docs generator reads props types out of that same dist/
 pnpm -r check     # svelte-check + tsc
 pnpm -r lint      # prettier --check && eslint
-pnpm -r test      # vitest + both fidelity oracles
+pnpm -r test      # vitest + all three fidelity oracles
 pnpm -F @astryx-svelte/core test:unit --run      # unit tests only
 pnpm -F @astryx-svelte/core test:unit --run src/tests/foo.svelte.test.ts   # one file
 #   NOTE: no `--`. Under pnpm 10 the `--` is passed through, so vitest sees
@@ -94,6 +94,15 @@ StyleX Babel plugin and diffs the emitted atomic classes against the _already co
 does the same for theme declarations. Authoring `stylex.create` against the same token references
 upstream uses makes the compiler emit byte-identical CSS — that is the property that makes this port
 tractable, and these scripts prove it rather than trusting review.
+
+`packages/core/scripts/compare-upstream-css.mjs` is the third, and covers what the first cannot.
+`compare-upstream-classes.mjs` reads modules _statically_, so a `stylex.create` **function style** is
+opaque to it — 54 of them. The CSS oracle builds `dist/astryx.css` (via
+`scripts/lib/collect-stylex-rules.mjs`, shared with `build-css.mjs`, so the sheet that ships is the
+sheet that was checked) and diffs it against upstream's published `astryx.css`, where a function
+style's output is just another rule. Reach for it when a bug would live inside one. Two classes of
+expected difference are paired rather than ignored: `:not(#\#)` padding is stripped from both sides,
+and marker-scoped rules are compared with their path-derived hashes blinded.
 
 Deferrals are explicit `skip` entries with a reason. A skip that stops matching fails the run, and so
 does a skip whose key _starts_ matching — the list cannot rot. The published tarball is ground truth

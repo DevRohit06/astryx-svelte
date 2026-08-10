@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-stone",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Stone theme for astryx-svelte — warm stone and slate, earthy and understated.",
 	"license": "MIT",
 	"repository": {
@@ -16,6 +16,7 @@
 		"access": "public"
 	},
 	"type": "module",
+	"main": "./dist/index.js",
 	"exports": {
 		".": {
 			"types": "./dist/index.d.ts",

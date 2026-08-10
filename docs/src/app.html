@@ -29,8 +29,11 @@
 			Declaring the full order *before* anything else loads fixes it: `product`
 			and `astryx-theme` are named after the priority layers, so they win, and
 			core's compiled StyleX sits exactly where upstream's `astryx-base` puts it.
-			`base.css`'s own `@layer reset, astryx-base, astryx-theme, product;` then
-			re-states an order that already exists and changes nothing.
+			`base.css` now declares this same order itself, so a consumer gets it from
+			the import alone and this block only re-states an order that already
+			exists. It stays because it is the one declaration guaranteed to come
+			first: it is inline in `<head>`, ahead of every linked stylesheet, whereas
+			`base.css` depends on where the bundler places it.
 
 			**Nine priority layers are emitted today; sixteen are named for headroom.**
 			The count is `Math.floor(priority / 1000)` bucket occupancy, so a new bucket
