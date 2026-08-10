@@ -487,7 +487,14 @@ export function checkPeerDeps(ctx) {
 
 	const corePkg = readPkg(path.join(ctx.coreDir, 'package.json'));
 	const peers = corePkg?.peerDependencies ?? {};
-	const peerNames = Object.keys(peers);
+	// npm's `peerDependenciesMeta.optional` marks a peer that is only needed by
+	// part of the package — core's `./vite` preset needs `vite` and
+	// `@stylexjs/unplugin`, and a consumer on another bundler needs neither.
+	// Reporting those as missing tells most projects to install two packages
+	// they have no use for, which is noise a health check cannot afford: a
+	// warning nobody should act on is how the ones that matter stop being read.
+	const optional = corePkg?.peerDependenciesMeta ?? {};
+	const peerNames = Object.keys(peers).filter((name) => optional[name]?.optional !== true);
 
 	if (peerNames.length === 0) {
 		return {
@@ -564,6 +571,91 @@ export function checkPackageManager(ctx) {
 	};
 }
 
+/** Vite config filenames, in the order Vite itself resolves them. */
+const VITE_CONFIGS = [
+	'vite.config.ts',
+	'vite.config.js',
+	'vite.config.mjs',
+	'vite.config.mts',
+	'vite.config.cjs'
+];
+
+/**
+ * Check 8 — the bundler actually runs the StyleX compiler.
+ *
+ * **The most common way to get this package wrong, and the only one that
+ * produces no error at all.** `@astryx-svelte/core` ships its `.stylex.js`
+ * modules uncompiled, so a project whose bundler never runs StyleX renders
+ * every component with correct markup and no styling. Nothing throws, the build
+ * succeeds, and the page looks like a stylesheet import was forgotten.
+ *
+ * Three things have to be present, and two of them exist only because Vite has
+ * two separate ways to route a dependency around its own plugin pipeline. The
+ * preset (`@astryx-svelte/core/vite`) supplies all three, so finding it is a
+ * pass on its own.
+ *
+ * Deliberately a **text scan**, not an import: a `vite.config.ts` is TypeScript
+ * that may import project-local modules and read env vars, and this engine's
+ * contract is to read rather than execute. That makes the check honest but not
+ * authoritative — it cannot see a config that assembles its plugin list
+ * indirectly, which is why a negative result is a `warn` and never a `fail`.
+ *
+ * @param {DoctorContext} ctx
+ * @returns {DoctorCheck}
+ */
+export function checkStyleXSetup(ctx) {
+	const label = 'StyleX compiler wiring';
+	const found = VITE_CONFIGS.map((name) => path.join(ctx.cwd, name)).find((p) => fs.existsSync(p));
+
+	if (!found) {
+		return {
+			id: 'stylex-setup',
+			label,
+			status: 'info',
+			message: 'No vite.config.* found — skipping. This check only covers Vite/SvelteKit.'
+		};
+	}
+
+	const source = fs.readFileSync(found, 'utf-8');
+	const rel = path.relative(ctx.cwd, found) || found;
+
+	if (/@astryx-svelte\/core\/vite/.test(source)) {
+		return {
+			id: 'stylex-setup',
+			label,
+			status: 'pass',
+			message: `${rel} uses the astryx() preset, which supplies all three settings.`
+		};
+	}
+
+	const missing = [];
+	if (!/@stylexjs\/unplugin/.test(source)) missing.push('the StyleX plugin');
+	if (!/optimizeDeps/.test(source) || !/exclude/.test(source)) missing.push('optimizeDeps.exclude');
+	if (!/noExternal/.test(source)) missing.push('ssr.noExternal');
+
+	if (missing.length === 0) {
+		return {
+			id: 'stylex-setup',
+			label,
+			status: 'pass',
+			message: `${rel} configures StyleX by hand, and all three settings are present.`
+		};
+	}
+
+	return {
+		id: 'stylex-setup',
+		label,
+		status: 'warn',
+		message:
+			`${rel} appears to be missing ${missing.join(', ')}. ` +
+			'Components would render unstyled, with no error.',
+		fix:
+			'Replace the hand-rolled StyleX block with the preset:\n' +
+			"    import { astryx } from '@astryx-svelte/core/vite';\n" +
+			'    export default defineConfig({ plugins: [astryx(), sveltekit()] });'
+	};
+}
+
 /**
  * Ordered list of synchronous check functions. Append here to add a check.
  * (checkConfig is async and is awaited separately by {@link runChecks}.)
@@ -576,6 +668,7 @@ export const SYNC_CHECKS = [
 	checkThemes,
 	checkAgentDocs,
 	checkPeerDeps,
+	checkStyleXSetup,
 	checkPackageManager
 ];
 

@@ -4147,6 +4147,18 @@ checklist nobody re-reads against the repo describes the day it was written.
       or credential problem surfaces without burning a version number, which npm does not let you
       re-use
 - [ ] Consider asking the Astryx maintainers for a blessing
+- [ ] **The version scheme cannot express a release of our own, and 0.3.1 is the first proof.**
+      Decided 2026-08-10, with the collision accepted deliberately rather than missed: versions stay
+      in lockstep with the upstream release they port, so a port-local fix — the Vite preset, the
+      `doctor` check — takes the next patch number regardless of whether upstream has used it.
+      **Upstream will very likely publish its own 0.3.1**: it shipped ten patches across the 0.1.x
+      line, so this is likely rather than hypothetical. The rule when it happens, written down now
+      so it is not improvised then: **skip to the next free patch and state the parity target in the
+      `CHANGELOG` heading** — if upstream ships 0.3.1 we release 0.3.2 and say it ports 0.3.1. The
+      machine-readable parity target is already exact and already in the tree: the
+      `@astryxdesign/*` pin in each package's devDependencies. The alternative considered and
+      rejected was decoupling to our own semver with parity as metadata, which costs the
+      "version means parity" property that the README, the CHANGELOG and the tag all lean on
 - [x] Enforce the parity rule in CI, with a `parity` label on issues/PRs — `.github/ISSUE_TEMPLATE`
       carries `parity.yml`, `bug.yml` and `port-template.yml`; CI runs both fidelity oracles on
       every PR, which is the enforcement that matters

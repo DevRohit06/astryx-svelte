@@ -26,15 +26,33 @@ published **uncompiled**, and every consumer compiles it as part of their own bu
 same property that makes the port verifiable: the compiler derives its class names from the source,
 so authoring against Astryx's token references emits byte-identical atomic CSS.
 
-For Vite (and therefore SvelteKit), that is three things — the plugin, and two settings that exist
-because Vite has two ways to route a dependency _around_ the plugin pipeline:
+For Vite (and therefore SvelteKit), **use the preset**:
 
 ```ts
 // vite.config.ts
+import { astryx } from '@astryx-svelte/core/vite';
 import { sveltekit } from '@sveltejs/kit/vite';
-import stylex from '@stylexjs/unplugin/vite';
 import { defineConfig } from 'vite';
 
+export default defineConfig({
+	plugins: [astryx(), sveltekit()]
+});
+```
+
+That is the whole setup. `astryx()` takes `include` (further packages that ship uncompiled
+`.stylex.js`), `rootDir` (the StyleX module-resolution root — a monorepo importing `.stylex`
+modules across packages wants the workspace root, not the default `process.cwd()`), and `dev`.
+
+Run `pnpm exec astryx-svelte doctor` if a page renders with the right markup and no styling; it
+reads your Vite config and names whichever piece is missing.
+
+<details>
+<summary>What the preset does, and why it is three things rather than one</summary>
+
+The plugin compiles the styles. The other two exist because Vite has **two separate ways to route a
+dependency _around_ its own plugin pipeline**, and each defeats the compiler on its own:
+
+```ts
 export default defineConfig({
 	plugins: [
 		stylex({
@@ -61,6 +79,12 @@ export default defineConfig({
 	ssr: { noExternal: ['@astryx-svelte/core'] }
 });
 ```
+
+Written by hand, these options must match this package's own build **exactly**, or the atomic CSS
+you compile differs from the output verified against upstream. The preset is the only form in which
+"exactly" stays true without anyone maintaining it.
+
+</details>
 
 Both `optimizeDeps.exclude` and `ssr.noExternal` fail silently when missing. If a page renders with
 the right markup and none of the styling, check those two first.

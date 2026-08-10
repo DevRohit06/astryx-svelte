@@ -1,9 +1,54 @@
 # Changelog
 
 Every package in this workspace carries the version of the upstream
-[Astryx](https://astryx.atmeta.com/) release it ports, and they are published together. So this one
-file covers all ten: a version here means "at parity with Astryx of the same number", and the
-per-package sections below say only what differs between them.
+[Astryx](https://astryx.atmeta.com/) release it ports, and they are published together, so this one
+file covers all ten.
+
+**The version is the parity target, not a count of this port's own releases** — which means a
+release the port makes on its own has no number of its own to take. 0.3.1 is the first of those: it
+ports Astryx 0.3.0, exactly as 0.3.0 did, and changes only things upstream has no counterpart for.
+Each entry states its parity target for that reason.
+
+## 0.3.1
+
+Ports Astryx `0.3.0` — the same parity target as 0.3.0. **This release is the port's own, not an
+upstream one**, which is something the version scheme cannot express; `TODO.md` carries the rule for
+when upstream publishes its own 0.3.1.
+
+### The StyleX setup is one line now
+
+`@astryx-svelte/core/vite` exports `astryx()` — the StyleX plugin plus the two settings Vite would
+otherwise use to route this package around it:
+
+```ts
+import { astryx } from '@astryx-svelte/core/vite';
+export default defineConfig({ plugins: [astryx(), sveltekit()] });
+```
+
+It replaces ~25 lines of copied configuration whose options had to match this package's own build
+**exactly**, or a consumer compiled atomic CSS that no oracle had ever checked. Hand-rolling the
+three still works and is still documented.
+
+**Verified by dogfooding rather than asserted**: the docs site was the hand-rolled consumer and now
+uses the preset. Its build emits **2,344 distinct CSS rules before and after, with zero differences
+in either direction**.
+
+### `doctor` reads your bundler config
+
+`astryx-svelte doctor` gained a StyleX-wiring check. It had seven checks and none of them covered
+the single most common way to get this package wrong — the one that renders correct markup with no
+styling and never throws. It passes the preset, passes a complete hand-rolled config, and names
+whichever of the three pieces is missing otherwise.
+
+A text scan, not an import: a `vite.config.ts` may import project-local modules, and the engine's
+contract is to read rather than execute. So a missing piece is a `warn`, never a `fail`.
+
+### Fixed
+
+- **`doctor` reported optional peer dependencies as missing.** `peerDependenciesMeta.optional` was
+  ignored, so adding `vite` and `@stylexjs/unplugin` as optional peers of core told every project on
+  another bundler to install two packages it has no use for. A warning nobody should act on is how
+  the ones that matter stop being read.
 
 ## 0.3.0
 
