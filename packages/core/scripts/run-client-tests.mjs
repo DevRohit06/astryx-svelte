@@ -55,6 +55,20 @@ const TESTS = path.join(CORE, 'src', 'tests');
 const SIZE = Number(process.env.CLIENT_CHUNK_SIZE ?? 12);
 
 /**
+ * How many times a chunk that lost its browser is re-run. Only ever applied to
+ * an infrastructure failure — a chunk that failed a *case* stops immediately,
+ * however many attempts are left.
+ *
+ * One was not enough. On release run 31407711720, chunk 2 dropped on both
+ * attempts, ~40 seconds apart, with a different innocent victim each time
+ * (`carousel-handle-untracked`, then `center`) and the identical cause both
+ * times: `Failed to import test file setup-stylex.ts`, zero failed tests. Two
+ * consecutive drops is a runner having a bad minute, not a suite that cannot
+ * pass — the same 12 files passed on the run before and the run after.
+ */
+const RETRIES = Number(process.env.CLIENT_CHUNK_RETRIES ?? 2);
+
+/**
  * Vitest's entry resolved as a JS file and run through `process.execPath`,
  * rather than the `.bin` shim. Since the CVE-2024-27980 fix Node refuses to
  * spawn a `.cmd` without a shell, so the shim needs `shell: true` on Windows,
@@ -137,18 +151,24 @@ for (const [index, chunk] of chunks.entries()) {
 
 	const args = [vitestBin, '--run', '--project=client', ...chunk, ...process.argv.slice(2)];
 
-	let { code, output } = await runChunk(args);
-	let plain = stripAnsi(output);
-	let fileLine = plain.match(/Test Files\s+(\d+) passed\s+\((\d+)\)/);
-	let caseLine = plain.match(/Tests\s+(\d+) passed\s+\((\d+)\)/);
+	let code, plain, fileLine, caseLine;
 
-	if ((code !== 0 || !fileLine || !caseLine) && isInfrastructureFailure(plain)) {
-		console.log(`\n  ${label} lost its browser, not a case — retrying once.\n`);
-		({ code, output } = await runChunk(args));
-		plain = stripAnsi(output);
+	for (let attempt = 0; attempt <= RETRIES; attempt++) {
+		if (attempt > 0) {
+			console.log(`\n  ${label} lost its browser, not a case — retry ${attempt} of ${RETRIES}.\n`);
+			retried.push(`${label} (×${attempt})`);
+		}
+
+		const result = await runChunk(args);
+		code = result.code;
+		plain = stripAnsi(result.output);
 		fileLine = plain.match(/Test Files\s+(\d+) passed\s+\((\d+)\)/);
 		caseLine = plain.match(/Tests\s+(\d+) passed\s+\((\d+)\)/);
-		retried.push(label);
+
+		const ok = code === 0 && fileLine && caseLine;
+		// Stop on success, and stop immediately on a *real* failure — a chunk
+		// that failed a case is never re-run, however many attempts are left.
+		if (ok || !isInfrastructureFailure(plain)) break;
 	}
 
 	if (code !== 0 || !fileLine || !caseLine) {
