@@ -4,6 +4,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 import { astryx } from '@astryx-svelte/core/vite';
 import { contentPlugin } from './scripts/vite-plugin-content.mjs';
+import { partytownPlugin } from './scripts/vite-plugin-partytown.mjs';
 
 // The monorepo root. StyleX resolves cross-package `.stylex` imports relative to
 // this, and `@astryx-svelte/core` is a workspace symlink into `packages/core`,
@@ -16,6 +17,11 @@ export default defineConfig({
 		// Emits src/lib/generated/* from the upstream `.doc.mjs` files. Runs
 		// first so the generated modules exist before SvelteKit resolves them.
 		contentPlugin(),
+		// Copies Partytown's lib into `static/~partytown/` and serves its loader
+		// snippet as a virtual module. `dataLayer.push` is the one global the page
+		// itself calls — `analytics.svelte` reports client-side navigations through
+		// it — so it is the one that has to be forwarded into the worker.
+		partytownPlugin({ forward: ['dataLayer.push'] }),
 		// `@astryx-svelte/core` ships its `.stylex.js` modules *uncompiled* —
 		// `svelte-package` only transpiles TS, it does not run StyleX — so every
 		// consumer runs the compiler itself, with `optimizeDeps.exclude` and

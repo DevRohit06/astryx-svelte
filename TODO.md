@@ -3052,6 +3052,35 @@ work rather than component work, itemised under [After launch](#after-launch).
 
 ### Landed
 
+- [x] **Analytics, off the main thread — 2026-08-13.** GA4 via `gtag.js`, run inside a Partytown
+      web worker rather than on the main thread, gated on `PUBLIC_GA_MEASUREMENT_ID`. Three parts:
+      `scripts/vite-plugin-partytown.mjs` (copies the lib into `static/~partytown/`, serves the
+      loader snippet as a virtual module so the package never enters the client graph),
+      `src/lib/analytics/gtag.ts` (the head block and the navigation hit) and
+      `analytics.svelte` in the root layout. **The measurement id is not committed** — `.env` is
+      tracked with an *empty* value, because `$env/static/public` cannot import a name nothing
+      declares and a dashboard-only variable would break every checkout and CI run; the real value
+      goes in the Vercel project, which wins over `.env` in Vite's `loadEnv` order. Unset, the whole
+      thing dead-code-eliminates: verified zero `partytown`/`googletagmanager` strings in the
+      prerendered HTML and the client bundle. Four things the browser had to settle, all in
+      `gtag.ts`'s docstring: `googletagmanager.com` reflects the origin in
+      `Access-Control-Allow-Origin`, so **no `resolveUrl` reverse proxy is needed** despite what
+      Partytown's docs imply; a client-side navigation must push a **plain array**, not an
+      `arguments` object, which produces no hit at all through the forwarding stub; the worker's
+      synthetic `location` **drops the port**, so local verification looks wrong and production is
+      fine; and a browser without service workers reports nothing, because Partytown's 10s fallback
+      recovers inline scripts but not `src` ones. Verified against a preview build: worker active,
+      `gtag.js` fetched from inside it, and one `page_view` per navigation with the right `dl`/`dt`
+      and no double-count on entry
+- [x] **The social card is the landing page — 2026-08-13.** `static/og.png` was a hand-drawn card
+      (headline, subhead, three stat columns) from a time when the landing page was a plain hero.
+      It is now a 1200×630 crop of a committed 1920×1080 capture of `/`, so the unfurl shows the
+      wordmark, the floating product cards and the reel. The capture is committed
+      (`scripts/og-source.webp`) rather than taken live, which keeps `generate-og-image.mjs` a pure
+      function: a live shot would need the site running *and* would race the hero reel's rotation,
+      so a re-run for an unrelated change could land on a different slide. **The trade is
+      legibility** — a screenshot at thumbnail size has no readable type, where the drawn card did.
+      Re-capture at 1920×1080 on the first slide when the page changes enough to warrant it
 - [x] **`/blog` and `/blog/<slug>` — 2026-08-10.** Upstream's blog surface, ported, with one post of
       this repo's own. The split is worth stating because it decided the whole shape: the **content**
       is Meta's prose and does not port (their seven posts stay theirs), but the **surface** ports
