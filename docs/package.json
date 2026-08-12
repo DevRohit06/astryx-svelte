@@ -32,6 +32,7 @@
 		"@astryxdesign/cli": "0.3.0",
 		"@astryxdesign/core": "0.3.0",
 		"@eslint/js": "^10.0.1",
+		"@qwik.dev/partytown": "^0.14.0",
 		"@stylexjs/unplugin": "^0.19.0",
 		"@sveltejs/adapter-vercel": "^6.3.3",
 		"@sveltejs/kit": "^2.63.0",

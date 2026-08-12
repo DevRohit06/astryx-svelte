@@ -54,6 +54,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.7.0(jiti@2.7.0))
+      '@qwik.dev/partytown':
+        specifier: ^0.14.0
+        version: 0.14.0
       '@stylexjs/unplugin':
         specifier: ^0.19.0
         version: 0.19.0(unplugin@2.3.11)
@@ -998,6 +1001,11 @@ packages:
     resolution: {integrity: sha512-edgyN2pP07uXiP4tJs0s8KVmU8M8i60YPbbI0/WDeok1mIJHRXz+CgD8I0nelwDkoCh3EWL/G5kGfbuHjsdbvw==}
     engines: {node: '>=18'}
 
+  '@qwik.dev/partytown@0.14.0':
+    resolution: {integrity: sha512-ZZITKYRihVGDuK0cn+Y5XJn7Zufum6rHme15ydaUDLpUprPkct+RSGCk1wN5Mep0oareBf4TKMYGBZj3c0A8HA==}
+    engines: {node: '>=18.0.0'}
+    hasBin: true
+
   '@rolldown/binding-android-arm64@1.1.5':
     resolution: {integrity: sha512-lZg8fqIv2v7FF237bwMgzGZEJvGL79/s5knJ/i6FmsGF4XXlzccZ4jb+TrFIxtSSxFtIpdsgrPZeMk1I9AFcyQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -1458,6 +1466,10 @@ packages:
 
   devalue@5.8.2:
     resolution: {integrity: sha512-DObPPAfdtFbXjxLqK8s2Xk9ZuWz5+ZoFEhC7J76es4GU/rEiXwHTmbImoCdyoCOcBH1UF3+Cz6Z2sYD4hyl5TA==}
+
+  dotenv@16.6.1:
+    resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
 
   electron-to-chromium@1.5.394:
     resolution: {integrity: sha512-Wmt2Gm0o8JWBuGgmc4XZ0u9s1RaCRqhxP47phplmfg04+qypTUurpeJGP45A7Fhv7jdrrVH44PLlR9qXo37cVQ==}
@@ -2950,6 +2962,10 @@ snapshots:
     dependencies:
       tinyexec: 1.2.4
 
+  '@qwik.dev/partytown@0.14.0':
+    dependencies:
+      dotenv: 16.6.1
+
   '@rolldown/binding-android-arm64@1.1.5':
     optional: true
 
@@ -3426,6 +3442,8 @@ snapshots:
   detect-libc@2.1.2: {}
 
   devalue@5.8.2: {}
+
+  dotenv@16.6.1: {}
 
   electron-to-chromium@1.5.394: {}
 

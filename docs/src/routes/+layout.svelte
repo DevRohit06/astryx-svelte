@@ -59,6 +59,7 @@
 	import SideNav from '$lib/shell/side-nav.svelte';
 	import SiteFooter from '$lib/shell/site-footer.svelte';
 	import { setColorModeContext, useColorMode } from '$lib/shell/color-mode.svelte.js';
+	import Analytics from '$lib/analytics/analytics.svelte';
 
 	/**
 	 * The site frame — a real `AppShell`, configured as upstream's two route-group
@@ -167,6 +168,13 @@
 		<link rel="stylesheet" href="/virtual:stylex.css" />
 	{/if}
 </svelte:head>
+
+<!--
+	Renders nothing unless `PUBLIC_GA_MEASUREMENT_ID` is set. Here, in the root
+	layout, because it owns a `<head>` block that must appear once per document
+	and a navigation callback that must outlive every route change.
+-->
+<Analytics />
 
 {#snippet topNav()}
 	<TopNav mode={colorMode.mode} themeMode={colorMode.themeMode} onToggleMode={colorMode.toggle} />

@@ -17,10 +17,26 @@ Thumbs.db
 .env.*
 !.env.example
 !.env.test
+# ...except `.env` itself, which is tracked here. It declares
+# `PUBLIC_GA_MEASUREMENT_ID` with an empty value, and `$env/static/public`
+# cannot import a name that no `.env` file or environment declares — so without
+# it every checkout and every CI build fails to compile. It holds no secret;
+# real values come from the deployment environment or `.env.local`, both of
+# which take precedence. See the file's own header.
+!/.env
 
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Partytown's library files, copied out of the pinned `@qwik.dev/partytown` by
+# scripts/vite-plugin-partytown.mjs on buildStart. They live under `static/`
+# because the service worker's scope is the directory it is served from, so they
+# have to be same-origin; they are not committed because they are a verbatim
+# copy of a package in the lockfile, and a committed copy would silently outlive
+# an upgrade. eslint reads this file, so this entry also keeps it from linting
+# 90kB of minified vendor code.
+/static/~partytown/
 
 # Derived by scripts/generate-content.mjs, which runs on buildStart and before
 # `check` — from upstream's `.doc.mjs` files for components and example blocks,
