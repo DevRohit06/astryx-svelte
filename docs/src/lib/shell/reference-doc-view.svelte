@@ -104,7 +104,7 @@
 		/* Upstream wraps each section in `VStack gap={4}` — 16px, not 12px. */
 		gap: var(--spacing-4);
 		/*
-		 * Upstream's `AnchorHeading`: `calc(var(--appshell-header-height, 0px) +
+		 * Upstream's `AnchorHeading`: `calc(var(--_app-shell-header-height, 0px) +
 		 * var(--docs-anchor-offset, 0px) + 16px)`. `AppShell` is unported, so this
 		 * port's own 56px sticky header stands in for the first term — which is
 		 * what the bare `72px` here already was, with the offset silently at 0.
@@ -113,7 +113,7 @@
 		 * the pinned selector instead of landing behind it.
 		 */
 		scroll-margin-block-start: calc(
-			var(--appshell-header-height, 56px) + var(--docs-anchor-offset, 0px) + 16px
+			var(--_app-shell-header-height, 56px) + var(--docs-anchor-offset, 0px) + 16px
 		);
 	}
 

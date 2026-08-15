@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import {
 	colorVars,
 	fontWeightVars,
@@ -173,8 +174,8 @@ const styles = stylex.create({
 		flexShrink: 0,
 		overflow: 'clip',
 		position: 'sticky',
-		top: 'var(--appshell-header-height, 0px)',
-		height: 'calc(100dvh - var(--appshell-header-height, 0px))',
+		top: 'var(--_app-shell-header-height, 0px)',
+		height: 'calc(100dvh - var(--_app-shell-header-height, 0px))',
 		// Ensure children (LayoutPanel → SideNav) fill the sticky container
 		display: 'flex',
 		flexDirection: 'column'
@@ -248,9 +249,14 @@ export function appShellRootAttrs(
  */
 export const appShellMainFocusTarget = styles.mainFocusTarget;
 
-/** The skip-to-content link — 1px and clipped until focused. */
+/**
+ * The skip-to-content link — 1px and clipped until focused, and ringed by the
+ * shared focus outline. It is the first thing a keyboard user reaches, so the
+ * ring is the only signal that anything happened; before it was shared, the link
+ * drew the UA default.
+ */
 export function appShellSkipLinkAttrs(): SvelteStyleAttrs {
-	return sx(styles.skipLink);
+	return focusOutlineProps.focusVisible(styles.skipLink);
 }
 
 /** The banner slot wrapper, tinted with the nav-area background. */

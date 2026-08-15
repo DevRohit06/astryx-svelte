@@ -163,13 +163,13 @@
 		--text-body-leading: 1.6470588235;
 	}
 
-	/* Upstream tops the aside at `--appshell-header-height + 24px`, and since
+	/* Upstream tops the aside at `--_app-shell-header-height + 24px`, and since
 	   batch 10 so does this port: `AppShell` measures its own header with a
 	   ResizeObserver and publishes the variable on the shell root. The `56px`
 	   fallback is only for the first paint before the observer reports. */
 	.doc-aside {
 		position: sticky;
-		top: calc(var(--appshell-header-height, 56px) + 24px);
+		top: calc(var(--_app-shell-header-height, 56px) + 24px);
 		flex-shrink: 0;
 		align-self: flex-start;
 		width: 232px;
@@ -180,7 +180,7 @@
 	   border keep content readable as it scrolls underneath. */
 	.mobile-outline {
 		position: sticky;
-		top: var(--appshell-header-height, 56px);
+		top: var(--_app-shell-header-height, 56px);
 		z-index: 1;
 		background-color: var(--color-background-surface);
 		padding-block: var(--spacing-3);

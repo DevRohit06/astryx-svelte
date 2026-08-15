@@ -306,7 +306,7 @@
 	// Header height measurement for the sticky sideNav offset (auto mode)
 	// =========================================================================
 	let headerEl = $state<HTMLDivElement>();
-	// The measured header height, published as `--appshell-header-height` on the
+	// The measured header height, published as `--_app-shell-header-height` on the
 	// shell root for the sticky sideNav's `top`/`height` to resolve against.
 	//
 	// **It goes through the `style` attribute Svelte writes, not
@@ -427,8 +427,8 @@
 		<!--
 			Top-level banner landmark for the header region (topNav + banner). Safe
 			here: the wrapper is never nested inside main/nav/other landmarks. The
-			sidenav-only mobile top bar below deliberately has none — upstream marks
-			only this wrapper, and a second banner landmark would be a duplicate.
+			sidenav-only mobile top bar below carries the landmark instead whenever
+			this wrapper is absent, so exactly one of the two is ever a banner.
 		-->
 		<div
 			bind:this={headerEl}
@@ -441,7 +441,14 @@
 		</div>
 	{/if}
 	{#if showAutoMobileTopBar}
+		<!--
+			Banner landmark for the mobile top bar, so the sidenav-only layout exposes
+			the same landmark structure as the topNav one. Only when the header
+			wrapper above is absent: a banner slot with no topNav renders both, and
+			two sibling banner regions is worse than the one this restores.
+		-->
 		<div
+			role={hasTopNav || hasBanner ? undefined : 'banner'}
 			{...headerTheme}
 			class={cx(headerTheme.class, headerAttrs.class)}
 			style={headerAttrs.style}
@@ -529,7 +536,7 @@
 	style={mergeStyle(
 		rootAttrs.style,
 		styleProp as string | undefined,
-		headerHeight != null ? `--appshell-header-height:${headerHeight}px` : undefined
+		headerHeight != null ? `--_app-shell-header-height:${headerHeight}px` : undefined
 	)}
 >
 	<!--

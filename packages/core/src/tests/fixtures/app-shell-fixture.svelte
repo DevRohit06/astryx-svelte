@@ -7,6 +7,7 @@
 	import TopNav from '$lib/components/top-nav/top-nav.svelte';
 	import TopNavHeading from '$lib/components/top-nav/top-nav-heading.svelte';
 	import TopNavItem from '$lib/components/top-nav/top-nav-item.svelte';
+	import AppShellMobileProbe from './app-shell-mobile-probe.svelte';
 
 	/**
 	 * The harness for `AppShell.test.tsx`, and for `MobileNavReopen.test.tsx`'s
@@ -41,8 +42,13 @@
 		props?: Record<string, any>;
 		/** Text of the `<div>` rendered as the main content. */
 		content?: string;
+		/**
+		 * Render `AppShellMobileProbe` as the main content instead of the text
+		 * `<div>` — upstream's `<AppShell …><MobileProbe /></AppShell>`.
+		 */
+		probe?: boolean;
 		/** Which `topNav` shape to render. */
-		topNav?: 'none' | 'div' | 'heading-only' | 'with-item';
+		topNav?: 'none' | 'div' | 'label-only' | 'heading-only' | 'with-item';
 		/** Text of the bare-`div` topNav. */
 		topNavText?: string;
 		/** `data-testid` of the bare-`div` topNav. */
@@ -60,6 +66,7 @@
 	const {
 		props = {},
 		content = 'Content',
+		probe = false,
 		topNav = 'none',
 		topNavText = 'Nav',
 		topNavTestId,
@@ -74,7 +81,11 @@
 </script>
 
 {#snippet mainContent()}
-	<div>{content}</div>
+	{#if probe}
+		<AppShellMobileProbe />
+	{:else}
+		<div>{content}</div>
+	{/if}
 {/snippet}
 
 {#snippet bannerSlot()}
@@ -92,6 +103,8 @@
 {#snippet topNavSlot()}
 	{#if topNav === 'div'}
 		<div data-testid={topNavTestId}>{topNavText}</div>
+	{:else if topNav === 'label-only'}
+		<TopNav label="Main navigation" />
 	{:else if topNav === 'heading-only'}
 		<TopNav label="Main navigation" heading={appHeading} />
 	{:else if topNav === 'with-item'}

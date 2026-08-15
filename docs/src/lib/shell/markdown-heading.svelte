@@ -38,7 +38,7 @@
 			: 'margin-block-start: var(--spacing-4); margin-block-end: var(--spacing-2);'
 	);
 	const style = $derived(
-		`${spacing} scroll-margin-top: calc(var(--appshell-header-height, 56px) + var(--docs-anchor-offset, 0px) + 16px);`
+		`${spacing} scroll-margin-top: calc(var(--_app-shell-header-height, 56px) + var(--docs-anchor-offset, 0px) + 16px);`
 	);
 </script>
 
