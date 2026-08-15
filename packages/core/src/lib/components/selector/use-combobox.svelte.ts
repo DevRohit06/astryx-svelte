@@ -4,11 +4,18 @@ import type { SelectorOptionData } from './types.js';
  * Ported from the second half of Astryx's `Selector/hooks.ts`.
  *
  * A pure keyboard/selection state machine, so the translation is mechanical:
- * `useState` → `$state`, the typeahead timer ref → a plain `let` (nothing reads
- * it reactively), and every `useCallback` dependency array → a read through the
- * options getter at call time. The returned handlers are plain functions, which
- * is what upstream's memoised identities amount to once there is no reconciler
- * to keep them stable for.
+ * `useState` → `$state`, and every `useCallback` dependency array → a read
+ * through the options getter at call time. The returned handlers are plain
+ * functions, which is what upstream's memoised identities amount to once there
+ * is no reconciler to keep them stable for.
+ *
+ * **Type-to-select is not handled here.** It used to be, as a private matcher in
+ * the `default:` branch; 0.4.x deleted it in favour of the shared
+ * `useTypeahead`, which the caller composes *ahead* of `onKeyDown` (see
+ * `selector.svelte`). That keeps matching consistent with the other collections
+ * — menus, listboxes — and leaves consumers whose own input already filters the
+ * items (`CommandPalette`) untouched. What is left in `default:` is the
+ * `hasSearch` seeding path.
  *
  * `React.KeyboardEvent` becomes the native `KeyboardEvent`; the three properties
  * the switch reads (`key`, `ctrlKey`, `metaKey`) and `preventDefault()` are the
@@ -47,6 +54,13 @@ interface UseComboboxOptions {
 	 * navigation owns those keys there) or when there is no value.
 	 */
 	onClear?: () => void;
+	/**
+	 * With `hasSearch`, printable characters typed on the trigger are appended to
+	 * the search query (opening the popup if needed), so type-to-find works
+	 * without a separate open step. Characters keep arriving here until focus
+	 * lands in the search input, which then owns its own typing.
+	 */
+	onSearchSeed?: (char: string) => void;
 	/** The listbox's id — item ids are derived from it. */
 	listboxId: string;
 }
@@ -70,13 +84,15 @@ interface UseComboboxResult {
 }
 
 /**
- * Handles keyboard navigation, typeahead search, and selection for
- * combobox/listbox patterns.
+ * Handles keyboard navigation and selection for combobox/listbox patterns.
+ *
+ * Type-to-select is not handled here: callers that want it compose the shared
+ * `useTypeahead` hook and run it ahead of this handler (see `Selector`). That
+ * keeps matching consistent with the other collections and leaves consumers
+ * whose own input already filters the items (`CommandPalette`) untouched.
  */
 export function useCombobox(options: () => UseComboboxOptions): UseComboboxResult {
 	let highlightedIndex = $state(-1);
-	let typeahead = $state('');
-	let typeaheadTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
 	function getItemId(index: number): string {
 		return `${options().listboxId}-item-${index}`;
@@ -169,6 +185,8 @@ export function useCombobox(options: () => UseComboboxOptions): UseComboboxResul
 				if (hasSearch) {
 					break;
 				}
+			// A space mid-typeahead extends the query instead of activating; the
+			// caller's `useTypeahead` claims it before this handler ever runs.
 			// falls through
 			case 'Enter':
 				e.preventDefault();
@@ -244,26 +262,14 @@ export function useCombobox(options: () => UseComboboxOptions): UseComboboxResul
 				break;
 
 			default:
-				if (!hasSearch && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-					const newTypeahead = typeahead + e.key.toLowerCase();
-					typeahead = newTypeahead;
-
-					if (typeaheadTimeout) {
-						clearTimeout(typeaheadTimeout);
+				// Keys land here only while the trigger holds focus — once the search
+				// input takes over it handles its own typing — so they belong in the
+				// query, including the ones racing the open.
+				if (hasSearch && o.onSearchSeed && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+					if (!isOpen) {
+						o.onOpen();
 					}
-					typeaheadTimeout = setTimeout(() => {
-						typeahead = '';
-					}, 500);
-
-					const matchIndex = selectableItems.findIndex(
-						(item) => !item.disabled && item.label?.toLowerCase().startsWith(newTypeahead)
-					);
-					if (matchIndex >= 0) {
-						if (!isOpen) {
-							o.onOpen();
-						}
-						highlightedIndex = matchIndex;
-					}
+					o.onSearchSeed(e.key);
 				}
 				break;
 		}

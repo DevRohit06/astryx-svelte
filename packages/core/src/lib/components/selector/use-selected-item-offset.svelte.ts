@@ -8,7 +8,7 @@
  *
  * Two translations:
  *
- * **The `RefObject`s become elements.** Upstream takes `listboxRef`/`triggerRef`
+ * **The `RefObject`s become elements.** Upstream takes `listboxRef`/`anchorRef`
  * as `RefObject<T | null>` and reads `.current`; here the options getter returns
  * the elements themselves, the shape `Popover`'s `anchorRef` already settled.
  * That also makes the effect fire when the listbox mounts, which is what
@@ -18,11 +18,43 @@
  * in a microtask after the DOM is written and before paint, which is the property
  * `useLayoutEffect` exists to buy — the offset is measured and committed without
  * an intervening frame, so the listbox never paints at the unpositioned spot.
- * (`$effect.pre` would be wrong: it runs *before* the DOM update, so the items
- * being measured would not be there yet.) `useIsomorphicLayoutEffect`'s own
- * reason to exist — React warns about `useLayoutEffect` during SSR — has no
- * counterpart at all, since Svelte effects simply do not run on the server.
+ *
+ * `$effect.pre` would be wrong, but *not* because the rows would be missing: the
+ * layer's content is rendered unconditionally (the Popover API owns visibility),
+ * so the options exist from mount and `.pre` would find them. The reason is the
+ * mutate-then-observe split — this has to read the **patched** DOM, after
+ * `showPopover()` has run imperatively, so `offsetHeight` reflects the box the
+ * user is about to see. `.pre` is for geometry read *before* a mutation.
+ *
+ * `useIsomorphicLayoutEffect`'s own reason to exist — React warns about
+ * `useLayoutEffect` during SSR — has no counterpart at all, since Svelte effects
+ * simply do not run on the server.
+ *
+ * The geometry itself is upstream's, and it is deliberately NOT
+ * `getBoundingClientRect()` throughout (#4802): a rect includes the popover's
+ * entry `scale()`, so the measured error grew with each option's distance from
+ * the menu top. `offsetTop`/`offsetParent`/`offsetHeight` are untransformed
+ * layout metrics and stay stable while the popover animates.
  */
+
+// The selected row renders one optical pixel below the closed trigger label at
+// the same mathematical center, so compensate before viewport clamping.
+const SELECTED_ITEM_OPTICAL_OFFSET = 1;
+
+/**
+ * Return an element's document-relative layout top without CSS transforms.
+ * `getBoundingClientRect` includes the popover's entry scale, which would make
+ * the measured error grow with each option's distance from the menu top.
+ */
+function getLayoutTop(element: HTMLElement): number {
+	let top = 0;
+	let current: HTMLElement | null = element;
+	while (current) {
+		top += current.offsetTop;
+		current = current.offsetParent as HTMLElement | null;
+	}
+	return top;
+}
 
 /**
  * Options for `useSelectedItemOffset`. Module-private, as upstream declares it.
@@ -36,8 +68,12 @@ interface UseSelectedItemOffsetOptions {
 	listboxId: string;
 	/** The listbox element, once mounted. Upstream's `listboxRef`. */
 	listboxEl: HTMLElement | null | undefined;
-	/** The trigger button element. Upstream's `triggerRef`. */
-	triggerEl: HTMLElement | null | undefined;
+	/**
+	 * The OUTER trigger container — the element `usePopover` anchors to, not the
+	 * shorter inner `<button>`. Upstream's `anchorRef`: measuring from the button
+	 * makes every size's selected row land too low.
+	 */
+	anchorEl: HTMLElement | null | undefined;
 }
 
 /** Return value of `useSelectedItemOffset`. Module-private, and named as upstream names it. */
@@ -50,9 +86,9 @@ interface UseSelectedItemOffsetResult {
 
 /**
  * Calculates the offset needed to position the dropdown so that the selected
- * item appears centered over the trigger button (macOS-style selector).
+ * item appears centered over the outer selector control (macOS-style selector).
  *
- * The desired dropdown top is calculated directly from the trigger center and
+ * The desired dropdown top is calculated directly from the anchor center and
  * selected-item center, then clamped to the viewport. This preserves the
  * default "selected item over trigger" behavior while letting the menu slide
  * upward near the bottom edge or downward near the top edge instead of being
@@ -70,7 +106,7 @@ export function useSelectedItemOffset(
 	}
 
 	$effect(() => {
-		const { isOpen, selectedItemIndex, listboxId, listboxEl, triggerEl } = options();
+		const { isOpen, selectedItemIndex, listboxId, listboxEl, anchorEl } = options();
 
 		if (!isOpen) {
 			// Reset offset when closed
@@ -78,7 +114,7 @@ export function useSelectedItemOffset(
 			return;
 		}
 
-		if (!listboxEl || !triggerEl) {
+		if (!listboxEl || !anchorEl) {
 			commitPosition(0, true);
 			return;
 		}
@@ -94,32 +130,35 @@ export function useSelectedItemOffset(
 			return;
 		}
 
-		// Get positions. Browsers provide real dimensions before paint.
-		const listboxRect = listboxEl.getBoundingClientRect();
-		const itemRect = targetItem.getBoundingClientRect();
-		const triggerRect = triggerEl.getBoundingClientRect();
+		const anchorRect = anchorEl.getBoundingClientRect();
 
-		const listboxHeight = listboxRect.height;
+		// offset* metrics intentionally exclude the popover's entry transform.
+		const listboxHeight = listboxEl.offsetHeight;
 		if (listboxHeight <= 0) {
 			commitPosition(0, true);
 			return;
 		}
 
 		// Item center relative to listbox top. This remains stable even as the
-		// popover's top changes between measurements.
-		const itemCenterInListbox = itemRect.top - listboxRect.top + itemRect.height / 2;
-		const triggerCenter = triggerRect.top + triggerRect.height / 2;
+		// popover animates between scale values. scrollTop keeps the calculation
+		// correct when a previously scrolled listbox is reopened.
+		const itemCenterInListbox =
+			getLayoutTop(targetItem) -
+			getLayoutTop(listboxEl) -
+			listboxEl.scrollTop +
+			targetItem.offsetHeight / 2;
+		const anchorCenter = anchorRect.top + anchorRect.height / 2;
 
-		// Desired top aligns the selected item's center with trigger center.
-		const desiredTop = triggerCenter - itemCenterInListbox;
+		// Desired top aligns the selected item's center with the anchor center.
+		const desiredTop = anchorCenter - itemCenterInListbox - SELECTED_ITEM_OPTICAL_OFFSET;
 		const viewportHeight = window.innerHeight;
 		const maxTop = Math.max(0, viewportHeight - listboxHeight);
 		const clampedTop = Math.min(Math.max(desiredTop, 0), maxTop);
 
-		// The layer positions the popover below the trigger. Apply a negative
+		// The layer positions the popover below the outer anchor. Apply a negative
 		// block-start margin to the layer container so the listbox top moves from
-		// triggerRect.bottom to clampedTop.
-		const clampedOffset = Math.max(0, triggerRect.bottom - clampedTop);
+		// anchorRect.bottom to clampedTop.
+		const clampedOffset = Math.max(0, anchorRect.bottom - clampedTop);
 
 		commitPosition(clampedOffset, true);
 	});

@@ -29,8 +29,9 @@ import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
  * Deliberately *not* shared with `selector.stylex.ts`: the two declare a dozen
  * identically-named keys, but they are separate `stylex.create` calls upstream
  * and several differ (`MultiSelector`'s `triggerContainer` has no coarse-pointer
- * font-size bump, its `popover` carries a `marginBlockStart`, its `item` has no
- * `justifyContent`/typography). Folding them together would be an invention.
+ * font-size bump, its `trigger` carries a `borderRadius`, its `item` has no
+ * `justifyContent` and adds a `fontWeight`, and it has no `dropdownInput` /
+ * `searchRowInput` pair). Folding them together would be an invention.
  */
 
 const styles = stylex.create({
@@ -108,24 +109,26 @@ const styles = stylex.create({
 		color: colorVars['--color-text-secondary'],
 		fontWeight: fontWeightVars['--font-weight-medium']
 	},
+	// Only what Icon does not already provide: `size="sm"` gives the 16px box
+	// and `color` the token, but the glyph still must not shrink inside the flex
+	// trigger.
 	triggerIcon: {
-		flexShrink: 0,
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		width: 16,
-		height: 16,
+		flexShrink: 0
+	},
+	// Rotation lives on the chevron glyph itself (passed through `xstyle`), not
+	// on the layout wrapper above, so the icon's `multi-selector-indicator-icon`
+	// theme target and the open/closed transform sit on one element — a theme can
+	// restyle the mark and its rotation through a single selector. The wrapper
+	// keeps only layout. The status branch renders a different icon, so it never
+	// picks these up and needs no transition opt-out.
+	triggerIconRotation: {
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard'],
-		transformOrigin: 'center',
-		color: colorVars['--color-icon-secondary']
+		transformOrigin: 'center'
 	},
 	triggerIconOpen: {
 		transform: 'rotate(180deg)'
-	},
-	triggerIconStatus: {
-		transition: 'none'
 	},
 	triggerGhost: {
 		width: 'auto',
@@ -161,18 +164,6 @@ const styles = stylex.create({
 	},
 
 	// Clear button
-	clearButton: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		padding: 0,
-		margin: 0,
-		borderWidth: 0,
-		borderStyle: 'none',
-		backgroundColor: 'transparent',
-		cursor: 'pointer',
-		borderRadius: radiusVars['--radius-element']
-	},
 	statusButton: {
 		display: 'flex',
 		alignItems: 'center',
@@ -197,18 +188,7 @@ const styles = stylex.create({
 
 	// Popover container (for anchor positioning)
 	popover: {
-		minWidth: 'anchor-size(width)',
-		marginBlockStart: spacingVars['--spacing-1']
-	},
-
-	// Search field. The inner TextInput owns the border, focus ring, magnifier
-	// (startIcon), and clear button (hasClear); this wrapper only supplies the
-	// dropdown's inline/block padding around it.
-	searchWrapper: {
-		display: 'flex',
-		alignItems: 'center',
-		paddingInline: spacingVars['--spacing-2'],
-		paddingBlock: spacingVars['--spacing-1']
+		minWidth: 'anchor-size(width)'
 	},
 
 	// Select-all wrapper
@@ -219,9 +199,19 @@ const styles = stylex.create({
 		cursor: 'pointer'
 	},
 
-	// Section divider with label
-	sectionDivider: {
-		marginBlock: spacingVars['--spacing-1']
+	// Section heading. Plain secondary text, no rules — the same treatment
+	// DropdownMenu and CommandPaletteGroup already use for a group heading in a
+	// panel list. A labelled Divider (line–text–line) reads as a separator, and
+	// next to the search row's own divider it stacked two rules a few pixels
+	// apart.
+	sectionHeading: {
+		paddingBlock: spacingVars['--spacing-1'],
+		paddingInline: spacingVars['--spacing-2'],
+		fontFamily: typographyVars['--font-family-body'],
+		fontSize: typeScaleVars['--text-supporting-size'],
+		lineHeight: typeScaleVars['--text-supporting-leading'],
+		color: colorVars['--color-text-secondary'],
+		userSelect: 'none'
 	},
 
 	// Divider
@@ -238,6 +228,14 @@ const styles = stylex.create({
 		width: '100%',
 		borderRadius: radiusVars['--radius-element'],
 		cursor: 'pointer',
+		// Row typography lives here, not on the label span, so a theme override on
+		// the row target reaches both the fallback label and renderOption output
+		// (a declaration on the span would win over the inherited row value).
+		// Matches Selector, whose option row owns its typography the same way.
+		fontFamily: typographyVars['--font-family-body'],
+		fontSize: typeScaleVars['--text-label-size'],
+		fontWeight: fontWeightVars['--font-weight-medium'],
+		color: colorVars['--color-text-primary'],
 		backgroundColor: 'transparent',
 		border: 'none',
 		outline: 'none'
@@ -247,6 +245,7 @@ const styles = stylex.create({
 	},
 	itemDisabled: {
 		opacity: 0.5,
+		color: colorVars['--color-text-disabled'],
 		cursor: 'not-allowed'
 	},
 
@@ -256,20 +255,23 @@ const styles = stylex.create({
 		display: 'flex',
 		flexShrink: 0
 	},
+	// Pushed to the row's far edge rather than sitting against the label, which
+	// is what an end-positioned control means here. The row is not
+	// `space-between` (a truncating label plus a trailing control is what wants
+	// the auto margin), and `renderOption` content is not wrapped in a growing
+	// span, so the margin has to live on the checkbox itself.
+	checkboxDecorativeEnd: {
+		marginInlineStart: 'auto'
+	},
 
-	// Label text for items (rendered outside checkbox for correct click behavior)
+	// Label text for items (rendered outside checkbox for correct click
+	// behavior). Typography is inherited from the row; this only handles
+	// truncation.
 	itemLabel: {
-		fontFamily: typographyVars['--font-family-body'],
-		fontSize: typeScaleVars['--text-label-size'],
-		fontWeight: fontWeightVars['--font-weight-medium'],
-		color: colorVars['--color-text-primary'],
 		minWidth: 0,
 		overflow: 'hidden',
 		textOverflow: 'ellipsis',
 		whiteSpace: 'nowrap'
-	},
-	itemLabelDisabled: {
-		color: colorVars['--color-text-disabled']
 	},
 
 	// Empty state
@@ -353,6 +355,10 @@ export function multiSelectorTriggerContainerAttrs(
 		styles.triggerContainer,
 		sizeStyles[size],
 		variant === 'ghost' && styles.triggerGhost,
+		// A ghost trigger has no bordered wrapper of its own, so the shared ring is
+		// what makes its keyboard focus visible (#4935/#4973). `focusWithin` is
+		// `:has(:focus-visible)`, so a pointer click does not draw it.
+		variant === 'ghost' && focusOutlineStyles.focusWithin,
 		isDisabled && inputWrapperStyles.disabled,
 		variant === 'ghost' && isDisabled && styles.triggerGhostDisabled,
 		isEmpty && styles.triggerPlaceholder,
@@ -389,24 +395,19 @@ export function multiSelectorTriggerOverflowAttrs(): SvelteStyleAttrs {
 }
 
 /**
- * The trailing chevron / status icon slot. `showStatusIcon` is the on-field
- * status affordance actually rendering — not merely `status != null`, since the
- * `detached` variant suppresses it and the chevron takes the slot back.
+ * `xstyle` for the on-field status glyph — the no-shrink rule alone. The status
+ * branch renders a different icon from the chevron, so it never picks up the
+ * rotation and needs no transition opt-out.
  */
-export function multiSelectorTriggerIconAttrs(
-	showStatusIcon: boolean,
-	isOpen: boolean
-): SvelteStyleAttrs {
-	return sx(
-		styles.triggerIcon,
-		!showStatusIcon && isOpen && styles.triggerIconOpen,
-		showStatusIcon && styles.triggerIconStatus
-	);
-}
+export const multiSelectorTriggerIconStyle: StyleArg = styles.triggerIcon;
 
-/** The inline clear-all button. */
-export function multiSelectorClearButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.clearButton);
+/**
+ * `xstyle` for the chevron glyph: the no-shrink rule, the rotation transition,
+ * and the flip while open. Handed to `Icon` so one element carries the mark, its
+ * transform and the `multi-selector-indicator-icon` theme target.
+ */
+export function multiSelectorChevronXstyle(isOpen: boolean): StyleArg {
+	return [styles.triggerIcon, styles.triggerIconRotation, isOpen && styles.triggerIconOpen];
 }
 
 /** The focusable status button that opens the `tooltip` variant's info-tip. */
@@ -414,14 +415,18 @@ export function multiSelectorStatusButtonAttrs(): SvelteStyleAttrs {
 	return sx(focusOutlineStyles.focusVisible, styles.statusButton);
 }
 
-/** The scrolling dropdown surface holding the search input and the listbox. */
+/**
+ * The scrolling container the option list sits in. With a search row it is a
+ * sibling of the header rather than its parent, so the field stays put while the
+ * options scroll under it.
+ */
 export function multiSelectorDropdownAttrs(): SvelteStyleAttrs {
 	return sx(styles.dropdown);
 }
 
-/** The search field's padding wrapper. The field itself is a `TextInput`. */
-export function multiSelectorSearchWrapperAttrs(): SvelteStyleAttrs {
-	return sx(styles.searchWrapper);
+/** The `aria-hidden` heading inside a `role="group"`. */
+export function multiSelectorSectionHeadingAttrs(): SvelteStyleAttrs {
+	return sx(styles.sectionHeading);
 }
 
 /**
@@ -443,14 +448,20 @@ export function multiSelectorItemAttrs(
 	);
 }
 
-/** The `inert` wrapper around the purely visual checkbox. */
-export function multiSelectorCheckboxDecorativeAttrs(): SvelteStyleAttrs {
-	return sx(styles.checkboxDecorative);
+/**
+ * The `inert` wrapper around the purely visual checkbox. At `indicatorPosition:
+ * 'end'` it is pushed to the row's far edge with an auto inline-start margin.
+ */
+export function multiSelectorCheckboxDecorativeAttrs(isEnd: boolean): SvelteStyleAttrs {
+	return sx(styles.checkboxDecorative, isEnd && styles.checkboxDecorativeEnd);
 }
 
-/** The option's label text, rendered outside the checkbox. */
-export function multiSelectorItemLabelAttrs(isDisabled: boolean): SvelteStyleAttrs {
-	return sx(styles.itemLabel, isDisabled && styles.itemLabelDisabled);
+/**
+ * The option's label text, rendered outside the checkbox. Truncation only — the
+ * row owns the typography, including the disabled colour.
+ */
+export function multiSelectorItemLabelAttrs(): SvelteStyleAttrs {
+	return sx(styles.itemLabel);
 }
 
 /** The "No results found" row. */
@@ -458,14 +469,17 @@ export function multiSelectorEmptyStateAttrs(): SvelteStyleAttrs {
 	return sx(styles.emptyState);
 }
 
-/** `xstyle` for a plain divider between options (and under select-all). */
+/** `xstyle` for a plain divider between option groups. */
 export const multiSelectorDividerStyle: StyleArg = styles.divider;
 
-/** `xstyle` for the labelled divider that titles a section. */
-export const multiSelectorSectionDividerStyle: StyleArg = styles.sectionDivider;
+/** `xstyle` for the layer container — upstream's `styles.popover`. */
+export const multiSelectorPopoverStyle: StyleArg = styles.popover;
 
 /**
- * `xstyle` for the layer container — upstream's `styles.popover`, to which the
- * caller appends `layerAnimations[placement]`.
+ * The system's standard menu clearance, passed to `<PopoverLayer offset>`
+ * (#4951). It replaces the `marginBlockStart` this module used to bake into
+ * `popover`, which a `position-try-fallbacks` flip would have applied to the
+ * wrong edge. A token cannot be read from a `.svelte` file, so it is re-exported
+ * here — the arrangement `powerSearchPopoverOffset` settled.
  */
-export const multiSelectorPopoverStyle: StyleArg = styles.popover;
+export const multiSelectorPopoverOffset: string = spacingVars['--spacing-1'];

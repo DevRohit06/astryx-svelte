@@ -20,6 +20,9 @@ export default {
 			{
 				className: 'astryx-complex-selector-indicator-icon',
 				states: ['state']
+			},
+			{
+				className: 'astryx-complex-selector-popup'
 			}
 		]
 	},

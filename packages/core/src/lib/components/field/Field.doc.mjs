@@ -38,6 +38,9 @@ export default {
 			{
 				className: 'astryx-input-status-icon',
 				visualProps: ['size', 'status']
+			},
+			{
+				className: 'astryx-input-clear-icon'
 			}
 		],
 		vars: [

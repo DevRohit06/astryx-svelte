@@ -11,6 +11,7 @@ import {
 	typeScaleVars,
 	typographyVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `ComplexSelector/ComplexSelector.tsx`, where the styles
@@ -21,13 +22,18 @@ import {
  * diffs `dist/`'s object key by key.
  *
  * The declarations read very close to `Selector`'s — same trigger container,
- * same chevron slot — but they are a second, independent copy upstream, not a
+ * same chevron glyph — but they are a second, independent copy upstream, not a
  * shared module, so they are transcribed rather than imported. Where the two
- * genuinely differ is worth naming: this trigger carries `borderRadius` (the
- * button is the focus target under `styles.focusRing` rather than borrowing the
- * wrapper's `:focus-within` ring alone), the container has no `variant`, and
- * the popup content is a scrolling `padding: --spacing-3` box instead of a
- * listbox.
+ * genuinely differ is worth naming: this trigger carries `borderRadius`, the
+ * container has no `variant`, and the popup content is a scrolling
+ * `padding: --spacing-3` box instead of a listbox.
+ *
+ * **There is no local focus ring.** This module used to declare one
+ * (`:focus-within { outline: 2px solid accent; outline-offset: 2px }`), which
+ * was the CSS oracle's invented `.x1oqel4m:focus-within` / `.x1fanpfn` pair.
+ * 0.4.x consolidated every ring into `focusOutlineStyles` (#4935, #4973), and
+ * `focusWithin` there is `:has(:focus-visible)` — so it is also a *keyboard*
+ * ring, where the old one drew on a mouse click too.
  */
 
 const styles = stylex.create({
@@ -82,25 +88,28 @@ const styles = stylex.create({
 	placeholder: {
 		color: colorVars['--color-text-secondary']
 	},
+	// Only what Icon does not already provide: `sm` gives the 16px box and
+	// `color="secondary"` the color, but the glyph still must not shrink inside
+	// the flex trigger.
 	triggerIcon: {
-		flexShrink: 0,
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		width: 16,
-		height: 16,
+		flexShrink: 0
+	},
+	// Rotation lives on the chevron glyph itself (passed through `xstyle`), not
+	// on the layout wrapper above, so the icon's
+	// `complex-selector-indicator-icon` theme target and the open/closed
+	// transform sit on one element — a theme can restyle the mark and its
+	// rotation through a single selector. The wrapper keeps only layout.
+	triggerIconRotation: {
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard'],
-		transformOrigin: 'center',
-		color: colorVars['--color-icon-secondary']
+		transformOrigin: 'center'
 	},
 	triggerIconOpen: {
 		transform: 'rotate(180deg)'
 	},
 	popover: {
-		minWidth: 'anchor-size(width)',
-		marginBlockStart: spacingVars['--spacing-1']
+		minWidth: 'anchor-size(width)'
 	},
 	content: {
 		boxSizing: 'border-box',
@@ -119,12 +128,6 @@ const styles = stylex.create({
 	},
 	disabled: {
 		cursor: 'not-allowed'
-	},
-	focusRing: {
-		':focus-within': {
-			outline: `2px solid ${colorVars['--color-accent']}`,
-			outlineOffset: '2px'
-		}
 	}
 });
 
@@ -157,7 +160,11 @@ export function complexSelectorTriggerContainerAttrs(
 		inputWrapperStyles.base,
 		styles.triggerContainer,
 		styles[size],
-		styles.focusRing,
+		// The ring belongs to the wrapper (the focusable `<button>` sits inside
+		// it), but it must still be a KEYBOARD ring: `:focus-within` matched a
+		// mouse click on the trigger and drew the outline for pointer users too.
+		// `focusWithin` here is `:has(:focus-visible)`.
+		focusOutlineStyles.focusWithin,
 		isDisabled && inputWrapperStyles.disabled,
 		isDisabled && styles.disabled,
 		!hasTriggerLabel && styles.placeholder,
@@ -175,9 +182,13 @@ export function complexSelectorTriggerTextAttrs(): SvelteStyleAttrs {
 	return sx(styles.triggerText);
 }
 
-/** The trailing chevron slot, rotated while the popup is open. */
-export function complexSelectorTriggerIconAttrs(isOpen: boolean): SvelteStyleAttrs {
-	return sx(styles.triggerIcon, isOpen && styles.triggerIconOpen);
+/**
+ * `xstyle` for the chevron glyph: the no-shrink rule, the rotation transition,
+ * and the flip while open. Handed to `Icon` so one element carries the mark, its
+ * transform and the `complex-selector-indicator-icon` theme target.
+ */
+export function complexSelectorChevronXstyle(isOpen: boolean): StyleArg {
+	return [styles.triggerIcon, styles.triggerIconRotation, isOpen && styles.triggerIconOpen];
 }
 
 /** The scrolling popup content box the render snippet fills. */
@@ -190,3 +201,12 @@ export function complexSelectorContentAttrs(contentXstyle: StyleArg): SvelteStyl
  * layerAnimations[placement]]`, whose second half the caller appends.
  */
 export const complexSelectorPopoverStyle: StyleArg = styles.popover;
+
+/**
+ * The system's standard menu clearance, passed to `<PopoverLayer offset>`
+ * (#4951). It replaces the `marginBlockStart` this module used to bake into
+ * `popover`, which a `position-try-fallbacks` flip would have applied to the
+ * wrong edge. A token cannot be read from a `.svelte` file, so it is re-exported
+ * here — the arrangement `powerSearchPopoverOffset` settled.
+ */
+export const complexSelectorPopoverOffset: string = spacingVars['--spacing-1'];
