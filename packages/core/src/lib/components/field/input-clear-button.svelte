@@ -13,29 +13,49 @@
 		onclick: MouseEventHandler<HTMLButtonElement>;
 		/** Extra styles, merged after the 20px height override so a caller can win. */
 		xstyle?: StyleArg;
+		/**
+		 * Extra class(es) for the clear glyph itself, merged onto the shared
+		 * `astryx-input-clear-icon` target. Used by inputs that shipped a
+		 * component-specific clear-icon target before the family converged here
+		 * (e.g. `astryx-date-input-clear-icon`) to keep emitting it for a
+		 * deprecation window; new callers don't need it.
+		 */
+		iconClassName?: string;
 	}
 </script>
 
 <script lang="ts">
 	import type { ComponentProps } from 'svelte';
+	import { themeProps } from '../../internal/theme-props.js';
 	import Button from '../button/button.svelte';
 	import Icon from '../icon/icon.svelte';
 	import { clearButtonStyle } from './input-clear-button.stylex.js';
 
 	/**
 	 * A small clear affordance for input controls — a ghost, icon-only `Button`
-	 * shrunk to 20px. Used by `Typeahead`, `Tokenizer` and `FileInput` (each
-	 * passing its own translated `label`); note `TextInput` inlines its *own*
-	 * clear button rather than routing through this one, matching upstream.
+	 * shrunk to 20px.
 	 *
-	 * Deliberately three props wide — no `size`, `variant` or `icon` overrides.
-	 * Widening it would be invented API.
+	 * At 0.4.x (#4876) the whole input family converges here: `TextInput`,
+	 * `NumberInput`, `TimeInput`, the three date inputs and the selectors each
+	 * used to inline their own `<button>`, and each drew its own focus ring. The
+	 * glyph carries the shared `astryx-input-clear-icon` target so one rule
+	 * reaches every clear button in the system, and `iconClassName` lets the
+	 * inputs that already shipped a component-specific target keep emitting it
+	 * through a deprecation window.
+	 *
+	 * Deliberately narrow — no `size`, `variant` or `icon` overrides. Widening it
+	 * would be invented API.
 	 */
-	let { label, onclick, xstyle }: InputClearButtonProps = $props();
+	let { label, onclick, xstyle, iconClassName }: InputClearButtonProps = $props();
+
+	const iconTheme = themeProps('input-clear-icon');
+	const iconClass = $derived(
+		iconClassName != null ? `${iconTheme.class} ${iconClassName}` : iconTheme.class
+	);
 </script>
 
 {#snippet closeIcon()}
-	<Icon icon="close" size="sm" color="inherit" />
+	<Icon icon="close" size="sm" color="secondary" class={iconClass} />
 {/snippet}
 
 <Button
