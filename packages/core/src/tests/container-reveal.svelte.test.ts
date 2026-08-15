@@ -1,25 +1,41 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
-import { POOL_SIZE } from '$lib/hooks/container-reveal.pool.stylex.js';
 import Probe from './fixtures/container-reveal-probe.svelte';
 import ManyProbe from './fixtures/container-reveal-many-probe.svelte';
 
 /**
- * Upstream's `hooks/useContainerReveal.test.tsx`, ported case for case — all 8.
+ * Upstream's `hooks/useContainerReveal.test.tsx`, ported case for case — all 6.
  *
- * The hook claims a pool slot at init and releases it on destroy, so every case
- * needs a real component lifecycle: `renderHook` becomes the probe fixture and
- * `result.current` its instance export. `act()` disappears — `unmount()` here
- * already awaits, and there is no batched state to flush.
+ * `renderHook` becomes the probe fixture and `result.current` its instance
+ * export. `className` becomes `class` throughout: the hook returns Svelte
+ * attribute names, which is the whole of the translation on the return shape.
  *
- * `className` becomes `class` throughout: the hook returns Svelte attribute
- * names, which is the whole of the translation on the return shape.
+ * `rerender` has no direct counterpart, so "follows isEnabled after mount"
+ * drives a `$state` the probe's options getter reads — which is the same thing
+ * upstream's `rerender({isEnabled})` does, and the behaviour the case exists
+ * for. That behaviour is itself new: through 0.3.0 `isEnabled` decided a
+ * one-time pool-slot claim, so flipping it after mount did nothing.
  *
- * The pool is module-level and shared by every case in this file.
- * `vitest-browser-svelte` cleans up before each test, so each one starts with
- * the free-list empty — which is what makes the "recycles a slot" and
- * "full pool" cases mean anything.
+ * Nesting isolation is a cascade behaviour, verified in the demo routes rather
+ * than asserted here — upstream says the same of jsdom and its Storybook story,
+ * and although this suite runs in real Chromium, the assertion would be on
+ * computed style through a hover state no test driver can hold.
+ *
+ * **EIGHT cases from the 0.3.0 suite are gone, and they are not dropped
+ * coverage — the mechanism they tested no longer exists.** "gives two
+ * concurrently mounted containers DISTINCT marker classes", "recycles a slot
+ * after unmount (free-list release)", "assigns distinct markers across a full
+ * pool", "survives repeated mount/unmount without leaking the pool", and the
+ * four SSR slot-reclamation cases in the companion `container-reveal-ssr.test.ts`
+ * all asserted properties of the six-marker pool that upstream 0.4.0 deleted.
+ * Scoping is the cascade's job now: a nested container re-declares the same
+ * custom properties on itself, so there is no slot to hand out, exhaust, leak or
+ * reclaim. That whole file is deleted with them.
  */
+
+afterEach(() => {
+	vi.restoreAllMocks();
+});
 
 describe('useContainerReveal', () => {
 	it('returns spreadable getter props for container and content', async () => {
@@ -27,8 +43,6 @@ describe('useContainerReveal', () => {
 		const { reveal } = screen.component;
 		const container = reveal.getContainerProps();
 		const content = reveal.getContentRevealProps();
-		expect(container).toHaveProperty('class');
-		expect(content).toHaveProperty('class');
 		expect(typeof container.class).toBe('string');
 		expect(typeof content.class).toBe('string');
 		// And they reach the DOM — the half `result.current` cannot check.
@@ -37,37 +51,27 @@ describe('useContainerReveal', () => {
 		);
 	});
 
-	it('is inert when disabled: no marker class, empty content props', async () => {
+	it('is inert when disabled: no container class, empty content props', async () => {
 		const screen = await render(Probe, { props: { options: () => ({ isEnabled: false }) } });
 		const { reveal } = screen.component;
 		expect(reveal.getContainerProps()).toEqual({});
 		expect(reveal.getContentRevealProps()).toEqual({});
 	});
 
-	it('gives two concurrently mounted containers DISTINCT marker classes', async () => {
-		// The core leak-safety property: nested/concurrent containers must never
-		// share a marker, or an ancestor container's :hover would reveal a
-		// descendant container's content.
-		const a = await render(Probe);
-		const b = await render(Probe);
-		const classA = a.component.reveal.getContainerProps().class;
-		const classB = b.component.reveal.getContainerProps().class;
-		expect(classA).toBeTruthy();
-		expect(classB).toBeTruthy();
-		expect(classA).not.toBe(classB);
-		await a.unmount();
-		await b.unmount();
-	});
+	it('follows isEnabled after mount, in both directions', async () => {
+		let isEnabled = $state(true);
+		const screen = await render(Probe, { props: { options: () => ({ isEnabled }) } });
+		const { reveal } = screen.component;
 
-	it('recycles a slot after unmount (free-list release)', async () => {
-		const first = await render(Probe);
-		const firstClass = first.component.reveal.getContainerProps().class;
-		await first.unmount();
-		// A fresh mount should be able to reclaim the just-released slot.
-		const second = await render(Probe);
-		const secondClass = second.component.reveal.getContainerProps().class;
-		expect(secondClass).toBe(firstClass);
-		await second.unmount();
+		expect(reveal.getContentRevealProps().class).toBeTruthy();
+
+		isEnabled = false;
+		expect(reveal.getContainerProps()).toEqual({});
+		expect(reveal.getContentRevealProps()).toEqual({});
+
+		isEnabled = true;
+		expect(reveal.getContainerProps().class).toBeTruthy();
+		expect(reveal.getContentRevealProps().class).toBeTruthy();
 	});
 
 	it('reveal and conceal map to different style blocks', async () => {
@@ -88,26 +92,9 @@ describe('useContainerReveal', () => {
 		expect(clipped).not.toBe(preserved);
 	});
 
-	it('assigns distinct markers across a full pool of concurrent containers', async () => {
-		const screen = await render(ManyProbe, { props: { count: POOL_SIZE } });
-		const classes = [...screen.container.querySelectorAll('[data-reveal-container]')].map(
-			(el) => el.className
-		);
-		const unique = new Set(classes.filter(Boolean));
-		expect(unique.size).toBe(POOL_SIZE);
-		await screen.unmount();
-	});
-
-	it('survives repeated mount/unmount without leaking the pool', async () => {
-		// Mount and unmount a full pool several times; each cycle must still hand
-		// out POOL_SIZE distinct markers, proving slots are released.
-		for (let cycle = 0; cycle < 3; cycle++) {
-			const screen = await render(ManyProbe, { props: { count: POOL_SIZE } });
-			const classes = [...screen.container.querySelectorAll('[data-reveal-container]')].map(
-				(el) => el.className
-			);
-			expect(new Set(classes).size).toBe(POOL_SIZE);
-			await screen.unmount();
-		}
+	it('mounts a large flat list without a dev warning', async () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		await render(ManyProbe, { props: { count: 500 } });
+		expect(warn).not.toHaveBeenCalled();
 	});
 });

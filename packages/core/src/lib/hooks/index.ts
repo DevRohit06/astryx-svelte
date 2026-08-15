@@ -21,9 +21,10 @@ export {
 	type UseClickableContainerOptions
 } from './use-clickable-container.svelte.js';
 
-// The pool module behind this hook (`POOL`, `POOL_SIZE`, `m0`…`m5`,
-// `RevealSlot`) is deliberately absent: it is internal to `useContainerReveal`
-// upstream too, and its barrel names only these four.
+// The style module behind this hook (`container-reveal.stylex.ts`) is
+// deliberately absent: it is internal to `useContainerReveal` upstream too, and
+// its barrel names only these four. It was a six-marker POOL through 0.3.0
+// (`POOL`, `POOL_SIZE`, `m0`…`m5`, `RevealSlot`), all equally internal.
 export {
 	useContainerReveal,
 	type ContentRevealOptions,

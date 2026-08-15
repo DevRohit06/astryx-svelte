@@ -2,9 +2,12 @@
 	import Probe from './container-reveal-probe.svelte';
 
 	/**
-	 * Upstream renders a fragment of `POOL_SIZE` probes to prove the free-list
-	 * hands out that many distinct markers concurrently. Same thing here, as a
-	 * fixture because `{#each}` needs a component to live in.
+	 * A flat list of `count` reveal containers, as a fixture because `{#each}`
+	 * needs a component to live in.
+	 *
+	 * Upstream renders 500 of these to prove a large list mounts without a dev
+	 * warning — the thing the marker pool could not do, since it had six slots
+	 * and warned past them.
 	 */
 	const { count }: { count: number } = $props();
 </script>

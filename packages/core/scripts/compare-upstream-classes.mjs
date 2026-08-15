@@ -755,12 +755,15 @@ const CASES = [
 		// variable drives them. The remove slot is a single string now: its hover
 		// variant moved to the pool.
 		//
-		// NOTE the pool itself is UNMEASURED. `hooks/containerReveal.pool.stylex.js`
-		// declares six mechanically identical marker slots; `marker` holds exactly
-		// one name per case and `normaliseRule` rewrites one class, so a case for it
-		// passes slot 0 and fails the other five. Slot 0 passing is strong evidence
-		// the other five match — but it is evidence, not measurement. Closing it
-		// needs the script to take a LIST of marker names.
+		// **The pool is gone at upstream 0.4.0, and with it the one measurement gap
+		// this case used to record.** It read: the pool itself is UNMEASURED,
+		// because `containerReveal.pool.stylex.js` declared six mechanically
+		// identical marker slots while `marker` holds exactly one name per case, so
+		// a case for it passed slot 0 and failed the other five — evidence rather
+		// than measurement, closable only by teaching this script a LIST of marker
+		// names. #4955 replaced the pool with inherited custom properties, which
+		// carry no marker at all: `container-reveal.stylex.ts` is ordinary static
+		// CSS and the CSS oracle covers it directly. The debt retired itself.
 		inline: [
 			['styles.image'],
 			['styles.placeholder'],
