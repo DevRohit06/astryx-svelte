@@ -485,20 +485,8 @@ the argument for the case-for-case contract:
 
 ### What is left, and none of it is a slice
 
-- [ ] **146 upstream codemod assets stay deferred, and should stay deferred permanently in their
-      present form.** Every one is a jscodeshift transform over `.tsx` migrating *React* source
-      between React Astryx versions. The first real registry entry belongs to this port's second
-      release, written against the `magic-string` + `svelte/compiler` api
-- [ ] **1,329 template assets and 43 page templates stay deferred.** `template --list` therefore
-      shows nothing from core, and `init --features template` returns `skipped`. Everything around
-      it is live and tested — integration-contributed templates and external-package blocks are
-      discovered, listed, shown, skeletonised and scaffolded — which is also what makes
-      `component --showcase`, `search --type template` and `layout`'s `{hint}` catalog work now
-- [ ] **`blog` (7/5) is not ported.** It needs content this port does not have
-- [ ] **`components.lock.json` with per-file content hashes** — still not started
-- [ ] **The 27 remaining `it.todo`s do not name a slice any more.** Nine wait on this port cutting a
-      **second release** (a codemod migrates *between* two versions, and there is one); the rest
-      wait on the deferred assets. Both are content, not code
+The genuinely-open items this section used to list moved to `port/todo.md`'s "CLI — still open" —
+see there for the current backlog.
 
 ### The original slice sizing
 
@@ -546,10 +534,10 @@ signature going async ripples through every caller in both slices.
 
 ### Still open from the original checklist
 
-- [ ] Commands identical to upstream: `docs`, `search`, `discover`, `doctor`, `theme *`, `validate-integration`
-- [ ] Adapted: `component` (props + snippets), `template` (`page.tsx` → `+page.svelte`), `swizzle`, `init`
-- [ ] Rename `hook` → `util` with `.alias('hook')`; add `.alias('add')` to `template`
-- [ ] `upgrade` with the full contract (dry-run default, corruption guards) but a `magic-string` + `svelte/compiler` runner (jscodeshift can't parse `.svelte`)
+The unchecked items this section used to list — the commands/aliases checklist, `Core ships its demo
+routes to consumers`, `components.lock.json`, and dropping `"private": true` — moved to
+`port/todo.md`'s "CLI — still open". What is left here is the one item that was already checked off.
+
 - [x] **CI assertion on `package.json#files`** — **landed 2026-08-08** as
       `packages/cli/scripts/assert-core-ships-src.mjs`, wired as the CLI's `test:core-src` and
       chained into its `test` script the way core chains `test:parity`. It asserts against what
@@ -564,15 +552,6 @@ signature going async ripples through every caller in both slices.
       today), and on Windows `npm` is a `.cmd` shim that Node refuses to spawn without a shell
       since the CVE-2024-27980 fix — POSIX takes `execFileSync` with an args array, Windows a
       static command string
-- [ ] **Core ships its demo routes to consumers.** The assertion above surfaced it: core's tarball
-      is 2,356 files, of which `src/lib` is 691 — the other ~286 `src/` entries are `src/routes`,
-      the SvelteKit demo app, plus the app shell files around it. Upstream ships `src` wholesale
-      too, but upstream's `src` has no demo app in it (their stories live elsewhere), so this is a
-      port artifact rather than parity. A `"!src/routes"` negation is the whole fix. Left alone
-      here because it changes published content and this slice was not the moment; it should ride
-      with the release checklist rather than a CLI slice
-- [ ] `components.lock.json` with per-file content hashes
-- [ ] Drop `"private": true` from `packages/cli/package.json` — **only** when the CLI is genuinely usable
 
 ---
 

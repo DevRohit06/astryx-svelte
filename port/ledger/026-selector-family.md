@@ -265,9 +265,8 @@ It also corrected one clause of a comment I wrote: `use-selected-item-offset.sve
 
 ## Rules promoted
 
-Not promoted at the time — this file's port-binding fix and CI split are real infrastructure changes
-of this era, but no specific CLAUDE.md passage was confidently traced back to them, as opposed to a
-different, later client-project investigation.
+Not promoted at the time. `027-upstream-0.4.1-infrastructure.md` carries the port-binding fix and CI
+split that used to be described here; see that file's own Rules promoted for the accurate version.
 
 ## Debts opened
 

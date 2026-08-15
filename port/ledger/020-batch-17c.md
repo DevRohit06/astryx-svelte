@@ -300,7 +300,7 @@ rather than left to rot.
       `utils/index.ts` publishes `devWarn`, `devError`, `warnOnce` and `formatDevMessage`;
       `hooks/index.ts` publishes `useDevWarning`. This port has no `devWarning` module at all — the
       only `warnOnce` in the tree is file-private in `i18n/resolve.ts`. The _behaviour_ was ported
-      inline everywhere it was needed (`PORTED.md` records `useOverflow` turning `useDevWarning`
+      inline everywhere it was needed (`port/ledger/` records `useOverflow` turning `useDevWarning`
       into a plain `$effect`), so nothing is missing functionally; what is missing is the published
       surface, and it was never accounted for either way. **Port the module or record it as a
       deliberate non-port** — leaving it unmeasured is the one option that is not defensible.

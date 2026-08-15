@@ -2082,7 +2082,40 @@ the two can disagree indefinitely without any gate noticing.
 
 ## Phase 4 — CLI
 
-Landed in full — see [`port/ledger/023-cli-phase-4.md`](./ledger/023-cli-phase-4.md).
+The CLI's landed history is in [`port/ledger/023-cli-phase-4.md`](./ledger/023-cli-phase-4.md); what
+remains open is below.
+
+### CLI — still open
+
+- [ ] Commands identical to upstream: `docs`, `search`, `discover`, `doctor`, `theme *`, `validate-integration`
+- [ ] Adapted: `component` (props + snippets), `template` (`page.tsx` → `+page.svelte`), `swizzle`, `init`
+- [ ] Rename `hook` → `util` with `.alias('hook')`; add `.alias('add')` to `template`
+- [ ] `upgrade` with the full contract (dry-run default, corruption guards) but a `magic-string` +
+      `svelte/compiler` runner (jscodeshift can't parse `.svelte`)
+- [ ] **146 upstream codemod assets stay deferred, and should stay deferred permanently in their
+      present form.** Every one is a jscodeshift transform over `.tsx` migrating _React_ source
+      between React Astryx versions. The first real registry entry belongs to this port's second
+      release, written against the `magic-string` + `svelte/compiler` api
+- [ ] **1,329 template assets and 43 page templates stay deferred.** `template --list` therefore
+      shows nothing from core, and `init --features template` returns `skipped`. Everything around
+      it is live and tested — integration-contributed templates and external-package blocks are
+      discovered, listed, shown, skeletonised and scaffolded — which is also what makes
+      `component --showcase`, `search --type template` and `layout`'s `{hint}` catalog work now
+- [ ] **`blog` (7/5) is not ported.** It needs content this port does not have
+- [ ] **`components.lock.json` with per-file content hashes** — still not started
+- [ ] **The 27 remaining `it.todo`s do not name a slice any more.** Nine wait on this port cutting a
+      **second release** (a codemod migrates _between_ two versions, and there is one); the rest
+      wait on the deferred assets. Both are content, not code
+- [ ] **Core ships its demo routes to consumers.** The assertion above surfaced it: core's tarball
+      is 2,356 files, of which `src/lib` is 691 — the other ~286 `src/` entries are `src/routes`,
+      the SvelteKit demo app, plus the app shell files around it. Upstream ships `src` wholesale
+      too, but upstream's `src` has no demo app in it (their stories live elsewhere), so this is a
+      port artifact rather than parity. A `"!src/routes"` negation is the whole fix. Left alone
+      here because it changes published content and this slice was not the moment; it should ride
+      with the release checklist rather than a CLI slice
+- [ ] `components.lock.json` with per-file content hashes
+- [ ] Drop `"private": true` from `packages/cli/package.json` — **only** when the CLI is genuinely
+      usable
 
 ## Phase 5 — Docs site (the current goal)
 
