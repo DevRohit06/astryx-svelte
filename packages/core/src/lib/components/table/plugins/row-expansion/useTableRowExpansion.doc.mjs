@@ -10,7 +10,7 @@ export default {
 	displayName: 'useTableRowExpansion',
 	subComponentOf: 'Table',
 	description:
-		'Deprecated: use useTableTreeData + useTableTreeState instead. Hook that returns a TablePlugin implementing expandable rows with inherited columns. Child rows use the same columns as their parents, indented by depth. Clicking the chevron (or right-click context menu) toggles expansion. Pair with useTableRowExpansionState, which flattens the tree and derives this config (expand/collapse handlers + expand-all state) from a single expandedKeys set. Converging with useTableTreeData: new tree tables should prefer useTableTreeData + useTableTreeState, which cover the same affordances with a cycle guard and fine-grained re-render. See the migration example below.',
+		'Hook that returns a TablePlugin which expands a full-width detail panel below a row, rendered by the consumer via renderExpanded(item). Adds a leading chevron column and a right-click "Expand/Collapse row" action; the consumer owns the expandedKeys set. Use it for master-detail rows (order details, forms, charts, nested tables). For hierarchical data where child rows reuse the parent columns, use useTableTreeData + useTableTreeState instead.',
 	keywords: [
 		'table',
 		'datatable',
@@ -29,13 +29,14 @@ export default {
 		{
 			name: 'expandedKeys',
 			type: 'Set<string>',
-			description: 'Set of currently-expanded row keys.',
+			description: 'Set of currently-expanded row keys. Consumer-owned.',
 			required: true
 		},
 		{
 			name: 'onToggle',
 			type: '(key: string) => void',
-			description: 'Called when a row expansion is toggled.',
+			description:
+				'Called with a row key when its expansion is toggled (chevron click or context-menu action).',
 			required: true
 		},
 		{
@@ -45,37 +46,17 @@ export default {
 			required: true
 		},
 		{
-			name: 'getChildren',
-			type: '(item: T) => T[]',
-			description: 'Return the children of a row (determines expandability).',
-			required: true
-		},
-		{
-			name: 'getDepth',
-			type: '(item: T) => number',
+			name: 'renderExpanded',
+			type: 'Snippet<[T]>',
 			description:
-				'Return the depth of a row in the hierarchy (0 = top-level). Used for indentation.'
+				'Render the detail content shown in a full-width panel below the row when it is expanded. Receives the row item.',
+			required: true
 		},
 		{
 			name: 'getIsItemExpandable',
 			type: '(item: T) => boolean',
-			description: 'Control which rows are expandable. Defaults to checking getChildren length.'
-		},
-		{
-			name: 'hasRowClickExpansion',
-			type: 'boolean',
-			description: 'When true, clicking anywhere on the row toggles expansion.',
-			default: 'false'
-		},
-		{
-			name: 'isAllExpanded',
-			type: "boolean | 'indeterminate'",
-			description: 'State of the expand-all toggle in the header. Enables the header toggle button.'
-		},
-		{
-			name: 'onToggleExpandAll',
-			type: '(expand: boolean) => void',
-			description: 'Callback when the expand-all header toggle is clicked.'
+			description:
+				'Control which rows are expandable. Non-expandable rows show no chevron, no context-menu action, and never render a panel. Defaults to all rows expandable.'
 		}
 	]
 };

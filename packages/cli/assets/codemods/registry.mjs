@@ -3,31 +3,32 @@
  * manifest that migrates *into* it. `upgrade` walks it to decide which codemods
  * apply between two versions.
  *
- * ## It is empty, and that is the answer rather than a placeholder
+ * ## It held exactly one version as of 0.4.0, and getting there was the point
  *
- * Upstream registers 18 versions (`0.0.2` … `0.3.0`), each a lazy import of a
- * transform module under `assets/codemods/transforms/v<version>/`. **This port
- * has released no versions**, so there is no transform between any two of them
- * and no `assets/codemods/transforms/` tree to point at. An empty `Map` is the
- * correct content, in the same sense `Project.codemods()`'s core half returning
- * `[]` is correct and `listTemplates()` returning `[]` was correct in slice 6a:
- * the mechanism is real, the data set is genuinely empty, and nothing here is
- * stubbed out waiting to be filled in with fake entries.
+ * Upstream registers 18 versions (`0.0.2` … `0.3.0` at the time this port's
+ * registry was written, `0.4.0` now), each a lazy import of a transform module
+ * under `assets/codemods/transforms/v<version>/`. This file was **empty** until
+ * 0.4.0, and honestly so: a codemod migrates *between* two releases, and this
+ * port had released one. That is no longer true. 0.4.0 tracks upstream 0.4.1 and
+ * carries a breaking change — `useTableRowExpansion` became a detail-panel
+ * plugin (upstream PR #4609) and `useTableRowExpansionState` was removed — so
+ * `v0.4.0/migrate-table-rowexpansion-to-tree.mjs` is the first real entry, the
+ * one the old note here said would land at the second release.
  *
- * The 146 upstream codemod assets are **deferred, not adopted**. Every one is a
- * jscodeshift transform over `.tsx`; they migrate React source between React
- * Astryx versions and would be wrong to ship against Svelte source even if they
- * could be parsed. When this port cuts its second release, the first real entry
- * goes here and points at a transform written against the
- * `magic-string` + `svelte/compiler` api (see `run-codemod.mjs`).
+ * The remaining upstream codemod assets are still **deferred, not adopted**.
+ * Every one is a jscodeshift transform over `.tsx`; they migrate React source
+ * between React Astryx versions and would be wrong to ship against Svelte source
+ * even if they could be parsed. A transform lands here only when it has been
+ * rewritten against the `magic-string` + `svelte/compiler` api (see
+ * `run-codemod.mjs`) and tested against Svelte fixtures.
  *
- * Two consequences follow from the emptiness and are handled at the call sites
- * rather than papered over here:
+ * The two consequences of the old emptiness are still handled at the call sites,
+ * and both now take their populated branch:
  *
- *   - `latestVersion` is `undefined`. It is typed that way, so a caller that
- *     forgets to guard fails to typecheck instead of passing `undefined` into a
- *     comparator. `_adapter.collectAllCodemods` is the one caller and guards.
- *   - `getTransformsBetween` returns `[]` for every range, which routes
+ *   - `latestVersion` is typed `string | undefined`, so a caller that forgets to
+ *     guard fails to typecheck instead of passing `undefined` into a comparator.
+ *     `_adapter.collectAllCodemods` is the one caller and guards.
+ *   - `getTransformsBetween` returns `[]` for a range below 0.4.0, which routes
  *     `upgrade` to its `no_codemods` status short-circuit — the same path
  *     upstream takes for a range with no registered codemods.
  */
@@ -70,7 +71,7 @@ import { semverCompare } from '../../foundation/env/semver.mjs';
  */
 
 /** @type {Map<string, () => Promise<{default: CoreTransformEntry[]}>>} */
-const registry = new Map();
+const registry = new Map([['0.4.0', () => import('./transforms/v0.4.0/index.mjs')]]);
 
 /** All registered versions, sorted ascending. */
 export const versions = [...registry.keys()].sort(semverCompare);

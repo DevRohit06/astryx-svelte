@@ -3,23 +3,27 @@
  *
  * ## Ported case count
  *
- * Upstream has 7; 7 here, **3 live and 4 `it.todo`**. The split is forced by the
- * registry being empty (see `assets/codemods/registry.mjs`): four of upstream's
- * cases assert *which* version manifests come back for a range, and there are no
- * manifests to come back. They are carried as `it.todo` rather than refixtured
- * because there is no weaker form of "returns the v0.0.10 transforms" that is
- * still about the registry — a rewritten version would pass for the wrong
- * reason, which this port treats as worse than not running.
+ * Upstream has 7; 7 here, **4 live and 3 `it.todo`**. The split used to be 3/4,
+ * and it moved because the registry stopped being empty: 0.4.0 registers
+ * `migrate-table-rowexpansion-to-tree`, the transform for the breaking
+ * `useTableRowExpansion` rewrite. That is the release the previous version of
+ * this header named as the blocker for all four todos.
  *
- * The three live ones are not vacuous. The first is the guard on the honest
- * empty itself: it fails the day a version is registered without this suite
- * being revisited, which is exactly when the four todos become writable. The
- * other two hold for an empty registry *and* a populated one, so they survive
- * that change unedited.
+ * One of them is now writable and is written — upstream's "returns the manifest
+ * for a one-version range", refixtured onto the range this port actually has
+ * (`0.3.1 → 0.4.0`). The remaining three still have no honest form:
  *
- * The blocker for all four todos is the same and is not a slice: **this port
- * must cut a second release**, so that there is a version transition for a
- * codemod to migrate across.
+ *   - the three-version range needs three registered versions, and there is one.
+ *   - both prerelease cases assert that a **canary** `--to` / `--from` still
+ *     selects the release version's manifest. `semverCompare` strips the
+ *     prerelease tag outright (`0.4.0-canary.1` compares equal to `0.4.0`), so
+ *     against a single registered version the canary and the release select the
+ *     same manifest for the same reason a *typo* would — the case would pass
+ *     without the prerelease handling being exercised at all. They need a second
+ *     registered version to sit either side of.
+ *
+ * The two range-edge cases hold for an empty registry *and* a populated one, so
+ * they survived the change unedited — which is why they were written that way.
  */
 
 import { describe, expect, test } from 'vitest';
@@ -28,19 +32,24 @@ import { versions, latestVersion, getTransformsBetween } from '../registry.mjs';
 describe('registry', () => {
 	describe('versions', () => {
 		test('are sorted in ascending semver order across digit boundaries', () => {
-			// Upstream asserts its 18-entry list. This port has released no versions,
-			// so the list is empty and `latestVersion` is undefined — both by design,
-			// and both asserted so the emptiness cannot drift unnoticed.
-			expect(versions).toEqual([]);
-			expect(latestVersion).toBeUndefined();
+			// Upstream asserts its 18-entry list. This port has one registered
+			// version; asserted exactly so a second cannot land without this suite
+			// being revisited, which is when the three todos below become writable.
+			expect(versions).toEqual(['0.4.0']);
+			expect(latestVersion).toBe('0.4.0');
 		});
 	});
 
 	describe('getTransformsBetween', () => {
-		// Needs a registered version. Blocked on this port's second release.
-		test.todo('returns v0.0.10 transforms for range 0.0.9 to 0.0.10');
+		test('returns v0.4.0 transforms for range 0.3.1 to 0.4.0', async () => {
+			const results = await getTransformsBetween('0.3.1', '0.4.0');
+			expect(results.map((r) => r.version)).toEqual(['0.4.0']);
+			expect(results[0].transforms.map((t) => t.name)).toEqual([
+				'migrate-table-rowexpansion-to-tree'
+			]);
+		});
 
-		// Needs three registered versions. Blocked on this port's second release.
+		// Needs three registered versions. Blocked on this port's fourth release.
 		test.todo('returns v0.0.6, v0.0.7, v0.0.8 for range 0.0.2 to 0.0.8');
 
 		test('returns empty array when from equals to', async () => {
@@ -53,10 +62,9 @@ describe('registry', () => {
 			expect(results).toEqual([]);
 		});
 
-		// Both prerelease cases assert that a canary `--to` / `--from` still selects
-		// the release version's manifest. With nothing registered there is no
-		// manifest to select, and asserting `[]` would prove the prerelease handling
-		// nothing at all. Blocked on this port's second release.
+		// Both prerelease cases need a second registered version to select
+		// *between*; with one, a canary and its release resolve identically whether
+		// or not the prerelease tag is handled. See the header.
 		test.todo('handles prerelease suffixes in --to (canary versions)');
 
 		test.todo('handles prerelease suffixes in --from');

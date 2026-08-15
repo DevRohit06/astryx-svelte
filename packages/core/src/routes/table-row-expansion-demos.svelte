@@ -1,259 +1,165 @@
 <script lang="ts">
 	import {
+		Badge,
+		Heading,
+		HStack,
 		Table,
+		Text,
+		VStack,
 		pixel,
 		proportional,
-		useTableRowExpansion,
-		useTableRowExpansionState
+		useTableRowExpansion
 	} from '$lib/index.js';
 	import type { TableColumn } from '$lib/index.js';
 
 	/**
 	 * Upstream's `TableRowExpansion.stories.tsx`, as a sibling route component —
-	 * the `table-demos.svelte` shape, because three live file trees would
-	 * otherwise bury the page.
+	 * the `table-demos.svelte` shape.
 	 *
-	 * **All 3 stories.** `fileTree` and `columns` are shared across the stories
-	 * upstream and shared here; the expanded set is not — each story is its own
-	 * React component with its own `useState`, so each gets its own `$state` set
-	 * and its own pair of hooks. Upstream's per-story doc comments, verbatim:
+	 * **Both stories**, rewritten wholesale at upstream 0.4.1 (PR #4609) along
+	 * with the plugin. The three tree-mode stories this file used to carry
+	 * (`InheritedColumns`, `LeafNodesNotExpandable`, `ExpandOnRowClick`) are gone
+	 * with the tree mode; `table-tree-demos.svelte` is where that shape lives now.
+	 * `orders`, `columns` and `OrderItems` are shared across the stories upstream
+	 * and shared here; the expanded set is not — each story is its own React
+	 * component with its own `useState`, so each gets its own `$state` set and its
+	 * own hook. Upstream's per-story doc comments, verbatim:
 	 *
-	 * - **InheritedColumns** — "A file tree rendered as a table with expandable
-	 *   folder rows. Child rows inherit the parent's columns and are indented
-	 *   based on depth. Click the chevron (or right-click → "Expand/Collapse
-	 *   row") to expand a folder."
-	 * - **LeafNodesNotExpandable** — "Only folders are expandable (files have no
-	 *   children). The chevron and context-menu action are hidden for leaf
-	 *   nodes."
-	 * - **ExpandOnRowClick** — "`hasRowClickExpansion: true` — clicking anywhere
-	 *   on the row toggles expansion (in addition to the chevron). The row shows
-	 *   a pointer cursor."
+	 * - **DetailPanel** — "Each row expands a full-width detail panel below it,
+	 *   rendered by `renderExpanded(item)`. Click the chevron (or right-click,
+	 *   then "Expand/Collapse row") to toggle the panel. The consumer owns the
+	 *   `expandedKeys` set. For hierarchical data (child rows that reuse the
+	 *   parent columns), use `useTableTreeData` + `useTableTreeState` instead."
+	 * - **NotAllRowsExpandable** — "`getIsItemExpandable` restricts which rows can
+	 *   expand. Here only orders with more than one line item are expandable; the
+	 *   rest show no chevron and no context-menu action."
 	 *
-	 * Four translations:
+	 * Three translations:
 	 *
-	 * - **`useState` → `$state`.** `useState<Set<string>>(new Set(['src']))`
-	 *   becomes `$state(new Set(['src']))`, and `setExpandedKeys` a
-	 *   reassignment. The `Set` is a plain one: reassignment is the reactive
-	 *   boundary, and the ported config's setter takes the next set rather than
-	 *   upstream's updater function, because a `$state` read is never stale.
-	 * - **Both hooks take a getter**, where upstream passes the config object.
+	 * - **`useState` → `$state`.** `useState<Set<string>>(new Set(['ord-1001']))`
+	 *   becomes `$state(new Set(['ord-1001']))`. The `Set` is a plain one:
+	 *   reassignment is the reactive boundary, so upstream's `toggleKey(prev, key)`
+	 *   updater becomes a copy-and-reassign — a `$state` read is never stale, so
+	 *   the updater form has nothing left to guard.
+	 * - **The hook takes a getter**, where upstream passes the config object.
 	 *   Upstream's `useMemo`/`useCallback` around plugin objects have no
-	 *   counterpart — the ported hooks are already stable — and the storybook
-	 *   file uses none anyway.
-	 * - **The `*State` hook result is held, not destructured.** Upstream writes
-	 *   `const {data, expansionConfig} = useTableRowExpansionState(…)`, safe
-	 *   because React returns a fresh object every render. Here the hook returns
-	 *   one object for the component's lifetime and exposes `data` as a
-	 *   **getter** over a `$derived`, so destructuring would snapshot the first
-	 *   flattening and the tree would never expand.
-	 * - **`ExpandOnRowClick`'s spread moves *inside* the getter.** Upstream
-	 *   extends the derived config with `{...expansionConfig,
-	 *   hasRowClickExpansion: true}` at render time; spreading at the top of
-	 *   `<script>` would run `expansionConfig`'s getters once and freeze
-	 *   `expandedKeys`. Spread inside `() => ({…})` it is re-evaluated on every
-	 *   read, which is where the plugin reads its config from anyway.
+	 *   counterpart — the ported hook is already stable — and the storybook file
+	 *   uses none anyway.
+	 * - **`renderExpanded` is a `Snippet<[Order]>`**, not `(item) => ReactNode`, so
+	 *   upstream's `OrderItems` component becomes a snippet rather than a sibling
+	 *   component. It is declared at the top level and read by both stories'
+	 *   config getters at render time, which is when a snippet exists.
 	 */
 
 	// =============================================================================
-	// Sample Data — tree structure (file system)
+	// Sample Data: orders with expandable detail panels
 	// =============================================================================
 
-	interface FileNode extends Record<string, unknown> {
+	interface Order extends Record<string, unknown> {
 		id: string;
-		name: string;
-		type: 'folder' | 'file';
-		size: string;
-		modified: string;
-		children?: FileNode[];
+		customer: string;
+		status: string;
+		total: string;
+		placed: string;
+		items: { name: string; qty: number; price: string }[];
 	}
 
-	const fileTree: FileNode[] = [
+	const orders: Order[] = [
 		{
-			id: 'src',
-			name: 'src',
-			type: 'folder',
-			size: '—',
-			modified: '2026-06-20',
-			children: [
-				{
-					id: 'src/components',
-					name: 'components',
-					type: 'folder',
-					size: '—',
-					modified: '2026-06-19',
-					children: [
-						{
-							id: 'src/components/Button.tsx',
-							name: 'Button.tsx',
-							type: 'file',
-							size: '4.2 KB',
-							modified: '2026-06-18',
-							children: []
-						},
-						{
-							id: 'src/components/Table.tsx',
-							name: 'Table.tsx',
-							type: 'file',
-							size: '12.8 KB',
-							modified: '2026-06-20',
-							children: []
-						},
-						{
-							id: 'src/components/Dialog.tsx',
-							name: 'Dialog.tsx',
-							type: 'file',
-							size: '6.1 KB',
-							modified: '2026-06-15',
-							children: []
-						}
-					]
-				},
-				{
-					id: 'src/utils',
-					name: 'utils',
-					type: 'folder',
-					size: '—',
-					modified: '2026-06-17',
-					children: [
-						{
-							id: 'src/utils/format.ts',
-							name: 'format.ts',
-							type: 'file',
-							size: '1.3 KB',
-							modified: '2026-06-17',
-							children: []
-						},
-						{
-							id: 'src/utils/merge.ts',
-							name: 'merge.ts',
-							type: 'file',
-							size: '0.8 KB',
-							modified: '2026-06-10',
-							children: []
-						}
-					]
-				},
-				{
-					id: 'src/index.ts',
-					name: 'index.ts',
-					type: 'file',
-					size: '0.4 KB',
-					modified: '2026-06-20',
-					children: []
-				}
+			id: 'ord-1001',
+			customer: 'Ada Lovelace',
+			status: 'Shipped',
+			total: '$248.00',
+			placed: '2026-06-20',
+			items: [
+				{ name: 'Mechanical keyboard', qty: 1, price: '$180.00' },
+				{ name: 'Wrist rest', qty: 2, price: '$34.00' }
 			]
 		},
 		{
-			id: 'public',
-			name: 'public',
-			type: 'folder',
-			size: '—',
-			modified: '2026-06-01',
-			children: [
-				{
-					id: 'public/favicon.ico',
-					name: 'favicon.ico',
-					type: 'file',
-					size: '15 KB',
-					modified: '2026-05-20',
-					children: []
-				}
-			]
+			id: 'ord-1002',
+			customer: 'Alan Turing',
+			status: 'Processing',
+			total: '$52.00',
+			placed: '2026-06-21',
+			items: [{ name: 'USB-C cable', qty: 4, price: '$13.00' }]
 		},
 		{
-			id: 'package.json',
-			name: 'package.json',
-			type: 'file',
-			size: '1.8 KB',
-			modified: '2026-06-22',
-			children: []
-		},
-		{
-			id: 'tsconfig.json',
-			name: 'tsconfig.json',
-			type: 'file',
-			size: '0.6 KB',
-			modified: '2026-06-01',
-			children: []
+			id: 'ord-1003',
+			customer: 'Grace Hopper',
+			status: 'Delivered',
+			total: '$1,200.00',
+			placed: '2026-06-18',
+			items: [{ name: 'Standing desk', qty: 1, price: '$1,200.00' }]
 		}
 	];
 
-	const columns: TableColumn<FileNode>[] = [
-		{ key: 'name', header: 'Name', width: proportional(2) },
-		{ key: 'type', header: 'Type', width: pixel(80) },
-		{ key: 'size', header: 'Size', width: pixel(90) },
-		{ key: 'modified', header: 'Modified', width: pixel(120) }
+	const columns: TableColumn<Order>[] = [
+		{ key: 'customer', header: 'Customer', width: proportional(2) },
+		{ key: 'status', header: 'Status', width: pixel(130) },
+		{ key: 'total', header: 'Total', width: pixel(110) },
+		{ key: 'placed', header: 'Placed', width: pixel(120) }
 	];
+
+	/**
+	 * Upstream's `toggleKey`. The `Set` is plain, with
+	 * `svelte/prefer-svelte-reactivity` disabled for the reason
+	 * `use-table-column-settings-state.svelte.ts` records: it is scratch space
+	 * built fresh per call and never mutated after it is assigned, so the `$state`
+	 * reassignment at the call site is already the reactive boundary.
+	 */
+	function toggleKey(keys: Set<string>, key: string): Set<string> {
+		// eslint-disable-next-line svelte/prefer-svelte-reactivity
+		const next = new Set(keys);
+		if (next.has(key)) {
+			next.delete(key);
+		} else {
+			next.add(key);
+		}
+		return next;
+	}
 
 	// =============================================================================
 	// Stories
 	// =============================================================================
 
-	// InheritedColumns
-	let inheritedKeys = $state(new Set(['src']));
+	// DetailPanel
+	let detailKeys = $state(new Set(['ord-1001']));
 
-	// The state hook flattens the tree, tracks depth, and derives the
-	// expand/collapse + expand-all handlers — no boilerplate in the consumer.
-	const inheritedState = useTableRowExpansionState<FileNode>(() => ({
-		baseData: fileTree,
-		getChildren: (item) => item.children ?? [],
+	const detailPlugin = useTableRowExpansion<Order>(() => ({
+		expandedKeys: detailKeys,
+		onToggle: (key) => (detailKeys = toggleKey(detailKeys, key)),
 		getRowKey: (item) => item.id,
-		expandedKeys: inheritedKeys,
-		setExpandedKeys: (next) => (inheritedKeys = next)
+		renderExpanded: orderItems
 	}));
 
-	const inheritedPlugin = useTableRowExpansion<FileNode>(() => inheritedState.expansionConfig);
+	// NotAllRowsExpandable
+	let restrictedKeys = $state(new Set<string>());
 
-	// LeafNodesNotExpandable
-	let leafKeys = $state(new Set(['src', 'src/components']));
-
-	// `getIsItemExpandable` restricts expandability (and expand-all) to folders.
-	const leafState = useTableRowExpansionState<FileNode>(() => ({
-		baseData: fileTree,
-		getChildren: (item) => item.children ?? [],
+	const restrictedPlugin = useTableRowExpansion<Order>(() => ({
+		expandedKeys: restrictedKeys,
+		onToggle: (key) => (restrictedKeys = toggleKey(restrictedKeys, key)),
 		getRowKey: (item) => item.id,
-		getIsItemExpandable: (item) => item.type === 'folder',
-		expandedKeys: leafKeys,
-		setExpandedKeys: (next) => (leafKeys = next)
-	}));
-
-	const leafPlugin = useTableRowExpansion<FileNode>(() => leafState.expansionConfig);
-
-	// ExpandOnRowClick
-	let rowClickKeys = $state(new Set<string>());
-
-	const rowClickState = useTableRowExpansionState<FileNode>(() => ({
-		baseData: fileTree,
-		getChildren: (item) => item.children ?? [],
-		getRowKey: (item) => item.id,
-		expandedKeys: rowClickKeys,
-		setExpandedKeys: (next) => (rowClickKeys = next)
-	}));
-
-	// Opt into row-click expansion by extending the derived config.
-	const rowClickPlugin = useTableRowExpansion<FileNode>(() => ({
-		...rowClickState.expansionConfig,
-		hasRowClickExpansion: true
+		getIsItemExpandable: (item) => item.items.length > 1,
+		renderExpanded: orderItems
 	}));
 </script>
 
-<h3>Inherited columns</h3>
-<Table
-	data={inheritedState.data}
-	{columns}
-	idKey="id"
-	hasHover
-	plugins={{ expansion: inheritedPlugin }}
-/>
+{#snippet orderItems(order: Order)}
+	<VStack gap={2}>
+		<Heading level={4}>Line items</Heading>
+		{#each order.items as line (line.name)}
+			<HStack gap={3}>
+				<Badge label={`x${line.qty}`} variant="info" />
+				<Text type="body">{line.name}</Text>
+				<Text type="body" color="secondary">{line.price}</Text>
+			</HStack>
+		{/each}
+	</VStack>
+{/snippet}
 
-<h3>Leaf nodes not expandable</h3>
-<Table data={leafState.data} {columns} idKey="id" hasHover plugins={{ expansion: leafPlugin }} />
+<h3>Detail panel</h3>
+<Table data={orders} {columns} idKey="id" hasHover plugins={{ expansion: detailPlugin }} />
 
-<h3>Expand on row click</h3>
-<Table
-	data={rowClickState.data}
-	{columns}
-	idKey="id"
-	hasHover
-	plugins={{ expansion: rowClickPlugin }}
-/>
+<h3>Not all rows expandable</h3>
+<Table data={orders} {columns} idKey="id" hasHover plugins={{ expansion: restrictedPlugin }} />

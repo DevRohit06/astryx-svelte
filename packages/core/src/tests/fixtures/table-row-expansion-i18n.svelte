@@ -10,8 +10,8 @@
 	 * a provider's `children` is a snippet and cannot be written inline in a
 	 * `render()` props object.
 	 *
-	 * Serves the one case asserting the context-menu action label reads its copy
-	 * from the i18n catalog.
+	 * Serves the one case asserting the chevron's `aria-label` reads its copy from
+	 * the i18n catalog.
 	 */
 	interface Props extends ComponentProps<typeof Harness> {
 		locale: Locale;

@@ -925,14 +925,8 @@ export {
 	useTableRowExpansion,
 	type UseTableRowExpansionConfig
 } from './components/table/plugins/row-expansion/use-table-row-expansion.js';
-// Upstream exports `useTableRowExpansionState` from `Table/index.ts` but *not*
-// its config or result types — so the hook's own parameter type is unnameable by
-// a consumer. Verified against both the clone and the published
-// `dist/Table/index.d.ts`, and replicated: `selection`, `sortable` and
-// `columnSettings` all publish their state hook's types, which is what makes
-// this look like an upstream oversight rather than a decision. Recorded under
-// Known debts rather than quietly fixed.
-export { useTableRowExpansionState } from './components/table/plugins/row-expansion/use-table-row-expansion-state.svelte.js';
+// `useTableRowExpansionState` was removed at upstream 0.4.1 (PR #4609) along
+// with the plugin's tree mode; `useTableTreeState` below is its replacement.
 export {
 	useTableColumnResize,
 	type UseTableColumnResizeConfig
