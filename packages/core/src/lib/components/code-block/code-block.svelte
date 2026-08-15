@@ -189,8 +189,9 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
-	import { useAnnounce } from '../../hooks/use-announce.js';
+	import { useClipboard } from '../../hooks/use-clipboard.svelte.js';
 	import Icon from '../icon/icon.svelte';
+	import IconButton from '../icon-button/icon-button.svelte';
 	import SyntaxTheme from '../../theme/syntax/syntax-theme.svelte';
 	import {
 		SYNC_TOKENIZE_THRESHOLD,
@@ -205,9 +206,12 @@
 		codeBlockCodeAttrs,
 		codeBlockCodeWrapperAttrs,
 		codeBlockCollapseChevronAttrs,
+		codeBlockCollapseChevronExpandedStyle,
+		codeBlockCollapseChevronIconStyle,
 		codeBlockCollapseGridAttrs,
 		codeBlockCollapseInnerAttrs,
-		codeBlockCopyButtonAttrs,
+		codeBlockCopyButtonAbsoluteStyle,
+		codeBlockCopyButtonStyle,
 		codeBlockHeaderAttrs,
 		codeBlockHeaderRowAttrs,
 		codeBlockHeaderTitleAttrs,
@@ -253,20 +257,13 @@
 	}: CodeBlockProps = $props();
 
 	const t = useTranslator();
-	const announce = useAnnounce();
 
-	let copied = $state(false);
-	let copyResetTimer: ReturnType<typeof setTimeout> | null = null;
+	// The copied flag, its 2s reset timer and the polite announcement all live in
+	// the shared hook now (#4867) — CodeBlock and TimestampHoverCard were running
+	// two copies of the same state machine.
+	const clipboard = useClipboard(() => ({ announce: t('@astryx.codeBlock.copied') }));
+
 	let isCollapsed = $state(false);
-
-	// Clear a pending "copied" reset when the block unmounts.
-	$effect(() => {
-		return () => {
-			if (copyResetTimer != null) {
-				clearTimeout(copyResetTimer);
-			}
-		};
-	});
 
 	// Derived, not read once at init, because upstream recomputes it every render
 	// and a changing `highlightMode` genuinely switches strategy. The two
@@ -399,24 +396,12 @@
 	});
 
 	async function handleCopy(): Promise<void> {
-		try {
-			await navigator.clipboard.writeText(code);
-			copied = true;
-			// Swapping the button's aria-label alone isn't reliably announced by
-			// screen readers, so confirm the copy via a polite live region.
-			announce(t('@astryx.codeBlock.copied'));
+		// `onCopy` now fires only once the write has actually resolved, and after
+		// the hook has flipped the icon and announced — upstream called it mid-`try`
+		// before the timer started, which meant a consumer could observe the callback
+		// for a copy the clipboard went on to reject.
+		if (await clipboard.copy(code)) {
 			onCopy?.();
-			// Restart the reset timer on every copy — otherwise a rapid re-copy is
-			// reverted early by the previous click's timer.
-			if (copyResetTimer != null) {
-				clearTimeout(copyResetTimer);
-			}
-			copyResetTimer = setTimeout(() => {
-				copyResetTimer = null;
-				copied = false;
-			}, 2000);
-		} catch {
-			// Clipboard failures leave the copied state unchanged.
 		}
 	}
 
@@ -442,7 +427,7 @@
 	const headerRowAttrs = $derived(codeBlockHeaderRowAttrs(hasLineNumbers));
 	const headerAttrs = $derived(codeBlockHeaderAttrs(canCollapse));
 	const headerTitleAttrs = codeBlockHeaderTitleAttrs();
-	const chevronAttrs = $derived(codeBlockCollapseChevronAttrs(isCollapsed));
+	const chevronAttrs = codeBlockCollapseChevronAttrs();
 	const collapseGridAttrs = $derived(codeBlockCollapseGridAttrs(isCollapsed));
 	const collapseInnerAttrs = codeBlockCollapseInnerAttrs();
 	const scrollContainerAttrs = codeBlockScrollContainerAttrs();
@@ -450,19 +435,31 @@
 	const codeAttrs = $derived(codeBlockCodeAttrs(size, isWrapped, hasLineNumbers, maxLineDigits));
 	const lineChunkAttrs = codeBlockLineChunkAttrs();
 	const lineContentAttrs = codeBlockLineContentAttrs();
-	const copyButtonAttrs = $derived(codeBlockCopyButtonAttrs(!showHeader));
+	const headerTheme = $derived(themeProps('codeblock-header', { size, language, container }));
+	const titleTheme = $derived(themeProps('codeblock-title', { size, language }));
+	const copyButtonTheme = themeProps('codeblock-copy-button');
 </script>
 
 {#snippet copyButton()}
-	<button
-		type="button"
+	<!--
+		A visible "Copy" hover/focus hint via Button's built-in tooltip. It stays
+		"Copy" after copying — the copy → check icon flip is the confirmation, not a
+		tooltip change. The aria-label still swaps to the localized "Copied" for
+		assistive tech, backed by the announcement.
+	-->
+	<IconButton
+		variant="ghost"
+		size="sm"
+		tooltip={t('@astryx.codeBlock.copyCode')}
+		label={clipboard.isCopied ? t('@astryx.codeBlock.copied') : t('@astryx.codeBlock.copyCode')}
 		onclick={handleCopyClick}
-		aria-label={copied ? t('@astryx.codeBlock.copied') : t('@astryx.codeBlock.copyCode')}
-		class={copyButtonAttrs.class}
-		style={copyButtonAttrs.style}
+		xstyle={[codeBlockCopyButtonStyle, !showHeader && codeBlockCopyButtonAbsoluteStyle]}
+		{...copyButtonTheme}
 	>
-		<Icon icon={copied ? 'check' : 'copy'} size="sm" color="inherit" />
-	</button>
+		{#snippet icon()}
+			<Icon icon={clipboard.isCopied ? 'check' : 'copy'} size="sm" color="inherit" />
+		{/snippet}
+	</IconButton>
 {/snippet}
 
 <!--
@@ -554,7 +551,11 @@
 {/snippet}
 
 {#snippet headerRow()}
-	<div class={headerRowAttrs.class} style={headerRowAttrs.style}>
+	<div
+		{...headerTheme}
+		class={cx(headerTheme.class, headerRowAttrs.class)}
+		style={headerRowAttrs.style}
+	>
 		<!--
 			`role`/`tabindex`/the handlers are all conditional on `canCollapse`, so the
 			compiler cannot prove the element is interactive when it is focusable.
@@ -571,9 +572,20 @@
 			class={headerAttrs.class}
 			style={headerAttrs.style}
 		>
-			<span class={headerTitleAttrs.class} style={headerTitleAttrs.style}
+			<span
+				{...titleTheme}
+				class={cx(titleTheme.class, headerTitleAttrs.class)}
+				style={headerTitleAttrs.style}
 				>{#if canCollapse}<span class={chevronAttrs.class} style={chevronAttrs.style}>
-						<Icon icon="chevronRight" size="xsm" color="inherit" />
+						<Icon
+							icon="chevronRight"
+							size="xsm"
+							color="inherit"
+							xstyle={[
+								codeBlockCollapseChevronIconStyle,
+								!isCollapsed && codeBlockCollapseChevronExpandedStyle
+							]}
+						/>
 					</span>{/if}{title ?? ''}{title && languageLabel ? ' — ' : ''}{languageLabel ?? ''}</span
 			>
 		</div>

@@ -68,6 +68,8 @@
 		chatToolCallStatusIconAttrs,
 		chatToolCallStatusInnerAttrs,
 		chatToolCallToggleRowAttrs,
+		chatToolCallChevronExpandedStyle,
+		chatToolCallChevronTransitionStyle,
 		chatToolCallsChevronAttrs,
 		chatToolCallsCountAttrs,
 		chatToolCallsGroupContentAttrs,
@@ -170,7 +172,7 @@
 	const nameAttrs = $derived(chatToolCallNameAttrs());
 	const labelAttrs = $derived(chatToolCallLabelAttrs());
 	const countAttrs = $derived(chatToolCallsCountAttrs());
-	const chevron = $derived(chatToolCallsChevronAttrs(isExpanded));
+	const chevron = chatToolCallsChevronAttrs();
 	const groupContent = $derived(chatToolCallsGroupContentAttrs(isExpanded));
 	const groupContentInner = $derived(chatToolCallsGroupContentInnerAttrs());
 	const list = $derived(chatToolCallsListAttrs());
@@ -235,7 +237,15 @@
 				{/if}
 			</span>
 			<span class={chevron.class} style={chevron.style}>
-				<Icon icon="chevronDown" size="xsm" color="inherit" />
+				<Icon
+					icon="chevronDown"
+					size="xsm"
+					color="inherit"
+					xstyle={[
+						chatToolCallChevronTransitionStyle,
+						isExpanded && chatToolCallChevronExpandedStyle
+					]}
+				/>
 			</span>
 		</div>
 

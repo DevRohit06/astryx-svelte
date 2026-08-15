@@ -168,7 +168,11 @@ const styles = stylex.create({
 			'@media (prefers-reduced-motion: reduce)': 'none'
 		},
 		animationDuration: durationVars['--duration-medium'],
-		animationTimingFunction: easeVars['--ease-standard'],
+		animationTimingFunction: easeVars['--ease-standard']
+	},
+	// Applied to the chevron <Icon> (via `xstyle`): the glyph is the element that
+	// rotates and the element a theme targets, so one selector reaches both.
+	collapseChevronIcon: {
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
@@ -266,22 +270,11 @@ const styles = stylex.create({
 		fontSize: typeScaleVars['--text-code-size']
 	},
 	copyButton: {
-		display: 'inline-flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		padding: spacingVars['--spacing-1'],
-		marginInlineEnd: `calc(-1 * ${spacingVars['--spacing-2']})`,
-		border: 'none',
-		borderRadius: radiusVars['--radius-inner'],
-		backgroundColor: {
-			default: 'transparent',
-			'@media (hover: hover)': {
-				':hover': colorVars['--color-overlay-hover']
-			}
-		},
-		color: 'var(--color-syntax-comment)',
-		cursor: 'pointer',
-		lineHeight: 0
+		// The copy control is a ghost IconButton (Button owns its own padding,
+		// radius, and hover surface); this only tints the resting glyph to the
+		// muted syntax-comment colour so it blends into the header/corner. A theme
+		// reaches it via the `codeblock-copy-button` target on the Button.
+		color: 'var(--color-syntax-comment)'
 	},
 	copyButtonAbsolute: {
 		position: 'absolute',
@@ -327,10 +320,21 @@ export function codeBlockHeaderTitleAttrs(): SvelteStyleAttrs {
 	return sx(styles.headerTitle);
 }
 
-/** The disclosure chevron, rotated when collapsed. */
-export function codeBlockCollapseChevronAttrs(isCollapsed: boolean): SvelteStyleAttrs {
-	return sx(styles.collapseChevron, !isCollapsed && styles.collapseChevronExpanded);
+/** The disclosure chevron's wrapper — the reveal animation and the clip box. */
+export function codeBlockCollapseChevronAttrs(): SvelteStyleAttrs {
+	return sx(styles.collapseChevron);
 }
+
+/**
+ * Handed to the chevron `Icon`'s `xstyle`, and to `IconButton`'s, the way
+ * upstream hands over `styles.collapseChevronIcon` / `styles.copyButton`
+ * (#4838, #4867). Both cross a component boundary, so they stay objects rather
+ * than being folded into a class string here.
+ */
+export const codeBlockCollapseChevronIconStyle = styles.collapseChevronIcon;
+export const codeBlockCollapseChevronExpandedStyle = styles.collapseChevronExpanded;
+export const codeBlockCopyButtonStyle = styles.copyButton;
+export const codeBlockCopyButtonAbsoluteStyle = styles.copyButtonAbsolute;
 
 /** The `grid-template-rows` animation host for the collapsible region. */
 export function codeBlockCollapseGridAttrs(isCollapsed: boolean): SvelteStyleAttrs {
@@ -388,9 +392,4 @@ export function codeBlockLineAttrs(
 /** The span-mode wrapper that keeps a line's tokens in one grid cell. */
 export function codeBlockLineContentAttrs(): SvelteStyleAttrs {
 	return sx(styles.lineContent);
-}
-
-/** The copy button; absolutely positioned when there is no header to sit in. */
-export function codeBlockCopyButtonAttrs(isAbsolute: boolean): SvelteStyleAttrs {
-	return sx(styles.copyButton, isAbsolute && styles.copyButtonAbsolute);
 }

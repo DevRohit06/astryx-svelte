@@ -6377,6 +6377,34 @@ _Locale gaps in upstream's own docs, recorded because the docs site renders them
       then split the projects across instances. Until then, never run the suite concurrently with
       anything else, and treat any full-run number produced under contention as unmeasured.
 
+**Batch 11 — upstream 0.4.1 port findings:**
+
+- [ ] **The class oracle cannot see a focus ring that stopped being applied.** Migrating 36 modules
+      onto the shared `utils/focus-outline.stylex.ts` meant deleting each local ring declaration and
+      wrapping the call site instead. Deleting the declaration and _forgetting the wrap_ produces
+      **zero mismatches**: object-mode diffing compares the declarations a module makes, and the ring
+      now arrives from a different module entirely, so its absence at the call site is not a
+      difference the oracle is looking at. **16 modules silently lost their ring**, and they were
+      found by grepping every stripped module for a `focusOutline` reference — not by the gate that
+      exists to catch exactly this. The CSS oracle is blind for the same reason: the rule is still in
+      the sheet, nothing references it. Generalised, **both oracles prove what a module _declares_,
+      never what an element _receives_**, so any refactor that moves a declaration across a module
+      boundary leaves the gate green by construction. Worth a third check that resolves call sites,
+      or at minimum a rule that a style key deleted in the same commit as a shared-module adoption
+      must appear as a wrap somewhere
+- [ ] **`ThemeConfig` has no `extends`, where upstream's does.** Pre-existing — not introduced by
+      0.4.1 — but 0.4.1 is what made it visible: upstream themes the indicators by merging through a
+      parent theme, and with no `extends` that merge is a no-op for us. Nothing in the port is
+      _wrong_ today because no shipped theme uses it, and all seven theme oracles are green; the debt
+      is that a downstream consumer writing an upstream-shaped theme config gets a silently ignored
+      key. Port `extends` before advertising theme authoring
+- [ ] **The client vitest project could not be executed for any of the 0.4.1 batch.** Its browser
+      server fails to bind with `EACCES: permission denied ::1:<port>` in this environment, so ~162
+      files — including the six rewritten container-reveal cases — are **unrun**, not passing. Each
+      commit message says so rather than implying a green run. This is environmental and distinct
+      from the truncation trap above, but it lands in the same place: **a release cannot ship on the
+      server project alone.** Run the client project somewhere it can bind before tagging
+
 **Empty package:**
 
 - [ ] `packages/cli` — package.json only, no `bin/` or `src/`; `test` is an honest no-op

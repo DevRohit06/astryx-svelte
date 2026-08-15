@@ -2114,6 +2114,14 @@ const CASES = [
 		// `styles.lineContent` folds to the single class `xeuugli`, which is also the
 		// `flex: 1` `styles.header` already carries; upstream's `dist/` holds it as its
 		// own one-class string, so it is a distinct call site rather than a duplicate.
+		//
+		// Four keys are **object** mode for two different 0.4.x reasons, and neither
+		// leaves an inline claim to make. `header`/`headerCollapsible` go through
+		// `focusOutlineProps.focusVisible(...)` (#4654), a runtime call the compiler
+		// cannot fold. `copyButton`/`copyButtonAbsolute` ride `IconButton`'s `xstyle`
+		// (#4867), and `collapseChevronIcon`/`collapseChevronExpanded` ride the
+		// chevron `Icon`'s (#4838) — all three cross a component boundary, so they
+		// survive in `dist/` as objects. Verified against `dist/CodeBlock/CodeBlock.js`.
 		file: 'src/lib/components/code-block/code-block.stylex.js',
 		upstreamFile: 'CodeBlock/CodeBlock.js',
 		inline: [
@@ -2123,15 +2131,10 @@ const CASES = [
 			['styles.line', 'styles.lineNumbered', 'styles.lineHighlighted'],
 			['styles.lineChunk'],
 			['styles.lineContent'],
-			['styles.copyButton'],
-			['styles.copyButton', 'styles.copyButtonAbsolute'],
 			['styles.headerRow', 'styles.headerWithDivider'],
 			['styles.headerRow', 'styles.headerCompact'],
-			['styles.header'],
-			['styles.header', 'styles.headerCollapsible'],
 			['styles.headerTitle'],
 			['styles.collapseChevron'],
-			['styles.collapseChevron', 'styles.collapseChevronExpanded'],
 			['styles.scrollContainer'],
 			['styles.codeWrapper'],
 			['styles.codeWrapper', 'styles.codeWrapperCompact'],
@@ -3266,6 +3269,14 @@ const CASES = [
 		// compiled modules: no object entry, no inline string, nothing to diff, and
 		// no skip to rot. If upstream ever applies one, its `dist/` grows a string we
 		// do not claim and the leftover check fails — the reverse of a skip.
+		//
+		// `chevronTransition` and `chevronExpanded` are **object** mode, and that is
+		// the whole of #4838 here: both chevrons' transition and rotation moved off
+		// the wrapper `<span>` and onto the `<Icon>` beneath it, where they cross a
+		// component boundary as `xstyle` and so survive in `dist/` as objects. The
+		// two wrapper claims below (`chevron`, `callDetailChevron`) are therefore
+		// bare — a `+ chevronExpanded` pair here would be claiming a site upstream
+		// no longer has.
 		file: 'src/lib/components/chat/chat-tool-calls.stylex.js',
 		upstreamFile: 'Chat/ChatToolCalls.js',
 		inline: [
@@ -3281,13 +3292,11 @@ const CASES = [
 			['styles.statsDeletions'],
 			['styles.callDuration'],
 			['styles.callDetailChevron'],
-			['styles.chevronExpanded', 'styles.callDetailChevron'],
 			['styles.callDetailContent'],
 			['styles.groupIcon'],
 			['styles.groupLabel'],
 			['styles.callCount'],
 			['styles.chevron'],
-			['styles.chevron', 'styles.chevronExpanded'],
 			['styles.groupContent'],
 			['styles.groupContent', 'styles.groupContentExpanded'],
 			['styles.groupContentInner'],

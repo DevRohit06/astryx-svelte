@@ -33,6 +33,8 @@
 	import {
 		chatToolCallAdditionsAttrs,
 		chatToolCallDeletionsAttrs,
+		chatToolCallChevronExpandedStyle,
+		chatToolCallChevronTransitionStyle,
 		chatToolCallDetailChevronAttrs,
 		chatToolCallDetailContentAttrs,
 		chatToolCallDurationAttrs,
@@ -84,7 +86,7 @@
 	const additionsAttrs = $derived(chatToolCallAdditionsAttrs());
 	const deletionsAttrs = $derived(chatToolCallDeletionsAttrs());
 	const durationAttrs = $derived(chatToolCallDurationAttrs());
-	const detailChevron = $derived(chatToolCallDetailChevronAttrs(isDetailOpen));
+	const detailChevron = chatToolCallDetailChevronAttrs();
 	const detailContent = $derived(chatToolCallDetailContentAttrs());
 
 	const hasStats = $derived(call.additions != null || call.deletions != null || call.stats != null);
@@ -159,7 +161,15 @@
 		{/if}
 		{#if hasDetail}
 			<span class={detailChevron.class} style={detailChevron.style}>
-				<Icon icon="chevronDown" size="xsm" color="inherit" />
+				<Icon
+					icon="chevronDown"
+					size="xsm"
+					color="inherit"
+					xstyle={[
+						chatToolCallChevronTransitionStyle,
+						isDetailOpen && chatToolCallChevronExpandedStyle
+					]}
+				/>
 			</span>
 		{/if}
 	</div>

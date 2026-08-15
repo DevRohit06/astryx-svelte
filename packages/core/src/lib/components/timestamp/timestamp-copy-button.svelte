@@ -13,7 +13,7 @@
 </script>
 
 <script lang="ts">
-	import { useAnnounce } from '../../hooks/use-announce.js';
+	import { useClipboard } from '../../hooks/use-clipboard.svelte.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import Icon from '../icon/icon.svelte';
@@ -23,7 +23,8 @@
 	 * The per-row copy affordance: a compact ghost `IconButton` that writes the
 	 * row's value to the clipboard, flips `copy` → `check` for a moment, and
 	 * announces the copy to a polite live region (a swapped aria-label alone
-	 * isn't reliably announced). A clipboard rejection is a silent no-op.
+	 * isn't reliably announced). A clipboard rejection is a silent no-op. All of
+	 * that is `useClipboard` — shared with CodeBlock's built-in copy button.
 	 *
 	 * Kept as its own component so its state/timer/effect only exist for rows
 	 * that actually opt into copying — read-only rows render no button and carry
@@ -35,37 +36,13 @@
 	const COPY_FEEDBACK_MS = 1500;
 
 	const t = useTranslator();
-	const announce = useAnnounce();
+	const clipboard = useClipboard(() => ({
+		announce: t('@astryx.timestamp.copied'),
+		resetAfterMs: COPY_FEEDBACK_MS
+	}));
 
-	let copied = $state(false);
-	let resetTimer: ReturnType<typeof setTimeout> | null = null;
-
-	// Clear a pending "copied" reset when the row unmounts.
-	$effect(() => {
-		return () => {
-			if (resetTimer != null) {
-				clearTimeout(resetTimer);
-			}
-		};
-	});
-
-	async function handleCopy(): Promise<void> {
-		try {
-			await navigator.clipboard.writeText(value);
-			copied = true;
-			announce(t('@astryx.timestamp.copied'));
-			// Restart the reset timer on every copy so a rapid re-copy isn't
-			// reverted early by the previous click's timer.
-			if (resetTimer != null) {
-				clearTimeout(resetTimer);
-			}
-			resetTimer = setTimeout(() => {
-				resetTimer = null;
-				copied = false;
-			}, COPY_FEEDBACK_MS);
-		} catch {
-			// Clipboard failures leave the copied state unchanged.
-		}
+	function handleCopy(): void {
+		void clipboard.copy(value);
 	}
 
 	// Constant — `themeProps` takes no visual props here, so there is nothing for
@@ -76,8 +53,10 @@
 <IconButton
 	variant="ghost"
 	size="sm"
-	tooltip={t(copied ? '@astryx.timestamp.copied' : '@astryx.timestamp.copy')}
-	label={copied ? t('@astryx.timestamp.copied') : t('@astryx.timestamp.copyValue', { value })}
+	tooltip={t(clipboard.isCopied ? '@astryx.timestamp.copied' : '@astryx.timestamp.copy')}
+	label={clipboard.isCopied
+		? t('@astryx.timestamp.copied')
+		: t('@astryx.timestamp.copyValue', { value })}
 	onclick={() => {
 		void handleCopy();
 	}}
@@ -89,6 +68,6 @@
 		'Copy <value>' string stays the aria-label for assistive tech.
 	-->
 	{#snippet icon()}
-		<Icon icon={copied ? 'check' : 'copy'} size="sm" color="inherit" />
+		<Icon icon={clipboard.isCopied ? 'check' : 'copy'} size="sm" color="inherit" />
 	{/snippet}
 </IconButton>
