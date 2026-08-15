@@ -81,6 +81,22 @@ jobs:
       # so a regression here is caught rather than silently tolerated.
       - run: pnpm install --frozen-lockfile
 
+      # `status.mjs`'s Surface section diffs `packages/core/src/lib/components`
+      # against upstream's own source tree at `reference/astryx-upstream/` (see
+      # its header comment) — gitignored, so no checkout brings it along.
+      # Without it, `status.mjs` prints "upstream clone absent" and drops the
+      # "Missing here"/"Not in upstream" rows entirely, which is a *different*
+      # `port/status.md` than the one a contributor generates locally with the
+      # clone present — the drift gate below would then fail on every run.
+      # Pinned to the tag matching `@astryxdesign/core`'s devDependency version
+      # rather than hardcoded, so this step tracks `track-upstream` bumps
+      # automatically instead of silently drifting the way the file it guards
+      # once did.
+      - name: Clone upstream Astryx (status.mjs diffs against its source tree)
+        run: |
+          pin=$(node -p "require('./packages/core/package.json').devDependencies['@astryxdesign/core']")
+          git clone --depth 1 --branch "v$pin" https://github.com/facebook/astryx.git reference/astryx-upstream
+
       # See the job comment: needed for status.mjs's test-collection stage,
       # not for running the browser suite itself.
       - name: Install the browser the client test project needs

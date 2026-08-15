@@ -4,18 +4,27 @@
 // three batches after upstream moved to 101, and the file it lived in ended up
 // instructing readers not to trust its own numbers.
 //
-// Two design rules:
-//   - Capture, do not parse. Each gate's own stdout is embedded verbatim with
+// Design rules:
+//   - Capture, do not parse. Each gate's own stdout is printed verbatim with
 //     its exit code. Regexing a number out of prose is the fragility this
 //     script exists to remove.
 //   - Deterministic output only. No clock, no paths, no SHAs — `verify.mjs`
 //     gates on `git diff --exit-code port/status.md`, so a timestamp would
 //     fail every run.
+//   - The committed file holds metrics, not logs. `--full`'s gate results
+//     (pass/fail table plus captured output) print to stdout only — a gate
+//     run is a log, not a metric, and a file whose content depended on which
+//     tier generated it could never be green in both `--fast` and `--full`
+//     at once (it wasn't: the committed file was the fast tier, and CI's
+//     `--no-client` run — full tier — failed the drift gate on every run).
+//     `port/status.md` is now byte-identical whether `status.mjs` ran fast or
+//     `--full` — generate at both and `diff` them to confirm.
 //
 // Usage: node scripts/status.mjs [--full]
 //   default  filesystem counts, manifest pins and debt tallies. Seconds.
 //   --full   additionally runs the oracles, `vitest list` and the docs
-//            generator, and embeds their output. Minutes.
+//            generator, and prints their pass/fail table and captured output
+//            to stdout. Minutes. Does not change what's written to the file.
 
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
@@ -202,19 +211,19 @@ for (const kind of Object.keys(debtKinds).sort()) debtRows.push([kind, String(de
 debtRows.push(['**total**', `**${debtTotal}**`]);
 push(...table(debtRows), '');
 
-push('## Gates', '');
-if (!full) {
-	push('_Not run — regenerate with `node scripts/status.mjs --full`._', '');
-} else {
+writeFileSync('port/status.md', lines.join('\n').trimEnd() + '\n');
+console.log(`wrote port/status.md (${full ? 'full' : 'fast'})`);
+
+// The gates are a log, not a metric — printed to stdout only, never written
+// to the committed file. See the header comment for why.
+if (full) {
+	console.log('\n=== Gates ===\n');
 	const gateRows = [['Gate', 'Result', 'Summary']];
 	for (const g of gates) {
 		gateRows.push([g.name, g.ok ? 'pass' : `FAIL (${g.code})`, lastLine(g.output).slice(0, 120)]);
 	}
-	push(...table(gateRows), '');
+	for (const line of table(gateRows)) console.log(line);
 	for (const g of gates) {
-		push(`### ${g.name}`, '', '```', g.output, '```', '');
+		console.log(`\n--- ${g.name} ---\n${g.output}`);
 	}
 }
-
-writeFileSync('port/status.md', lines.join('\n').trimEnd() + '\n');
-console.log(`wrote port/status.md (${full ? 'full' : 'fast'})`);

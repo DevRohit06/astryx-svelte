@@ -25,7 +25,3 @@
 | unported              | 11     |
 | upstream-lag          | 12     |
 | **total**             | **92** |
-
-## Gates
-
-_Not run — regenerate with `node scripts/status.mjs --full`._
