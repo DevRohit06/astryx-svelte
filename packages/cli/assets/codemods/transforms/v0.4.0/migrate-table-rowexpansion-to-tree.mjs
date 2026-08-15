@@ -145,6 +145,7 @@ function indentAt(source, index) {
  * @returns {string}
  */
 function rewriteConfigObject(source, offset, obj) {
+	/** @param {any} node @returns {string} */
 	const text = (node) => source.slice(node.start - offset, node.end - offset);
 
 	/** @type {string[]} */
@@ -198,7 +199,9 @@ export default function transformer(file, api) {
 	/** @param {any} node @returns {string} */
 	const text = (node) => source.slice(node.start - offset, node.end - offset);
 
+	/** @type {string | null} */
 	let stateLocal = null;
+	/** @type {string | null} */
 	let pluginLocal = null;
 	/** @type {any[]} */
 	const importDecls = [];
@@ -246,6 +249,7 @@ export default function transformer(file, api) {
 
 	if (!stateLocal) return undefined;
 
+	/** @param {any} node @returns {boolean} */
 	const isStateCall = (node) => node?.type === 'CallExpression' && node.callee?.name === stateLocal;
 	const stateCalls = calls.filter(isStateCall);
 	const pluginCalls = pluginLocal ? calls.filter((node) => node.callee?.name === pluginLocal) : [];
@@ -346,6 +350,10 @@ export default function transformer(file, api) {
 
 	// --- 5. Fix imports: drop the removed hooks, add the tree hooks ---
 	for (const decl of importDecls) {
+		// Annotated, not inferred: `decl` is `any`, so `decl.specifiers ?? []` is
+		// `any` too, and every `.filter`/`.map` callback below would take an
+		// implicitly-any parameter under `checkJs` + `strict`.
+		/** @type {any[]} */
 		const specs = decl.specifiers ?? [];
 		if (specs.length === 0) continue;
 		const kept = specs.filter(
