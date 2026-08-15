@@ -3,7 +3,9 @@
 Small, named, deliberately not hidden. Upstream bugs are documented here, not replicated.
 
 Every entry carries a machine-readable head so `astryx-parity` can ask "is this drift already a
-known debt?" with one grep. The prose body below it is unchanged.
+known debt?" with one grep. Bodies are carried verbatim from `port/todo.md`; where an entry was
+re-verified against the tree while this file was assembled, the finding is appended as a
+`> **Re-verified …**` note rather than folded into the original text.
 
 ### `BlogCoverArt` is not ported, so a non-release post with no `coverImage` has no cover
 
@@ -612,7 +614,14 @@ The lazy-`Tooltip` code split (`Text`/`Heading`/`Timestamp`); SvelteKit's Vite p
 - **kind:** unported
 - **retires:** when `button-group.svelte.test.ts` is updated to add the two `DropdownMenu`-trigger cases now that `DropdownMenu` has landed
 
-`ButtonGroup` drops 2 of 26 cases (`rounds a trailing DropdownMenu trigger`) — `DropdownMenu` unported. **Verified against the current tree**: `DropdownMenu` has since been ported in full (`packages/core/src/lib/components/dropdown-menu/`, exported from the root barrel, wired into the class oracle), but `button-group.svelte.test.ts`'s own header still reads "**Dropped:** the two `rounds a trailing DropdownMenu trigger` cases… `DropdownMenu` is not ported" and the suite is still 23 declarations / 26 of 28 cases. The named blocker cleared without the cases being restored — a real, standing coverage gap, just no longer for the reason the file states.
+`ButtonGroup` drops 2 of 26 cases (`rounds a trailing DropdownMenu trigger`) — `DropdownMenu` unported
+
+> **Re-verified 2026-08-15 while routing this file.** `DropdownMenu` has since been ported in full
+> (`packages/core/src/lib/components/dropdown-menu/`, exported from the root barrel, wired into the
+> class oracle), but `button-group.svelte.test.ts`'s own header still reads "**Dropped:** the two
+> `rounds a trailing DropdownMenu trigger` cases… `DropdownMenu` is not ported" and the suite is
+> still 23 declarations / 26 of 28 cases. The named blocker cleared without the cases being
+> restored — a real, standing coverage gap, just no longer for the reason the file states.
 
 ### `Icon` demo hand-draws an SVG for component mode
 
@@ -997,11 +1006,15 @@ build rather than degrading it
 - **kind:** unported
 - **retires:** when `props-table.svelte` migrates to `Table`
 
-And so do the component
-props tables — but the reason has changed for the reference-doc table blocks. `Table` is no longer unported: its core landed with
-batch 11, and `docs/src/lib/shell/content-block.svelte`'s own `'table'` block has since migrated to
-upstream's `Card` → `Table` shape. `props-table.svelte`, which renders every component's props table,
-has not: its own header comment still reads "A `<table>` until `Table` lands (batch 13)", and it
-still renders a bare `<table>`. This is now a _docs-site migration_ rather than a blocked feature,
-and it is the obvious first dogfooding job of the next docs pass. Upstream's own `PropsTablePattern`
-story is ported on the demo route and shows the shape the props table should take
+, and so do the component
+props tables — but the reason has changed. `Table` is no longer unported: its core landed with
+batch 11, so this is now a _docs-site migration_ rather than a blocked feature, and it is the
+obvious first dogfooding job of the next docs pass. Upstream's own `PropsTablePattern` story is
+ported on the demo route and shows the shape the props table should take
+
+> **Re-verified 2026-08-15 while routing this file.** The reference-doc table blocks and the
+> component props tables have since diverged: `docs/src/lib/shell/content-block.svelte`'s own
+> `'table'` block has migrated to upstream's `Card` → `Table` shape, but `props-table.svelte`,
+> which renders every component's props table, has not — its own header comment still reads
+> "A `<table>` until `Table` lands (batch 13)", and it still renders a bare `<table>`. The debt
+> above survives for `props-table.svelte`; the reference-doc half of it has closed.
