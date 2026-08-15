@@ -1610,9 +1610,7 @@ function groupOf(category) {
  *
  * Everything else is upstream's shape, **including the scaffold skip below**, so
  * the counts are upstream's: 43 templates ship, 42 are recorded here, and 31 are
- * listed. `port/research/10-page-templates-and-community.md` §B7/§B8 says 43 and 32;
- * those were written before the skip was found and are off by the one template
- * it drops.
+ * listed.
  *
  * @returns {Promise<Array<Record<string, any>>>}
  */

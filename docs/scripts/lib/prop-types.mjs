@@ -4,8 +4,8 @@
 // `ReactElement<IconProps>`, `(e: MouseEvent) => void`). Rendering them verbatim
 // would document an API this library does not have, so each is rewritten to the
 // type the Svelte port actually accepts. This is adaptation the port cannot
-// avoid — port/research/04 risk #2 — not an invented API: every rewrite below
-// corresponds to a translation the components already make.
+// avoid, not an invented API: every rewrite below corresponds to a translation
+// the components already make.
 //
 // Anything not matched here is passed through unchanged, so a type this table
 // does not know about is still shown truthfully rather than mangled.
