@@ -42,7 +42,7 @@ machine-readable parity target is the exact `@astryxdesign/*` pin, already in th
 ## 3. Gate
 
 ```sh
-pnpm -r build && pnpm -r check && pnpm -r lint && pnpm -r test
+pnpm verify
 pnpm check:publish --version <version>
 ```
 
@@ -56,7 +56,7 @@ Trigger the release workflow with `workflow_dispatch`, passing the version as it
 runs the identical job with `--dry-run` on the publish step, so a manifest or credential problem
 surfaces without burning a version number — which npm does not let you re-use.
 
-Watch for `EOTP`: a classic *Publish* token fails on an account with 2FA enforced for writes, and it
+Watch for `EOTP`: a classic _Publish_ token fails on an account with 2FA enforced for writes, and it
 fails only after authenticating and uploading the tarball — the last possible step, after the full
 gate has already run. `NPM_TOKEN` must be an **Automation** token or a Granular Access Token with
 write access to the `@astryx-svelte` scope.

@@ -52,13 +52,16 @@ For each lesson in the entry, ask: **does this constrain future work?**
   and leave only a pointer in the ledger's `Rules promoted` section.
 - **No** — it stays as narrative where it is.
 
-This exists because the port's best content used to strand itself. "Any event a component handles
-itself must be destructured out of `$props()` and invoked explicitly, in upstream's documented order"
-is a rule for every future port — it is real, it is still true, and it currently sits at
-`port/research/06-react-to-svelte-patterns.md:1191`, a 1,463-line research file nothing points an
-agent at unless it already knows to look. `port/ledger/026-selector-family.md` cites it as the fix for
-`ComplexSelector` and calls it verbatim from that file — and that same ledger entry's own `Rules
-promoted` section reads "**Not promoted at the time.**" That gap is the reason this step exists.
+This exists because the port's best content used to strand itself, and it has already happened once.
+`port/ledger/026-selector-family.md` found `ComplexSelector` silently discarding a consumer's
+`onclick` and fixed it with a rule pulled from `port/research/06-react-to-svelte-patterns.md:1191` —
+a 1,463-line research file nothing points an agent at unless it already knows to look. That ledger
+entry's own `Rules promoted` section first read "**Not promoted at the time.**" — this step didn't
+run. It has since been promoted: "any event a component handles itself must be destructured out of
+`$props()` and invoked explicitly, in upstream's documented order" now lives in `CLAUDE.md:171-174`,
+and `026`'s `Rules promoted` section points back to it as the incident that motivated it. That is
+what this step buys — do it, and the next agent that hits this shape of bug finds the rule in
+`CLAUDE.md`, not buried in a research file.
 
 If nothing was promoted, say so and why in the ledger's `Rules promoted` section. An empty section is
 a claim, not an omission.

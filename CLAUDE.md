@@ -37,6 +37,9 @@ telling readers not to trust its own numbers.
 Batches open with the `start-batch` skill and close with `close-batch`, which runs the audit agents
 below and carries the **promotion rule**: a lesson that constrains future work moves into this file
 or an agent's file, in the same commit — never left stranded in a ledger entry or a research file.
+Three more skills cover the rest of the loop: `port-component` ports one component end to end,
+`track-upstream` pulls an Astryx release and scopes the drift it introduces, and `release` cuts a
+version once a batch's gate is green.
 
 ## Subagents
 
@@ -58,7 +61,8 @@ pnpm verify        # the gate: every stage runs and every result reports, then p
                    #   regenerated and diffed against what's committed. Prefer this to chaining
                    #   build/check/lint/test with && — that reports "failed" identically whether
                    #   one stage failed or both ran, and once hid six real errors behind the first.
-pnpm verify --fast # skips the ~4,500-case browser suite; for gating a commit locally.
+pnpm verify --fast # skips the browser suite (real Chromium, thousands of cases); for gating a
+                   #   commit locally.
 pnpm -r build     # must run before check — theme-neutral typechecks against core's built dist/,
                   #   and the docs generator reads props types out of that same dist/
 pnpm -r check     # svelte-check + tsc
@@ -77,18 +81,19 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   different file each time. `scripts/run-client-tests.mjs` runs it in batches of 20
 #   (`CLIENT_CHUNK_SIZE` overrides) and reconciles files-run against files-on-disk, so
 #   a chunk that collected nothing fails the run instead of shrinking the total. This
-#   is what `core`'s `test` script and CI both use; a bare `--project=client` over all
-#   162 files is not a measurement.
+#   is what `core`'s `test` script and CI both use; a bare `--project=client` over every
+#   client test file is not a measurement.
 pnpm dev          # core's demo routes;  pnpm dev:docs for the docs site
 pnpm -F docs generate   # regenerate the docs content registries (runs automatically on dev/build)
 ```
 
-Never install with `--prod` or prune devDependencies: both oracles **and the docs content
+Never install with `--prod` or prune devDependencies: all three oracles **and the docs content
 pipeline** read the upstream `@astryxdesign/*` packages, which are devDependencies.
 
 ## The docs site
 
-`port/todo.md`'s Phase 5 is the current goal. Two things about `docs/` are easy to get wrong:
+See `port/todo.md`'s `## Current goal` for what's active. Two things about `docs/` are easy to get
+wrong:
 
 - **It compiles core's StyleX itself.** `dist/` ships `.stylex.js` _uncompiled_ — `svelte-package`
   transpiles TypeScript and does not run StyleX — so `docs/vite.config.ts` runs the same
@@ -112,7 +117,7 @@ tractable, and these scripts prove it rather than trusting review.
 
 `packages/core/scripts/compare-upstream-css.mjs` is the third, and covers what the first cannot.
 `compare-upstream-classes.mjs` reads modules _statically_, so a `stylex.create` **function style** is
-opaque to it — 54 of them. The CSS oracle builds `dist/astryx.css` (via
+opaque to it, and this port has more than a few. The CSS oracle builds `dist/astryx.css` (via
 `scripts/lib/collect-stylex-rules.mjs`, shared with `build-css.mjs`, so the sheet that ships is the
 sheet that was checked) and diffs it against upstream's published `astryx.css`, where a function
 style's output is just another rule. Reach for it when a bug would live inside one. Two classes of

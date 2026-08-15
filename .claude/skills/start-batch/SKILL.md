@@ -32,12 +32,18 @@ dimension when it had several.
       LOC; it also needed `theme/syntax/` (~710 LOC), because its `syntaxTheme` prop and
       `highlight-styles.ts`'s `:root` block both require it. `Markdown` was booked at 3,717 and came
       in around 7,100 because it imports the whole `Table` family to render a GFM table. Read what a
-      component *imports*, then what those import, before writing a number down.
-- [ ] **Verify `port/research/01-component-inventory.md`'s description against upstream source.** It
-      is research, not spec, and it has been wrong before: `Lightbox` was described as a Popover-API
-      overlay with a focus trap and autoplay timing — it is a native `<dialog>`, browser-owned focus,
-      no autoplay. `TabList` was said to need the `OverflowList` items+snippet precedent; it never
-      slices its children. Correct the research file in the same commit, as both of those did.
+      component _imports_, then what those import, before writing a number down.
+- [ ] **If this batch starts a front outside `packages/core`, check
+      `port/research/01-component-inventory.md` against upstream source first.** Its per-component
+      descriptions are gone — compacted away once every `packages/core` unit shipped, since the code
+      and `port/ledger/` are strictly better answers for those than a July 2026 snapshot. What's left
+      is the "Packages outside `@astryxdesign/core`" table: sizes and status for `lab`, `charts`,
+      `vega`, `build` and `richtext`, still all unstarted as of the file's own compaction date. If
+      this batch is the one that starts one of those fronts, verify the table against upstream
+      source and update its status in the same commit — it has been wrong before (`Lightbox` was
+      once described as a Popover-API overlay with a focus trap and autoplay timing; it is a native
+      `<dialog>`, browser-owned focus, no autoplay), and a stale "still unstarted" row is the same
+      failure mode.
 - [ ] **Check the published dist against the source before wiring the oracle.** The tarball lags:
       `Icon`'s px→rem, `Collapsible`'s `isDisabled` and `content` typography, `DropdownMenu`'s
       selectable trio, and `Table/plugins/tree` — entirely absent from `@astryxdesign/core@0.1.7`'s
@@ -54,7 +60,7 @@ dimension when it had several.
       walked union constituents).
 - [ ] **Check whether the entry is a hook before designing its page or its props.** `params != null`
       is upstream's discriminator, and a hook's surface is its signature, not a props table.
-      `useResizable` is described by *both* its own `.doc.mjs` (params) and a `components[]` member in
+      `useResizable` is described by _both_ its own `.doc.mjs` (params) and a `components[]` member in
       `Resizable.doc.mjs` (props) — anything merging them has to let the hook branch win.
 - [ ] **Read `port/debts.md` for every unit in scope.**
       `grep -n -A3 "^### .*<Name>" port/debts.md` and `grep -n -B2 "units:.*<Name>" port/debts.md`. A
