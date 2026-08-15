@@ -242,48 +242,93 @@ Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 2: Extract `port/debts.md`
+### Task 2: Route the Known debts section
 
-The Known debts section is 2,323 lines — a third of `port/todo.md` — and is the thing agents most
-need to query. It moves out whole and gains a machine-readable head per entry.
+**Corrected 2026-08-15 after measurement. The original task assumed the section was ~371 debts and
+moved it out whole. It is not.** The section is 2,324 lines organised into **41 groups** by bold
+paragraph label, and 25 of those groups are keyed to a batch — "Batch 14 — PowerSearch (ported; the
+debts below are what the batch left behind)", "Batch 10 — test-harness findings (not component
+defects)". Those are ledger entries, not debts. Measured split:
+
+| Group class | Groups | Entries | Destination |
+| --- | --- | --- | --- |
+| Batch-keyed | 25 | **242** | `port/ledger/`, under the batch that produced them |
+| Cross-cutting | 16 | **129** | `port/debts.md` |
+
+Moving all 371 into `debts.md` would preserve the category error and make the grep this whole design
+exists for useless: `astryx-parity` would hit landed CI fixes, incident reports and already-resolved
+items. So this task **routes** rather than moves, and Task 3 distributes what it stages.
+
+The 129 are not all debts either — "Fixed, found by porting an example block" is resolved by its own
+title. Resolved entries are dropped here and named in the report, not carried forward.
 
 **Files:**
 
-- Create: `port/debts.md`
+- Create: `port/debts.md` (from the cross-cutting groups), `port/ledger/_inbox.md` (staging for the
+  batch-keyed groups, consumed and deleted by Task 3)
 - Modify: `port/todo.md` (delete the Known debts section, leave a pointer)
 
 **Interfaces:**
 
 - Produces: the entry head format that `astryx-parity` greps in Task 10 and `status.mjs` counts in
   Task 5 — `- **units:** …`, `- **kind:** …`, `- **retires:** …` under a `### <title>` heading.
+- Produces: `port/ledger/_inbox.md`, batch-keyed entries under their original group labels as `##`
+  headings, verbatim. Task 3 consumes it.
 
-- [ ] **Step 1: Locate the section boundaries**
-
-```bash
-grep -n "^## Known debts" port/todo.md
-wc -l port/todo.md
-```
-
-Expected: the heading's line number, and the file's total. The section runs from that line to EOF.
-
-- [ ] **Step 2: Cut the section into the new file**
+- [ ] **Step 1: Print the group inventory and confirm the split**
 
 ```bash
-START=$(grep -n "^## Known debts" port/todo.md | cut -d: -f1)
-{
-  printf '%s\n' '# Known debts'
-  printf '%s\n\n' ''
-  printf '%s\n' 'Small, named, deliberately not hidden. Upstream bugs are documented here, not replicated.'
-  printf '%s\n\n' ''
-  printf '%s\n' 'Every entry carries a machine-readable head so `astryx-parity` can ask "is this drift'
-  printf '%s\n\n' 'already a known debt?" with one grep. The prose body below it is unchanged.'
-  tail -n +$((START + 1)) port/todo.md
-} > port/debts.md
-head -n $((START - 1)) port/todo.md > port/todo.md.new && mv port/todo.md.new port/todo.md
-wc -l port/debts.md port/todo.md
+tail -n +4320 port/todo.md | node --input-type=module -e '
+let t=""; process.stdin.on("data",d=>t+=d).on("end",()=>{
+ const lines=t.split("\n"); let cur="(ungrouped preamble)"; const g=new Map([[cur,0]]);
+ for(const l of lines){
+  const m=l.match(/^\*\*(.+)\*\*$/);
+  if(m){cur=m[1].replace(/:$/,"");g.set(cur,0);continue;}
+  if(/^- \[[ x]\]/.test(l)) g.set(cur,g.get(cur)+1);
+ }
+ const batchy=/^(Batch \d|The Selector family|The input family|Slice)/;
+ for(const [k,n] of g) if(n>0) console.log(String(n).padStart(4), batchy.test(k)?"LEDGER":"debt  ", k);
+});'
 ```
 
-Expected: `debts.md` around 2,325 lines; `todo.md` around 4,319.
+Expected: 41 groups, 242 entries marked LEDGER and 129 marked debt. If these numbers differ, stop
+and report — the routing below is sized against them.
+
+- [ ] **Step 2: Stage the batch-keyed groups**
+
+Write the 25 LEDGER-marked groups to `port/ledger/_inbox.md`, each under its original label as a
+`##` heading, entries verbatim. This file is Task 3's input and Task 3 deletes it.
+
+Do not classify, reword or add heads to these — they are batch narrative and Task 3 files them.
+
+- [ ] **Step 2b: Cut the cross-cutting groups into `port/debts.md`**
+
+Write the 16 cross-cutting groups to `port/debts.md` under this header, preserving their group
+labels as `##` headings so related debts stay together:
+
+```markdown
+# Known debts
+
+Small, named, deliberately not hidden. Upstream bugs are documented here, not replicated.
+
+Every entry carries a machine-readable head so `astryx-parity` can ask "is this drift already a
+known debt?" with one grep. The prose body below it is unchanged.
+```
+
+**Do not truncate `port/todo.md` with a redirect in the same pipeline that reads it.** An earlier
+attempt at this task ran `head -n $((START-1)) port/todo.md > port/todo.md.new && mv …` and left the
+file truncated when it was interrupted mid-step. Cut `todo.md` last, as its own step, after both
+output files exist and have been counted.
+
+- [ ] **Step 2c: Reconcile the counts before touching `todo.md`**
+
+```bash
+echo "inbox:  $(grep -c '^- \[[ x]\]' port/ledger/_inbox.md)"
+echo "debts:  $(grep -c '^- \[[ x]\]' port/debts.md)"
+```
+
+Expected: `242` and `129`, summing to 371. **If they do not sum to 371, stop** — an entry has been
+dropped, and nothing else in this task may proceed until the sum is right.
 
 - [ ] **Step 3: Convert each entry to a heading with a head**
 
@@ -304,7 +349,16 @@ one piece of the blog surface this port skipped. …
 `api-divergence`. `units` is a comma-separated list of component or module names, or `-` where the
 debt is repo-wide. `retires` states the condition, or `never`.
 
-Work through the file top to bottom. Do not summarise or shorten any prose body.
+Work through `port/debts.md` top to bottom — the 129 cross-cutting entries only. The 242 staged in
+`_inbox.md` get no heads; they are batch narrative and Task 3 files them as-is.
+
+Do not summarise or shorten any prose body.
+
+**Drop entries whose own title says they are resolved** — "Fixed, found by porting an example
+block" is one whole group, and individual entries elsewhere read "…is now published, resolving an
+inconsistency the batch created". A resolved item is history: move it to `_inbox.md` under a
+`## Resolved — <original group>` heading so Task 3 can file it with its batch, and name it in your
+report. Never delete one outright.
 
 - [ ] **Step 4: Verify every entry has a complete head**
 
@@ -330,14 +384,24 @@ process.exit(bad === 0 ? 0 : 1);
 
 Expected: `<N> entries, 0 incomplete`, exit 0.
 
-- [ ] **Step 5: Leave a pointer in `todo.md`**
+- [ ] **Step 5: Cut the section out of `todo.md` and leave a pointer**
 
-Append to `port/todo.md`:
+Only now, with `debts.md` and `_inbox.md` both written and reconciled at 371. Delete from the
+`## Known debts` heading to EOF and append:
 
 ```markdown
 ## Known debts
 
-Moved to [`debts.md`](./debts.md), where each entry carries a machine-readable head.
+Standing deviations live in [`debts.md`](./debts.md), each with a machine-readable head.
+Per-batch findings live in [`ledger/`](./ledger).
+```
+
+Verify the cut did not overshoot:
+
+```bash
+wc -l port/todo.md          # expect 4,319
+tail -5 port/todo.md        # expect the pointer above, nothing after it
+git diff --stat port/todo.md
 ```
 
 - [ ] **Step 6: Commit**
@@ -440,6 +504,27 @@ Each file gets the YAML front matter from the template, filled from its content.
 verbatim. Add `## Rules promoted` and `## Debts opened` to each; for historical batches, fill
 `Rules promoted` with a pointer where the lesson has already reached `CLAUDE.md`, and otherwise
 record `not promoted at the time`.
+
+- [ ] **Step 3b: Distribute `port/ledger/_inbox.md`**
+
+Task 2 staged **242 batch-keyed entries** there — the groups whose own labels name a batch ("Batch
+14 — PowerSearch (ported; the debts below are what the batch left behind)"), plus any resolved
+entries it moved out of the debts file under `## Resolved — <group>` headings.
+
+Each `##` group in the inbox names its batch. File its entries into that batch's ledger file, under
+the **What the audits caught** section — that is what they are. A group naming a batch with no
+ledger file of its own (the older Batch 1-8 groups predate `PORTED.md`'s narrative) gets a ledger
+file created for it from the template, carrying only what the inbox holds; mark its front matter
+`units: []` and `upstream-prs: []` where the content does not say.
+
+Then:
+
+```bash
+grep -c '^- \[[ x]\]' port/ledger/_inbox.md    # must reach 0 entries unfiled
+git rm port/ledger/_inbox.md
+```
+
+**The inbox must be empty before it is deleted.** An entry left in it is an entry lost.
 
 - [ ] **Step 4: Verify nothing was lost**
 
