@@ -5,7 +5,7 @@ Dated **2026-08-11**, against upstream's clone at `reference/astryx-upstream/` a
 API, CLI, themes/CSS, tests, and core runtime modules.
 
 This is a point-in-time audit, not a living document. Anything here that stays open belongs in
-`todo.md`; anything about how a unit was built belongs in `PORTED.md`. Its purpose is the thing
+`todo.md`; anything about how a unit was built belongs in `port/ledger/`. Its purpose is the thing
 neither of those files could give: a **measured** answer to "where has this port drifted, in both
 directions."
 
@@ -244,7 +244,7 @@ Consequence: **our hidden `postinstall` command is dead code that nothing invoke
 `stylex-setup` (`api/doctor/doctor.mjs:606`). Verified by running both: ours emits 9 checks /
 `info:6`, upstream 8 / `info:5`. `data.checks` length and `summary` are machine-read by agents. It
 never returns `fail`, so exit codes are safe — but it is unrecorded in `todo.md`, `CHANGELOG.md` and
-`PORTED.md`, and the README's own Checks table lists 8 rows and omits it.
+`port/ledger/`, and the README's own Checks table lists 8 rows and omits it.
 
 It was added deliberately in this branch and is genuinely useful. It needs a record and a README row,
 not removal.

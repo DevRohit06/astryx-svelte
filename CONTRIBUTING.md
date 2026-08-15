@@ -46,10 +46,10 @@ Two live documents track the work:
 
 - **`port/todo.md`** — status and backlog: what's next, the batch history, the known debts. Read the
   relevant section before starting; update it when your work lands.
-- **`PORTED.md`** — the per-component implementation notes: what each unit does, the translations
+- **`port/ledger/`** — the per-component implementation notes: what each unit does, the translations
   it needed, its oracle and test posture.
 
-Status and open decisions go in `port/todo.md`. _How_ a component was built goes in `PORTED.md`.
+Status and open decisions go in `port/todo.md`. _How_ a component was built goes in `port/ledger/`.
 
 ## Getting set up
 
@@ -163,7 +163,7 @@ and neither the oracle nor a ported test caught it. Those are the most valuable 
    getters, `$derived` caching through a server render, un-`untrack`ed attachments),
    `astryx-oracle`, `astryx-test-parity`, and `astryx-surface`.
 5. **Verify** — `pnpm -r build && pnpm -r check && pnpm -r lint && pnpm -r test`, all clean.
-6. **Write it down** — `PORTED.md` for how, `port/todo.md` for status.
+6. **Write it down** — `port/ledger/` for how, `port/todo.md` for status.
 
 ## Pull requests
 

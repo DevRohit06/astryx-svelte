@@ -56,7 +56,7 @@ const SCOPES = [
 	['port/research/', null],
 	['README.md', null],
 	['port/todo.md', null],
-	['PORTED.md', null],
+	['port/ledger/', null],
 	['CLAUDE.md', null],
 	['UPSTREAM-CLAUDE.md', null],
 	['LICENSE', null],

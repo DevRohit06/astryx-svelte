@@ -23,10 +23,10 @@ repo does not have. The content is kept under the new name, and its StyleX capab
 worth consulting; it just must not auto-load.
 
 `port/todo.md` is the live status and backlog (what's next, the batch history, known debts). Read the
-relevant section before starting work; update it when work lands. **`PORTED.md` is its companion**
+relevant section before starting work; update it when work lands. **`port/ledger/` is its companion**
 — the per-component implementation notes (what each unit does, the translations it needed, its
 oracle and test posture). Status and open decisions go in `port/todo.md`; how a component was built goes
-in `PORTED.md`.
+in `port/ledger/`.
 
 ## Subagents
 

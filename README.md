@@ -121,7 +121,7 @@ pnpm dev          # core's demo routes
 Never install with `--prod` or prune devDependencies: both fidelity oracles and the docs content
 pipeline read the published `@astryxdesign/*` packages, which are devDependencies.
 
-`CLAUDE.md` is the contributor guide, `port/todo.md` the live status and backlog, and `PORTED.md` the
+`CLAUDE.md` is the contributor guide, `port/todo.md` the live status and backlog, and `port/ledger/` the
 per-component implementation notes.
 
 ## License
