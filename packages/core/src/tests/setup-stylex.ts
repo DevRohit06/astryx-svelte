@@ -83,11 +83,37 @@ beforeAll(async () => {
  * corner is both reachable and clear of them.
  */
 beforeAll(async () => {
+	// A `position: fixed` box is fixed to the *frame's* viewport, and Playwright
+	// checks actionability against the top-level one. A scrolled frame maps this
+	// corner to a page coordinate the browser viewport does not contain, which is
+	// the same `element is outside of the viewport` the note above describes —
+	// reached by scroll offset rather than by frame height.
+	window.scrollTo(0, 0);
+
 	const corner = document.createElement('div');
 	corner.style.cssText = 'position:fixed;top:0;right:0;width:4px;height:4px;z-index:2147483647';
 	document.body.append(corner);
 	try {
-		await userEvent.hover(corner);
+		// **Best effort, and bounded.** Parking the pointer is hygiene, not an
+		// assertion: the cost of failing is that one cross-file hover-inheritance
+		// bug can resurface, and the cost of *waiting* to fail is Playwright's 30 s
+		// actionability timeout — in `beforeAll`, so it takes the whole file, and
+		// once per file, so it takes the whole chunk. That is not a trade worth
+		// making. On CI this deterministically killed all 12 files of chunk 1 while
+		// passing locally, and reported them as failures with nothing named but the
+		// setup file.
+		//
+		// The race leaves the hover pending rather than cancelling it; the `catch`
+		// is attached first so removing the corner underneath it cannot surface as
+		// an unhandled rejection.
+		let failure: unknown;
+		const parked = userEvent.hover(corner).catch((error: unknown) => {
+			failure = error;
+		});
+		await Promise.race([parked, new Promise((resolve) => setTimeout(resolve, 2000))]);
+		if (failure) {
+			console.warn('[setup] could not park the pointer; hover state may leak in:', failure);
+		}
 	} finally {
 		corner.remove();
 	}
