@@ -5,15 +5,48 @@ on:
     branches: [main]
   pull_request:
 
-jobs:
-  verify:
-    runs-on: ubuntu-latest
+# A superseded run on the same branch is wasted compute — and this workflow is
+# expensive. Never cancel on `main`, where each run is the record for a commit.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
+jobs:
+  # Which parts of the repo changed. `changed-scopes.mjs` is deny-by-default: a
+  # path it does not recognise sets `global`, and every job runs. See its header.
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      core: ${{ steps.scopes.outputs.core }}
+      cli: ${{ steps.scopes.outputs.cli }}
+      themes: ${{ steps.scopes.outputs.themes }}
+      docs: ${{ steps.scopes.outputs.docs }}
+      global: ${{ steps.scopes.outputs.global }}
     steps:
       - uses: actions/checkout@v5
+        with:
+          # Both SHAs have to be reachable to diff them.
+          fetch-depth: 0
+      - id: scopes
+        run: node .github/scripts/changed-scopes.mjs
+        env:
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
+  # Everything except the browser suite and the docs site: build, typecheck,
+  # lint, the server project, both fidelity oracles, the CLI suite, the theme
+  # oracles, and the publish manifest gate.
+  #
+  # Scoped with `--filter='!docs'` rather than by naming packages, so a package
+  # added later is covered here by construction instead of being silently
+  # untested until someone remembers to edit this file.
+  lib:
+    needs: changes
+    if: needs.changes.outputs.global == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.cli == 'true' || needs.changes.outputs.themes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v5
         with:
           # Root `engines` asks for >=22. Kept unpinned within the major so a
@@ -27,16 +60,6 @@ jobs:
       # report green. Each oracle now fails loudly if its upstream is missing,
       # so a regression here is caught rather than silently tolerated.
       - run: pnpm install --frozen-lockfile
-
-      # The client vitest project runs in a real headless Chromium through
-      # Playwright, and `pnpm install` does not fetch browser binaries — they
-      # live in ~/.cache/ms-playwright, outside node_modules. Without this the
-      # whole client project (162 files, 4,255 cases) fails to launch with
-      # "Executable doesn't exist", which is how it went unrun in CI for its
-      # entire life: the Typecheck step above was failing first, so the Test
-      # step never got the chance to say so.
-      - name: Install the browser the client test project needs
-        run: pnpm -F @astryx-svelte/core exec playwright install --with-deps chromium
 
       # Build first: @astryx-svelte/theme-neutral typechecks against the theme
       # compiler's types, which it reaches through core's built `dist/`. pnpm
@@ -56,22 +79,25 @@ jobs:
         run: pnpm -F @astryx-svelte/core build:demo
 
       - name: Typecheck
-        run: pnpm -r check
+        run: pnpm -r --filter='!docs' check
 
       - name: Lint
-        run: pnpm -r lint
+        run: pnpm -r --filter='!docs' lint
 
-      # `pnpm -r test` runs both fidelity oracles and the packaging assertion:
+      # The oracles and the packaging assertion:
       #  - @astryx-svelte/core          → compare-upstream-classes.mjs (component classes)
-      #  - @astryx-svelte/theme-neutral → compare-upstream.mjs (theme declarations)
+      #                                 → compare-upstream-css.mjs (the built sheet)
+      #  - @astryx-svelte/theme-*       → compare-upstream.mjs (theme declarations)
       #  - @astryx-svelte/cli           → assert-core-ships-src.mjs (core publishes src/)
-      # The two oracles build what they need first, so they are order-independent.
-      # The CLI assertion is not: it runs `npm pack --dry-run` over core with
-      # `--ignore-scripts`, so it needs the Build step above to have produced
-      # core's dist/. That ordering already holds here; it fails loudly rather
-      # than silently if it ever stops holding.
+      # The CLI assertion needs the Build step above to have produced core's
+      # dist/, since it runs `npm pack --dry-run` with `--ignore-scripts`.
+      #
+      # Core is excluded and run as `test:node` so the browser suite stays in its
+      # own job — see `client` below.
       - name: Test, fidelity oracles and packaging assertion
-        run: pnpm -r test
+        run: |
+          pnpm -F @astryx-svelte/core test:node
+          pnpm -r --filter='!docs' --filter='!@astryx-svelte/core' test
 
       # The same manifest gate the release runs, minus the version pin: publint
       # over every publishable package, plus the README check that caught all
@@ -80,3 +106,94 @@ jobs:
       # catch on the PR that breaks it and expensive to discover mid-publish.
       - name: Every package is still fit to publish
         run: node scripts/check-publish.mjs
+
+  # The browser suite, alone: 163 files and ~4,500 cases in real headless
+  # Chromium, and by far the longest thing here. Split out so it runs in
+  # parallel with `lib` rather than after it, and so a docs-only or CLI-only
+  # change does not pay for it at all.
+  client:
+    needs: changes
+    if: needs.changes.outputs.global == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.themes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # The client vitest project runs in a real headless Chromium through
+      # Playwright, and `pnpm install` does not fetch browser binaries — they
+      # live in ~/.cache/ms-playwright, outside node_modules. Without this the
+      # whole project fails to launch with "Executable doesn't exist", which is
+      # how it went unrun in CI for its entire life: Typecheck was failing
+      # first, so the Test step never got the chance to say so.
+      - name: Install the browser the client test project needs
+        run: pnpm -F @astryx-svelte/core exec playwright install --with-deps chromium
+
+      # Built for the same reason `lib` builds: the suite imports through `$lib`,
+      # but `svelte-kit sync` and the theme packages it touches expect the
+      # topological build to have run.
+      - name: Build
+        run: pnpm -r build
+
+      - name: Client test project
+        run: pnpm -F @astryx-svelte/core test:client
+
+  # The docs site. Runs on its own changes *and* on core's, because the
+  # dependency is one-directional: `docs/vite.config.ts` compiles core's StyleX
+  # itself and `docs/scripts/generate-content.mjs` reads prop types out of
+  # `packages/core/dist/`. Core never depends on docs.
+  docs:
+    needs: changes
+    if: needs.changes.outputs.global == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # The docs content pipeline reads `.doc.mjs` out of the upstream
+      # `@astryxdesign/*` packages and prop *types* out of core's `dist/`, so the
+      # build is a prerequisite here exactly as it is in `lib`.
+      - name: Build
+        run: pnpm -r build
+
+      - name: Typecheck
+        run: pnpm -F docs check
+
+      - name: Lint
+        run: pnpm -F docs lint
+
+      - name: Docs content is current
+        run: pnpm -F docs test
+
+  # One always-running check to hang branch protection off, so a skipped job
+  # cannot leave a required status pending forever. `needs` results are
+  # `success` / `failure` / `cancelled` / `skipped`; skipped is a pass here,
+  # because it means the filter decided the job was irrelevant to this diff.
+  ci:
+    if: always()
+    needs: [changes, lib, client, docs]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every required job passed or was skipped
+        run: |
+          echo '${{ toJSON(needs) }}'
+          echo '${{ toJSON(needs) }}' | node -e "
+            const needs = JSON.parse(require('node:fs').readFileSync(0, 'utf8'));
+            const bad = Object.entries(needs).filter(
+              ([, v]) => v.result !== 'success' && v.result !== 'skipped'
+            );
+            if (bad.length) {
+              console.error('failed: ' + bad.map(([k, v]) => k + '=' + v.result).join(', '));
+              process.exit(1);
+            }
+            console.log('all good: ' + Object.entries(needs).map(([k, v]) => k + '=' + v.result).join(', '));
+          "

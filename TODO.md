@@ -6458,12 +6458,39 @@ _Locale gaps in upstream's own docs, recorded because the docs site renders them
       has two — seeding the raw map would inherit only what the base's author typed by hand and
       drop every generated token. All 9 upstream cases ported plus one for indicators, which
       upstream merges without covering
-- [ ] **The client vitest project could not be executed for any of the 0.4.1 batch.** Its browser
-      server fails to bind with `EACCES: permission denied ::1:<port>` in this environment, so ~162
-      files — including the six rewritten container-reveal cases — are **unrun**, not passing. Each
-      commit message says so rather than implying a green run. This is environmental and distinct
-      from the truncation trap above, but it lands in the same place: **a release cannot ship on the
-      server project alone.** Run the client project somewhere it can bind before tagging
+- [x] **The client vitest project could not be executed for any of the 0.4.1 batch.** ~~Its browser
+      server fails to bind with `EACCES: permission denied ::1:<port>` in this environment.~~
+      **Resolved, and the recorded diagnosis was wrong in a way worth keeping.** It was called
+      environmental, which suggested nothing could be done about it locally. The real cause is
+      specific and fixable: vitest's browser server binds **63315** by default and Windows reserves
+      TCP blocks for Hyper-V — `netsh interface ipv4 show excludedportrange protocol=tcp` reports
+      `63271–63370` here. Vite retries `EADDRINUSE` and **not** `EACCES`, so the run dies before
+      Chromium launches and reports "no tests" rather than anything naming a port.
+      `VITEST_BROWSER_PORT` overrides it; the suite then runs 163/163 files, 4,510 cases. The
+      generalisable part: **"environmental" is a diagnosis that stops investigation**, and this one
+      survived disabling the sandbox — which should have been the clue that the assumed cause was
+      not the cause
+- [ ] **A failed hover in `beforeAll` costs a whole chunk, and did so only on CI.**
+      `setup-stylex.ts` parks the real pointer in a corner so hover state cannot leak between files.
+      On CI that hover hit Playwright's `element is outside of the viewport` and retried to the
+      **30 s actionability timeout — once per file, in `beforeAll`**, so all 12 files of chunk 1
+      died and reported with nothing named but the setup file. It passed locally every time. Two
+      things were wrong independent of which environment difference triggered it: the corner is
+      `position: fixed`, so a scrolled frame maps it outside the *top-level* viewport that
+      Playwright checks against (the note there already reasoned about frame *height* and missed
+      scroll offset), and **a hygiene step was allowed to fail a suite**. Now scrolls to top first
+      and is best-effort with a 2 s bound, warning rather than failing. The rule: a setup step that
+      is not an assertion must not be able to take the file down with it
+- [ ] **CI ran everything for every change.** A full run is ~13 minutes — 409 s of tests, 190 s of
+      type-aware lint, 76 s of build — and a `docs/`-only edit paid all of it. Split into `lib`,
+      `client` and `docs` jobs behind a `changes` job that classifies the diff
+      (`.github/scripts/changed-scopes.mjs`). Two properties are the point and should survive any
+      later tidying: the classifier is **deny-by-default**, so a path it does not recognise sets
+      `global` and runs every job (a skip-list would fail silently green instead); and the jobs
+      select packages by **exclusion** (`--filter='!docs'`) rather than by naming them, so a package
+      added later is covered by construction instead of going untested until someone edits the
+      workflow. The always-running `ci` job exists so a *skipped* job cannot leave a required status
+      pending forever
 - [ ] **`git checkout -- '*'` destroyed every uncommitted tracked file in the worktree, across
       every concurrent workstream.** It was written inside a cleanup script as an intended no-op
       guard. It is not a no-op: git expands the pathspec against the **whole index**, not against
