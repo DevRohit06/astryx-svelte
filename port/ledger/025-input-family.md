@@ -1,5 +1,5 @@
 ---
-batch: 25
+seq: 25
 title: The input family at 0.4.x
 upstream: 0.4.x
 units: [TextInput, TextArea, TimeInput, DateInput, DateRangeInput, DateTimeInput, Tokenizer, FileInput, Switch, CheckboxInput, Token, InputClearButton]
@@ -11,13 +11,12 @@ upstream-prs: [4876, 4813, 4940, 4974, 4815, 4973, 4745, 4896]
 Ten components in one batch: `TextInput`, `TextArea`, `TimeInput`, `DateInput`, `DateRangeInput`,
 `DateTimeInput`, `Tokenizer`, `FileInput`, `Switch`, `CheckboxInput`, plus `Token`'s remove button and
 the shared `InputClearButton` they converge on. `NumberInput` and the `Selector` family took the same
-changes in parallel and are described in the next file (`026-selector-family.md`), which also carries
-the general 0.4.1 infrastructure findings (CI, the client-project port-binding fix, `ThemeConfig.extends`,
-the `git checkout --` incident) that `port/ledger/_inbox.md` staged under a second "Batch 11" heading —
-none of it is specific to this family or to the selectors, so it is filed with whichever of the two
-0.4.x/0.4.1 files sits last, per the task's numbering instruction.
+changes in parallel and are described in `026-selector-family.md`. The general 0.4.1 infrastructure
+findings (CI, the client-project port-binding fix, `ThemeConfig.extends`, the `git checkout --`
+incident) that `port/ledger/_inbox.md` staged under a second "Batch 11" heading are not specific to
+this family either; they now have their own file, `027-upstream-0.4.1-infrastructure.md`.
 
-## The input family at 0.4.x — `isReadOnly`, the clear-button convergence, and ten uncalled i18n keys
+### The input family at 0.4.x — `isReadOnly`, the clear-button convergence, and ten uncalled i18n keys
 
 Ten components in one batch: `TextInput`, `TextArea`, `TimeInput`, `DateInput`, `DateRangeInput`,
 `DateTimeInput`, `Tokenizer`, `FileInput`, `Switch`, `CheckboxInput`, plus `Token`'s remove button
@@ -167,7 +166,7 @@ composes an imported style, which defeats StyleX's fold, so object mode already 
 
 ## What the audits caught
 
-## The input family at 0.4.x — port findings
+### The input family at 0.4.x — port findings
 
 - [ ] **A "13 shipped i18n keys have no call site" brief is a count of the catalog, not of one
       family.** Grepping `src/lib` for every key in `locales/en.json` finds **20** with no call

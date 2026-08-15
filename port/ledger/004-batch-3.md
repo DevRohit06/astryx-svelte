@@ -1,5 +1,5 @@
 ---
-batch: 4
+seq: 4
 title: Batch 3 — slot translation, ids, and a source/dist lag
 upstream: 0.1.7
 units: [NavHeadingMenu, NavHeadingMenuItem, TreeList, TabList, Tab, TabMenu]

@@ -1,5 +1,5 @@
 ---
-batch: 22
+seq: 22
 title: Page templates — upstream's 43 whole pages
 upstream: 0.3.0
 date: 2026-08-10

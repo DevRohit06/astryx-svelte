@@ -1,5 +1,5 @@
 ---
-batch: 9
+seq: 9
 title: Batch 8 — the launch set — Theme
 upstream: 0.1.7
 units: [Theme, ThemeContext, useTheme]

@@ -1,5 +1,5 @@
 ---
-batch: 3
+seq: 3
 title: Batch 2 — slot translation and seams
 upstream: 0.1.7
 units: [Breadcrumbs, BreadcrumbItem, Carousel, Toolbar, ContextMenu, Collapsible, CollapsibleGroup]

@@ -1,5 +1,5 @@
 ---
-batch: 8
+seq: 8
 title: Batch 7 — the imperative handle, slot translation, and two closed-prop roots
 upstream: 0.1.7
 units: [MultiSelector, useMultiCombobox, Tokenizer]

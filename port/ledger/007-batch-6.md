@@ -1,5 +1,5 @@
 ---
-batch: 7
+seq: 7
 title: Batch 6 — the selector spine
 upstream: 0.1.7
 units: [Selector, SelectorOption, useCombobox, useSelectedItemOffset, Pagination, Typeahead, BaseTypeahead, TypeaheadItem, createStaticSource]

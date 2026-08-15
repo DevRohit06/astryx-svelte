@@ -1,5 +1,5 @@
 ---
-batch: NNN
+seq: NNN
 title:
 upstream:
 date:

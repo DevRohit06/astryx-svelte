@@ -1,5 +1,5 @@
 ---
-batch: 2
+seq: 2
 title: Batch 1 — slot translation and seams
 upstream: 0.1.7
 units: [List, ListItem, MoreMenu, AlertDialog, Banner, Spinner]

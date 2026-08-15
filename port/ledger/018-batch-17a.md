@@ -1,5 +1,5 @@
 ---
-batch: 18
+seq: 18
 title: Batch 17a — the 0.2.0 class re-baseline
 upstream: 0.2.0
 units: [AvatarStatusDot, CodeBlock]

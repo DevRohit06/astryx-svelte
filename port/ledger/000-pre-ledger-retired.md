@@ -1,5 +1,5 @@
 ---
-batch: 0
+seq: 0
 title: Retired debts with no identifiable owning batch
 units: []
 upstream-prs: []

@@ -1,5 +1,5 @@
 ---
-batch: 6
+seq: 6
 title: Batch 5 — divergences, and a spread hazard NumberInput exposed
 upstream: 0.1.7
 units: [NumberInput, FileInput, CodeBlock]

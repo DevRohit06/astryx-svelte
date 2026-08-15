@@ -1,5 +1,5 @@
 ---
-batch: 5
+seq: 5
 title: Batch 4 — divergences, and a shared-primitive fragility Slider exposed
 upstream: 0.1.7
 units: [CheckboxInput, CheckboxList, CheckboxListItem, Slider]

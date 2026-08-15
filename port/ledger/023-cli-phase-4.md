@@ -1,5 +1,5 @@
 ---
-batch: 23
+seq: 23
 title: Phase 4 — the CLI
 upstream: 0.3.0
 date: 2026-08-07..2026-08-09

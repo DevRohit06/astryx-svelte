@@ -1,5 +1,5 @@
 ---
-batch: 20
+seq: 20
 title: Batch 17c — the a11y batch
 upstream: 0.2.0
 units: [Avatar, AvatarStatusDot, AvatarGroup, Button, Citation, Divider, FileInput, Slider, Item, Calendar]

@@ -1,5 +1,5 @@
 ---
-batch: 24
+seq: 24
 title: Phase 5 — the docs site, landed
 upstream: 0.3.0
 date: 2026-08-03..2026-08-13

@@ -1,5 +1,5 @@
 ---
-batch: 10
+seq: 10
 title: Batch 9 — the chrome, dogfooded
 upstream: 0.1.7
 units: [CommandPalette, CommandPaletteInput, CommandPaletteList, CommandPaletteItem, CommandPaletteGroup, CommandPaletteFooter, CommandPaletteEmpty, Outline, useScrollSpy, useOutlineFromDOM, LayerProvider, LayerContext]

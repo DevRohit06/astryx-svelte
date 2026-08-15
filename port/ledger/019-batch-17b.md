@@ -1,5 +1,5 @@
 ---
-batch: 19
+seq: 19
 title: Batch 17b — new surface and new props at 0.2.0
 upstream: 0.2.0
 units: [InputStatusIcon, FieldStatus, Field, Icon, TreeList, HoverCard, CommandPaletteInput, Thumbnail, OverflowList, BreadcrumbItem, DropdownMenuCheckboxItem, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSubMenu, Outline, useTableTreeData, useTableRowStatus, Avatar, Button]
