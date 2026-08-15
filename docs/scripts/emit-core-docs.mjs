@@ -91,7 +91,12 @@ const USAGE_FIELDS = new Set(['description', 'bestPractices', 'anatomy']);
 const BEST_PRACTICE_FIELDS = new Set(['guidance', 'description']);
 const ANATOMY_FIELDS = new Set(['name', 'required', 'description']);
 const THEMING_FIELDS = new Set(['container', 'targets', 'vars', 'derived']);
-const THEMING_TARGET_FIELDS = new Set(['className', 'visualProps', 'states']);
+// `deprecatedFor` marks a target that has been RENAMED and is still emitted for
+// a deprecation window — the input family's `astryx-*-clear-icon` targets now
+// carry it, superseded by the shared `input-clear-icon`. It is part of
+// `ComponentThemingTarget` in the CLI's contract, so it belongs here too;
+// without it `assertDeclared` would reject the upstream doc outright.
+const THEMING_TARGET_FIELDS = new Set(['className', 'visualProps', 'states', 'deprecatedFor']);
 const THEMING_VAR_FIELDS = new Set([
 	'name',
 	'description',
@@ -100,7 +105,13 @@ const THEMING_VAR_FIELDS = new Set([
 	'formula',
 	'private'
 ]);
-const THEMING_DERIVED_FIELDS = new Set(['property', 'vars', 'expand']);
+// `replaces` marks a derived var whose source property must NOT be emitted
+// alongside it — the class-carrying element sets only the internal var, and the
+// value reaches a child through it (`TextArea`'s flush wrapper drives the inner
+// `<textarea>`'s inline padding that way). It is part of
+// `ComponentThemingDerivedVar` in the CLI's contract, so it belongs here too;
+// without it `assertDeclared` would reject the upstream doc outright.
+const THEMING_DERIVED_FIELDS = new Set(['property', 'vars', 'expand', 'replaces']);
 const PLAYGROUND_FIELDS = new Set(['defaults', 'overlay', 'wrapper']);
 const PLAYGROUND_WRAPPER_FIELDS = new Set(['component', 'props']);
 

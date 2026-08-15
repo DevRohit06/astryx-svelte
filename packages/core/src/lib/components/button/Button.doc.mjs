@@ -40,7 +40,7 @@ export default {
 			{
 				name: '--button-focus-offset',
 				description: 'Focus ring outline offset',
-				default: '3px'
+				default: 'var(--focus-outline-offset)'
 			},
 			{
 				name: '--button-icon-only-aspect',

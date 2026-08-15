@@ -145,16 +145,40 @@ section is where every open decision lives, and several entries here point at it
     through `'minStepsBetweenThumbs' in rest`, upstream's own probe. Compiles to **28 inline call
     sites and no style object at all** — the first pure-`inline` oracle case. 32/32 tests
 - **Batch 5** — `NumberInput`, `FileInput`, `CodeBlock` (+ the `theme/syntax/` subsystem):
-  - **NumberInput** — `type="number"` on the `TextInput` shell (`Field` outside a group, bare control
-    inside one). Strictly controlled with **no `$bindable()`**, unlike `TextInput`: upstream never
-    writes `value` back, and the emptied-then-blurred-with-no-parent-update case depends on it. A
-    local `pendingInput` buffer holds unparseable text — it dims (`inputInvalid` _replaces_ the text
-    colour rather than joining it, so the inline merge order is load-bearing), sets `aria-invalid`,
-    announces through an always-rendered `role="alert"` region, and reverts on blur; Enter commits but
-    deliberately keeps the buffer. **Zero effects**, as upstream has. Props are a _discriminated
+  - **NumberInput** (rewritten to 0.4.1, #4896) — a **text-backed spinbutton** on the `TextInput`
+    shell (`Field` outside a group, bare control inside one): `type="text"` with `role="spinbutton"`
+    and `aria-valuemin`/`valuemax`/`valuenow`/`valuetext`, and no native `min`/`max`/`step` attribute
+    anywhere. That is what lets `formatValue` show `$1,234.56` at rest and the raw number on focus,
+    and what makes the stepping arithmetic the component's own rather than the UA's. Strictly
+    controlled with **no `$bindable()`**, unlike `TextInput`: upstream never writes `value` back, and
+    the emptied-then-blurred-with-no-parent-update case depends on it. A local `pendingInput` buffer
+    holds unparseable text — it dims (`inputInvalid` _replaces_ the text colour rather than joining
+    it, so the inline merge order is load-bearing), sets `aria-invalid`, announces through an
+    always-rendered `role="alert"` region, and reverts on blur; Enter commits but deliberately keeps
+    the buffer. **`min`/`max` are enforced two different ways**, which is the thing to remember:
+    typing out of range is _rejected_ (`parseNumberInput` returns `null`, so `onChange` never fires),
+    while stepping _clamps_ and then no-ops — and that same no-op comparison
+    (`getSteppedValue(…) === value`) is what greys out one stepper button at a time. `getSteppedValue`
+    is **transcribed, not reimplemented** (character-identical to upstream once trailing commas are
+    normalised): its `Number.EPSILON * max(1, |pos|) * 4` tolerance is what snaps `0.25` at
+    `step: 0.1` to `0.3` going up and `0.2` going down. `step`'s documented `@default 1` is real here
+    too, applied by `getEffectiveStep` rather than by an attribute. Keyboard stepping is **arrow keys
+    only and only unmodified** — no PageUp/PageDown, no Home/End, no press-and-hold repeat, none of
+    which upstream has. **Two attachments, neither `untrack`ed**: the controlled-`value` sync, which
+    is now *defensive* rather than load-bearing (TODO.md's spread hazard — `type="text"` retired the
+    bad-input symptom, and the intuitive replacement, caret destruction, was measured in Chromium and
+    does not occur, because the `value` setter only moves the cursor when the value differs); and the
+    non-passive `wheel` listener, an attachment rather than `onwheel={…}` because an attribute after
+    `{...rest}` would shadow a consumer's own, and one that gets the `isWheelEnabled` re-attach for
+    free. One **accepted divergence**: a consumer's `onwheel` fires here after a consumed step and
+    does not upstream, since React delegates `onWheel` from the root where `stopPropagation()` reaches
+    it. `isFocused` is plain `$state` and forces `onfocus` to be composed, since focusing is what
+    swaps `displayValue` from the formatted string to the raw number. Props are a _discriminated
     union_ (`hasClear` widens `onChange` to accept `null`), not an interface, so the two arms meet at
-    one cast. There are **no stepper buttons** — upstream's `.doc.mjs` anatomy claims a `Spinner` for
-    them, its source renders none, and the source wins. 67/67 tests
+    one cast. The clear button is the shared `InputClearButton` as of #4876. Oracle-wise the six
+    stepper declarations **look like function styles and are not** — each has one statically-known
+    call site, so StyleX folded them all into literals and they are `inline:` entries rather than a
+    skip. 113/113 tests
   - **FileInput** — the operable control is a `role="button"` wrapper, not the `<input type="file">`,
     which is visually hidden / `aria-hidden` / `tabindex="-1"`; every describing attribute lives on
     the wrapper (upstream's forms-6). `input` and `dropzone` modes, with the four drag handlers
@@ -455,8 +479,14 @@ section is where every open decision lives, and several entries here point at it
   - **The `TopNav` family's three upstream suites are ported case-for-case, nothing dropped** —
     `src/tests/top-nav.svelte.test.ts` (43/43 across six describes, including upstream's second
     `NavIcon` describe, which duplicates `NavIcon.test.tsx` and is kept because the count of _that_
-    suite is the contract), `src/tests/top-nav-menu.svelte.test.ts` (4/4) and
-    `src/tests/top-nav-mega-menu.svelte.test.ts` (16/16). All client (Chromium). Five new fixtures
+    suite is the contract), `src/tests/top-nav-menu.svelte.test.ts` (**12/12** at v0.4.1) and
+    `src/tests/top-nav-mega-menu.svelte.test.ts` (**37/37** at v0.4.1). All client (Chromium).
+    Both of those counts were header rot caught at the 0.4.1 bump and are recorded in the files
+    themselves: the menu suite claimed "all 4, nothing dropped" against a suite that had **12 at
+    every tag from v0.2.0** — the 8 unported ones were the two APG describes (`menu semantics`,
+    `keyboard navigation`), now in; and the mega-menu suite closed at 21 for v0.3.0 before #4555
+    added **16 more** (nine `hover/click guard`, three `dismissal`, four `keyboard`). Five new
+    fixtures
     carry the slot content upstream writes inline as JSX, and `mode` on each of them stands in for
     `<TopNavRenderContext value=…>` by wrapping the subject in the internal `TopNavRenderScope` —
     React scopes a context with an element, Svelte needs a component boundary. Four `forwards ref
@@ -1585,3 +1615,337 @@ fixtures written specifically to expire when template assets landed:
   resolving the packaged template exactly as upstream does. One assertion changes value, not meaning:
   upstream reads `columns={{minWidth: 200}}` out of the skeleton, ours carries the repo's prettier
   spacing inside the literal.
+
+## The input family at 0.4.x — `isReadOnly`, the clear-button convergence, and ten uncalled i18n keys
+
+Ten components in one batch: `TextInput`, `TextArea`, `TimeInput`, `DateInput`, `DateRangeInput`,
+`DateTimeInput`, `Tokenizer`, `FileInput`, `Switch`, `CheckboxInput`, plus `Token`'s remove button
+and the shared `InputClearButton` they converge on. `NumberInput` and the `Selector` family took the
+same changes in parallel and are not described here.
+
+### `isReadOnly` — a state defined by what it does _not_ do
+
+New on `TextInput` and `TextArea` only (`NumberInput` is the third upstream case). It is the native
+`readonly` attribute and nothing else: `readonly={isReadOnly || showsDisabledMessage || undefined}`,
+never `aria-readonly`. It selects **no style key** — the whole point of the state is that it is not
+dimmed — so it reaches the stylesheet only through `themeProps`, as `data-readonly="readonly"` plus
+a bare `readonly` class token, for a theme that wants to paint it. The value still submits, the
+control keeps its tab stop, and `isDisabled` wins when both are set.
+
+The behaviour lives in three places that each have to agree, and two of them are easy to skip: the
+attribute stops the DOM accepting an insert, the `if (isDisabled || isReadOnly) return` guard in the
+change handler stops the optimistic value and the callbacks firing, and `hasClear`'s render
+condition gains `&& !isReadOnly` so the affordance is not offered for a value that cannot change.
+Upstream's suite tests all three independently, which is what makes them independent: Chromium's
+editor refusing the keystroke would otherwise mask a missing handler guard.
+
+`name={isDisabled ? undefined : htmlName}` landed alongside it on both, and is the sharper half of
+the pair. A `disabledMessage` deliberately drops the native `disabled` attribute so the reason stays
+focus-discoverable — but a `readonly` control **does** submit, so without withholding the name a
+field the user was told they cannot edit posts its value anyway. `Switch` and `CheckboxInput`
+already had it; `Tokenizer` reaches the same end differently, by putting `disabled` on the hidden
+`<input>` carriers rather than dropping their name, which is upstream's shape and is left alone.
+
+### `data-disabled` on seven roots
+
+`disabled: isDisabled ? 'disabled' : null` in the root `themeProps` of `TextInput`, `TextArea`,
+`TimeInput`, `DateInput`, `DateRangeInput`, `DateTimeInput` and `Tokenizer`. Keyed off the
+**prop**, not the effective busy-inclusive state the three date inputs compute for their own
+styling: a busy field is not a disabled one, and reflecting the derived value would have made the
+attribute flicker for the duration of a `changeAction`.
+
+### The clear-button convergence (#4876)
+
+`TextInput`, `TimeInput` and the three date inputs each inlined their own `<button>` and each drew
+its own 1px `--color-accent` focus ring — a width nothing else in the system used, and the source of
+the CSS oracle's two invented rules `.x1p25gnr:focus-visible{…}` and `.x1y3gkto{outline-offset:1px}`.
+All five now render `field/input-clear-button.svelte`, and both rules are gone from `astryx.css`.
+
+**Only two callers pass `iconClassName`.** The brief said every converted caller passes
+`stableClassName('<component>-clear-icon')`; upstream passes it from `DateInput` and
+`DateRangeInput` and from nowhere else, because those two are the only ones that had already shipped
+a component-specific theme target a consumer could be styling. Stamping it on the other three would
+have invented three public targets. The `.doc.mjs` corpus is the cross-check that settles it:
+`deprecatedFor: 'input-clear-icon'` appears on exactly `astryx-date-input-clear-icon`,
+`astryx-date-range-input-clear-icon`, `astryx-selector-clear-icon` and
+`astryx-multi-selector-clear-icon` — four targets, two of them in this batch.
+
+The oracle bookkeeping is the interesting half. `styles.clearButton` left `text-input` and
+`time-input` outright, so their `inline` claims were deleted. But the three date inputs' claims had
+been stale _since an earlier batch_: adopting `focusOutlineStyles.focusVisible` on the calendar
+toggle is a composition of an **imported** style, which is exactly what defeats StyleX's fold, so
+upstream's `dist/` already carried `styles.iconButton` / `iconButtonDisabled` (and
+`DateRangeInput`'s `presetButton` pair) as live objects. The fix is to delete the `inline` entries
+rather than correct them — object mode already covers those keys. `Switch`'s `statusGap` and
+`Token`'s `removeButton` moved the same direction for the neighbouring reasons: an `xstyle` handed
+across a component boundary, and a `focusOutlineProps.focusVisible(...)` runtime call.
+
+### Ten i18n keys, not thirteen
+
+`file-input` hardcoded eight English strings, `time-input` and the two date-time components three
+more between them. The brief called it thirteen; grepping `src/lib` for every key in
+`locales/en.json` finds **twenty** uncalled, of which ten are this family's. The rest belong to
+`NumberInput` (2), the table's row-expansion plugin (2) and the lab `Stepper` (6) — a component this
+port has not ported at all, so those six stay uncalled by construction. The method is the finding:
+**derive the list from the catalog, not from a brief**, because a hardcoded literal is invisible to
+every gate here. The oracles diff CSS, `check` sees a perfectly good string, and a ported suite
+asserting the English literal _passes_ precisely because the component emits it.
+
+`validateFiles` is module-private and pure, so it takes the translator as a parameter rather than
+calling `useTranslator` — which forced upstream's own rename of the `accept.split(',').map(t => …)`
+lambda parameter to `s`, since `t` is now the translator in that scope.
+
+### `TextArea`'s double inset and its detached reserve (#4813, #4940)
+
+`styles.wrapper` zeroed the shared inset with the `padding` shorthand. StyleX ranks longhands above
+shorthands **regardless of merge order**, so `padding: 0` lost to `inputWrapperStyles.base`'s
+`paddingBlock`/`paddingInline` and the wrapper kept an inset the `<textarea>`'s own padding then
+doubled — insetting the text and pushing the native resize grip in from the corner. Splitting it
+into matching longhands is the whole fix, and it is the class oracle's `kmVPX3=x1717udv` →
+`k8WAf4=xt970qd kg3NbH=xnjsko4`.
+
+The trailing reserve was gated on `status != null || isBusy`, i.e. on the _prop_. The `detached`
+variant renders no on-field glyph — its icon lives in the message box below — so the reserve was
+insetting text for an icon that never appeared. It now gates on the end slot's own render condition,
+`isBusy || statusIcon.hasIcon`, which is the value the slot already reads.
+
+### Focus return on calendar dismiss (#4974)
+
+`utils/focus-return.ts` was ported with `isFocusDetached` exported and **no consumer anywhere in
+`src/lib/components`** — the same shape of gap as a custom property with no reader. `DateInput` and
+`DateTimeInput`'s `usePopover` `onHide` now guards on it. A native `popover="auto"` light-dismiss
+fires synchronously with the pointer event that moved focus, so by the time `onHide` runs the user's
+click has already landed somewhere; reclaiming focus unconditionally fought it. Escape and a click
+on non-focusable empty space are the cases that leave focus on the body, and those are the only ones
+that should reclaim.
+
+### `form=""` (#4815)
+
+`Switch` and `CheckboxInput`. `disabledMessage` drops the native `disabled` attribute, which leaves
+`required` live on a control the user cannot operate: `form.checkValidity()` is false forever and
+the browser's validation bubble points at a switch nothing can toggle. `form` names the **id** of
+the form to associate with, and no element can have the empty id — so `form=""` associates the input
+with no form at all, dropping it out of constraint validation and form data while it stays visible,
+focusable and labelled. Dropping `required` instead would let a genuinely required field submit
+empty once re-enabled; setting `disabled` takes back the focusability the message exists for.
+
+### `Token`'s remove button (#4973)
+
+`all: 'unset'` cleared the UA outline and nothing put one back, so the remove affordance had **no
+focus ring at all**. `focusOutlineProps.focusVisible(styles.removeButton)` supplies it; the shared
+ring is written as longhands, which is what lets it outrank the `all` shorthand whatever the merge
+order.
+
+### `weekStartsOn` (#4745)
+
+Pure forwarding on all three date inputs — optional, no local default, handed raw to `<Calendar>`,
+which owns both the `= 0` fallback and `normalizeDayOfWeek`. Defaulting it in the caller would state
+the same fact twice in the file that does not decide it. No locale interaction: the default stays
+Sunday regardless of the active locale.
+
+### Test posture
+
+64 upstream cases added across nine suites — `TextInput` 13, `TextArea` 14, `TimeInput` 5,
+`DateInput` 8, `DateRangeInput` 7, `DateTimeInput` 8, `Tokenizer` 2, `Switch` 2, `CheckboxInput` 5 —
+**nothing dropped**. Two suites are new: `input-clear-button.svelte.test.ts` (6 for 6, upstream's own
+new file for the converged primitive) and `focus-return.svelte.test.ts` (4 for 4). The second is a
+`.test.ts` upstream and a `*.svelte.test.ts` here, because two of its four cases focus a real element
+and read `document.activeElement`, and this port's server project is `environment: 'node'` with no
+DOM — splitting one four-case suite across two projects to keep a filename would have been worse.
+
+The client project could not be run in this environment, so those 74 cases are **written and
+typechecked, not passing**. The server project is 838 for 838.
+
+---
+
+## The Selector family at 0.4.1 — `PanelSearchInput`, the indicator seam, and a chevron that is its own element
+
+`Selector`, `MultiSelector` and `ComplexSelector` in one batch, plus the new shared primitive
+`field/panel-search-input.svelte` they lean on. The clear-button convergence (#4876) and the
+`data-disabled` root state reach these three too; the input-family section above describes both, so
+this one covers only what is specific to the selectors.
+
+### `PanelSearchInput` — a search row that is part of the panel, not a box inside it (#4928)
+
+A dropdown panel is already a bordered, elevated surface, so the `TextInput` these three used to nest
+in one drew a second box within that box. The replacement is a magnifier `<Icon>`, a borderless
+`<input>`, and the shared `InputClearButton`, in a rounded box shaped like the option rows beneath
+it, separated from them by a full-bleed `<Divider>` the panel owns.
+
+**It is not barrel-exported**, and that is upstream's shape rather than an oversight: `Field/index.ts`
+exports only `InputClearButton`, and the file header says so in as many words. `src/lib/index.ts` is
+therefore untouched by this batch.
+
+Two orderings are load-bearing and neither is obvious from reading the render:
+
+- **The rest spread comes _after_ the StyleX class on the `<input>`.** The selectors pass
+  `role="combobox"` and the whole `aria-activedescendant` wiring through it, so a caller's attributes
+  have to win.
+- **`InputClearButton` renders _after_ the input in DOM order.** Both selectors' Tab handling depends
+  on it: a forward Tab from the input moves onto the ✕ (keeping the popup open) only because the ✕ is
+  the next tab stop, and `onContainerKeyDown` dismisses on a Tab that did _not_ originate on the
+  input.
+
+`data-keyboard-focus` is part of the contract, and `fieldKeyboardFocus` is the one sanctioned
+exception to this family's shared-ring rule: an **inset** `box-shadow`, not `focusOutlineStyles`. The
+field is inset 4–5px from the panel edge, so the shared ring's 3px offset would land on the panel's
+own border and on the divider. The comment in the module says so, because the natural instinct on
+reading it is to "fix" it back to the shared helper.
+
+Upstream ships no `PanelSearchInput.test.tsx`, so this port writes none — beyond-upstream coverage
+needs a hazard with no upstream analogue, and this has none.
+
+The oracle case is both modes at once: `wrapper` rides `stylex.props(styles.wrapper, xstyle)` and
+`icon` is handed to `Icon`'s `xstyle`, so neither folds; `field`, `field + fieldKeyboardFocus` and
+`input` are the three literal strings in `dist/`.
+
+### The chevron becomes its own element (#4838 + #4846)
+
+All three had a wrapper `<span>` carrying a 16px box, the secondary icon colour, the rotation
+transition and the theme target, with a bare `<Icon>` inside it. The wrapper is gone. `triggerIcon`
+collapses to `{flexShrink: 0}`, a new `triggerIconRotation` holds the transition, `triggerIconStatus`
+is deleted, and the glyph itself takes
+`xstyle={[triggerIcon, triggerIconRotation, isOpen && triggerIconOpen]}` plus the
+`*-indicator-icon` target — so one element carries the mark, its open/closed transform and the
+selector a theme addresses. The status branch renders a different icon and so never picks up the
+rotation, which is why its `transition: 'none'` opt-out could be deleted rather than moved.
+
+**The two changes have to land together.** #4838 alone leaves `triggerIcon` in a shape that exists in
+no released version, so the oracle would have nothing to diff it against in either mode.
+
+That is also the batch's clearest instance of the standing hazard: object-mode diffing proves what a
+module _declares_, never what an element _receives_. Moving a transform onto an `<Icon xstyle>` can
+leave the declaration correct and the wrap missing at **zero mismatches**. Every converted `.svelte`
+was grepped for its `xstyle=` references as a separate check.
+
+### `useIndicator('check')`, rendered unconditionally
+
+`Selector`'s option row no longer renders `{#if isSelected}<Icon icon="check">`. It renders the
+theme's `check` indicator **on every row**, inside a `styles.itemMarkColumn` span, with
+`state={isSelected ? 'checked' : 'unchecked'}`. The default `CheckIndicator` draws nothing when
+unchecked, so the rendered output is unchanged — but a theme that maps `check` to a radio needs the
+unchecked state to draw its empty circle, and `{#if}` would make that impossible.
+
+`itemMarkColumn` uses `minWidth: '1rem'`, not `width`, for the same reason: a replacement radio is
+20px at `sm` and the column has to grow with it.
+
+The Svelte translation is `const mark = useIndicator('check')` then
+`const SelectionMark = $derived(mark.current)`. Freezing it at init compiles, renders correctly on
+first paint, and breaks `<Theme>` swaps — the exact hazard `use-indicator.svelte.ts` documents in its
+header, and the reason that hook returns a getter where upstream returns the component.
+
+### `indicatorPosition` (#4993)
+
+Default `'end'` on `Selector`, `'start'` on `MultiSelector` — the two conventions each family already
+had. `MultiSelector`'s `'end'` needs a new `checkboxDecorativeEnd` (`marginInlineStart: auto`)
+because its row is not `space-between`: a truncating label plus a trailing control is what wants the
+auto margin, and `renderOption` output is not wrapped in a growing span, so the margin has to live on
+the checkbox itself.
+
+### Section headings stop being separators
+
+A labelled `<Divider>` rendered as a sibling put a stray `role="separator"` inside `role="listbox"`.
+Both selectors now render an `aria-hidden="true"` `<div>` **inside** the `role="group"`, styled by a
+new `sectionHeading` key and themed `selector-section-heading` / `multi-selector-section-heading`.
+`sectionDivider` is deleted from both modules. The group already carries the title as its accessible
+name, so the visible text is hidden rather than announced twice.
+
+`MultiSelector`'s select-all divider goes for the same reason — upstream has none, and its storybook
+comment names our shape as the a11y failure that stops a story opening its popup.
+
+### `offset` replaces a baked `marginBlockStart` (#4951, #5003)
+
+`MultiSelector` and `ComplexSelector` baked `marginBlockStart: --spacing-1` into their `popover`
+style, which a `position-try-fallbacks` flip would have applied to the wrong edge. Both now pass
+`offset` to `<PopoverLayer>`. `Selector` passes
+`shouldOverlaySelectedItem ? undefined : spacingVars['--spacing-1']`: in overlay mode the measured
+negative margin owns the block geometry and the menu is _meant_ to sit on the trigger.
+
+A token cannot be read from a `.svelte` file, so each `.stylex.ts` re-exports the value as a plain
+string — the arrangement `powerSearchPopoverOffset` settled.
+
+### `useSelectedItemOffset` stops measuring through a transform (#4802)
+
+The port had used `getBoundingClientRect()` throughout, which includes the popover's entry `scale()`,
+so the measured error grew with each option's distance from the menu top. It now walks
+`offsetTop`/`offsetParent` (`getLayoutTop`), reads `listbox.offsetHeight`, subtracts
+`listbox.scrollTop`, and applies `SELECTED_ITEM_OPTICAL_OFFSET = 1`. It also anchors on the **outer
+container** rather than the inner `<button>` — the shorter element made every size's selected row
+land too low, and the outer div is what `usePopover` anchors to anyway.
+
+### Typeahead moves out of `useCombobox`
+
+The private matcher in `use-combobox.svelte.ts`'s `default:` branch is deleted in favour of the
+shared `useTypeahead`, composed _ahead_ of `combobox.onKeyDown` by the component. What is left in
+`default:` is the new `onSearchSeed` path: with `hasSearch`, a printable key on the closed trigger
+seeds the query and opens the popup, and `onOpen` then places the caret after the seeded text.
+
+**`resetTypeahead` is a forward reference and must stay a plain `let`.** The hide handler and
+`clearValue` both need to drop the pending buffer (or "Dog" then "c" searches "dc"), but the hook is
+constructed below them because it needs the popover. A plain `let resetTypeahead = () => {}` assigned
+after `useTypeahead(...)` works, because the handlers read it at call time — making it `$state` would
+have the assignment re-trigger every derivation that read it.
+
+### The optimistic value is what `useCombobox` sees
+
+`Selector.tsx:922` passes `optimisticValue`, and this port had been passing `normalizedValue`. With a
+pending `changeAction` the raw prop still holds the old selection, so the popup would open with the
+highlight on a value the action has already replaced, and Delete/Backspace would clear it. The
+typeahead's `getCurrentIndex` / `onMatch` read the optimistic value for the same reason.
+
+### `ComplexSelector` loses its local focus ring (#4935, #4973)
+
+`styles.focusRing` (`:focus-within { outline: 2px solid accent; outline-offset: 2px }`) was the CSS
+oracle's two invented rules `.x1oqel4m:focus-within` and `.x1fanpfn`; both are gone from
+`astryx.css`. `focusOutlineStyles.focusWithin` replaces it and is `:has(:focus-visible)`, so the ring
+is now a **keyboard** ring where the old one drew on a mouse click too. `Selector` and
+`MultiSelector`'s ghost triggers gain the same style, for the same reason: a ghost trigger has no
+bordered wrapper of its own.
+
+### Oracle bookkeeping
+
+Three mode flips and one new case, each landed with its style edit:
+
+- **`selector`'s `statusButton` moved inline → object**, with its atoms unchanged. Its call site now
+  merges `focusOutlineStyles.focusVisible` across a module boundary, which defeats StyleX's fold.
+  `multi-selector`'s identical key made the same move. Only the _mode_ was wrong — exactly the
+  failure an oracle checking one mode would miss.
+- **`complex-selector`'s four-entry `inline` list is deleted, not trimmed.** `dist/` carries only two
+  literal strings (`trigger`, `triggerText`), and both keys survive as objects too, so object mode
+  already checks them atom for atom. With no `inline` key the leftover check does not run and nothing
+  goes unverified.
+- `selector`'s four dropdown entries are one call site's conditional matrix (`dropdownInput` on
+  `variant !== 'ghost'`, `dropdownHidden` on `!isPositioned`), not four sites.
+- New case for `field/panel-search-input.stylex.js` → `Field/PanelSearchInput.js`.
+
+`selector` 18 → 0, `multi-selector` 17 → 0, `complex-selector` 5 → 0, `panel-search-input` 0 from a
+standing start. The CSS oracle lost the two invented `complex-selector` rules and now reports nothing
+from this family.
+
+### One parity correction outside the brief
+
+`MultiSelector`'s `<PopoverLayer>` was passing `[styles.popover, layerAnimations.below]`. Upstream's
+`popover.render` is called with `xstyle: styles.popover` and never had a `layerAnimations` entry —
+checked against v0.3.0 and v0.4.1 — so the appended animation was this port's invention and is
+removed. `Selector` and `ComplexSelector` both genuinely carry `layerAnimations[placement]` upstream
+and keep it.
+
+### What the post-port audits caught
+
+The `astryx-parity` and `astryx-idiom` passes both ran after the components were written, and between them found five things worth recording — four of which were **pre-existing** rather than introduced by this batch, which is the argument for running them on a rewrite and not only on a new port.
+
+**`ComplexSelector` was dropping the consumer's `onclick` entirely.** Upstream destructures `onClick: onClickProp` (`ComplexSelector.tsx:268`) and composes it — `composeEventHandlers(onClickProp, () => { if (!isDisabled) popover.toggle(); })` — so a consumer handler runs first and can veto the toggle with `preventDefault()`. This port never destructured it, so `onclick` survived into `...rest` and the spread sat *before* the explicit `onclick=`. Compiled, that is one object literal where the last key wins, so the forwarded handler was discarded outright: `<ComplexSelector onclick={…}>` fired nothing and opened anyway. Now inlined as the two-step `MobileNav` and `SideNavCollapseButton` already use. The general rule, and it is `planning/06` H12 verbatim: **any event a component handles itself must be destructured out of `$props()` and invoked explicitly, in upstream's documented order** — a `{...rest}` beside an explicit handler for the same event is never a merge.
+
+`Selector` and `MultiSelector` were checked for the same shape and are faithful: their `{...rest}` sits before `onkeydown` on the inner `<button>`, and so does upstream's JSX, so React drops a forwarded `onkeydown` too.
+
+**`PanelSearchInput` omitted the wrong handler name.** It shipped `Omit<BaseProps<HTMLInputElement>, 'onchange'>`, reasoning by name from upstream's `Omit<…, 'onChange'>`. But React's `onChange` on a text input *is* the input event, and the handler this component binds its own value callback to is `oninput` — which, because the rest spread deliberately comes **after** it, a caller could have silently replaced, leaving a search box that types but never filters. `onchange` is never set here and has no React counterpart to omit, so it passes through. `TextInput` omits `'oninput'` for exactly this reason and was the precedent to have read. Unreachable in practice today (neither selector passes it, and the component is not exported), which is why it is second on the list rather than first — but it is the kind of thing that only stays unreachable by luck.
+
+**The `statusButton` inline→object flip had a third call site.** `use-input-status-icon.stylex.ts` composes `focusOutlineStyles.focusVisible` at its one call site exactly as upstream does, so its oracle case needed the same mode flip `selector` and `multi-selector` got — and without it the class oracle stayed red on a key whose atoms were already correct. The rule that generalises: **when a shared style helper is adopted, every case claiming `inline` for a call site that now composes it needs re-reading, and they are found by grepping the helper's name** rather than by waiting for each to fail in turn.
+
+**One demo story was missed.** `Placements` (`below`/`start`/`end`) is new at 0.4.1 and was added by #5003 — the same PR as the `offset` change — so it belongs to this batch even though the brief named only five stories. Now present.
+
+**`Selector`'s trigger spread was in the wrong place.** Upstream puts `{...rest}` after `ref, id, type, role` (`Selector.tsx:1328`); ours had it first, so our explicit `role`/`id`/`type` won where upstream lets a caller's override. Reordered to match.
+
+The idiom pass additionally confirmed, empirically rather than by reading, the four translation decisions this batch was least sure of: `$.component` re-reads the `SelectionMark` derived so a `<Theme>` swap does re-resolve the mark; `useCombobox`'s options bag is rebuilt per call so `optimistic.current` is read at event time; a top-level `$effect` is deferred to `pop()` and therefore runs after the whole template subtree, so `searchEl` and `anchorEl` are populated before any measurement or focus; and `{@const}` compiles to a `$derived`, so the per-row `multi-selector-option` target restamps its `data-*` while the hoisted, argument-free `themeProps` calls correctly do not.
+
+It also corrected one clause of a comment I wrote: `use-selected-item-offset.svelte.ts`'s header claimed `$effect.pre` would be wrong because "the items being measured would not be there yet". They would — the layer's content is rendered unconditionally, so the rows exist from mount. The real reason plain `$effect` is right is that this must observe the *patched* DOM after `showPopover()` has run. Conclusion unchanged, justification corrected.

@@ -30,7 +30,7 @@ export default {
 			{
 				guidance: true,
 				description:
-					"Libraries can augment the icon map with their own keys: registerIcons({'richtext:bold': <MyIcon />}) accepts arbitrary extension keys (not just the built-in IconName set). Resolve them with getExtendedIcon(key, fallback), which prefers a theme-registered icon and falls back to a bundled default — the seam that makes library-shipped icons theme-overridable."
+					"Override icons through the theme, not globally: defineTheme({icons: {close: <XMarkIcon />}}) scopes the swap to the active <Theme>, and extends shallow-merges it into derived themes. registerIcons() mutates a process-wide registry and warns in dev, so keep it for app bootstrap rather than making it a library's theming seam."
 			},
 			{
 				guidance: true,

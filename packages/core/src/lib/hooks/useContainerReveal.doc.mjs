@@ -30,7 +30,7 @@ export default {
 			name: 'options.isEnabled',
 			type: 'boolean',
 			description:
-				'When false the hook is inert: no marker is applied and content getters return no styles, so content is always shown. Lets a component gate reveal on its own prop (e.g. revealOn === "hover").',
+				'When false the hook is inert: the container gets no styles and content getters return no styles, so content is always shown. Read on every render, so a component can flip it after mount (e.g. revealOn === "hover").',
 			default: 'true'
 		}
 	],
@@ -49,7 +49,7 @@ export default {
 	],
 	usage: {
 		description:
-			'A headless hover/focus reveal primitive. Gives a container a scoped trigger that reveals (or conceals) content inside it when the container is hovered or receives keyboard focus: the classic "row actions appear on hover" pattern. The reveal is CSS-only: no hover state lives in React and hovering never triggers a re-render. The caller authors no StyleX for the reveal itself; the hook hands out a scoped marker and matching styles, so nested containers never leak hover/focus into one another. Accessible by construction: revealed content is visually hidden at rest with position and opacity (never display:none), so it stays mounted, keeps its place in the tab order, and is announced to assistive technology; it reveals on :focus-within so keyboard users see it when tabbing in, stays visible on touch (never gated behind hover on coarse pointers), and honors prefers-reduced-motion.',
+			'A headless hover/focus reveal primitive. Gives a container a scoped trigger that reveals (or conceals) content inside it when the container is hovered or receives keyboard focus: the classic "row actions appear on hover" pattern. The reveal is CSS-only: no hover state lives in React and hovering never triggers a re-render. The caller authors no StyleX for the reveal itself; the hook hands out the container and content styles, and a nested container shadows its ancestor, so nested containers never leak hover/focus into one another. Accessible by construction: revealed content is visually hidden at rest with position and opacity (never display:none), so it stays mounted, keeps its place in the tab order, and is announced to assistive technology; it reveals on :focus-within so keyboard users see it when tabbing in, stays visible on touch (never gated behind hover on coarse pointers), and honors prefers-reduced-motion.',
 		bestPractices: [
 			{
 				guidance: true,
@@ -64,7 +64,7 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Gate the reveal with isEnabled when a consumer prop decides whether content is revealed on hover or always shown.'
+					'Gate the reveal with isEnabled when a consumer prop decides whether content is revealed on hover or always shown; it can change at any time.'
 			},
 			{
 				guidance: true,
