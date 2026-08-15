@@ -1463,7 +1463,10 @@ Release `$ARGUMENTS` (a version, e.g. `0.4.1`).
 
 `.github/workflows/release.yml` owns the mechanics: it fires on `v*`, re-runs the full CI gate
 (a tag can be pushed at any commit, including one CI never saw), then publishes with
-`pnpm publish -r --access public --provenance --no-git-checks`. It must be pnpm, not npm — only pnpm
+`pnpm publish -r --access public --no-git-checks`. **No `--provenance`** — the old `TODO.md` claimed
+there was, and the workflow has not carried it since the repo went private, because npm's Sigstore
+log rejects provenance from a private source repository. `release.yml` says so at the call site and
+keeps `id-token: write` for the day the repo is public again. It must be pnpm, not npm — only pnpm
 rewrites the `workspace:` protocol in the theme peer dependencies to a real range at pack time.
 
 This skill covers what the workflow cannot.
