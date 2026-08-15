@@ -49,26 +49,15 @@ matching release of this port. The pin is currently Astryx `0.4.1` — see
 
 ### CLI
 
-- [ ] `upgrade` with the full contract (dry-run default, corruption guards) on a `magic-string` +
-      `svelte/compiler` runner, since jscodeshift can't parse `.svelte`
-- [ ] Upstream's codemod assets stay deferred, and should stay deferred permanently in their
-      present form — every one is a jscodeshift transform over `.tsx` migrating _React_ source
-      between React Astryx versions. The first real registry entry belongs to this port's own
-      codemods, written against the `magic-string` + `svelte/compiler` API
-- [ ] Upstream's template assets and page templates stay deferred from the CLI's own catalog —
-      `template --list` shows nothing from core and `init --features template` returns `skipped`.
-      (The page template _content_ has separately landed as demo/docs assets; this item is the
-      CLI's own template scaffolding catalog.)
 - [ ] `blog` CLI command is not ported — it needs content this port does not have
 - [ ] `components.lock.json` with per-file content hashes — not started
 - [ ] The remaining `it.todo`s in the CLI suite don't name a slice any more: some wait on this
       port cutting a second upstream-tracking release (a codemod migrates _between_ two
-      versions), the rest wait on the deferred assets above
-- [ ] Core ships its demo routes (`src/routes`) inside its published tarball — a `"!src/routes"`
-      negation in `files` is the fix. Left for the release checklist rather than a CLI slice,
-      since it changes published content
-- [ ] Drop `"private": true` from `packages/cli/package.json` — only once the CLI is genuinely
-      usable
+      versions), the rest wait on the deferred codemod and template assets
+
+Upstream's codemod and template assets stay deliberately deferred from the CLI's own catalog. Both
+are recorded in [`debts.md`](./debts.md) rather than here, because a standing decision is a
+deviation, not a task.
 
 ### Docs site
 

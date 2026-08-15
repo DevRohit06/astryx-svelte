@@ -1018,3 +1018,25 @@ ported on the demo route and shows the shape the props table should take
 > which renders every component's props table, has not — its own header comment still reads
 > "A `<table>` until `Table` lands (batch 13)", and it still renders a bare `<table>`. The debt
 > above survives for `props-table.svelte`; the reference-doc half of it has closed.
+
+### Upstream's codemod assets stay deferred, and should stay deferred in their present form
+
+- **units:** cli (assets/codemods)
+- **kind:** deliberate-divergence
+- **retires:** when this port ships its own codemods against `magic-string` + `svelte/compiler`
+
+Every one of upstream's codemod assets is a jscodeshift transform over `.tsx`, migrating _React_
+source between React Astryx versions. jscodeshift cannot parse `.svelte`, so porting them in their
+present form would produce transforms that cannot run against a consumer's code. The first real
+registry entry belongs to this port's own codemods, written against the `magic-string` +
+`svelte/compiler` API the `upgrade` command already uses.
+
+### Upstream's template assets stay deferred from the CLI's own catalog
+
+- **units:** cli (assets/templates)
+- **kind:** deliberate-divergence
+- **retires:** when the CLI grows its own template scaffolding catalog
+
+`template --list` shows nothing from core and `init --features template` returns `skipped`. The page
+template _content_ has separately landed as demo and docs assets — 42 of them — so this is the CLI's
+own scaffolding catalog rather than the templates themselves.
