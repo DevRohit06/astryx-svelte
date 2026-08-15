@@ -39,6 +39,8 @@
 	import { useTabListContext } from './tab-list-context.svelte.js';
 	import {
 		tabMenuChevronAttrs,
+		tabMenuChevronIconStyle,
+		tabMenuChevronOpenStyle,
 		tabMenuDropdownAttrs,
 		tabMenuHeadingAttrs,
 		tabMenuHoverBgAttrs,
@@ -151,7 +153,7 @@
 	const triggerLabelAttrs = tabMenuTriggerLabelAttrs();
 	const triggerLabelTextAttrs = tabMenuTriggerLabelTextAttrs();
 	const triggerLabelSizerAttrs = tabMenuTriggerLabelSizerAttrs();
-	const chevronAttrs = $derived(tabMenuChevronAttrs(popover.isOpen));
+	const chevronAttrs = tabMenuChevronAttrs();
 	const indicatorAttrs = tabMenuIndicatorAttrs();
 	const dropdownAttrs = tabMenuDropdownAttrs();
 	const headingAttrs = tabMenuHeadingAttrs();
@@ -184,7 +186,12 @@
 		>
 	</span>
 	<span aria-hidden="true" class={chevronAttrs.class} style={chevronAttrs.style}>
-		<Icon icon="chevronDown" size="sm" color="inherit" />
+		<Icon
+			icon="chevronDown"
+			size="sm"
+			color="inherit"
+			xstyle={[tabMenuChevronIconStyle, popover.isOpen && tabMenuChevronOpenStyle]}
+		/>
 	</span>
 	{#if hasSelectedOption}
 		<span

@@ -47,10 +47,9 @@
 
 <script lang="ts">
 	import { cx, mergeStyle } from '../../internal/sx.js';
-	import { rtlMirrorAttrs } from '../../utils/rtl.stylex.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { spacingVars } from '../../styles/tokens.stylex.js';
-	import { useIcon } from '../icon/use-icon.svelte.js';
+	import Icon from '../icon/icon.svelte';
 	import { useLinkComponent } from '../link/link-context.svelte.js';
 	import LinkElement from '../link/link-element.svelte';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
@@ -58,8 +57,10 @@
 	import {
 		treeItemBranchesAttrs,
 		treeItemChevronButtonAttrs,
+		treeItemChevronCollapsedStyle,
 		treeItemChevronContainerAttrs,
-		treeItemChevronSvgAttrs,
+		treeItemChevronExpandedStyle,
+		treeItemChevronSvgStyle,
 		treeItemChildGroupAttrs,
 		treeItemContentAttrs,
 		treeItemContentWrapperAttrs,
@@ -140,8 +141,6 @@
 			: `calc(${nestedLevel} * var(--tree-list-indent) + ${spacingVars['--spacing-4']} + ${spacingVars['--spacing-2']})`
 	);
 
-	const chevronIcon = useIcon(() => 'chevronRight');
-
 	const theme = $derived(
 		themeProps('tree-list-item', {
 			density,
@@ -171,8 +170,10 @@
 	const endAttrs = treeItemEndContentAttrs();
 	const chevronContainerAttrs = treeItemChevronContainerAttrs();
 	const chevronButtonAttrs = treeItemChevronButtonAttrs();
-	const chevronSvgAttrs = $derived(treeItemChevronSvgAttrs(isExpanded));
-	const mirror = rtlMirrorAttrs();
+	const chevronXstyle = $derived([
+		treeItemChevronSvgStyle,
+		isExpanded ? treeItemChevronExpandedStyle : treeItemChevronCollapsedStyle
+	]);
 
 	// Stable theme target on the chevron, reflecting the open/closed state, so a
 	// theme can restyle the toggle and each of its states without a fragile
@@ -223,18 +224,18 @@
 {/snippet}
 
 <!--
-	The RTL mirror is an **outer** span, outside the rotation. Composing it onto
-	the same element as `chevronSvgAttrs` (which carries the expanded/collapsed
-	`transform: rotate(...)`) would make one transform overwrite the other, and
-	the chevron would only be wrong in the expanded × RTL corner. Two elements,
-	two transforms, no interaction.
+	Both wrappers are gone (#4838). `Icon` renders the glyph's span itself —
+	carrying the pre-existing `astryx-icon` target — so the rotation rides that
+	same element, and the RTL mirror is spelled out inside each state's
+	`transform` rather than nested on an outer span. One element, one transform,
+	one theme target.
+
+	`sm` is the nearest size to the 16px chevron column; `chevronSvgStyle`
+	re-pins the exact box, because the column is spacing-token-sized rather than
+	rem-sized. The button/container owns the colour, so the glyph inherits it.
 -->
 {#snippet chevronGlyph()}
-	<span class={mirror.class} style={mirror.style}>
-		<span class={chevronSvgAttrs.class} style={chevronSvgAttrs.style}>
-			{@render chevronIcon.current?.()}
-		</span>
-	</span>
+	<Icon icon="chevronRight" size="sm" color="inherit" xstyle={chevronXstyle} />
 {/snippet}
 
 <li

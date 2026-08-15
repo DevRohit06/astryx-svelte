@@ -59,7 +59,8 @@
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import {
-		bannerChevronAttrs,
+		bannerChevronExpandedStyle,
+		bannerChevronStyle,
 		bannerContentAreaAttrs,
 		bannerDescriptionAttrs,
 		bannerEndAreaAttrs,
@@ -179,10 +180,12 @@
 </script>
 
 {#snippet chevronIcon()}
-	{@const attrs = bannerChevronAttrs(isExpanded)}
-	<span class={attrs.class} style={attrs.style}>
-		<Icon icon="chevronDown" size="sm" color="inherit" />
-	</span>
+	<Icon
+		icon="chevronDown"
+		size="sm"
+		color="inherit"
+		xstyle={[bannerChevronStyle, isExpanded && bannerChevronExpandedStyle]}
+	/>
 {/snippet}
 
 {#snippet closeIcon()}
@@ -202,18 +205,37 @@
 			class={cx(headerTheme.class, headerAttrs.class)}
 			style={headerAttrs.style}
 		>
-			<div
-				{...iconTheme}
-				class={cx(iconTheme.class, iconWrapperAttrs.class)}
-				style={iconWrapperAttrs.style}
-				aria-hidden="true"
-			>
-				{#if icon != null}
+			<!--
+				The 'banner-icon' target rides on the element that paints: the default
+				<Icon> below, or this wrapper when a custom `icon` snippet is passed
+				(core never injects props into consumer markup, so overrides reach it
+				via inheritance). The wrapper itself stays layout-only.
+			-->
+			{#if icon != null}
+				<div
+					{...iconTheme}
+					class={cx(iconTheme.class, iconWrapperAttrs.class)}
+					style={iconWrapperAttrs.style}
+					aria-hidden="true"
+				>
 					{@render icon()}
-				{:else}
-					<Icon icon={defaultIconNames[status]} size="md" color={statusIconColor[status]} />
-				{/if}
-			</div>
+				</div>
+			{:else}
+				<div class={iconWrapperAttrs.class} style={iconWrapperAttrs.style} aria-hidden="true">
+					<!--
+						Applied to the status <Icon> itself rather than the wrapper, so the
+						element that paints the glyph is the element a theme targets — a
+						'banner-icon' 'status:X' colour override beats the Icon's own
+						variant from @layer astryx-theme (#4166).
+					-->
+					<Icon
+						icon={defaultIconNames[status]}
+						size="md"
+						color={statusIconColor[status]}
+						{...iconTheme}
+					/>
+				</div>
+			{/if}
 			<div class={headerContentAttrs.class} style={headerContentAttrs.style}>
 				<div class={titleAttrs.class} style={titleAttrs.style}>
 					{#if typeof title === 'function'}{@render title()}{:else}{title}{/if}

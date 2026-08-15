@@ -111,7 +111,11 @@ const styles = stylex.create({
 	chevron: {
 		width: spacingVars['--spacing-4'],
 		height: spacingVars['--spacing-4'],
-		flexShrink: 0,
+		flexShrink: 0
+	},
+	// Applied to the chevron <Icon> (via `xstyle`) rather than its wrapper, so the
+	// element that rotates is the element a theme targets.
+	chevronIcon: {
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
@@ -222,10 +226,19 @@ export function tabMenuTriggerLabelSizerAttrs(): SvelteStyleAttrs {
 	return sx(styles.triggerLabelSizer);
 }
 
-/** The chevron, rotated while the menu is open. */
-export function tabMenuChevronAttrs(isOpen: boolean): SvelteStyleAttrs {
-	return sx(styles.chevron, isOpen && styles.chevronOpen);
+/** The chevron's wrapper — a fixed box, and nothing that moves. */
+export function tabMenuChevronAttrs(): SvelteStyleAttrs {
+	return sx(styles.chevron);
 }
+
+/**
+ * Passed to the chevron `Icon`'s `xstyle`, the way upstream passes
+ * `styles.chevronIcon` and `styles.chevronOpen` (#4838). The rotation and the
+ * transition that animates it ride the glyph rather than the wrapper, so the
+ * element a theme targets is the element that moves.
+ */
+export const tabMenuChevronIconStyle = styles.chevronIcon;
+export const tabMenuChevronOpenStyle = styles.chevronOpen;
 
 /** The selected-state rule under the trigger. Rendered only when selected. */
 export function tabMenuIndicatorAttrs(): SvelteStyleAttrs {

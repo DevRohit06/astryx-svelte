@@ -148,7 +148,12 @@ const styles = stylex.create({
 		justifyContent: 'center',
 		minWidth: spacingVars['--spacing-7'],
 		minHeight: spacingVars['--spacing-7'],
-		color: colorVars['--color-icon-secondary']
+		color: colorVars['--color-icon-secondary'],
+		// 28px is the hit/alignment box, not the glyph. Icon sizes its own span
+		// with a matching font-size (the registry chevron is a 1em SVG), so pin
+		// font-size back to inherit to keep the glyph at the 14px it renders at
+		// today. The 28px min box still wins over Icon's width/height.
+		fontSize: 'inherit'
 	},
 	headerEndContent: {
 		flexShrink: 0,
@@ -194,7 +199,14 @@ const styles = stylex.create({
 		minWidth: spacingVars['--spacing-7'],
 		minHeight: spacingVars['--spacing-7'],
 		color: colorVars['--color-icon-secondary'],
+		// See `chevron` — keep the glyph on the inherited font-size.
+		fontSize: 'inherit',
 		transform: 'rotate(180deg)'
+	},
+	// Glyph inside a chevron *trigger* (the button already carries the 28px box
+	// and the color, so the Icon only has to avoid resizing itself).
+	chevronGlyph: {
+		fontSize: 'inherit'
 	},
 	popover: {
 		minWidth: 'anchor-size(width)',
@@ -276,15 +288,23 @@ export function sideNavHeadingRowAttrs(): SvelteStyleAttrs {
 	return sx(styles.headingRow);
 }
 
-/** The static chevron. */
-export function sideNavHeadingChevronAttrs(): SvelteStyleAttrs {
-	return sx(styles.chevron);
-}
+/**
+ * The static chevron, passed to the `Icon`'s `xstyle` the way upstream passes
+ * `styles.chevron` (#4838). The 28px box is the hit/alignment box, so it stays
+ * on the glyph's own element rather than a wrapper it would have to fill.
+ */
+export const sideNavHeadingChevronStyle = styles.chevron;
 
 /** The chevron as its own focusable button, inside a heading that has links. */
 export function sideNavHeadingChevronButtonAttrs(): SvelteStyleAttrs {
 	return sx(styles.chevron, styles.interactive);
 }
+
+/**
+ * The glyph inside a chevron *trigger*. The `<button>` stays a button and keeps
+ * the 28px box and the colour; the `Icon` only has to avoid resizing itself.
+ */
+export const sideNavHeadingChevronGlyphStyle = styles.chevronGlyph;
 
 /** The trailing slot pushed to the end of the heading row. */
 export function sideNavHeadingEndContentAttrs(): SvelteStyleAttrs {
@@ -302,6 +322,4 @@ export function sideNavHeadingPopoverHeadingAttrs(): SvelteStyleAttrs {
 }
 
 /** The replica's chevron, flipped to point back up at the trigger. */
-export function sideNavHeadingPopoverChevronAttrs(): SvelteStyleAttrs {
-	return sx(styles.popoverChevron);
-}
+export const sideNavHeadingPopoverChevronStyle = styles.popoverChevron;

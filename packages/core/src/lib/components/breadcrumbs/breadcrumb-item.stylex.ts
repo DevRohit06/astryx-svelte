@@ -85,6 +85,11 @@ const itemStyles = stylex.create({
 		display: 'flex',
 		alignItems: 'center',
 		flexShrink: 0,
+		// Sized off supporting text (12px) — exactly Icon's `xsm` box at the
+		// default type scale. Width/height stay on the token so the box and the
+		// glyph keep matching if a theme retunes the supporting step.
+		width: typeScaleVars['--text-supporting-size'],
+		height: typeScaleVars['--text-supporting-size'],
 		fontSize: typeScaleVars['--text-supporting-size']
 	},
 	separator: {
@@ -138,10 +143,15 @@ export function breadcrumbIconAttrs(): SvelteStyleAttrs {
 	return sx(itemStyles.icon);
 }
 
-/** The trailing chevron on a menu trigger. */
-export function breadcrumbChevronAttrs(): SvelteStyleAttrs {
-	return sx(itemStyles.chevron);
-}
+/**
+ * The trailing chevron on a menu trigger, passed to the `Icon`'s `xstyle` the
+ * way upstream passes `itemStyles.chevron` (#4838). The glyph used to be
+ * resolved with `useIcon` and hand-rendered inside a `<span>` — a weaker
+ * reimplementation of `Icon`, which already resolves the glyph *and* renders a
+ * span carrying the `astryx-icon` theme target. Same node count, one more
+ * target.
+ */
+export const breadcrumbChevronStyle = itemStyles.chevron;
 
 /**
  * The menu surface a `menu` crumb opens. `--_dropdown-menu-radius` and

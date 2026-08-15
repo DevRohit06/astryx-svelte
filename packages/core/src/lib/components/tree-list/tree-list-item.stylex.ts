@@ -184,15 +184,34 @@ const styles = stylex.create({
 	},
 	chevronSvg: {
 		display: 'flex',
+		// The chevron column is sized in spacing tokens by the button/container
+		// around it (--spacing-4 = 16px), not on Icon's rem scale, so the glyph's
+		// box is pinned to that same token. Icon's `sm` (1rem) only coincides with
+		// 16px at a 16px root font-size; drifting off the token would knock the
+		// glyph out of its 16px column.
+		width: spacingVars['--spacing-4'],
+		height: spacingVars['--spacing-4'],
+		fontSize: spacingVars['--spacing-4'],
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
 	},
+	// The RTL mirror is folded into each state's transform rather than living on
+	// a parent span. Both are `transform`, so on one element the later value
+	// would win — spelling out `scaleX(-1) rotate(...)` per state composes them
+	// exactly as the nested elements did, while leaving a single element to
+	// carry the glyph's theme target.
 	chevronExpanded: {
-		transform: 'rotate(90deg)'
+		transform: {
+			default: 'rotate(90deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(90deg)'
+		}
 	},
 	chevronCollapsed: {
-		transform: 'rotate(0deg)'
+		transform: {
+			default: 'rotate(0deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(0deg)'
+		}
 	}
 });
 
@@ -317,7 +336,12 @@ export function treeItemChevronButtonAttrs(): SvelteStyleAttrs {
 	return sx(styles.chevronButton);
 }
 
-/** The rotating chevron glyph. */
-export function treeItemChevronSvgAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(styles.chevronSvg, isExpanded ? styles.chevronExpanded : styles.chevronCollapsed);
-}
+/**
+ * The rotating chevron glyph, passed to the `Icon`'s `xstyle` (#4838). `Icon`
+ * renders the glyph's span itself — carrying the pre-existing `astryx-icon`
+ * target — so the rotation rides that element instead of two extra wrappers,
+ * and the RTL mirror is spelled out per state above rather than nested outside.
+ */
+export const treeItemChevronSvgStyle = styles.chevronSvg;
+export const treeItemChevronExpandedStyle = styles.chevronExpanded;
+export const treeItemChevronCollapsedStyle = styles.chevronCollapsed;

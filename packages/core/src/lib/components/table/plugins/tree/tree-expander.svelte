@@ -11,8 +11,9 @@
 	import Icon from '../../../icon/icon.svelte';
 	import { useTranslator } from '../../../../i18n/index.js';
 	import {
-		treeChevronAttrs,
-		treeChevronMirrorAttrs,
+		treeChevronIconCollapsedStyle,
+		treeChevronIconExpandedStyle,
+		treeChevronIconStyle,
 		treeExpanderButtonAttrs
 	} from './tree.stylex.js';
 
@@ -27,8 +28,10 @@
 	const t = useTranslator();
 
 	const buttonAttrs = treeExpanderButtonAttrs();
-	const chevronAttrs = $derived(treeChevronAttrs(isExpanded));
-	const mirror = treeChevronMirrorAttrs();
+	const chevronXstyle = $derived([
+		treeChevronIconStyle,
+		isExpanded ? treeChevronIconExpandedStyle : treeChevronIconCollapsedStyle
+	]);
 </script>
 
 <button
@@ -42,9 +45,9 @@
 	aria-label={isExpanded ? t('@astryx.tableTree.collapseRow') : t('@astryx.tableTree.expandRow')}
 	aria-expanded={isExpanded}
 >
-	<span class={mirror.class} style={mirror.style}>
-		<span class={chevronAttrs.class} style={chevronAttrs.style}>
-			<Icon icon="chevronRight" size="xsm" />
-		</span>
-	</span>
+	<!--
+		The rotation rides on the glyph rather than a wrapper span so the theme
+		target reaches both the mark and its open/closed transform (#4838).
+	-->
+	<Icon icon="chevronRight" size="xsm" xstyle={chevronXstyle} />
 </button>

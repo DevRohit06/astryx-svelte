@@ -50,6 +50,12 @@ export default {
 				description:
 					'Per-level indentation step. Each nesting level indents its rows by this distance, and the guide lines follow it so they stay aligned. Set it on the `tree-list` target to retune the metric (e.g. `var(--spacing-5)` for a wider indent).',
 				default: 'var(--spacing-4)'
+			},
+			{
+				name: '--tree-list-row-gap',
+				description:
+					'Vertical gap between adjacent rows. Default `2px` (var(--spacing-0-5)) gives a subtle separation; set it on the `tree-list` target to widen or close the gap. The connector guides span the gap automatically (the line stays continuous) and do not overhang the last row, so no guide-height tuning is needed.',
+				default: 'var(--spacing-0-5)'
 			}
 		]
 	},
@@ -65,6 +71,11 @@ export default {
 			{
 				guidance: true,
 				description: 'Pre-expand important branches so users see key content immediately.'
+			},
+			{
+				guidance: true,
+				description:
+					'Leaf rows reserve space for a chevron column whenever the tree has any expandable item to line up under; only a fully flat tree (no expandable items at all) renders its rows flush. Rely on this rather than nudging indentation with custom CSS.'
 			},
 			{
 				guidance: false,

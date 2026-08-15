@@ -9,13 +9,15 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 import { customChevron, customInfo } from './fixtures/banner-registry-icons.svelte';
 
 /**
- * Ported from Astryx's `Banner/Banner.test.tsx`, all **35** cases at v0.3.0.
+ * Ported from Astryx's `Banner/Banner.test.tsx`, all **38** cases at v0.4.1.
  * Nothing is dropped.
  *
- * (The previous header said "all 33 cases". Upstream has 35: the nested
- * `describe('elevation')` pair that arrived with 0.1.9's `elevation` prop had
- * never been carried across and the header did not name it. Both are ported here
- * and both passed on the first run.)
+ * (At v0.3.0 this was 35. The three added here are #4166's "Status icon color
+ * theming" block, which pins the `banner-icon` theme target to the element that
+ * paints — the status `<Icon>` — and keeps it on the wrapper only when a custom
+ * `icon` is passed. An earlier header said "all 33 cases": upstream had 35, and
+ * the nested `describe('elevation')` pair that arrived with 0.1.9's `elevation`
+ * prop had never been carried across.)
  *
  * Cases with `children` or `endContent` go through `banner-fixture.svelte`, and
  * the custom-icon case through the shared `slot-probe` — both slots are snippets
@@ -363,6 +365,62 @@ describe('Banner', () => {
 		});
 		expect(attached).toHaveBeenCalledWith(screen.container.firstElementChild);
 		expect(screen.container.firstElementChild).toBeInstanceOf(HTMLDivElement);
+	});
+
+	// =========================================================================
+	// Status icon color theming (#4166)
+	// =========================================================================
+
+	it("carries the 'banner-icon' theme target on the default status icon glyph", async () => {
+		// Theme overrides for 'banner-icon' + 'status:X' compile to
+		// '.astryx-banner-icon.<status>' (parseStyleKey). The target must sit on
+		// the <Icon> span itself so those same-element rules in
+		// @layer astryx-theme beat the Icon's own color variant.
+		const statuses = ['info', 'warning', 'error', 'success'] as const;
+		for (const status of statuses) {
+			const screen = await render(Banner, {
+				props: { status, title: `${status} banner` }
+			});
+			const glyph = screen.container.querySelector(`.astryx-icon.astryx-banner-icon.${status}`);
+			expect(glyph).not.toBeNull();
+			expect(glyph).toHaveAttribute('data-status', status);
+			// Exactly one element carries the target — the layout wrapper no
+			// longer does.
+			expect(screen.container.querySelectorAll('.astryx-banner-icon')).toHaveLength(1);
+			screen.unmount();
+		}
+	});
+
+	it('keeps the color variant on the theme-target element (regression pin for #4166)', async () => {
+		// Pre-fix, '.astryx-banner-icon.info' matched the layout wrapper while
+		// the color variant (data-color="accent") sat on an inner span that a
+		// theme override could never reach. Target and paint now share one
+		// element.
+		const screen = await render(Banner, { props: { status: 'info', title: 'Info' } });
+		const target = screen.container.querySelector('.astryx-banner-icon.info');
+		expect(target).toHaveAttribute('data-color', 'accent');
+	});
+
+	it("keeps the 'banner-icon' target on the wrapper for a custom icon node", async () => {
+		// Core never injects props into consumer markup, so with a custom `icon`
+		// the target stays on the (layout-only) wrapper and overrides reach the
+		// node via inheritance. The node itself is untouched.
+		const screen = await render(SlotProbe, {
+			props: {
+				component: Banner,
+				slot: 'icon',
+				text: 'i',
+				testid: 'custom-glyph',
+				rest: { status: 'info', title: 'Custom icon' }
+			}
+		});
+		const targets = screen.container.querySelectorAll('.astryx-banner-icon');
+		expect(targets).toHaveLength(1);
+		expect(targets[0]?.tagName).toBe('DIV');
+		expect(targets[0]).toHaveAttribute('aria-hidden', 'true');
+		const custom = screen.container.querySelector('[data-testid="custom-glyph"]');
+		expect(custom).not.toBeNull();
+		expect(custom?.className).toBe('');
 	});
 
 	// =========================================================================

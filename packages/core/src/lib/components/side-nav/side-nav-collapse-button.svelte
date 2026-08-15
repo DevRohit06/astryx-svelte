@@ -30,8 +30,11 @@
 	import { useTranslator } from '../../i18n/index.js';
 	import { useAppShellMobile } from '../app-shell/app-shell-mobile-context.svelte.js';
 	import Button, { type ButtonProps } from '../button/button.svelte';
-	import { useIcon } from '../icon/use-icon.svelte.js';
-	import { sideNavCollapseChevronAttrs } from './side-nav-collapse-button.stylex.js';
+	import Icon from '../icon/icon.svelte';
+	import {
+		sideNavCollapseChevronCollapsedStyle,
+		sideNavCollapseChevronStyle
+	} from './side-nav-collapse-button.stylex.js';
 	import { rtlMirrorAttrs } from '../../utils/rtl.stylex.js';
 	import {
 		useSideNavCollapse,
@@ -72,8 +75,6 @@
 	const contextCollapse = useSideNavCollapse();
 	const appShellMobile = useAppShellMobile();
 
-	const chevronIcon = useIcon(() => 'chevronLeft');
-
 	// Upstream's `useSideNavCollapseState`: context when there is no handle,
 	// otherwise the handle's live state. Note the `isCollapsible` fallback
 	// differs between the two branches — `false` from an absent context, `true`
@@ -95,7 +96,6 @@
 	// mobile drawer — collapse doesn't apply there).
 	const isVisible = $derived(collapse.isCollapsible && !appShellMobile().isMobile);
 
-	const chevronAttrs = $derived(sideNavCollapseChevronAttrs(collapse.isCollapsed));
 	const mirror = rtlMirrorAttrs();
 
 	// Upstream's `composeEventHandlers(onClickProp, toggle)`: the caller's handler
@@ -116,13 +116,23 @@
 <!--
 	The RTL mirror wraps the rotation rather than sharing its element: both are
 	`transform`s, so composing them on one span makes the collapsed state and the
-	mirror overwrite each other.
+	mirror overwrite each other. This is #4838's one deliberate exception — every
+	other converted chevron spells the mirror out per state instead.
+
+	`sm` (1rem) matches what this glyph already renders at: Button's icon slot
+	pins its wrapper to 16px, and the registry SVG is 1em.
 -->
 {#snippet chevron()}
 	<span class={mirror.class} style={mirror.style}>
-		<span class={chevronAttrs.class} style={chevronAttrs.style}
-			>{@render chevronIcon.current?.()}</span
-		>
+		<Icon
+			icon="chevronLeft"
+			size="sm"
+			color="inherit"
+			xstyle={[
+				sideNavCollapseChevronStyle,
+				collapse.isCollapsed && sideNavCollapseChevronCollapsedStyle
+			]}
+		/>
 	</span>
 {/snippet}
 

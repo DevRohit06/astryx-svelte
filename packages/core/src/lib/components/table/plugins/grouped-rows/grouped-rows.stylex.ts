@@ -53,12 +53,25 @@ const styles = stylex.create({
 		}
 	},
 	chevronIcon: {
-		display: 'inline-flex',
 		transitionProperty: 'transform',
 		transitionDuration: '150ms'
 	},
-	chevronExpanded: {
-		transform: 'rotate(90deg)'
+	// The RTL mirror is folded into each state's transform rather than living on
+	// a parent span. Both are `transform`, so on one element the later value
+	// would win — spelling out `scaleX(-1) rotate(...)` per state composes them
+	// exactly as the nested elements did, while leaving a single element to
+	// carry the glyph's theme target.
+	chevronIconCollapsed: {
+		transform: {
+			default: 'rotate(0deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(0deg)'
+		}
+	},
+	chevronIconExpanded: {
+		transform: {
+			default: 'rotate(90deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(90deg)'
+		}
 	},
 	// Emphasized body text — same size as body, heavier weight (Ernest #3).
 	label: {
@@ -86,9 +99,16 @@ export function groupChevronAttrs(): SvelteStyleAttrs {
 	return sx(styles.chevron);
 }
 
-export function groupChevronIconAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(styles.chevronIcon, isExpanded && styles.chevronExpanded);
-}
+/**
+ * Passed to the chevron `Icon`'s `xstyle` (#4838). The rotation rides the glyph
+ * rather than a wrapper span, so the `astryx-icon` target reaches both the mark
+ * and its open/closed transform — and the RTL mirror, which was inert on the
+ * old inline wrapper (`transform` does not apply to a non-replaced inline box),
+ * is spelled out per state above and now actually mirrors.
+ */
+export const groupChevronIconStyle = styles.chevronIcon;
+export const groupChevronIconCollapsedStyle = styles.chevronIconCollapsed;
+export const groupChevronIconExpandedStyle = styles.chevronIconExpanded;
 
 export function groupLabelAttrs(): SvelteStyleAttrs {
 	return sx(styles.label);

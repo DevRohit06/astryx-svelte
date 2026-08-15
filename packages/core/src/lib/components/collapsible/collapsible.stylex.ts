@@ -49,10 +49,17 @@ const styles = stylex.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		flexShrink: 0,
+		// The chevron is sized off the trigger's own type size (--text-large-size,
+		// 17px), which sits between Icon's `sm` (16px) and `md` (20px) boxes.
+		// Pinning the box to the token keeps the glyph exactly the size it was
+		// when it was a bare 1em SVG inheriting the trigger's font-size, and keeps
+		// it tracking the trigger if a theme retunes that step.
+		width: typeScaleVars['--text-large-size'],
+		height: typeScaleVars['--text-large-size'],
+		fontSize: typeScaleVars['--text-large-size'],
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		color: colorVars['--color-icon-secondary']
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	chevronOpen: {
 		transform: 'rotate(180deg)'
@@ -129,10 +136,16 @@ export function collapsibleTriggerLabelAttrs(): SvelteStyleAttrs {
 	return sx(styles.triggerLabel);
 }
 
-/** The chevron indicator; rotates 180° when open. */
-export function collapsibleChevronAttrs(isOpen: boolean): SvelteStyleAttrs {
-	return sx(styles.chevron, isOpen ? styles.chevronOpen : styles.chevronClosed);
-}
+/**
+ * The chevron indicator; rotates 180° when open. Passed to the `Icon`'s
+ * `xstyle` the way upstream passes `styles.chevron` and the open/closed pair
+ * (#4838), so the element a theme targets is the element that rotates. The
+ * wrapper `<span>` it replaced carried `--color-icon-secondary`; the same token
+ * now arrives as the Icon's `color="secondary"`.
+ */
+export const collapsibleChevronStyle = styles.chevron;
+export const collapsibleChevronOpenStyle = styles.chevronOpen;
+export const collapsibleChevronClosedStyle = styles.chevronClosed;
 
 /** The content region, hidden when collapsed, with optional density padding. */
 export function collapsibleContentAttrs(
