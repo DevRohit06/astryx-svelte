@@ -32,6 +32,14 @@ export interface DerivedVarEntry {
 	vars?: string[];
 	/** Named expansion strategy. `'container'` expands padding to container tokens. */
 	expand?: 'container';
+	/**
+	 * Emit only the internal `vars`, dropping the source property from the rule.
+	 * Use when the class-carrying element must NOT receive the standard property
+	 * itself — the value is consumed by a child through the var instead. Without
+	 * this, the property is emitted alongside the var (correct when the same
+	 * element both reads the var and applies the property, e.g. Chat/DropdownMenu).
+	 */
+	replaces?: boolean;
 }
 
 /**
@@ -63,10 +71,30 @@ export const derivedVarRegistry: Record<string, DerivedVarEntry[]> = {
 	field: [{ property: 'borderRadius', vars: ['--_field-radius'] }],
 	hovercard: [{ property: 'borderRadius', vars: ['--_hovercard-radius'] }],
 	popover: [{ property: 'borderRadius', vars: ['--_popover-radius'] }],
+	// `replaces`, because the mark's own `width`/`height` must not compete with
+	// the var. They were plain StyleX declarations through 0.3.0, so a
+	// `progressbar-mark` override only landed where `@layer astryx-theme`
+	// outranks the component atomics — in a source build that compiles StyleX
+	// without `useCSSLayers` the atomics are unlayered and beat every theme rule,
+	// leaving no way to resize the tick but an unlayered `!important`.
+	'progressbar-mark': [
+		{ property: 'width', vars: ['--_progressbar-mark-width'], replaces: true },
+		{ property: 'height', vars: ['--_progressbar-mark-height'], replaces: true }
+	],
 	section: [{ property: 'padding', expand: 'container' }],
 	'segmented-control': [
 		{ property: 'borderRadius', vars: ['--_segmented-control-radius'] },
 		{ property: 'padding', vars: ['--_segmented-control-padding'] }
+	],
+	// `replaces`, because the wrapper must stay flush at `padding: 0` so the
+	// native resize grip keeps its true-corner position — the inset is applied by
+	// the `<textarea>` inside it, which reads the var.
+	textarea: [
+		{
+			property: 'paddingInline',
+			vars: ['--_textarea-inline-padding'],
+			replaces: true
+		}
 	]
 };
 
