@@ -26,9 +26,16 @@
 		featured?: { text: string; testid?: string };
 		/** A standalone `<TopNavMegaMenuItem>`, rendered with no menu around it. */
 		item?: Record<string, unknown>;
+		/**
+		 * A second `<TopNavMegaMenu>` beside the first. The one shape the fixture
+		 * could not already express, and it exists for exactly one upstream case —
+		 * `opening a sibling mega menu closes the pinned menu through the native
+		 * auto-popover stack`, which renders two menus in one fragment.
+		 */
+		sibling?: { menu: Record<string, unknown>; items?: Record<string, unknown>[] };
 	}
 
-	const { mode, menu, items, featured, item }: Props = $props();
+	const { mode, menu, items, featured, item, sibling }: Props = $props();
 </script>
 
 {#snippet itemsSlot()}
@@ -38,6 +45,12 @@
 {/snippet}
 
 {#snippet featuredSlot()}<span data-testid={featured?.testid}>{featured?.text}</span>{/snippet}
+
+{#snippet siblingItemsSlot()}
+	{#each sibling?.items ?? [] as spec, i (i)}
+		<TopNavMegaMenuItem {...spec} title={spec.title as string} />
+	{/each}
+{/snippet}
 
 {#snippet body()}
 	{#if item}
@@ -49,6 +62,13 @@
 			items={items ? itemsSlot : undefined}
 			featured={featured ? featuredSlot : undefined}
 		/>
+		{#if sibling}
+			<TopNavMegaMenu
+				{...sibling.menu}
+				label={sibling.menu.label as string}
+				items={sibling.items ? siblingItemsSlot : undefined}
+			/>
+		{/if}
 	{/if}
 {/snippet}
 

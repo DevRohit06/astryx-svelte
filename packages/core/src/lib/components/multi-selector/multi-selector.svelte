@@ -3,6 +3,7 @@
 	import type { BaseProps } from '../../base-props.js';
 	import type { SizeValue } from '../../internal/types.js';
 	import type { IconName } from '../icon/icon-registry.js';
+	import type { IndicatorPosition } from '../indicator/types.js';
 	import type { FieldStatusVariant } from '../field-status/field-status.stylex.js';
 	// `MultiSelectorSize` is published from `multi-selector.stylex.ts`, derived
 	// from the size style keys — the arrangement `Selector`/`TextInput` use.
@@ -186,6 +187,12 @@
 		 */
 		renderOption?: Snippet<[MultiSelectorOptionData]>;
 		/**
+		 * Which edge of the option row carries the checkbox.
+		 *
+		 * @default 'start'
+		 */
+		indicatorPosition?: IndicatorPosition;
+		/**
 		 * Whether the dropdown starts open on mount.
 		 * Useful for showcases and previews.
 		 * @default false
@@ -241,6 +248,7 @@
 <script lang="ts" generics="T extends MultiSelectorOptionType">
 	import { untrack } from 'svelte';
 	import { useSize } from '../../internal/contexts.svelte.js';
+	import { stableClassName } from '../../internal/naming.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { themeProps } from '../../internal/theme-props.js';
@@ -251,12 +259,12 @@
 	import CheckboxInput from '../checkbox-input/checkbox-input.svelte';
 	import Divider from '../divider/divider.svelte';
 	import Field from '../field/field.svelte';
+	import InputClearButton from '../field/input-clear-button.svelte';
+	import PanelSearchInput from '../field/panel-search-input.svelte';
 	import Icon from '../icon/icon.svelte';
-	import { layerAnimations } from '../layer/layer-animations.stylex.js';
 	import PopoverLayer from '../popover/popover-layer.svelte';
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import Spinner from '../spinner/spinner.svelte';
-	import TextInput from '../text-input/text-input.svelte';
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
@@ -271,21 +279,21 @@
 	import { useMultiCombobox } from './use-multi-combobox.svelte.js';
 	import {
 		multiSelectorCheckboxDecorativeAttrs,
-		multiSelectorClearButtonAttrs,
+		multiSelectorChevronXstyle,
 		multiSelectorDividerStyle,
 		multiSelectorDropdownAttrs,
 		multiSelectorEmptyStateAttrs,
 		multiSelectorItemAttrs,
 		multiSelectorItemLabelAttrs,
+		multiSelectorPopoverOffset,
 		multiSelectorPopoverStyle,
-		multiSelectorSearchWrapperAttrs,
-		multiSelectorSectionDividerStyle,
+		multiSelectorSectionHeadingAttrs,
 		multiSelectorStatusButtonAttrs,
 		multiSelectorTriggerAttrs,
 		multiSelectorTriggerBadgesAttrs,
 		multiSelectorTriggerContainerAttrs,
 		multiSelectorTriggerContentAttrs,
-		multiSelectorTriggerIconAttrs,
+		multiSelectorTriggerIconStyle,
 		multiSelectorTriggerOverflowAttrs,
 		multiSelectorTriggerTextAttrs
 	} from './multi-selector.stylex.js';
@@ -344,6 +352,7 @@
 		triggerDisplay = 'count',
 		maxBadges = 3,
 		renderOption,
+		indicatorPosition = 'start',
 		isDefaultOpen = false,
 		'data-testid': testId,
 		htmlName,
@@ -386,24 +395,15 @@
 	const statusTooltipId = `${uid}-status-tip`;
 
 	let triggerEl = $state<HTMLButtonElement | null>(null);
-	let searchWrapperEl = $state<HTMLDivElement | null>(null);
-
-	/**
-	 * Upstream holds a `ref` on the search field; our `TextInput` publishes no
-	 * element ref (a Svelte component has none unless it exports one), so the
-	 * `<input>` is reached through the padding wrapper it is the only input
-	 * inside. Read at call time rather than cached, because the wrapper and the
-	 * field mount together with the popover.
-	 */
-	function searchInputEl(): HTMLInputElement | null {
-		return searchWrapperEl?.querySelector('input') ?? null;
-	}
+	// `PanelSearchInput` publishes its `<input>` through a bindable `ref` — the
+	// Svelte spelling of upstream's `searchRef`.
+	let searchEl = $state<HTMLInputElement | null>(null);
 
 	const inputGroup = useInputGroup();
 
 	let searchQuery = $state('');
-	// A typed query shows TextInput's built-in clear (✕) button, which becomes
-	// the next tab stop after the search input.
+	// A typed query shows the search row's clear (✕) button, which becomes the
+	// next tab stop after the search input.
 	const hasQuery = $derived(searchQuery.length > 0);
 
 	// Snapshot of which values were selected when the dropdown opened. Held in
@@ -571,7 +571,10 @@
 		hasAutoFocus: false,
 		// The popup's own role="listbox" is the exposed semantics; the trigger
 		// keeps DOM focus, so wrapping it in a modal dialog would misrepresent it.
-		role: 'none' as const
+		role: 'none' as const,
+		// The theme target belongs on the SURFACE that paints the popup, which
+		// `usePopover` owns — not on the scrolling list inside it.
+		surfaceTarget: 'multi-selector-popup'
 	}));
 
 	// Open dropdown on mount when isDefaultOpen is true. Read once at init, as
@@ -687,7 +690,7 @@
 			if (hasSearch) {
 				// Focus search after popover opens
 				requestAnimationFrame(() => {
-					searchInputEl()?.focus();
+					searchEl?.focus();
 				});
 			}
 		},
@@ -744,10 +747,13 @@
 		// Number of real items (excluding the select-all sentinel)
 		const realItemCount = hasSelectAll ? sortedItems.length - 1 : sortedItems.length;
 
-		// Show select-all only when there are real items to select
+		// Show select-all only when there are real items to select. It reads as
+		// the first row of the list, not a section of its own — no divider under
+		// it (the checkbox column already lines it up with the options below), and
+		// upstream's storybook names the divider we used to draw here as an a11y
+		// failure: a `role="separator"` inside `role="listbox"`.
 		if (hasSelectAll && realItemCount > 0) {
 			entries.push({ kind: 'item', key: sortedItems[0].value, item: sortedItems[0], flatIndex: 0 });
-			entries.push({ kind: 'divider', key: 'select-all-divider' });
 			cursor = 1;
 		} else if (hasSelectAll) {
 			// Skip the select-all sentinel when there are no real items
@@ -852,8 +858,20 @@
 	);
 
 	const theme = $derived(
-		themeProps('multi-selector', { variant, size, status: status?.type ?? null })
+		themeProps('multi-selector', {
+			variant,
+			size,
+			status: status?.type ?? null,
+			disabled: isDisabled ? 'disabled' : null
+		})
 	);
+	// Upstream merges each of these with `mergeProps(themeProps(…),
+	// stylex.props(…))`; where the target contributes only a class, `cx` is the
+	// whole of that merge. `multi-selector-option` carries data attributes too, so
+	// it is spread as well.
+	const searchTheme = themeProps('multi-selector-search');
+	const emptyStateTheme = themeProps('multi-selector-empty-state');
+	const sectionHeadingTheme = themeProps('multi-selector-section-heading');
 	const containerAttrs = $derived(
 		multiSelectorTriggerContainerAttrs(
 			size,
@@ -870,14 +888,18 @@
 	const triggerTextAttrs = multiSelectorTriggerTextAttrs();
 	const triggerBadgesAttrs = multiSelectorTriggerBadgesAttrs();
 	const triggerOverflowAttrs = multiSelectorTriggerOverflowAttrs();
-	const triggerIconAttrs = $derived(multiSelectorTriggerIconAttrs(showStatusIcon, popover.isOpen));
-	const clearAttrs = multiSelectorClearButtonAttrs();
+	const chevronXstyle = $derived(multiSelectorChevronXstyle(popover.isOpen));
 	const statusButtonAttrs = multiSelectorStatusButtonAttrs();
 	const dropdownAttrs = multiSelectorDropdownAttrs();
-	const searchWrapperAttrs = multiSelectorSearchWrapperAttrs();
-	const checkboxDecorativeAttrs = multiSelectorCheckboxDecorativeAttrs();
+	const checkboxDecorativeAttrs = $derived(
+		multiSelectorCheckboxDecorativeAttrs(indicatorPosition === 'end')
+	);
 	const emptyStateAttrs = multiSelectorEmptyStateAttrs();
-	const layerXstyle = [multiSelectorPopoverStyle, layerAnimations.below];
+	const sectionHeadingAttrs = multiSelectorSectionHeadingAttrs();
+	const itemLabelAttrs = multiSelectorItemLabelAttrs();
+	// Upstream's `xstyle: styles.popover` — no `layerAnimations` entry, which this
+	// port used to append and upstream has never had.
+	const layerXstyle = multiSelectorPopoverStyle;
 </script>
 
 {#snippet startIconSlot()}
@@ -886,16 +908,6 @@
 	{:else if startIcon}
 		{@render startIcon()}
 	{/if}
-{/snippet}
-
-<!--
-	Upstream passes the icon *name* (`startIcon="search"`) and `TextInput` runs it
-	through `renderIconSlot(icon, {size: 'sm', color: 'secondary'})`. Our
-	`TextInput.startIcon` takes only a `Snippet`, so the caller spells out what
-	that helper would have produced — the same element, the same two props.
--->
-{#snippet searchMagnifier()}
-	<Icon icon="search" size="sm" color="secondary" />
 {/snippet}
 
 {#snippet triggerContent()}
@@ -937,15 +949,26 @@
 		flatIndex === combobox.highlightedIndex,
 		item.disabled === true
 	)}
-	{@const labelAttrs = multiSelectorItemLabelAttrs(item.disabled === true)}
+	{@const optionTheme = themeProps('multi-selector-option', {
+		size,
+		'select-all': isSelectAll ? 'select-all' : null,
+		selected: isSelected ? 'selected' : null,
+		disabled: item.disabled ? 'disabled' : null
+	})}
 	<!--
 		A `role="option"` div with click + hover handlers, as upstream renders. The
 		keyboard model is the combobox's — the trigger (or the search input) keeps
 		DOM focus and drives toggling through `aria-activedescendant` — so the row
 		itself is deliberately not a tab stop and has no key handler of its own.
+
+		One target for every dropdown row, carrying the row's size and runtime state
+		so a theme can express "selected option at large" or restyle just the Select
+		All row (`.select-all`) without reaching for structural selectors.
+		No `svelte-ignore` pair here, unlike `Selector`'s otherwise identical row: the
+		`{...optionTheme}` spread below makes the element's attributes opaque to the
+		a11y analysis, so it emits no warning to ignore and lint rejects a dead
+		directive. Restore both if the spread ever goes.
 	-->
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_interactive_supports_focus -->
 	<div
 		id={combobox.getItemId(flatIndex)}
 		role="option"
@@ -960,24 +983,80 @@
 			}
 		}}
 		onmouseenter={() => combobox.onItemMouseEnter(item, flatIndex)}
-		class={attrs.class}
+		{...optionTheme}
+		class={cx(optionTheme.class, attrs.class)}
 		style={attrs.style}
 	>
-		<div inert class={checkboxDecorativeAttrs.class} style={checkboxDecorativeAttrs.style}>
-			<CheckboxInput
-				label=""
-				isLabelHidden
-				value={checkboxValue}
-				onChange={() => {}}
-				isDisabled={item.disabled}
-				size={size === 'lg' ? 'md' : size}
-			/>
-		</div>
+		{#snippet checkbox()}
+			<div inert class={checkboxDecorativeAttrs.class} style={checkboxDecorativeAttrs.style}>
+				<CheckboxInput
+					label=""
+					isLabelHidden
+					value={checkboxValue}
+					onChange={() => {}}
+					isDisabled={item.disabled}
+					size={size === 'lg' ? 'md' : size}
+				/>
+			</div>
+		{/snippet}
+		{#if indicatorPosition === 'start'}{@render checkbox()}{/if}
 		{#if renderOption && !isSelectAll}
 			{@render renderOption(item)}
 		{:else}
-			<span class={labelAttrs.class} style={labelAttrs.style}>{item.label ?? item.value}</span>
+			<span class={itemLabelAttrs.class} style={itemLabelAttrs.style}>
+				{item.label ?? item.value}
+			</span>
 		{/if}
+		{#if indicatorPosition === 'end'}{@render checkbox()}{/if}
+	</div>
+{/snippet}
+
+{#snippet listbox()}
+	<div id={listboxId} role="listbox" aria-multiselectable="true" aria-labelledby={triggerId}>
+		{#each renderEntries as entry (entry.key)}
+			{#if entry.kind === 'item'}
+				{@render optionRow(entry.item, entry.flatIndex)}
+			{:else if entry.kind === 'divider'}
+				<Divider xstyle={multiSelectorDividerStyle} />
+			{:else if entry.kind === 'section'}
+				<div role="group" aria-label={entry.title}>
+					{#if entry.title}
+						<!--
+							The heading lives INSIDE the group and is aria-hidden: the group
+							already carries the title as its accessible name, so exposing the
+							text again would announce it twice. This also keeps
+							role="listbox"'s children to option/group only — the labelled
+							`Divider` this replaces sat in the listbox as a stray
+							role="separator".
+						-->
+						<div
+							aria-hidden="true"
+							class={cx(sectionHeadingTheme.class, sectionHeadingAttrs.class)}
+							style={sectionHeadingAttrs.style}
+						>
+							{entry.title}
+						</div>
+					{/if}
+					{#each entry.items as member (member.item.value)}
+						{@render optionRow(member.item, member.flatIndex)}
+					{/each}
+				</div>
+			{:else}
+				<!--
+					role="presentation" keeps the message out of the listbox's
+					accessibility tree (role="listbox" only permits option/group children);
+					the no-results outcome is announced via the result-count live region
+					instead.
+				-->
+				<div
+					role="presentation"
+					class={cx(emptyStateTheme.class, emptyStateAttrs.class)}
+					style={emptyStateAttrs.style}
+				>
+					No results found
+				</div>
+			{/if}
+		{/each}
 	</div>
 {/snippet}
 
@@ -1043,185 +1122,170 @@
 			<Spinner size="sm" />
 		{/if}
 		{#if hasClear && value.length > 0 && !isDisabled}
-			<button
-				type="button"
+			<!--
+				The shared clear affordance, so the multi-selector's ✕ behaves like every
+				other input's. `iconClassName` keeps the component-specific
+				`astryx-multi-selector-clear-icon` target emitting through its
+				deprecation window, alongside the shared `astryx-input-clear-icon`.
+			-->
+			<InputClearButton
+				label={t('@astryx.multiSelector.clearAll', { label })}
 				onclick={handleClear}
-				aria-label={t('@astryx.multiSelector.clearAll', { label })}
-				class={clearAttrs.class}
-				style={clearAttrs.style}
-			>
-				<!--
-					Stable theme target on the clear glyph itself, so a theme can restyle
-					just this icon (colour, size, hover) via `defineTheme`. Same-element
-					rules in `@layer astryx-theme` win over the icon's own base colour and
-					size, which a button-level target could not reach.
-				-->
-				<Icon
-					icon="close"
-					size="sm"
-					color="secondary"
-					{...themeProps('multi-selector-clear-icon')}
-				/>
-			</button>
+				iconClassName={stableClassName('multi-selector-clear-icon')}
+			/>
 		{/if}
-		<span class={triggerIconAttrs.class} style={triggerIconAttrs.style}>
-			{#if showStatusIcon && status}
-				{#if showStatusTooltip}
-					<!--
-						The `tooltip` variant's affordance: a real focusable button so the
-						status is reachable by keyboard and pointer alike. `stopPropagation`
-						keeps a click off the container's open-the-dropdown handler.
-					-->
-					<button
-						{@attach statusTooltip.attachTrigger}
-						type="button"
-						aria-label={t(STATUS_BUTTON_LABEL_KEY[status.type])}
-						aria-describedby={statusTooltip.describedBy}
-						onclick={(e) => e.stopPropagation()}
-						class={statusButtonAttrs.class}
-						style={statusButtonAttrs.style}
-					>
-						<Icon
-							icon={STATUS_ICON_MAP[status.type]}
-							size="sm"
-							color={STATUS_ICON_COLOR_MAP[status.type]}
-						/>
-					</button>
-				{:else}
+		<!--
+			No wrapper span: Icon's own span already provides the 16px box (`sm`) and
+			the icon colour, so the status glyph and the chevron are each directly
+			targetable instead of sharing one untargetable parent — and the two
+			affordances stop sharing a node.
+		-->
+		{#if showStatusIcon && status}
+			{#if showStatusTooltip}
+				<!--
+					The `tooltip` variant's affordance: a real focusable button so the
+					status is reachable by keyboard and pointer alike. `stopPropagation`
+					keeps a click off the container's open-the-dropdown handler.
+				-->
+				<button
+					{@attach statusTooltip.attachTrigger}
+					type="button"
+					aria-label={t(STATUS_BUTTON_LABEL_KEY[status.type])}
+					aria-describedby={statusTooltip.describedBy}
+					onclick={(e) => e.stopPropagation()}
+					class={statusButtonAttrs.class}
+					style={statusButtonAttrs.style}
+				>
 					<Icon
 						icon={STATUS_ICON_MAP[status.type]}
 						size="sm"
 						color={STATUS_ICON_COLOR_MAP[status.type]}
+						xstyle={multiSelectorTriggerIconStyle}
 					/>
-				{/if}
+				</button>
 			{:else}
-				<!--
-					As above, plus the chevron's open/closed state as `data-state`, so a
-					theme can style the two independently.
-				-->
 				<Icon
-					icon="chevronDown"
+					icon={STATUS_ICON_MAP[status.type]}
 					size="sm"
-					color="inherit"
-					{...themeProps('multi-selector-indicator-icon', {
-						state: popover.isOpen ? 'expanded' : 'collapsed'
-					})}
+					color={STATUS_ICON_COLOR_MAP[status.type]}
+					xstyle={multiSelectorTriggerIconStyle}
 				/>
 			{/if}
-		</span>
+		{:else}
+			<!--
+				The rotation rides on the glyph, alongside the box and colour the wrapper
+				used to provide, so one element carries the mark, its open/closed
+				transform, and the `multi-selector-indicator-icon` theme target — plus
+				its state as `data-state`, so a theme can style the two independently.
+			-->
+			<Icon
+				icon="chevronDown"
+				size="sm"
+				color="secondary"
+				xstyle={chevronXstyle}
+				{...themeProps('multi-selector-indicator-icon', {
+					state: popover.isOpen ? 'expanded' : 'collapsed'
+				})}
+			/>
+		{/if}
 	</div>
 
-	<PopoverLayer {popover} placement="below" alignment="start" xstyle={layerXstyle}>
-		<div class={dropdownAttrs.class} style={dropdownAttrs.style}>
-			{#if hasSearch}
-				<!-- svelte-ignore a11y_no_static_element_interactions -->
-				<div
-					bind:this={searchWrapperEl}
-					class={searchWrapperAttrs.class}
-					style={searchWrapperAttrs.style}
-					onkeydown={(e) => {
-						// The clear (✕) button lives inside the TextInput, after the input in
-						// DOM order. When it is focused and the user tabs forward there is
+	<PopoverLayer
+		{popover}
+		placement="below"
+		alignment="start"
+		offset={multiSelectorPopoverOffset}
+		xstyle={layerXstyle}
+	>
+		{#if hasSearch}
+			<!--
+				With a search row the panel splits: the header stays put while the
+				options scroll under it, so the field does not slide out of reach in a
+				long list. Without one the panel is a single scroll container, exactly as
+				before.
+			-->
+			<div>
+				<!--
+					The search row is the panel's header: a magnifier, a borderless input,
+					and the shared clear (✕) button. It deliberately does NOT render a
+					bordered `TextInput` — the popup is already a bordered surface, and a
+					field inside it drew a second box within that box.
+
+					When hasSearch is set, focus moves into this input on open, so it — not
+					the trigger — must be the combobox reporting the highlighted option via
+					aria-activedescendant (comboboxes-4). `role` + `aria-*` pass through to
+					the underlying `<input>`.
+				-->
+				<PanelSearchInput
+					bind:ref={searchEl}
+					id={searchId}
+					label={t('@astryx.multiSelector.searchOptions')}
+					clearLabel={t('@astryx.textInput.clearLabel', {
+						label: t('@astryx.multiSelector.searchOptions')
+					})}
+					class={searchTheme.class}
+					role="combobox"
+					aria-expanded={popover.isOpen}
+					aria-controls={listboxId}
+					aria-autocomplete="list"
+					aria-activedescendant={popover.isOpen && combobox.highlightedIndex >= 0
+						? combobox.getItemId(combobox.highlightedIndex)
+						: undefined}
+					value={searchQuery}
+					onValueChange={handleSearchChange}
+					onContainerKeyDown={(e) => {
+						// The clear (✕) button lives inside the row, after the input in DOM
+						// order. When it is focused and the user tabs forward there is
 						// nothing else in the popup, so dismiss it (Shift+Tab returns to the
 						// input natively). Key events originating on the input are handled on
 						// the input below; ignore them here so we don't double-dismiss.
-						if (e.target === searchInputEl()) {
+						if (e.target === searchEl) {
 							return;
 						}
 						if (e.key === 'Tab' && !e.shiftKey) {
 							combobox.onKeyDown(e);
 						}
 					}}
-				>
-					<!--
-						The search field IS a TextInput: the leading magnifier is its
-						`startIcon` and the trailing clear (✕) is its built-in `hasClear`
-						(which resets the value and refocuses the input). We add no bespoke
-						affordance chrome — the field just looks and behaves like every other
-						Astryx input.
-
-						When hasSearch is set, focus moves into this input on open, so it —
-						not the trigger — must be the combobox reporting the highlighted
-						option via aria-activedescendant (comboboxes-4). role + aria-* pass
-						through to the underlying `<input>` via BaseProps.
-
-						`width="100%"` fills the dropdown's width (minus the wrapper's inline
-						padding) so the field is flush end-to-end rather than sized to its
-						content.
-					-->
-					<TextInput
-						id={searchId}
-						label={t('@astryx.multiSelector.searchOptions')}
-						isLabelHidden
-						startIcon={searchMagnifier}
-						hasClear
-						size="sm"
-						width="100%"
-						role="combobox"
-						aria-expanded={popover.isOpen}
-						aria-controls={listboxId}
-						aria-autocomplete="list"
-						aria-activedescendant={popover.isOpen && combobox.highlightedIndex >= 0
-							? combobox.getItemId(combobox.highlightedIndex)
-							: undefined}
-						value={searchQuery}
-						onChange={handleSearchChange}
-						onkeydown={(e) => {
-							// Arrow keys navigate options; Enter toggles; Escape closes.
-							// Space and Home/End are left to the input (type a space / move
-							// the caret) per the APG editable combobox; PageUp/PageDown are
-							// the sanctioned substitute for jumping to the first/last option.
-							if (
-								e.key === 'ArrowDown' ||
-								e.key === 'ArrowUp' ||
-								e.key === 'PageUp' ||
-								e.key === 'PageDown' ||
-								e.key === 'Enter' ||
-								e.key === 'Escape'
-							) {
-								combobox.onKeyDown(e);
-								return;
-							}
-							// Tab: when a query is showing the clear (✕) button, forward-tab
-							// moves focus to it (keeping the popup open) so the affordance is
-							// keyboard-reachable. Every other Tab dismisses the popup as usual.
-							if (e.key === 'Tab' && (e.shiftKey || !hasQuery)) {
-								combobox.onKeyDown(e);
-							}
-						}}
-						placeholder={searchPlaceholder}
-					/>
+					onkeydown={(e) => {
+						// Arrow keys navigate options; Enter toggles; Escape closes.
+						// Space and Home/End are left to the input (type a space / move
+						// the caret) per the APG editable combobox; PageUp/PageDown are
+						// the sanctioned substitute for jumping to the first/last option.
+						if (
+							e.key === 'ArrowDown' ||
+							e.key === 'ArrowUp' ||
+							e.key === 'PageUp' ||
+							e.key === 'PageDown' ||
+							e.key === 'Enter' ||
+							e.key === 'Escape'
+						) {
+							combobox.onKeyDown(e);
+							return;
+						}
+						// Tab: when a query is showing the clear (✕) button, forward-tab
+						// moves focus to it (keeping the popup open) so the affordance is
+						// keyboard-reachable. Every other Tab dismisses the popup as usual.
+						if (e.key === 'Tab' && (e.shiftKey || !hasQuery)) {
+							combobox.onKeyDown(e);
+						}
+					}}
+					placeholder={searchPlaceholder}
+				/>
+				<!--
+					Separates the header from the options and spans the panel: the search
+					row and the option list each hold their own inline padding, the line
+					does not, so it reads as the panel's own edge.
+				-->
+				<Divider />
+				<div class={dropdownAttrs.class} style={dropdownAttrs.style}>
+					{@render listbox()}
 				</div>
-			{/if}
-			<div id={listboxId} role="listbox" aria-multiselectable="true" aria-labelledby={triggerId}>
-				{#each renderEntries as entry (entry.key)}
-					{#if entry.kind === 'item'}
-						{@render optionRow(entry.item, entry.flatIndex)}
-					{:else if entry.kind === 'divider'}
-						<Divider xstyle={multiSelectorDividerStyle} />
-					{:else if entry.kind === 'section'}
-						{#if entry.title}
-							<Divider label={entry.title} xstyle={multiSelectorSectionDividerStyle} />
-						{/if}
-						<div role="group" aria-label={entry.title}>
-							{#each entry.items as member (member.item.value)}
-								{@render optionRow(member.item, member.flatIndex)}
-							{/each}
-						</div>
-					{:else}
-						<!--
-							role="presentation" keeps the message out of the listbox's
-							accessibility tree (role="listbox" only permits option/group
-							children); the no-results outcome is announced via the result-count
-							live region instead.
-						-->
-						<div role="presentation" class={emptyStateAttrs.class} style={emptyStateAttrs.style}>
-							No results found
-						</div>
-					{/if}
-				{/each}
 			</div>
-		</div>
+		{:else}
+			<div class={dropdownAttrs.class} style={dropdownAttrs.style}>
+				{@render listbox()}
+			</div>
+		{/if}
 	</PopoverLayer>
 
 	{#if showStatusTooltip}

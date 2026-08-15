@@ -70,9 +70,19 @@ function tooltipsIn(container: HTMLElement): HTMLElement[] {
 	return Array.from(container.querySelectorAll<HTMLElement>('[role="tooltip"]'));
 }
 
-/** The `input` variant's editable page box, as a real `<input type="number">`. */
+/**
+ * The `input` variant's editable page box.
+ *
+ * Queried by role rather than by `input[type="number"]`: 0.4.1 made
+ * `NumberInput` a **text-backed spinbutton** — `type="text"` with
+ * `role="spinbutton"` and `aria-valuemin`/`valuemax`/`valuenow`, which is what
+ * lets `formatValue` show a thousands separator without the native control
+ * rejecting it. So the box's value is a **string**, and its bounds are the
+ * `aria-value*` attributes rather than `min`/`max`. Upstream's suite asserts the
+ * same shape.
+ */
 function pageBox(container: HTMLElement): HTMLInputElement {
-	const el = container.querySelector('input[type="number"]');
+	const el = container.querySelector('[role="spinbutton"]');
 	if (!(el instanceof HTMLInputElement)) throw new Error('expected the editable page box');
 	return el;
 }
@@ -521,7 +531,7 @@ describe('Pagination', () => {
 			});
 			const box = screen.getByRole('spinbutton', { name: 'Go to page' });
 			await expect.element(box).toBeInTheDocument();
-			await expect.element(box).toHaveValue(3);
+			await expect.element(box).toHaveValue('3');
 			// Visible leading "Page" label and trailing "/ N" total (10 pages).
 			await expect.element(screen.getByText('Page', { exact: true })).toBeInTheDocument();
 			await expect.element(screen.getByText('/ 10', { exact: true })).toBeInTheDocument();
@@ -556,8 +566,8 @@ describe('Pagination', () => {
 			// The box is a NumberInput (a spinbutton) whose min/max clamp entries to
 			// the valid page range without hand-rolled parsing in Pagination.
 			const box = screen.getByRole('spinbutton', { name: 'Go to page' });
-			await expect.element(box).toHaveAttribute('min', '1');
-			await expect.element(box).toHaveAttribute('max', '10');
+			await expect.element(box).toHaveAttribute('aria-valuemin', '1');
+			await expect.element(box).toHaveAttribute('aria-valuemax', '10');
 		});
 
 		it('commits a typed page on Enter and rejects an over-range entry', async () => {
@@ -607,13 +617,13 @@ describe('Pagination', () => {
 			await userEvent.type(box, 'abc');
 			await userEvent.tab();
 			expect(onChange).not.toHaveBeenCalled();
-			expect(box).toHaveValue(3);
+			expect(box).toHaveValue('3');
 
 			// Emptying the box and blurring reverts to the committed page too.
 			await userEvent.clear(box);
 			await userEvent.tab();
 			expect(onChange).not.toHaveBeenCalled();
-			expect(box).toHaveValue(3);
+			expect(box).toHaveValue('3');
 		});
 
 		it('announces the committed page to screen readers', async () => {
@@ -726,7 +736,7 @@ describe('Pagination', () => {
 			});
 			const box = pageBox(screen.container);
 			// The box holds the page number, and committing drives page navigation.
-			expect(box).toHaveValue(1);
+			expect(box).toHaveValue('1');
 			await userEvent.clear(box);
 			await userEvent.type(box, '4');
 			await userEvent.keyboard('{Enter}');
@@ -873,7 +883,9 @@ describe('Pagination', () => {
 				expect(screen.getByText('Page', { exact: true }).query()).toBeNull();
 				await expect.element(screen.getByText('/ 10', { exact: true })).toBeInTheDocument();
 				// The box still holds the 1-based page number.
-				await expect.element(screen.getByRole('spinbutton', { name: 'Go to page' })).toHaveValue(3);
+				await expect
+					.element(screen.getByRole('spinbutton', { name: 'Go to page' }))
+					.toHaveValue('3');
 			});
 
 			it('keeps the input page-navigating with a custom label', async () => {

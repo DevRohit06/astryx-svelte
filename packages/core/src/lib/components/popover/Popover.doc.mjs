@@ -27,6 +27,9 @@ export default {
 		targets: [
 			{
 				className: 'astryx-popover'
+			},
+			{
+				className: 'astryx-popover-surface'
 			}
 		],
 		vars: [

@@ -120,19 +120,20 @@ describe('Avatar', () => {
 		expect(innerImg).toHaveAttribute('alt', '');
 	});
 
-	it('renders fallback initials through the themeable font-size var, not a bare px literal', async () => {
+	it('renders fallback initials at the proportional size via a StyleX class, not an inline property', async () => {
 		const screen = await render(Avatar, {
 			props: { name: 'Ada Lovelace', size: 'sm', 'data-testid': 'a' }
 		});
 		const initials = screen.getByText('AL').element();
-		// The seam: the dynamic font size resolves to the Avatar-scoped var (with
-		// the proportional `size × 0.4` default baked in as the fallback), so a
-		// theme can re-scope it per size. A regression to a bare px literal would
-		// break theming.
+		// The default proportional size (sm = 24 × 0.4 = 9.6px) is fed to StyleX as
+		// a dynamic value: StyleX applies `font-size` through a class and sets only
+		// the computed value inline (as a custom property). Because the property
+		// lands via a class, a theme's `.astryx-avatar-fallback.<size>` rule in the
+		// theme layer overrides it per size tier — no internal var seam needed.
 		const style = initials.getAttribute('style') ?? '';
-		expect(style).toContain('var(--_avatar-fallback-font-size,');
-		// Default still reproduces the proportional scale (sm = 24 × 0.4 = 9.6px).
-		expect(style).toMatch(/var\(--_avatar-fallback-font-size,\s*9\.6\d*px\)/);
+		expect(style).toMatch(/9\.6\d*px/);
+		// Regression guard: the seam must NOT reintroduce the removed internal var.
+		expect(style).not.toContain('--_avatar-fallback-font-size');
 	});
 
 	it('retries a new src after a previous src failed to load', async () => {

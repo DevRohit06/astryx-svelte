@@ -106,6 +106,15 @@ describe('expandColorScale', () => {
 		const high = expandColorScale({ accent: '#0064E0', contrast: 'high' });
 		expect(high['--color-text-primary']).not.toBe(standard['--color-text-primary']);
 	});
+
+	it('contrast high strengthens both border tokens', () => {
+		const standard = expandColorScale({ accent: '#0064E0', contrast: 'standard' });
+		const high = expandColorScale({ accent: '#0064E0', contrast: 'high' });
+		// Both the subtle hairline and the emphasized border shift under high
+		// contrast, so structural boundaries stay perceivable.
+		expect(high['--color-border']).not.toBe(standard['--color-border']);
+		expect(high['--color-border-emphasized']).not.toBe(standard['--color-border-emphasized']);
+	});
 });
 
 describe('expandColorScale — neutral-only themes (#2279)', () => {

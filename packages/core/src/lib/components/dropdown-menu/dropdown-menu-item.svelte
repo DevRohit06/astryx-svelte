@@ -20,6 +20,20 @@
 		isDisabled?: boolean;
 		/** Content after the label/description. */
 		endContent?: Snippet;
+		/**
+		 * Whether activating the item closes the menu. Set `false` for an action
+		 * that reports its result on the item itself (a copy row swapping to
+		 * "Copied"), matching the checkbox and radio items, which already decide
+		 * this for themselves.
+		 * @default true
+		 */
+		hasCloseOnSelect?: boolean;
+		/**
+		 * Visual variant. `'destructive'` renders the label, description, and icon
+		 * in the error color for dangerous actions (e.g. Delete).
+		 * @default 'default'
+		 */
+		variant?: 'default' | 'destructive';
 	}
 </script>
 
@@ -45,6 +59,8 @@
 		onClick,
 		isDisabled = false,
 		endContent,
+		hasCloseOnSelect = true,
+		variant = 'default',
 		xstyle,
 		class: className,
 		style: styleProp
@@ -52,24 +68,32 @@
 
 	const ctx = useDropdownMenuContext();
 	const menuSize = $derived(ctx()?.menuSize ?? 'md');
+	const isDestructive = $derived(variant === 'destructive');
 
 	function handleClick(): void {
-		if (isDisabled || !onClick) return;
-		onClick();
-		ctx()?.closeMenu();
+		if (isDisabled) return;
+		onClick?.();
+		if (hasCloseOnSelect) ctx()?.closeMenu();
 	}
 
 	function handlePointerMove(e: PointerEvent): void {
 		focusMenuItemOnHover(e, isDisabled);
 	}
 
-	const theme = $derived(themeProps('dropdown-menu-item', { size: menuSize }));
-	const itemXstyle = $derived(dropdownMenuItemXstyle(menuSize, isDisabled, xstyle));
+	// `variant` is reflected only when it is destructive — a default item carries
+	// no `data-variant`, so existing themes and usage are unchanged.
+	const theme = $derived(
+		themeProps('dropdown-menu-item', {
+			size: menuSize,
+			variant: isDestructive ? 'destructive' : null
+		})
+	);
+	const itemXstyle = $derived(dropdownMenuItemXstyle(menuSize, isDisabled, isDestructive, xstyle));
 </script>
 
 {#snippet iconSlot()}
 	{#if typeof icon === 'string'}
-		<Icon {icon} size="sm" color="secondary" />
+		<Icon {icon} size="sm" color={isDestructive ? 'error' : 'secondary'} />
 	{:else if icon}
 		{@render icon()}
 	{/if}
@@ -86,7 +110,7 @@
 	{isDisabled}
 	onclick={handleClick}
 	xstyle={itemXstyle}
+	{...theme}
 	class={cx(theme.class, className)}
 	style={styleProp as string | undefined}
-	data-size={menuSize}
 />

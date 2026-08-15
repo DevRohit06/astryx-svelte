@@ -3,7 +3,12 @@
 	import type { SizeValue } from '../../internal/types.js';
 	import type { InputStatus, InputStatusType } from '../field/types.js';
 	import type { FieldStatusVariant } from '../field-status/field-status.stylex.js';
-	import type { DateRange, ISODateString } from '../../utils/date-types.js';
+	import type {
+		DateRange,
+		DayOfWeek,
+		DayOfWeekName,
+		ISODateString
+	} from '../../utils/date-types.js';
 	import type { DateRangeInputSize } from './date-range-input.stylex.js';
 
 	// Upstream re-exports `DateRange` from `DateRangeInput.tsx` as well as from
@@ -134,6 +139,13 @@
 		 * @default 2
 		 */
 		numberOfMonths?: 1 | 2;
+		/**
+		 * First day of week in the calendar. Accepts a number
+		 * (0 = Sunday … 6 = Saturday) or a three-letter day name ('sun'–'sat',
+		 * case-insensitive).
+		 * @default 0
+		 */
+		weekStartsOn?: DayOfWeek | DayOfWeekName;
 	}
 
 	/**
@@ -180,10 +192,12 @@
 		plainDateToday
 	} from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { stableClassName } from '../../internal/naming.js';
 	import Calendar from '../calendar/calendar.svelte';
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
 	import InputStatusIcon from '../../hooks/input-status-icon.svelte';
 	import Field from '../field/field.svelte';
+	import InputClearButton from '../field/input-clear-button.svelte';
 	import Icon from '../icon/icon.svelte';
 	import Spinner from '../spinner/spinner.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';
@@ -240,6 +254,9 @@
 		statusVariant = 'attached',
 		labelTooltip,
 		numberOfMonths = 2,
+		// Deliberately no default: it is forwarded raw, and `Calendar` owns both the
+		// `= 0` fallback and the name→number normalisation.
+		weekStartsOn,
 		width,
 		xstyle,
 		class: className,
@@ -348,12 +365,21 @@
 		value ? `${label}: ${displayValue}` : `${label}: ${placeholder}`
 	);
 
-	const theme = $derived(themeProps('date-range-input', { size, status: status?.type ?? null }));
+	// `disabled` reflects as `data-disabled` (and as a bare state class) so a theme
+	// can reach the state without duplicating the component's own conditionals.
+	// Keyed off `isDisabled`, not `isEffectivelyDisabled`: a busy field is not a
+	// disabled one, and upstream reflects the prop.
+	const theme = $derived(
+		themeProps('date-range-input', {
+			size,
+			status: status?.type ?? null,
+			disabled: isDisabled ? 'disabled' : null
+		})
+	);
 	const wrapperAttrs = $derived(
 		dateRangeInputWrapperAttrs(size, status?.type, isEffectivelyDisabled, xstyle)
 	);
 	const toggleAttrs = $derived(dateRangeInputIconButtonAttrs(isEffectivelyDisabled));
-	const clearAttrs = dateRangeInputIconButtonAttrs();
 	const triggerAttrs = $derived(dateRangeInputTriggerAttrs(!displayValue, isEffectivelyDisabled));
 	const layoutAttrs = dateRangeInputPopoverLayoutAttrs();
 	const sidebarAttrs = dateRangeInputPresetSidebarAttrs();
@@ -443,24 +469,18 @@
 			{displayValue || placeholder}
 		</button>
 		{#if hasClear && value !== null && !isEffectivelyDisabled}
-			<button
-				type="button"
+			<!--
+				The shared clear affordance. It stamps `astryx-input-clear-icon` on the
+				glyph; `iconClassName` keeps this component's original
+				`astryx-date-range-input-clear-icon` target beside it through a
+				deprecation window, so a theme written against the old name still
+				reaches the icon.
+			-->
+			<InputClearButton
+				label={t('@astryx.dateInput.clear', { label })}
 				onclick={handleClear}
-				aria-label={t('@astryx.dateInput.clear', { label })}
-				class={clearAttrs.class}
-				style={clearAttrs.style}
-			>
-				<!--
-					Stable theme target on the clear glyph itself — see the toggle icon
-					above for why it sits on the icon rather than the button.
-				-->
-				<Icon
-					icon="close"
-					size="sm"
-					color="secondary"
-					{...themeProps('date-range-input-clear-icon')}
-				/>
-			</button>
+				iconClassName={stableClassName('date-range-input-clear-icon')}
+			/>
 		{/if}
 		{#if isBusy}<Spinner size="sm" />{/if}
 		<InputStatusIcon {statusIcon} />
@@ -504,6 +524,7 @@
 				{max}
 				{dateConstraints}
 				{numberOfMonths}
+				{weekStartsOn}
 			/>
 		</div>
 	</PopoverLayer>

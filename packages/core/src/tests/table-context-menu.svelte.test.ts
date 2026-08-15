@@ -4,7 +4,7 @@ import type { TableColumn, TablePlugin } from '$lib/components/table/table-types
 import { renderTable } from './render-table.js';
 
 /**
- * Ported from Astryx's `Table/tableContextMenu.test.tsx` — all **5** of its `it`
+ * Ported from Astryx's `Table/tableContextMenu.test.tsx` — all **6** of its `it`
  * cases, in order and under upstream's names. Nothing dropped, nothing deferred:
  * both of its plugins are hand-written objects handed to the public `plugins`
  * prop, so none of the ten deferred plugin hooks is involved.
@@ -103,6 +103,25 @@ describe('Table header context menu', () => {
 		const screen = await renderTable({ data, columns, idKey: 'id' });
 		rightClick(screen.getByText('Name', { exact: true }).element());
 		expect(menuItems(screen.container)).toHaveLength(0);
+	});
+
+	it('forwards a destructive action variant to the menu item', async () => {
+		const plugin: TablePlugin<Row> = {
+			transformHeaderCell: (props) => ({
+				...props,
+				contextMenuActions: [
+					{ id: 'delete', label: 'Delete column', variant: 'destructive', onSelect: () => {} },
+					{ id: 'pin', label: 'Pin column', onSelect: () => {} }
+				]
+			})
+		};
+		const screen = await renderTable({ data, columns, idKey: 'id', plugins: { plugin } });
+		rightClick(screen.getByText('Name', { exact: true }).element());
+		expect(menuItems(screen.container, 'Delete column')[0]).toHaveAttribute(
+			'data-variant',
+			'destructive'
+		);
+		expect(menuItems(screen.container, 'Pin column')[0]).not.toHaveAttribute('data-variant');
 	});
 });
 

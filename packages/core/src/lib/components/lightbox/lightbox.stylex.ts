@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { colorVars, spacingVars, typeScaleVars } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 const styles = stylex.create({
 	dialog: {
@@ -53,16 +54,6 @@ const styles = stylex.create({
 			'@media (hover: hover)': 'zoom-in'
 		}
 	},
-	zoomTarget: {
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
-	},
 	imageWrapperZoomed: {
 		cursor: 'grab'
 	},
@@ -110,7 +101,12 @@ const styles = stylex.create({
 	navButton: {
 		position: 'absolute',
 		top: '50%',
-		transform: 'translateY(-50%)',
+		// The individual `translate` property, not `transform`: this style now
+		// lands on the Button root, and a `transform` here replaces the Button's
+		// own transform rules — measured: the `scale(0.98)` press feedback stops
+		// firing. `translate` composes with them, reproducing exactly what the
+		// removed wrapper element did (wrapper translated, button scaled).
+		translate: '0 -50%',
 		zIndex: 1
 	},
 	navPrev: {
@@ -156,10 +152,11 @@ export function lightboxMediaGroupAttrs(): SvelteStyleAttrs {
  * `dragging` beats both. The compiled lookup table in the published `dist/`
  * encodes exactly that precedence, so reordering these would change the merge.
  *
- * `zoomTarget` sits second, as upstream applies it — it only carries the
- * focus-visible ring for the wrapper's `role="button"` state and shares no
- * property with the cursor styles, so its position is fidelity rather than
- * precedence.
+ * The shared focus ring sits second, as upstream applies it — it is the
+ * wrapper's `role="button"` focus affordance and shares no property with the
+ * cursor styles, so its position is fidelity rather than precedence. Through
+ * 0.3.0 this was a local `zoomTarget` key holding a hand-written ring; upstream
+ * 0.4.1 replaced the key outright with `focusOutlineStyles.focusVisible`.
  */
 export function lightboxImageWrapperAttrs(
 	isZoomTarget: boolean,
@@ -169,7 +166,7 @@ export function lightboxImageWrapperAttrs(
 ): SvelteStyleAttrs {
 	return sx(
 		styles.imageWrapper,
-		isZoomTarget && styles.zoomTarget,
+		isZoomTarget && focusOutlineStyles.focusVisible,
 		isZoomable && styles.imageWrapperZoomable,
 		isZoomed && styles.imageWrapperZoomed,
 		isDragging && styles.imageWrapperDragging
@@ -195,17 +192,20 @@ export function lightboxCaptionAttrs(): SvelteStyleAttrs {
 	return sx(styles.caption);
 }
 
-export function lightboxCloseButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.closeButton);
-}
-
-export function lightboxNavButtonAttrs(direction: 'prev' | 'next'): SvelteStyleAttrs {
-	return sx(styles.navButton, direction === 'prev' ? styles.navPrev : styles.navNext);
-}
-
 export function lightboxCounterAttrs(): SvelteStyleAttrs {
 	return sx(styles.counter);
 }
 
-/** Passed to `IconButton`'s `xstyle`, as upstream passes `styles.controlButton`. */
+/**
+ * Handed to `IconButton`'s `xstyle`, as upstream hands over the same styles.
+ *
+ * These were `…Attrs()` builders on wrapper `<div>`s until #4775, which deleted
+ * the wrappers and put the positioning on the Button root itself. That is why
+ * `navButton` had to move from `transform` to `translate` — see the note at the
+ * declaration.
+ */
 export const lightboxControlButtonStyle = styles.controlButton;
+export const lightboxCloseButtonStyle = styles.closeButton;
+export const lightboxNavButtonStyle = styles.navButton;
+export const lightboxNavPrevStyle = styles.navPrev;
+export const lightboxNavNextStyle = styles.navNext;

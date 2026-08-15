@@ -1,7 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../../../internal/sx.js';
 import { colorVars, radiusVars, spacingVars } from '../../../../styles/tokens.stylex.js';
-import { rtlMirrorAttrs } from '../../../../utils/rtl.stylex.js';
 
 /**
  * Ported from the styles declared in Astryx's
@@ -61,14 +60,26 @@ const treeStyles = stylex.create({
 			color: colorVars['--color-icon-primary']
 		}
 	},
-	chevron: {
-		display: 'inline-flex',
+	chevronIcon: {
 		transitionProperty: 'transform',
-		transitionDuration: '150ms',
-		transform: 'rotate(0deg)'
+		transitionDuration: '150ms'
 	},
-	chevronExpanded: {
-		transform: 'rotate(90deg)'
+	// The RTL mirror is folded into each state's transform rather than living on
+	// a parent span. Both are `transform`, so on one element the later value
+	// would win — spelling out `scaleX(-1) rotate(...)` per state composes them
+	// exactly as the nested elements did, while leaving a single element to
+	// carry the glyph's theme target.
+	chevronIconCollapsed: {
+		transform: {
+			default: 'rotate(0deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(0deg)'
+		}
+	},
+	chevronIconExpanded: {
+		transform: {
+			default: 'rotate(90deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(90deg)'
+		}
 	},
 	/** Keeps leaf content aligned with expandable siblings. */
 	leafSpacer: {
@@ -108,10 +119,20 @@ export function treeExpanderButtonAttrs(): SvelteStyleAttrs {
 	return sx(treeStyles.expanderButton);
 }
 
-/** The chevron itself; rotates 90° when the row is expanded. */
-export function treeChevronAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(treeStyles.chevron, isExpanded && treeStyles.chevronExpanded);
-}
+/**
+ * The chevron itself; rotates 90° when the row is expanded. Passed to the
+ * `Icon`'s `xstyle` (#4838), so the rotation rides the glyph rather than a
+ * wrapper span and the `astryx-icon` target reaches both the mark and its
+ * open/closed transform.
+ *
+ * The RTL mirror moved into each state's `transform` with it, and that fixed a
+ * real bug: the old `rtlStyles.mirror` wrapper was **inert**, because
+ * `transform` does not apply to a non-replaced inline box. RTL disclosure
+ * chevrons now mirror where they silently did not before.
+ */
+export const treeChevronIconStyle = treeStyles.chevronIcon;
+export const treeChevronIconCollapsedStyle = treeStyles.chevronIconCollapsed;
+export const treeChevronIconExpandedStyle = treeStyles.chevronIconExpanded;
 
 /** The fixed-width spacer a leaf row renders instead of an expander. */
 export function treeLeafSpacerAttrs(): SvelteStyleAttrs {
@@ -130,16 +151,3 @@ export function treeHeaderCellAttrs(): SvelteStyleAttrs {
  * exactly as `row-expansion.stylex.ts` exports its own `clickableRow`.
  */
 export const treeClickableRowStyle: StyleArg = treeStyles.clickableRow;
-
-/**
- * The RTL mirror wrapper that sits **outside** the chevron's rotation span.
- *
- * Upstream nests two spans — `rtlStyles.mirror` wrapping the rotating
- * `treeStyles.chevron` — and the nesting is the point. Composing the mirror
- * onto the same element as the state rotation makes one `transform` overwrite
- * the other, so the chevron would point the wrong way in the expanded × RTL
- * corner only. Two elements, two transforms, no interaction.
- */
-export function treeChevronMirrorAttrs(): SvelteStyleAttrs {
-	return rtlMirrorAttrs();
-}

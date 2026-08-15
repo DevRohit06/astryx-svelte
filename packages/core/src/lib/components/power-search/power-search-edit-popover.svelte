@@ -26,6 +26,9 @@
 	import Selector from '../selector/selector.svelte';
 	import VStack from '../stack/vstack.svelte';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	// From the module, not the barrel — upstream keeps `isImeKeyEvent` out of
+	// `hooks/index.ts` and its consumers import it directly.
+	import { isImeKeyEvent } from '../../hooks/use-focus-trap.svelte.js';
 	import NestedEditor from './nested-editor.svelte';
 	import {
 		editPopoverContainerAttrs,
@@ -213,6 +216,12 @@
 	// handles that key and calls `preventDefault`, and without the check this
 	// handler still read it as "save and close".
 	function handleKeyDown(e: KeyboardEvent): void {
+		// Don't treat an IME composition-commit Enter as save-to-close --
+		// typing a CJK filter value and pressing Enter to confirm the
+		// composition would otherwise close the popover mid-composition.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		if (e.key === 'Enter' && !isSaveDisabled && !e.defaultPrevented) {
 			e.preventDefault();
 			handleSave();

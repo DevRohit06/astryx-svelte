@@ -149,7 +149,7 @@
 		justify-content: flex-start;
 		/* Narrow: in flow under the transparent nav, so pad by nav height to clear
 		   it. Desktop is fixed + centred, so none. */
-		padding-block-start: calc(var(--appshell-header-height, 0px) + var(--spacing-8));
+		padding-block-start: calc(var(--_app-shell-header-height, 0px) + var(--spacing-8));
 		padding-block-end: var(--spacing-12);
 		max-width: var(--docs-prose-max-width);
 		margin-inline: auto;
@@ -163,16 +163,16 @@
 
 	@media (min-width: 768px) {
 		.hero-content {
-			padding-block-start: calc(var(--appshell-header-height, 0px) + var(--hero-gap));
+			padding-block-start: calc(var(--_app-shell-header-height, 0px) + var(--hero-gap));
 		}
 	}
 
 	@media (min-width: 1024px) {
 		.hero-content {
 			position: fixed;
-			top: var(--appshell-header-height, 0px);
+			top: var(--_app-shell-header-height, 0px);
 			/* Desktop: fixed band, centred (cards are a separate overlap layer). */
-			height: calc(760px - var(--appshell-header-height, 0px));
+			height: calc(760px - var(--_app-shell-header-height, 0px));
 			justify-content: center;
 			padding-block-start: 0;
 		}
@@ -240,7 +240,7 @@
 			position: absolute;
 			/* The fixed band's bottom sits a nav-height above the real seam, so
 			   subtract it to land 32px above the features surface. */
-			inset-block-end: calc(var(--spacing-8) - var(--appshell-header-height, 0px));
+			inset-block-end: calc(var(--spacing-8) - var(--_app-shell-header-height, 0px));
 			inset-inline-start: 0;
 			inset-inline-end: 0;
 		}

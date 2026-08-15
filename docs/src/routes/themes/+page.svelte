@@ -268,7 +268,7 @@
 
 	.theme-rail {
 		position: sticky;
-		top: calc(var(--appshell-header-height, 56px) + var(--spacing-4));
+		top: calc(var(--_app-shell-header-height, 56px) + var(--spacing-4));
 		flex-shrink: 0;
 		width: 260px;
 	}

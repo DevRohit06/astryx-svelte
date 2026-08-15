@@ -1,21 +1,19 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
-import {
-	borderVars,
-	colorVars,
-	durationVars,
-	easeVars,
-	spacingVars
-} from '../../styles/tokens.stylex.js';
-import { radioScope } from './radio.markers.stylex.js';
+import { colorVars, spacingVars } from '../../styles/tokens.stylex.js';
+import { indicatorScope } from '../indicator/indicator.markers.stylex.js';
 import type { RadioListSize } from './radio-list-context.svelte.js';
 
 /**
  * Ported from Astryx's `RadioList/RadioListItem.tsx` styles.
  *
- * The `<input type="radio">` is transparent and overlaid on a decorative circle
- * (`radio` + inner `innerDot`); the hover tints resolve through the `radioScope`
- * marker so a parent container's hover never bleeds in. The item container
+ * **This component no longer draws a radio.** Upstream 0.4.0 moved the circle,
+ * its inner dot and their two size ramps into `RadioIndicator`, so what is left
+ * is the row, the wrapper square, the transparent `<input type="radio">`, the
+ * `display: contents` indicator slot and the label. The hover tints still
+ * resolve through an ancestor marker so a parent container's hover never bleeds
+ * in — now the shared `indicatorScope` rather than a `radioScope` of its own,
+ * since the tinted element belongs to the theme's indicator. The item container
  * carries the marker only when enabled.
  */
 const styles = stylex.create({
@@ -43,74 +41,11 @@ const styles = stylex.create({
 	inputDisabled: {
 		cursor: 'not-allowed'
 	},
-	radio: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: borderVars['--border-width'],
-		borderStyle: 'solid',
-		borderRadius: '50%',
-		transitionProperty: 'background-color, border-color',
-		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		boxSizing: 'border-box'
-	},
-	radioUnchecked: {
-		borderColor: {
-			default: colorVars['--color-border-emphasized'],
-			[stylex.when.ancestor(':hover', radioScope)]: {
-				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-border-emphasized']}, ${colorVars['--color-tint-hover']} 20%)`
-			}
-		},
-		backgroundColor: {
-			default: colorVars['--color-background-surface'],
-			[stylex.when.ancestor(':hover', radioScope)]: {
-				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-background-surface']}, ${colorVars['--color-tint-hover']} 5%)`
-			}
-		}
-	},
-	radioChecked: {
-		borderColor: {
-			default: colorVars['--color-accent'],
-			[stylex.when.ancestor(':hover', radioScope)]: {
-				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`
-			}
-		},
-		backgroundColor: {
-			default: colorVars['--color-accent'],
-			[stylex.when.ancestor(':hover', radioScope)]: {
-				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`
-			}
-		}
-	},
-	radioWrapperFocus: {
-		outline: {
-			default: 'none',
-			':has(:focus-visible)': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':has(:focus-visible)': '2px'
-		},
-		borderRadius: '50%'
-	},
-	radioDisabled: {
-		opacity: 0.5,
-		borderColor: colorVars['--color-border']
-	},
-	radioDisabledUnchecked: {
-		backgroundColor: colorVars['--color-background-muted']
-	},
-	innerDot: {
-		borderRadius: '50%',
-		backgroundColor: {
-			default: colorVars['--color-on-accent'],
-			// Forced colors (Windows High Contrast) strips painted backgrounds,
-			// which would make the selected dot invisible — checked and unchecked
-			// radios would look identical. CanvasText keeps the dot perceivable on
-			// the Canvas circle fill (WCAG 1.4.11).
-			'@media (forced-colors: active)': 'CanvasText'
-		}
+	// Holds only the indicator, so the focus ring has one unambiguous target.
+	// `display: contents` adds no box of its own — the indicator keeps whatever
+	// layout relationship it already had with the wrapper.
+	indicatorSlot: {
+		display: 'contents'
 	},
 	labelDisabled: {
 		color: colorVars['--color-text-disabled'],
@@ -123,15 +58,10 @@ const wrapperSizeStyles = stylex.create({
 	md: { width: 24, height: 24 }
 });
 
-const radioSizeStyles = stylex.create({
-	sm: { width: 20, height: 20 },
-	md: { width: 24, height: 24 }
-});
-
-const dotSizeStyles = stylex.create({
-	sm: { width: 8, height: 8 },
-	md: { width: 10, height: 10 }
-});
+// The `radioSizeStyles` / `dotSizeStyles` ramps that stood here moved to
+// `RadioIndicator` at upstream 0.4.0, along with the seven style keys that drew
+// the circle and its inner dot. This component no longer draws a radio — it
+// renders whichever indicator the theme resolves for the `radio` name.
 
 const embeddedStyles = stylex.create({
 	root: {
@@ -151,12 +81,20 @@ export function radioListItemContainerAttrs(
 	isDisabled: boolean,
 	xstyle: StyleArg
 ): SvelteStyleAttrs {
-	return sx(styles.container, !isDisabled && radioScope, xstyle);
+	return sx(styles.container, !isDisabled && indicatorScope, xstyle);
 }
 
-/** The square that centres the input, the circle and the focus ring. */
-export function radioWrapperAttrs(size: RadioListSize, isDisabled: boolean): SvelteStyleAttrs {
-	return sx(styles.radioWrapper, wrapperSizeStyles[size], !isDisabled && styles.radioWrapperFocus);
+/**
+ * The square that centres the input and the indicator.
+ *
+ * No longer carries a focus ring, which is why the `isDisabled` parameter is
+ * gone: the ring is painted imperatively on the indicator's own element by
+ * `useIndicatorFocusRing`, so it takes that element's shape instead of the
+ * wrapper hardcoding a `border-radius: 50%` guess about a circle it does not
+ * own — and the disabled guard moved to the hook with it.
+ */
+export function radioWrapperAttrs(size: RadioListSize): SvelteStyleAttrs {
+	return sx(styles.radioWrapper, wrapperSizeStyles[size]);
 }
 
 /** The transparent `<input type="radio">` overlaid on the circle. */
@@ -164,24 +102,16 @@ export function radioInputAttrs(size: RadioListSize, isDisabled: boolean): Svelt
 	return sx(styles.input, wrapperSizeStyles[size], isDisabled && styles.inputDisabled);
 }
 
-/** The decorative circle. */
-export function radioCircleAttrs(
-	size: RadioListSize,
-	isChecked: boolean,
-	isDisabled: boolean
-): SvelteStyleAttrs {
-	return sx(
-		styles.radio,
-		radioSizeStyles[size],
-		isChecked ? styles.radioChecked : styles.radioUnchecked,
-		isDisabled && styles.radioDisabled,
-		isDisabled && !isChecked && styles.radioDisabledUnchecked
-	);
-}
-
-/** The filled centre dot, shown when checked. */
-export function radioDotAttrs(size: RadioListSize): SvelteStyleAttrs {
-	return sx(styles.innerDot, dotSizeStyles[size]);
+/**
+ * A container holding ONLY the indicator, so the focus ring has an unambiguous
+ * target whatever a theme renders. `display: contents` keeps it out of layout
+ * entirely.
+ *
+ * This replaced `radioCircleAttrs`/`radioDotAttrs` at upstream 0.4.0 — the
+ * circle and its dot are `RadioIndicator`'s now, and it takes the size itself.
+ */
+export function radioIndicatorSlotAttrs(): SvelteStyleAttrs {
+	return sx(styles.indicatorSlot);
 }
 
 /** The `<label>`, dimmed when disabled. */

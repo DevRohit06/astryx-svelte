@@ -108,7 +108,11 @@ const styles = stylex.create({
 		alignItems: 'center'
 	},
 	stickyBottomCollapsed: {
-		paddingBlockStart: 0
+		paddingBlockStart: 0,
+		// Centre the footer on the collapsed rail, matching its structural sibling
+		// `scrollableCollapsed` — without this, full-width footer content stretches
+		// to the rail's width instead of centring (#4852).
+		alignItems: 'center'
 	},
 	// Drawer footer — pushed to bottom of the scrollable content area
 	drawerFooter: {

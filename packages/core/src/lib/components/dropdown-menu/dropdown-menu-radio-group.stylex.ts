@@ -1,5 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
-import { sx, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { spacingVars } from '../../styles/tokens.stylex.js';
 
 /** Ported from Astryx's `DropdownMenu/DropdownMenuRadioGroup.tsx` styles. */
@@ -15,6 +15,6 @@ const styles = stylex.create({
 });
 
 /** The `role="group"` wrapper. */
-export function radioGroupAttrs(): SvelteStyleAttrs {
-	return sx(styles.group);
+export function radioGroupAttrs(xstyle?: StyleArg): SvelteStyleAttrs {
+	return sx(styles.group, xstyle);
 }

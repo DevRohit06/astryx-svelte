@@ -62,6 +62,25 @@ export default defineConfig({
 					browser: {
 						enabled: true,
 						/**
+						 * Vitest's browser server binds **63315** by default, and on Windows
+						 * that is not reliably bindable: Hyper-V reserves blocks of TCP
+						 * ports, and `netsh interface ipv4 show excludedportrange
+						 * protocol=tcp` reports 63271–63370 on at least one dev machine
+						 * here. The bind fails with `EACCES`, which Vite does **not** treat
+						 * as a retryable port conflict the way it does `EADDRINUSE`, so the
+						 * run dies before Chromium launches — "no tests", zero cases, exit 1,
+						 * and nothing naming a port unless you read the stack.
+						 *
+						 * Set `VITEST_BROWSER_PORT` to any port outside the reserved ranges
+						 * to get past it. Left unset — CI, and every non-Windows machine —
+						 * the default stands and this is inert. Concurrent chunks from
+						 * `scripts/run-client-tests.mjs` sharing one explicit port is fine:
+						 * `strictPort` is off, so the second one increments.
+						 */
+						...(process.env.VITEST_BROWSER_PORT
+							? { api: { port: Number(process.env.VITEST_BROWSER_PORT) } }
+							: {}),
+						/**
 						 * `contextOptions.locale` is load-bearing, not cosmetic. `plainDateFormat`
 						 * and `Timestamp` format through `new Intl.DateTimeFormat(undefined,
 						 * …)` — the *runtime default* locale. Node and jsdom report `en-US`,

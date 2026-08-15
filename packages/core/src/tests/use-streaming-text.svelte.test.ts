@@ -3,14 +3,19 @@ import { render } from 'vitest-browser-svelte';
 import Probe from './fixtures/streaming-text-probe.svelte';
 
 /**
- * Ported from Astryx's `hooks/useStreamingText.test.ts`, **all ten cases**, in
- * upstream's order and with its assertions unchanged. Nothing is dropped.
+ * Ported from Astryx's `hooks/useStreamingText.test.ts` at **v0.4.1** — its
+ * `useStreamingText` describe, **all eleven cases**, in upstream's order and
+ * with its assertions unchanged. Nothing is dropped. The file's *second*
+ * describe, `snapToGraphemeBoundary`, is a pure function of a string and an
+ * offset and lives in the node project as `use-streaming-text.test.ts`; between
+ * the two files upstream's 14 cases are all present.
  *
  * Runs in the **client** (real Chromium) project, and it has to: the hook is
  * `$effect.pre` (the reset/snap comparisons upstream does during render) plus
  * one `$effect` (the rAF loop), and neither runs under `svelte/server`. A node
  * run could only ever reach the two short-circuit returns; there would be no
- * animation frame to drive, so eight of the ten cases would assert nothing real.
+ * animation frame to drive, so nine of the eleven cases would assert nothing
+ * real.
  *
  * Both of upstream's stubs are kept verbatim, and they matter *more* here than
  * upstream rather than less:
@@ -217,5 +222,27 @@ describe('useStreamingText', () => {
 		// With enough frames and time elapsed, should have revealed everything
 		// (or close to it — the hook drains charsPerTick per tickMs)
 		expect(component.result.current.length).toBeGreaterThan(targetText.length * 0.5);
+	});
+
+	it('never reveals a tick boundary landing mid-surrogate-pair or mid-ZWJ-emoji-sequence (#4779)', async () => {
+		// natural speed advances 10 UTF-16 code units per tick. 9 ASCII chars
+		// (indices 0-8) followed by a 4-person ZWJ family emoji (indices 9-19,
+		// one grapheme cluster, 11 code units) means the first tick's raw
+		// boundary (index 10) lands one code unit into the family emoji's first
+		// surrogate pair -- exactly the failure case from the issue.
+		const family = '\u{1F468}‍\u{1F469}‍\u{1F467}‍\u{1F466}';
+		const targetText = 'a'.repeat(9) + family + 'end';
+		const { component } = await render(Probe, {
+			props: { text: targetText, streaming: true }
+		});
+
+		expect(rafCallbacks.length).toBeGreaterThan(0);
+		const cb = rafCallbacks.pop()!;
+		cb(performance.now() + 20);
+
+		// Without the fix this would be 'a'.repeat(9) + a lone high surrogate
+		// (renders as U+FFFD). With the fix, the whole not-yet-complete family
+		// cluster is held back rather than rendering a broken glyph.
+		expect(component.result.current).toBe('a'.repeat(9));
 	});
 });

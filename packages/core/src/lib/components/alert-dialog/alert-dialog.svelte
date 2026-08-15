@@ -66,6 +66,13 @@
 	 * cannot be dismissed by clicking outside, and Escape triggers cancel. Initial
 	 * focus goes to the cancel button — the least destructive action.
 	 *
+	 * The inline preview is the exception, and takes `role="group"` instead
+	 * (#4887): `alertdialog` is a *modal* role, promising an interruption the
+	 * user has to deal with, a focus trap, and an inert page behind it. The
+	 * inline path renders a plain always-present div with none of that, so the
+	 * role would misdescribe it. `group` keeps the title and description
+	 * associated with a container without claiming a dialog.
+	 *
 	 * @example
 	 * ```svelte
 	 * <AlertDialog
@@ -109,6 +116,8 @@
 
 	const theme = themeProps('alert-dialog');
 
+	const dialogRole = $derived(isInline ? 'group' : 'alertdialog');
+
 	function handleCancel(): void {
 		onOpenChange(false);
 	}
@@ -124,7 +133,12 @@
 {#snippet footer()}
 	<LayoutFooter>
 		<HStack gap={2} hAlign="end">
-			<Button variant="ghost" label={cancelLabel} onclick={handleCancel} />
+			<!--
+			Dialog focuses `[data-autofocus]` itself after `showModal()`, because the
+			native `autofocus` attribute runs while the dialog is still invisible.
+			Cancel is the least destructive choice, so it is the one preselected.
+		-->
+			<Button variant="ghost" label={cancelLabel} onclick={handleCancel} data-autofocus />
 			<Button
 				variant={actionVariant}
 				label={actionLabel}
@@ -142,7 +156,7 @@
 	{onOpenChange}
 	{width}
 	purpose="form"
-	role="alertdialog"
+	role={dialogRole}
 	aria-labelledby={titleId}
 	aria-describedby={descriptionId}
 	class={cx(theme.class, className)}

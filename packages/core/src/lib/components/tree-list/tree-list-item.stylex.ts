@@ -9,6 +9,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import type { TreeListDensity } from './tree-list-types.js';
+import { focusOutlineProps, focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TreeList/TreeListItem.tsx` styles.
@@ -39,20 +40,14 @@ const styles = stylex.create({
 		width: '100%',
 		// The treeitem row is the roving-tabindex focus owner; suppress the
 		// native focus ring in favor of the row's :focus-visible outline below.
-		outline: 'none',
+		outline: 'none'
 		// Publish this row's own focus state as an inheritable CSS variable
 		// instead of matching it via an ancestor selector. Every nested <li>
 		// redeclares these vars (default: 'none' / '0'), so a descendant row's
 		// default shadows an ancestor's active value — the ring can never leak
 		// past the nearest containing treeitem, however deep the tree nests.
-		'--_tree-focus-outline': {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		'--_tree-focus-outline-offset': {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		// That publication is `focusOutlineProps.publishFocusVisibleVars` at the
+		// call site now, rather than two hand-rolled `--_tree-focus-*` vars.
 	},
 	childGroup: {
 		margin: 0,
@@ -63,7 +58,18 @@ const styles = stylex.create({
 		paddingInlineStart: spacingVars['--spacing-2']
 	},
 	rowWrapper: {
-		position: 'relative'
+		position: 'relative',
+		// Inter-row gap. Half the public `--tree-list-row-gap` lever sits above and
+		// half below the row box; because this is PADDING (not margin) it cannot
+		// collapse, so adjacent rows end up a full gap apart — and it rides the
+		// `rowWrapper`, which carries no theme target, so the paintable
+		// `tree-list-item` stays a pure paint seam (layout lives off it). The `<li>`s
+		// stay contiguous — the gap is padding INSIDE each `<li>`, not space between
+		// them — so the per-`<li>` connector guide can still span it and read as a
+		// continuous line (see `tree-list-branches`). The lever's default is a subtle
+		// `--spacing-0-5` (2px, set on the tree-list root); a theme widens or closes
+		// it via the `tree-list` target.
+		paddingBlock: 'calc(var(--tree-list-row-gap, 0px) / 2)'
 	},
 	contentWrapper: {
 		borderRadius: radiusVars['--radius-element'],
@@ -71,7 +77,8 @@ const styles = stylex.create({
 		alignItems: 'center',
 		gap: spacingVars['--spacing-2'],
 		paddingInline: spacingVars['--spacing-2'],
-		outline: 'none',
+		// No `outline: 'none'` here: this element receives the shared focus ring,
+		// which already defaults to none, and the shorthand would erase it.
 		overflow: 'hidden',
 		position: 'relative',
 		boxSizing: 'border-box',
@@ -94,19 +101,6 @@ const styles = stylex.create({
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		}
-	},
-	focusVisibleOutline: {
-		outline: {
-			// Reads the row's own --_tree-focus-outline (published on the <li> in
-			// `wrapper`), which resolves to the nearest containing treeitem only.
-			default: 'var(--_tree-focus-outline, none)',
-			// Also support inner focusable actions.
-			':has(:focus-visible)': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: 'var(--_tree-focus-outline-offset, 0)',
-			':has(:focus-visible)': '2px'
 		}
 	},
 	disabled: {
@@ -201,15 +195,34 @@ const styles = stylex.create({
 	},
 	chevronSvg: {
 		display: 'flex',
+		// The chevron column is sized in spacing tokens by the button/container
+		// around it (--spacing-4 = 16px), not on Icon's rem scale, so the glyph's
+		// box is pinned to that same token. Icon's `sm` (1rem) only coincides with
+		// 16px at a 16px root font-size; drifting off the token would knock the
+		// glyph out of its 16px column.
+		width: spacingVars['--spacing-4'],
+		height: spacingVars['--spacing-4'],
+		fontSize: spacingVars['--spacing-4'],
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
 	},
+	// The RTL mirror is folded into each state's transform rather than living on
+	// a parent span. Both are `transform`, so on one element the later value
+	// would win — spelling out `scaleX(-1) rotate(...)` per state composes them
+	// exactly as the nested elements did, while leaving a single element to
+	// carry the glyph's theme target.
 	chevronExpanded: {
-		transform: 'rotate(90deg)'
+		transform: {
+			default: 'rotate(90deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(90deg)'
+		}
 	},
 	chevronCollapsed: {
-		transform: 'rotate(0deg)'
+		transform: {
+			default: 'rotate(0deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(0deg)'
+		}
 	}
 });
 
@@ -248,7 +261,7 @@ const descriptionSizeStyles = stylex.create({
 
 /** The `<li role="treeitem">`, publishing its own focus state as custom properties. */
 export function treeItemWrapperAttrs(): SvelteStyleAttrs {
-	return sx(styles.wrapper);
+	return focusOutlineProps.publishFocusVisibleVars(styles.wrapper);
 }
 
 /** The `<ul role="group">` holding an expanded item's children. */
@@ -283,7 +296,7 @@ export function treeItemContentWrapperAttrs(
 		styles.contentWrapper,
 		densityStyles[density],
 		hasInteractiveStyles && styles.interactive,
-		hasInteractiveStyles && styles.focusVisibleOutline,
+		hasInteractiveStyles && focusOutlineStyles.focusWithinOrPublished,
 		isDisabled && styles.disabled,
 		isSelected && styles.selected
 	);
@@ -334,7 +347,12 @@ export function treeItemChevronButtonAttrs(): SvelteStyleAttrs {
 	return sx(styles.chevronButton);
 }
 
-/** The rotating chevron glyph. */
-export function treeItemChevronSvgAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(styles.chevronSvg, isExpanded ? styles.chevronExpanded : styles.chevronCollapsed);
-}
+/**
+ * The rotating chevron glyph, passed to the `Icon`'s `xstyle` (#4838). `Icon`
+ * renders the glyph's span itself — carrying the pre-existing `astryx-icon`
+ * target — so the rotation rides that element instead of two extra wrappers,
+ * and the RTL mirror is spelled out per state above rather than nested outside.
+ */
+export const treeItemChevronSvgStyle = styles.chevronSvg;
+export const treeItemChevronExpandedStyle = styles.chevronExpanded;
+export const treeItemChevronCollapsedStyle = styles.chevronCollapsed;

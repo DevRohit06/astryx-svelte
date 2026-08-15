@@ -238,6 +238,24 @@ export function generateTypeScaleComponents(): Record<
 			lineHeight: `var(--text-heading-${level}-leading)`
 		};
 	}
+	// `Heading` renders both a `level:N` and, when set, a `type:display-N`
+	// visual-prop class simultaneously (type sizing takes precedence over level
+	// sizing — see `heading.svelte`'s own `type ? sizeByType[type] :
+	// sizeByLevel[level]`). Without a `type:display-N` rule here, the `level:N`
+	// rule is the only one that matches, so it silently wins regardless of
+	// `type` once a theme supplies a type scale — a bug that looked intermittent
+	// because a theme with no typography config was unaffected. Emitting these
+	// after the level rules keeps them later in source order, so they take
+	// precedence at equal specificity, matching the component's own logic.
+	// `fontWeight` is intentionally omitted, mirroring the `text` branch below
+	// and preserving the default-weight-by-type styles.
+	for (const type of ['display-1', 'display-2', 'display-3']) {
+		heading[`type:${type}`] = {
+			fontFamily: 'var(--font-family-heading)',
+			fontSize: `var(--text-${type}-size)`,
+			lineHeight: `var(--text-${type}-leading)`
+		};
+	}
 
 	const text: Record<string, Record<string, string>> = {};
 	for (const [type] of TEXT_STEPS) {

@@ -6,9 +6,7 @@
 	} from '$lib/hooks/use-container-reveal.svelte.js';
 
 	/**
-	 * `renderHook`'s stand-in for `useContainerReveal`. The hook claims its pool
-	 * slot during component init and releases it on destroy, so a component is
-	 * the only place it can run at all.
+	 * `renderHook`'s stand-in for `useContainerReveal`.
 	 *
 	 * Two things the probe does that `result.current` cannot: it exposes the
 	 * return as an instance export (upstream reads `result.current` the same
@@ -17,6 +15,11 @@
 	 *
 	 * `options` is left undefined by most cases so the hook's own default
 	 * parameter is exercised, exactly as upstream's `useContainerReveal()` does.
+	 *
+	 * **The getter is now read on every call**, not once at init: upstream 0.4.0
+	 * made `isEnabled` take effect after mount, which is what
+	 * `rerender({isEnabled})` exercises. Through 0.3.0 it decided a one-time pool
+	 * slot claim, so re-reading it would have changed nothing.
 	 */
 	interface Props {
 		options?: () => UseContainerRevealOptions;
@@ -24,18 +27,9 @@
 
 	const { options }: Props = $props();
 
-	// Forwarded by reference on purpose: the hook reads the getter once, at init,
-	// so re-reading the prop would change nothing. No case rebinds it.
-	// svelte-ignore state_referenced_locally
-	export const reveal: UseContainerRevealReturn = useContainerReveal(options);
+	export const reveal: UseContainerRevealReturn = useContainerReveal(() => options?.() ?? {});
 </script>
 
-<!-- `data-marker` mirrors the container class so the SSR suite can read it out of
-     a markup string without depending on how the spread orders attributes. -->
-<div
-	data-reveal-container
-	data-marker={reveal.getContainerProps().class}
-	{...reveal.getContainerProps()}
->
+<div data-reveal-container {...reveal.getContainerProps()}>
 	<span data-reveal-content {...reveal.getContentRevealProps()}></span>
 </div>

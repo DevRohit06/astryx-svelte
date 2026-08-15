@@ -222,3 +222,74 @@ describe('themeBuild() — check mode', () => {
 		expect(result?.data.stale).toEqual([]);
 	});
 });
+
+describe('themeBuild() — component override validation', () => {
+	it('accepts documented state keys without an "Unknown prop" warning', async () => {
+		// The state-key syntax the Theming Infrastructure wiki documents —
+		// `radio: {checked}`, `calendar-day: {today, selected}` — is declared in
+		// each component's doc under `theming.targets[].states`, not
+		// `visualProps`. The target index read only `visualProps`, so every one of
+		// these warned "Unknown prop": documented syntax that looked broken.
+		//
+		// Upstream's fixture verbatim, and it holds here — but note that in this
+		// port TWO mechanisms keep it quiet, so on its own it does not pin #4778:
+		// `validateComponentOverrides` already skips a colonless segment (a bare
+		// state name names no prop — see build.mjs), which this port needed
+		// because its `defineTheme` folds `generateTextColorComponents()` into
+		// `theme.components` as bare keys. The case below is where the states
+		// widening itself is observable.
+		const themeFile = path.join(tmpDir, 'states.mjs');
+		fs.writeFileSync(
+			themeFile,
+			`export default {
+        name: 'states',
+        tokens: {'--color-bg': '#0a0a0a'},
+        components: {
+          radio: {
+            checked: {borderColor: 'var(--color-accent)'},
+            'checked+disabled': {opacity: '0.5'},
+          },
+          'calendar-day': {
+            today: {fontWeight: '700'},
+            selected: {backgroundColor: 'var(--color-accent)'},
+          },
+        },
+      };\n`
+		);
+
+		const result = await themeBuild('states.mjs', {}, { cwd: tmpDir });
+
+		expect(result?.data.warnings).toEqual([]);
+	});
+
+	it('still warns on a key that is neither a visual prop nor a state', async () => {
+		// Widening the known set to states must not turn the guard off.
+		//
+		// RESTATED: upstream's fixture is the bare key `radio: {notAState}`, which
+		// cannot warn in this port at all — `validateComponentOverrides` skips a
+		// colonless segment outright (see the case above and build.mjs's comment),
+		// a deliberate divergence that predates #4778. So the guard is exercised
+		// through the key form this port does read, `prop:value`, which asks the
+		// same question of the same code path.
+		const themeFile = path.join(tmpDir, 'bogus.mjs');
+		fs.writeFileSync(
+			themeFile,
+			`export default {
+        name: 'bogus',
+        tokens: {'--color-bg': '#0a0a0a'},
+        components: {radio: {'notAProp:x': {opacity: '0.5'}}},
+      };\n`
+		);
+
+		const result = await themeBuild('bogus.mjs', {}, { cwd: tmpDir });
+
+		expect(result?.data.warnings).toEqual([
+			expect.stringContaining('Unknown prop "notAProp" on component "radio"')
+		]);
+		// The hint lists the known set, and `checked` can only have reached it
+		// through `target.states`: the `astryx-radio` target declares
+		// `visualProps: ['size']`, `states: ['checked', 'disabled']`. This is the
+		// #4778 assertion — before the fix the hint read `Known props: size`.
+		expect(result?.data.warnings[0]).toMatch(/Known props: .*\bchecked\b/);
+	});
+});

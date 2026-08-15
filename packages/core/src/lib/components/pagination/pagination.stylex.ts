@@ -9,6 +9,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `Pagination/Pagination.tsx`, where the one style group is
@@ -70,15 +71,7 @@ const styles = stylex.create({
 		cursor: 'pointer',
 		transitionProperty: 'background-color',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	dotSm: {
 		width: spacingVars['--spacing-1-5'],
@@ -122,9 +115,6 @@ const styles = stylex.create({
 		alignItems: 'center',
 		gap: spacingVars['--spacing-2']
 	},
-	pageSizeSelectorControl: {
-		width: 80
-	},
 	disabled: {
 		opacity: 0.5,
 		pointerEvents: 'none' as const
@@ -162,7 +152,7 @@ export function paginationDotAttrs(
 	isActive: boolean,
 	isDisabled: boolean
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.dot,
 		isSm && styles.dotSm,
 		isActive && styles.dotActive,
@@ -200,7 +190,12 @@ export function paginationPageSizeSelectorAttrs(): SvelteStyleAttrs {
 	return sx(styles.pageSizeSelector);
 }
 
-/** The fixed-width box the page-size `Selector` sits in. */
-export function paginationPageSizeSelectorControlAttrs(): SvelteStyleAttrs {
-	return sx(styles.pageSizeSelectorControl);
-}
+/**
+ * Width (px) of the page-size `Selector` field.
+ *
+ * This was a `pageSizeSelectorControl` style on a wrapper `<div>` until #4775.
+ * It is a prop now because `Selector`'s `xstyle` lands on the trigger box while
+ * `width` sizes the whole field — the wrapper was sizing the outer element, so
+ * moving the style to `xstyle` would have silently narrowed what it applied to.
+ */
+export const PAGE_SIZE_SELECTOR_WIDTH = 80;

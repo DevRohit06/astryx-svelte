@@ -19,9 +19,9 @@ import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
  * dropped. There is no ref-callback and no `displayName` case in the file, so
  * nothing is React-only.
  *
- * (`use-typeahead.svelte.test.ts` is a different suite entirely — the
- * type-to-select hook `DropdownMenu` uses. It was renamed off this filename when
- * the component landed.)
+ * (`use-typeahead.test.ts` is a different suite entirely — the type-to-select
+ * hook `DropdownMenu` uses. It was renamed off this filename when the component
+ * landed, and has since moved to the server project.)
  *
  * Runs in the **client (real Chromium)** project. Upstream's `beforeAll`/
  * `beforeEach` stubs for `showPopover`/`hidePopover`/`:popover-open` are

@@ -254,8 +254,13 @@ export const neutralTheme = defineTheme({
 
 		// ====================================================================
 		// Radius — slightly larger than the defaults.
+		//
+		// `--radius-none` and `--radius-full` are always fixed and must never be
+		// scaled by a theme (see `defineTheme`'s radius config docs) — 0 and
+		// 9999px respectively, matching core's own defaults. Upstream shipped
+		// `0.25rem` here through 0.3.0 and corrected it at 0.4.1.
 		// ====================================================================
-		'--radius-none': '0.25rem',
+		'--radius-none': '0px',
 		'--radius-inner': '0.375rem',
 		'--radius-element': '0.625rem',
 		'--radius-container': '0.75rem',

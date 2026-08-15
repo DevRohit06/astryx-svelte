@@ -220,7 +220,7 @@
 	   horizontal scroll. Hidden <1024px, where the collage takes over. */
 	.stage {
 		position: fixed;
-		top: var(--appshell-header-height, 0px);
+		top: var(--_app-shell-header-height, 0px);
 		left: 50%;
 		transform: translateX(-50%);
 		width: min(1200px, 100vw);

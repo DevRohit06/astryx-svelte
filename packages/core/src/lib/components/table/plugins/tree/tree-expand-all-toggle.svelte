@@ -13,8 +13,9 @@
 	import Icon from '../../../icon/icon.svelte';
 	import { useTranslator } from '../../../../i18n/index.js';
 	import {
-		treeChevronAttrs,
-		treeChevronMirrorAttrs,
+		treeChevronIconCollapsedStyle,
+		treeChevronIconExpandedStyle,
+		treeChevronIconStyle,
 		treeExpanderButtonAttrs
 	} from './tree.stylex.js';
 
@@ -26,8 +27,8 @@
 	 * header when `hasExpandAllControl` is set and the state hook supplies the
 	 * aggregate `isAllExpanded` plus `onExpandAll`/`onCollapseAll`. It shares the
 	 * chevron affordance with the per-row expander (`tree-expander.svelte`) —
-	 * same button, same rotation, same RTL mirror nesting — and points down only
-	 * when **every** expandable row is expanded, matching a row expander.
+	 * same button, same rotation on the glyph itself — and points down only when
+	 * **every** expandable row is expanded, matching a row expander.
 	 *
 	 * `'indeterminate'` therefore reads as collapsed and the next press expands
 	 * all, which is upstream's `allExpanded === true` comparison rather than a
@@ -39,8 +40,10 @@
 	const allExpanded = $derived(isAllExpanded === true);
 
 	const buttonAttrs = treeExpanderButtonAttrs();
-	const chevronAttrs = $derived(treeChevronAttrs(allExpanded));
-	const mirror = treeChevronMirrorAttrs();
+	const chevronXstyle = $derived([
+		treeChevronIconStyle,
+		allExpanded ? treeChevronIconExpandedStyle : treeChevronIconCollapsedStyle
+	]);
 </script>
 
 <button
@@ -60,9 +63,9 @@
 		: t('@astryx.tableTree.expandAllRows')}
 	aria-expanded={allExpanded}
 >
-	<span class={mirror.class} style={mirror.style}>
-		<span class={chevronAttrs.class} style={chevronAttrs.style}>
-			<Icon icon="chevronRight" size="xsm" />
-		</span>
-	</span>
+	<!--
+		Same one-element treatment as the row expander: the glyph carries both the
+		rotation and the theme target (#4838).
+	-->
+	<Icon icon="chevronRight" size="xsm" xstyle={chevronXstyle} />
 </button>

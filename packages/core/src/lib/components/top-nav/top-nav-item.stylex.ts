@@ -1,5 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
-import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import type { StyleArg, SvelteStyleAttrs } from '../../internal/sx.js';
 import { navItemStyles, type NavItemSize } from '../nav-item/nav-item.stylex.js';
 import {
 	colorVars,
@@ -10,6 +10,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavItem.tsx` styles.
@@ -44,14 +45,6 @@ const styles = stylex.create({
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			},
 			':active': colorVars['--color-overlay-pressed']
-		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
 		}
 	},
 	selected: {
@@ -67,18 +60,8 @@ const styles = stylex.create({
 	},
 	iconOnly: {
 		paddingInline: spacingVars['--spacing-2']
-	},
-	// Drawer mode — focus outline (base item + selected come from navItemStyles)
-	drawerFocus: {
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
 	}
+	// Drawer mode — focus outline (base item + selected come from navItemStyles)
 });
 
 /** The drawer-mode row — the shared nav item plus this component's focus ring. */
@@ -88,10 +71,9 @@ export function topNavItemDrawerAttrs(
 	isDisabled: boolean,
 	xstyle: StyleArg
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		navItemStyles.item,
 		navItemStyles[size],
-		styles.drawerFocus,
 		isSelected && navItemStyles.selected,
 		isDisabled && navItemStyles.disabled,
 		xstyle
@@ -108,7 +90,7 @@ export function topNavItemAttrs(
 	isIconOnly: boolean,
 	xstyle: StyleArg
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.base,
 		isSelected && styles.selected,
 		isDisabled && navItemStyles.disabled,

@@ -58,10 +58,12 @@
 		lightboxImageAttrs,
 		lightboxVideoAttrs,
 		lightboxCaptionAttrs,
-		lightboxCloseButtonAttrs,
-		lightboxNavButtonAttrs,
 		lightboxCounterAttrs,
-		lightboxControlButtonStyle
+		lightboxControlButtonStyle,
+		lightboxCloseButtonStyle,
+		lightboxNavButtonStyle,
+		lightboxNavPrevStyle,
+		lightboxNavNextStyle
 	} from './lightbox.stylex.js';
 
 	/**
@@ -389,9 +391,6 @@
 	const dialogAttrs = $derived(lightboxDialogAttrs(xstyle));
 	const container = lightboxContainerAttrs();
 	const mediaGroup = lightboxMediaGroupAttrs();
-	const closeButton = lightboxCloseButtonAttrs();
-	const navPrev = lightboxNavButtonAttrs('prev');
-	const navNext = lightboxNavButtonAttrs('next');
 	const mirror = rtlMirrorAttrs();
 	const counter = lightboxCounterAttrs();
 	const captionAttrs = lightboxCaptionAttrs();
@@ -452,15 +451,13 @@
 		style={mergeStyle(dialogAttrs.style, styleProp as string | undefined)}
 	>
 		<div bind:this={containerEl} class={container.class} style={container.style}>
-			<div class={closeButton.class} style={closeButton.style}>
-				<IconButton
-					icon={closeIcon}
-					label={t('@astryx.lightbox.close')}
-					variant="ghost"
-					onclick={handleClose}
-					xstyle={lightboxControlButtonStyle}
-				/>
-			</div>
+			<IconButton
+				icon={closeIcon}
+				label={t('@astryx.lightbox.close')}
+				variant="ghost"
+				onclick={handleClose}
+				xstyle={[lightboxCloseButtonStyle, lightboxControlButtonStyle]}
+			/>
 
 			<!--
 				Gallery nav: prev — stays mounted and is disabled at the start of the
@@ -468,16 +465,14 @@
 				control and drop focus to <body>.
 			-->
 			{#if isGallery}
-				<div class={navPrev.class} style={navPrev.style}>
-					<IconButton
-						icon={prevIcon}
-						label={t('@astryx.lightbox.previous')}
-						variant="ghost"
-						isDisabled={!canPrev}
-						onclick={goToPrev}
-						xstyle={lightboxControlButtonStyle}
-					/>
-				</div>
+				<IconButton
+					icon={prevIcon}
+					label={t('@astryx.lightbox.previous')}
+					variant="ghost"
+					isDisabled={!canPrev}
+					onclick={goToPrev}
+					xstyle={[lightboxNavButtonStyle, lightboxNavPrevStyle, lightboxControlButtonStyle]}
+				/>
 			{/if}
 
 			<!-- Media + caption group (centered together) -->
@@ -540,16 +535,14 @@
 				end of the range instead of unmounting.
 			-->
 			{#if isGallery}
-				<div class={navNext.class} style={navNext.style}>
-					<IconButton
-						icon={nextIcon}
-						label={t('@astryx.lightbox.next')}
-						variant="ghost"
-						isDisabled={!canNext}
-						onclick={goToNext}
-						xstyle={lightboxControlButtonStyle}
-					/>
-				</div>
+				<IconButton
+					icon={nextIcon}
+					label={t('@astryx.lightbox.next')}
+					variant="ghost"
+					isDisabled={!canNext}
+					onclick={goToNext}
+					xstyle={[lightboxNavButtonStyle, lightboxNavNextStyle, lightboxControlButtonStyle]}
+				/>
 			{/if}
 
 			<!-- Gallery counter -->

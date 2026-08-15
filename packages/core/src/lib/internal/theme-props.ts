@@ -61,15 +61,42 @@ export function themeDataAttributes(props?: ClassProps): ThemeDataAttributes {
 }
 
 /**
+ * Options for {@link themeProps}.
+ */
+export type ThemePropsOptions = {
+	/**
+	 * Stable class names to emit ALONGSIDE the component's own, for targets that
+	 * have been renamed.
+	 *
+	 * A theme target is public API: renaming one silently breaks every theme
+	 * that styles it. Emitting the old name beside the new one keeps those
+	 * themes working through a deprecation window, at the cost of one extra
+	 * class on the element until the old name is dropped in a major.
+	 *
+	 * Pass plain string literals — the theming guards scan for them statically.
+	 * Document the old name with `deprecatedFor` in the component's
+	 * `theming.targets` so the docs site says which to use.
+	 */
+	legacyNames?: ReadonlyArray<string>;
+};
+
+/**
  * Props to spread onto the element that carries the stable Astryx class.
  *
  * @example
  * themeProps('button', { variant: 'primary', size: 'sm' })
  * // → { class: 'astryx-button primary sm', 'data-variant': 'primary', 'data-size': 'sm' }
  */
-export function themeProps(component: string, props?: ClassProps): ThemeProps {
+export function themeProps(
+	component: string,
+	props?: ClassProps,
+	options?: ThemePropsOptions
+): ThemeProps {
+	const className = buildClassName(component, props);
+	const legacy = options?.legacyNames?.map((name) => stableClassName(name)) ?? [];
+
 	return {
-		class: buildClassName(component, props),
+		class: legacy.length > 0 ? [className, ...legacy].join(' ') : className,
 		...themeDataAttributes(props)
 	};
 }

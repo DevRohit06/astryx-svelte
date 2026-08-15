@@ -56,28 +56,25 @@ describe('DropdownMenuCheckboxItem', () => {
 		expect(onChangeSpy).toHaveBeenCalledWith(true);
 	});
 
-	it('keeps the composed checkbox decorative (row is the only announced control)', async () => {
+	it('keeps the checkbox indicator decorative (row is the only announced control)', async () => {
 		const screen = await render(Selectable, { props: { scenario: 'checkbox', value: true } });
 		(screen.getByRole('button', { name: /View/ }).element() as HTMLElement).click();
 
 		// The row owns role="menuitemcheckbox" — it is the single such control.
 		expect(screen.container.querySelectorAll('[role="menuitemcheckbox"]')).toHaveLength(1);
 
-		// The composed CheckboxInput is present in the DOM but sits inside an
-		// `aria-hidden` + `inert` subtree: it contributes nothing to the row's
-		// accessible name and its native <input> is out of the tab order and the
-		// accessibility tree, so it is not a second announced/focusable control.
-		// RESTATED: upstream notes jsdom does not model inert's a11y removal and so
-		// asserts the boundary directly. Chromium *does* enforce inert, so this also
-		// asserts the enforced consequence — the input refuses focus.
+		// The visual is the shared checkbox indicator: aria-hidden, with no nested
+		// native <input>, so the row is the only announced/focusable control. 0.4.1
+		// replaced the composed CheckboxInput — and with it the `inert` subtree the
+		// nested input used to need — with the indicator drawn directly on the row.
 		const checkboxRow = row(screen.container, 'menuitemcheckbox', 'Show archived');
-		const input = checkboxRow.querySelector<HTMLInputElement>('input[type="checkbox"]');
-		expect(input).not.toBeNull();
-		const marker = input?.closest('[inert]');
-		expect(marker).not.toBeNull();
+		expect(checkboxRow.querySelector('input[type="checkbox"]')).toBeNull();
+		// The shared checkbox target, directly on the row — no wrapper, and no
+		// menu-specific target added for it.
+		const marker = checkboxRow.querySelector('.astryx-checkbox');
+		expect(marker).toBeInTheDocument();
 		expect(marker).toHaveAttribute('aria-hidden', 'true');
-		input?.focus();
-		expect(document.activeElement).not.toBe(input);
+		expect(marker).toHaveAttribute('data-checked', 'checked');
 	});
 
 	it('does not toggle when disabled', async () => {
@@ -110,20 +107,31 @@ describe('DropdownMenuRadioGroup / RadioItem', () => {
 		expect(screen.container.querySelector('[role="group"][aria-label="Sort by"]')).toBeTruthy();
 	});
 
-	it('exposes a themeable slot on the checked radio dot', async () => {
+	it('renders the shared radio indicator in the menu marker', async () => {
 		const screen = await render(Selectable, {
 			props: { scenario: 'radioGroup', radioValue: 'newest' }
 		});
 		(screen.getByRole('button', { name: /Sort/ }).element() as HTMLElement).click();
 		const checked = row(screen.container, 'menuitemradio', 'Newest');
-		const dot = checked.querySelector('.astryx-dropdown-menu-radio-dot');
-		expect(dot).toBeInTheDocument();
-		// Mirrors the radio container's visual props/states for consistent theming.
-		expect(dot).toHaveAttribute('data-size', 'md');
-		expect(dot).toHaveAttribute('data-checked', 'checked');
-		// The unchecked radio has no dot, so no dot slot either.
+		// The menu's target and the shared radio target land on the SAME painted
+		// circle, so menu radios and RadioList radios theme together and a theme
+		// never has to reach through a wrapper.
+		const box = checked.querySelector('.astryx-dropdown-menu-radio');
+		expect(box).toHaveClass('astryx-radio');
+		expect(box).toHaveAttribute('data-size', 'md');
+		expect(box).toHaveAttribute('data-checked', 'checked');
+		// `astryx-radio-dot` is the legacy name `radio-indicator-dot` still emits.
+		// The menu-specific `dropdown-menu-radio-dot` was removed at 0.4.1 — that
+		// removal is what `rename-dropdown-menu-radio-dot-target` migrates, and
+		// this file was asserting the removed class until now.
+		expect(box?.querySelector('.astryx-radio-dot')).toBeInTheDocument();
+
+		// The unchecked radio still draws its circle, without the dot.
 		const unchecked = row(screen.container, 'menuitemradio', 'Oldest');
-		expect(unchecked.querySelector('.astryx-dropdown-menu-radio-dot')).not.toBeInTheDocument();
+		const uncheckedIndicator = unchecked.querySelector('.astryx-radio');
+		expect(uncheckedIndicator).toBeInTheDocument();
+		expect(uncheckedIndicator).not.toHaveAttribute('data-checked');
+		expect(uncheckedIndicator?.querySelector('.astryx-radio-dot')).not.toBeInTheDocument();
 	});
 
 	it('calls onChange with the selected value', async () => {

@@ -12,6 +12,7 @@ import {
 } from '../../styles/tokens.stylex.js';
 import { tabScope } from './tab.markers.stylex.js';
 import type { TabListSize } from './tab-list-context.svelte.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TabList/TabMenu.tsx` styles.
@@ -48,15 +49,7 @@ const styles = stylex.create({
 		textDecoration: 'none',
 		transitionProperty: 'color',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	triggerSelected: {
 		color: colorVars['--color-text-primary'],
@@ -118,7 +111,11 @@ const styles = stylex.create({
 	chevron: {
 		width: spacingVars['--spacing-4'],
 		height: spacingVars['--spacing-4'],
-		flexShrink: 0,
+		flexShrink: 0
+	},
+	// Applied to the chevron <Icon> (via `xstyle`) rather than its wrapper, so the
+	// element that rotates is the element a theme targets.
+	chevronIcon: {
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
@@ -155,10 +152,6 @@ const styles = stylex.create({
 			':hover': {
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
-		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
 		}
 	},
 	menuItemSelected: {
@@ -233,10 +226,19 @@ export function tabMenuTriggerLabelSizerAttrs(): SvelteStyleAttrs {
 	return sx(styles.triggerLabelSizer);
 }
 
-/** The chevron, rotated while the menu is open. */
-export function tabMenuChevronAttrs(isOpen: boolean): SvelteStyleAttrs {
-	return sx(styles.chevron, isOpen && styles.chevronOpen);
+/** The chevron's wrapper — a fixed box, and nothing that moves. */
+export function tabMenuChevronAttrs(): SvelteStyleAttrs {
+	return sx(styles.chevron);
 }
+
+/**
+ * Passed to the chevron `Icon`'s `xstyle`, the way upstream passes
+ * `styles.chevronIcon` and `styles.chevronOpen` (#4838). The rotation and the
+ * transition that animates it ride the glyph rather than the wrapper, so the
+ * element a theme targets is the element that moves.
+ */
+export const tabMenuChevronIconStyle = styles.chevronIcon;
+export const tabMenuChevronOpenStyle = styles.chevronOpen;
 
 /** The selected-state rule under the trigger. Rendered only when selected. */
 export function tabMenuIndicatorAttrs(): SvelteStyleAttrs {
@@ -255,7 +257,7 @@ export function tabMenuHeadingAttrs(): SvelteStyleAttrs {
 
 /** One `role="menuitem"` row. */
 export function tabMenuItemAttrs(isSelected: boolean): SvelteStyleAttrs {
-	return sx(styles.menuItem, isSelected && styles.menuItemSelected);
+	return focusOutlineProps.focusVisible(styles.menuItem, isSelected && styles.menuItemSelected);
 }
 
 /** The icon + label group inside a row. */

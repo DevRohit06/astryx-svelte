@@ -49,6 +49,20 @@
 		 */
 		alignment?: LayerAlignment;
 		/**
+		 * Clearance between the layer and its anchor, as a CSS length (a number is
+		 * treated as `px`). Applied along the placement axis and flip-safe, so the
+		 * gap survives a `position-try-fallbacks` flip to the opposite side.
+		 *
+		 * Layers sit flush by default: the hook zeroes the UA margins so anchor
+		 * positioning has a clean box, and clearance is a deliberate choice per
+		 * surface. `var(--spacing-1)` is the system's standard clearance.
+		 *
+		 * Ignored when `positioning` is `'custom'` — that mode owns its own insets.
+		 *
+		 * @default 0
+		 */
+		offset?: number | string;
+		/**
 		 * ARIA role applied to the popover container (e.g. `'tooltip'`). Lets
 		 * consumers complete the ARIA pattern and gives test tooling a stable,
 		 * non-hashed selector for the layer.
@@ -141,7 +155,9 @@
 
 	const isFixed = $derived(p.layer.attachTrigger === undefined);
 
-	const attrs = $derived(layerAttrs(isFixed, p.xstyle));
+	const attrs = $derived(
+		layerAttrs(isFixed, p.xstyle, p.offset, p.positioning ?? 'anchor', p.placement ?? 'above')
+	);
 
 	const positionStyle = $derived(
 		isFixed

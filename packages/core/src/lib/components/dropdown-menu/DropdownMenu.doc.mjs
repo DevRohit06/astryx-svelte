@@ -28,15 +28,10 @@ export default {
 			},
 			{
 				className: 'astryx-dropdown-menu-item',
-				visualProps: ['size']
+				visualProps: ['size', 'variant']
 			},
 			{
 				className: 'astryx-dropdown-menu-radio',
-				visualProps: ['size'],
-				states: ['checked', 'disabled']
-			},
-			{
-				className: 'astryx-dropdown-menu-radio-dot',
 				visualProps: ['size'],
 				states: ['checked', 'disabled']
 			},
@@ -129,7 +124,7 @@ export default {
 			name: 'items',
 			type: 'DropdownMenuOption[]',
 			description:
-				'Array of menu entries. Each entry is one of: an action item `{label, onClick?, icon?, isDisabled?}`, a divider `{type: "divider"}`, or a section `{type: "section", title?, items: [...action items]}`.',
+				'Array of menu entries. Each entry is one of: an action item `{label, onClick?, icon?, description?, endContent?, isDisabled?, variant?, hasCloseOnSelect?, id?}` (variant `"destructive"` renders it in the error color; `endContent` holds trailing content such as a keyboard-shortcut hint; `id` is the row\'s stable React key, needed only when the array reorders or filters), a divider `{type: "divider"}`, or a section `{type: "section", title?, id?, items: [...action items]}`.',
 			required: true
 		},
 		{
@@ -176,7 +171,8 @@ export default {
 		{
 			name: 'children',
 			type: 'Snippet',
-			description: 'Custom render function for each item in the list.'
+			description:
+				'Compound-mode menu content: DropdownMenuItem, DropdownMenuDivider, DropdownMenuSubMenu, and the selectable items. Mutually exclusive with `items`.'
 		}
 	]
 };

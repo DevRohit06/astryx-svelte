@@ -81,7 +81,7 @@
 	 *   navigation lands them with `scroll-margin-block-start`, and the landing
 	 *   page's pin-and-cover hero reads `window` scroll. Under `fill` the scroll
 	 *   container is `LayoutContent` instead and all three would silently stop
-	 *   working. `auto` also gives us `--appshell-header-height`, measured from
+	 *   working. `auto` also gives us `--_app-shell-header-height`, measured from
 	 *   the real header.
 	 * - **`sideNav` is conditional on the route**, not always supplied. `AppShell`
 	 *   treats any snippet as "a sidenav exists", so handing it one that renders
@@ -221,7 +221,7 @@
 	.shell {
 		display: flex;
 		flex-direction: column;
-		min-height: calc(100vh - var(--appshell-header-height, 64px));
+		min-height: calc(100vh - var(--_app-shell-header-height, 64px));
 		width: 100%;
 	}
 

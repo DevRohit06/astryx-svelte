@@ -31,14 +31,16 @@
 <script lang="ts">
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
-	import { useIcon } from '../icon/use-icon.svelte.js';
+	import Icon from '../icon/icon.svelte';
 	import {
 		setCollapsibleGroupPresentationContext,
 		useCollapsibleGroupPresentationContext
 	} from './collapsible-group-context.svelte.js';
 	import { useCollapsible } from './use-collapsible.svelte.js';
 	import {
-		collapsibleChevronAttrs,
+		collapsibleChevronClosedStyle,
+		collapsibleChevronOpenStyle,
+		collapsibleChevronStyle,
 		collapsibleContentAttrs,
 		collapsibleRootAttrs,
 		collapsibleTriggerAttrs,
@@ -89,8 +91,6 @@
 	const isDivided = $derived(presentation?.hasDividers ?? false);
 	const density = $derived(presentation?.density ?? null);
 
-	const chevronIcon = useIcon(() => 'chevronDown');
-
 	function handleToggle(): void {
 		if (isDisabled) {
 			return;
@@ -111,7 +111,6 @@
 	);
 	const triggerAttrs = $derived(collapsibleTriggerAttrs(density, isDisabled));
 	const triggerLabelAttrs = collapsibleTriggerLabelAttrs();
-	const chevronAttrs = $derived(collapsibleChevronAttrs(collapsible.isOpen));
 	const contentAttrs = $derived(collapsibleContentAttrs(density, collapsible.isOpen));
 </script>
 
@@ -135,9 +134,15 @@
 		<span class={triggerLabelAttrs.class} style={triggerLabelAttrs.style}>
 			{#if typeof trigger === 'function'}{@render trigger()}{:else}{trigger}{/if}
 		</span>
-		<span class={chevronAttrs.class} style={chevronAttrs.style}
-			>{@render chevronIcon.current?.()}</span
-		>
+		<Icon
+			icon="chevronDown"
+			size="sm"
+			color="secondary"
+			xstyle={[
+				collapsibleChevronStyle,
+				collapsible.isOpen ? collapsibleChevronOpenStyle : collapsibleChevronClosedStyle
+			]}
+		/>
 	</button>
 	<div
 		id={contentId}

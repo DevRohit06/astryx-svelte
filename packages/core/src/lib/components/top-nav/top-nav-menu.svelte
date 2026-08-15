@@ -41,16 +41,16 @@
 	import { useListFocus } from '../../hooks/use-list-focus.svelte.js';
 	import { useTypeahead } from '../../hooks/use-typeahead.js';
 	import { useAppShellMobile } from '../app-shell/app-shell-mobile-context.svelte.js';
-	import { useIcon } from '../icon/use-icon.svelte.js';
+	import Icon from '../icon/icon.svelte';
 	import { useLinkComponent } from '../link/link-context.svelte.js';
 	import LinkElement from '../link/link-element.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import { useTopNavSlot } from './top-nav-context.svelte.js';
 	import {
-		topNavMenuChevronAttrs,
+		topNavMenuChevronStyle,
 		topNavMenuContainerAttrs,
-		topNavMenuDrawerChevronAttrs,
+		topNavMenuDrawerChevronStyle,
 		topNavMenuDrawerHeaderAttrs,
 		topNavMenuDrawerItemAttrs,
 		topNavMenuDrawerItemDescriptionAttrs,
@@ -109,7 +109,6 @@
 	const menuId = $props.id();
 	const renderMode = useTopNavRenderMode();
 
-	const chevronIcon = useIcon(() => 'chevronDown');
 	const appShellMobile = useAppShellMobile();
 	const resolveLink = useLinkComponent();
 	const linkResolved = $derived(resolveLink());
@@ -123,8 +122,7 @@
 		// wrapper would announce an unnamed dialog around the menu and make the
 		// trigger claim aria-haspopup="dialog" for menu content (see TabMenu). This
 		// used to pass `dialogLabel`, which is exactly the wrapper 0.1.9 removed.
-		role: 'none',
-		xstyle: topNavMenuOffset
+		role: 'none'
 	}));
 
 	const menuHover = useMenuHover(() => ({
@@ -190,7 +188,7 @@
 
 	const theme = themeProps('top-nav-menu');
 	const triggerAttrs = $derived(topNavMenuTriggerAttrs(popover.isOpen, xstyle));
-	const chevronAttrs = $derived(topNavMenuChevronAttrs(popover.isOpen));
+	const chevronStyle = $derived(topNavMenuChevronStyle(popover.isOpen));
 	const containerAttrs = topNavMenuContainerAttrs();
 	const rowAttrs = topNavMenuItemAttrs();
 	const rowIconAttrs = topNavMenuItemIconAttrs();
@@ -200,7 +198,7 @@
 
 	const drawerSectionAttrs = topNavMenuDrawerSectionAttrs();
 	const drawerHeaderAttrs = topNavMenuDrawerHeaderAttrs();
-	const drawerChevronAttrs = $derived(topNavMenuDrawerChevronAttrs(drawerExpanded));
+	const drawerChevronStyle = $derived(topNavMenuDrawerChevronStyle(drawerExpanded));
 	const drawerItemsAttrs = $derived(topNavMenuDrawerItemsAttrs(drawerExpanded));
 	const drawerItemsInnerAttrs = topNavMenuDrawerItemsInnerAttrs();
 	const drawerItemAttrs = topNavMenuDrawerItemAttrs();
@@ -235,9 +233,7 @@
 			style={drawerHeaderAttrs.style}
 		>
 			{label}
-			<span class={drawerChevronAttrs.class} style={drawerChevronAttrs.style}>
-				{@render chevronIcon.current?.()}
-			</span>
+			<Icon icon="chevronDown" size="sm" color="inherit" xstyle={drawerChevronStyle} />
 		</button>
 		<div id="{menuId}-items" class={drawerItemsAttrs.class} style={drawerItemsAttrs.style}>
 			<div class={drawerItemsInnerAttrs.class} style={drawerItemsInnerAttrs.style}>
@@ -278,11 +274,9 @@
 		style={mergeStyle(triggerAttrs.style, styleProp as string | undefined)}
 	>
 		{label}
-		<span class={chevronAttrs.class} style={chevronAttrs.style}>
-			{@render chevronIcon.current?.()}
-		</span>
+		<Icon icon="chevronDown" size="sm" color="inherit" xstyle={chevronStyle} />
 	</button>
-	<PopoverLayer {popover} placement="below" alignment={slot()} xstyle={topNavMenuOffset}>
+	<PopoverLayer {popover} placement="below" alignment={slot()} offset={topNavMenuOffset}>
 		<!--
 			The container carries both the hover hook's attachment (for its open/close
 			focus management) and the list-focus one (roving tabindex + typeahead) —

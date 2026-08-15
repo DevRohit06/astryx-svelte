@@ -275,6 +275,12 @@ export interface ComponentThemingDerivedVar {
 	/** Named expansion strategy instead of specific vars.
 	 *  `'container'` — expands padding to 7 container layout tokens. */
 	expand?: 'container';
+	/** Emit only the internal `vars`, dropping the source property from the
+	 *  generated rule. Use when the class-carrying element must not receive the
+	 *  standard property itself — the value reaches a child through the var
+	 *  (e.g. TextArea's flush wrapper drives the inner textarea's inline
+	 *  padding). Without this, the property is emitted alongside the var. */
+	replaces?: boolean;
 }
 
 /**
@@ -309,6 +315,15 @@ export interface ComponentThemingTarget {
 	 *  `[data-checked="checked"]`. Legacy state classes are still emitted for
 	 *  compatibility. Omit if the element has no state-driven selectors. */
 	states?: string[];
+	/** Set when this target has been RENAMED and this entry is the old name.
+	 *  The component still emits the class (via `themeProps`'s `legacyNames`),
+	 *  so existing themes keep working, but the docsite should steer readers to
+	 *  the replacement. The value is the class name that supersedes this one,
+	 *  without the `astryx-` prefix — e.g. `"checkbox-indicator"`.
+	 *
+	 *  A theme target is public API; renaming one without this is a silent
+	 *  break for every theme styling it. */
+	deprecatedFor?: string;
 }
 
 /**

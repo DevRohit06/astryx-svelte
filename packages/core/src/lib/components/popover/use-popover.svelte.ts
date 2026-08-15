@@ -154,6 +154,22 @@ export interface UsePopoverOptions {
 	 * @default true
 	 */
 	hasSurface?: boolean;
+
+	/**
+	 * Theme-target name stamped on the popup SURFACE — the element that paints
+	 * the background, radius and elevation — without the `astryx-` prefix
+	 * (e.g. `'complex-selector-popup'`).
+	 *
+	 * The surface is created here, not by the calling component, so a component
+	 * that wants its popup themeable cannot reach it on its own: a target it
+	 * renders itself lands on its content INSIDE the surface, where a background
+	 * or radius rule paints the wrong box. Name the surface through this option
+	 * and document the class in the component's `theming.targets`.
+	 *
+	 * The shared `astryx-popover-surface` class is always present alongside it,
+	 * so a theme can style every popup surface at once.
+	 */
+	surfaceTarget?: string;
 }
 
 /**
@@ -219,6 +235,9 @@ export interface UsePopoverReturn {
 
 	/** Whether the default surface styles apply to the content wrapper. */
 	readonly hasSurface: boolean;
+
+	/** The option `surfaceTarget`, stamped on the surface alongside the shared class. */
+	readonly surfaceTarget: string | undefined;
 
 	/** Whether the hidden close button renders. */
 	readonly hasCloseButton: boolean;
@@ -374,6 +393,9 @@ export function usePopover(options: () => UsePopoverOptions): UsePopoverReturn {
 		},
 		get hasSurface() {
 			return hasSurface;
+		},
+		get surfaceTarget() {
+			return options().surfaceTarget;
 		},
 		get hasCloseButton() {
 			return hasCloseButton;

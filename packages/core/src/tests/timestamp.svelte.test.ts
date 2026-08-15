@@ -519,6 +519,48 @@ describe('Timestamp', () => {
 		expect(tsIn(screen.container).getAttribute('aria-label')).toBeNull();
 	});
 
+	// An abbreviation like "PST" or "GMT+2" is an unexpanded abbreviation to a
+	// screen-reader user (WCAG 3.1.4) — the AT-facing aria-label must spell the
+	// timezone out in full, while visible text keeps the compact short form.
+	it('uses the long timezone name in the aria-label (WCAG 3.1.4)', async () => {
+		const oneHourAgo = new Date(Date.now() - 3600 * 1000);
+		const screen = await render(Timestamp, {
+			props: {
+				value: oneHourAgo.getTime() / 1000,
+				format: 'relative',
+				hasTooltip: false,
+				'data-testid': 'ts'
+			}
+		});
+
+		const longTz =
+			new Intl.DateTimeFormat(undefined, { timeZoneName: 'long' })
+				.formatToParts(oneHourAgo)
+				.find((p) => p.type === 'timeZoneName')?.value ?? '';
+		expect(longTz).not.toBe('');
+		expect(tsIn(screen.container).getAttribute('aria-label')).toContain(longTz);
+	});
+
+	it('keeps the short timezone form in visible text when isTimezoneShown', async () => {
+		const date = new Date('2026-03-25T10:00:00Z');
+		const screen = await render(Timestamp, {
+			props: {
+				value: '2026-03-25T10:00:00Z',
+				format: 'time',
+				isTimezoneShown: true,
+				'data-testid': 'ts'
+			}
+		});
+
+		const tzPart = (form: 'short' | 'long') =>
+			new Intl.DateTimeFormat(undefined, { timeZoneName: form })
+				.formatToParts(date)
+				.find((p) => p.type === 'timeZoneName')?.value ?? '';
+		const text = tsIn(screen.container).textContent ?? '';
+		expect(text).toContain(tzPart('short'));
+		expect(text).not.toContain(tzPart('long'));
+	});
+
 	// --- Input handling ---
 
 	it('accepts Unix timestamp in seconds', async () => {
@@ -691,8 +733,13 @@ describe('Timestamp', () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 - 3600, format: 'relative', 'data-testid': 'ts' }
 			});
-			// The card layer mounts and carries the full absolute time (the same
-			// string as the aria-label) as its single default copyable row.
+			// The card layer mounts inline and carries the full absolute time in its
+			// visible form (short timezone abbreviation) as its single default
+			// copyable row. The aria-label spells the timezone out in full
+			// (WCAG 3.1.4), so the two strings intentionally differ — compare the
+			// card against an independently formatted short-form string.
+			// Compare with normalized whitespace: Intl output can contain narrow
+			// no-break spaces the matcher's own normalization would break on.
 			const card = await awaitCard(screen.container);
 			// Re-read the `<time>` only now: `{#await}`'s pending branch — the
 			// `Suspense` fallback — renders a `<time>` of its own, and the `:then`
@@ -700,9 +747,17 @@ describe('Timestamp', () => {
 			// never sees that swap, because a `React.lazy` whose promise is already
 			// resolved (its `beforeAll` warms it) renders without suspending at all.
 			const el = tsIn(screen.container);
-			expect(normalize(card.textContent ?? '')).toContain(
-				normalize(el.getAttribute('aria-label') ?? '\0')
-			);
+			const datetime = new Date(el.getAttribute('datetime') ?? '');
+			const expected = new Intl.DateTimeFormat(undefined, {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+				hour: 'numeric',
+				minute: '2-digit',
+				second: '2-digit',
+				timeZoneName: 'short'
+			}).format(datetime);
+			expect(normalize(card.textContent ?? '')).toContain(normalize(expected));
 
 			// The layer having mounted does not mean the trigger is wired — those
 			// are separate effects, and focusing an unwired trigger shows nothing.
@@ -782,14 +837,25 @@ describe('Timestamp', () => {
 			// The default card is the named details card, exactly as the configured
 			// one is.
 			expect(card).toHaveAttribute('aria-label', 'Timestamp details');
-			// Exactly one row, carrying the full absolute time (the same string as
-			// the aria-label) with its own copy button.
+			// Exactly one row, carrying the full absolute time in its visible form
+			// (short timezone abbreviation) with its own copy button. The
+			// aria-label spells the timezone out in full (WCAG 3.1.4), so the two
+			// strings intentionally differ — compare the row against an
+			// independently formatted short-form string.
 			expect(card.querySelectorAll('dd')).toHaveLength(1);
 			expect(card.querySelectorAll('button')).toHaveLength(1);
 
-			expect(normalize(card.textContent ?? '')).toContain(
-				normalize(tsIn(screen.container).getAttribute('aria-label') ?? '\0')
-			);
+			const datetime = new Date(tsIn(screen.container).getAttribute('datetime') ?? '');
+			const expected = new Intl.DateTimeFormat(undefined, {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+				hour: 'numeric',
+				minute: '2-digit',
+				second: '2-digit',
+				timeZoneName: 'short'
+			}).format(datetime);
+			expect(normalize(card.textContent ?? '')).toContain(normalize(expected));
 		});
 
 		it("copies the default absolute row's value", async () => {
@@ -1212,15 +1278,26 @@ describe('Timestamp', () => {
 			}
 		);
 
-		it('renders the full style identically as the aria-label and as a line', async () => {
+		it('renders the full style as the aria-label and as a line, differing only in zone-name spelling', async () => {
 			// 'full' is the one member with no visible-text counterpart — it backs
 			// the accessible name of a relative timestamp and the card's default
-			// line. Those two must not drift apart either.
+			// line. The two must not drift apart on anything but the zone name: the
+			// aria-label spells the zone out in full for assistive tech (WCAG 3.1.4),
+			// the visible line keeps the abbreviation. Comparing them after swapping
+			// the abbreviation for the spelled-out form keeps this a direct
+			// surface-to-surface check, so re-forking either path still fails here.
 			const screen = await render(Timestamp, {
 				props: { value: VALUE, format: 'relative', hasTooltip: false, 'data-testid': 'ts' }
 			});
-			const [line] = formatTooltipLines(new Date(VALUE), [{ format: 'full' }]);
-			expect(line.value).toBe(tsIn(screen.container).getAttribute('aria-label'));
+			const date = new Date(VALUE);
+			const tzPart = (form: 'short' | 'long') =>
+				new Intl.DateTimeFormat(undefined, { timeZoneName: form })
+					.formatToParts(date)
+					.find((p) => p.type === 'timeZoneName')?.value ?? '';
+			const [line] = formatTooltipLines(date, [{ format: 'full' }]);
+			expect(tsIn(screen.container).getAttribute('aria-label')).toBe(
+				line.value.replace(tzPart('short'), tzPart('long'))
+			);
 		});
 	});
 });

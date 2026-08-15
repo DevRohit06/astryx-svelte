@@ -9,6 +9,133 @@ release the port makes on its own has no number of its own to take. 0.3.1 is the
 ports Astryx 0.3.0, exactly as 0.3.0 did, and changes only things upstream has no counterpart for.
 Each entry states its parity target for that reason.
 
+## 0.4.1
+
+Ports Astryx `0.4.1`.
+
+**0.4.1 and not 0.4.0, deliberately.** 0.4.1 is upstream's npm `latest`, and it repairs something
+0.4.0 shipped: the `complex-selector-popup` / `multi-selector-popup` theme targets landed on an
+element that cannot paint. Since the version here _is_ the parity target, porting 0.4.0 exactly
+would have meant reproducing a known-bad implementation in order to undo it in the next release.
+
+### Breaking: `useTableRowExpansion` is a detail panel, and nothing else
+
+Its tree mode is gone and `useTableRowExpansionState` is deleted. Child rows that reuse the parent's
+columns are now `useTableTreeData` + `useTableTreeState`.
+
+Upstream shipped a codemod rather than a compatibility shim, and this follows it — **the first
+codemods this port has ever registered**; `assets/codemods/registry.mjs` had been empty by design
+since it was written, because a codemod migrates _between_ two releases and there had only been one.
+
+```sh
+npx @astryx-svelte/cli upgrade --from 0.3.1
+```
+
+All three of upstream's v0.4.0 transforms are here: the row-expansion migration,
+`rename-dropdown-menu-radio-dot-target` and `rename-menu-divider-data-types`. The two renames matter
+more than they look. A theme keyed on the removed `dropdown-menu-radio-dot` target **keeps compiling
+and simply stops matching** — runtime themes are not validated, so there is no error anywhere, which
+is why it needs a codemod rather than a line in this file. The rename is also not scope-preserving
+and cannot be: `radio-indicator-dot` reaches every radio dot in the app, so each rewritten site gets
+a `TODO(astryx upgrade)` comment asking whether the widening was intended.
+
+Upstream's transforms are jscodeshift; these are `magic-string` + `svelte/compiler`, which changes
+their reach in both directions. `.svelte` files are in scope, so a `<Table data={state.data}>` in
+markup is rewritten in the same pass as the hook call. The divider rename's value-vs-type check is
+`JSXIdentifier` upstream — here the import sits in `<script>` and the render sits in the fragment,
+so the whole tree is walked before any decision is made.
+
+### The Indicator layer
+
+Three indicators (checkbox, radio, switch), a family-typed registry and `useIndicator`. A theme
+replaces a control's visual **by name**, not per call site, so one entry reaches every component
+that draws it — mapping `check` to `RadioIndicator` gives radio visuals to every single-selection
+mark in the app. Each entry is checked against its indicator's family, so a replacement has to
+accept the states that family passes.
+
+`CheckboxInput`, `RadioListItem` and the menu checkbox and radio rows all draw from these now. The
+menu radio's dot in particular is the shared radio dot, which is what retires the menu-specific
+target above.
+
+### Every focus ring comes from one definition
+
+36 modules had their own ring. They now draw from one themeable definition, so a theme restyles
+focus once rather than per component.
+
+**This is also where the batch's most useful finding came from.** Migrating a module means deleting
+its local ring declaration and wrapping the call site instead — and deleting the declaration while
+forgetting the wrap produces **zero oracle mismatches**, because the ring now arrives from a
+different module and its absence at the call site is not a difference either oracle is looking at.
+**16 modules silently lost their ring**, and they were found by grepping, not by the gate that
+exists to catch exactly this. Generalised: both oracles prove what a module _declares_, never what
+an element _receives_. `TODO.md` carries it.
+
+### Theme authoring: `extends` does something now
+
+```ts
+const myTheme = defineTheme({
+	name: 'my-brand',
+	extends: neutralTheme,
+	tokens: { '--color-accent': '#FF0000' }
+});
+```
+
+This was carried as a deferred debt on the grounds that a consumer would at worst hit a silently
+ignored key. That was wrong on the facts: the CLI's shipped `theme.doc.mjs` had been documenting
+`extends` the whole time — upstream's prose and worked example, carried over verbatim. The published
+surface promised it while `defineTheme` dropped it on the floor. Tokens, components, icons and
+indicators all merge with the base at lowest precedence; `name` is always the child's.
+
+### New
+
+- **`PanelSearchInput`**, **`DropdownMenuDivider`**, **`useClipboard`**, **`focusReturn`**,
+  **`interactionModality`**, **`useLayer.offset`** (flip-safe: margins on both edges),
+  **`usePopover.surfaceTarget`**, and the shared `astryx-popover-surface` class.
+- **`NumberInput` is a text-backed spinbutton** — `type="text"` with `role="spinbutton"` and
+  `aria-valuemin`/`valuemax`/`valuenow`, which is what lets `formatValue` show a thousands
+  separator without the native control rejecting it. If you assert on it, its value is a **string**
+  now and its bounds are the `aria-value*` attributes rather than `min`/`max`.
+- **Menu items take a `variant`, a close policy and stable keys**; the selector search panel is
+  rebuilt, and a theme can replace its check.
+- **Container reveal is scoped by inheritance**, retiring the marker pool.
+- **A theme build can name its own icon specifier**, and no longer warns about states.
+
+### Fixed
+
+Live in shipped behaviour, not style drift:
+
+- **Disabled `TextInput`/`TextArea` still POSTed their values**, and a required+disabled `Switch` or
+  `CheckboxInput` **permanently blocked form submission** — the form could never be satisfied.
+- **Hovering a mega-menu trigger and then clicking it dismissed the panel.**
+- **`EmptyState` spread rest props _after_ `role="status"`**, so a caller silently clobbered it.
+  `CommandPaletteItem` did the same to `onclick`/`onmouseenter`, and `ComplexSelector` discarded a
+  consumer's `onclick` entirely.
+- **`useScrollLock` snapshotted per caller**, so a Dialog opening a Drawer left the page pinned with
+  no lock holding it. Now module-scoped, and only the transition through zero touches the body.
+- **`useTypeahead` wrapped a fresh single-character search onto the _last_ item** — the starting
+  index was `-1` and the modulo carried it to the end of the list. Option+`a` also failed to match
+  "å", because `altKey` was excluded from the printable-character test.
+- **13 shipped i18n keys had zero call sites.** The locale files carried translations for them while
+  the components rendered hardcoded English.
+- **`contrast: 'high'` never reached either border token.**
+- **A relative `Timestamp`'s `aria-label` read "PST"** as an unexpanded abbreviation (WCAG 3.1.4).
+- **IME Enter double-committed.**
+- **The CLI's bundled `neutral-theme.ts` was stale against a 0.4.1 correction** — `--radius-none` is
+  fixed at `0px` and it still shipped `0.25rem`.
+
+### Verified
+
+Both fidelity oracles reach zero, from 267 and 54 mismatches at the start of the batch: 1,613 style
+keys and 519 inline call sites with **no skips**, and `astryx.css` matching upstream across 1,492
+shared classes. All seven theme oracles are clean.
+
+**The client test project runs, which it had never done.** 163 files, 4,510 cases, in real headless
+Chromium — and not once in CI before this release, because Typecheck was failing ahead of the Test
+step and skipping it. Its first real execution failed 19 cases and **not one was a component
+defect**; every implementation matched upstream, several byte for byte. They were tests written
+against the pre-0.4.1 DOM, which is the predictable cost of writing cases against a suite nothing
+has ever run.
+
 ## 0.3.1
 
 Ports Astryx `0.3.0` — the same parity target as 0.3.0. **This release is the port's own, not an

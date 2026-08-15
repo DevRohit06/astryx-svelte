@@ -183,7 +183,14 @@
 						: ''
 	);
 	/** Full absolute text, for the accessible name and the card's default row. */
+	// Full absolute text for the tooltip (visible — keeps the compact timezone
+	// abbreviation) and for the AT-facing aria-label, which spells the timezone
+	// out in full: abbreviations like "PST" or "GMT+2" are unexpanded
+	// abbreviations to a screen-reader user (WCAG 3.1.4).
 	const fullAbsoluteText = $derived(isValidDate ? formatInstant(date, 'full') : '');
+	const ariaLabelText = $derived(
+		isValidDate ? formatInstant(date, 'full', { timeZoneNameStyle: 'long' }) : ''
+	);
 
 	// An empty array is not a second way to spell "off" — `hasTooltip` stays the
 	// only on/off axis — so normalize it away before anything reads it.
@@ -272,7 +279,7 @@
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 		<time
 			datetime={date.toISOString()}
-			aria-label={isRelativeFormat(effectiveFormat) ? fullAbsoluteText : undefined}
+			aria-label={isRelativeFormat(effectiveFormat) ? ariaLabelText : undefined}
 			data-testid={testId}
 			tabindex={showTooltip ? 0 : undefined}
 			class={attrs.class}

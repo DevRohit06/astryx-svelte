@@ -18,9 +18,15 @@ export default {
 				visualProps: ['size']
 			},
 			{
-				className: 'astryx-checkbox',
+				className: 'astryx-checkbox-indicator',
 				visualProps: ['size'],
 				states: ['checked', 'disabled']
+			},
+			{
+				className: 'astryx-checkbox',
+				visualProps: ['size'],
+				states: ['checked', 'disabled'],
+				deprecatedFor: 'checkbox-indicator'
 			}
 		]
 	},

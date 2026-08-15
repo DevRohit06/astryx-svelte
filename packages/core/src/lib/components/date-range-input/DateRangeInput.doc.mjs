@@ -24,14 +24,16 @@ export default {
 		targets: [
 			{
 				className: 'astryx-date-range-input',
-				visualProps: ['size', 'status']
+				visualProps: ['size', 'status'],
+				states: ['disabled']
 			},
 			{
 				className: 'astryx-date-range-input-toggle-icon',
 				states: ['state']
 			},
 			{
-				className: 'astryx-date-range-input-clear-icon'
+				className: 'astryx-date-range-input-clear-icon',
+				deprecatedFor: 'input-clear-icon'
 			}
 		]
 	},
@@ -239,6 +241,13 @@ export default {
 			type: '1 | 2',
 			description: 'Number of months in the calendar.',
 			default: '2'
+		},
+		{
+			name: 'weekStartsOn',
+			type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
+			description:
+				'First day of week in the calendar. A number (0 = Sunday to 6 = Saturday) or a three-letter day name.',
+			default: '0'
 		},
 		{
 			name: 'width',

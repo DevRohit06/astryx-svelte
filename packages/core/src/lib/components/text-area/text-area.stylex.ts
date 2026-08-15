@@ -36,7 +36,14 @@ const styles = stylex.create({
 	wrapper: {
 		zIndex: 1,
 		display: 'block',
-		padding: 0,
+		// Zero the shared wrapper inset with matching longhands, not the `padding`
+		// shorthand: StyleX ranks longhands above shorthands regardless of merge
+		// order, so a `padding: 0` shorthand loses to the base's
+		// paddingBlock/paddingInline. The wrapper would keep a duplicate inset that
+		// the <textarea>'s own padding then doubles — insetting the text and
+		// pushing the native resize grip in from the corner.
+		paddingBlock: 0,
+		paddingInline: 0,
 		// Internal inline padding for the textarea's text. Defined on the wrapper
 		// so the counter (a sibling overlay) inherits the same value and stays
 		// aligned with the text edge. Kept as an internal var so it can later be
@@ -77,7 +84,11 @@ const styles = stylex.create({
 	textareaWithStartIcon: {
 		paddingInlineStart: `calc(var(--_textarea-inline-padding) + ${spacingVars['--spacing-6']})`
 	},
-	// Reserve end padding so text clears the status icon / spinner overlay.
+	// Reserve end padding so text clears the status icon / spinner overlay. Only
+	// applied when the end slot actually renders something (spinner or on-field
+	// status glyph) — the `detached` status variant suppresses the on-field icon,
+	// its glyph living in the message box below, so reserving here would inset the
+	// text for an icon that never appears.
 	// inline inset + 20px icon (md) + 4px gap
 	textareaWithStatus: {
 		paddingInlineEnd: `calc(var(--_textarea-inline-padding) + ${spacingVars['--spacing-6']})`

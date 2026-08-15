@@ -6,25 +6,39 @@ import TimeInput from '$lib/components/time-input/time-input.svelte';
 import type { ISOTimeString } from '$lib/utils/time-parser.js';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import TimeInputGroupProbe from './fixtures/time-input-group-probe.svelte';
+import TimeInputI18n from './fixtures/time-input-i18n.svelte';
 
 /**
- * Astryx's `TimeInput/TimeInput.test.tsx`, ported case for case — **39** upstream
- * cases at v0.3.0 (22 directly in `describe('TimeInput')`, 4 in the nested
- * `describe('InputGroup integration')`, 9 in `describe('disabledMessage')` and 2
- * in the top-level `describe('TimeInput statusVariant forwarding')`, plus 2
- * grouped-status cases inside `describe('TimeInput')`), **37 here**. There is no
- * `displayName` case, no snapshot and no no-JSX construction form in the file,
- * so nothing is React-only except the ref case, which gets a counterpart.
+ * Astryx's `TimeInput/TimeInput.test.tsx`, ported case for case — **44** upstream
+ * cases at v0.4.1 (25 directly in `describe('TimeInput')`, 6 in the nested
+ * `describe('InputGroup integration')` — the last two of which are the
+ * grouped-status/live-region pair — 9 in `describe('disabledMessage')`, 2 in the
+ * top-level `describe('TimeInput statusVariant forwarding')` and 2 in
+ * `describe('TimeInput disabled theme state')`), **44 here, none dropped**.
+ * There is no `displayName` case, no snapshot and no no-JSX construction form in
+ * the file, so nothing is React-only except the ref case, which gets a
+ * counterpart.
  *
- * ## The count, re-derived from the tag (the previous header was wrong)
+ * ## v0.3.0 → v0.4.1
  *
- * This header used to read "35 upstream cases … 35 here, none dropped". Upstream
- * has **39**, and **all 39 are here**: the `TimeInput statusVariant forwarding`
- * block and the two grouped-status/live-region cases (`keeps the grouped status
- * node role-free while announcing via the persistent region`, `announces a
- * grouped status message that appears after mount`) have now been ported. The
- * live regions are a document-level singleton that outlives a render, so the
- * file resets them in `afterEach`, exactly as upstream's own `afterEach` does.
+ * Five cases were added upstream and are all here:
+ * `resolves the invalid-time announcement from the i18n catalog` (the hardcoded
+ * "Invalid time" became `t('@astryx.timeInput.invalidTime')`), the two
+ * `politely announces the new time after Arrow…` stepping cases (the new
+ * `announce(formatDisplayTime(…))` call on ArrowUp/ArrowDown), and the two
+ * `TimeInput disabled theme state` cases (`themeProps` now reflects
+ * `disabled: isDisabled ? 'disabled' : null`).
+ *
+ * ## The count, re-derived from the tag (an earlier header was wrong)
+ *
+ * This header once read "35 upstream cases … 35 here, none dropped". At v0.3.0
+ * upstream had **39**, and all 39 were here: the `TimeInput statusVariant
+ * forwarding` block and the two grouped-status/live-region cases (`keeps the
+ * grouped status node role-free while announcing via the persistent region`,
+ * `announces a grouped status message that appears after mount`) were ported
+ * then. The live regions are a document-level singleton that outlives a render,
+ * so the file resets them in `afterEach`, exactly as upstream's own `afterEach`
+ * does.
  *
  * **Those last two fail, and the failure is the port's.** Upstream v0.3.0 moved
  * the grouped status node's announcement off the node itself and onto the
@@ -43,9 +57,11 @@ import TimeInputGroupProbe from './fixtures/time-input-group-probe.svelte';
  * arrangement `number-input.svelte.test.ts` set for the same nine-case block.
  *
  * `changeAction` never appears in the upstream file, so nothing here exercises
- * `createOptimistic`; and no case asserts on an arrow-key result, so there is no
- * wall clock to pin (upstream's only arrow-key case, `:456`, asserts that
- * `onChange` is *not* called).
+ * `createOptimistic`; and no case leans on the wall clock, so there is none to
+ * pin. v0.4.1's two arrow-key stepping cases do assert on a result, but each
+ * passes an explicit `value`, which is the branch that never reads `new Date()`
+ * (the pre-existing `:456` arrow-key case still only asserts that `onChange` is
+ * *not* called).
  *
  * Counterpart, noted at the case:
  * - **`forwards ref correctly` (`:67`)** — Svelte has no `ref` prop and this
@@ -293,6 +309,63 @@ describe('TimeInput', () => {
 
 		await expect.element(screen.getByRole('alert')).toHaveTextContent('');
 		expect(screen.getByText('Invalid time').query()).toBeNull();
+	});
+
+	// New at v0.4.1: the live region's copy is `t('@astryx.timeInput.invalidTime')`
+	// rather than a hardcoded English string.
+	it('resolves the invalid-time announcement from the i18n catalog', async () => {
+		const screen = await render(TimeInputI18n, {
+			props: {
+				locale: 'en',
+				overrides: { en: { '@astryx.timeInput.invalidTime': 'Ungültige Zeit' } },
+				label: 'Time',
+				onChange: noop
+			}
+		});
+
+		changeValue(inputIn(screen.container), '25:99');
+
+		await expect.element(screen.getByRole('alert')).toHaveTextContent('Ungültige Zeit');
+	});
+
+	// Arrow-key stepping mutates a plain textbox programmatically, and screen
+	// readers do not announce programmatic textbox changes — the new value must
+	// be announced through the polite live region (WCAG 4.1.2).
+	//
+	// Restated only in how the key is delivered: vitest-browser has no
+	// `fireEvent`, so upstream's `fireEvent.keyDown` is the same native event
+	// dispatched at the input. `waitFor` is `vi.waitFor`; the announce sets the
+	// region's text in a rAF callback, so it cannot be read synchronously.
+	it('politely announces the new time after ArrowUp stepping', async () => {
+		const onChange = vi.fn();
+		const screen = await render(TimeInput, {
+			props: { label: 'Time', value: iso('14:30'), onChange }
+		});
+
+		inputIn(screen.container).dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true })
+		);
+
+		expect(onChange).toHaveBeenCalledWith('14:31');
+		await vi.waitFor(() => {
+			expect(politeRegion()).toHaveTextContent('2:31 PM');
+		});
+	});
+
+	it('politely announces the new time after ArrowDown stepping', async () => {
+		const onChange = vi.fn();
+		const screen = await render(TimeInput, {
+			props: { label: 'Time', value: iso('14:30'), onChange }
+		});
+
+		inputIn(screen.container).dispatchEvent(
+			new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true })
+		);
+
+		expect(onChange).toHaveBeenCalledWith('14:29');
+		await vi.waitFor(() => {
+			expect(politeRegion()).toHaveTextContent('2:29 PM');
+		});
 	});
 
 	it('calls onChange on blur when input is valid', async () => {
@@ -714,5 +787,27 @@ describe('TimeInput statusVariant forwarding', () => {
 			'data-variant',
 			'detached'
 		);
+	});
+});
+
+// New at v0.4.1: `themeProps('time-input', …)` gained
+// `disabled: isDisabled ? 'disabled' : null`, so the root reflects the state as
+// both a data attribute and a bare class token.
+describe('TimeInput disabled theme state', () => {
+	it('reflects disabled on the root target so themes can gate paint on it', async () => {
+		const screen = await render(TimeInput, {
+			props: { label: 'Time', onChange: noop, isDisabled: true }
+		});
+		const root = screen.container.querySelector('.astryx-time-input');
+		expect(root).toHaveAttribute('data-disabled', 'disabled');
+		expect(root).toHaveClass('disabled');
+	});
+
+	it('omits data-disabled when enabled, like status does', async () => {
+		const screen = await render(TimeInput, {
+			props: { label: 'Time', onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-time-input');
+		expect(root).not.toHaveAttribute('data-disabled');
 	});
 });

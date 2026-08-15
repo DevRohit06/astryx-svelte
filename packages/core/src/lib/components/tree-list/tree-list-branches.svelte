@@ -22,18 +22,20 @@
 	 * including children.
 	 *
 	 * Not exported: upstream keeps `TreeListBranches` out of `TreeList/index.ts`
-	 * too. `isLast` is accepted and unused on both sides (upstream destructures it
-	 * as `isLast: _isLast`) — the positional data is the caller's contract, so the
-	 * prop stays rather than being trimmed.
+	 * too.
 	 */
-	let { ancestorsIsLast, isLast: _isLast, nestedLevel }: TreeListBranchesProps = $props();
+	let { ancestorsIsLast, isLast, nestedLevel }: TreeListBranchesProps = $props();
 
 	// The guide lines are the documented way to restyle the hierarchy under
 	// `TreeList.variant`, so they carry their own stable theme target.
 	const guideTheme = themeProps('tree-list-guide');
 
 	const containerAttrs = treeBranchContainerAttrs();
-	const lineAttrs = treeBranchLineAttrs();
+	// An ancestor continuation column always has a row below it, so it always
+	// bridges the inter-row gap; only the current item's own terminus depends on
+	// `isLast`.
+	const continuationLineAttrs = treeBranchLineAttrs(false);
+	const terminusLineAttrs = $derived(treeBranchLineAttrs(isLast));
 
 	/** The per-level `left` offset, an inline style exactly as upstream's is. */
 	function offsetStyle(level: number): string | undefined {
@@ -61,18 +63,24 @@
 	<div class={containerAttrs.class} style={offsetStyle(level)}>
 		<div
 			{...guideTheme}
-			class={cx(guideTheme.class, lineAttrs.class)}
-			style={lineAttrs.style}
+			class={cx(guideTheme.class, continuationLineAttrs.class)}
+			style={continuationLineAttrs.style}
 		></div>
 	</div>
 {/each}
 
 {#if nestedLevel > 0}
 	<div class={containerAttrs.class} style={offsetStyle(nestedLevel - 1)}>
+		<!--
+			The last item in a group has no sibling below, so its connector is clamped
+			to the row box's bottom edge (`verticalLast`) instead of bridging into the
+			inter-row gap — no overhang into empty space. Every other row bridges the
+			gap (`verticalFull`) so the line stays continuous down to the next sibling.
+		-->
 		<div
 			{...guideTheme}
-			class={cx(guideTheme.class, lineAttrs.class)}
-			style={lineAttrs.style}
+			class={cx(guideTheme.class, terminusLineAttrs.class)}
+			style={terminusLineAttrs.style}
 		></div>
 	</div>
 {/if}

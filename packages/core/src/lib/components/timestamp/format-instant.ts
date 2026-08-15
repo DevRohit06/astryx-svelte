@@ -56,6 +56,16 @@ export interface FormatInstantOptions {
 	 * @default false
 	 */
 	isTimezoneShown?: boolean;
+	/**
+	 * How the zone name is spelled when a format carries one. `'short'` is the
+	 * abbreviation ("PST"); `'long'` spells it out ("Pacific Standard Time").
+	 * Only `'full'` honours it — it is the one format that always names its zone.
+	 * The spelled-out form backs a relative timestamp's accessible name, where an
+	 * abbreviation reads as an unexpanded initialism to a screen reader
+	 * (WCAG 3.1.4); every visible surface keeps the abbreviation.
+	 * @default 'short'
+	 */
+	timeZoneNameStyle?: 'short' | 'long';
 }
 
 /** The long absolute style, with seconds and a zone name. */
@@ -134,7 +144,7 @@ function getWallClock(date: Date, timeZone: string | undefined): WallClock {
 export function formatInstant(
 	date: Date,
 	format: InstantFormat,
-	{ timeZone, isTimezoneShown = false }: FormatInstantOptions = {}
+	{ timeZone, isTimezoneShown = false, timeZoneNameStyle = 'short' }: FormatInstantOptions = {}
 ): string {
 	const zone = timeZone === undefined ? {} : { timeZone };
 	const zoneName = isTimezoneShown ? { timeZoneName: 'short' as const } : {};
@@ -143,6 +153,7 @@ export function formatInstant(
 		case 'full':
 			return new Intl.DateTimeFormat(undefined, {
 				...FULL_OPTIONS,
+				timeZoneName: timeZoneNameStyle,
 				...zone
 			}).format(date);
 

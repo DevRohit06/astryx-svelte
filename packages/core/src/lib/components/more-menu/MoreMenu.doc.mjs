@@ -103,6 +103,20 @@ export default {
 			default: 'false'
 		},
 		{
+			name: 'placement',
+			type: "'below' | 'above' | 'end' | 'start'",
+			description:
+				"Position of the menu relative to the trigger. Logical: start/end resolve against the menu's own inherited direction (RTL mirrors).",
+			default: "'below'"
+		},
+		{
+			name: 'alignment',
+			type: "'end' | 'start' | 'center'",
+			description:
+				"Alignment along the placement axis. Use 'end' to align the menu with the trigger's trailing edge, which is usually what an overflow menu wants.",
+			default: "'start'"
+		},
+		{
 			name: 'xstyle',
 			type: 'StyleArg',
 			description:

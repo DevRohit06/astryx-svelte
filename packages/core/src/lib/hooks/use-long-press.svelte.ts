@@ -67,7 +67,14 @@ export function useLongPress(options: () => UseLongPressOptions): UseLongPressHa
 
 	function ontouchstart(event: TouchEvent): void {
 		const { disabled = false, delayMs = DEFAULT_DELAY_MS } = options();
-		if (disabled || event.touches.length !== 1) {
+		if (disabled) {
+			return;
+		}
+		if (event.touches.length !== 1) {
+			// Multi-touch cancels any pending long-press. Returning without
+			// clearing would leave the timer armed against a stale start point, so
+			// a pinch would fire the long-press at the first finger's position.
+			clear();
 			return;
 		}
 		const touch = event.touches[0];
@@ -84,7 +91,12 @@ export function useLongPress(options: () => UseLongPressOptions): UseLongPressHa
 	}
 
 	function ontouchmove(event: TouchEvent): void {
-		if (start == null || event.touches.length !== 1) {
+		if (start == null) {
+			return;
+		}
+		if (event.touches.length !== 1) {
+			// Multi-touch cancels the pending long-press.
+			clear();
 			return;
 		}
 		const { moveCancelPx = DEFAULT_MOVE_CANCEL_PX } = options();

@@ -24,6 +24,14 @@ export default {
 			{
 				className: 'astryx-empty-state',
 				visualProps: ['variant']
+			},
+			{
+				className: 'astryx-empty-state-title',
+				visualProps: ['variant']
+			},
+			{
+				className: 'astryx-empty-state-description',
+				visualProps: ['variant']
 			}
 		]
 	},

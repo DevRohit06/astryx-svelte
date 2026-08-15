@@ -73,7 +73,6 @@
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useAppShellMobile } from '../app-shell/app-shell-mobile-context.svelte.js';
 	import Icon from '../icon/icon.svelte';
-	import { useIcon } from '../icon/use-icon.svelte.js';
 	import PopoverLayer from '../popover/popover-layer.svelte';
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import Tooltip from '../tooltip/tooltip.svelte';
@@ -84,7 +83,8 @@
 	} from './side-nav-collapse-context.svelte.js';
 	import SideNavCollapseScope from './side-nav-collapse-scope.svelte';
 	import {
-		sideNavItemChevronAttrs,
+		sideNavItemChevronExpandedStyle,
+		sideNavItemChevronStyle,
 		sideNavItemChildrenAttrs,
 		sideNavItemChildrenInnerAttrs,
 		sideNavItemCollapsedAttrs,
@@ -154,8 +154,6 @@
 	// Svelte allows one `$props.id()` per component; the popover's id is derived
 	// from it, which keeps both SSR-stable and unique.
 	const popoverId = `${id}-popover`;
-
-	const chevronIcon = useIcon(() => 'chevronDown');
 
 	const isCollapsed = $derived(sideNavCollapse().isCollapsed);
 	const isInDrawer = $derived(renderMode() === 'drawer' || renderMode() === 'drawer-content');
@@ -274,7 +272,10 @@
 	const endContentAttrs = sideNavItemEndContentAttrs();
 	const childrenAttrs = $derived(sideNavItemChildrenAttrs(isItemCollapsed));
 	const childrenInnerAttrs = sideNavItemChildrenInnerAttrs();
-	const chevronAttrs = $derived(sideNavItemChevronAttrs(!isItemCollapsed));
+	const chevronXstyle = $derived([
+		sideNavItemChevronStyle,
+		!isItemCollapsed && sideNavItemChevronExpandedStyle
+	]);
 	const expandToggleAttrs = sideNavItemExpandToggleAttrs();
 	const splitActionAttrs = sideNavItemSplitActionAttrs();
 	const popoverSurfaceAttrs = sideNavItemPopoverSurfaceAttrs();
@@ -313,9 +314,7 @@
 		</span>
 	{/if}
 	{#if !isCollapsed && isItemCollapsible && !hasIndependentToggle}
-		<span class={chevronAttrs.class} style={chevronAttrs.style}
-			>{@render chevronIcon.current?.()}</span
-		>
+		<Icon icon="chevronDown" size="lg" color="inherit" xstyle={chevronXstyle} />
 	{/if}
 {/snippet}
 
@@ -419,9 +418,7 @@
 					class={expandToggleAttrs.class}
 					style={expandToggleAttrs.style}
 				>
-					<span class={chevronAttrs.class} style={chevronAttrs.style}>
-						{@render chevronIcon.current?.()}
-					</span>
+					<Icon icon="chevronDown" size="lg" color="inherit" xstyle={chevronXstyle} />
 				</button>
 			</div>
 		{:else}

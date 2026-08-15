@@ -9,6 +9,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 const indeterminateSlide = stylex.keyframes({
 	'0%': {
@@ -123,28 +124,27 @@ const styles = stylex.create({
 	},
 	// A mark is a vertical tick centred on the track, a child of the
 	// `role="progressbar"` element (unchanged DOM). The track no longer clips, so
-	// its height — 8px by default, directly overridable via the `progressbar-mark`
-	// theme target — may exceed the bar and overhang; the centring translate keeps
-	// any overhang symmetric. Positioned horizontally via `insetInlineStart`; the
-	// translate mirrors under RTL.
+	// its height — 8px by default — may exceed the bar and overhang; the centring
+	// translate keeps any overhang symmetric. Positioned horizontally via
+	// `insetInlineStart`; the translate mirrors under RTL.
+	//
+	// The dimensions read private vars rather than being plain declarations: a
+	// theme writes `width`/`height` on the `progressbar-mark` target as usual and
+	// the derived-var registry emits them as these vars instead of as competing
+	// properties. Nothing else declares them, so the theme value lands whatever
+	// the consumer's cascade looks like — a source-build app that compiles StyleX
+	// without `useCSSLayers` leaves the atomics unlayered, where they outrank
+	// every rule in `@layer astryx-theme` and made sizing the mark impossible
+	// without `!important`.
+	//
+	// The tick's colour is not set here: it depends on what the mark sits on, so
+	// it comes from `markOnFillStyles[variant]` (mark inside the filled area) or
+	// `markOnTrackStyles.track` (mark out on the bare track).
 	mark: {
 		position: 'absolute',
 		top: '50%',
-		width: 2,
-		height: 8,
-		// Defaults to text-primary. Directly overridable via the `progressbar-mark`
-		// theme target — a theme can set `backgroundColor`, `width`, and `height`
-		// (e.g. a taller "flag" tick that overhangs the bar, or per-variant
-		// contrast) with `defineTheme`; no dedicated CSS vars needed.
-		backgroundColor: colorVars['--color-text-primary'],
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		},
+		width: 'var(--_progressbar-mark-width, 2px)',
+		height: 'var(--_progressbar-mark-height, 8px)',
 		transform: {
 			default: 'translate(-50%, -50%)',
 			':is([dir="rtl"] *)': 'translate(50%, -50%)'
@@ -170,6 +170,64 @@ const variantStyles = stylex.create({
 	},
 	disabled: {
 		backgroundColor: colorVars['--color-text-disabled']
+	}
+});
+
+// A mark sitting inside the filled area is drawn *on* the bar, so it takes the
+// on-colour that pairs with the fill's own variant colour — the same pairing
+// Badge uses for solid semantic backgrounds.
+//
+// `neutral` and `disabled` both fill with the muted `--color-text-disabled`
+// grey, which carries no semantic weight and has no dedicated on-token, so they
+// fall back to a plain foreground. They pick different ones: a `neutral` bar is
+// live, so its mark keeps the full-contrast `--color-text-primary` a mark uses
+// out on the track; a `disabled` bar is deliberately low-emphasis — its own
+// label and value text drop to muted colours — so its mark steps down to
+// `--color-text-secondary` rather than becoming the loudest thing on a
+// greyed-out component.
+const markOnFillStyles = stylex.create({
+	accent: {
+		backgroundColor: colorVars['--color-on-accent']
+	},
+	success: {
+		backgroundColor: colorVars['--color-on-success']
+	},
+	warning: {
+		backgroundColor: colorVars['--color-on-warning']
+	},
+	error: {
+		backgroundColor: colorVars['--color-on-error']
+	},
+	neutral: {
+		backgroundColor: colorVars['--color-text-primary']
+	},
+	disabled: {
+		backgroundColor: colorVars['--color-text-secondary']
+	}
+});
+
+// A mark out on the bare track is a foreground tick over the muted track
+// background, so it takes `--color-text-primary`.
+//
+// The obvious candidate was `--color-border-emphasized` — the emphasized
+// divider colour `Divider`'s `strong` variant and `Slider`'s marks use — but
+// divider tokens sit a step or two from the track on the same neutral ramp, so
+// a mark drawn in one is at or near invisible: measured against each shipped
+// theme's track it lands between 1.00:1 (theme-neutral, both modes, where the
+// track is aliased to that very token) and 2.9:1, under the 3:1 WCAG 1.4.11
+// non-text floor in 7 of 8 themes. `--color-text-secondary` still misses in
+// two. `--color-text-primary` is the one foreground guaranteed to read against
+// every surface a theme defines: 5.8:1 to 15.7:1 on the track across all themes
+// and both modes.
+const markOnTrackStyles = stylex.create({
+	track: {
+		backgroundColor: colorVars['--color-text-primary']
+	},
+	// A disabled bar dims everything it draws, so its track marks step down to
+	// the secondary foreground for the same reason the disabled on-fill mark
+	// does — matching the muted label and value text.
+	trackDisabled: {
+		backgroundColor: colorVars['--color-text-secondary']
 	}
 });
 
@@ -226,8 +284,25 @@ export function progressBarTrackAttrs(isIndeterminate: boolean): SvelteStyleAttr
 	return sx(styles.track, isIndeterminate && styles.trackClipped);
 }
 
-export function progressBarMarkAttrs(): SvelteStyleAttrs {
-	return sx(styles.mark);
+/**
+ * A mark's colour follows what it sits on: inside the fill it takes the fill
+ * variant's on-colour, out on the bare track the plain foreground — stepped
+ * down to the secondary one when the bar is disabled.
+ */
+export function progressBarMarkAttrs(
+	variant: ProgressBarFillVariant,
+	isOnFill: boolean,
+	isDisabled: boolean
+): SvelteStyleAttrs {
+	return sx(
+		focusOutlineStyles.focusVisible,
+		styles.mark,
+		isOnFill
+			? markOnFillStyles[variant as keyof typeof markOnFillStyles]
+			: isDisabled
+				? markOnTrackStyles.trackDisabled
+				: markOnTrackStyles.track
+	);
 }
 
 export function progressBarFillAttrs(

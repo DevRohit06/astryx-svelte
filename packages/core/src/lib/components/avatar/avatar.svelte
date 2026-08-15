@@ -68,6 +68,18 @@
 		 */
 		onclick?: (event: MouseEvent) => void;
 	}
+
+	/**
+	 * Reuse a single segmenter when the runtime supports Intl.Segmenter.
+	 *
+	 * Module scope, not instance scope: constructing a segmenter is expensive
+	 * relative to reading two characters off it, and every avatar wants the same
+	 * one. `<script module>` is Svelte's counterpart to upstream's module body.
+	 */
+	const graphemeSegmenter =
+		typeof Intl.Segmenter === 'function'
+			? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+			: null;
 </script>
 
 <script lang="ts">
@@ -239,8 +251,7 @@
 		avatarWrapperAttrs(
 			{
 				groupOverlap: group?.().overlap ?? null,
-				isInteractive,
-				hasTooltipTabStop: showTooltip
+				isInteractive
 			},
 			xstyle
 		)
@@ -258,6 +269,11 @@
 	const icon = avatarIconAttrs();
 	const statusAttrs = $derived(avatarStatusAttrs(numericSize));
 	const theme = $derived(themeProps('avatar', { size: resolvedSize }));
+	// The fallback surface (initials + default icon) is its own theme target as
+	// of upstream 0.4.1, replacing the `--_avatar-fallback-*` derived vars: a
+	// theme sets background, color and weight on `avatar-fallback`, and per-size
+	// font size through its size variant.
+	const fallbackTheme = $derived(themeProps('avatar-fallback', { size: resolvedSize }));
 
 	// `LinkElement` renders either a tag or a component, so the attachment travels
 	// in the props object — the `BreadcrumbItem`/`ClickableCard` seam.
@@ -279,12 +295,27 @@
 		[createAttachmentKey()]: tooltipHook.attachTrigger
 	});
 
-	/** First letter of the first word, plus the first of the last. */
+	/**
+	 * First letter of the first word, plus the first of the last.
+	 *
+	 * `charAt(0)` returns one UTF-16 **code unit**, which splits any character
+	 * outside the BMP down the middle — an emoji or a multi-codepoint grapheme
+	 * rendered as a lone surrogate. Segment by grapheme instead, falling back to
+	 * code points where `Intl.Segmenter` is unavailable.
+	 */
+	function firstGrapheme(word: string): string {
+		if (graphemeSegmenter) {
+			return [...graphemeSegmenter.segment(word)][0]?.segment ?? '';
+		}
+
+		return [...word][0] ?? '';
+	}
+
 	function getInitials(value: string): string {
 		const words = value.trim().split(/\s+/);
 		if (words.length === 0) return '';
-		if (words.length === 1) return words[0].charAt(0).toUpperCase();
-		return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+		if (words.length === 1) return firstGrapheme(words[0]).toUpperCase();
+		return (firstGrapheme(words[0]) + firstGrapheme(words[words.length - 1])).toUpperCase();
 	}
 </script>
 
@@ -315,9 +346,11 @@
 				onerror={() => (erroredFallbackSrc = fallbackSrc)}
 			/>
 		{:else if showInitials}
-			<div class={initials.class} style={initials.style}>{getInitials(name as string)}</div>
+			<div class={cx(fallbackTheme.class, initials.class)} style={initials.style}>
+				{getInitials(name as string)}
+			</div>
 		{:else if showIcon}
-			<div class={icon.class} style={icon.style}>
+			<div class={cx(fallbackTheme.class, icon.class)} style={icon.style}>
 				<svg
 					width={numericSize * 0.6}
 					height={numericSize * 0.6}

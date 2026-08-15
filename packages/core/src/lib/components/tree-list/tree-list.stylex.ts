@@ -16,7 +16,14 @@ const styles = stylex.create({
 		// the tree's indent metric (e.g. to `var(--spacing-5)`) via `defineTheme`
 		// on the `tree-list` target, and both the row margins (TreeListItem) and
 		// the guide-line offsets (TreeListBranches) read it so they stay aligned.
-		'--tree-list-indent': spacingVars['--spacing-4']
+		'--tree-list-indent': spacingVars['--spacing-4'],
+		// Vertical gap between adjacent rows. Public, themeable lever (default
+		// `--spacing-0-5` = 2px for a subtle separation between rows). A theme sets
+		// it on the `tree-list` target to widen or close the gap; the guide
+		// connector spans the gap natively (see `tree-list-branches`) so the line
+		// stays continuous and does not overhang the last row — no consumer-side
+		// guide tuning needed.
+		'--tree-list-row-gap': spacingVars['--spacing-0-5']
 	},
 	list: {
 		margin: 0,

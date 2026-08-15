@@ -52,7 +52,7 @@
 	   hero and don't intercept clicks. */
 	.cards-layer {
 		position: sticky;
-		top: var(--appshell-header-height, 0px);
+		top: var(--_app-shell-header-height, 0px);
 		height: 0;
 		width: 100%;
 		pointer-events: none;
@@ -92,7 +92,7 @@
 		top: 0;
 		left: 0;
 		right: 0;
-		height: var(--appshell-header-height, 64px);
+		height: var(--_app-shell-header-height, 64px);
 		background-color: var(--color-background-body);
 		pointer-events: none;
 		transition: background-color 600ms ease;
@@ -104,7 +104,7 @@
 	   centres sit under the card clusters; colours come from --aurora-* per slide. */
 	.backdrop-glow {
 		position: fixed;
-		top: var(--appshell-header-height, 0px);
+		top: var(--_app-shell-header-height, 0px);
 		left: 50%;
 		transform: translateX(-50%);
 		width: min(1200px, 100vw);

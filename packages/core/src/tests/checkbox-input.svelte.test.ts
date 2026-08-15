@@ -8,13 +8,36 @@ import CheckboxInput, {
 } from '$lib/components/checkbox-input/checkbox-input.svelte';
 import CheckboxInputForm from './fixtures/checkbox-input-form.svelte';
 import CheckboxInputLabelIcon from './fixtures/checkbox-input-label-icon.svelte';
+import CheckboxInputTheme from './fixtures/checkbox-input-theme.svelte';
+import BareCheckboxIndicator from './fixtures/bare-checkbox-indicator.svelte';
+import { defineTheme } from '$lib/theme/define-theme.js';
+import { FOCUS_OUTLINE_PARTS } from '$lib/utils/focus-outline.stylex.js';
 import { forcedColorsCssIn } from './forced-colors.js';
 
 /**
- * Astryx's `CheckboxInput/CheckboxInput.test.tsx`, ported case for case — **37**
- * upstream cases at v0.3.0 (24 `CheckboxInput`, 8 `disabledMessage`, 3 `form
- * participation`, 2 `forced colors`), **37** here. Nothing added, nothing
- * dropped.
+ * Astryx's `CheckboxInput/CheckboxInput.test.tsx`, ported case for case — **42**
+ * upstream cases at v0.4.1 (24 `CheckboxInput`, 8 `disabledMessage`, 5 `form
+ * participation`, 2 `forced colors`, 3 `focus ring ownership`), **42** here.
+ * Nothing added, nothing dropped.
+ *
+ * ## v0.3.0 → v0.4.1
+ *
+ * Five cases were added upstream, all five ported:
+ *
+ * - two `form participation` cases about a required control that is disabled
+ *   *with a reason*. `disabledMessage` drops the native `disabled` so the reason
+ *   stays focus-discoverable, which would otherwise leave a `required` checkbox
+ *   nothing can satisfy and a form that can never submit; `form=""` detaches the
+ *   input from its form entirely instead. Ported verbatim through the existing
+ *   `checkbox-input-form.svelte` fixture.
+ * - three `focus ring ownership` cases. The indicator extraction they build on
+ *   landed here in an earlier batch, but no case covered who *paints the ring*,
+ *   so all three are new to this suite. The bare replacement indicator and the
+ *   `<Theme>` nesting need fixture files (`bare-checkbox-indicator.svelte`,
+ *   `checkbox-input-theme.svelte`) because a Svelte component and a Svelte
+ *   parent cannot be authored in a test module; the theme itself is defined in
+ *   this file, as upstream defines it in its own. Delivery of the focus and the
+ *   blur is restated at the block — see there.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
@@ -597,6 +620,43 @@ describe('CheckboxInput', () => {
 			expect(data.get('terms')).toBe('on');
 		});
 
+		it('does not block form submission when required and disabled with a disabledMessage', async () => {
+			const screen = await render(CheckboxInputForm, {
+				props: {
+					checkbox: {
+						label: 'Terms',
+						htmlName: 'terms',
+						value: false,
+						onChange: noop,
+						isRequired: true,
+						isDisabled: true,
+						disabledMessage: 'Terms are managed by your administrator'
+					}
+				}
+			});
+			// `disabledMessage` drops the native `disabled` so the reason stays
+			// focus-discoverable, but `required` is still on the element — so the
+			// control is detached from the form with `form=""` instead. No element can
+			// have the empty id, so it owns no form: out of constraint validation and
+			// out of the form data, while staying visible, focusable and labelled.
+			expect(screen.container.querySelector('form')!.checkValidity()).toBe(true);
+		});
+
+		it('still blocks submission when required and unchecked but enabled', async () => {
+			const screen = await render(CheckboxInputForm, {
+				props: {
+					checkbox: {
+						label: 'Terms',
+						htmlName: 'terms',
+						value: false,
+						onChange: noop,
+						isRequired: true
+					}
+				}
+			});
+			expect(screen.container.querySelector('form')!.checkValidity()).toBe(false);
+		});
+
 		it('is excluded from form data when disabled, even with a disabledMessage', async () => {
 			const screen = await render(CheckboxInputForm, {
 				props: {
@@ -645,5 +705,91 @@ describe('forced colors (WCAG 1.4.11)', () => {
 		// white as the flattened box, so it needs its own CanvasText color to stay
 		// perceivable on the Canvas box.
 		expect(forcedColorsCssIn(screen.container)).toContain('color: canvastext;');
+	});
+});
+
+// The control's native input is `opacity: 0`, so the visible focus indicator
+// has to land on the indicator beside it — which is themeable, third-party
+// code. If drawing the ring were the indicator's job, a replacement that
+// simply doesn't would ship a control with no visible focus (WCAG 2.4.7), and
+// that is the default: the replacement registered below destructures `state`
+// and drops the rest, which is what a theme author writes. (Upstream's comment
+// cites its own sample replacement — `{state, size, isDisabled}`, rest dropped
+// — and this port ships no such sample, so the fixture stands in for it.)
+//
+// So the owner paints it, on the indicator's own element, at focus time. The
+// shape is right because `outline` follows that element's border-radius, and
+// no cooperation is required.
+describe('focus ring ownership (WCAG 2.4.7)', () => {
+	/** What a theme author plausibly writes: state in, picture out. */
+	const bareTheme = defineTheme({
+		name: 'bare-indicator-theme',
+		indicators: { checkbox: BareCheckboxIndicator }
+	});
+
+	/**
+	 * The element the ring is painted on: the indicator slot's only child — the
+	 * indicator's own root, whatever a theme renders there.
+	 */
+	function indicatorOf(container: HTMLElement): HTMLElement {
+		const slot = inputIn(container).nextElementSibling;
+		const indicator = slot?.firstElementChild;
+		if (!(indicator instanceof HTMLElement)) {
+			throw new Error('expected an indicator element');
+		}
+		return indicator;
+	}
+
+	async function focusInput(container: HTMLElement): Promise<HTMLInputElement> {
+		const input = inputIn(container);
+		// A Tab first, so the browser's `:focus-visible` heuristic sees keyboard
+		// modality — the ring is deliberately keyboard-only, and a bare
+		// programmatic focus reads as a pointer focus. Upstream does the same with
+		// `fireEvent.keyDown(document.body, {key: 'Tab'})` for jsdom's heuristic;
+		// here it is a real Tab, then the focus is placed on the control (a
+		// synthetic Tab does not settle onto a `<input type="checkbox">` in this
+		// environment — the same delivery the `disabledMessage` keyboard case
+		// above records).
+		await userEvent.tab();
+		input.focus();
+		return input;
+	}
+
+	it('paints the ring on the built-in indicator', async () => {
+		const screen = await render(CheckboxInput, {
+			props: { label: 'Accept', value: false, onChange: noop }
+		});
+		await focusInput(screen.container);
+		expect(indicatorOf(screen.container).style.outlineStyle).toBe(FOCUS_OUTLINE_PARTS.outlineStyle);
+	});
+
+	it('paints it on a replacement that forwards nothing', async () => {
+		const screen = await render(CheckboxInputTheme, {
+			props: {
+				theme: bareTheme,
+				checkbox: { label: 'Accept', value: false, onChange: noop }
+			}
+		});
+
+		// The replacement really took effect, and really is bare.
+		const replaced = screen.getByTestId('bare-indicator').element() as HTMLElement;
+		expect(replaced.className).toBe('');
+		// ...and it still gets a ring, because the owner drew it.
+		await focusInput(screen.container);
+		expect(replaced.style.outlineStyle).toBe(FOCUS_OUTLINE_PARTS.outlineStyle);
+	});
+
+	it('clears the ring on blur', async () => {
+		const screen = await render(CheckboxInput, {
+			props: { label: 'Accept', value: false, onChange: noop }
+		});
+		const input = await focusInput(screen.container);
+		expect(indicatorOf(screen.container).style.outlineStyle).toBe(FOCUS_OUTLINE_PARTS.outlineStyle);
+		// Upstream's `fireEvent.blur(input)`, delivered as a real blur: `blur` does
+		// not bubble in the DOM, and this port listens on `focusout` (React's
+		// `onBlur` is already delegated-and-bubbling — the component records the
+		// same correction). Same event the handler would see from a user.
+		input.blur();
+		expect(indicatorOf(screen.container).style.outlineStyle).toBe('');
 	});
 });

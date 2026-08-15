@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
-import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import type { StyleArg, SvelteStyleAttrs } from '../../internal/sx.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import type { TextColor } from '../text/text.stylex.js';
 import {
 	colorVars,
@@ -34,15 +35,7 @@ const styles = stylex.create({
 		cursor: 'pointer',
 		transitionProperty: 'color, text-decoration',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	buttonReset: {
 		backgroundColor: 'transparent',
@@ -122,7 +115,7 @@ export function linkAttrs(
 	{ isButton, hasUnderline, isStandalone, isDisabled }: LinkStyleOptions,
 	xstyle: StyleArg
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.base,
 		isButton && styles.buttonReset,
 		linkColorStyles[color],

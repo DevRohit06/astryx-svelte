@@ -40,7 +40,7 @@
 		MENU_ITEM_ROLES,
 		MENU_ITEM_SELECTOR
 	} from '../dropdown-menu/menu-item-roles.js';
-	import { useIcon } from '../icon/use-icon.svelte.js';
+	import Icon from '../icon/icon.svelte';
 	import { layerAnimations } from '../layer/layer-animations.stylex.js';
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import { useListFocus } from '../../hooks/use-list-focus.svelte.js';
@@ -49,7 +49,7 @@
 	import { cx } from '../../internal/sx.js';
 	import {
 		breadcrumbButtonAttrs,
-		breadcrumbChevronAttrs,
+		breadcrumbChevronStyle,
 		breadcrumbMenuAttrs,
 		breadcrumbMenuPopoverXstyle
 	} from './breadcrumb-item.stylex.js';
@@ -167,12 +167,9 @@
 
 	setDropdownMenuContext(() => ({ closeMenu, menuSize }));
 
-	const chevronIcon = useIcon(() => 'chevronDown');
-
 	const triggerTheme = themeProps('breadcrumb-item-menu-trigger');
 	const menuTheme = themeProps('breadcrumb-menu');
 	const buttonAttrs = $derived(breadcrumbButtonAttrs(isSupporting));
-	const chevronAttrs = breadcrumbChevronAttrs();
 	const menuAttrs = breadcrumbMenuAttrs();
 	const layerXstyle = [breadcrumbMenuPopoverXstyle, layerAnimations.below];
 </script>
@@ -193,9 +190,7 @@
 	style={buttonAttrs.style}
 >
 	{@render children()}
-	<span aria-hidden="true" class={chevronAttrs.class} style={chevronAttrs.style}>
-		{@render chevronIcon.current?.()}
-	</span>
+	<Icon icon="chevronDown" size="xsm" color="inherit" xstyle={breadcrumbChevronStyle} />
 </button>
 
 <PopoverLayer {popover} placement="below" alignment="start" xstyle={layerXstyle}>

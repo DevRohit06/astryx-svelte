@@ -25,14 +25,33 @@ export default {
 		targets: [
 			{
 				className: 'astryx-multi-selector',
-				visualProps: ['variant', 'size', 'status']
+				visualProps: ['variant', 'size', 'status'],
+				states: ['disabled']
 			},
 			{
-				className: 'astryx-multi-selector-clear-icon'
+				className: 'astryx-multi-selector-clear-icon',
+				deprecatedFor: 'input-clear-icon'
+			},
+			{
+				className: 'astryx-multi-selector-empty-state'
+			},
+			{
+				className: 'astryx-multi-selector-search'
+			},
+			{
+				className: 'astryx-multi-selector-section-heading'
 			},
 			{
 				className: 'astryx-multi-selector-indicator-icon',
 				states: ['state']
+			},
+			{
+				className: 'astryx-multi-selector-option',
+				visualProps: ['size'],
+				states: ['select-all', 'selected', 'disabled']
+			},
+			{
+				className: 'astryx-multi-selector-popup'
 			}
 		]
 	},
@@ -227,6 +246,13 @@ export default {
 			type: 'Snippet<[MultiSelectorOptionData]>',
 			description:
 				'Custom render function for each selectable option in the dropdown. Not called for dividers, sections, or the select-all row.'
+		},
+		{
+			name: 'indicatorPosition',
+			type: "'end' | 'start'",
+			description:
+				'Which edge of the option row carries the checkbox. end pushes it to the far edge of the row, including on the select-all row.',
+			default: "'start'"
 		},
 		{
 			name: 'width',

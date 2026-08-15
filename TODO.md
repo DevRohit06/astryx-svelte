@@ -2058,18 +2058,25 @@ Done: theme compiler (`defineTheme`, `parseStyleKey`, expanders, `generateThemeC
       docs site is unblocked either way; a library consumer is not
 - [ ] Decide the `@scope` floor (Baseline only since 2025-12-12) — fall back to descendant selectors, or require it?
 
-Deferred without loss (no shipped theme needs it): **`extends`** — now the only one left. **Two
-items have come off this list, and neither left on its own terms.** The radius expander went when
-y2k landed. HCT-generative **`color` went in batch 18**, and it went for a reason the list did not
-anticipate: not a shipped theme needing it, but a _surface_ audit noticing `theme/index.ts` was
-missing `expandColorScale` entirely. That turned out to be a gap predating v0.2.0 that also required
-two absent dependency modules (`hct.ts`, `contrast.ts`), and it carried 63 upstream test cases —
-`defineTheme`'s header called it "omitted **for now**", which is a deferral with a to-do attached,
-not a decision.
+Deferred without loss (no shipped theme needs it): **this list is now empty.** All three items came
+off it, and **not one left on the terms the list set.** The radius expander went when y2k landed.
+HCT-generative **`color` went in batch 18**, for a reason the list did not anticipate: not a shipped
+theme needing it, but a _surface_ audit noticing `theme/index.ts` was missing `expandColorScale`
+entirely — a gap predating v0.2.0 that also required two absent dependency modules (`hct.ts`,
+`contrast.ts`) and carried 63 upstream test cases. `defineTheme`'s header called it "omitted **for
+now**", which is a deferral with a to-do attached, not a decision.
 
-So the standing lesson is now doubly earned: **a "no shipped theme uses it" deferral is only as good
-as the set of shipped themes** — and `chocolate` and `stone` are about to enlarge that set, which is
-the moment to re-test `extends` against them rather than assuming it stays deferred.
+**`extends` went last, and it is the one that should have gone first.** The deferral held that a
+consumer would at worst hit a silently ignored key. That was wrong on the facts: the CLI's shipped
+`assets/docs/theme.doc.mjs` had been documenting `extends` the whole time, upstream's prose and
+worked example carried over verbatim. The published surface was promising it while `defineTheme`
+dropped it on the floor.
+
+So the standing lesson is now earned three times over, and it is sharper than the version this
+paragraph used to carry: **"no shipped theme uses it" is a claim about this repo's themes and
+nothing else.** It is not a claim about the published type, the generated docs, or what a consumer
+will reach for — and when the docs pipeline reads from a different source than the implementation,
+the two can disagree indefinitely without any gate noticing.
 
 ---
 
@@ -3899,15 +3906,19 @@ paint uses the server markup.
   is structural: the `<pre>`'s children are top-level snippets rendered with no literal whitespace.
   Three mutations checked; a fifth case asserting copy-button position was written and **removed**
   because it survived all of them (the root clips with `overflow: hidden`).
-- `src/tests/number-input-spread-value.svelte.test.ts` (2 cases). **An element carrying a spread
-  loses Svelte's compare-against-the-DOM guard on `value`** — `set_value` has React's
-  `if (node.value != value)` condition, but any spread routes every attribute through
-  `set_attributes`, which compares against the previously _rendered_ string and then assigns
-  unconditionally. A `type="number"` field in `badInput` reports `value === ''` while showing the raw
-  text, so typing `1e5` ended as `5` and `onChange` fired `(1), (5)` instead of `(1), (100000)`. The
-  ported suite cannot catch it: none of its 67 cases types a partial exponent, because React's guard
-  makes that a non-event upstream. `TextInput` has the identical shape and is immune only because
-  text fields have no bad-input state
+- ~~`src/tests/number-input-spread-value.svelte.test.ts` (2 cases)~~ — **RETIRED 2026-08-15 at the
+  0.4.1 rewrite, and it is the one entry on this list that stopped earning its place.** The rule it
+  pinned is still true: **an element carrying a spread loses Svelte's compare-against-the-DOM guard
+  on `value`** — `set_value` has React's `if (node.value != value)` condition, but any spread routes
+  every attribute through `set_attributes`, which compares against the previously _rendered_ string
+  and then assigns unconditionally. What is gone is anything observable. The symptom was a
+  `type="number"` field in `badInput` reporting `value === ''` while showing the raw text, so typing
+  `1e5` ended as `5`; #4896's `type="text"` has no bad-input state. The intuitive replacement — a
+  redundant write collapsing the caret to the end — was **measured in Chromium and does not happen**,
+  because the HTML `value` setter moves the cursor only when the new value differs. With no case that
+  can mutation-check the fix, the file failed this list's own bar and was deleted rather than left
+  asserting a false rationale. The attachment stays; `src/tests/batch-5-server-markup.test.ts` is now
+  the only thing pinning the server-only `value` spread it requires
 
 **Batch 9 added a fifth** (2 cases): `src/tests/command-palette-snippet-empty-text.svelte.test.ts`.
 It meets the same bar for a reason worth generalising — **the hazard lives in the translation
@@ -4009,12 +4020,20 @@ overflow blocks use `Carousel`'s `items` + `item` snippet form. `TreeList` ports
       `{#each}`-driven items
       **Batch 5 sections added** (2026-07-26) — `NumberInput` and `FileInput` under _Inputs_ (between
       `TextArea` and `InputGroup`), `CodeBlock` under _Typography_ (after `Code, Kbd, Blockquote`), each
-      indexed in the sidebar. `NumberInput` covers **19 of upstream's 24** stories, `FileInput` **13 of
-      14**, `CodeBlock` **all 15** plus a `syntaxTheme` block. Every absence, named rather than left
-      implicit:
+      indexed in the sidebar. `NumberInput` covers **24 of upstream's 29** stories (retallied
+      2026-08-15: 0.4.1 added `FormattedDisplay`, `WithNumberSteppers`, `WheelBehavior`, `ReadOnly`
+      and `StatusVariantComparison`, and all five are rendered — the old "19 of 24" was already wrong
+      before the batch, so re-derive this from the stories file rather than incrementing it),
+      `FileInput` **13 of 14**, `CodeBlock` **all 15** plus a `syntaxTheme` block. Every absence,
+      named rather than left implicit:
 
 - `NumberInput`'s `AllVariations` and `FileInput`'s `AllVariations` are _roll-ups_ of blocks already
-  shown individually — the batch-4 convention.
+  shown individually — the batch-4 convention. **One caveat found 2026-08-15**: that rationale is
+  exactly true for `FileInput` and _not_ for `NumberInput`, whose `AllVariations` is the only
+  upstream story setting `isLabelHidden`. So `isLabelHidden` is demonstrated nowhere in our section —
+  a genuine gap, not a roll-up. Left open rather than closed: a standalone `isLabelHidden` block
+  would be demo content upstream does not have as a story of its own, which the parity rule calls a
+  defect. It closes when the `AllVariations` roll-up convention is revisited.
 - `NumberInput`'s `ErrorStatus`/`WarningStatus`/`SuccessStatus` are the **inverse** case: the
   `StatusVariations` roll-up _is_ rendered, and the three individual stories differ from it only in
   their label and starting value, so the API surface is fully covered by the block that is there.
@@ -4531,7 +4550,7 @@ which differs per component and is load-bearing (see each component's comment).
       counterpart, and `field.svelte.test.ts` carries it
 - [ ] `List` destructures a closed list (`children`/`density`/`hasDividers`/`header`/`listStyle`/`start`/`xstyle`/`className`/`style`/`data-testid`/`ref`) with no rest spread, dropping `id`/`aria-*`/handlers its `BaseProps<HTMLUListElement | HTMLOListElement>` promises; we forward rest onto the `<ul>`/`<ol>`, as `DropdownMenu` and `Timestamp` do. Spread _first_, so the component's own `role="list"`/`aria-labelledby`/`start` still win
 - [ ] `Slider` destructures a closed list off `BaseProps<HTMLDivElement>` and does **not** rest-spread — `id`/`role`/`aria-*`/handlers its type promises are dropped. This is the one root where we **replicate** rather than forward, because the leftover object is load-bearing: upstream reads it for `'minStepsBetweenThumbs' in props`, its only use, and forwarding it would have to pick an element to forward _to_ (the `Field` root, the row, or the track container) where upstream picks none. Only `class`/`style`/`xstyle`/`width`/`data-testid` reach the DOM, all via `Field`
-- [ ] `TimeInput` destructures a closed list off `BaseProps` with no rest spread, so `id`/`role`/`aria-*`/`data-*`/handlers its type promises are dropped; we forward rest onto the `<input>`, as `Timestamp`/`List`/`DropdownMenu` do. It is the **only** member of the date/time family upstream leaves closed — `DateInput`, `DateTimeInput` and `DateRangeInput` all rest-spread, each onto its wrapper `<div>`, and this port matches all three targets and orderings exactly. The forwarding is also what forces `syncDisplayValue`: a spread routes every attribute through `set_attributes`, which loses Svelte's compare-against-the-DOM guard on `value` (the hazard `src/tests/number-input-spread-value.svelte.test.ts` pins), so the value write moves into an attachment
+- [ ] `TimeInput` destructures a closed list off `BaseProps` with no rest spread, so `id`/`role`/`aria-*`/`data-*`/handlers its type promises are dropped; we forward rest onto the `<input>`, as `Timestamp`/`List`/`DropdownMenu` do. It is the **only** member of the date/time family upstream leaves closed — `DateInput`, `DateTimeInput` and `DateRangeInput` all rest-spread, each onto its wrapper `<div>`, and this port matches all three targets and orderings exactly. The forwarding is also what forces `syncDisplayValue`: a spread routes every attribute through `set_attributes`, which loses Svelte's compare-against-the-DOM guard on `value` (the hazard recorded in the batch-5 entry below; `NumberInput`'s client-side pin for it was retired at 0.4.1, so `TimeInput`'s own suite is worth re-reading for whether *it* still has an observable symptom), so the value write moves into an attachment
 - [x] ~~`ChatSendButton` destructures a closed list off `BaseProps<HTMLButtonElement>` and does **not** rest-spread~~ — **retired at 17c.** 0.1.9 forwards `className`, `style` and pass-throughs, and this port followed. The spread moved to upstream's position, **after** the component's own `label`/`variant`/`icon`/`onclick`, which a consumer's rest therefore overrides — a deliberate reversal of what this port did while upstream dropped rest entirely. The `as Partial<ButtonProps>` cast stays for the reason it always had: `Button` takes the _intersection_ of the button and anchor attribute sets, so every handler off a `BaseProps<HTMLButtonElement>` rest is contravariantly incompatible — the same clash `Timestamp` records against `Text`
 - [ ] **`ChatSendButton` drops its own theme class as of 0.2.0, and that is an upstream regression the forwarding fix introduced.** It writes `{...themeProps('chat-send-button')} className={className}`, and a later key wins in an object literal even when its value is `undefined` — so `astryx-chat-send-button` is replaced by the consumer's `className`, or by nothing at all, which is the usual case. **Verified in the shipped 0.2.0 `dist/`, not just the source.** Documented and _not_ replicated: reproducing it would silently retire a theme target `defineTheme` still advertises. This port emits `cx(theme.class, className)`
 - [ ] `Token` reads a closed list and does **not** rest-spread — `id`/`role`/`aria-*`/handlers accepted by `TokenProps extends BaseProps` are dropped at runtime, exactly as upstream. Only `class`/`style`/`data-testid`/`aria-label`(when `isLabelHidden`)/`aria-description`/(link)`aria-disabled` reach the DOM. No `ref`/attachment seam either, so its three ref-forwarding test cases assert the rendered element type instead
@@ -5657,7 +5676,8 @@ directory's worth of work:**
 - [ ] `Spinner` `size="xl"` (source + `SpinnerSizes` use it; `.doc.mjs` omits); `Kbd` `plus` special key; `Code` `color`/`size` props
 - [ ] `Collapsible` `isDisabled` feature — the prop plus `aria-disabled`/`tabindex="-1"`/`triggerDisabled` dim and the click guard — is in source, `.doc.mjs`, and tests, but the published 0.1.7 dist lags (no `triggerDisabled`, no guard). Followed from source. `triggerDisabled` has no dist class to diff, so the oracle leaves it **uncompared** (no skip needed — a skip is for keys upstream has that we defer; this is the reverse).
 - [ ] `Collapsible` `styles.content` typography anchoring (`fontFamily`/`fontSize`/`fontWeight`/`lineHeight`/`color` beyond `paddingBlockStart`) — added upstream by commit #4126 (same batch as Icon's rem #4120), present in source, absent from dist 0.1.7. Followed from source; the oracle records a **self-retiring skip** on `styles.content` that fails the moment a release ships the typography.
-- [ ] **Batch 5's four doc omissions.** `NumberInput`'s `width` and `onKeyDown`, `FileInput`'s `width`, and `CodeBlock`'s `highlightMode` are real source props absent from both locales of their `.doc.mjs` props tables. Ported from source, as the `Lightbox` `defaultIndex`/`hasAutoPlay` gap below already is. Two further `.doc.mjs`-vs-source disagreements in the same batch, also resolved in source's favour: `NumberInput`'s `step` is documented `@default 1` but the source assigns no default (the `1` is HTML's implicit step, and no attribute is rendered when unset), and its anatomy lists a `Spinner` for "increment and decrement controls" that the source never renders.
+- [ ] **Batch 5's doc omissions — two of the four closed at 0.4.1.** `NumberInput`'s `onKeyDown` and `CodeBlock`'s `highlightMode` are still real source props absent from both locales of their `.doc.mjs` props tables; ported from source, as the `Lightbox` `defaultIndex`/`hasAutoPlay` gap below already is. `NumberInput`'s `width` and `FileInput`'s `width` were the other two, and **0.4.1's props tables document both**, so those halves are retired.
+- [x] **RETIRED 2026-08-15 — batch 5's two `NumberInput` doc-vs-source disagreements are now doc-vs-doc agreements**, because #4896 made the docs true rather than the source. `step`'s `@default 1` was called an HTML implicit step the source never assigned; `getEffectiveStep` now assigns it for real, as the fallback for an unset, non-finite, non-positive or (under `isIntegerOnly`) fractional step — and the control is `type="text"`, so there is no native step left to inherit either way. The anatomy entry that listed a `Spinner` for "increment and decrement controls" the source never rendered is now `Number steppers`, and `hasNumberSteppers` renders exactly that. **The standing lesson is the third instance of it**: resolving a doc-vs-source disagreement in source's favour is a bet that the *source* is ahead, and twice now the next release proved the doc was ahead instead. Re-read both halves at every pin bump, as with stale-dist deferrals.
 
 **`Toast` — slot translation, deferred suite, and replicated upstream quirks:**
 
@@ -5732,7 +5752,7 @@ directory's worth of work:**
 
 **Batch 5 — divergences, and a spread hazard NumberInput exposed:**
 
-- [x] **An element carrying a spread loses Svelte's compare-against-the-DOM guard on `value`.** Svelte's `set_value` carries React's exact controlled-input condition (`element.value === value` → return), but _any_ spread routes every attribute through `set_attributes`, whose guard compares against the previously **rendered** string and then assigns `element.value` unconditionally. `NumberInput`'s `<input>` must carry `{...rest}` (test-pinned), and a `type="number"` field in `badInput` reports `value === ''` while still showing the raw text — so `pendingInput` correctly became `''`, the stale compare fired, and the editor was wiped. Typing `1e5` ended as `5`. Fixed with an attachment reproducing React's condition, plus a **server-only `value` spread** so SSR still emits the attribute React emits (attachments do not run on the server; hydration's `remove_input_defaults` then moves it to the property and the attachment no-ops). The guard deliberately does **not** live in `handleInputChange` — `hasClear`'s commit-null-on-blur depends on `pendingInput` genuinely becoming `''`. `TextInput` has the identical shape and is immune only because text fields have no bad-input state; **revisit if any other spread-carrying control gains a bad-input mode**
+- [x] **An element carrying a spread loses Svelte's compare-against-the-DOM guard on `value` — and at 0.4.1 that stopped being observable.** The mechanism is unchanged and still verified in Svelte 5.56.7's source: `set_value` carries React's exact controlled-input condition (`element.value === value` → return), while _any_ spread routes every attribute through `set_attributes`, whose guard compares against the previously **rendered** string and then assigns `element.value` unconditionally. `NumberInput`'s `<input>` must carry `{...rest}` (test-pinned). Under `type="number"` this was a live bug: a field in `badInput` (`1e`, `2-`, …) reports `value === ''` while still showing the raw text, so `pendingInput` correctly became `''`, the stale compare fired, and the editor was wiped — typing `1e5` ended as `5`. #4896 made the control a text-backed spinbutton, and **a text field has no bad-input state**, so the symptom is gone. **The obvious replacement symptom does not exist either**, which is the part worth recording: caret destruction was the intuitive guess (a redundant write collapsing the selection to the end), and it is wrong — the HTML `value` setter moves the text entry cursor only *"if the element's value is different from oldValue"* (setter step 5), and Chromium implements it, so a same-string assignment leaves the caret alone. That was measured, not reasoned: `afterEdit {value:"152", sel:2}` → `afterSameAssign {value:"152", sel:2}`. **`src/tests/number-input-spread-value.svelte.test.ts` is therefore retired rather than restated** — it could no longer mutation-check its own fix, which is exactly the bar `CLAUDE.md` sets for beyond-upstream coverage, and a test whose stated rationale is false is worse than no test. The attachment **stays**: it is the faithful translation of `updateInput`, it costs one string comparison per keystroke, it is what makes the server-only `value` spread coherent, and it must stay reactive (not `untrack`ed) because `displayValue` now flips formatted↔raw on focus. What still pins anything is `src/tests/batch-5-server-markup.test.ts`'s two SSR cases, which are now the only pin on that spread. **Standing lesson: when a fix's symptom disappears, re-derive the replacement symptom empirically before writing it down** — a plausible mechanism stated confidently in a test header is how a suite starts lying
 - [x] **Svelte preserves whitespace inside `<pre>`; JSX does not.** `CodeBlock`'s `<pre>` children are top-level snippets rendered with no literal whitespace between them, because Svelte switches to preserve-whitespace mode on entering a `<pre>` and keeps it for the whole _lexical_ subtree. Written the ordinary indented way, the header rendered three lines tall with its label indented ~48 characters (it inherits the default `tab-size: 8`; `styles.code`'s `tabSize: 2` does not reach it) and `collapseInner` gained blank lines. Both files above pin it
 - [ ] **`NumberInput` omits `oninput` from its props surface**, as `TextInput` does. `BaseProps` extends `HTMLAttributes`, so without the omission a caller's `oninput` typechecks and is then silently shadowed by the spread. Upstream has no equivalent hole — React registers `onInput` and `onChange` as separate props over the same native event, so a caller's `onInput` arriving through `{...props}` really does fire alongside the component's own. Ours makes it a compile error instead of a silent drop, which is the honest translation but _is_ a surface difference
 - [ ] **`NumberInput`'s props are a discriminated union, so `onChange` is not contextually typed at call sites** — the same limitation `Slider` records. `onChange={(v) => …}` infers `v` as `any` under `noImplicitAny`; the demo route annotates, and a consumer must too
@@ -5865,10 +5885,19 @@ directory's worth of work:**
       route to a consumer at all. Do **not** "fix" it by adding them to the root barrel: upstream's
       `Selector/index.ts` deliberately withholds them, so root-exporting would convert a missing
       export into an over-export. This is the concrete cost of the per-component-subpath debt
-- [ ] **`use-typeahead.svelte.test.ts` was renamed** from `typeahead.svelte.test.ts` to free the
-      filename for the component's suite. It is the type-to-select _hook_'s suite
+- [x] **`use-typeahead.test.ts` was renamed** from `typeahead.svelte.test.ts` to free the filename
+      for the component's suite. It is the type-to-select _hook_'s suite
       (`hooks/useTypeahead.test.tsx`), unrelated to the `Typeahead` component, and is the one hook
-      suite that keeps its `use-` prefix
+      suite that keeps its `use-` prefix. **At 0.4.1 it also moved from the client project to the
+      server one** and lost its `.svelte` infix: the hook reads `key` and four modifier flags off a
+      keyboard event and touches no node, no window and no layout, so it only ever sat in the client
+      project because node has no `KeyboardEvent` _constructor_. A small `extends Event` stand-in
+      carrying exactly those fields replaces it — deliberately not more, so a future `useTypeahead`
+      reaching for `getModifierState` fails loudly instead of passing against a fake. Upstream's own
+      suite runs under jsdom, so its `new KeyboardEvent(...)` is a reimplementation too. This makes
+      `compute-overflow.test.ts:7-9`'s claim that `use-typeahead` follows the pure-module rule true
+      rather than aspirational, and the suite is now runnable in an environment that cannot bind a
+      browser port
 
 **Batch 7 — the imperative handle, slot translation, and two closed-prop roots:**
 
@@ -6376,6 +6405,238 @@ _Locale gaps in upstream's own docs, recorded because the docs site renders them
       one:** make a truncated run exit non-zero and say so (the reporting is the dangerous half),
       then split the projects across instances. Until then, never run the suite concurrently with
       anything else, and treat any full-run number produced under contention as unmeasured.
+      **Partly addressed**: `run-client-tests.mjs` now runs its chunks concurrently
+      (`CLIENT_CHUNK_CONCURRENCY`, default `max(2, min(4, cpus - 1))`). This is not the same thing
+      as the contention hazard above and does not reopen it — the danger there is _two runs sharing
+      one browser_, where this gives every chunk its own process, browser and Vite server, which
+      was already true and was only ever run serially. The reporting half of the debt was closed
+      earlier by the files-run-vs-files-on-disk reconciliation, which a concurrent run does not
+      weaken: it is a sum, and a chunk that collects nothing still subtracts from it. What remains
+      open is the real fix — one run that survives all 163 files, so cross-chunk state leakage is
+      exercised again.
+- [ ] **oxlint cannot replace eslint here, and the reason is Svelte templates — not speed and not
+      the custom rule.** Evaluated at oxlint v1.62-era (2026-08) because `pnpm -F …/core lint`
+      measures **1m24**. Two things that sound like blockers are not: JS-authored plugins reached
+      alpha in 2026-03 with "most existing ESLint plugins without modification" and 100% conformance
+      on ESLint's 33,006 built-in-rule tests, so `eslint-rules/no-physical-properties.js` would very
+      likely run unmodified; and raw speed is a ~4.8x win. The blocker is coverage: oxlint lints the
+      `<script>` blocks of a `.svelte` file and **not the template**, where much of
+      `svelte.configs.recommended` lives — and core is **559 `.svelte` files** against 643 `.ts`.
+      So the honest framing is an *additional* fast pass over the `.ts` half, not a replacement, and
+      it buys a fraction of 1m24 against a 25-minute client suite. Revisit when oxlint ships Svelte
+      template support (on their roadmap; `sveltejs/svelte#17665` tracks the same question for
+      upstream Svelte's own repo). **oxc has no test runner at all** — `@oxc-node/core` is a
+      TypeScript register hook for Node's built-in runner, which is unrelated to 163 browser suites
+      in headless Chromium, so nothing in that toolchain addresses the gate that actually costs time.
+
+**Batch 11 — upstream 0.4.1 port findings:**
+
+- [ ] **The class oracle cannot see a focus ring that stopped being applied.** Migrating 36 modules
+      onto the shared `utils/focus-outline.stylex.ts` meant deleting each local ring declaration and
+      wrapping the call site instead. Deleting the declaration and _forgetting the wrap_ produces
+      **zero mismatches**: object-mode diffing compares the declarations a module makes, and the ring
+      now arrives from a different module entirely, so its absence at the call site is not a
+      difference the oracle is looking at. **16 modules silently lost their ring**, and they were
+      found by grepping every stripped module for a `focusOutline` reference — not by the gate that
+      exists to catch exactly this. The CSS oracle is blind for the same reason: the rule is still in
+      the sheet, nothing references it. Generalised, **both oracles prove what a module _declares_,
+      never what an element _receives_**, so any refactor that moves a declaration across a module
+      boundary leaves the gate green by construction. Worth a third check that resolves call sites,
+      or at minimum a rule that a style key deleted in the same commit as a shared-module adoption
+      must appear as a wrap somewhere
+- [x] **`ThemeConfig` has no `extends`, where upstream's does.** ~~Nothing in the port is _wrong_
+      today because no shipped theme uses it; the debt is that a downstream consumer writing an
+      upstream-shaped theme config gets a silently ignored key.~~ **Ported.** The framing above was
+      too generous by one step: the CLI's shipped `assets/docs/theme.doc.mjs` was already
+      documenting `extends` — upstream's prose carried over verbatim, down to the worked example —
+      so this was not a key a consumer might reasonably not know about, it was **a documented
+      feature that did nothing**. Merges tokens, components, icons and indicators with the base at
+      lowest precedence and the child's `name` always winning, which is upstream's set; `syntax`
+      inherits through `resolvedTokens` and the on-media maps are resolved unconditionally, so
+      neither needs a branch. The one translation that mattered: the pre-seed reads
+      `base.resolvedTokens`, not `base.tokens`, because upstream has one token map where this port
+      has two — seeding the raw map would inherit only what the base's author typed by hand and
+      drop every generated token. All 9 upstream cases ported plus one for indicators, which
+      upstream merges without covering
+- [x] **The client vitest project could not be executed for any of the 0.4.1 batch.** ~~Its browser
+      server fails to bind with `EACCES: permission denied ::1:<port>` in this environment.~~
+      **Resolved, and the recorded diagnosis was wrong in a way worth keeping.** It was called
+      environmental, which suggested nothing could be done about it locally. The real cause is
+      specific and fixable: vitest's browser server binds **63315** by default and Windows reserves
+      TCP blocks for Hyper-V — `netsh interface ipv4 show excludedportrange protocol=tcp` reports
+      `63271–63370` here. Vite retries `EADDRINUSE` and **not** `EACCES`, so the run dies before
+      Chromium launches and reports "no tests" rather than anything naming a port.
+      `VITEST_BROWSER_PORT` overrides it; the suite then runs 163/163 files, 4,510 cases. The
+      generalisable part: **"environmental" is a diagnosis that stops investigation**, and this one
+      survived disabling the sandbox — which should have been the clue that the assumed cause was
+      not the cause
+- [ ] **A failed hover in `beforeAll` costs a whole chunk, and did so only on CI.**
+      `setup-stylex.ts` parks the real pointer in a corner so hover state cannot leak between files.
+      On CI that hover hit Playwright's `element is outside of the viewport` and retried to the
+      **30 s actionability timeout — once per file, in `beforeAll`**, so all 12 files of chunk 1
+      died and reported with nothing named but the setup file. It passed locally every time. Two
+      things were wrong independent of which environment difference triggered it: the corner is
+      `position: fixed`, so a scrolled frame maps it outside the *top-level* viewport that
+      Playwright checks against (the note there already reasoned about frame *height* and missed
+      scroll offset), and **a hygiene step was allowed to fail a suite**. Now scrolls to top first
+      and is best-effort with a 2 s bound, warning rather than failing. The rule: a setup step that
+      is not an assertion must not be able to take the file down with it
+- [ ] **CI ran everything for every change.** A full run is ~13 minutes — 409 s of tests, 190 s of
+      type-aware lint, 76 s of build — and a `docs/`-only edit paid all of it. Split into `lib`,
+      `client` and `docs` jobs behind a `changes` job that classifies the diff
+      (`.github/scripts/changed-scopes.mjs`). Two properties are the point and should survive any
+      later tidying: the classifier is **deny-by-default**, so a path it does not recognise sets
+      `global` and runs every job (a skip-list would fail silently green instead); and the jobs
+      select packages by **exclusion** (`--filter='!docs'`) rather than by naming them, so a package
+      added later is covered by construction instead of going untested until someone edits the
+      workflow. The always-running `ci` job exists so a *skipped* job cannot leave a required status
+      pending forever
+- [ ] **`git checkout -- '*'` destroyed every uncommitted tracked file in the worktree, across
+      every concurrent workstream.** It was written inside a cleanup script as an intended no-op
+      guard. It is not a no-op: git expands the pathspec against the **whole index**, not against
+      the caller's own edits, and it has no concept of which workstream authored a change. Unstaged
+      changes have no reflog, so nothing was recoverable — every affected agent had to retype from
+      memory, and one commit's worth of work (`format-instant.ts`) was caught only because a
+      follow-up read happened to show pre-edit content. **The revert is silent**: a reverted file
+      looks untouched rather than broken, so "it still compiles" and "the oracle is green" are both
+      worthless as evidence that an edit survived. Three rules came out of it, and the third is the
+      one that generalises: a script that reverts files must **enumerate** them, never glob; the
+      blast radius of `git checkout --` is every workstream sharing the checkout, not the one
+      running it; and **the safe primitive for scoping work back to your own files is to rewrite
+      the files you own, never to revert the ones you do not.** Untracked files survived, which is
+      the only reason new modules (`panel-search-input.*`, new fixtures, new suites) came through
+      intact — an accident of the mechanism, not a safeguard
+
+**The Selector family at 0.4.1 — port findings:**
+
+- [ ] **An oracle case can be wrong about the _mode_ while every atom matches.** `statusButton` in
+      both `selector` and `multi-selector` emits byte-identical classes at 0.4.1 and 0.3.0; what
+      changed is that its call site now merges `focusOutlineStyles.focusVisible` across a module
+      boundary, which defeats StyleX's fold, so `dist/` carries an object where it used to carry a
+      literal string. A case claiming `inline` for it fails with a diff that looks like a style
+      difference and is not one. **Read `dist/` for whether the key is an object before reading it
+      for what the object says** — the mode is the first question, not a detail of the answer. The
+      inverse bit the same batch: `complex-selector`'s `dist/` still carries `trigger` and
+      `triggerText` as literals _and_ as objects, so its four-entry `inline` list was deleted rather
+      than trimmed, and nothing went unverified because object mode already covered both keys
+- [ ] **Two upstream PRs that touch one style key have to be ported as one change.** #4838 collapses
+      `triggerIcon` to `{flexShrink: 0}` and #4846 adds `triggerIconRotation`; landing #4838 alone
+      leaves the key in a shape that exists in no released version, so `dist/` has nothing to diff it
+      against in either mode and the run reports a mismatch that no source edit can close. The
+      general form: **when a brief lists two PR numbers against one declaration, the released tarball
+      is the join of both, never of either**
+- [ ] **A forward reference to a hook's `reset` must not be `$state`.** `Selector`'s hide and clear
+      handlers have to drop the typeahead buffer, but `useTypeahead` is constructed after them
+      because it needs the popover. Upstream uses a ref; the Svelte translation is a plain
+      `let resetTypeahead = () => {}` assigned afterwards, because the handlers read it at call time.
+      Making it `$state` compiles and works, and re-triggers every derivation that read it on the
+      assignment — a self-inflicted extra render pass on every mount, invisible to `check` and to
+      both oracles
+- [ ] **`getBoundingClientRect()` measures through the popover's entry transform.** The selected-item
+      overlay offset (#4802) had been computed from rects on both sides, so the error grew with each
+      option's distance from the menu top — every row measured through a different point of the same
+      `scale()`. `offsetTop`/`offsetParent`/`offsetHeight` are untransformed layout metrics and are
+      what upstream uses. Anywhere this port measures an element inside an animating layer, the rect
+      is the wrong instrument
+- [ ] **A rewrite needs the parity and idiom passes as much as a fresh port does, and this batch is
+      the evidence.** Both ran after the components were written; between them they found five
+      things, and **four were pre-existing** rather than introduced here — `ComplexSelector`
+      silently discarding a consumer's `onclick` (`{...rest}` beside an explicit handler is one
+      object literal, last key wins, never a merge), `Selector`'s trigger spread sitting before
+      `id`/`type`/`role` where upstream puts it after, a stale `mockSelectorRects` harness that
+      `useSelectedItemOffset`'s rewrite had turned into a coincidence of the test page, and the
+      `statusButton` mode flip's **third** call site in `use-input-status-icon`. None of the four
+      would have been found by re-reading the diff of what changed
+- [ ] **The ported suites for this family are written and typechecked, not passing** — the client
+      vitest project still cannot bind a port in this environment, which is the standing 0.4.1 debt
+      recorded above. `Selector` **124/124**, `MultiSelector` **101/102** (one named drop:
+      `has displayName`, a React-only concern), `ComplexSelector` **6/6**. The server project is
+      green (838/838), and both class and CSS oracles report nothing from `selector`,
+      `multi-selector`, `complex-selector` or `panel-search-input`
+
+**The input family at 0.4.x — port findings:**
+
+- [ ] **A "13 shipped i18n keys have no call site" brief is a count of the catalog, not of one
+      family.** Grepping `src/lib` for every key in `locales/en.json` finds **20** with no call
+      site, and only **10** of them belong to the input family (`fileInput.*` x8,
+      `timeInput.invalidTime`, `dateInput.invalidDate`). The other ten are three separate
+      workstreams: `numberInput.increment/decrementLabel` (2),
+      `tableRowExpansion.expand/collapseAllRows` (2), and `step.*` (6) — the lab `Stepper`, which
+      **this port has not ported at all**, so those six will stay uncalled until it is. The
+      generalisation is the method, not the number: **derive the list from the catalog with a
+      script and attribute each key to an owner**, because a hardcoded English literal is invisible
+      to every gate the repo has (the oracles diff CSS, `check` sees a valid string, and a suite
+      asserting the literal _passes_ precisely because the component emits it)
+- [ ] **A summary of which callers pass `iconClassName` to `InputClearButton` is worth checking
+      against the source, not trusting.** The convergence brief said "each converted caller passes
+      `iconClassName={stableClassName('<component>-clear-icon')}`". Upstream passes it from **two**
+      of the ten call sites — `DateInput` and `DateRangeInput` — and from those two only because
+      they had already shipped a component-specific target a theme could be written against.
+      `TextInput`, `TimeInput`, `DateTimeInput`, `FileInput`, `Tokenizer` and `PanelSearchInput`
+      pass nothing, and stamping the extra class on them would have invented six public theme
+      targets upstream does not ship — the parity rule's exact failure mode, arriving as an
+      instruction rather than as an idea. The `.doc.mjs` corpus is the cross-check:
+      `deprecatedFor: 'input-clear-icon'` appears on exactly the targets that exist
+- [ ] **Three of the five date/time `inline` oracle claims were already stale before this batch,
+      and the run had been red on them for a release.** An earlier batch moved
+      `DateInput`/`DateRangeInput`/`DateTimeInput`'s icon buttons onto
+      `focusOutlineStyles.focusVisible` without touching the oracle, and composing an **imported**
+      style at a call site is exactly what stops StyleX folding it — upstream's `dist/` now carries
+      `styles.iconButton` / `iconButtonDisabled` (and `DateRangeInput`'s `presetButton` pair) as
+      live objects with no literal string left to claim. So the fix is to **delete** the `inline`
+      entries, not to correct them: object mode already covers the keys. Generalised, and it is the
+      other half of the focus-ring finding above: **adopting a shared style module moves a key from
+      inline mode to object mode**, so the same commit that deletes a local ring declaration has to
+      delete its `inline` claim too, or the oracle reports a mismatch that looks like a style bug
+      and is really a bookkeeping one. `Switch`'s `statusGap` and `Token`'s `removeButton` moved the
+      same way in this batch, for the neighbouring reasons (`xstyle` across a component boundary; a
+      `focusOutlineProps.focusVisible(...)` runtime call)
+- [ ] **`form=""` is the only escape for required + disabled-with-a-reason, and it reads like a
+      typo.** `disabledMessage` deliberately drops the native `disabled` attribute so the reason
+      stays focus-discoverable — which leaves `required` live on a control the user cannot operate,
+      so `form.checkValidity()` is false forever and the browser's "please check this box" bubble
+      points at a switch nothing can toggle. `form` names the **id** of the form to associate with,
+      and no element can have the empty id, so `form=""` associates the input with _no_ form: it
+      leaves constraint validation and form data entirely while staying visible, focusable and
+      labelled. The two alternatives are both wrong — dropping `required` lets a genuinely required
+      field submit empty once re-enabled, and setting `disabled` takes back the focusability the
+      message exists for. Ported to `Switch` and `CheckboxInput`; `RadioListItem` carries it
+      upstream too and is not in this batch
+- [ ] **The docs emitter had TWO undeclared fields, not one, and the first hid the second.**
+      `assertDeclared` throws on the first undeclared key it meets and aborts the whole run, so
+      clearing `deprecatedFor` on `theming.targets[]` simply revealed `replaces` on
+      `theming.derived[]` (0.4.1 added it for `ProgressBar`'s mark vars and `TextArea`'s
+      `--_textarea-inline-padding`) behind an identical-looking message. Both are now declared in
+      `packages/cli/authoring/doctypes/base/type.ts`, verbatim from upstream's own doctype, and in
+      the emitter's field sets. Neither is consumed by `astryx theme build` — upstream's CLI does
+      not consume them either — so both are documentary in both trees, which is what makes
+      declaring them faithful rather than a promise the CLI does not keep. **Read a
+      fail-on-first-error gate as a queue, not as a single decision**
+- [x] **`NumberInput`'s 0.4.1 rewrite (#4896) — six new StyleX keys that look like function styles
+      and are not.** The stepper declarations (`numberSteppers`, `numberStepperButton`,
+      `numberStepperButtonDisabled`, `decrementButton`, plus `wrapperWithNumberSteppers` and
+      `incrementIcon`) each have exactly one call site with a statically-known combination, so StyleX
+      folded four of them into literal class strings and `dist/NumberInput.js` declares only
+      `{wrapper, wrapperWithNumberSteppers, incrementIcon}`. The reflex on seeing "declared upstream,
+      absent from dist" is a self-retiring **skip**; the right answer here was six more **`inline:`
+      entries**, and the difference is whether those classes stay checked or stop being checked.
+      **Read `dist/`'s `className:` literals before writing a skip** — `grep -n 'className:'` on the
+      compiled file counts the fold sites directly, and it said ten where the old comment claimed
+      six. The same rewrite deleted `MozAppearance` and both `::-webkit-*-spin-button` blocks (there
+      is no `type="number"` left to grow spinners), removing **5 of the CSS oracle's invented
+      rules**; NumberInput went from 10 CSS-oracle mismatches to 0
+- [ ] **A consumer's `onwheel` fires here and does not upstream — a divergence Svelte cannot close
+      cheaply.** `NumberInput` consumes a focused wheel gesture with `preventDefault()` +
+      `stopPropagation()` on a native listener bound to the `<input>`. React delivers a consumer's
+      `onWheel` from the **root container** (`wheel` is not in its `nonDelegatedEvents`), so
+      upstream's `stopPropagation()` means the root never sees the event and the consumer's handler
+      never runs. Svelte binds `onwheel` to the **same element**, where `stopPropagation()` has no
+      effect on sibling listeners, so ours runs after every consumed step. `stopImmediatePropagation()`
+      would match upstream, but only if our listener is registered first — which depends on Svelte's
+      microtask registration order, too fragile a thing to lean on in order to gain the *less* useful
+      behaviour. Documented at the prop instead. Generalised: **`stopPropagation` is not portable
+      between React and Svelte whenever the consumer's handler arrives through a spread**, because
+      the two frameworks attach it at different nodes
 
 **Empty package:**
 

@@ -35,6 +35,15 @@ const menuItemStyles = stylex.create({
 	disabled: {
 		opacity: 0.5,
 		cursor: 'not-allowed'
+	},
+	destructive: {
+		// Only recolor the text/icon; the hover / focus background stays the shared
+		// neutral overlay from `root` so the hover state matches every other menu
+		// item. The root color covers the label/description via the Item custom
+		// properties (and any bare text). Semantic error tokens keep it theme-aware.
+		color: colorVars['--color-error'],
+		'--_item-label-color': colorVars['--color-error'],
+		'--_item-description-color': colorVars['--color-error']
 	}
 });
 
@@ -51,12 +60,20 @@ const itemSizeStyles = stylex.create({
 
 /**
  * The `xstyle` array passed to `Item` — upstream's
- * `[menuItemStyles.root, itemSizeStyles[size], isDisabled && menuItemStyles.disabled, xstyle]`.
+ * `[menuItemStyles.root, itemSizeStyles[size], isDestructive && menuItemStyles.destructive,
+ * isDisabled && menuItemStyles.disabled, xstyle]`.
  */
 export function dropdownMenuItemXstyle(
 	size: DropdownMenuSize,
 	isDisabled: boolean,
+	isDestructive: boolean,
 	xstyle?: StyleArg
 ): StyleArg {
-	return [menuItemStyles.root, itemSizeStyles[size], isDisabled && menuItemStyles.disabled, xstyle];
+	return [
+		menuItemStyles.root,
+		itemSizeStyles[size],
+		isDestructive && menuItemStyles.destructive,
+		isDisabled && menuItemStyles.disabled,
+		xstyle
+	];
 }

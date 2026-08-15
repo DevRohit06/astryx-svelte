@@ -27,14 +27,15 @@
 	import Item from '../item/item.svelte';
 	import { useRadioList } from './radio-list-context.svelte.js';
 	import {
-		radioCircleAttrs,
-		radioDotAttrs,
 		radioEmbeddedRoot,
+		radioIndicatorSlotAttrs,
 		radioInputAttrs,
 		radioLabelAttrs,
 		radioListItemContainerAttrs,
 		radioWrapperAttrs
 	} from './radio-list-item.stylex.js';
+	import { useIndicator } from '../indicator/use-indicator.svelte.js';
+	import { useIndicatorFocusRing } from '../../hooks/use-indicator-focus-ring.svelte.js';
 
 	/**
 	 * A single radio within a `RadioList`. The visible circle is decorative; the
@@ -69,19 +70,25 @@
 
 	const containerTheme = themeProps('radio-list-item');
 	const containerAttrs = $derived(radioListItemContainerAttrs(isDisabled, xstyle));
-	const wrapperAttrs = $derived(radioWrapperAttrs(size, isDisabled));
+	const wrapperAttrs = $derived(radioWrapperAttrs(size));
 	const inputAttrs = $derived(radioInputAttrs(size, isDisabled));
-	const circleAttrs = $derived(radioCircleAttrs(size, isChecked, isDisabled));
-	const dotAttrs = $derived(radioDotAttrs(size));
+	const indicatorSlotAttrs = radioIndicatorSlotAttrs();
 	const labelAttrs = $derived(radioLabelAttrs(isDisabled));
-	const radioTheme = $derived(
-		themeProps('radio', {
-			size,
-			checked: isChecked ? 'checked' : null,
-			disabled: isDisabled ? 'disabled' : null
-		})
-	);
-	const dotTheme = $derived(themeProps('radio-dot', { size }));
+
+	// The circle and its dot are a component the theme resolves now, so it
+	// carries its own `radio-indicator` / `radio-indicator-dot` targets (with the
+	// legacy `radio` / `radio-dot` beside them) and its own size ramp.
+	const radioIndicator = useIndicator('radio');
+	const RadioControl = $derived(radioIndicator.current);
+
+	// The focusable `<input>` is transparent, so the ring has to land on the
+	// indicator beside it — painted imperatively, since a theme's replacement may
+	// never draw one itself.
+	let indicatorSlot = $state<HTMLElement | null>(null);
+	const { focusProps } = useIndicatorFocusRing(() => ({
+		container: indicatorSlot,
+		isDisabled
+	}));
 
 	function handleChange(e: Event): void {
 		if (isDisabled) {
@@ -107,7 +114,16 @@
 </script>
 
 {#snippet radioCircle()}
-	<div class={wrapperAttrs.class} style={wrapperAttrs.style}>
+	<!--
+		`focusin`/`focusout`, not `focus`/`blur`: the focusable element is the
+		`<input>` inside this wrapper, and the plain events do not bubble.
+	-->
+	<div
+		class={wrapperAttrs.class}
+		style={wrapperAttrs.style}
+		onfocusin={focusProps.onFocus}
+		onfocusout={focusProps.onBlur}
+	>
 		<input
 			{id}
 			type="radio"
@@ -123,16 +139,14 @@
 			class={inputAttrs.class}
 			style={inputAttrs.style}
 		/>
-		<div
-			aria-hidden="true"
-			{...radioTheme}
-			class={cx(radioTheme.class, circleAttrs.class)}
-			style={circleAttrs.style}
-		>
-			{#if isChecked}
-				<div {...dotTheme} class={cx(dotTheme.class, dotAttrs.class)} style={dotAttrs.style}></div>
-			{/if}
-		</div>
+		<!--
+			A container holding ONLY the indicator, so the focus ring has an
+			unambiguous target whatever a theme renders. `display: contents` keeps it
+			out of layout entirely.
+		-->
+		<span bind:this={indicatorSlot} class={indicatorSlotAttrs.class}>
+			<RadioControl state={isChecked ? 'checked' : 'unchecked'} {size} {isDisabled} />
+		</span>
 	</div>
 {/snippet}
 

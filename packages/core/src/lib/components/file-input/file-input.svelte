@@ -3,6 +3,7 @@
 	import type { SizeValue } from '../../internal/types.js';
 	import type { InputStatus, InputStatusType } from '../field/types.js';
 	import type { FieldStatusVariant } from '../field-status/field-status.stylex.js';
+	import type { TranslatorFn } from '../../i18n/use-translator.svelte.js';
 
 	// `FileInputStatus`/`FileInputStatusType` alias Field's `InputStatus`/
 	// `InputStatusType`, as upstream publishes them from `FileInput/index.ts`.
@@ -139,13 +140,16 @@
 		accept: string | undefined,
 		maxSize: number | undefined,
 		maxFiles: number | undefined,
-		isMultiple: boolean
+		isMultiple: boolean,
+		t: TranslatorFn
 	): { valid: File[]; errors: string[] } {
 		const errors: string[] = [];
 		let valid = files;
 
 		if (accept) {
-			const acceptedTypes = accept.split(',').map((t) => t.trim().toLowerCase());
+			// `s`, not `t` — the translator now occupies that name in this scope, and
+			// upstream renamed the same lambda parameter for the same reason.
+			const acceptedTypes = accept.split(',').map((s) => s.trim().toLowerCase());
 			valid = valid.filter((file) => {
 				const matches = acceptedTypes.some((type) => {
 					if (type.startsWith('.')) {
@@ -158,7 +162,7 @@
 					return file.type.toLowerCase() === type;
 				});
 				if (!matches) {
-					errors.push(`"${file.name}" is not an accepted file type`);
+					errors.push(t('@astryx.fileInput.errorInvalidType', { fileName: file.name }));
 				}
 				return matches;
 			});
@@ -167,7 +171,12 @@
 		if (maxSize != null) {
 			valid = valid.filter((file) => {
 				if (file.size > maxSize) {
-					errors.push(`"${file.name}" exceeds ${formatFileSize(maxSize)} limit`);
+					errors.push(
+						t('@astryx.fileInput.errorMaxSize', {
+							fileName: file.name,
+							maxSize: formatFileSize(maxSize)
+						})
+					);
 					return false;
 				}
 				return true;
@@ -175,7 +184,7 @@
 		}
 
 		if (isMultiple && maxFiles != null && valid.length > maxFiles) {
-			errors.push(`Maximum ${maxFiles} files allowed`);
+			errors.push(t('@astryx.fileInput.errorMaxFiles', { maxFiles }));
 			valid = valid.slice(0, maxFiles);
 		}
 
@@ -321,9 +330,9 @@
 			.join(' ') || undefined
 	);
 
-	// Hardcoded English, as upstream's are — only the clear button's label goes
-	// through the translator. Reproduced rather than "fixed" by inventing keys.
-	const defaultPlaceholder = $derived(isMultiple ? 'Choose files' : 'Choose file');
+	const defaultPlaceholder = $derived(
+		isMultiple ? t('@astryx.fileInput.placeholderMultiple') : t('@astryx.fileInput.placeholder')
+	);
 	const displayPlaceholder = $derived(placeholder ?? defaultPlaceholder);
 
 	const hasFiles = $derived(value != null && (Array.isArray(value) ? value.length > 0 : true));
@@ -342,7 +351,7 @@
 			return;
 		}
 
-		const { valid, errors } = validateFiles(fileList, accept, maxSize, maxFiles, isMultiple);
+		const { valid, errors } = validateFiles(fileList, accept, maxSize, maxFiles, isMultiple, t);
 
 		validationError = errors.length > 0 ? errors[0] : null;
 
@@ -362,7 +371,9 @@
 		// one, which is the duplicate 0.2.0 removed.
 		if (errors.length === 0) {
 			announce(
-				valid.length === 1 ? `1 file selected: ${valid[0].name}` : `${valid.length} files selected`
+				valid.length === 1
+					? t('@astryx.fileInput.fileSelected', { fileName: valid[0].name })
+					: t('@astryx.fileInput.filesSelected', { count: valid.length })
 			);
 		}
 
@@ -576,7 +587,7 @@
 			{:else}
 				<Icon icon="arrowUp" size="md" color="secondary" />
 				<span class={placeholderDropzoneAttrs.class} style={placeholderDropzoneAttrs.style}>
-					{isDragOver ? 'Drop files here' : displayPlaceholder}
+					{isDragOver ? t('@astryx.fileInput.dropHint') : displayPlaceholder}
 				</span>
 			{/if}
 		{:else if isLoading}

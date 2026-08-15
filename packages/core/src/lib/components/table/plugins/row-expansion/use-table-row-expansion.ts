@@ -6,34 +6,42 @@ import { resolveContextActions } from '../../table-context-menu.svelte';
 import type {
 	BodyCellRenderProps,
 	BodyRowRenderProps,
-	HeaderCellRenderProps,
 	TableColumn,
 	TablePlugin
 } from '../../table-types.js';
-import { clickableRowStyle } from './row-expansion.stylex.js';
 import {
+	afterRowFragment,
 	chevronDownIcon,
 	chevronRightIcon,
-	expandAllContent,
+	expandedPanel,
 	expansionCell,
-	expansionFirstColumnCell,
-	type ExpandAllArg,
-	type ExpansionCellArg,
-	type ExpansionFirstColumnCellArg
+	type AfterRowArg,
+	type ExpandedPanelArg,
+	type ExpansionCellArg
 } from './row-expansion-slots.svelte';
 
 /**
  * Ported from Astryx's
  * `Table/plugins/rowExpansion/useTableRowExpansion.tsx`.
  *
- * @deprecated Superseded by the tree plugin (useTableTreeData +
- *   useTableTreeState). Kept for back-compat; new tree tables should use the
- *   tree plugin. See the migration guide on useTableRowExpansion.
+ * ## Rewritten at upstream 0.4.1 (PR #4609) — this is a breaking change
  *
- * The transform pipeline transcribes verbatim — the synthetic `__expansion`
- * column, the wrapped first content column, the per-cell context-menu action and
- * the optional whole-row click target are all upstream's, in upstream's order.
- * What follows is every translation, including the deletions.
+ * The plugin used to draw hierarchy: a flat array of rows plus `getChildren` /
+ * `getDepth`, indented child cells, an expand-all header toggle, an optional
+ * whole-row click target. All of that now belongs to `useTableTreeData` +
+ * `useTableTreeState`, and `useTableRowExpansion` owns **one full-width detail
+ * panel below the expanded row** and nothing else.
+ *
+ * Gone from the config, with no compatibility layer: `getChildren`, `getDepth`,
+ * `hasRowClickExpansion`, `isAllExpanded`, `onToggleExpandAll`. Added and
+ * **required**: `renderExpanded`. `getIsItemExpandable`'s default flips from
+ * "has children" to `true`. `useTableRowExpansionState` is deleted outright —
+ * `packages/cli/assets/codemods/transforms/v0.4.0/` carries the migration.
+ *
+ * The pipeline follows suit: `transformColumns` still prepends the synthetic
+ * `__expansion` column but no longer wraps the first user column,
+ * `transformHeaderCell` is gone with the expand-all toggle, and
+ * `transformBodyRow` builds the panel instead of a row click handler.
  *
  * ## What has no counterpart, and is deleted
  *
@@ -41,46 +49,49 @@ import {
  *   expansion column so a re-render does not hand `BaseTable` a new identity.
  *   The config arrives here as a **getter**, so a closure over it is stable and
  *   live at once: the plugin object is built once for the component's lifetime
- *   and every read of `expandedKeys`, `getDepth`, … happens at call time. There
- *   is nothing left to memoise and no dependency array to keep honest.
- * - **`firstUserColumnKeyRef`.** The ref is written at the top of
- *   `transformColumns` and read in the `map` immediately below it, inside the
- *   same call. It is a local variable wearing a ref's clothes, so it is a local
- *   variable here.
+ *   and every read of `expandedKeys`, `renderExpanded`, … happens at call time.
+ *   There is nothing left to memoise and no dependency array to keep honest.
+ *
+ * ## What does keep a ref counterpart
+ *
+ * **`columnCountRef`.** Unlike the `firstUserColumnKeyRef` this file used to
+ * carry — written and read inside a single `transformColumns` call, so a local
+ * variable — the column count is written in `transformColumns` and read in
+ * `transformBodyRow`, which are *different* passes of the pipeline. It is a
+ * `let` in the hook's closure, one per hook call as `useRef` is one per
+ * component instance, and `transformColumns` runs first (`base-table.svelte`
+ * resolves its columns before it renders a body row) so the panel's `colSpan` is
+ * correct on the first render rather than one pass behind.
+ *
+ * The documented limit of the keyed binders applies to it: the panel's argument
+ * is a derived over the reads its getter performs, and the count is a plain
+ * `let`, so a `columns` prop that changes *while a row is expanded* updates the
+ * count without waking that derived. See "What this still does not cover" in
+ * `internal/bind-snippet.ts`.
  *
  * ## What changes shape
  *
  * - **Three slots are markup, and a `.ts` hook cannot author a snippet.** Each
- *   is a module-exported snippet from `row-expansion-slots.svelte`, bound with
- *   its per-cell data through the **keyed** binders in
- *   `internal/bind-snippet.ts`. `content` on the header uses `createSlotBinder`;
- *   the two `renderCell`s use `createCellSlotBinder`, because
- *   `TableColumn.renderCell` is `Snippet<[T]>` and the row parameter has to be
- *   folded into the bound argument. See those functions' notes — and note the
- *   keying is not cosmetic: `{@render}` branches on a snippet's function
- *   identity, so an unkeyed binding hands it a fresh function on every transform
- *   and *replaces* the chevron a keyboard user just pressed, dropping focus to
- *   `<body>`. Upstream never meets this, because React reconciles by
- *   type-and-key. This plugin briefly carried its own private `bindCellSnippet`
- *   for the fold; the shared, keyed pair supersedes it.
+ *   is a module-exported snippet from `row-expansion-slots.svelte`, bound
+ *   through the **keyed** binders in `internal/bind-snippet.ts`: `expansionCell`
+ *   through `createCellSlotBinder` (because `TableColumn.renderCell` is
+ *   `Snippet<[T]>` and the row has to be folded into the bound argument), the
+ *   panel and the `afterRow` composition through `createSlotBinder`, keyed by
+ *   **row key**. The keying is not cosmetic: `{@render}` branches on a snippet's
+ *   function identity, so an unkeyed binding hands it a fresh function on every
+ *   transform and *replaces* the subtree — dropping focus out of the chevron a
+ *   keyboard user just pressed, and out of anything focusable the consumer put
+ *   in the panel. Upstream never meets this, because React reconciles by
+ *   type-and-key (and keys the panel `${key}-expanded` for exactly this reason).
  * - **Returning `null` from `renderCell` becomes a flag.** Upstream skips the
- *   chevron for child rows and for non-expandable rows by returning `null`;
- *   `ExpansionCellArg.isVisible` carries both guards and the snippet renders
+ *   chevron for a non-expandable row by returning `null`;
+ *   `ExpansionCellArg.isVisible` carries the guard and the snippet renders
  *   nothing when it is false.
- * - **`content: null` on the header becomes `content: undefined`.** The slot is
- *   `string | Snippet`, and `BaseTable` resolves `content ?? column.header`, so
- *   `undefined` falls back to the expansion column's `header: ''` and the cell
- *   renders empty — which is what `null` renders upstream.
- * - **`onClick` → `onclick`** on the row's `htmlProps`, Svelte's attribute name.
+ * - **`<>{props.afterRow}{panel}</>` becomes a snippet.** A fragment is not a
+ *   value here, so the composition is its own module snippet over
+ *   `{previous?, panel}` — and it is keyed for the same focus reason as the rest.
  *
- * The context-menu label was translated here ahead of upstream — a recorded
- * known debt of theirs, since they hardcoded `'Collapse row'` / `'Expand row'`
- * there while translating the two aria labels that say the same words. Upstream
- * 0.3.0 closed it against the same `@astryx.tableRowExpansion.*` keys, so this
- * is no longer a divergence.
- *
- * The plugin holds no state, so this is a plain `.ts` module;
- * `use-table-row-expansion-state.svelte.ts` is where the runes live.
+ * The plugin holds no state, so this is a plain `.ts` module.
  */
 
 // =============================================================================
@@ -88,39 +99,32 @@ import {
 // =============================================================================
 
 /**
- * Configuration for useTableRowExpansion (inherited-columns mode).
+ * Configuration for useTableRowExpansion (detail-panel mode).
  *
- * Child rows use the same columns as their parents, with indentation on the
- * first content column. The consumer provides a **flat** data array (use
- * `useTableRowExpansionState` to flatten a tree) and a `getDepth`
- * function so the plugin knows each row's nesting level.
+ * The consumer owns expansion state; the plugin provides the chevron UI, the
+ * full-width detail panel rendered below an expanded row, and a right-click
+ * "Expand/Collapse row" action.
  */
 export interface UseTableRowExpansionConfig<T extends Record<string, unknown>> {
 	/** Set of currently-expanded row keys. */
 	expandedKeys: Set<string>;
-	/** Called when a row's expansion is toggled. */
+	/** Called with a row key when its expansion is toggled. */
 	onToggle: (key: string) => void;
 	/** Derive a stable unique key from a row item. */
 	getRowKey: (item: T) => string;
-	/** Return the children of a row (used to determine expandability). */
-	getChildren: (item: T) => T[];
-	/** Return the depth of a row in the hierarchy (0 = top-level). */
-	getDepth?: (item: T) => number;
-	/** Optionally control which rows are expandable. @default checks getChildren length */
+	/**
+	 * Render the detail content shown in a full-width panel below the row when
+	 * it is expanded. Receives the row's item.
+	 *
+	 * `(item: T) => ReactNode` upstream; a `Snippet<[T]>` here, which is the
+	 * standing translation for a render prop (`Table.renderCell`'s is the same).
+	 */
+	renderExpanded: Snippet<[T]>;
+	/**
+	 * Control which rows are expandable. Non-expandable rows show no chevron, no
+	 * context-menu action, and never render a panel. @default all rows expandable
+	 */
 	getIsItemExpandable?: (item: T) => boolean;
-	/**
-	 * When true, clicking anywhere on the row toggles expansion (in addition to
-	 * the chevron button). @default false — only the chevron triggers expansion.
-	 */
-	hasRowClickExpansion?: boolean;
-	/**
-	 * State of the expand-all toggle in the header. `true` = all expanded,
-	 * `false` = all collapsed, `'indeterminate'` = mixed. When provided
-	 * (together with `onToggleExpandAll`), the header cell shows a toggle button.
-	 */
-	isAllExpanded?: boolean | 'indeterminate';
-	/** Called when the expand-all header toggle is clicked. */
-	onToggleExpandAll?: (expand: boolean) => void;
 }
 
 // =============================================================================
@@ -132,38 +136,38 @@ const EXPANSION_COLUMN_KEY = '__expansion';
 
 const EXPANSION_COLUMN_WIDTH = pixel(40);
 
-/** Indentation applied per depth level, in pixels. */
-const INDENT_PER_DEPTH = 24;
-
 // =============================================================================
 // Hook
 // =============================================================================
 
 /**
- * Returns a {@link TablePlugin} implementing expandable rows with inherited
- * columns: child rows use the same columns as their parents, indented by depth,
- * and a synthetic chevron column leads the table.
+ * Returns a {@link TablePlugin} that expands a full-width detail panel below a
+ * row.
  *
- * @deprecated Use `useTableTreeData` (with `useTableTreeState`) instead. The
- * tree plugin covers the same affordances (expand-all header control,
- * whole-row click) with a cycle guard and per-row fine-grained re-render. See
- * the migration guide in the `useTableRowExpansion` docs for the before/after
- * and config mapping.
+ * The consumer owns the `expandedKeys` set; the plugin adds a leading chevron
+ * column, a right-click expand/collapse action, and renders `renderExpanded`
+ * in a full-width panel below each expanded row.
+ *
+ * For hierarchical data (child rows sharing the parent columns) use
+ * `useTableTreeData` + `useTableTreeState` instead.
  *
  * @example
  * ```svelte
  * <script lang="ts">
  *   let expandedKeys = $state(new Set<string>());
- *   const expansionState = useTableRowExpansionState(() => ({
- *     baseData: tree,
- *     getChildren: (item) => item.children ?? [],
- *     getRowKey: (item) => item.id,
+ *   const expansion = useTableRowExpansion<Order>(() => ({
  *     expandedKeys,
- *     setExpandedKeys: (next) => (expandedKeys = next)
+ *     onToggle: (key) => {
+ *       const next = new Set(expandedKeys);
+ *       next.has(key) ? next.delete(key) : next.add(key);
+ *       expandedKeys = next;
+ *     },
+ *     getRowKey: (item) => item.id,
+ *     renderExpanded: orderDetails
  *   }));
- *   const expansion = useTableRowExpansion(() => expansionState.expansionConfig);
  * </script>
- * <Table data={expansionState.data} {columns} idKey="id" plugins={{ expansion }} />
+ * {#snippet orderDetails(order: Order)}<OrderDetails {order} />{/snippet}
+ * <Table data={orders} {columns} idKey="id" plugins={{ expansion }} />
  * ```
  */
 export function useTableRowExpansion<T extends Record<string, unknown>>(
@@ -171,28 +175,24 @@ export function useTableRowExpansion<T extends Record<string, unknown>>(
 ): TablePlugin<T> {
 	const t = useTranslator();
 
-	// Bound once per hook call, keyed by column: each chevron must keep its
-	// element identity across an expand/collapse, or clicking it by keyboard
-	// destroys the very button that has focus. See the keyed binders' notes in
-	// `internal/bind-snippet.ts`.
+	// Bound once per hook call, keyed: each chevron and each panel must keep its
+	// element identity across an expand/collapse, or clicking a chevron by
+	// keyboard destroys the very button that has focus. See the keyed binders'
+	// notes in `internal/bind-snippet.ts`.
 	const bindExpansionCell = createCellSlotBinder<T, ExpansionCellArg>(expansionCell);
-	const bindFirstColumnCell = createCellSlotBinder<T, ExpansionFirstColumnCellArg>(
-		expansionFirstColumnCell
-	);
-	const bindExpandAll = createSlotBinder<ExpandAllArg>(expandAllContent);
+	const bindExpandedPanel = createSlotBinder<ExpandedPanelArg>(expandedPanel);
+	const bindAfterRow = createSlotBinder<AfterRowArg>(afterRowFragment);
+
+	// Final rendered column count, captured in transformColumns (pipeline step
+	// 1) and read in transformBodyRow for the detail panel's colSpan. Upstream's
+	// `useRef(1)`; see the module header for why this one *does* need a ref
+	// counterpart where `firstUserColumnKeyRef` did not.
+	let columnCount = 1;
 
 	// Upstream destructures the config once per render and closes over the
 	// results; here every read goes back through the getter, which is what keeps
 	// one plugin object correct for the component's whole lifetime.
-	const isItemExpandable = (item: T): boolean => {
-		const { getIsItemExpandable, getChildren } = config();
-		return getIsItemExpandable ? getIsItemExpandable(item) : getChildren(item).length > 0;
-	};
-
-	const depthOf = (item: T): number => {
-		const { getDepth } = config();
-		return getDepth ? getDepth(item) : 0;
-	};
+	const isItemExpandable = (item: T): boolean => config().getIsItemExpandable?.(item) ?? true;
 
 	const rowToggleLabel = (isExpanded: boolean): string =>
 		isExpanded
@@ -209,10 +209,8 @@ export function useTableRowExpansion<T extends Record<string, unknown>>(
 			const key = getRowKey(item);
 			const isExpanded = expandedKeys.has(key);
 			return {
-				// Child rows (depth > 0) show their chevron inline in the first user
-				// column instead — don't double up here. Non-expandable rows show
-				// nothing at all.
-				isVisible: depthOf(item) === 0 && isItemExpandable(item),
+				// Upstream's `return null` for a row `getIsItemExpandable` rejects.
+				isVisible: isItemExpandable(item),
 				isExpanded,
 				onToggle: () => config().onToggle(key),
 				ariaLabel: rowToggleLabel(isExpanded)
@@ -222,80 +220,9 @@ export function useTableRowExpansion<T extends Record<string, unknown>>(
 
 	return {
 		transformColumns(columns: TableColumn<T>[]) {
-			// The first user column takes the indentation. Upstream parks this in a
-			// `useRef` that it writes and reads within this one call; see the module
-			// header for why the ref has no counterpart.
-			const firstUserColumnKey = columns.find((c) => !c.key.startsWith('__'))?.key ?? null;
-
-			// Wrap the first user column's renderCell to add depth indentation +
-			// an inline chevron for child rows. This is the inherited-columns
-			// pattern: child rows use the same columns but indent their first
-			// content cell.
-			const wrappedColumns = columns.map((col) => {
-				if (col.key !== firstUserColumnKey) {
-					return col;
-				}
-				const originalRenderCell = col.renderCell;
-				return {
-					...col,
-					renderCell: bindFirstColumnCell(col.key, (item) => {
-						const { expandedKeys, getRowKey } = config();
-						const depth = depthOf(item);
-						const key = getRowKey(item);
-						const isExpanded = expandedKeys.has(key);
-						return {
-							item,
-							depth,
-							// Guarded rather than computed unconditionally, because
-							// upstream computes both only inside its `depth > 0`
-							// branch and `getChildren` is the consumer's function.
-							indent: depth > 0 ? (depth - 1) * INDENT_PER_DEPTH : 0,
-							isExpandable: depth > 0 && isItemExpandable(item),
-							isExpanded,
-							onToggle: () => config().onToggle(key),
-							ariaLabel: rowToggleLabel(isExpanded),
-							renderCell: originalRenderCell as Snippet<[Record<string, unknown>]> | undefined,
-							text: originalRenderCell
-								? ''
-								: String((item[col.key] as string | number | null | undefined) ?? '')
-						};
-					})
-				};
-			});
-
-			return [expansionColumn, ...wrappedColumns];
-		},
-
-		transformHeaderCell(
-			props: HeaderCellRenderProps,
-			column: TableColumn<T>
-		): HeaderCellRenderProps {
-			if (column.key !== EXPANSION_COLUMN_KEY) {
-				return props;
-			}
-
-			// Show expand-all toggle when the consumer provides the state + callback.
-			const { isAllExpanded, onToggleExpandAll } = config();
-			if (isAllExpanded !== undefined && onToggleExpandAll) {
-				return {
-					...props,
-					content: bindExpandAll(column.key, () => {
-						const c = config();
-						const allExpanded = c.isAllExpanded === true;
-						return {
-							allExpanded,
-							onToggleExpandAll: c.onToggleExpandAll ?? (() => {}),
-							ariaLabel: allExpanded
-								? t('@astryx.tableRowExpansion.collapseAllRows')
-								: t('@astryx.tableRowExpansion.expandAllRows')
-						};
-					})
-				};
-			}
-
-			// Upstream's `content: null`. `BaseTable` resolves `content ?? header`,
-			// and this column's header is `''`, so the cell renders empty either way.
-			return { ...props, content: undefined };
+			const withExpansion = [expansionColumn, ...columns];
+			columnCount = withExpansion.length;
+			return withExpansion;
 		},
 
 		transformBodyCell(
@@ -303,8 +230,8 @@ export function useTableRowExpansion<T extends Record<string, unknown>>(
 			_column: TableColumn<T>,
 			item: T
 		): BodyCellRenderProps {
-			// Contribute "Expand/Collapse row" context-menu action on every cell
-			// so right-clicking anywhere in the row shows the option.
+			// Contribute the expand/collapse action on every cell; BaseTable
+			// aggregates them into one menu per row. Skip non-expandable rows.
 			if (!isItemExpandable(item)) {
 				return props;
 			}
@@ -329,21 +256,27 @@ export function useTableRowExpansion<T extends Record<string, unknown>>(
 		},
 
 		transformBodyRow(props: BodyRowRenderProps, item: T): BodyRowRenderProps {
-			const { hasRowClickExpansion = false, getRowKey } = config();
-			if (!hasRowClickExpansion) {
-				return props;
-			}
 			if (!isItemExpandable(item)) {
 				return props;
 			}
+			const { expandedKeys, getRowKey } = config();
 			const key = getRowKey(item);
+			if (!expandedKeys.has(key)) {
+				return props;
+			}
+
+			// Upstream's `key={`${key}-expanded`}` on the panel `<tr>` is what this
+			// binder key spells: one identity per row, for the life of the table.
+			const panel = bindExpandedPanel(`${key}-expanded`, () => ({
+				item,
+				columnCount,
+				renderExpanded: config().renderExpanded as unknown as Snippet<[Record<string, unknown>]>
+			}));
+
+			const previous = props.afterRow;
 			return {
 				...props,
-				htmlProps: {
-					...props.htmlProps,
-					onclick: () => config().onToggle(key)
-				},
-				xstyle: [...props.xstyle, clickableRowStyle]
+				afterRow: previous ? bindAfterRow(`${key}-after-row`, () => ({ previous, panel })) : panel
 			};
 		}
 	};

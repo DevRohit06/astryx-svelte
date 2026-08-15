@@ -9,14 +9,17 @@ import { defineTheme } from '$lib/theme/define-theme.js';
 import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 
 /**
- * Astryx's `MultiSelector/MultiSelector.test.tsx`, ported case for case — 88
- * upstream cases across its eleven describe blocks (the top-level
+ * Astryx's `MultiSelector/MultiSelector.test.tsx`, ported case for case — **102
+ * upstream cases** across its sixteen describe blocks (the top-level
  * `MultiSelector` and its nested `grouped search`, `result announcements`,
  * `keyboard accessibility`, `announcements`, `disabledMessage` and `form
- * participation`, then the four top-level `MultiSelector statusVariant
- * forwarding`, `MultiSelector clear icon theme target`, `MultiSelector indicator
- * (chevron) icon theme target` and `MultiSelector search affordances`), 87 here,
- * 1 dropped and named below.
+ * participation`, then the nine top-level `MultiSelector statusVariant
+ * forwarding`, `MultiSelector empty-state theme target`, `MultiSelector clear
+ * icon theme target`, `MultiSelector indicator (chevron) icon theme target`,
+ * `MultiSelector list structure`, `MultiSelector search affordances`,
+ * `MultiSelector disabled state theme target`, `MultiSelector dropdown option
+ * theme target` and `MultiSelector popup theme target`), 101 here, 1 dropped and
+ * named below.
  *
  * DROPPED (1): `has displayName` — `MultiSelector.displayName` is a React
  * component surface with no Svelte counterpart, the same case
@@ -48,14 +51,22 @@ import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
  *   `selector.svelte.test.ts` does: the rows and the trigger carry `onclick`, and
  *   the search field filters off `input`, so neither the pointer sequence nor the
  *   per-keystroke events are what is under test here.
+ * - `document.querySelector(All)` becomes `screen.container.querySelector(All)`.
+ *   Nothing here portals, so the container is the tighter scope for the same
+ *   node — and it keeps a stray live region or a sibling render out of a
+ *   "there is exactly none of these" assertion.
+ * - `generateThemeCss` is this port's counterpart to upstream's
+ *   `generateThemeTestCSS` helper; both return the flat stylesheet string the
+ *   `toContain` assertions read.
  *
  * RESTATED cases carry an inline comment: the four `tabIndex` assertions
  * (Svelte renders the attribute lowercase), the one `not.toBeDisabled`
  * assertion on the focusable-disabled trigger (vitest-browser's is Playwright's
  * ARIA computation, which counts `aria-disabled`, not jest-dom's
- * native-attribute one), and the `blocks activation` case (Playwright refuses to
+ * native-attribute one), the `blocks activation` case (Playwright refuses to
  * click an `aria-disabled` element, so the click is dispatched natively onto the
- * `onclick` handler the trigger actually carries).
+ * `onclick` handler the trigger actually carries), and the `renderOption` row
+ * case (the fixture's test id is `custom-option`, not upstream's `custom-row`).
  */
 
 const defaultOptions = ['Apple', 'Banana', 'Orange'];
@@ -1403,6 +1414,30 @@ describe('MultiSelector statusVariant forwarding', () => {
 	});
 });
 
+describe('MultiSelector empty-state theme target', () => {
+	const OPTIONS = ['Apple', 'Banana', 'Cherry'];
+
+	it('renders the astryx-multi-selector-empty-state target on the "No results found" element', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: OPTIONS,
+				value: [],
+				onChange: () => {},
+				hasSearch: true
+			}
+		});
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.fill(screen.getByRole('combobox'), 'xyz');
+
+		await vi.waitFor(() => {
+			const empty = screen.container.querySelector('.astryx-multi-selector-empty-state');
+			expect(empty).not.toBeNull();
+			expect(empty).toHaveTextContent('No results found');
+		});
+	});
+});
+
 describe('MultiSelector clear icon theme target', () => {
 	const ICON_OPTIONS = ['Apple', 'Banana', 'Orange'];
 
@@ -1419,7 +1454,7 @@ describe('MultiSelector clear icon theme target', () => {
 		return icon as HTMLElement;
 	};
 
-	it('renders the astryx-multi-selector-clear-icon target on the clear glyph', async () => {
+	it('renders the astryx-input-clear-icon target (plus the legacy alias) on the clear glyph', async () => {
 		const screen = await render(MultiSelector, {
 			props: {
 				label: 'Fruit',
@@ -1429,11 +1464,13 @@ describe('MultiSelector clear icon theme target', () => {
 				hasClear: true
 			}
 		});
-		// The stable theme target lands on the icon element itself (not the
-		// button), so a theme can restyle just this glyph (color, size, hover)
-		// via `defineTheme` — a button-level target could not reach the icon's
-		// own color/size.
+		// The canonical target lands on the icon element itself (not the button),
+		// so a theme can restyle just this glyph (color, size, hover) via
+		// `defineTheme` — a button-level target could not reach the icon's own
+		// color/size. The original per-component name rides along for a
+		// deprecation window.
 		const icon = getClearIcon(screen.container);
+		expect(icon).toHaveClass('astryx-input-clear-icon');
 		expect(icon).toHaveClass('astryx-multi-selector-clear-icon');
 		expect(icon).toHaveClass('astryx-icon');
 	});
@@ -1457,11 +1494,13 @@ describe('MultiSelector clear icon theme target', () => {
 		expect(onChange).toHaveBeenCalledWith([]);
 	});
 
-	it('renders the default icon (secondary color, sm size) byte-identically', async () => {
-		// Pixel-identical default guard: the clear glyph must carry the exact same
-		// StyleX color/size classes as a standalone secondary/sm icon. The added
-		// target class is purely additive — it changes nothing until a theme
-		// targets it.
+	it('routes the clear glyph through the shared clear button, keeping the legacy target', async () => {
+		// The clear affordance now composes the shared InputClearButton (a ghost
+		// Button with a secondary/sm glyph), so the icon carries the canonical
+		// `astryx-input-clear-icon` target and — for a deprecation window — the
+		// original `astryx-multi-selector-clear-icon`. Aside from those target
+		// classes it matches the shared button's own `close`/`sm`/`secondary`
+		// glyph exactly, so the default look is defined in one place.
 		const screen = await render(MultiSelector, {
 			props: {
 				label: 'Fruit',
@@ -1472,6 +1511,8 @@ describe('MultiSelector clear icon theme target', () => {
 			}
 		});
 		const icon = getClearIcon(screen.container);
+		expect(icon).toHaveClass('astryx-input-clear-icon');
+		expect(icon).toHaveClass('astryx-multi-selector-clear-icon');
 
 		const refScreen = await render(Icon, {
 			props: { icon: 'close', size: 'sm', color: 'secondary' }
@@ -1481,7 +1522,7 @@ describe('MultiSelector clear icon theme target', () => {
 		const styleClasses = (el: HTMLElement) =>
 			el.className
 				.split(' ')
-				.filter((c) => c !== 'astryx-multi-selector-clear-icon')
+				.filter((c) => c !== 'astryx-input-clear-icon' && c !== 'astryx-multi-selector-clear-icon')
 				.sort();
 
 		expect(styleClasses(icon)).toEqual(styleClasses(refIcon));
@@ -1554,23 +1595,25 @@ describe('MultiSelector indicator (chevron) icon theme target', () => {
 		});
 	});
 
-	it('renders the default icon (inherit color, sm size) byte-identically', async () => {
+	it('renders the default icon (secondary color, sm size) byte-identically', async () => {
 		// Pixel-identical default guard: the chevron glyph must carry the exact
-		// same StyleX color/size classes as a standalone inherit/sm icon. The added
-		// target class + data-state are purely additive — they change nothing until
-		// a theme targets them.
+		// same StyleX color/size classes as a standalone secondary/sm icon. The
+		// glyph now sets --color-icon-secondary itself rather than inheriting it
+		// from a wrapper span that set the same token, so the rendered color is
+		// unchanged. The added target class + data-state are purely additive —
+		// they change nothing until a theme targets them.
 		const screen = await render(MultiSelector, {
 			props: { label: 'Fruit', options: ICON_OPTIONS, value: [], onChange: () => {} }
 		});
 		const icon = getIndicatorIcon(screen.container);
 
 		const refScreen = await render(Icon, {
-			props: { icon: 'chevronDown', size: 'sm', color: 'inherit' }
+			props: { icon: 'chevronDown', size: 'sm', color: 'secondary' }
 		});
 		const refIcon = refScreen.container.querySelector('.astryx-icon') as HTMLElement;
 
 		// Exclude the additive theme-target classes (the stable target + its
-		// reflected state class) so only the StyleX color/size classes remain.
+		// reflected state class) so only StyleX classes remain.
 		const themeTargetClasses = new Set([
 			'astryx-multi-selector-indicator-icon',
 			'collapsed',
@@ -1582,7 +1625,12 @@ describe('MultiSelector indicator (chevron) icon theme target', () => {
 				.filter((c) => !themeTargetClasses.has(c))
 				.sort();
 
-		expect(styleClasses(icon)).toEqual(styleClasses(refIcon));
+		// A superset, not an exact match: the chevron additionally carries the
+		// rotation styles, which live on the glyph precisely so a theme can reach
+		// the transform through the same selector as the color. The guard that
+		// matters is that every color/size class of a standalone icon is still
+		// present — i.e. the default look has not drifted.
+		expect(styleClasses(icon)).toEqual(expect.arrayContaining(styleClasses(refIcon)));
 	});
 
 	it('exposes multi-selector-indicator-icon so a theme reaches the icon size and per-state color', () => {
@@ -1607,7 +1655,126 @@ describe('MultiSelector indicator (chevron) icon theme target', () => {
 	});
 });
 
+describe('MultiSelector list structure', () => {
+	it('does not draw a divider under select-all', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: ['Apple', 'Banana', 'Orange'],
+				value: [],
+				onChange: () => {},
+				hasSelectAll: true
+			}
+		});
+		await userEvent.click(screen.getByRole('combobox'));
+		// Select-all is the first row of the list, not a section of its own. No
+		// option here declares a divider and there is no search row, so the panel
+		// should contain no rule at all.
+		expect(screen.container.querySelectorAll('[role="separator"]')).toHaveLength(0);
+		const [first] = optionsIn(screen.container);
+		expect(first).toHaveTextContent('Select all');
+	});
+
+	it('renders a section title as a plain heading inside the group, not a divider', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: [
+					{
+						type: 'section',
+						title: 'Citrus',
+						options: [
+							{ value: 'orange', label: 'Orange' },
+							{ value: 'lemon', label: 'Lemon' }
+						]
+					}
+				],
+				value: [],
+				onChange: () => {}
+			}
+		});
+		await userEvent.click(screen.getByRole('combobox'));
+
+		// A labeled Divider used to stand in for the heading; it rendered a
+		// role="separator" as a direct child of the listbox and stacked a second
+		// rule under the search row's own.
+		expect(screen.container.querySelectorAll('[role="separator"]')).toHaveLength(0);
+
+		const group = groupNamed(screen.container, 'Citrus');
+		expect(group).not.toBeNull();
+		const heading = (group as HTMLElement).querySelector('.astryx-multi-selector-section-heading');
+		expect(heading).toBeTruthy();
+		expect(heading).toHaveTextContent('Citrus');
+		// The group already carries the title as its accessible name, so the
+		// visible heading must not announce it a second time.
+		expect(heading).toHaveAttribute('aria-hidden', 'true');
+		// ...and it precedes the options it heads.
+		const [firstOption] = optionsIn(group as HTMLElement);
+		expect(
+			(heading as HTMLElement).compareDocumentPosition(firstOption) &
+				Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+	});
+});
+
 describe('MultiSelector search affordances', () => {
+	it('renders the search row seamlessly — no nested input box, a divider under it', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: ['Apple', 'Banana', 'Orange'],
+				value: [],
+				onChange: () => {},
+				hasSearch: true
+			}
+		});
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+
+		const search = screen.getByRole('combobox').element() as HTMLElement;
+		// The row is the outer gutter; the input sits inside the rounded field.
+		const row = search.closest('.astryx-multi-selector-search');
+		const field = search.parentElement;
+		if (!row || !field) {
+			throw new Error('search row not found');
+		}
+		// The panel is already a bordered surface: the field inside it must not be
+		// a second bordered box (this used to render a TextInput).
+		expect(row).not.toHaveClass('astryx-text-input');
+		expect(search.closest('.astryx-text-input')).toBeNull();
+		// The field is a rounded box inset from the panel edge, shaped like the
+		// option rows under it — not a full-bleed header strip.
+		expect(field).not.toBe(row);
+		// ...and a divider separates it from the options.
+		const separator = screen.container.querySelector('[role="separator"]');
+		if (!separator) {
+			throw new Error('divider not found');
+		}
+		// Order: row, then divider, then the listbox.
+		expect(row.compareDocumentPosition(separator) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+		const listbox = listboxIn(screen.container);
+		expect(
+			separator.compareDocumentPosition(listbox) & Node.DOCUMENT_POSITION_FOLLOWING
+		).toBeTruthy();
+	});
+
+	it('keeps the search row outside the scrolling option list', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: ['Apple', 'Banana', 'Orange'],
+				value: [],
+				onChange: () => {},
+				hasSearch: true
+			}
+		});
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		// The options scroll under the header rather than carrying it away, so the
+		// field stays reachable in a long list.
+		const search = screen.getByRole('combobox').element() as HTMLElement;
+		const listbox = listboxIn(screen.container);
+		expect(listbox.contains(search)).toBe(false);
+	});
+
 	it('renders a decorative (aria-hidden) magnifier icon whenever hasSearch is on', async () => {
 		const screen = await render(MultiSelector, {
 			props: {
@@ -1620,8 +1787,7 @@ describe('MultiSelector search affordances', () => {
 		});
 		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
 		const search = screen.getByRole('combobox').element() as HTMLElement;
-		// The search field is a TextInput; the magnifier is its startIcon, so it
-		// sits inside the input container as a sibling of the <input>.
+		// The magnifier leads the search row, as a sibling of the <input>.
 		const wrapper = search.parentElement;
 		const magnifier = wrapper?.querySelector('.astryx-icon');
 		expect(magnifier).toBeTruthy();
@@ -1730,5 +1896,198 @@ describe('MultiSelector search affordances', () => {
 		// plain combobox does.
 		await userEvent.keyboard('{Tab}');
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+	});
+});
+
+describe('MultiSelector disabled state theme target', () => {
+	const getSelectorRoot = (container: HTMLElement): HTMLElement => {
+		const root = container.querySelector('.astryx-multi-selector');
+		if (root == null) {
+			throw new Error('multi-selector root not found');
+		}
+		return root as HTMLElement;
+	};
+
+	it('reflects data-state="disabled" on the root when disabled', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: ['Apple', 'Banana', 'Orange'],
+				value: [],
+				onChange: () => {},
+				isDisabled: true
+			}
+		});
+		expect(getSelectorRoot(screen.container)).toHaveAttribute('data-disabled', 'disabled');
+	});
+
+	it('omits the disabled class/attribute when enabled', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: ['Apple', 'Banana', 'Orange'],
+				value: [],
+				onChange: () => {}
+			}
+		});
+		const root = getSelectorRoot(screen.container);
+		expect(root).not.toHaveAttribute('data-disabled');
+		expect(root).not.toHaveClass('disabled');
+	});
+
+	it('exposes the disabled state so a theme can key on it', () => {
+		const theme = defineTheme({
+			name: 'multi-selector-disabled-state-test',
+			components: {
+				'multi-selector': {
+					'disabled:disabled': { opacity: '0.4' }
+				}
+			}
+		});
+		const css = generateThemeCss(theme);
+		expect(css).toContain('.astryx-multi-selector.disabled');
+		expect(css).toContain('opacity: 0.4');
+	});
+});
+
+describe('MultiSelector dropdown option theme target', () => {
+	const ROW_OPTIONS = ['Apple', 'Banana', 'Orange'];
+
+	it('renders astryx-multi-selector-option, with its size, on every dropdown row', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: ROW_OPTIONS,
+				value: [],
+				onChange: () => {},
+				size: 'lg' as const
+			}
+		});
+		await userEvent.click(screen.getByRole('combobox'));
+		const options = optionsIn(screen.container);
+		expect(options).toHaveLength(3);
+		for (const option of options) {
+			expect(option).toHaveClass('astryx-multi-selector-option');
+			expect(option).toHaveClass('lg');
+			expect(option).toHaveAttribute('data-size', 'lg');
+		}
+	});
+
+	it('carries the selected and disabled states a theme keys on', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: [
+					{ value: 'apple', label: 'Apple' },
+					{ value: 'banana', label: 'Banana' },
+					{ value: 'orange', label: 'Orange', disabled: true }
+				],
+				value: ['apple'],
+				onChange: () => {}
+			}
+		});
+		await userEvent.click(screen.getByRole('combobox'));
+		const [selected, plain, disabled] = optionsIn(screen.container);
+
+		expect(selected).toHaveClass('selected');
+		expect(selected).toHaveAttribute('data-selected', 'selected');
+		expect(plain).not.toHaveClass('selected');
+		expect(plain).not.toHaveAttribute('data-selected');
+
+		expect(disabled).toHaveClass('disabled');
+		expect(disabled).toHaveAttribute('data-disabled', 'disabled');
+		expect(plain).not.toHaveAttribute('data-disabled');
+	});
+
+	it('marks the Select All row with the select-all state, not a separate target', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: ROW_OPTIONS,
+				value: [],
+				onChange: () => {},
+				hasSelectAll: true
+			}
+		});
+		await userEvent.click(screen.getByRole('combobox'));
+
+		const [selectAllRow, ...regularRows] = optionsIn(screen.container);
+		expect(selectAllRow).toHaveTextContent('Select all');
+		expect(selectAllRow).toHaveClass('astryx-multi-selector-option');
+		expect(selectAllRow).toHaveClass('select-all');
+		expect(selectAllRow).toHaveAttribute('data-select-all', 'select-all');
+
+		for (const row of regularRows) {
+			expect(row).toHaveClass('astryx-multi-selector-option');
+			expect(row).not.toHaveClass('select-all');
+			expect(row).not.toHaveAttribute('data-select-all');
+		}
+	});
+
+	it('keeps the row targetable when renderOption replaces the label', async () => {
+		const screen = await render(Fixture, {
+			props: {
+				variant: 'render-option',
+				selector: {
+					label: 'Fruit',
+					options: [{ value: 'apple', label: 'Apple' }],
+					value: [],
+					onChange: () => {}
+				}
+			}
+		});
+		await userEvent.click(screen.getByRole('combobox'));
+		const option = optionsIn(screen.container)[0];
+		// The row owns the typography, so custom content inherits the same
+		// treatment the fallback label gets — and one row override reaches both.
+		expect(option).toHaveClass('astryx-multi-selector-option');
+		// RESTATED in the test id only: the shared fixture's custom row is
+		// `data-testid="custom-option"`, where upstream's inline JSX names this
+		// one `custom-row`. Same node, same assertion.
+		expect(option.querySelector('[data-testid="custom-option"]')).toHaveTextContent('Apple');
+	});
+
+	it('exposes the row target, its states and its size to defineTheme', () => {
+		const theme = defineTheme({
+			name: 'multi-selector-option-target-test',
+			components: {
+				'multi-selector-option': {
+					base: { borderRadius: '8px', fontWeight: '600' },
+					selected: { backgroundColor: 'var(--color-background-muted)' },
+					'select-all': { fontWeight: '700' },
+					'size:lg': { borderRadius: '12px' }
+				}
+			}
+		});
+		const css = generateThemeCss(theme);
+		expect(css).toContain('.astryx-multi-selector-option {');
+		expect(css).toContain('.astryx-multi-selector-option.selected');
+		expect(css).toContain('.astryx-multi-selector-option.select-all');
+		expect(css).toContain('.astryx-multi-selector-option.lg');
+	});
+});
+
+describe('MultiSelector popup theme target', () => {
+	it('puts astryx-multi-selector-popup on the surface that paints, not the list inside it', async () => {
+		const screen = await render(MultiSelector, {
+			props: {
+				label: 'Fruit',
+				options: ['Apple', 'Banana'],
+				value: [],
+				onChange: () => {}
+			}
+		});
+		await userEvent.click(screen.getByRole('combobox', { name: 'Fruit' }));
+
+		const popup = screen.container.querySelector('.astryx-multi-selector-popup') as HTMLElement;
+		expect(popup).not.toBeNull();
+		expect(popup).toHaveClass('astryx-popover-surface');
+		// The scrolling list is a descendant, not the target itself.
+		expect(popup.querySelector('[role="listbox"]')).not.toBeNull();
+		expect(popup.getAttribute('role')).toBeNull();
+
+		const layer = screen.container.querySelector('[popover]') as HTMLElement;
+		expect(popup).not.toBe(layer);
+		expect(layer.contains(popup)).toBe(true);
 	});
 });

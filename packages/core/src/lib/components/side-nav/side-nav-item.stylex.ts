@@ -80,6 +80,11 @@ const styles = stylex.create({
 		justifyContent: 'center',
 		width: spacingVars['--spacing-6'],
 		height: spacingVars['--spacing-6'],
+		// Icon's `lg` would also set font-size: 1.5rem, and the registry chevron
+		// is a 1em SVG — that would blow the glyph up from the 14px it inherits
+		// from the row to the full 24px box. The 24px box is the touch/alignment
+		// target, not the glyph size, so keep the glyph on the inherited size.
+		fontSize: 'inherit',
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard'],
@@ -214,10 +219,13 @@ export function sideNavItemChildrenInnerAttrs(): SvelteStyleAttrs {
 	return sx(styles.childrenInner);
 }
 
-/** The disclosure chevron, rotated while expanded. */
-export function sideNavItemChevronAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(styles.expandChevron, isExpanded && styles.expandChevronExpanded);
-}
+/**
+ * The disclosure chevron, rotated while expanded. Passed to the `Icon`'s
+ * `xstyle` the way upstream passes the pair (#4838), so the 24px box and the
+ * rotation land on the element a theme targets rather than a wrapper `<span>`.
+ */
+export const sideNavItemChevronStyle = styles.expandChevron;
+export const sideNavItemChevronExpandedStyle = styles.expandChevronExpanded;
 
 /** The chevron as its own button, in the split-action row. */
 export function sideNavItemExpandToggleAttrs(): SvelteStyleAttrs {

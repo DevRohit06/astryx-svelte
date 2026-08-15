@@ -387,6 +387,14 @@
 	<TableRow {...rowProps.htmlProps} xstyle={rowProps.xstyle as StyleArg[]}>
 		{@render rowProps.children()}
 	</TableRow>
+	<!--
+		`afterRow`: plugins (e.g. row expansion) can append a full-width detail
+		panel `<tr>` after the row. Upstream returns `<>{row}{afterRow}</>` from
+		`BaseTable.tsx:246-255`; this renders it as a **sibling** of `</TableRow>`
+		for the same reason — a `<tr>` inside a `<tr>` is invalid markup, and the
+		HTML parser reparents it out of the row rather than reporting it.
+	-->
+	{#if rowProps.afterRow}{@render rowProps.afterRow()}{/if}
 {/snippet}
 
 {#snippet tableElement()}

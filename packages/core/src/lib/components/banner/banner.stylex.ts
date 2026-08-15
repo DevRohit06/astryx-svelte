@@ -19,9 +19,9 @@ import {
  *
  * The root, header and end area survive into upstream's `dist/` as objects —
  * each reaches `stylex.props` beside a conditional, an `xstyle` spread or a
- * dynamic `edgeCompSlot.inset`. The text slots, the icon wrapper, the chevron
- * and the content area are single call sites and were folded into literal class
- * strings.
+ * dynamic `edgeCompSlot.inset`. The chevron pair joins them, since 0.4.1 hands
+ * it to the `Icon`'s `xstyle` (#4838). The text slots, the icon wrapper and the
+ * content area are single call sites and were folded into literal class strings.
  */
 
 /** Status controlling the banner's icon and colour. */
@@ -133,8 +133,9 @@ const styles = stylex.create({
 		borderEndStartRadius: radiusVars['--radius-container'],
 		borderEndEndRadius: radiusVars['--radius-container']
 	},
+	// Applied to the chevron <Icon> itself (via `xstyle`) rather than a wrapper,
+	// so the element that rotates is the element a theme targets.
 	chevron: {
-		display: 'inline-flex',
 		transitionProperty: 'transform',
 		transitionDuration: {
 			default: durationVars['--duration-fast'],
@@ -229,7 +230,11 @@ export function bannerContentAreaAttrs(isCard: boolean): SvelteStyleAttrs {
 	return sx(styles.contentArea, isCard && styles.contentAreaCard);
 }
 
-/** The expand/collapse chevron, rotated when open. */
-export function bannerChevronAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(styles.chevron, isExpanded && styles.chevronExpanded);
-}
+/**
+ * Passed to the chevron `Icon`'s `xstyle`, the way upstream passes
+ * `styles.chevron` and `styles.chevronExpanded` (#4838). The transition and the
+ * rotation it animates now ride the glyph itself rather than a wrapper `<span>`,
+ * so the element a theme targets is the element that actually moves.
+ */
+export const bannerChevronStyle = styles.chevron;
+export const bannerChevronExpandedStyle = styles.chevronExpanded;

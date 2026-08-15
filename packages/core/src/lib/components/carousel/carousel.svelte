@@ -119,7 +119,7 @@
 	import { useLayer } from '../layer/use-layer.svelte.js';
 	import { isRtlElement } from '../../hooks/is-rtl-element.js';
 	import { useScrollOverflow } from '../../hooks/use-scroll-overflow.svelte.js';
-	import { rtlMirrorAttrs } from '../../utils/rtl.stylex.js';
+	import { rtlStyles } from '../../utils/rtl.stylex.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
@@ -352,25 +352,28 @@
 	const itemAttrs = carouselItemAttrs();
 	const startPill = $derived(carouselButtonPillAttrs('start', !canScrollStart));
 	const endPill = $derived(carouselButtonPillAttrs('end', !canScrollEnd));
-	const mirror = rtlMirrorAttrs();
 </script>
 
 <!--
-	The chevrons are wrapped in `rtlStyles.mirror`, so they point toward the
-	content they scroll to in both directions. The wrapper is a separate span
-	rather than an `xstyle` on the `Icon`: the mirror is a `transform`, and the
-	icon's own styles may carry one too.
+	The chevrons carry `rtlStyles.mirror`, so they point toward the content they
+	scroll to in both directions.
+
+	The mirror rides the `Icon`'s own `xstyle`, not a wrapper span. This port used
+	to wrap, on the reading that the mirror is a `transform` and the icon's own
+	styles might carry one too — but `Icon` declares no `transform` at any size or
+	colour, so there was nothing to collide with, and the extra element was a
+	divergence in the DOM upstream does not have. Upstream (#4775) passes
+	`xstyle={rtlStyles.mirror}` here for exactly that reason. Where a rotation IS
+	present the rule still holds and `rtl.stylex.ts`'s header still states it: the
+	mirror must compose with the rotation on one element or sit outside it, never
+	fight it from a second `transform`.
 -->
 {#snippet chevronLeft()}
-	<span class={mirror.class} style={mirror.style}>
-		<Icon icon="chevronLeft" size="xsm" />
-	</span>
+	<Icon icon="chevronLeft" size="xsm" xstyle={rtlStyles.mirror} />
 {/snippet}
 
 {#snippet chevronRight()}
-	<span class={mirror.class} style={mirror.style}>
-		<Icon icon="chevronRight" size="xsm" />
-	</span>
+	<Icon icon="chevronRight" size="xsm" xstyle={rtlStyles.mirror} />
 {/snippet}
 
 <div

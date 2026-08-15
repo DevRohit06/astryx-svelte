@@ -45,7 +45,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useMenuHover } from '../../internal/use-menu-hover.svelte.js';
-	import { useIcon } from '../icon/use-icon.svelte.js';
+	import Icon from '../icon/icon.svelte';
 	import { useLinkComponent } from '../link/link-context.svelte.js';
 	import LinkElement from '../link/link-element.svelte';
 	import Link from '../link/link.svelte';
@@ -55,8 +55,9 @@
 	import Tooltip from '../tooltip/tooltip.svelte';
 	import { useSideNavCollapse } from './side-nav-collapse-context.svelte.js';
 	import {
-		sideNavHeadingChevronAttrs,
 		sideNavHeadingChevronButtonAttrs,
+		sideNavHeadingChevronGlyphStyle,
+		sideNavHeadingChevronStyle,
 		sideNavHeadingCollapsedLinkAttrs,
 		sideNavHeadingCollapsedRootAttrs,
 		sideNavHeadingCollapsedTriggerAttrs,
@@ -65,7 +66,7 @@
 		sideNavHeadingHeadingLinkAttrs,
 		sideNavHeadingIconAttrs,
 		sideNavHeadingPopover,
-		sideNavHeadingPopoverChevronAttrs,
+		sideNavHeadingPopoverChevronStyle,
 		sideNavHeadingPopoverContentAttrs,
 		sideNavHeadingPopoverHeadingAttrs,
 		sideNavHeadingPopoverOverlap,
@@ -123,8 +124,6 @@
 	const linkResolved = $derived(resolveLink(as));
 	const sideNavCollapse = useSideNavCollapse();
 	const popoverId = $props.id();
-
-	const chevronIcon = useIcon(() => 'chevronDown');
 
 	// The element the collapsed tooltip anchors to. The link branch has no DOM
 	// node of its own here (the resolved link component owns it), so it is
@@ -186,12 +185,10 @@
 	const headingLinkAttrs = sideNavHeadingHeadingLinkAttrs();
 	const subheadingAttrs = sideNavHeadingSubheadingAttrs();
 	const rowAttrs = sideNavHeadingRowAttrs();
-	const chevronAttrs = sideNavHeadingChevronAttrs();
 	const chevronButtonAttrs = sideNavHeadingChevronButtonAttrs();
 	const endContentAttrs = sideNavHeadingEndContentAttrs();
 	const popoverContentAttrs = sideNavHeadingPopoverContentAttrs();
 	const popoverHeadingAttrs = sideNavHeadingPopoverHeadingAttrs();
-	const popoverChevronAttrs = sideNavHeadingPopoverChevronAttrs();
 
 	function openMenuFromChevron(event: MouseEvent): void {
 		event.stopPropagation();
@@ -272,9 +269,7 @@
 {/snippet}
 
 {#snippet chevronElement()}
-	<span class={chevronAttrs.class} style={chevronAttrs.style}
-		>{@render chevronIcon.current?.()}</span
-	>
+	<Icon icon="chevronDown" size="sm" color="secondary" xstyle={sideNavHeadingChevronStyle} />
 {/snippet}
 
 {#snippet headerEndContentElement()}
@@ -294,14 +289,12 @@
 		class={chevronButtonAttrs.class}
 		style={chevronButtonAttrs.style}
 	>
-		{@render chevronIcon.current?.()}
+		<Icon icon="chevronDown" size="sm" color="inherit" xstyle={sideNavHeadingChevronGlyphStyle} />
 	</button>
 {/snippet}
 
 {#snippet popoverFlippedChevron()}
-	<span class={popoverChevronAttrs.class} style={popoverChevronAttrs.style}>
-		{@render chevronIcon.current?.()}
-	</span>
+	<Icon icon="chevronDown" size="sm" color="secondary" xstyle={sideNavHeadingPopoverChevronStyle} />
 {/snippet}
 
 {#snippet popoverHeadingContent()}

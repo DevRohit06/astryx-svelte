@@ -140,7 +140,7 @@
 		switchFieldAttrs,
 		switchInputAttrs,
 		switchLabelWrapperAttrs,
-		switchStatusGapAttrs,
+		switchStatusGapStyle,
 		switchThumbAttrs,
 		switchTrackAttrs,
 		switchWrapperAttrs
@@ -280,12 +280,29 @@
 	const thumbTheme = $derived(themeProps('switch-thumb', { checked: isOn ? 'checked' : null }));
 	const thumbAttrs = $derived(switchThumbAttrs(size, isOn));
 	const labelWrapperAttrs = $derived(switchLabelWrapperAttrs(size));
-	const statusGapAttrs = switchStatusGapAttrs();
 </script>
 
 <!-- The switch control: transparent native checkbox over the track and thumb. -->
 {#snippet switchControl()}
 	<div class={wrapperAttrs.class} style={wrapperAttrs.style}>
+		<!--
+			`form=""` detaches the control from its owning form while it is
+			disabled-with-a-reason.
+
+			`disabledMessage` deliberately drops the native `disabled` attribute so
+			the reason stays focus-discoverable — but `required` is still on the
+			element, and an un-disabled required checkbox the user cannot toggle
+			fails constraint validation forever: the form can never submit, and the
+			browser's "please check this box" bubble points at a control nothing can
+			change.
+
+			`form` names the *id* of the form to associate with, and no element can
+			have the empty id — so the empty string associates the input with no form
+			at all. It leaves constraint validation and form data entirely while
+			staying visible, focusable and labelled. Dropping `required` instead
+			would let a genuinely required field submit empty once it was re-enabled;
+			setting `disabled` would take back the focusability the message needs.
+		-->
 		<input
 			{id}
 			type="checkbox"
@@ -295,6 +312,7 @@
 			checked={isOn}
 			disabled={isDisabled && !showsDisabledMessage}
 			aria-disabled={showsDisabledMessage ? 'true' : undefined}
+			form={showsDisabledMessage ? '' : undefined}
 			required={isRequired}
 			onchange={handleChange}
 			{onfocus}
@@ -356,14 +374,17 @@
 		{/if}
 	</div>
 	{#if status?.message}
-		<div class={statusGapAttrs.class} style={statusGapAttrs.style}>
-			<FieldStatus
-				type={status.type}
-				message={status.message}
-				id={statusMessageID}
-				variant="detached"
-			/>
-		</div>
+		<!--
+			The gap rides `FieldStatus`'s `xstyle` rather than a spacer `<div>` — one
+			element fewer, and the margin lands on the box it spaces.
+		-->
+		<FieldStatus
+			type={status.type}
+			message={status.message}
+			id={statusMessageID}
+			variant="detached"
+			xstyle={switchStatusGapStyle}
+		/>
 	{/if}
 	{#if showsDisabledMessage && disabledMessage}
 		<TooltipLayer tooltip={disabledMessageTooltip}>{disabledMessage}</TooltipLayer>

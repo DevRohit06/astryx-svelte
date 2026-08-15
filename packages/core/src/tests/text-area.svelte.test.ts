@@ -6,17 +6,36 @@ import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import TextArea from '$lib/components/text-area/text-area.svelte';
 import IconSlotProbe from './fixtures/icon-slot-probe.svelte';
 import TextAreaHarness from './fixtures/text-area-harness.svelte';
+import TextAreaForm from './fixtures/text-area-form.svelte';
 import BindHarness from './fixtures/text-area-bind.svelte';
 import { TIMER_BUDGET } from './timer-budget.js';
 
 /**
- * Astryx's `TextArea/TextArea.test.tsx`, ported case for case — **64** upstream
- * cases at v0.3.0, 64 here, plus one beyond upstream (`supports two-way
- * bind:value`) that pins the `$bindable` decision. **65 `it` in the file.**
+ * Astryx's `TextArea/TextArea.test.tsx`, ported case for case — **78** upstream
+ * cases at v0.4.1, 78 here, plus one beyond upstream (`supports two-way
+ * bind:value`) that pins the `$bindable` decision. **79 `it` in the file.**
  *
- * (The previous header said "62 upstream cases, 62 here". Upstream has 64: the
- * top-level `TextArea statusVariant forwarding` block was unported and unnamed.
- * Both of its cases are ported here and both passed on the first run.)
+ * (An earlier header said "62 upstream cases, 62 here". Upstream had 64 at
+ * v0.3.0: the top-level `TextArea statusVariant forwarding` block was unported
+ * and unnamed. Both of its cases are ported here and both passed on the first
+ * run.)
+ *
+ * ## The 0.4.1 batch (64 → 78)
+ *
+ * Fourteen cases came with `isReadOnly`, the form-participation fix and the
+ * trailing-reserve fix: the `form participation` describe (3), the `isReadOnly`
+ * describe (5), two more in `TextArea statusVariant forwarding`, and the two
+ * theme-state describes at the bottom of the file (`data-disabled` /
+ * `data-readonly` on the root target, 2 each). Two translations, noted at the
+ * cases:
+ *
+ * - the five that read `FormData` go through `text-area-form.svelte`, because a
+ *   Svelte test cannot pass a `<form>` as markup children of the component under
+ *   test the way upstream's JSX does. Same fixture shape as
+ *   `checkbox-input-form.svelte` and `number-input-form.svelte`.
+ * - `does not render an on-field icon for statusVariant="detached", …` renders
+ *   twice in one case, as upstream does, and `unmount()`s the first — Svelte's
+ *   is async, so it is awaited. Its class-set comparison transcribes exactly.
  *
  * 0.3.0 reworked the layout (the textarea spans the container; icons, the
  * status/spinner slot and the counter became absolutely-positioned overlays)
@@ -654,6 +673,119 @@ describe('TextArea', () => {
 		});
 	});
 
+	// Upstream renders `<form><TextArea …/></form>` as JSX children of `render`.
+	// A Svelte test cannot pass markup children to the component under test, so
+	// the form lives in `text-area-form.svelte` and the cases reach it through
+	// `container.querySelector('form')` — the assertions are upstream's verbatim.
+	describe('form participation', () => {
+		it('submits the value under htmlName', async () => {
+			const screen = await render(TextAreaForm, {
+				props: { textArea: { label: 'Notes', htmlName: 'notes', value: 'hello', onChange: noop } }
+			});
+			const data = new FormData(screen.container.querySelector('form')!);
+			expect(data.get('notes')).toBe('hello');
+		});
+
+		it('is excluded from form data when disabled', async () => {
+			const screen = await render(TextAreaForm, {
+				props: {
+					textArea: {
+						label: 'Notes',
+						htmlName: 'notes',
+						value: 'hello',
+						onChange: noop,
+						isDisabled: true
+					}
+				}
+			});
+			expect([...new FormData(screen.container.querySelector('form')!).keys()]).toEqual([]);
+		});
+
+		// Regression: a disabledMessage swaps the native `disabled` attribute for
+		// aria-disabled + readOnly so the reason stays focus-discoverable, but
+		// read-only fields still submit — the name has to be withheld too.
+		it('is excluded from form data when disabled, even with a disabledMessage', async () => {
+			const screen = await render(TextAreaForm, {
+				props: {
+					textArea: {
+						label: 'Notes',
+						htmlName: 'notes',
+						value: 'hello',
+						onChange: noop,
+						isDisabled: true,
+						disabledMessage: 'Notes are locked while the review is open'
+					}
+				}
+			});
+			expect([...new FormData(screen.container.querySelector('form')!).keys()]).toEqual([]);
+		});
+	});
+
+	describe('isReadOnly', () => {
+		it('marks the textarea read-only', async () => {
+			const screen = await render(TextArea, {
+				props: { label: 'Notes', value: 'hello', onChange: noop, isReadOnly: true }
+			});
+			await expect.element(screen.getByRole('textbox')).toHaveAttribute('readonly');
+		});
+
+		it('still submits its value with the form', async () => {
+			const screen = await render(TextAreaForm, {
+				props: {
+					textArea: {
+						label: 'Notes',
+						htmlName: 'notes',
+						value: 'hello',
+						onChange: noop,
+						isReadOnly: true
+					}
+				}
+			});
+			expect(new FormData(screen.container.querySelector('form')!).get('notes')).toBe('hello');
+		});
+
+		it('does not call onChange when the user types', async () => {
+			const handleChange = vi.fn();
+			const screen = await render(TextArea, {
+				props: { label: 'Notes', value: 'hello', onChange: handleChange, isReadOnly: true }
+			});
+			// Ported as upstream writes it — unlike the `isDisabled` cases, nothing
+			// here trips Playwright's actionability check: a read-only textarea is
+			// neither `disabled` nor `aria-disabled`, so `type` focuses it and sends
+			// real keys. Chromium's editor refuses the insert, and the `oninput`
+			// guard refuses the callback, so neither layer can mask the other.
+			await userEvent.type(screen.getByRole('textbox'), 'xyz');
+			expect(handleChange).not.toHaveBeenCalled();
+		});
+
+		it('stays focusable and is not disabled', async () => {
+			const screen = await render(TextArea, {
+				props: { label: 'Notes', value: 'hello', onChange: noop, isReadOnly: true }
+			});
+			const textarea = screen.getByRole('textbox');
+			await expect.element(textarea).not.toBeDisabled();
+			await userEvent.tab();
+			await expect.element(textarea).toHaveFocus();
+		});
+
+		it('lets isDisabled win when both are set', async () => {
+			const screen = await render(TextAreaForm, {
+				props: {
+					textArea: {
+						label: 'Notes',
+						htmlName: 'notes',
+						value: 'hello',
+						onChange: noop,
+						isReadOnly: true,
+						isDisabled: true
+					}
+				}
+			});
+			await expect.element(screen.getByRole('textbox')).toBeDisabled();
+			expect([...new FormData(screen.container.querySelector('form')!).keys()]).toEqual([]);
+		});
+	});
+
 	describe('click-to-focus', () => {
 		it('focuses textarea when clicking the start icon', async () => {
 			const screen = await render(IconSlotProbe, {
@@ -871,5 +1003,109 @@ describe('TextArea statusVariant forwarding', () => {
 			'data-variant',
 			'detached'
 		);
+	});
+
+	it('reserves trailing space for the on-field icon with the default (attached) status', async () => {
+		// Attached renders the on-field status icon, so the textarea must inset its
+		// trailing edge to clear it.
+		const screen = await render(TextArea, {
+			props: {
+				label: 'Bio',
+				value: '',
+				onChange: noop,
+				status: { type: 'error', message: 'Required' }
+			}
+		});
+		// The on-field status glyph renders (in the end slot). Scoped to the render
+		// container rather than upstream's `document`, for the reason the header
+		// records: RTL's `document` is a freshly-cleaned one, which is what the
+		// container amounts to here.
+		expect(screen.container.querySelector('.astryx-input-status-icon')).not.toBeNull();
+	});
+
+	it('does not render an on-field icon for statusVariant="detached", and does not reserve trailing space for it', async () => {
+		// The detached variant suppresses the on-field icon (its glyph lives in the
+		// message box below), so the textarea must NOT inset its trailing edge —
+		// otherwise the text is pushed in for an icon that never appears.
+		const attached = await render(TextArea, {
+			props: {
+				label: 'Bio',
+				value: '',
+				onChange: noop,
+				status: { type: 'error', message: 'Required' },
+				statusVariant: 'attached'
+			}
+		});
+		const attachedTextarea = textareaIn(attached.container);
+		const attachedClasses = new Set(attachedTextarea.className.split(/\s+/));
+		// `unmount()` is async in vitest-browser-svelte v3 where upstream's is
+		// synchronous; the only change to upstream's case.
+		await attached.unmount();
+
+		const detached = await render(TextArea, {
+			props: {
+				label: 'Bio',
+				value: '',
+				onChange: noop,
+				status: { type: 'error', message: 'Required' },
+				statusVariant: 'detached'
+			}
+		});
+		// No on-field icon is rendered for detached. (The detached message box
+		// renders its own leading glyph, but that carries
+		// `astryx-field-status-icon` — a different target — so this selector sees
+		// only the on-field one.)
+		expect(detached.container.querySelector('.astryx-input-status-icon')).toBeNull();
+
+		const detachedTextarea = textareaIn(detached.container);
+		const detachedClasses = new Set(detachedTextarea.className.split(/\s+/));
+
+		// The attached textarea carries exactly one extra StyleX class over the
+		// detached one: the trailing-reserve style. Detached must not carry it, so
+		// its class set is a strict subset of attached's.
+		for (const cls of detachedClasses) {
+			expect(attachedClasses.has(cls)).toBe(true);
+		}
+		expect(detachedClasses.size).toBeLessThan(attachedClasses.size);
+	});
+});
+
+describe('TextArea disabled theme state', () => {
+	// Reflecting isDisabled on the root theming target lets a theme gate its own
+	// hover/border treatment on disabled (data-disabled + a .disabled variant),
+	// mirroring how status is reflected — without structural :has() CSS.
+	it('reflects disabled on the root target so themes can gate paint on it', async () => {
+		const screen = await render(TextArea, {
+			props: { label: 'Description', value: '', onChange: noop, isDisabled: true }
+		});
+		const root = screen.container.querySelector('.astryx-textarea');
+		expect(root).toHaveAttribute('data-disabled', 'disabled');
+		expect(root).toHaveClass('disabled');
+	});
+
+	it('omits data-disabled when enabled, like status does', async () => {
+		const screen = await render(TextArea, {
+			props: { label: 'Description', value: '', onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-textarea');
+		expect(root).not.toHaveAttribute('data-disabled');
+	});
+});
+
+describe('TextArea readonly theme state', () => {
+	it('reflects readonly on the root target so themes can gate paint on it', async () => {
+		const screen = await render(TextArea, {
+			props: { label: 'Notes', value: '', onChange: noop, isReadOnly: true }
+		});
+		const root = screen.container.querySelector('.astryx-textarea');
+		expect(root).toHaveAttribute('data-readonly', 'readonly');
+	});
+
+	it('omits data-readonly when editable', async () => {
+		const screen = await render(TextArea, {
+			props: { label: 'Notes', value: '', onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-textarea');
+		expect(root).not.toHaveAttribute('data-readonly');
 	});
 });

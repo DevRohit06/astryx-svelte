@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import DropdownMenu from '$lib/components/dropdown-menu/dropdown-menu.svelte';
 import MoreMenu from '$lib/components/more-menu/more-menu.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Ported from Astryx's `MoreMenu/MoreMenu.test.tsx` — 16 of its 17 cases.
+ * Ported from Astryx's `MoreMenu/MoreMenu.test.tsx` — 21 of its 22 cases
+ * (v0.4.1). 16 → 21 is 0.4.x's five additions: the two `#4477` open-modality
+ * cases and the three-case `placement and alignment` block.
  *
  * DROPPED: **`supports forwardRef`**. Upstream threads a `ref` into the trigger
  * `button`'s props. `MoreMenuProps` is a closed `Pick<BaseProps, 'xstyle' |
@@ -43,6 +46,27 @@ function menuItem(container: HTMLElement, name: string): HTMLElement {
 	);
 	if (!el) throw new Error(`no menuitem named "${name}"`);
 	return el;
+}
+
+/**
+ * Open the menu the way a *mouse* does. `HTMLElement.prototype.click()` reports
+ * `detail === 0`, which `DropdownMenu` treats as an AT activation and therefore
+ * a keyboard open (#4477); a real pointer click reports `detail >= 1`. See
+ * `dropdown-menu.svelte.test.ts`, which documents the same helper.
+ */
+function pointerOpen(trigger: HTMLElement): void {
+	trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
+}
+
+/** `position-area` keywords are order-insensitive; the engine canonicalises. */
+function areaTokens(value: string): string[] {
+	return value.trim().split(/\s+/).filter(Boolean).sort();
+}
+
+function positionAreaOf(container: HTMLElement): string[] {
+	const popover = menuIn(container).closest('[popover]');
+	if (!(popover instanceof HTMLElement)) throw new Error('expected a [popover] ancestor');
+	return areaTokens(popover.style.getPropertyValue('position-area'));
 }
 
 afterEach(() => {
@@ -188,5 +212,60 @@ describe('MoreMenu', () => {
 	it('renders astryx-more-menu class on dropdown panel for theme targeting', async () => {
 		const screen = await render(MoreMenu, { props: { items: defaultItems } });
 		expect(menuIn(screen.container).className).toContain('astryx-more-menu');
+	});
+
+	it('pointer open focuses the menu container, not the first item (#4477)', async () => {
+		const screen = await render(MoreMenu, { props: { items: defaultItems } });
+
+		pointerOpen(screen.getByRole('button', { name: 'More options' }).element() as HTMLElement);
+
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+		expect(menuItem(screen.container, 'Edit')).not.toHaveFocus();
+	});
+
+	it('first ArrowDown after a pointer open moves focus to the first item (#4477)', async () => {
+		const screen = await render(MoreMenu, { props: { items: defaultItems } });
+
+		pointerOpen(screen.getByRole('button', { name: 'More options' }).element() as HTMLElement);
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+		expect(menuItem(screen.container, 'Edit')).toHaveFocus();
+	});
+
+	describe('placement and alignment', () => {
+		it('resolves the same default position as DropdownMenu', async () => {
+			// RESTATED: upstream renders both components into one tree and compares
+			// their `position-area` strings. `render()` here mounts one component, so
+			// the two are rendered separately and compared across the pair — the same
+			// claim (MoreMenu's default resolves to DropdownMenu's), and the literal
+			// upstream asserts is kept as the second expectation.
+			const moreScreen = await render(MoreMenu, { props: { items: defaultItems } });
+			const moreArea = positionAreaOf(moreScreen.container);
+			moreScreen.unmount();
+
+			const dropdownScreen = await render(DropdownMenu, {
+				props: { button: { label: 'Actions' }, items: defaultItems }
+			});
+
+			expect(moreArea).toEqual(positionAreaOf(dropdownScreen.container));
+			expect(moreArea).toEqual(areaTokens('self-block-end span-self-inline-end'));
+		});
+
+		it('forwards alignment to the menu layer', async () => {
+			const screen = await render(MoreMenu, { props: { items: defaultItems, alignment: 'end' } });
+			expect(positionAreaOf(screen.container)).toEqual(
+				areaTokens('self-block-end span-self-inline-start')
+			);
+		});
+
+		it('forwards placement to the menu layer', async () => {
+			const screen = await render(MoreMenu, { props: { items: defaultItems, placement: 'above' } });
+			expect(positionAreaOf(screen.container)).toEqual(
+				areaTokens('self-block-start span-self-inline-end')
+			);
+		});
 	});
 });

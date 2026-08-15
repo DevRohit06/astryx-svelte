@@ -8,13 +8,20 @@ import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import type { SearchSource, SearchableItem } from '$lib/components/typeahead/types.js';
 
 /**
- * Astryx's `Tokenizer/Tokenizer.test.tsx`, ported case for case — 59 upstream
- * cases across its nine describe blocks (the top-level `Tokenizer`,
+ * Astryx's `Tokenizer/Tokenizer.test.tsx`, ported case for case — 61 upstream
+ * cases at v0.4.1 across its ten describe blocks (the top-level `Tokenizer`,
  * `tokenOverflowBehavior`, `hasCreate`, `popover after selection`, `paste
  * behavior`, `startIcon`, `disabledMessage`, `announcements` and `form
  * participation`, plus the separate top-level `Tokenizer statusVariant
- * forwarding`), 59 here, none dropped. There is no `displayName` case in the
- * file.
+ * forwarding` and `Tokenizer disabled theme state`), 61 here, none dropped.
+ * There is no `displayName` case in the file.
+ *
+ * v0.3.0 → v0.4.1 added the two `Tokenizer disabled theme state` cases (the
+ * root now reflects `disabled` through `themeProps`); both are ported verbatim.
+ * They query `.astryx-tokenizer` with `querySelector`, as upstream does — this
+ * port spreads the one derived `themeProps` object onto BOTH render branches
+ * (the inline wrapper and the layer placeholder), so the first match carries the
+ * state whichever branch is live.
  *
  * Two cases change shape rather than being dropped, because the seam they test
  * is a different one here:
@@ -1162,5 +1169,35 @@ describe('Tokenizer statusVariant forwarding', () => {
 			'data-variant',
 			'detached'
 		);
+	});
+});
+
+describe('Tokenizer disabled theme state', () => {
+	it('reflects disabled on the root target so themes can gate paint on it', async () => {
+		const screen = await render(Tokenizer, {
+			props: {
+				label: 'Members',
+				searchSource: userSource,
+				value: [],
+				onChange: () => {},
+				isDisabled: true
+			}
+		});
+		const root = screen.container.querySelector('.astryx-tokenizer');
+		expect(root).toHaveAttribute('data-disabled', 'disabled');
+		expect(root).toHaveClass('disabled');
+	});
+
+	it('omits data-disabled when enabled, like status does', async () => {
+		const screen = await render(Tokenizer, {
+			props: {
+				label: 'Members',
+				searchSource: userSource,
+				value: [],
+				onChange: () => {}
+			}
+		});
+		const root = screen.container.querySelector('.astryx-tokenizer');
+		expect(root).not.toHaveAttribute('data-disabled');
 	});
 });

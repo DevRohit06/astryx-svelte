@@ -102,7 +102,8 @@
 					// form takes a single leading icon, so checked state replaces it.
 					icon: action.checked ? checkIcon : action.icon,
 					isDisabled: action.disabled,
-					onClick: action.onSelect
+					onClick: action.onSelect,
+					variant: action.variant
 				});
 			}
 		});

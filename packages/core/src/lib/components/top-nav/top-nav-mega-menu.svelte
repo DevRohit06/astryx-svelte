@@ -37,13 +37,13 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import Grid from '../grid/grid.svelte';
-	import { useIcon } from '../icon/use-icon.svelte.js';
+	import Icon from '../icon/icon.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import { useTopNavSlot } from './top-nav-context.svelte.js';
 	import {
-		megaMenuChevronAttrs,
-		megaMenuDrawerChevronAttrs,
+		megaMenuChevronStyle,
+		megaMenuDrawerChevronStyle,
 		megaMenuDrawerFeaturedAttrs,
 		megaMenuDrawerHeaderAttrs,
 		megaMenuDrawerItemsAttrs,
@@ -55,7 +55,7 @@
 		megaMenuPanelContentAttrs,
 		megaMenuPanelViewportFit,
 		megaMenuTriggerAttrs,
-		megaMenuWrapperAttrs
+		megaMenuWrapperStyle
 	} from './top-nav-mega-menu.stylex.js';
 	import { useTopNavRenderMode } from './top-nav-render-context.svelte.js';
 
@@ -72,6 +72,15 @@
 	 * Upstream declares its two render shapes as two sibling components in one
 	 * file; Svelte has no in-file component declaration, so both live in this
 	 * template's branches — the same arrangement `Lightbox` and `TreeList` take.
+	 *
+	 * The desktop trigger opens on hover *and* click. Hover opens are transient;
+	 * click and keyboard opens are pinned (`sticky`). A click landing within
+	 * `CLICK_GUARD_MS` of a hover open **confirms** that open rather than toggling
+	 * it shut — without the guard, moving the pointer onto a trigger and then
+	 * clicking it dismissed the panel the hover had just produced. The panel stays
+	 * an `auto` popover for native dismissal and sibling exclusivity, and the
+	 * trigger's `popovertarget` registers it as the native invoker so this guard
+	 * runs before any light dismiss.
 	 *
 	 * Two upstream shapes replicated rather than corrected, both recorded in
 	 * TODO.md → Known debts. (A third — the trigger writing `aria-haspopup`/
@@ -99,7 +108,6 @@
 	const popoverId = $props.id();
 	const renderMode = useTopNavRenderMode();
 
-	const chevronIcon = useIcon(() => 'chevronDown');
 	const slot = useTopNavSlot();
 
 	const isDrawer = $derived(renderMode() === 'drawer');
@@ -109,26 +117,54 @@
 	// Upstream's `mega-menu-${label.toLowerCase().replace(/\s+/g, '-')}`.
 	const drawerMenuId = $derived(`mega-menu-${label.toLowerCase().replace(/\s+/g, '-')}`);
 
+	/**
+	 * How long after a hover-open a click still counts as *confirming* that open
+	 * rather than toggling it shut. Upstream's `CLICK_GUARD_MS`.
+	 */
+	const CLICK_GUARD_MS = 500;
+
 	let triggerButton = $state<HTMLButtonElement>();
-	// Plain `let`s: upstream's three refs, none of which drive a render.
+	// Upstream reads the panel through `popover.contentRef.current`. Our
+	// `usePopover` exposes `attachContent` as an Attachment, with no ref to read,
+	// so the panel element is bound here instead. `<PopoverLayer>` renders the
+	// hidden close button *after* `children`, so the first focusable descendant is
+	// the same element from either box.
+	let panelElement = $state<HTMLDivElement>();
+	// Plain `let`s: upstream's refs, none of which drive a render.
 	let showTimeout: ReturnType<typeof setTimeout> | null = null;
 	let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-	let clickLocked = false;
+	// When the current open came from hover, and whether it has been pinned.
+	// Upstream's `hoverOpenedAtRef` / `stickyRef`, which replaced the single
+	// `clickLocked` boolean: a hover open is transient, a click or keyboard open
+	// is pinned, and a click that lands inside the guard window promotes the
+	// first into the second instead of dismissing it.
+	let hoverOpenedAt = 0;
+	let sticky = false;
 
 	const popover = usePopover(() => ({
 		id: popoverId,
 		// role: 'none' — the panel exposes its own role="group" labelled by
-		// `label`. Focus stays on the trigger while the panel is open, so a
-		// role="dialog" aria-modal="true" wrapper (which is what `dialogLabel` used
-		// to ask for here) would announce an unnamed modal dialog around a grid of
-		// links.
+		// `label`. Pointer/hover opens keep focus on the trigger; keyboard and
+		// assistive-tech opens move focus into the panel (a labelled group you exit
+		// with Escape or by tabbing out). Either way role="dialog"
+		// aria-modal="true" would be wrong: it announces an unnamed modal dialog
+		// around a grid of links (and, when focus stays on the trigger, marks the
+		// focused control inert).
 		role: 'none',
 		// hasSurface: false — the mega menu provides its own surface
 		// (panelContainer) with a border-top and custom overflow. The animation
 		// rides <PopoverLayer>'s xstyle, not the hook's.
 		hasSurface: false,
+		// Keep native outside-click/Escape dismissal and sibling exclusivity. The
+		// trigger's `popovertarget` association prevents its activation from being
+		// treated as an ordinary outside interaction.
+		hasLightDismiss: true,
 		onShow: () => onOpenChange?.(true),
-		onHide: () => onOpenChange?.(false)
+		onHide: () => {
+			hoverOpenedAt = 0;
+			sticky = false;
+			onOpenChange?.(false);
+		}
 	}));
 
 	// Anchor the popover to the parent <nav> (the TopNav), not to the trigger —
@@ -160,6 +196,7 @@
 	function scheduleShow(): void {
 		clearTimeouts();
 		showTimeout = setTimeout(() => {
+			hoverOpenedAt = Date.now();
 			popover.show({ skipAutoFocus: true });
 		}, delay);
 	}
@@ -171,42 +208,73 @@
 		}, hideDelay);
 	}
 
-	function handleMouseEnter(): void {
-		if (!clickLocked) {
+	function focusFirstPanelItem(): void {
+		panelElement
+			?.querySelector<HTMLElement>(
+				'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+			)
+			?.focus();
+	}
+
+	function handleTriggerMouseEnter(): void {
+		clearTimeouts();
+		if (!popover.isOpen) {
 			scheduleShow();
 		}
 	}
 
+	function handlePanelMouseEnter(): void {
+		clearTimeouts();
+	}
+
 	function handleMouseLeave(): void {
-		if (!clickLocked) {
+		if (!sticky) {
 			scheduleHide();
 		}
 	}
 
-	function handleClick(): void {
+	function handleClick(event: MouseEvent): void {
+		// Cancel the native invoker toggle so this guard is the single source of
+		// truth for trigger activation. `popovertarget` still establishes the
+		// invoker relationship used by native light dismiss and stacking.
+		event.preventDefault();
 		clearTimeouts();
-		if (popover.isOpen) {
-			clickLocked = false;
+
+		if (event.detail === 0) {
+			// Keyboard activation: pin, and move focus into the panel.
+			sticky = true;
+			hoverOpenedAt = 0;
+			if (popover.isOpen) {
+				focusFirstPanelItem();
+			} else {
+				popover.show();
+			}
+		} else if (!popover.isOpen) {
+			sticky = true;
+			popover.show({ skipAutoFocus: true });
+		} else if (Date.now() - hoverOpenedAt < CLICK_GUARD_MS) {
+			// A click that naturally follows a hover-open confirms the open state
+			// instead of toggling the panel shut. From here it behaves like any
+			// other click-open and stays pinned until explicit dismissal.
+			sticky = true;
+			hoverOpenedAt = 0;
+		} else {
 			popover.hide();
 			triggerButton?.focus();
-		} else {
-			clickLocked = true;
-			popover.show();
 		}
 	}
 
 	const theme = themeProps('top-nav-mega-menu');
 	const drawerTheme = themeProps('top-nav-mega-menu', { mode: 'drawer' });
 	const triggerAttrs = $derived(megaMenuTriggerAttrs(popover.isOpen, xstyle));
-	const chevronAttrs = $derived(megaMenuChevronAttrs(popover.isOpen));
+	const chevronStyle = $derived(megaMenuChevronStyle(popover.isOpen));
 	const panelContainerAttrs = megaMenuPanelContainerAttrs();
 	const panelContentAttrs = megaMenuPanelContentAttrs();
-	const wrapperAttrs = megaMenuWrapperAttrs();
 	const featuredAttrs = megaMenuFeaturedAttrs();
 
 	const drawerSectionAttrs = megaMenuDrawerSectionAttrs();
 	const drawerHeaderAttrs = megaMenuDrawerHeaderAttrs();
-	const drawerChevronAttrs = $derived(megaMenuDrawerChevronAttrs(isExpanded));
+	const drawerChevronStyle = $derived(megaMenuDrawerChevronStyle(isExpanded));
 	const drawerItemsAttrs = $derived(megaMenuDrawerItemsAttrs(isExpanded));
 	const drawerItemsInnerAttrs = megaMenuDrawerItemsInnerAttrs();
 	const drawerFeaturedAttrs = megaMenuDrawerFeaturedAttrs();
@@ -227,9 +295,7 @@
 			style={drawerHeaderAttrs.style}
 		>
 			{label}
-			<span class={drawerChevronAttrs.class} style={drawerChevronAttrs.style}>
-				{@render chevronIcon.current?.()}
-			</span>
+			<Icon icon="chevronDown" size="sm" color="inherit" xstyle={drawerChevronStyle} />
 		</button>
 
 		<!-- Animated expand/collapse container -->
@@ -259,17 +325,16 @@
 		bind:this={triggerButton}
 		type="button"
 		{...popover.triggerProps}
+		popovertarget={popover.id}
 		onclick={handleClick}
-		onmouseenter={handleMouseEnter}
+		onmouseenter={handleTriggerMouseEnter}
 		onmouseleave={handleMouseLeave}
 		{...theme}
 		class={cx(theme.class, triggerAttrs.class, className)}
 		style={mergeStyle(triggerAttrs.style, styleProp as string | undefined)}
 	>
 		{label}
-		<span class={chevronAttrs.class} style={chevronAttrs.style}>
-			{@render chevronIcon.current?.()}
-		</span>
+		<Icon icon="chevronDown" size="sm" color="inherit" xstyle={chevronStyle} />
 	</button>
 	<!--
 		Two styles on the layer, not one: `megaMenuPanelViewportFit` caps the panel
@@ -290,9 +355,10 @@
 			which is what 0.1.9 corrected.
 		-->
 		<div
+			bind:this={panelElement}
 			role="group"
 			aria-label={label}
-			onmouseenter={handleMouseEnter}
+			onmouseenter={handlePanelMouseEnter}
 			onmouseleave={handleMouseLeave}
 			class={panelContainerAttrs.class}
 			style={panelContainerAttrs.style}
@@ -300,11 +366,9 @@
 			<div class={panelContentAttrs.class} style={panelContentAttrs.style}>
 				<!-- Menu items section -->
 				{#if items}
-					<div class={wrapperAttrs.class} style={wrapperAttrs.style}>
-						<Grid columns={2} gap={2}>
-							{@render items()}
-						</Grid>
-					</div>
+					<Grid columns={2} gap={2} xstyle={megaMenuWrapperStyle}>
+						{@render items()}
+					</Grid>
 				{/if}
 
 				<!-- Featured section -->

@@ -1,22 +1,29 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { userEvent } from 'vitest/browser';
 import { createAttachmentKey } from 'svelte/attachments';
 import AppShellFixture from './fixtures/app-shell-fixture.svelte';
 import AppShellI18n from './fixtures/app-shell-i18n.svelte';
+import AppShellMobileProbe from './fixtures/app-shell-mobile-probe.svelte';
 
 /**
- * Ported from Astryx's `AppShell/AppShell.test.tsx`, all **42** cases at
- * v0.3.0. Nothing is dropped.
+ * Ported from Astryx's `AppShell/AppShell.test.tsx`, all **48** cases at
+ * v0.4.1. Nothing is dropped.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
- * This header used to read "all 38 cases". Upstream has **42**, and the four
+ * This header once read "all 38 cases". Upstream had **42**, and the four
  * missing ones were never named: `moves focus to the main content when the skip
  * link is activated`, `skip link text comes from the i18n catalog`, and the
  * `Banner landmark` pair (`exposes the header region as a banner landmark`,
- * `does not render a banner landmark without header content`). All four are
- * ported here and all four passed on the first run — the component already had
- * the behaviour; only the assertions were absent.
+ * `does not render a banner landmark without header content`). All four were
+ * ported and all four passed on the first run — the component already had the
+ * behaviour; only the assertions were absent.
+ *
+ * v0.4.1 (#4944) took it to **48**, and the six are ported here: the
+ * `Keyboard operation` pair, the `Banner landmark on the mobile top bar` pair
+ * that covers the new `role` on the sidenav-only top bar, and the
+ * `useAppShellMobile` pair.
  *
  * ## Project
  *
@@ -61,6 +68,10 @@ import AppShellI18n from './fixtures/app-shell-i18n.svelte';
  *   exact, and the difference is observable here: `getByText('Content')` would
  *   otherwise also match the skip link's "Skip to content". The option restores
  *   upstream's semantics rather than departing from them.
+ * - `getAllByRole` becomes `screen.getByRole(…).elements()`, as in `calendar`.
+ * - Upstream's `MobileProbe` is `fixtures/app-shell-mobile-probe.svelte`. Svelte
+ *   has no `renderHook`, so the hook runs inside a component that renders its
+ *   result — the probe-fixture substitute CLAUDE.md describes.
  * - `act()` disappears: a `$state` write flushes on its own.
  *
  * ## Cases that changed shape
@@ -687,5 +698,118 @@ describe('AppShell', () => {
 		});
 		expect(attached).toHaveBeenCalled();
 		expect(attached.mock.calls[0][0]).toBe(screen.getByTestId('shell').element());
+	});
+
+	// ===========================================================================
+	// Keyboard operation
+	//
+	// Upstream's note here is about jsdom: the drawer's focus TRAP and focus
+	// RESTORE are native `<dialog>` behaviour that its shim cannot express, so
+	// upstream verified those two in Chromium and asserts only the keyboard path
+	// and the ARIA wiring. This project runs in Chromium already, but the same
+	// two are still out of reach for the same reason one level down — this file
+	// stubs `showModal`/`close` so the drawer's `open` attribute is all that
+	// moves, which is what keeps the real top layer from swallowing focus. The
+	// scope of the two cases is therefore upstream's, unchanged.
+	// ===========================================================================
+
+	it('reaches the skip link with Tab and moves focus to main with Enter', async () => {
+		const screen = await render(AppShellFixture, { props: { topNav: 'label-only' } });
+
+		await userEvent.tab();
+		const skipLink = screen.getByTestId('skip-to-content');
+		await expect.element(skipLink).toHaveFocus();
+
+		await userEvent.keyboard('{Enter}');
+		await expect.element(screen.getByRole('main')).toHaveFocus();
+	});
+
+	it('opens the mobile drawer from the keyboard and points the toggle at it', async () => {
+		goMobile();
+
+		const screen = await render(AppShellFixture, { props: { sideNav: 'test' } });
+
+		const toggle = screen.getByRole('button', { name: 'Open navigation' });
+		await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
+
+		(toggle.element() as HTMLElement).focus();
+		await userEvent.keyboard('{Enter}');
+
+		await expect.element(toggle).toHaveAttribute('aria-expanded', 'true');
+		// `getByRole('dialog', {hidden: true})` upstream; a closed `<dialog>` is
+		// `display: none` and Playwright's role engine skips hidden nodes, so the
+		// drawer is read off the container as everywhere else in this file.
+		const drawer = screen.container.querySelector('dialog');
+		expect(drawer).not.toBeNull();
+		// aria-controls has to name the drawer that actually opened, or a screen
+		// reader cannot follow the toggle to it.
+		expect((toggle.element() as HTMLElement).getAttribute('aria-controls')).toBe(drawer?.id);
+		expect(drawer?.id).toBeTruthy();
+	});
+
+	// ===========================================================================
+	// Banner landmark on the mobile top bar
+	// ===========================================================================
+
+	it('exposes the mobile top bar as a banner landmark in a sidenav-only layout', async () => {
+		goMobile();
+
+		const screen = await render(AppShellFixture, { props: { sideNav: 'test' } });
+
+		// Same landmark structure as the topNav layout: one banner region holding
+		// the top bar, whichever nav slots the page happens to fill.
+		await expect.element(screen.getByRole('banner')).toBeInTheDocument();
+	});
+
+	it('renders exactly one banner landmark when a banner slot joins the mobile top bar', async () => {
+		goMobile();
+
+		const screen = await render(AppShellFixture, {
+			props: { banner: 'Announcement', sideNav: 'test' }
+		});
+
+		// `getAllByRole` upstream; `.elements()` is this project's counterpart.
+		expect(screen.getByRole('banner').elements()).toHaveLength(1);
+	});
+
+	// ===========================================================================
+	// useAppShellMobile
+	//
+	// Upstream's `MobileProbe` is `fixtures/app-shell-mobile-probe.svelte`: Svelte
+	// has no `renderHook`, so the hook runs in a component that renders its result.
+	// ===========================================================================
+
+	it('useAppShellMobile is inert outside an AppShell', async () => {
+		const screen = await render(AppShellMobileProbe);
+		expect(JSON.parse(screen.getByTestId('probe').element().textContent ?? '')).toEqual({
+			isMobile: false,
+			isMobileNavOpen: false,
+			isMobileNavEnabled: false,
+			hasId: false
+		});
+	});
+
+	it('useAppShellMobile reports the shell mobile state and drawer id', async () => {
+		goMobile();
+
+		const screen = await render(AppShellFixture, { props: { probe: true, sideNav: 'test' } });
+
+		expect(JSON.parse(screen.getByTestId('probe').element().textContent ?? '')).toEqual({
+			isMobile: true,
+			isMobileNavOpen: false,
+			isMobileNavEnabled: true,
+			hasId: true
+		});
+
+		await userEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+
+		// `expect.poll` rather than a bare read: upstream's assertion follows a
+		// React re-render that `act()` has already flushed, and the retrying form
+		// is this project's counterpart to that.
+		await expect
+			.poll(
+				() => JSON.parse(screen.getByTestId('probe').element().textContent ?? '').isMobileNavOpen
+			)
+			.toBe(true);
 	});
 });

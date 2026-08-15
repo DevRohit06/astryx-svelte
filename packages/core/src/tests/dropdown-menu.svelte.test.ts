@@ -2,25 +2,34 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import DropdownMenu from '$lib/components/dropdown-menu/dropdown-menu.svelte';
 import Compound from './fixtures/dropdown-menu-compound.svelte';
+import Controlled from './fixtures/dropdown-menu-controlled.svelte';
+import CopyRow from './fixtures/dropdown-menu-copy-row.svelte';
+import DataApi from './fixtures/dropdown-menu-data-api.svelte';
 import IconButton from './fixtures/dropdown-menu-icon-button.svelte';
 import Rtl from './fixtures/dropdown-menu-rtl.svelte';
 
 /**
- * Ported from Astryx's `DropdownMenu/DropdownMenu.test.tsx` — 41 of its 50 cases
- * (v0.3.0), across eleven of its twelve describe blocks (the top-level
+ * Ported from Astryx's `DropdownMenu/DropdownMenu.test.tsx` — 67 of its 77 cases
+ * (v0.4.1), across fourteen of its fifteen describe blocks (the top-level
  * `DropdownMenu`, `light-dismiss race`, `controlled mode`, `items`, `sections`,
- * `dividers`, `theming slots`, `button customization`, `icon-only mode`,
- * `hasChevron`, and `compound mode`).
+ * `dividers`, `theming slots`, `DropdownMenuItem destructive variant`,
+ * `button customization`, `icon-only mode`, `hasChevron`, `compound mode`,
+ * `open focus follows input modality (#4477)`, and `data/compound parity`).
  *
  * DROPPED, and named here because the count is the contract: the whole of
- * upstream's twelfth block, `DropdownMenu keyboard access for
- * menuitemradio/menuitemcheckbox (#3829)` — 9 cases covering arrow navigation,
- * Enter/Space activation, typeahead and hover-focus over consumer-rendered
- * `menuitemradio`/`menuitemcheckbox` rows. They are portable (nothing in them is
- * React-specific) and predate 0.3.0; the gap is a standing coverage debt, not a
- * translation decision. 36 → 41 here is 0.3.0's five additions
- * (`alignment`, the two uncontrolled-transition cases, and the two theming
- * slots); the #3829 block is unchanged by 0.3.0 and stays open.
+ * upstream's `DropdownMenu keyboard access for
+ * menuitemradio/menuitemcheckbox (#3829)` block — 9 cases covering arrow
+ * navigation, Enter/Space activation, typeahead and hover-focus over
+ * consumer-rendered `menuitemradio`/`menuitemcheckbox` rows. They are portable
+ * (nothing in them is React-specific) and predate 0.3.0; the gap is a standing
+ * coverage debt, not a translation decision. Also dropped: the top-level
+ * `typeahead advances past an item that already starts with the letter` case,
+ * which belongs to `useTypeahead` and is deferred with it.
+ *
+ * 41 → 67 is 0.4.x's twenty-six additions: seven in `items` (the
+ * `hasCloseOnSelect` trio, the no-handler close, and the three keying cases),
+ * the four-case `destructive variant` block, the eleven-case `#4477` modality
+ * block, and the four-case `data/compound parity` block.
  *
  * Its two sibling suites live in their own files, matching upstream's split:
  * `dropdown-menu-selectable.svelte.test.ts` (the checkbox/radio trio) and
@@ -83,6 +92,19 @@ function menuItem(container: HTMLElement, name: string): HTMLElement {
 /** `position-area` keywords are order-insensitive; the engine canonicalises. */
 function areaTokens(value: string): string[] {
 	return value.trim().split(/\s+/).filter(Boolean).sort();
+}
+
+/**
+ * Open the menu the way a *mouse* does. `HTMLElement.prototype.click()` — what
+ * the rest of this suite uses, and what upstream's `fireEvent.click` produces —
+ * reports `detail === 0`, the shape of a screen-reader / AT activation, which
+ * `DropdownMenu` deliberately treats as a keyboard open (#4477). A real pointer
+ * click reports `detail >= 1`, so the modality cases dispatch that explicitly
+ * rather than reaching for `userEvent.click`: the assertion is about the event's
+ * `detail`, so the test states it instead of relying on the driver to.
+ */
+function pointerOpen(trigger: HTMLElement): void {
+	trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, detail: 1 }));
 }
 
 function popoverAreaOf(container: HTMLElement): string[] {
@@ -393,6 +415,130 @@ describe('DropdownMenu items', () => {
 		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
 
+	it('closes the menu after an item is activated', async () => {
+		const hideSpy = vi.spyOn(HTMLElement.prototype, 'hidePopover');
+		const screen = await render(DropdownMenu, {
+			props: { button: { label: 'Actions' }, items: [{ label: 'Edit', onClick: () => {} }] }
+		});
+
+		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
+		menuItem(screen.container, 'Edit').click();
+		expect(hideSpy).toHaveBeenCalled();
+	});
+
+	it('keeps the menu open when the item opts out of closing', async () => {
+		const hideSpy = vi.spyOn(HTMLElement.prototype, 'hidePopover');
+		const handleClick = vi.fn();
+		const screen = await render(DropdownMenu, {
+			props: {
+				button: { label: 'Actions' },
+				items: [{ label: 'Copy ID', onClick: handleClick, hasCloseOnSelect: false }]
+			}
+		});
+
+		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
+		const item = menuItem(screen.container, 'Copy ID');
+		item.click();
+		expect(handleClick).toHaveBeenCalledTimes(1);
+		expect(hideSpy).not.toHaveBeenCalled();
+
+		// Second activation still works, and focus never left the item.
+		item.click();
+		expect(handleClick).toHaveBeenCalledTimes(2);
+	});
+
+	it('keeps the menu open on keyboard activation too', async () => {
+		const hideSpy = vi.spyOn(HTMLElement.prototype, 'hidePopover');
+		const handleClick = vi.fn();
+		const screen = await render(DropdownMenu, {
+			props: {
+				button: { label: 'Actions' },
+				items: [{ label: 'Copy ID', onClick: handleClick, hasCloseOnSelect: false }]
+			}
+		});
+
+		const trigger = screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement;
+		pointerOpen(trigger);
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+		expect(handleClick).toHaveBeenCalledTimes(1);
+		expect(hideSpy).not.toHaveBeenCalled();
+		expect(menuItem(screen.container, 'Copy ID')).toHaveFocus();
+	});
+
+	it('closes the menu on activation even when the item carries no handler', async () => {
+		const hideSpy = vi.spyOn(HTMLElement.prototype, 'hidePopover');
+		const screen = await render(DropdownMenu, {
+			props: { button: { label: 'Actions' }, items: [{ label: 'Edit' }] }
+		});
+
+		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
+		menuItem(screen.container, 'Edit').click();
+		expect(hideSpy).toHaveBeenCalled();
+	});
+
+	it('keeps a row mounted when its label changes, so focus survives (data mode keys by position)', async () => {
+		const screen = await render(CopyRow);
+
+		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
+		const item = menuItem(screen.container, 'Copy ID');
+		item.focus();
+		item.click();
+
+		// Upstream awaits `user.click`, which settles the state update inside
+		// `act()`. There is no counterpart here and none is needed — the `$state`
+		// write flushes on its own — but it flushes in a *microtask*, so the query
+		// has to retry rather than read the DOM in the same tick as the click.
+		let renamed!: HTMLElement;
+		await vi.waitFor(() => {
+			renamed = menuItem(screen.container, 'Copied');
+		});
+		expect(renamed).toBe(item);
+		expect(renamed).toHaveFocus();
+	});
+
+	it('follows the item, not the slot, when ids are supplied and the list changes', async () => {
+		// A menu whose rows are filtered by a control outside it: the focused row
+		// survives at a new index. Position keys cannot express this — the DOM node
+		// at index 0 would be reused for whatever item lands there.
+		const all = [
+			{ id: 'edit', label: 'Edit' },
+			{ id: 'duplicate', label: 'Duplicate' },
+			{ id: 'archive', label: 'Archive' }
+		];
+		const screen = await render(DropdownMenu, {
+			props: { button: { label: 'Actions' }, items: all }
+		});
+		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
+
+		const duplicate = menuItem(screen.container, 'Duplicate');
+		duplicate.focus();
+
+		await screen.rerender({
+			button: { label: 'Actions' },
+			items: all.filter((item) => item.id !== 'edit')
+		});
+
+		// Same node, still focused, even though it moved from index 1 to index 0.
+		expect(menuItem(screen.container, 'Duplicate')).toBe(duplicate);
+		expect(duplicate).toHaveFocus();
+		expect(menuItems(screen.container).some((el) => el.textContent?.trim() === 'Edit')).toBe(false);
+	});
+
+	it('does not put id on the rendered row', async () => {
+		const screen = await render(DropdownMenu, {
+			props: { button: { label: 'Actions' }, items: [{ id: 'edit', label: 'Edit' }] }
+		});
+		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
+
+		// `id` is identity for the keyed `{#each}`, not a DOM attribute the caller
+		// is setting.
+		expect(menuItem(screen.container, 'Edit')).not.toHaveAttribute('id', 'edit');
+	});
+
 	it('does not call onClick when disabled', async () => {
 		const handleClick = vi.fn();
 		const screen = await render(DropdownMenu, {
@@ -513,6 +659,244 @@ describe('DropdownMenu theming slots', () => {
 		expect(divider).toHaveClass('astryx-dropdown-menu-divider');
 		// Still carries the base Divider slot so global divider theming applies too.
 		expect(divider).toHaveClass('astryx-divider');
+	});
+});
+
+describe('DropdownMenuItem destructive variant', () => {
+	it('marks a compound-mode item destructive via data-variant', async () => {
+		const screen = await render(Compound, { props: { scenario: 'destructive' } });
+
+		const del = menuItem(screen.container, 'Delete');
+		const edit = menuItem(screen.container, 'Edit');
+		expect(del).toHaveAttribute('data-variant', 'destructive');
+		// Default items carry no variant attribute, so existing usage is unchanged.
+		expect(edit).not.toHaveAttribute('data-variant');
+	});
+
+	it('forwards variant from the data-driven items API', async () => {
+		const screen = await render(DropdownMenu, {
+			props: {
+				button: { label: 'Actions' },
+				items: [
+					{ label: 'Delete', variant: 'destructive', onClick: () => {} },
+					{ label: 'Edit', onClick: () => {} }
+				]
+			}
+		});
+
+		expect(menuItem(screen.container, 'Delete')).toHaveAttribute('data-variant', 'destructive');
+		expect(menuItem(screen.container, 'Edit')).not.toHaveAttribute('data-variant');
+	});
+
+	it('forwards variant to items nested inside a section', async () => {
+		const screen = await render(DropdownMenu, {
+			props: {
+				button: { label: 'Actions' },
+				items: [
+					{
+						type: 'section',
+						title: 'Danger zone',
+						items: [{ label: 'Delete', variant: 'destructive', onClick: () => {} }]
+					}
+				]
+			}
+		});
+
+		expect(menuItem(screen.container, 'Delete')).toHaveAttribute('data-variant', 'destructive');
+	});
+
+	it('defaults to no variant attribute', async () => {
+		const screen = await render(Compound, { props: { scenario: 'defaultVariant' } });
+		expect(menuItem(screen.container, 'Edit')).not.toHaveAttribute('data-variant');
+	});
+});
+
+describe('DropdownMenu open focus follows input modality (#4477)', () => {
+	const items = [{ label: 'Edit' }, { label: 'Duplicate' }, { label: 'Delete' }];
+
+	it('pointer open focuses the menu container, not the first item (items mode)', async () => {
+		const screen = await render(DropdownMenu, { props: { button: { label: 'Actions' }, items } });
+
+		pointerOpen(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement);
+
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+		expect(menuItem(screen.container, 'Edit')).not.toHaveFocus();
+	});
+
+	it('pointer open focuses the menu container in compound mode', async () => {
+		const screen = await render(Compound, { props: { scenario: 'items' } });
+
+		pointerOpen(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement);
+
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+		expect(menuItem(screen.container, 'Edit')).not.toHaveFocus();
+	});
+
+	it('first ArrowDown after a pointer open moves focus to the first enabled item', async () => {
+		const screen = await render(DropdownMenu, { props: { button: { label: 'Actions' }, items } });
+
+		pointerOpen(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement);
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+		expect(menuItem(screen.container, 'Edit')).toHaveFocus();
+	});
+
+	it('ArrowDown after a pointer open skips a disabled leading item', async () => {
+		const screen = await render(DropdownMenu, {
+			props: {
+				button: { label: 'Actions' },
+				items: [{ label: 'Edit', isDisabled: true }, { label: 'Delete' }]
+			}
+		});
+
+		pointerOpen(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement);
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+		expect(menuItem(screen.container, 'Delete')).toHaveFocus();
+	});
+
+	it('keyboard open via Enter focuses the first enabled item', async () => {
+		const screen = await render(DropdownMenu, { props: { button: { label: 'Actions' }, items } });
+
+		const trigger = screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement;
+		trigger.focus();
+		trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+		await vi.waitFor(() => expect(menuItem(screen.container, 'Edit')).toHaveFocus());
+	});
+
+	it('keyboard open via ArrowDown skips a disabled leading item', async () => {
+		const screen = await render(DropdownMenu, {
+			props: {
+				button: { label: 'Actions' },
+				items: [{ label: 'Edit', isDisabled: true }, { label: 'Delete' }]
+			}
+		});
+
+		const trigger = screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement;
+		trigger.focus();
+		trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+
+		await vi.waitFor(() => expect(menuItem(screen.container, 'Delete')).toHaveFocus());
+	});
+
+	it('a synthesized click (detail 0, AT activation) still focuses the first item', async () => {
+		const screen = await render(DropdownMenu, { props: { button: { label: 'Actions' }, items } });
+
+		// `.click()` dispatches a MouseEvent with detail 0 (the shape of a screen
+		// reader / AT activation), so it must keep the keyboard behavior.
+		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
+
+		await vi.waitFor(() => expect(menuItem(screen.container, 'Edit')).toHaveFocus());
+	});
+
+	it('controlled pointer open focuses the menu container', async () => {
+		const screen = await render(Controlled, { props: { items } });
+
+		pointerOpen(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement);
+
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+		expect(menuItem(screen.container, 'Edit')).not.toHaveFocus();
+	});
+
+	it('programmatic controlled open still focuses the first item', async () => {
+		const screen = await render(DropdownMenu, {
+			props: { button: { label: 'Actions' }, items, isMenuOpen: false, onOpenChange: () => {} }
+		});
+
+		await screen.rerender({
+			button: { label: 'Actions' },
+			items,
+			isMenuOpen: true,
+			onOpenChange: () => {}
+		});
+
+		await vi.waitFor(() => expect(menuItem(screen.container, 'Edit')).toHaveFocus());
+	});
+
+	it('Escape still closes the menu after a pointer open', async () => {
+		const hideSpy = vi.spyOn(HTMLElement.prototype, 'hidePopover');
+		const screen = await render(DropdownMenu, { props: { button: { label: 'Actions' }, items } });
+
+		pointerOpen(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement);
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+		expect(hideSpy).toHaveBeenCalled();
+	});
+
+	it('Tab still closes the menu after a pointer open (APG menu-button)', async () => {
+		const hideSpy = vi.spyOn(HTMLElement.prototype, 'hidePopover');
+		const screen = await render(DropdownMenu, { props: { button: { label: 'Actions' }, items } });
+
+		pointerOpen(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement);
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menu).toHaveFocus());
+
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+		expect(hideSpy).toHaveBeenCalled();
+	});
+});
+
+describe('DropdownMenu data/compound parity', () => {
+	it('renders an identical divider from either mode', async () => {
+		const fromDataScreen = await render(DropdownMenu, {
+			props: {
+				button: { label: 'Actions' },
+				items: [{ label: 'Edit' }, { type: 'divider' }, { label: 'Delete' }]
+			}
+		});
+		const fromData = fromDataScreen.container.querySelector('[role="separator"]')?.outerHTML;
+		fromDataScreen.unmount();
+
+		const compoundScreen = await render(Compound, { props: { scenario: 'menuDivider' } });
+		const fromCompound = compoundScreen.container.querySelector('[role="separator"]');
+
+		expect(fromCompound?.outerHTML).toBe(fromData);
+		expect(fromCompound).toHaveClass('astryx-dropdown-menu-divider');
+	});
+
+	it('skips a compound divider in the arrow-key order', async () => {
+		const screen = await render(Compound, { props: { scenario: 'menuDivider' } });
+
+		const trigger = screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement;
+		trigger.focus();
+		trigger.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+		const menu = menuIn(screen.container);
+		await vi.waitFor(() => expect(menuItem(screen.container, 'Edit')).toHaveFocus());
+
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+		expect(menuItem(screen.container, 'Delete')).toHaveFocus();
+		expect(screen.container.querySelector('[role="separator"]')).not.toHaveFocus();
+	});
+
+	it('carries endContent and description through the items data API', async () => {
+		const screen = await render(DataApi, { props: { scenario: 'endContent' } });
+
+		const item = menuItems(screen.container)[0];
+		expect(item).toHaveTextContent('Find anything');
+		expect(item.contains(screen.getByTestId('shortcut').element())).toBe(true);
+	});
+
+	it('takes a snippet label through the items data API', async () => {
+		// RESTATED: upstream passes a `ReactNode` label (`<em data-testid="rich">`).
+		// The Svelte counterpart of "arbitrary node" in this API is a Snippet, which
+		// `DropdownMenuItemData['label']` now admits because it is `Pick`ed from
+		// `DropdownMenuItemProps`. Same claim: rich content renders inside the row
+		// and the row still reads as "Rename" to typeahead and screen readers.
+		const screen = await render(DataApi, { props: { scenario: 'richLabel' } });
+
+		const item = menuItems(screen.container)[0];
+		expect(item.contains(screen.getByTestId('rich').element())).toBe(true);
+		expect(item.textContent?.trim()).toBe('Rename');
 	});
 });
 

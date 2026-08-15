@@ -30,13 +30,13 @@
      itself, no consumer logic required. */
 	:root {
 		/* AppShell measures its header post-hydration and sets
-       --appshell-header-height on the shell element. Until that runs, every
+       --_app-shell-header-height on the shell element. Until that runs, every
        consumer (the hero's fixed `top`, the nav backdrop, the docs content
        padding) falls back to mismatched literals, so the top spacing visibly
        pops in on load. Seed the auto-mode header height (--spacing-12 = 48px)
        here so the very first paint already reserves the right offset; the
        AppShell then overwrites it with the measured value (identical, no jump). */
-		--appshell-header-height: var(--spacing-12, 48px);
+		--_app-shell-header-height: var(--spacing-12, 48px);
 
 		/* Feature card backdrop. Soft pastel blue in light mode, deep navy in dark
        mode. Consumed by FeaturesShowcase's bento cards. Picked specifically
@@ -70,13 +70,13 @@
      scrolling clears the nav, and add an actual padding-top so the first paint
      already has the offset in place. */
 	#astryx-app-shell-main {
-		scroll-padding-top: var(--appshell-header-height, 64px);
-		padding-top: var(--appshell-header-height, 64px);
+		scroll-padding-top: var(--_app-shell-header-height, 64px);
+		padding-top: var(--_app-shell-header-height, 64px);
 	}
 
 	/* The home page is excluded from the padding rule above — its hero
      (data-home-page) is already positioned flush under the nav by its own
-     `top: var(--appshell-header-height, 0px)` rule, and the extra padding here
+     `top: var(--_app-shell-header-height, 0px)` rule, and the extra padding here
      would introduce a visible cream-coloured gap between the nav and the hero.
      scroll-padding-top is kept for anchor-link scrolling. */
 	body:has([data-home-page]) #astryx-app-shell-main {

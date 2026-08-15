@@ -1,12 +1,12 @@
 import * as stylex from '@stylexjs/stylex';
-import { sx, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { durationVars, easeVars } from '../../styles/tokens.stylex.js';
 
 /**
  * Ported from Astryx's `SideNav/SideNavCollapseButton.tsx` styles.
  *
- * Two keys, one call site, one boolean — so upstream's `dist/` carries no style
- * object for this module at all, only the two folded class strings.
+ * Both keys ride the chevron `Icon`'s `xstyle` (#4838), so they cross a
+ * component boundary and survive in upstream's `dist/` as objects — the module
+ * folds no class string at all.
  */
 const styles = stylex.create({
 	chevron: {
@@ -21,7 +21,10 @@ const styles = stylex.create({
 	}
 });
 
-/** The chevron, flipped to point the other way once the sidebar is collapsed. */
-export function sideNavCollapseChevronAttrs(isCollapsed: boolean): SvelteStyleAttrs {
-	return sx(styles.chevron, isCollapsed && styles.chevronCollapsed);
-}
+/**
+ * The chevron, flipped to point the other way once the sidebar is collapsed.
+ * Passed to the `Icon`'s `xstyle`. The RTL mirror deliberately stays on the
+ * outer `<span>` — see the comment at the call site.
+ */
+export const sideNavCollapseChevronStyle = styles.chevron;
+export const sideNavCollapseChevronCollapsedStyle = styles.chevronCollapsed;

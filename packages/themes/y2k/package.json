@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-y2k",
-	"version": "0.3.1",
+	"version": "0.4.1",
 	"description": "Y2K theme for astryx-svelte — hot pinks, lime greens, and Poppins.",
 	"license": "MIT",
 	"repository": {
@@ -52,7 +52,7 @@
 	},
 	"devDependencies": {
 		"@astryx-svelte/core": "workspace:*",
-		"@astryxdesign/theme-y2k": "0.3.0",
+		"@astryxdesign/theme-y2k": "0.4.1",
 		"prettier": "^3.8.3",
 		"prettier-plugin-svelte": "^4.1.0",
 		"svelte": "^5.56.1",

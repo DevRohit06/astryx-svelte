@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import {
 	colorVars,
 	fontWeightVars,
@@ -106,14 +107,15 @@ const styles = stylex.create({
 		justifyContent: 'center',
 		width: '100%',
 		height: '100%',
-		// Fallback surface (initials + default icon). Each property reads an
-		// Avatar-scoped internal var so a theme can re-scope the fallback wash and
-		// initials weight/color without forking; the defaults reproduce today's
-		// exact output. See derivedVarRegistry (avatar) + Avatar.doc.mjs theming.
-		backgroundColor: `var(--_avatar-fallback-background, ${colorVars['--color-neutral']})`,
-		color: `var(--_avatar-fallback-color, ${colorVars['--color-text-secondary']})`,
+		// Fallback surface (initials + default icon). Background, text color,
+		// weight, and per-size font size are all themed directly via the stable
+		// `.astryx-avatar-fallback` class target (font size through its size
+		// variant, `.astryx-avatar-fallback.<size>`), so the defaults here are
+		// plain values with no internal-var seam. See Avatar.doc.mjs theming.
+		backgroundColor: colorVars['--color-neutral'],
+		color: colorVars['--color-text-secondary'],
 		fontFamily: typographyVars['--font-family-body'],
-		fontWeight: `var(--_avatar-fallback-font-weight, ${fontWeightVars['--font-weight-medium']})`,
+		fontWeight: fontWeightVars['--font-weight-medium'],
 		textTransform: 'uppercase'
 	},
 	status: {
@@ -122,16 +124,6 @@ const styles = stylex.create({
 	// Visible focus ring for the name-tooltip tab stop, matching the repo-wide
 	// focus-visible outline treatment (see Timestamp, Token, Thumbnail). Only
 	// applied when a tooltip is active so keyboard users can reveal it.
-	focusable: {
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
-	},
 	// Reset the intrinsic styling of the interactive element (<a>/<button>) so it
 	// is a transparent, correctly-sized wrapper around the avatar visuals. The
 	// element carries the focus-visible accent ring for keyboard users.
@@ -147,23 +139,7 @@ const styles = stylex.create({
 		textDecoration: 'none',
 		cursor: 'pointer',
 		// Match the avatar's circular shape so the focus ring hugs it.
-		borderRadius: radiusVars['--radius-full'],
-		outlineWidth: {
-			default: 0,
-			':focus-visible': 2
-		},
-		outlineStyle: {
-			default: 'none',
-			':focus-visible': 'solid'
-		},
-		outlineColor: {
-			default: null,
-			':focus-visible': colorVars['--color-accent']
-		},
-		outlineOffset: {
-			default: 0,
-			':focus-visible': 2
-		}
+		borderRadius: radiusVars['--radius-full']
 	}
 });
 
@@ -173,11 +149,12 @@ const dynamicStyles = stylex.create({
 		width: size,
 		height: size
 	}),
-	// Initials font size defaults to the proportional `size × ratio` scale but is
-	// reachable via the `--_avatar-fallback-font-size` derived var, so a theme can
-	// set a per-size type scale (e.g. `components.avatar['size:sm']`).
+	// Initials font size defaults to the proportional `size × ratio` scale. It's
+	// a StyleX dynamic style, so the value lands via a class (not an inline
+	// property) — a theme's `.astryx-avatar-fallback.<size>` rule in the theme
+	// layer overrides it per size tier, no internal var needed.
 	fontSize: (size: number) => ({
-		fontSize: `var(--_avatar-fallback-font-size, ${size * INITIALS_FONT_SIZE_RATIO}px)`
+		fontSize: `${size * INITIALS_FONT_SIZE_RATIO}px`
 	}),
 	statusPosition: (size: number) => ({
 		bottom: size * CIRCLE_EDGE_OFFSET_RATIO,
@@ -221,8 +198,12 @@ export interface AvatarWrapperAttrsOptions {
 	groupOverlap: number | null;
 	/** Whether the root renders as an `<a>`/`<button>` rather than a `<div>`. */
 	isInteractive: boolean;
-	/** Whether a name tooltip is active on a *static* root outside a group. */
-	hasTooltipTabStop: boolean;
+	// `hasTooltipTabStop` was here until upstream 0.4.1. It selected the
+	// `focusable` key — the ring for the name-tooltip tab stop on a *static*
+	// root. That key is gone: every root now draws the shared focus outline, so
+	// the static tab stop and the `<a>`/`<button>` ring identically and the flag
+	// selected nothing. Removed rather than kept dead, since this options object
+	// is this port's adapter rather than upstream API.
 }
 
 /**
@@ -236,13 +217,12 @@ export interface AvatarWrapperAttrsOptions {
  * reason the element swap is invisible to layout.
  */
 export function avatarWrapperAttrs(
-	{ groupOverlap, isInteractive, hasTooltipTabStop }: AvatarWrapperAttrsOptions,
+	{ groupOverlap, isInteractive }: AvatarWrapperAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.wrapper,
 		isInteractive && styles.interactive,
-		!isInteractive && hasTooltipTabStop && groupOverlap == null && styles.focusable,
 		groupOverlap != null && groupStyles.ring,
 		groupOverlap != null && groupStyles.overlap,
 		groupOverlap != null && groupDynamicStyles.overlap(-groupOverlap),

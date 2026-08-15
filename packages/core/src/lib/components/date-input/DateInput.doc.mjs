@@ -23,14 +23,16 @@ export default {
 		targets: [
 			{
 				className: 'astryx-date-input',
-				visualProps: ['size', 'status']
+				visualProps: ['size', 'status'],
+				states: ['disabled']
 			},
 			{
 				className: 'astryx-date-input-toggle-icon',
 				states: ['state']
 			},
 			{
-				className: 'astryx-date-input-clear-icon'
+				className: 'astryx-date-input-clear-icon',
+				deprecatedFor: 'input-clear-icon'
 			}
 		]
 	},
@@ -238,6 +240,13 @@ export default {
 			type: '1 | 2',
 			description: 'Number of months displayed simultaneously in the calendar popover.',
 			default: '1'
+		},
+		{
+			name: 'weekStartsOn',
+			type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
+			description:
+				'First day of week in the calendar popover. A number (0 = Sunday to 6 = Saturday) or a three-letter day name.',
+			default: '0'
 		},
 		{
 			name: 'format',

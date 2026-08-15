@@ -3,6 +3,7 @@
 	import type { BaseProps } from '../../base-props.js';
 	import type { ButtonSize, ButtonVariant } from '../button/button.stylex.js';
 	import type { DropdownMenuOption } from '../dropdown-menu/dropdown-menu-types.js';
+	import type { LayerAlignment, LayerPlacement } from '../layer/use-layer.svelte.js';
 
 	export interface MoreMenuProps extends Pick<BaseProps, 'xstyle' | 'class' | 'style'> {
 		/** Menu items — the same data array `DropdownMenu` takes. */
@@ -32,6 +33,18 @@
 		 * @default false
 		 */
 		isDisabled?: boolean;
+		/**
+		 * Position of the menu relative to the trigger button. Forwarded to
+		 * `DropdownMenu`, which owns the default.
+		 * @default 'below'
+		 */
+		placement?: LayerPlacement;
+		/**
+		 * Alignment of the menu along the placement axis. Forwarded to
+		 * `DropdownMenu`, which owns the default.
+		 * @default 'start'
+		 */
+		alignment?: LayerAlignment;
 		/** Controlled open state for the menu. */
 		isMenuOpen?: boolean;
 		/** Fired when the menu visibility changes. */
@@ -64,6 +77,8 @@
 		size: sizeProp,
 		icon,
 		isDisabled = false,
+		placement,
+		alignment,
 		isMenuOpen,
 		onOpenChange,
 		xstyle,
@@ -88,6 +103,8 @@
 	{style}
 	{isMenuOpen}
 	{onOpenChange}
+	{placement}
+	{alignment}
 	button={{
 		label,
 		icon: icon ?? moreIcon.current,

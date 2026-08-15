@@ -479,6 +479,9 @@
   "@astryx.dateInput.clear": {
     "defaultMessage": "⟦Çłéàř {label}⟧"
   },
+  "@astryx.dateInput.invalidDate": {
+    "defaultMessage": "⟦Íñṽàłíð ðàţé⟧"
+  },
   "@astryx.dateTimeInput.timeSuffix": {
     "defaultMessage": "⟦{label} ţíɱé⟧"
   },
@@ -532,6 +535,9 @@
   },
   "@astryx.timeInput.placeholder": {
     "defaultMessage": "⟦Šéłéçţ à ţíɱé⟧"
+  },
+  "@astryx.timeInput.invalidTime": {
+    "defaultMessage": "⟦Íñṽàłíð ţíɱé⟧"
   },
   "@astryx.topNav.heading.dialogLabel": {
     "defaultMessage": "⟦Ñàṽíĝàţíóñ ɱéñú⟧"
@@ -605,6 +611,30 @@
   "@astryx.fileInput.clearLabel": {
     "defaultMessage": "⟦Çłéàř {label}⟧"
   },
+  "@astryx.fileInput.dropHint": {
+    "defaultMessage": "⟦Ðřóþ ƒíłéš ĥéřé⟧"
+  },
+  "@astryx.fileInput.errorInvalidType": {
+    "defaultMessage": "⟦\"{fileName}\" íš ñóţ àñ àççéþţéð ƒíłé ţýþé⟧"
+  },
+  "@astryx.fileInput.errorMaxFiles": {
+    "defaultMessage": "⟦Ṁàẋíɱúɱ {maxFiles} ƒíłéš àłłóŵéð⟧"
+  },
+  "@astryx.fileInput.errorMaxSize": {
+    "defaultMessage": "⟦\"{fileName}\" éẋçééðš {maxSize} łíɱíţ⟧"
+  },
+  "@astryx.fileInput.fileSelected": {
+    "defaultMessage": "⟦1 ƒíłé šéłéçţéð: {fileName}⟧"
+  },
+  "@astryx.fileInput.filesSelected": {
+    "defaultMessage": "⟦{count} ƒíłéš šéłéçţéð⟧"
+  },
+  "@astryx.fileInput.placeholder": {
+    "defaultMessage": "⟦Çĥóóšé ƒíłé⟧"
+  },
+  "@astryx.fileInput.placeholderMultiple": {
+    "defaultMessage": "⟦Çĥóóšé ƒíłéš⟧"
+  },
   "@astryx.fileInput.required": {
     "defaultMessage": "⟦Řéɋúířéð⟧"
   },
@@ -650,6 +680,12 @@
   "@astryx.numberInput.clearLabel": {
     "defaultMessage": "⟦Çłéàř {label}⟧"
   },
+  "@astryx.numberInput.decrementLabel": {
+    "defaultMessage": "⟦Ðéçřéɱéñţ {label}⟧"
+  },
+  "@astryx.numberInput.incrementLabel": {
+    "defaultMessage": "⟦Íñçřéɱéñţ {label}⟧"
+  },
   "@astryx.selector.clearLabel": {
     "defaultMessage": "⟦Çłéàř {label}⟧"
   },
@@ -691,6 +727,9 @@
   },
   "@astryx.step.goToStepWithStatus": {
     "defaultMessage": "⟦Ĝó ţó šţéþ {stepNumber, number}: {label}, {status}⟧"
+  },
+  "@astryx.step.optional": {
+    "defaultMessage": "⟦Óþţíóñàł⟧"
   },
   "@astryx.step.status.completed": {
     "defaultMessage": "⟦çóɱþłéţéð⟧"

@@ -114,11 +114,12 @@
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import Spinner from '../spinner/spinner.svelte';
 	import {
+		complexSelectorChevronXstyle,
 		complexSelectorContentAttrs,
+		complexSelectorPopoverOffset,
 		complexSelectorPopoverStyle,
 		complexSelectorTriggerAttrs,
 		complexSelectorTriggerContainerAttrs,
-		complexSelectorTriggerIconAttrs,
 		complexSelectorTriggerTextAttrs
 	} from './complex-selector.stylex.js';
 
@@ -183,6 +184,8 @@
 		class: className,
 		style: styleProp,
 		'data-testid': testId,
+		// Destructured out of the rest spread on purpose — see `handleTriggerClick`.
+		onclick: onclickProp,
 		...rest
 	}: ComplexSelectorProps<Value> = $props();
 
@@ -223,6 +226,11 @@
 		dialogLabel: label,
 		hasCloseButton: false,
 		hasAutoFocus: true,
+		// The popup's theme target belongs on the SURFACE — the element painting
+		// background, radius and elevation — which `usePopover` owns. Rendered on
+		// the content box below it, a theme's background or radius rule paints the
+		// wrong box.
+		surfaceTarget: 'complex-selector-popup',
 		onHide: () => {
 			document.getElementById(triggerId)?.focus();
 		}
@@ -244,6 +252,25 @@
 		contentId
 	});
 
+	/**
+	 * Upstream's `composeEventHandlers(onClickProp, () => { if (!isDisabled)
+	 * popover.toggle(); })` — the consumer's handler runs **first**, and can opt
+	 * out of the toggle with `event.preventDefault()`. The early return *is* that
+	 * opt-out, and it is why `onclick` has to be destructured out of the rest
+	 * spread: a forwarded `onclick` landing in `{...rest}` beside an explicit one
+	 * is a single object literal where the last key wins, so the consumer's would
+	 * simply be dropped. Same inlining as `MobileNav` and `SideNavCollapseButton`.
+	 */
+	function handleTriggerClick(event: MouseEvent): void {
+		onclickProp?.(event as MouseEvent & { currentTarget: EventTarget & HTMLDivElement });
+		if (event.defaultPrevented) {
+			return;
+		}
+		if (!isDisabled) {
+			popover.toggle();
+		}
+	}
+
 	function handleTriggerKeyDown(event: KeyboardEvent): void {
 		if (event.key === 'ArrowDown' && !popover.isOpen && !isDisabled) {
 			event.preventDefault();
@@ -257,7 +284,7 @@
 	);
 	const triggerAttrs = complexSelectorTriggerAttrs();
 	const triggerTextAttrs = complexSelectorTriggerTextAttrs();
-	const triggerIconAttrs = $derived(complexSelectorTriggerIconAttrs(popover.isOpen));
+	const chevronXstyle = $derived(complexSelectorChevronXstyle(popover.isOpen));
 	const contentAttrs = $derived(complexSelectorContentAttrs(contentXstyle));
 	const layerXstyle = $derived([complexSelectorPopoverStyle, layerAnimations[placement]]);
 </script>
@@ -275,11 +302,7 @@
 		{@attach popover.attachTrigger}
 		data-testid={testId}
 		{...rest}
-		onclick={() => {
-			if (!isDisabled) {
-				popover.toggle();
-			}
-		}}
+		onclick={handleTriggerClick}
 		{...theme}
 		class={cx(theme.class, containerAttrs.class, className)}
 		style={mergeStyle(containerAttrs.style, styleProp as string | undefined)}
@@ -316,20 +339,21 @@
 		{#if isBusy}
 			<Spinner size="sm" />
 		{/if}
-		<span class={triggerIconAttrs.class} style={triggerIconAttrs.style}>
-			<!--
-				Stable theme target on the chevron itself, carrying its open/closed
-				state as `data-state`, so a theme can restyle just this glyph.
-			-->
-			<Icon
-				icon="chevronDown"
-				size="sm"
-				color="inherit"
-				{...themeProps('complex-selector-indicator-icon', {
-					state: popover.isOpen ? 'expanded' : 'collapsed'
-				})}
-			/>
-		</span>
+		<!--
+			No wrapper: Icon's own span already provides the 16px box (`sm`) and the
+			secondary icon colour the wrapper used to set, so the glyph IS the
+			trigger's icon element — one node carrying the box, the colour, the
+			rotation, and the stable theme target with its open/closed `data-state`.
+		-->
+		<Icon
+			icon="chevronDown"
+			size="sm"
+			color="secondary"
+			xstyle={chevronXstyle}
+			{...themeProps('complex-selector-indicator-icon', {
+				state: popover.isOpen ? 'expanded' : 'collapsed'
+			})}
+		/>
 	</div>
 
 	<!--
@@ -337,7 +361,13 @@
 		`aria-controls` on the trigger points at THIS div rather than the layer
 		wrapper, which is upstream's wiring — the same exception `Selector` makes.
 	-->
-	<PopoverLayer {popover} {placement} alignment="start" xstyle={layerXstyle}>
+	<PopoverLayer
+		{popover}
+		{placement}
+		alignment="start"
+		offset={complexSelectorPopoverOffset}
+		xstyle={layerXstyle}
+	>
 		<div id={contentId} class={contentAttrs.class} style={contentAttrs.style}>
 			{@render children(optimistic.current, commitValue, popover.hide, renderState)}
 		</div>

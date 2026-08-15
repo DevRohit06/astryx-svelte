@@ -16,6 +16,7 @@ import {
 	typeScaleVars,
 	typographyVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `DateRangeInput/DateRangeInput.tsx`, where the styles are
@@ -73,12 +74,7 @@ const styles = stylex.create({
 		borderStyle: 'none',
 		backgroundColor: 'transparent',
 		cursor: 'pointer',
-		borderRadius: radiusVars['--radius-element'],
-		outline: {
-			default: 'none',
-			':focus-visible': `${borderVars['--border-width']} solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: 1
+		borderRadius: radiusVars['--radius-element']
 	},
 	iconButtonDisabled: {
 		cursor: 'not-allowed'
@@ -115,11 +111,7 @@ const styles = stylex.create({
 		lineHeight: typeScaleVars['--text-label-leading'],
 		color: colorVars['--color-text-primary'],
 		cursor: 'pointer',
-		textAlign: 'start',
-		outline: {
-			default: 'none',
-			':focus-visible': `${borderVars['--border-width']} solid ${colorVars['--color-accent']}`
-		}
+		textAlign: 'start'
 	},
 	presetButtonActive: {
 		backgroundColor: colorVars['--color-accent-muted'],
@@ -173,7 +165,11 @@ export function dateRangeInputWrapperAttrs(
  * field is effectively disabled.
  */
 export function dateRangeInputIconButtonAttrs(isDisabled = false): SvelteStyleAttrs {
-	return sx(styles.iconButton, isDisabled && styles.iconButtonDisabled);
+	return sx(
+		focusOutlineStyles.focusVisible,
+		styles.iconButton,
+		isDisabled && styles.iconButtonDisabled
+	);
 }
 
 /**
@@ -204,5 +200,9 @@ export function dateRangeInputPresetSidebarAttrs(): SvelteStyleAttrs {
 
 /** One preset row; the applied preset takes the accent treatment. */
 export function dateRangeInputPresetButtonAttrs(isActive: boolean): SvelteStyleAttrs {
-	return sx(styles.presetButton, isActive && styles.presetButtonActive);
+	return sx(
+		focusOutlineStyles.focusVisible,
+		styles.presetButton,
+		isActive && styles.presetButtonActive
+	);
 }

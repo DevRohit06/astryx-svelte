@@ -1,68 +1,101 @@
 <script lang="ts" module>
 	import type { TableColumn } from '$lib/components/table/table-types.js';
 
-	export interface TreeItem extends Record<string, unknown> {
+	export interface Row extends Record<string, unknown> {
 		id: string;
 		name: string;
-		children: TreeItem[];
+		bio: string;
 	}
 
-	/** Upstream's `treeData`. */
-	export const treeData: TreeItem[] = [
-		{
-			id: 'a',
-			name: 'Folder A',
-			children: [
-				{ id: 'a1', name: 'File A1', children: [] },
-				{ id: 'a2', name: 'File A2', children: [] }
-			]
-		},
-		{
-			id: 'b',
-			name: 'Folder B',
-			children: [{ id: 'b1', name: 'File B1', children: [] }]
-		},
-		{ id: 'c', name: 'Leaf C', children: [] }
+	/** Upstream's `rows`. */
+	export const rows: Row[] = [
+		{ id: 'a', name: 'Ada', bio: 'Ada bio' },
+		{ id: 'b', name: 'Bo', bio: 'Bo bio' },
+		{ id: 'c', name: 'Cy', bio: 'Cy bio' }
 	];
 
 	/** Upstream's `columns`. */
-	export const expansionColumns: TableColumn<TreeItem>[] = [{ key: 'name', header: 'Name' }];
+	export const expansionColumns: TableColumn<Row>[] = [{ key: 'name', header: 'Name' }];
+
+	/** Upstream's `multiCol`, used by the colSpan case. */
+	export const multiColumns: TableColumn<Row>[] = [
+		{ key: 'name', header: 'Name' },
+		{ key: 'bio', header: 'Bio' }
+	];
 
 	const EMPTY_KEYS = new Set<string>();
 </script>
 
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import Table from '$lib/components/table/table.svelte';
 	import { useTableRowExpansion } from '$lib/components/table/plugins/row-expansion/use-table-row-expansion.js';
-	import { useTableRowExpansionState } from '$lib/components/table/plugins/row-expansion/use-table-row-expansion-state.svelte.js';
 
 	/**
 	 * Upstream's `Harness`.
 	 *
-	 * Upstream destructures `{data, expansionConfig}` out of the state hook,
-	 * which it can because React returns a fresh object each render. Here the
-	 * result's members are **getters** over one object, so destructuring `data`
-	 * would freeze the first flattening — the hazard the hook's docstring names.
-	 * The fixture therefore reads `expansionState.data` at the use site.
+	 * Four translations:
+	 *
+	 * - **`useState` → `$state`.** The `Set` is a plain one; reassignment is the
+	 *   reactive boundary, so `onToggle` copies-and-reassigns exactly as
+	 *   upstream's updater does.
+	 * - **The hook takes a getter**, where upstream passes the config object.
+	 * - **`renderExpanded` is a `Snippet<[Row]>`**, not `(item) => ReactNode`, and
+	 *   both variants are declared in the template below rather than in
+	 *   `<script>` — a snippet does not exist yet while `<script>` runs, and the
+	 *   config getter reads it at render time, which is when it does.
+	 * - **`panelVariant` stands in for passing a snippet.** Upstream's one case
+	 *   that overrides `renderExpanded` writes the JSX inline in the test; a
+	 *   `.ts` test file cannot author a snippet, so the two panels live here and
+	 *   the test selects one by name. Upstream's `renderExpanded` prop is kept
+	 *   alongside it for a caller that *can* pass one (`.svelte` fixtures can).
 	 */
 	interface Props {
 		initialExpanded?: Set<string>;
+		isItemExpandable?: (item: Row) => boolean;
+		renderExpanded?: Snippet<[Row]>;
+		panelVariant?: 'default' | 'bio';
+		columns?: TableColumn<Row>[];
 	}
 
-	const { initialExpanded = EMPTY_KEYS }: Props = $props();
+	const {
+		initialExpanded = EMPTY_KEYS,
+		isItemExpandable,
+		renderExpanded,
+		panelVariant = 'default',
+		columns = expansionColumns
+	}: Props = $props();
 
 	// svelte-ignore state_referenced_locally
 	let expandedKeys = $state(new Set(initialExpanded));
 
-	const expansionState = useTableRowExpansionState<TreeItem>(() => ({
-		baseData: treeData,
-		getChildren: (item) => item.children,
-		getRowKey: (item) => item.id,
+	const expansion = useTableRowExpansion<Row>(() => ({
 		expandedKeys,
-		setExpandedKeys: (next) => (expandedKeys = next)
+		onToggle: (key) => {
+			// Scratch space, built fresh and reassigned — the reassignment is the
+			// reactive boundary, so a `SvelteSet` would buy nothing here.
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
+			const next = new Set(expandedKeys);
+			if (next.has(key)) {
+				next.delete(key);
+			} else {
+				next.add(key);
+			}
+			expandedKeys = next;
+		},
+		getRowKey: (item) => item.id,
+		renderExpanded:
+			renderExpanded ?? (panelVariant === 'bio' ? bioRenderExpanded : defaultRenderExpanded),
+		getIsItemExpandable: isItemExpandable
 	}));
-
-	const expansion = useTableRowExpansion<TreeItem>(() => expansionState.expansionConfig);
 </script>
 
-<Table data={expansionState.data} columns={expansionColumns} idKey="id" plugins={{ expansion }} />
+{#snippet defaultRenderExpanded(item: Row)}
+	<div data-testid="panel">{`${item.name}: ${item.bio}`}</div>
+{/snippet}
+
+{#snippet bioRenderExpanded(item: Row)}
+	<span data-testid="panel">bio={item.bio}</span>
+{/snippet}
+
+<Table data={rows} {columns} idKey="id" plugins={{ expansion }} />

@@ -73,6 +73,8 @@ export type {
 } from './components/chat/chat-context.svelte.js';
 export { useSpeechRecognition } from './components/chat/use-speech-recognition.svelte.js';
 export { useChatDictation } from './components/chat/use-chat-dictation.svelte.js';
+export { default as CheckIndicator } from './components/indicator/check-indicator.svelte';
+export { default as CheckboxIndicator } from './components/indicator/checkbox-indicator.svelte';
 export { default as CheckboxInput } from './components/checkbox-input/checkbox-input.svelte';
 export { default as CheckboxList } from './components/checkbox-list/checkbox-list.svelte';
 export { default as CheckboxListItem } from './components/checkbox-list/checkbox-list-item.svelte';
@@ -207,6 +209,7 @@ export {
 export { default as Popover } from './components/popover/popover.svelte';
 export { default as PopoverLayer } from './components/popover/popover-layer.svelte';
 export { default as ProgressBar } from './components/progress-bar/progress-bar.svelte';
+export { default as RadioIndicator } from './components/indicator/radio-indicator.svelte';
 export { default as RadioList } from './components/radio-list/radio-list.svelte';
 export { default as RadioListItem } from './components/radio-list/radio-list-item.svelte';
 export { default as ResizeHandle } from './components/resizable/resize-handle.svelte';
@@ -345,9 +348,12 @@ export type { DropdownMenuSubMenuProps as BreadcrumbMenuSubMenuProps } from './c
 export type {
 	DropdownMenuOption as BreadcrumbMenuOption,
 	DropdownMenuItemData as BreadcrumbMenuItemData,
-	DropdownMenuDivider as BreadcrumbMenuDivider,
+	DropdownMenuDividerData as BreadcrumbMenuDividerData,
 	DropdownMenuSection as BreadcrumbMenuSection
 } from './components/dropdown-menu/dropdown-menu-types.js';
+// The bare `BreadcrumbMenuDivider` is the component alias now — see the value
+// export below.
+export { default as BreadcrumbMenuDivider } from './components/dropdown-menu/dropdown-menu-divider.svelte';
 // `BreadcrumbContext` itself stays module-private, as upstream's `index.ts` keeps it.
 export type {
 	BreadcrumbsVariant,
@@ -477,6 +483,8 @@ export type { ChatDictationButtonProps } from './components/chat/chat-dictation-
 // `CheckboxListContext`/`CheckboxListContextValue` stay module-private, as
 // upstream's `CheckboxList/index.ts` keeps them — unlike `RadioList`'s, which
 // does publish its context.
+export type { CheckIndicatorProps } from './components/indicator/check-indicator.svelte';
+export type { CheckboxIndicatorProps } from './components/indicator/checkbox-indicator.svelte';
 export type { CheckboxInputProps } from './components/checkbox-input/checkbox-input.svelte';
 export type { CheckboxInputSize } from './components/checkbox-input/checkbox-input.stylex.js';
 export type { CheckboxListProps } from './components/checkbox-list/checkbox-list.svelte';
@@ -522,10 +530,13 @@ export type { DropdownMenuSubMenuProps as ContextMenuSubMenuProps } from './comp
 export type {
 	ContextMenuProps,
 	ContextMenuItemData,
-	ContextMenuDivider,
+	ContextMenuDividerData,
 	ContextMenuSection,
 	ContextMenuOption
 } from './components/context-menu/context-menu.svelte';
+// The bare `ContextMenuDivider` is the component alias now — see the value
+// export below.
+export { default as ContextMenuDivider } from './components/dropdown-menu/dropdown-menu-divider.svelte';
 export type { CollapsibleGroupProps } from './components/collapsible/collapsible-group.svelte';
 export type { CollapsibleGroupDensity } from './components/collapsible/collapsible-group-context.svelte.js';
 export {
@@ -555,9 +566,14 @@ export type { DropdownMenuSubMenuProps } from './components/dropdown-menu/dropdo
 export type {
 	DropdownMenuOption,
 	DropdownMenuItemData,
-	DropdownMenuDivider,
+	DropdownMenuDividerData,
 	DropdownMenuSection
 } from './components/dropdown-menu/dropdown-menu-types.js';
+// New at upstream 0.4.0 — the compound-mode peer of `{type: 'divider'}`, and
+// what the data path renders too, so neither mode can drift from the other.
+// Claiming the bare name is why the three data types took the `Data` suffix.
+export { default as DropdownMenuDivider } from './components/dropdown-menu/dropdown-menu-divider.svelte';
+export type { DropdownMenuDividerProps } from './components/dropdown-menu/dropdown-menu-divider.svelte';
 export type { DropdownMenuContextValue } from './components/dropdown-menu/dropdown-menu-context.svelte.js';
 export type { DropdownMenuSize } from './components/dropdown-menu/dropdown-menu-item.stylex.js';
 export type { EmptyStateProps } from './components/empty-state/empty-state.svelte';
@@ -735,6 +751,7 @@ export type {
 	ProgressBarMark,
 	ProgressBarProps
 } from './components/progress-bar/progress-bar.svelte';
+export type { RadioIndicatorProps } from './components/indicator/radio-indicator.svelte';
 export type { RadioListProps } from './components/radio-list/radio-list.svelte';
 export type { RadioListItemProps } from './components/radio-list/radio-list-item.svelte';
 // Upstream publishes the `RadioListContext` object itself (like `SizeContext`),
@@ -908,14 +925,8 @@ export {
 	useTableRowExpansion,
 	type UseTableRowExpansionConfig
 } from './components/table/plugins/row-expansion/use-table-row-expansion.js';
-// Upstream exports `useTableRowExpansionState` from `Table/index.ts` but *not*
-// its config or result types — so the hook's own parameter type is unnameable by
-// a consumer. Verified against both the clone and the published
-// `dist/Table/index.d.ts`, and replicated: `selection`, `sortable` and
-// `columnSettings` all publish their state hook's types, which is what makes
-// this look like an upstream oversight rather than a decision. Recorded under
-// Known debts rather than quietly fixed.
-export { useTableRowExpansionState } from './components/table/plugins/row-expansion/use-table-row-expansion-state.svelte.js';
+// `useTableRowExpansionState` was removed at upstream 0.4.1 (PR #4609) along
+// with the plugin's tree mode; `useTableTreeState` below is its replacement.
 export {
 	useTableColumnResize,
 	type UseTableColumnResizeConfig
@@ -1321,6 +1332,42 @@ export {
 // return type for the hook anywhere, so the interface stays module-public and
 // off the barrel — the `focusableSelector` rule.
 export { useIcon } from './components/icon/use-icon.svelte.js';
+
+// The indicator layer, new at upstream 0.4.0. `useIndicator` is published here
+// rather than from `hooks/index.ts` for the same reason `useIcon` is: upstream
+// publishes it from `Indicator/index.ts`.
+//
+// `UseCoreIndicatorReturn` / `UseAnyIndicatorReturn` have **no upstream
+// counterpart** — upstream's hook returns the component itself, because React
+// re-runs the body when the theme changes. Here the value has to stay live
+// across a `<Theme>` swap, so it comes back on an object with a `current`
+// getter, and the two shapes of that object are named so a consumer can type a
+// variable holding one. Same standing as the other `Use*Return` interfaces this
+// port adds for the identical reason.
+export { defaultIndicators, getIndicator } from './components/indicator/indicator-registry.js';
+export { useIndicator } from './components/indicator/use-indicator.svelte.js';
+export { indicatorScope } from './components/indicator/indicator.markers.stylex.js';
+export type {
+	CoreIndicatorName,
+	IndicatorRegistrySource
+} from './components/indicator/indicator-registry.js';
+export type {
+	UseAnyIndicatorReturn,
+	UseCoreIndicatorReturn
+} from './components/indicator/use-indicator.svelte.js';
+export type {
+	IndicatorComponent,
+	IndicatorFamily,
+	IndicatorFamilyMap,
+	IndicatorMap,
+	IndicatorName,
+	IndicatorNameOfFamily,
+	IndicatorPosition,
+	IndicatorProps,
+	IndicatorRegistry,
+	IndicatorSize,
+	IndicatorState
+} from './components/indicator/types.js';
 export type {
 	ProgressBarFillVariant,
 	ProgressBarVariant,

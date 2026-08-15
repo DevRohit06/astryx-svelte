@@ -199,6 +199,9 @@ function expandContainerPadding(component: string, parsed: ParsedPadding): [stri
  */
 function applyDerivedVars(component: string, props: [string, string][]): [string, string][] {
 	const derivedProps: [string, string][] = [];
+	// Source properties an entry marked `replaces` consumed, so they can be
+	// dropped from the emitted rule rather than sitting beside their var.
+	const replacedProps = new Set<string>();
 	let containerExpanded = false;
 
 	for (const [prop, value] of props) {
@@ -210,6 +213,9 @@ function applyDerivedVars(component: string, props: [string, string][]): [string
 		for (const entry of [...getDerivedVars(component, prop), ...paddingDerived]) {
 			if (entry.expand === 'container' && PADDING_PROPS.has(prop)) {
 				containerExpanded = true;
+			}
+			if (entry.replaces === true) {
+				replacedProps.add(prop);
 			}
 			for (const varName of entry.vars ?? []) {
 				derivedProps.push([varName, value]);
@@ -224,6 +230,10 @@ function applyDerivedVars(component: string, props: [string, string][]): [string
 			...props.filter(([p]) => !PADDING_PROPS.has(p)),
 			...expandContainerPadding(component, parsed)
 		];
+	}
+
+	if (replacedProps.size > 0) {
+		finalProps = finalProps.filter(([p]) => !replacedProps.has(p));
 	}
 
 	return [...finalProps, ...derivedProps];

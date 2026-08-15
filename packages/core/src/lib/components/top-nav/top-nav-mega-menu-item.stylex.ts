@@ -10,6 +10,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMegaMenuItem.tsx` styles.
@@ -40,14 +41,6 @@ const styles = stylex.create({
 			':active': colorVars['--color-overlay-pressed']
 		},
 		border: 'none',
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		},
 		color: 'inherit',
 		fontFamily: 'inherit',
 		textAlign: 'start',
@@ -117,7 +110,7 @@ const styles = stylex.create({
 
 /** The desktop card. */
 export function megaMenuItemAttrs(xstyle?: StyleArg): SvelteStyleAttrs {
-	return sx(styles.desktop, xstyle);
+	return focusOutlineProps.focusVisible(styles.desktop, xstyle);
 }
 
 /** The 40px icon tile on the desktop card. */

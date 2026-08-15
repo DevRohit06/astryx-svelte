@@ -7,27 +7,57 @@ import DateTimeInput from '$lib/components/date-time-input/date-time-input.svelt
 import type { ISODateTimeString } from '$lib/components/date-time-input/date-time-input.svelte';
 import { defineTheme } from '$lib/theme/define-theme.js';
 import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
+import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
+import DateTimeInputI18n from './fixtures/date-time-input-i18n.svelte';
 
 /**
  * Astryx's `DateTimeInput/DateTimeInput.test.tsx`, ported case for case — **all
- * 75 of upstream's 75** at v0.3.0 (45 directly in `describe('DateTimeInput')`,
- * 5 in `describe('hasClear')`, 1 in `describe('external value changes')`, 6 in
+ * 83 of upstream's 83** at v0.4.1 (45 directly in `describe('DateTimeInput')`,
+ * 5 in `describe('hasClear')`, 1 in `describe('external value changes')`, 7 in
  * `describe('invalid typed input feedback (WCAG 3.3.1)')`, 9 in
- * `describe('disabledMessage')`, 2 in `describe('timeIncrement')` and 7 in
- * `describe('segment theme targets')`). The file has no `displayName` case, no
- * snapshot and no no-JSX construction form, so the only React-only surface is
- * `ref`, which gets a counterpart.
+ * `describe('disabledMessage')`, 4 in `describe('timeIncrement')`, 3 in
+ * `describe('weekStartsOn')`, 7 in `describe('segment theme targets')` and 2 in
+ * the top-level `describe('DateTimeInput disabled theme state')`). The file has
+ * no `displayName` case, no snapshot and no no-JSX construction form, so the
+ * only React-only surface is `ref`, which gets a counterpart.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
  * This header used to read "64 upstream cases … 64 here, **none dropped**".
- * Upstream has **75**; the eleven that were absent — the four forms-13
- * keyboard-open cases and the whole seven-case `segment theme targets` describe
- * — are now here. The segment block's last case swaps upstream's
+ * Upstream had **75** at v0.3.0; the eleven that were absent — the four
+ * forms-13 keyboard-open cases and the whole seven-case `segment theme targets`
+ * describe — are now here. The segment block's last case swaps upstream's
  * `generateThemeTestCSS` for this port's `generateThemeCss`, the substitution
  * `multi-selector` and `selector` already made; everything else in the eleven is
  * upstream's assertion unchanged, with `getByLabelText(…)` resolved through the
  * file's existing `dateInputIn`/`timeInputIn` element helpers.
+ *
+ * ## v0.4.1 (#4876, #4900)
+ *
+ * Upstream added eight, all here:
+ *
+ * - `resolves the invalid date and time announcements from the i18n catalog`,
+ *   in `invalid typed input feedback (WCAG 3.3.1)`. Upstream wraps the
+ *   component in `<InternationalizationProvider>` inline; a provider's
+ *   `children` is a snippet here, so it goes through
+ *   `fixtures/date-time-input-i18n.svelte` — the `field-label-i18n.svelte`
+ *   precedent. Same provider, same overrides, same assertions.
+ * - the two ArrowUp/ArrowDown polite-announcement cases, in `timeIncrement`.
+ *   They need upstream's new `afterEach(__resetLiveRegionsForTest)`, folded into
+ *   this file's existing `afterEach`, and its `politeRegion()` helper verbatim.
+ * - `describe('weekStartsOn')` (3), between `timeIncrement` and `segment theme
+ *   targets` where upstream puts it.
+ * - `describe('DateTimeInput disabled theme state')` (2), for the root's new
+ *   `data-disabled`/`disabled` reflection.
+ *
+ * Upstream's `openAndReadWeekdays` carries a comment about jsdom role queries
+ * skipping the top layer. That constraint does not exist here — Chromium's
+ * popover content is queryable — but the helper still reads the columnheaders
+ * off the container directly, which is upstream's assertion unchanged.
+ *
+ * Nothing here covers the `onHide`/`isFocusDetached` focus-return change that
+ * shipped alongside: upstream added no case for it, and inventing one would be
+ * coverage beyond upstream.
  *
  * Upstream's `disabledMessage` `beforeEach` (`:593-600`) shims
  * `showPopover`/`hidePopover` because jsdom implements neither, and its
@@ -166,6 +196,11 @@ async function keyDown(el: HTMLElement, key: string, init: KeyboardEventInit = {
 	await tick();
 }
 
+/** Upstream's `politeRegion()` — the singleton polite live region on `body`. */
+function politeRegion(): HTMLElement | null {
+	return document.querySelector('[data-astryx-live-region="polite"]');
+}
+
 /** Collects the text of every element an `aria-describedby` points at. */
 function describedText(el: HTMLElement): string {
 	return (el.getAttribute('aria-describedby') ?? '')
@@ -204,6 +239,9 @@ afterAll(() => {
 
 afterEach(() => {
 	vi.useRealTimers();
+	// Upstream's own `afterEach` — the arrow-key announcements go through the
+	// module-level singleton live regions, so each case has to start clean.
+	__resetLiveRegionsForTest();
 });
 
 describe('DateTimeInput', () => {
@@ -800,6 +838,32 @@ describe('DateTimeInput', () => {
 
 			await expect.element(screen.getByText('Invalid time', exact)).toBeInTheDocument();
 		});
+
+		// Upstream wraps the component in `<InternationalizationProvider>` inline;
+		// a provider's `children` is a snippet here, so the wrapper is the
+		// `date-time-input-i18n.svelte` fixture. Same provider, same overrides.
+		it('resolves the invalid date and time announcements from the i18n catalog', async () => {
+			const screen = await render(DateTimeInputI18n, {
+				props: {
+					locale: 'en',
+					overrides: {
+						en: {
+							'@astryx.dateInput.invalidDate': 'Ungültiges Datum',
+							'@astryx.timeInput.invalidTime': 'Ungültige Zeit'
+						}
+					},
+					label: 'Meeting',
+					value: iso('2026-03-15T10:00'),
+					onChange: noop
+				}
+			});
+
+			await changeValue(dateInputIn(screen.container), '13/45/2024');
+			await expect.element(screen.getByText('Ungültiges Datum', exact)).toBeInTheDocument();
+
+			await changeValue(timeInputIn(screen.container), '99:99 zz');
+			await expect.element(screen.getByText('Ungültige Zeit', exact)).toBeInTheDocument();
+		});
 	});
 
 	describe('disabledMessage', () => {
@@ -993,6 +1057,94 @@ describe('DateTimeInput', () => {
 			expect(onChange).toHaveBeenCalledTimes(1);
 			expect(onChange.mock.calls[0][0]).toContain('14:31');
 		});
+
+		// Arrow-key stepping mutates a plain textbox programmatically, and screen
+		// readers do not announce programmatic textbox changes — the new value
+		// must be announced through the polite live region (WCAG 4.1.2).
+		it('politely announces the new time after ArrowUp stepping', async () => {
+			const screen = await render(DateTimeInput, {
+				props: { label: 'Meeting', value: iso('2026-03-15T14:30'), onChange: noop }
+			});
+
+			await keyDown(timeInputIn(screen.container), 'ArrowUp');
+
+			// Upstream's `waitFor`; `announce` writes the text in a rAF callback, so
+			// the retry is load-bearing here too.
+			await vi.waitFor(() => {
+				expect(politeRegion()).toHaveTextContent('2:31 PM');
+			});
+		});
+
+		it('politely announces the new time after ArrowDown stepping', async () => {
+			const screen = await render(DateTimeInput, {
+				props: { label: 'Meeting', value: iso('2026-03-15T14:30'), onChange: noop }
+			});
+
+			await keyDown(timeInputIn(screen.container), 'ArrowDown');
+
+			await vi.waitFor(() => {
+				expect(politeRegion()).toHaveTextContent('2:29 PM');
+			});
+		});
+	});
+
+	describe('weekStartsOn', () => {
+		// Upstream's helper takes the container because jsdom's role queries skip
+		// the top layer. Chromium's do not, but the columnheaders are still read
+		// off the container directly — upstream's assertion unchanged. Upstream's
+		// `fireEvent.keyDown(getAllByRole('combobox')[0], …)` is this file's
+		// existing `keyDown(dateInputIn(container), …)`.
+		const openAndReadWeekdays = async (container: HTMLElement): Promise<(string | null)[]> => {
+			await keyDown(dateInputIn(container), 'ArrowDown');
+			return Array.from(container.querySelectorAll('[role="columnheader"]'))
+				.slice(0, 7)
+				.map((h) => h.textContent);
+		};
+
+		it('defaults to a Sunday-first week', async () => {
+			const screen = await render(DateTimeInput, {
+				props: { label: 'When', onChange: noop }
+			});
+			expect(await openAndReadWeekdays(screen.container)).toEqual([
+				'Su',
+				'Mo',
+				'Tu',
+				'We',
+				'Th',
+				'Fr',
+				'Sa'
+			]);
+		});
+
+		it('forwards a numeric weekStartsOn to the calendar', async () => {
+			const screen = await render(DateTimeInput, {
+				props: { label: 'When', onChange: noop, weekStartsOn: 1 }
+			});
+			expect(await openAndReadWeekdays(screen.container)).toEqual([
+				'Mo',
+				'Tu',
+				'We',
+				'Th',
+				'Fr',
+				'Sa',
+				'Su'
+			]);
+		});
+
+		it('accepts a three-letter day name', async () => {
+			const screen = await render(DateTimeInput, {
+				props: { label: 'When', onChange: noop, weekStartsOn: 'mon' }
+			});
+			expect(await openAndReadWeekdays(screen.container)).toEqual([
+				'Mo',
+				'Tu',
+				'We',
+				'Th',
+				'Fr',
+				'Sa',
+				'Su'
+			]);
+		});
 	});
 
 	// ===========================================================================
@@ -1102,5 +1254,24 @@ describe('DateTimeInput', () => {
 			expect(css).toContain('block-size: var(--size-element-lg)');
 			expect(css).toContain('padding-inline: var(--spacing-4)');
 		});
+	});
+});
+
+describe('DateTimeInput disabled theme state', () => {
+	it('reflects disabled on the root target so themes can gate paint on it', async () => {
+		const screen = await render(DateTimeInput, {
+			props: { label: 'Meeting', onChange: noop, isDisabled: true }
+		});
+		const root = screen.container.querySelector('.astryx-date-time-input');
+		expect(root).toHaveAttribute('data-disabled', 'disabled');
+		expect(root).toHaveClass('disabled');
+	});
+
+	it('omits data-disabled when enabled, like status does', async () => {
+		const screen = await render(DateTimeInput, {
+			props: { label: 'Meeting', onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-date-time-input');
+		expect(root).not.toHaveAttribute('data-disabled');
 	});
 });

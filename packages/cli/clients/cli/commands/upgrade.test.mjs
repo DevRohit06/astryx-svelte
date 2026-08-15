@@ -180,12 +180,9 @@ describe('upgrade --list dedup', () => {
 		const names = result.data.map((c) => c.name);
 		const unique = new Set(names);
 		// The bug: 31 unique codemods printed 9× → 201 entries. The uniqueness half
-		// is trivially satisfied while the registry is empty, so the case's live
-		// value today is the envelope: `--list` resolves, emits upgrade.list, and
-		// returns the honest empty rather than throwing on `latestVersion`
-		// being undefined (which is what the guard in `_adapter.collectAllCodemods`
-		// exists to prevent).
-		expect(result.data).toEqual([]);
+		// was trivially satisfied while the registry was empty; with v0.4.0's three
+		// transforms registered it now tests what it was written to test.
+		expect(result.data).toHaveLength(3);
 		expect(names.length).toBe(unique.size);
 	});
 });

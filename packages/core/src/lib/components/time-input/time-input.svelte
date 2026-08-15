@@ -167,6 +167,7 @@
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
 	import InputStatusIcon from '../../hooks/input-status-icon.svelte';
 	import Field from '../field/field.svelte';
+	import InputClearButton from '../field/input-clear-button.svelte';
 	import Icon from '../icon/icon.svelte';
 	import Spinner from '../spinner/spinner.svelte';
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
@@ -175,7 +176,6 @@
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
 	import {
 		timeInputAttrs,
-		timeInputClearButtonAttrs,
 		timeInputIconAttrs,
 		timeInputWrapperAttrs
 	} from './time-input.stylex.js';
@@ -457,6 +457,11 @@
 
 			if (isTimeInRange(newTime, min, max)) {
 				fireChange(newTime);
+				// Stepping programmatically rewrites a plain textbox's value, and
+				// screen readers do not announce programmatic textbox changes — the
+				// new value must be spoken explicitly or stepping is silent
+				// (WCAG 4.1.2).
+				announce(formatDisplayTime(newTime, hasSeconds));
 			}
 		}
 	}
@@ -473,13 +478,20 @@
 		disabled: isDisabled
 	}));
 
-	const theme = $derived(themeProps('time-input', { size, status: status?.type ?? null }));
+	// `disabled` reflects as `data-disabled` (and as a bare state class) so a theme
+	// can reach the state without duplicating the component's own conditionals.
+	const theme = $derived(
+		themeProps('time-input', {
+			size,
+			status: status?.type ?? null,
+			disabled: isDisabled ? 'disabled' : null
+		})
+	);
 	const wrapperAttrs = $derived(
 		timeInputWrapperAttrs(size, status?.type, isDisabled, inputGroup != null, xstyle)
 	);
 	const iconAttrs = timeInputIconAttrs();
 	const controlAttrs = $derived(timeInputAttrs(isDisabled, !isInputValid));
-	const clearAttrs = timeInputClearButtonAttrs();
 </script>
 
 {#snippet inputWrapper()}
@@ -539,19 +551,14 @@
 			would get no feedback that their entry was rejected (WCAG 3.3.1).
 		-->
 		<VisuallyHidden as="div" role="alert" aria-live="assertive">
-			{!isInputValid ? 'Invalid time' : ''}
+			{!isInputValid ? t('@astryx.timeInput.invalidTime') : ''}
 		</VisuallyHidden>
 		{#if isBusy}<Spinner size="sm" />{/if}
 		{#if hasClear && value && !isDisabled}
-			<button
-				type="button"
+			<InputClearButton
+				label={t('@astryx.timeInput.clearLabel', { label })}
 				onclick={handleClear}
-				aria-label={t('@astryx.timeInput.clearLabel', { label })}
-				class={clearAttrs.class}
-				style={clearAttrs.style}
-			>
-				<Icon icon="close" size="sm" color="secondary" />
-			</button>
+			/>
 		{/if}
 		<InputStatusIcon {statusIcon} />
 	</div>

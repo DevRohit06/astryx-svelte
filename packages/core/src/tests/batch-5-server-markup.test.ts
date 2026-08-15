@@ -4,17 +4,24 @@ import CodeBlock from '$lib/components/code-block/code-block.svelte';
 import NumberInput from '$lib/components/number-input/number-input.svelte';
 
 /**
- * Server-markup coverage for the two batch-5 fixes whose *client* halves are
- * pinned in `number-input-spread-value.svelte.test.ts` and
- * `code-block-pre-whitespace.svelte.test.ts`. Both fixes have a server side that
- * a client-project test structurally cannot reach, and Svelte compiles a
- * separate server output, so the two halves genuinely need separate assertions.
+ * Server-markup coverage for two batch-5 fixes. Both have a server side that a
+ * client-project test structurally cannot reach, and Svelte compiles a separate
+ * server output, so the two halves genuinely need separate assertions.
+ *
+ * `CodeBlock`'s client half is `code-block-pre-whitespace.svelte.test.ts`.
+ * `NumberInput`'s **no longer has one**: `number-input-spread-value.svelte.test.ts`
+ * was retired at 0.4.1 (#4896) when `type="number"` became a text-backed
+ * spinbutton and took the `badInput` hazard with it — see TODO.md's batch-5
+ * entry. That makes these two cases the *only* remaining pin on the
+ * server-only `value` spread, which is why they matter more now than when they
+ * were written: without the spread a server-rendered field comes back empty,
+ * and nothing else would catch it.
  *
  * Placed in the node project against `svelte/server`, the placement
  * `hover-card.test.ts` and `metadata-list.test.ts` already use.
  *
  * Neither case has an upstream counterpart — upstream has no equivalent hazard
- * to test, for the reasons the two client files set out at length.
+ * to test, for the reasons each fix sets out at its call site.
  */
 
 describe('NumberInput — SSR', () => {
@@ -24,7 +31,8 @@ describe('NumberInput — SSR', () => {
 	 * spread loses Svelte's compare-against-the-DOM guard. Attachments do not run
 	 * on the server, so the component adds a server-only `value` spread — without
 	 * it a server-rendered field would come back **empty**, where React's emits
-	 * the value.
+	 * the value. The attachment itself is defensive as of 0.4.1; this spread,
+	 * which exists only because of it, is not.
 	 *
 	 * Mutation-checked: removing `{...isServer ? { value: displayValue } : undefined}`
 	 * fails the first case (attribute absent).

@@ -128,7 +128,7 @@
 	.stage-sticky {
 		position: sticky;
 		z-index: 10;
-		inset-block-start: var(--appshell-header-height, 0px);
+		inset-block-start: var(--_app-shell-header-height, 0px);
 		max-height: 400px;
 		overflow: auto;
 		background-color: var(--color-background-body);

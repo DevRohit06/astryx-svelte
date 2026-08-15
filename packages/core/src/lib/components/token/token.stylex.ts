@@ -10,6 +10,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps, focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Extensible colour map for `Token`.
@@ -81,14 +82,6 @@ const styles = stylex.create({
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
 		}
 	},
 	disabled: {
@@ -116,16 +109,6 @@ const styles = stylex.create({
 		overflow: 'hidden',
 		minWidth: 0
 	},
-	focusVisibleOutline: {
-		outline: {
-			default: null,
-			':has(:focus-visible)': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':has(:focus-visible)': '2px'
-		}
-	},
 	removeButton: {
 		all: 'unset',
 		display: 'inline-flex',
@@ -139,10 +122,6 @@ const styles = stylex.create({
 		width: '16px',
 		height: '16px',
 		color: 'inherit',
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
 		'::after': {
 			content: '""',
 			position: 'absolute',
@@ -234,7 +213,7 @@ export function tokenRootAttrs(
 		sizeStyles[size],
 		colorStyles[color],
 		interactive && styles.interactive,
-		focusWithin && styles.focusVisibleOutline,
+		focusWithin && focusOutlineStyles.focusWithin,
 		isDisabled && styles.disabled,
 		xstyle
 	);
@@ -250,7 +229,17 @@ export function tokenInvisibleButtonAttrs(): SvelteStyleAttrs {
 	return sx(styles.invisibleButton);
 }
 
-/** The trailing remove (X) button. */
+/**
+ * The trailing remove (X) button.
+ *
+ * The ring comes first so a caller style could re-colour it — the rule
+ * `focusOutlineProps` states — and it is composed here rather than declared in
+ * `styles.removeButton` because 0.4.x (#4973) is precisely the fix for this
+ * button having had *no* ring: `all: 'unset'` cleared the UA outline and nothing
+ * put one back, so a keyboard user tabbing onto it saw nothing. The shared
+ * longhands outrank the `all` shorthand whatever the merge order, which is what
+ * makes composing it here enough.
+ */
 export function tokenRemoveButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.removeButton);
+	return focusOutlineProps.focusVisible(styles.removeButton);
 }

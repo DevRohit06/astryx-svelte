@@ -276,7 +276,7 @@
 	 */
 	.block-heading {
 		scroll-margin-block-start: calc(
-			var(--appshell-header-height, 56px) + var(--docs-anchor-offset, 0px) + 16px
+			var(--_app-shell-header-height, 56px) + var(--docs-anchor-offset, 0px) + 16px
 		);
 	}
 

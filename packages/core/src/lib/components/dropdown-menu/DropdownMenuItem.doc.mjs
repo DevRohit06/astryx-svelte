@@ -53,6 +53,20 @@ export default {
 			description: 'Additional content rendered after the label and description.'
 		},
 		{
+			name: 'hasCloseOnSelect',
+			type: 'boolean',
+			description:
+				'Whether activating the item closes the menu. Set false for an action that reports its result on the item itself.',
+			default: 'true'
+		},
+		{
+			name: 'variant',
+			type: "'destructive' | 'default'",
+			description:
+				"Visual variant. 'destructive' renders the label, description, and icon in the error color for dangerous actions (e.g. Delete).",
+			default: "'default'"
+		},
+		{
 			name: 'xstyle',
 			type: 'StyleArg',
 			description:

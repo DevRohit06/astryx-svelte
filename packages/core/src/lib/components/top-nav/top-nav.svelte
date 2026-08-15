@@ -51,7 +51,7 @@
 	import { useTopNavRenderMode } from './top-nav-render-context.svelte.js';
 	import {
 		topNavCenterContentAttrs,
-		topNavDrawerDividerAttrs,
+		topNavDrawerDividerStyle,
 		topNavDrawerExtraContentAttrs,
 		topNavDrawerItemsAttrs,
 		topNavEndContentAttrs,
@@ -133,7 +133,6 @@
 	const endContentAttrs = topNavEndContentAttrs();
 	const mobileBarEndAttrs = topNavMobileBarEndAttrs();
 	const drawerItemsAttrs = topNavDrawerItemsAttrs();
-	const drawerDividerAttrs = topNavDrawerDividerAttrs();
 	// Empty on both sides — kept off the DOM rather than rendered as `class=""`.
 	const drawerExtraContentAttrs = topNavDrawerExtraContentAttrs();
 </script>
@@ -175,9 +174,7 @@
 				</div>
 			{/if}
 			{#if hasCollapsibleContent && mobileContent()}
-				<div class={drawerDividerAttrs.class} style={drawerDividerAttrs.style}>
-					<Divider />
-				</div>
+				<Divider xstyle={topNavDrawerDividerStyle} />
 			{/if}
 			{#if mobileContent()}
 				{@const extra = mobileContent()}

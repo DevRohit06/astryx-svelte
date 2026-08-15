@@ -53,7 +53,11 @@ const styles = stylex.create({
 		flexShrink: 0,
 		width: '14px',
 		height: '14px',
-		color: colorVars['--color-text-disabled'],
+		color: colorVars['--color-text-disabled']
+	},
+	// Rides on the chevron <Icon> (via `xstyle`), next to the rotation it
+	// animates, so one element carries both the transform and the theme target.
+	chevronTransition: {
 		transition: {
 			default: `transform ${durationVars['--duration-fast']} ${easeVars['--ease-standard']}`,
 			'@media (prefers-reduced-motion: reduce)': 'none'
@@ -75,7 +79,19 @@ const styles = stylex.create({
 	},
 	groupContentInner: {
 		overflow: 'hidden',
-		minHeight: 0
+		minHeight: 0,
+		// `list` (and, within it, each `callRowClickable` row) overhangs its own
+		// content box by `--spacing-1` on each inline edge via a negative margin,
+		// so its hover background can extend past the text column without
+		// widening the layout — `list`'s own matching paddingInline absorbs the
+		// row-level overhang, but `list`'s negative margin then overhangs *this*
+		// element's box by the same amount, and this is the clip boundary the
+		// grid height animation needs `overflow: hidden` for. Mirror the same
+		// padding/negative-margin pair here so that overhang is absorbed too,
+		// instead of clipped — matching the ungrouped single-call row, which has
+		// no such wrapper to clip it.
+		paddingInline: spacingVars['--spacing-1'],
+		marginInline: `calc(-1 * ${spacingVars['--spacing-1']})`
 	},
 	list: {
 		display: 'flex',
@@ -193,10 +209,6 @@ const styles = stylex.create({
 		width: '14px',
 		height: '14px',
 		color: colorVars['--color-text-disabled'],
-		transition: {
-			default: `transform ${durationVars['--duration-fast']} ${easeVars['--ease-standard']}`,
-			'@media (prefers-reduced-motion: reduce)': 'none'
-		},
 		marginInlineStart: 'auto'
 	},
 	callDetailContent: {
@@ -261,6 +273,15 @@ const STATUS_STYLES = {
 /** Passed to `Badge`'s `xstyle`, the way upstream passes `styles.nodePill`. */
 export const chatToolCallNodePillStyle = styles.nodePill;
 
+/**
+ * Passed to the chevron `Icon`'s `xstyle`, the way upstream passes
+ * `styles.chevronTransition` and `styles.chevronExpanded` at both chevrons
+ * (#4838). The transition and the rotation it animates now ride the glyph
+ * itself rather than the wrapper `<span>`, so a single element carries both.
+ */
+export const chatToolCallChevronTransitionStyle = styles.chevronTransition;
+export const chatToolCallChevronExpandedStyle = styles.chevronExpanded;
+
 export function chatToolCallsRootAttrs(xstyle?: StyleArg): SvelteStyleAttrs {
 	return sx(styles.root, xstyle);
 }
@@ -309,8 +330,8 @@ export function chatToolCallDurationAttrs(): SvelteStyleAttrs {
 	return sx(styles.callDuration);
 }
 
-export function chatToolCallDetailChevronAttrs(isDetailOpen: boolean): SvelteStyleAttrs {
-	return sx(styles.callDetailChevron, isDetailOpen && styles.chevronExpanded);
+export function chatToolCallDetailChevronAttrs(): SvelteStyleAttrs {
+	return sx(styles.callDetailChevron);
 }
 
 export function chatToolCallDetailContentAttrs(): SvelteStyleAttrs {
@@ -329,8 +350,8 @@ export function chatToolCallsCountAttrs(): SvelteStyleAttrs {
 	return sx(styles.callCount);
 }
 
-export function chatToolCallsChevronAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(styles.chevron, isExpanded && styles.chevronExpanded);
+export function chatToolCallsChevronAttrs(): SvelteStyleAttrs {
+	return sx(styles.chevron);
 }
 
 export function chatToolCallsGroupContentAttrs(isExpanded: boolean): SvelteStyleAttrs {

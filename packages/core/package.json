@@ -1,7 +1,7 @@
 {
 	"name": "@astryx-svelte/core",
 	"displayName": "Astryx Core",
-	"version": "0.3.1",
+	"version": "0.4.1",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -32,7 +32,8 @@
 		"test:parity": "node scripts/compare-upstream-classes.mjs",
 		"test:css": "node scripts/compare-upstream-css.mjs",
 		"build:css": "node scripts/build-css.mjs",
-		"test": "npm run test:unit -- --run --project=server && npm run test:client && npm run test:parity && npm run test:css"
+		"test:node": "npm run test:unit -- --run --project=server && npm run test:parity && npm run test:css",
+		"test": "npm run test:node && npm run test:client"
 	},
 	"files": [
 		"dist",
@@ -119,7 +120,7 @@
 		"vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
 	},
 	"devDependencies": {
-		"@astryxdesign/core": "0.3.0",
+		"@astryxdesign/core": "0.4.1",
 		"@babel/core": "^7.29.7",
 		"@babel/plugin-syntax-typescript": "^7.29.7",
 		"@eslint/js": "^10.0.1",

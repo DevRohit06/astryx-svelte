@@ -42,7 +42,7 @@
 
 	function readNavHeight(): number {
 		const raw = getComputedStyle(document.documentElement).getPropertyValue(
-			'--appshell-header-height'
+			'--_app-shell-header-height'
 		);
 		return parseFloat(raw) || 64;
 	}

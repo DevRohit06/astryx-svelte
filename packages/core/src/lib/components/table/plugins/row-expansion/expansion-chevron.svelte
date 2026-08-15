@@ -11,25 +11,23 @@
 
 <script lang="ts">
 	import Icon from '../../../icon/icon.svelte';
-	import {
-		expansionChevronButtonAttrs,
-		expansionChevronIconAttrs
-	} from './row-expansion.stylex.js';
-	import { rtlMirrorAttrs } from '../../../../utils/rtl.stylex.js';
+	import { expansionChevronButtonAttrs } from './row-expansion.stylex.js';
 
 	/**
 	 * Ported from Astryx's `ExpansionChevron`, the module-private component
-	 * `useTableRowExpansion.tsx` renders in both the synthetic expansion column
-	 * and (for child rows) inline in the first content column.
+	 * `useTableRowExpansion.tsx` renders in the synthetic expansion column.
 	 *
 	 * Module-private upstream, so the props type is exported for `$props()`
 	 * typing but is deliberately not on the barrel.
+	 *
+	 * At 0.4.1 the rotation moved onto the **button** — `stylex.props(chevronButton,
+	 * isExpanded && chevronExpanded)` — so the icon is a bare `<Icon>` with no
+	 * wrapper span and no `rtlStyles.mirror`. Both spans were this port's reading
+	 * of the pre-0.4.1 markup and both are gone with it.
 	 */
 	let { isExpanded, onToggle, ariaLabel }: ExpansionChevronProps = $props();
 
-	const buttonAttrs = expansionChevronButtonAttrs();
-	const iconAttrs = $derived(expansionChevronIconAttrs(isExpanded));
-	const mirror = rtlMirrorAttrs();
+	const buttonAttrs = $derived(expansionChevronButtonAttrs(isExpanded));
 </script>
 
 <button
@@ -43,9 +41,5 @@
 	aria-label={ariaLabel}
 	aria-expanded={isExpanded}
 >
-	<span class={mirror.class} style={mirror.style}>
-		<span class={iconAttrs.class} style={iconAttrs.style}>
-			<Icon icon="chevronRight" size="xsm" />
-		</span>
-	</span>
+	<Icon icon="chevronRight" size="xsm" />
 </button>

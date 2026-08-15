@@ -10,6 +10,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMenu.tsx` styles.
@@ -46,14 +47,6 @@ const styles = stylex.create({
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
 		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		},
 		border: 'none',
 		fontFamily: 'inherit'
 	},
@@ -64,6 +57,14 @@ const styles = stylex.create({
 	chevron: {
 		display: 'inline-flex',
 		alignItems: 'center',
+		// The registry chevron is a 1em SVG, so it has always rendered at the
+		// trigger's own font size (--text-label-size). Icon's size box would repin
+		// it to a fixed rem (the nearest, sm, is 1rem = 16px vs the 14px here), so
+		// hold it on the inherited em: same pixels, and still tracks the type
+		// scale when a theme changes the label size.
+		width: '1em',
+		height: '1em',
+		fontSize: 'inherit',
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
@@ -77,9 +78,6 @@ const styles = stylex.create({
 		gap: spacingVars['--spacing-1'],
 		minWidth: 280,
 		padding: spacingVars['--spacing-1']
-	},
-	menuOffset: {
-		marginBlockStart: spacingVars['--spacing-1']
 	},
 	menuItem: {
 		display: 'flex',
@@ -99,15 +97,7 @@ const styles = stylex.create({
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
 		},
-		border: 'none',
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		border: 'none'
 	},
 	menuItemIcon: {
 		display: 'flex',
@@ -151,6 +141,11 @@ const drawerStyles = stylex.create({
 	},
 	chevron: {
 		display: 'inline-flex',
+		// Same em pin as styles.chevron above — the drawer header inherits
+		// --text-label-size from navItemStyles.item.
+		width: '1em',
+		height: '1em',
+		fontSize: 'inherit',
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
@@ -194,20 +189,28 @@ const drawerStyles = stylex.create({
 });
 
 /**
- * The gap between the trigger and its popover. Passed to `usePopover`'s
- * `xstyle` option *and* to `<PopoverLayer>`'s, as upstream passes it to both the
- * hook options and the `render` call.
+ * The gap between the trigger and its popover, passed to `<PopoverLayer offset>`
+ * (#4951). It used to be a `styles.menuOffset` `marginBlockStart` handed to both
+ * `usePopover`'s `xstyle` option and the layer's, which a
+ * `position-try-fallbacks` flip would strand on the wrong edge; upstream deleted
+ * the key outright and passes the token to `render`. A token cannot be read from
+ * a `.svelte` file, so it is re-exported here — the `powerSearchPopoverOffset`
+ * arrangement.
  */
-export const topNavMenuOffset = styles.menuOffset;
+export const topNavMenuOffset: string = spacingVars['--spacing-1'];
 
 /** The desktop trigger button. */
 export function topNavMenuTriggerAttrs(isOpen: boolean, xstyle?: StyleArg): SvelteStyleAttrs {
-	return sx(styles.trigger, isOpen && styles.triggerOpen, xstyle);
+	return focusOutlineProps.focusVisible(styles.trigger, isOpen && styles.triggerOpen, xstyle);
 }
 
-/** The trigger's chevron, rotated while open. */
-export function topNavMenuChevronAttrs(isOpen: boolean): SvelteStyleAttrs {
-	return sx(styles.chevron, isOpen && styles.chevronOpen);
+/**
+ * The trigger's chevron, rotated while open — passed to the `Icon`'s `xstyle`
+ * as upstream's `[styles.chevron, isOpen && styles.chevronOpen]` array (#4838),
+ * so the wrapper `<span>` that used to hold it is gone.
+ */
+export function topNavMenuChevronStyle(isOpen: boolean): StyleArg {
+	return [styles.chevron, isOpen && styles.chevronOpen];
 }
 
 /** The `role="menu"` container inside the popover. */
@@ -217,7 +220,7 @@ export function topNavMenuContainerAttrs(): SvelteStyleAttrs {
 
 /** A `role="menuitem"` row in the popover. */
 export function topNavMenuItemAttrs(): SvelteStyleAttrs {
-	return sx(styles.menuItem);
+	return focusOutlineProps.focusVisible(styles.menuItem);
 }
 
 /** The 40px icon tile on a popover row. */
@@ -250,9 +253,9 @@ export function topNavMenuDrawerHeaderAttrs(): SvelteStyleAttrs {
 	return sx(navItemStyles.item, drawerStyles.header);
 }
 
-/** The drawer header's chevron, rotated while expanded. */
-export function topNavMenuDrawerChevronAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(drawerStyles.chevron, isExpanded && drawerStyles.chevronExpanded);
+/** The drawer header's chevron, rotated while expanded. Also an `Icon` `xstyle` (#4838). */
+export function topNavMenuDrawerChevronStyle(isExpanded: boolean): StyleArg {
+	return [drawerStyles.chevron, isExpanded && drawerStyles.chevronExpanded];
 }
 
 /** The `0fr → 1fr` grid that animates the drawer section open. */

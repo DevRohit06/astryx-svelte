@@ -47,11 +47,8 @@
 		useDropdownMenuRadioGroupContext
 	} from './dropdown-menu-context.svelte.js';
 	import { focusMenuItemOnHover } from './menu-item-hover.js';
-	import {
-		radioCircleAttrs,
-		radioDotAttrs,
-		radioItemXstyle
-	} from './dropdown-menu-radio-item.stylex.js';
+	import { radioItemXstyle, radioMarkerXstyle } from './dropdown-menu-radio-item.stylex.js';
+	import { useIndicator } from '../indicator/use-indicator.svelte.js';
 
 	/**
 	 * A single option in a `DropdownMenuRadioGroup` (`role="menuitemradio"`).
@@ -111,19 +108,20 @@
 			disabled: isDisabled ? 'disabled' : null
 		})
 	);
-	// The dot renders only when checked, so its `checked` state is a constant —
-	// it mirrors the circle's visual props/states so both theme consistently.
-	const dotTheme = $derived(
-		themeProps('dropdown-menu-radio-dot', {
-			size: controlSize,
-			checked: 'checked',
-			disabled: isDisabled ? 'disabled' : null
-		})
-	);
+	// `dropdown-menu-radio-dot` is GONE at upstream 0.4.0, and it is the one
+	// removal in this release a theme cannot be warned about at build time: a
+	// runtime theme keyed on it keeps compiling and silently stops matching. The
+	// dot is the shared indicator's dot now, so a theme targets
+	// `radio-indicator-dot` (or the legacy `radio-dot`, which the indicator still
+	// emits beside it). The row's circle keeps `dropdown-menu-radio` — only the
+	// dot moved.
 	const itemTheme = $derived(themeProps('dropdown-menu-item', { size: menuSize }));
-	const circleAttrs = $derived(radioCircleAttrs(controlSize, isChecked));
-	const dotAttrs = $derived(radioDotAttrs(controlSize));
 	const itemXstyle = $derived(radioItemXstyle(isDisabled, xstyle));
+
+	// A menu radio and a RadioList radio are the same component now, so a theme
+	// that replaces `radio` reaches both.
+	const radioIndicator = useIndicator('radio');
+	const RadioControl = $derived(radioIndicator.current);
 </script>
 
 {#snippet iconSlot()}
@@ -135,16 +133,18 @@
 {/snippet}
 
 {#snippet marker()}
-	<span
-		aria-hidden="true"
+	<!--
+		No wrapper: the theme target belongs on the visible circle, and the
+		indicator already owns its control size. `RadioIndicator` renders its own
+		`aria-hidden`, so the row does not restate it.
+	-->
+	<RadioControl
+		state={isChecked ? 'checked' : 'unchecked'}
+		size={controlSize}
+		{isDisabled}
+		xstyle={radioMarkerXstyle}
 		{...circleTheme}
-		class={cx(circleTheme.class, circleAttrs.class)}
-		style={circleAttrs.style}
-	>
-		{#if isChecked}
-			<span {...dotTheme} class={cx(dotTheme.class, dotAttrs.class)} style={dotAttrs.style}></span>
-		{/if}
-	</span>
+	/>
 {/snippet}
 
 <Item

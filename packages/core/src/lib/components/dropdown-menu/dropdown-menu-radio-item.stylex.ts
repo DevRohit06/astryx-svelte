@@ -1,19 +1,19 @@
 import * as stylex from '@stylexjs/stylex';
-import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
-import {
-	borderVars,
-	colorVars,
-	durationVars,
-	easeVars,
-	spacingVars
-} from '../../styles/tokens.stylex.js';
+import type { StyleArg } from '../../internal/sx.js';
+import { colorVars, spacingVars } from '../../styles/tokens.stylex.js';
 
 /**
  * Ported from Astryx's `DropdownMenu/DropdownMenuRadioItem.tsx` styles.
  *
- * The same shape as the checkbox item's, with a circle instead of a square and
- * an inner dot rather than a check glyph: `root` reaches `Item`'s `xstyle` as an
- * array and stays an object; the circle and dot each resolve at one call site.
+ * **The menu stopped drawing the radio at upstream 0.4.0.** The circle, the
+ * inner dot and their size ramps are `RadioIndicator`'s now, so a menu radio and
+ * a `RadioList` radio are literally the same component — which is the point of
+ * the change, and why `dropdown-menu-radio-dot` could be removed as a theme
+ * target: there is no menu-only dot element left to address, and a theme reaches
+ * the dot through `radio-indicator-dot` instead.
+ *
+ * What is left is `root` (reaching `Item`'s `xstyle` as an array, so it stays an
+ * object) and `marker` — where the indicator sits in the row.
  */
 const styles = stylex.create({
 	root: {
@@ -33,21 +33,12 @@ const styles = stylex.create({
 	},
 	// Rendered in Item's `marker` slot as a raw flex child. On touch it moves to
 	// the inline-end of the row via `order`.
-	circle: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		flexShrink: 0,
-		boxSizing: 'border-box',
-		borderWidth: borderVars['--border-width'],
-		borderStyle: 'solid',
-		borderRadius: '50%',
-		transitionProperty: 'background-color, border-color',
-		transitionDuration: {
-			default: durationVars['--duration-fast'],
-			'@media (prefers-reduced-motion: reduce)': '0s'
-		},
-		transitionTimingFunction: easeVars['--ease-standard'],
+	// Placement of the marker within the row. The indicator draws its own box
+	// (size, fill, border) — these are only the rules the MENU owns: where the
+	// marker sits in the row, and that it never takes the pointer. On touch it
+	// moves to the inline-end of the row via `order`.
+	marker: {
+		pointerEvents: 'none',
 		order: {
 			default: 0,
 			'@media (pointer: coarse)': 1
@@ -56,29 +47,7 @@ const styles = stylex.create({
 			default: 0,
 			'@media (pointer: coarse)': 'auto'
 		}
-	},
-	unchecked: {
-		borderColor: colorVars['--color-border-emphasized'],
-		backgroundColor: colorVars['--color-background-surface']
-	},
-	checked: {
-		borderColor: colorVars['--color-accent'],
-		backgroundColor: colorVars['--color-accent']
-	},
-	dot: {
-		borderRadius: '50%',
-		backgroundColor: colorVars['--color-on-accent']
 	}
-});
-
-const circleSizeStyles = stylex.create({
-	sm: { width: 18, height: 18 },
-	md: { width: 22, height: 22 }
-});
-
-const dotSizeStyles = stylex.create({
-	sm: { width: 6, height: 6 },
-	md: { width: 8, height: 8 }
 });
 
 /** The control size the circle renders at — a `sm` menu gets the compact one. */
@@ -89,19 +58,13 @@ export function radioItemXstyle(isDisabled: boolean, xstyle?: StyleArg): StyleAr
 	return [styles.root, isDisabled && styles.disabled, xstyle];
 }
 
-/** The decorative circle in `Item`'s `marker` slot. */
-export function radioCircleAttrs(
-	controlSize: RadioControlSize,
-	isChecked: boolean
-): SvelteStyleAttrs {
-	return sx(
-		styles.circle,
-		circleSizeStyles[controlSize],
-		isChecked ? styles.checked : styles.unchecked
-	);
-}
-
-/** The inner dot, rendered only when the item is checked. */
-export function radioDotAttrs(controlSize: RadioControlSize): SvelteStyleAttrs {
-	return sx(styles.dot, dotSizeStyles[controlSize]);
-}
+/**
+ * The `xstyle` handed to the radio indicator in `Item`'s `marker` slot.
+ *
+ * Everything the circle and its dot used to declare here moved to
+ * `RadioIndicator` at upstream 0.4.0 — including their two size ramps, which is
+ * why the menu no longer states `18/22` and `6/8` px: it passes a control
+ * `size` and the indicator picks the box. What stays is placement, because
+ * where a marker sits in a menu row is the menu's business, not the radio's.
+ */
+export const radioMarkerXstyle: StyleArg = styles.marker;

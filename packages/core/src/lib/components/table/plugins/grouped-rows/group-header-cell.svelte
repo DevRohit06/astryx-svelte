@@ -21,13 +21,14 @@
 	import { useTranslator } from '../../../../i18n/index.js';
 	import {
 		groupChevronAttrs,
-		groupChevronIconAttrs,
+		groupChevronIconCollapsedStyle,
+		groupChevronIconExpandedStyle,
+		groupChevronIconStyle,
 		groupCountAttrs,
 		groupHeaderCellAttrs,
 		groupHeaderInnerAttrs,
 		groupLabelAttrs
 	} from './grouped-rows.stylex.js';
-	import { rtlMirrorAttrs } from '../../../../utils/rtl.stylex.js';
 
 	/**
 	 * The full-width `<td>` a group-header row renders instead of its cells,
@@ -42,8 +43,10 @@
 	const chevronAttrs = groupChevronAttrs();
 	const labelAttrs = groupLabelAttrs();
 	const countAttrs = groupCountAttrs();
-	const chevronIconAttrs = $derived(groupChevronIconAttrs(!collapsed));
-	const mirror = rtlMirrorAttrs();
+	const chevronXstyle = $derived([
+		groupChevronIconStyle,
+		collapsed ? groupChevronIconCollapsedStyle : groupChevronIconExpandedStyle
+	]);
 </script>
 
 <!--
@@ -70,11 +73,12 @@
 				: t('@astryx.tableGroupedRows.collapseGroup', { groupKey })}
 			aria-expanded={!collapsed}
 		>
-			<span class={mirror.class} style={mirror.style}>
-				<span class={chevronIconAttrs.class} style={chevronIconAttrs.style}>
-					<Icon icon="chevronRight" size="xsm" />
-				</span>
-			</span>
+			<!--
+				The rotation rides on the glyph rather than a wrapper span so the
+				`astryx-icon` target reaches both the mark and its open/closed
+				transform (#4838).
+			-->
+			<Icon icon="chevronRight" size="xsm" xstyle={chevronXstyle} />
 		</button>
 		{#if renderGroupHeader}
 			{@render renderGroupHeader(groupKey, count, collapsed)}

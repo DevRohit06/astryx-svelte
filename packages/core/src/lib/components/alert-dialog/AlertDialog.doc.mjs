@@ -31,7 +31,7 @@ export default {
 	},
 	usage: {
 		description:
-			'AlertDialog asks the user to confirm a destructive or irreversible action before it happens. Use it for things like deleting content, revoking access, or discarding unsaved changes.\n\nFor cases where you want to show an alert without managing open state, use the `useImperativeAlertDialog` hook: call `alert.show(options)` and render `alert.element` in your tree.',
+			'AlertDialog asks the user to confirm a destructive or irreversible action before it happens. Use it for things like deleting content, revoking access, or discarding unsaved changes.\n\nIt implements the WAI-ARIA APG [Alert Dialog pattern](https://www.w3.org/WAI/ARIA/apg/patterns/alertdialog/): `role="alertdialog"`, a title linked by `aria-labelledby`, a consequence description linked by `aria-describedby`, focus moved into the dialog on open and returned to the trigger on close, and no dismissal by clicking outside. Escape cancels.\n\nFor cases where you want to show an alert without managing open state, use the `useImperativeAlertDialog` hook: call `alert.show(options)` and render `alert.element` in your tree.',
 		bestPractices: [
 			{
 				guidance: true,
@@ -44,8 +44,55 @@ export default {
 					'Describe what will happen in the description so the user knows the consequences before confirming.'
 			},
 			{
+				guidance: true,
+				description:
+					'Keep the cancel button first: it takes initial focus, so the least destructive choice is the one already selected when the dialog opens.'
+			},
+			{
 				guidance: false,
 				description: 'Use AlertDialog for non-destructive actions; use a standard Dialog instead.'
+			},
+			{
+				guidance: false,
+				description:
+					'Rely on color alone to signal danger; the action label itself should say what will happen.'
+			},
+			{
+				guidance: false,
+				description:
+					'Close the dialog from onAction before the work finishes; hold it open with isActionLoading and call onOpenChange(false) when the action settles.'
+			}
+		],
+		anatomy: [
+			{
+				name: 'Title',
+				required: true,
+				description:
+					'The question being asked. Renders as a level-2 heading and labels the dialog via aria-labelledby.'
+			},
+			{
+				name: 'Description',
+				required: true,
+				description:
+					'What will happen if the user confirms. Linked to the dialog via aria-describedby.'
+			},
+			{
+				name: 'Cancel button',
+				required: true,
+				description:
+					'Ghost button that dismisses without acting. Takes initial focus, and Escape does the same thing.'
+			},
+			{
+				name: 'Action button',
+				required: true,
+				description:
+					'The confirming action. Destructive by default; shows a spinner while isActionLoading is set.'
+			},
+			{
+				name: 'Backdrop',
+				required: true,
+				description:
+					'Overlay behind the dialog that blocks page interaction. Clicking it does not dismiss.'
 			}
 		]
 	},
@@ -123,7 +170,7 @@ export default {
 			name: 'isInline',
 			type: 'boolean',
 			description:
-				'Renders alert dialog content inline without modal behavior. For documentation previews and showcases only.',
+				'Renders alert dialog content inline without modal behavior. For documentation previews and showcases only. Not being a modal, the inline path renders role="group" instead of role="alertdialog".',
 			default: 'false'
 		}
 	]

@@ -11,15 +11,25 @@ import { resolveOnMedia, type OnMediaOverrides, type ResolvedOnMedia } from './o
 import { registerTheme } from './theme-registry.js';
 import type { SyntaxThemeDefinition } from './syntax/define-syntax-theme.js';
 import type { IconRegistry } from '../components/icon/icon-registry.js';
+import type { IndicatorRegistry } from '../components/indicator/types.js';
 
 /**
  * Ported from Astryx's `src/theme/defineTheme.ts`, covering the surface the
  * shipped themes exercise.
  *
- * Deliberately omitted for now, because no shipped theme uses it: `extends`. It
- * can be added without changing this shape. The **radius expander** was on that
- * list until the y2k theme landed and turned out to use it, and the
- * HCT-generative `color` field was on it until this slice landed it below.
+ * **Nothing is omitted from this shape any more.** Three fields were on a
+ * "deferred because no shipped theme uses it" list and all three came off it,
+ * none on the terms the list assumed. The **radius expander** went when the y2k
+ * theme turned out to use it. The HCT-generative **`color`** field went when a
+ * surface audit found `theme/index.ts` missing `expandColorScale` entirely.
+ * **`extends`** was the last, and it was the worst of the three: the CLI's
+ * shipped `theme.doc.mjs` had been documenting it — upstream's prose, carried
+ * over verbatim — so it was not a quiet gap a consumer might never notice but a
+ * documented feature that silently did nothing.
+ *
+ * The lesson those three earned together: "no shipped theme uses it" is a claim
+ * about this repo's themes, and it says nothing about what the published surface
+ * promises or what a consumer's theme will reach for.
  *
  * `color` had to arrive with all three of its pieces at once —
  * `expandColorScale`, its `hct` helpers and `contrast.ts` — but only
@@ -101,6 +111,33 @@ export interface ThemeConfig {
 	 * ```
 	 */
 	syntax?: SyntaxThemeDefinition;
+	/**
+	 * Base theme to extend. The new theme starts with the base theme's tokens,
+	 * components, icons and indicators, then applies this input's own on top —
+	 * the base always has lowest precedence, and `name` is always the child's.
+	 *
+	 * Use it to build a variant that customises a few aspects without restating a
+	 * whole theme.
+	 *
+	 * Only the four merged keys inherit. `syntax`, `onDark` and `onLight` do not,
+	 * which is upstream's behaviour and not an oversight here: `syntax` folds into
+	 * the token map before this point, so it inherits through `resolvedTokens`
+	 * anyway, and the on-media maps are resolved unconditionally from the port's
+	 * own defaults for every theme.
+	 *
+	 * @example
+	 * ```ts
+	 * import { neutralTheme } from '@astryx-svelte/theme-neutral';
+	 *
+	 * const myTheme = defineTheme({
+	 * 	name: 'my-brand',
+	 * 	extends: neutralTheme,
+	 * 	icons: myIcons,
+	 * 	tokens: { '--color-accent': '#FF0000' }
+	 * });
+	 * ```
+	 */
+	extends?: DefinedTheme;
 	tokens?: TokenMap;
 	components?: ComponentOverrides;
 	/**
@@ -114,6 +151,19 @@ export interface ThemeConfig {
 	 * made the last theme mounted win — and upstream removed that at 0.3.0.
 	 */
 	icons?: Partial<IconRegistry>;
+	/**
+	 * Indicator overrides — replaces the components that draw stateful control
+	 * visuals with the theme's own, by name.
+	 *
+	 * Replacement is by indicator name, not per call site, so a single entry
+	 * reaches every component that draws that indicator: mapping `check` to
+	 * `RadioIndicator` gives radio visuals to every single-selection mark in the
+	 * app.
+	 *
+	 * Each entry is checked against its indicator's family, so a replacement
+	 * must accept the states that family passes.
+	 */
+	indicators?: IndicatorRegistry;
 	/** Additions to the defaults for content on a dark surface (`<MediaTheme>`). */
 	onDark?: OnMediaOverrides;
 	/** Additions to the defaults for content on a light surface. Same shape as `onDark`. */
@@ -217,7 +267,16 @@ function deepMergeComponents(
  * upstream's equivalent map contains.
  */
 export function defineTheme(config: ThemeConfig): DefinedTheme {
+	// Step 0, as upstream numbers it: pre-seed from the base theme so everything
+	// below overwrites it. `base.resolvedTokens` and not `base.tokens` — upstream
+	// has one token map and this port has two, and the resolved one is the
+	// counterpart (see the note in `tokens.ts`). Seeding the raw map instead would
+	// inherit only what the base's author typed by hand and silently drop every
+	// token its expanders generated.
+	const base = config.extends;
+
 	const resolvedTokens: Record<string, string> = {
+		...base?.resolvedTokens,
 		// Colour leads, as upstream's step order has it — its step 1, ahead of the
 		// type scale. No generated key namespace actually collides (colour emits
 		// `--color-*`, and the syntax fold below owns `--color-syntax-*` alone), so
@@ -247,10 +306,32 @@ export function defineTheme(config: ThemeConfig): DefinedTheme {
 		}
 	}
 
-	const components = deepMergeComponents(generated, config.components);
+	let components = deepMergeComponents(generated, config.components);
+	// The base goes underneath the whole generated-then-explicit stack, not
+	// alongside it — upstream's step 3 ordering. A child's own entry for a style
+	// key still wins, and so does a generated one.
+	if (base?.components) {
+		components = deepMergeComponents(base.components, components);
+	}
+
+	// Icons and indicators merge one level deep, keyed by name: a child that
+	// replaces `check` keeps every other glyph the base registered.
+	const icons =
+		config.icons && base?.icons
+			? { ...base.icons, ...config.icons }
+			: (config.icons ?? base?.icons);
+	const indicators =
+		config.indicators && base?.indicators
+			? { ...base.indicators, ...config.indicators }
+			: (config.indicators ?? base?.indicators);
 
 	const theme: DefinedTheme = {
 		...config,
+		// After the spread, so the merged values win over the child's own raw ones.
+		// `name` deliberately is not merged: it comes from the spread, so a child
+		// always keeps its own.
+		icons,
+		indicators,
 		components,
 		resolvedTokens,
 		// Resolved unconditionally: the on-media defaults are what make

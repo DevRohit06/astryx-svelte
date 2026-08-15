@@ -4,24 +4,51 @@ import { render } from 'vitest-browser-svelte';
 import { tick } from 'svelte';
 import { createAttachmentKey } from 'svelte/attachments';
 import DateInput from '$lib/components/date-input/date-input.svelte';
+import Icon from '$lib/components/icon/icon.svelte';
 import type { ISODateString } from '$lib/utils/date-types.js';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import DateInputGroupProbe from './fixtures/date-input-group-probe.svelte';
+import DateInputI18n from './fixtures/date-input-i18n.svelte';
 
 /**
- * Astryx's `DateInput/DateInput.test.tsx`, ported case for case — 76 upstream
- * cases (48 directly in `describe('DateInput')`, 5 in `describe('hasClear')`,
- * 4 in `describe('incomplete typed input')`, 1 in
+ * Astryx's `DateInput/DateInput.test.tsx`, ported case for case — **84 of
+ * upstream's 93 at v0.4.1** (49 directly in `describe('DateInput')`, 5 in
+ * `describe('hasClear')`, 4 in `describe('incomplete typed input')`, 1 in
  * `describe('external value changes')`, 2 in `describe('InputGroup')`, 8 in
- * `describe('disabledMessage')` and 8 in `describe('format')`), 76 here, none
- * dropped.
+ * `describe('disabledMessage')`, 8 in `describe('format')`, 3 in
+ * `describe('weekStartsOn')`, 2 of the 4 in the top-level `DateInput clear icon
+ * theme target` and 2 in `DateInput disabled theme state`).
  *
- * Upstream's file is 87 cases at 0.2.0. The 11 not here are three top-level
- * describes that belong to other 0.2.0 workstreams and land with them, not with
- * `format`: `DateInput statusVariant forwarding` (2) and the two icon
- * theme-target suites (9). There is no
- * `displayName` case, no snapshot and no no-JSX construction form in the file,
- * so nothing is React-only except the ref case, which gets a counterpart.
+ * The 9 absences are all pre-v0.3.0 work belonging to other workstreams, which
+ * land with them rather than here:
+ * - `DateInput statusVariant forwarding` (2)
+ * - `DateInput calendar-toggle icon theme target` (5)
+ * - the two `DateInput clear icon theme target` cases that v0.4.1 did *not*
+ *   touch: `keeps the clear button functional alongside the target` (whose
+ *   assertion `describe('hasClear')`'s `calls onChange with undefined when clear
+ *   is clicked` already makes) and `exposes date-input-clear-icon so a theme
+ *   reaches the icon color, size, and hover` (a pure `defineTheme` →
+ *   `generateThemeCss` generation case with no `DateInput` in it; the
+ *   `selector.svelte.test.ts` block is the pattern it will follow).
+ *
+ * There is no `displayName` case, no snapshot and no no-JSX construction form in
+ * the file, so nothing is React-only except the ref case, which gets a
+ * counterpart.
+ *
+ * ## v0.3.0 → v0.4.1
+ *
+ * Eight upstream cases changed or appeared, and all eight are here:
+ * `resolves the invalid-date announcement from the i18n catalog` (the hardcoded
+ * "Invalid date" became `t('@astryx.dateInput.invalidDate')`), the three
+ * `weekStartsOn` cases (the new prop, forwarded raw to `Calendar`), the two
+ * `DateInput disabled theme state` cases (`themeProps` now reflects
+ * `disabled: isDisabled ? 'disabled' : null`), and the two clear-glyph cases
+ * that v0.4.1 rewrote when the clear affordance moved to the shared
+ * `InputClearButton` — `renders the astryx-input-clear-icon target (plus the
+ * legacy alias) on the clear glyph` and `routes the clear glyph through the
+ * shared clear button, keeping the legacy target`. Those last two are the only
+ * members of their upstream describe that this file carries, for the reason
+ * given above.
  *
  * **The runtime locale is pinned to `en-US` for this file.** `plainDateFormat`
  * calls `new Intl.DateTimeFormat(undefined, …)`, i.e. the *runtime default*
@@ -378,6 +405,24 @@ describe('DateInput', () => {
 
 		await expect.element(screen.locator.getByRole('alert')).toHaveTextContent('');
 		expect(screen.getByText('Invalid date', { exact: true }).query()).toBeNull();
+	});
+
+	// New at v0.4.1: the live region's copy is `t('@astryx.dateInput.invalidDate')`
+	// rather than a hardcoded English string. `screen.locator` is upstream's
+	// `within(container)`, for the reason the two cases above give.
+	it('resolves the invalid-date announcement from the i18n catalog', async () => {
+		const screen = await render(DateInputI18n, {
+			props: {
+				locale: 'en',
+				overrides: { en: { '@astryx.dateInput.invalidDate': 'Ungültiges Datum' } },
+				label: 'Date',
+				onChange: noop
+			}
+		});
+
+		changeValue(inputIn(screen.container), '13/45/2024');
+
+		await expect.element(screen.locator.getByRole('alert')).toHaveTextContent('Ungültiges Datum');
 	});
 
 	it('reverts to previous value on blur when input is invalid', async () => {
@@ -1124,5 +1169,156 @@ describe('DateInput', () => {
 			});
 			await expect.element(screen.getByRole('combobox')).toHaveValue('Mar 10, 2026');
 		});
+	});
+
+	// New at v0.4.1: `weekStartsOn?: DayOfWeek | DayOfWeekName`, forwarded raw to
+	// `<Calendar>` with no local default — `Calendar` owns both the `= 0` fallback
+	// and the name→number normalisation, so these cases assert the forwarding
+	// through the rendered header rather than the prop.
+	describe('weekStartsOn', () => {
+		// Upstream's comment: "The calendar popover renders in the top layer; jsdom
+		// keeps the content in the DOM but role queries skip it, so read the
+		// columnheaders directly." The reason survives here for a different cause —
+		// `PopoverLayer` renders its children unconditionally into a real `popover`
+		// element, which is `display: none` until shown, so a role query would skip
+		// it too. `querySelectorAll` reaches it in both environments, and the
+		// ArrowDown that opens the popover is kept exactly as upstream fires it.
+		const openAndReadWeekdays = (container: HTMLElement): (string | null)[] => {
+			keyDown(inputIn(container), { key: 'ArrowDown' });
+			return Array.from(container.querySelectorAll('[role="columnheader"]'))
+				.slice(0, 7)
+				.map((h) => h.textContent);
+		};
+
+		it('defaults to a Sunday-first week', async () => {
+			const screen = await render(DateInput, {
+				props: { label: 'Date', onChange: noop }
+			});
+			expect(openAndReadWeekdays(screen.container)).toEqual([
+				'Su',
+				'Mo',
+				'Tu',
+				'We',
+				'Th',
+				'Fr',
+				'Sa'
+			]);
+		});
+
+		it('forwards a numeric weekStartsOn to the calendar', async () => {
+			const screen = await render(DateInput, {
+				props: { label: 'Date', onChange: noop, weekStartsOn: 1 }
+			});
+			expect(openAndReadWeekdays(screen.container)).toEqual([
+				'Mo',
+				'Tu',
+				'We',
+				'Th',
+				'Fr',
+				'Sa',
+				'Su'
+			]);
+		});
+
+		it('accepts a three-letter day name', async () => {
+			const screen = await render(DateInput, {
+				props: { label: 'Date', onChange: noop, weekStartsOn: 'mon' }
+			});
+			expect(openAndReadWeekdays(screen.container)).toEqual([
+				'Mo',
+				'Tu',
+				'We',
+				'Th',
+				'Fr',
+				'Sa',
+				'Su'
+			]);
+		});
+	});
+});
+
+/**
+ * Two of upstream's four `DateInput clear icon theme target` cases — the two
+ * v0.4.1 rewrote when the clear affordance moved to the shared
+ * `InputClearButton`. The other two are unchanged pre-v0.3.0 work and are named,
+ * with their reason, in the file header.
+ */
+describe('DateInput clear icon theme target', () => {
+	// Resolve the clear glyph span (the astryx-icon element inside the clear
+	// button), independent of the theme target class. Scoped to the render
+	// container rather than upstream's global `screen`, because the second case
+	// mounts a reference `Icon` into the same document.
+	const getClearIcon = (container: HTMLElement): HTMLElement => {
+		const button = container.querySelector('[aria-label="Clear Date"]');
+		const icon = button?.querySelector('.astryx-icon');
+		if (icon == null) {
+			throw new Error('clear icon not found');
+		}
+		return icon as HTMLElement;
+	};
+
+	it('renders the astryx-input-clear-icon target (plus the legacy alias) on the clear glyph', async () => {
+		const screen = await render(DateInput, {
+			props: { label: 'Date', value: iso('2026-01-15'), onChange: noop, hasClear: true }
+		});
+		// The canonical target lands on the icon element itself (not the button),
+		// so a theme can restyle just this glyph (color, size, hover) via
+		// `defineTheme` — a button-level target could not reach the icon's own
+		// color/size. The original per-component name rides along for a
+		// deprecation window.
+		const icon = getClearIcon(screen.container);
+		expect(icon).toHaveClass('astryx-input-clear-icon');
+		expect(icon).toHaveClass('astryx-date-input-clear-icon');
+		expect(icon).toHaveClass('astryx-icon');
+	});
+
+	it('routes the clear glyph through the shared clear button, keeping the legacy target', async () => {
+		// The clear affordance now composes the shared InputClearButton (a ghost
+		// Button with a secondary/sm glyph), so the icon carries the canonical
+		// `astryx-input-clear-icon` target and — for a deprecation window — the
+		// original `astryx-date-input-clear-icon`. Aside from those target classes
+		// it matches the shared button's own `close`/`sm`/`secondary` glyph
+		// exactly, so the default look is defined in one place.
+		const screen = await render(DateInput, {
+			props: { label: 'Date', value: iso('2026-01-15'), onChange: noop, hasClear: true }
+		});
+		const icon = getClearIcon(screen.container);
+		expect(icon).toHaveClass('astryx-input-clear-icon');
+		expect(icon).toHaveClass('astryx-date-input-clear-icon');
+
+		const refScreen = await render(Icon, {
+			props: { icon: 'close', size: 'sm', color: 'secondary' }
+		});
+		const refIcon = refScreen.container.querySelector('.astryx-icon') as HTMLElement;
+
+		const styleClasses = (el: HTMLElement) =>
+			el.className
+				.split(' ')
+				.filter((c) => c !== 'astryx-input-clear-icon' && c !== 'astryx-date-input-clear-icon')
+				.sort();
+
+		expect(styleClasses(icon)).toEqual(styleClasses(refIcon));
+	});
+});
+
+// New at v0.4.1: `themeProps('date-input', …)` gained
+// `disabled: isDisabled ? 'disabled' : null`, so the root reflects the state as
+// both a data attribute and a bare class token.
+describe('DateInput disabled theme state', () => {
+	it('reflects disabled on the root target so themes can gate paint on it', async () => {
+		const screen = await render(DateInput, {
+			props: { label: 'Date', onChange: noop, isDisabled: true }
+		});
+		const root = screen.container.querySelector('.astryx-date-input');
+		expect(root).toHaveAttribute('data-disabled', 'disabled');
+		expect(root).toHaveClass('disabled');
+	});
+
+	it('omits data-disabled when enabled, like status does', async () => {
+		const screen = await render(DateInput, {
+			props: { label: 'Date', onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-date-input');
+		expect(root).not.toHaveAttribute('data-disabled');
 	});
 });
