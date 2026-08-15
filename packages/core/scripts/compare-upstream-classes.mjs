@@ -1095,28 +1095,37 @@ const CASES = [
 		upstreamFile: 'DropdownMenu/DropdownMenuItem.js'
 	},
 	{
-		// BOTH modes as of upstream 0.3.0, and this one moves in the OPPOSITE
-		// direction to Slider's and TextArea's — a call site fell *into* inline mode
-		// rather than out of it.
+		// Both modes, and the module keeps shrinking. Through 0.2.0 it painted the
+		// square itself and was object-mode-only (`boxSizeStyles[controlSize]` is a
+		// dynamic index, which the compiler cannot resolve); 0.3.0 replaced the
+		// square with a composed `CheckboxInput` and deleted that ramp; **0.4.0
+		// replaced the composed control with the `checkbox` indicator**, which took
+		// the `aria-hidden` + `inert` wrapper with it.
 		//
-		// It used to be object-mode-only: the box's call site indexed
-		// `boxSizeStyles[controlSize]` dynamically, so the compiler could not resolve
-		// it and left every group live in `dist/`. 0.3.0 replaced the hand-painted
-		// square with a composed `CheckboxInput`, which deleted `boxSizeStyles`
-		// outright — so the surviving `markerBox` reaches exactly one call site with
-		// nothing dynamic beside it and upstream folded it to a literal string.
-		// `root`/`disabled` still reach `Item` as an `xstyle` array and stay objects.
+		// So `markerBox` is now `marker` — placement only, with no
+		// `display`/`flexShrink`, because the indicator's own chrome carries those.
 		//
-		// Our side keeps `markerBox` as an object regardless, because `sx()` blocks
-		// the fold — the same shape `render-dropdown-items`'s `sectionHeading` has.
-		// Without the entry below the oracle would silently check neither side.
+		// **And it went back to object mode with that rename**, which is the third
+		// time this module has changed mode in three releases and worth stating as
+		// the rule rather than the instance: the mode follows whether the style is
+		// *applied* here or *handed onward*. 0.3.0's `markerBox` styled a wrapper
+		// element via `stylex.props`, so the compiler folded it to a literal. 0.4.0
+		// passes `marker` to the indicator as `xstyle` — a value crossing a
+		// component boundary, which the compiler cannot resolve — so `dist/` keeps
+		// the object and there is no literal left to claim inline. Adding an
+		// `inline` entry for it fails with "upstream has no matching call site".
 		file: 'src/lib/components/dropdown-menu/dropdown-menu-checkbox-item.stylex.js',
-		upstreamFile: 'DropdownMenu/DropdownMenuCheckboxItem.js',
-		inline: [['styles.markerBox']]
+		upstreamFile: 'DropdownMenu/DropdownMenuCheckboxItem.js'
 	},
 	{
-		// Object mode, for the same reason: `circleSizeStyles[controlSize]` and
-		// `dotSizeStyles[controlSize]` are both dynamic indexes.
+		// The same move as its checkbox sibling at 0.4.0, object mode for the same
+		// reason: the circle, the inner dot and their
+		// `circleSizeStyles`/`dotSizeStyles` ramps went to `RadioIndicator`,
+		// leaving `root`/`disabled` (an `xstyle` array) and `marker` (handed to the
+		// indicator as `xstyle`) — all objects in `dist/`.
+		//
+		// This is the case that retires the `dropdown-menu-radio-dot` theme target:
+		// with no menu-owned dot element left, there is nothing for it to address.
 		file: 'src/lib/components/dropdown-menu/dropdown-menu-radio-item.stylex.js',
 		upstreamFile: 'DropdownMenu/DropdownMenuRadioItem.js'
 	},

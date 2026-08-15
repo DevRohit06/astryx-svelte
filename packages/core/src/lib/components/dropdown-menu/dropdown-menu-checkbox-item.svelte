@@ -48,7 +48,6 @@
 </script>
 
 <script lang="ts">
-	import CheckboxInput from '../checkbox-input/checkbox-input.svelte';
 	import Icon from '../icon/icon.svelte';
 	import Item from '../item/item.svelte';
 	import { cx } from '../../internal/sx.js';
@@ -57,8 +56,9 @@
 	import { focusMenuItemOnHover } from './menu-item-hover.js';
 	import {
 		checkboxItemXstyle,
-		checkboxMarkerBoxAttrs
+		checkboxMarkerXstyle
 	} from './dropdown-menu-checkbox-item.stylex.js';
+	import { useIndicator } from '../indicator/use-indicator.svelte.js';
 
 	/**
 	 * A checkable dropdown menu item (`role="menuitemcheckbox"`).
@@ -72,13 +72,13 @@
 	 * Enter/Space activation come from the parent menu's `useListFocus`, whose
 	 * selector matches `menuitemcheckbox` alongside plain `menuitem` rows.
 	 *
-	 * The checkbox visual composes the real `CheckboxInput` primitive so its
-	 * checkmark matches `CheckboxListItem` and picks up the standard `checkbox`
-	 * theming slots. It is purely decorative: the composed control is wrapped in
-	 * an element that is both `aria-hidden` and `inert`, so it contributes nothing
-	 * to the row's accessible name, and its native `<input>` and sr-only label stay
-	 * out of the tab order and the accessibility tree while pointer clicks fall
-	 * through to the row — the same shim `MultiSelector` uses.
+	 * The checkbox visual is the shared `checkbox` indicator, so it matches
+	 * `CheckboxInput` and `CheckboxListItem` exactly and follows a theme that
+	 * replaces it. Through 0.3.0 this composed a whole `CheckboxInput` wrapped in
+	 * an `aria-hidden` + `inert` element — a real control rendered purely to
+	 * borrow its picture, with a native `<input>` and an sr-only label that had to
+	 * be kept out of the tab order and the accessibility tree. An indicator is
+	 * decorative by contract, so all of that scaffolding is gone.
 	 *
 	 * @example
 	 * ```svelte
@@ -112,12 +112,6 @@
 	const menuSize = $derived(ctx()?.menuSize ?? 'md');
 	const controlSize = $derived(menuSize === 'sm' ? 'sm' : 'md');
 
-	// The composed checkbox is decorative and inert, so its label never reaches
-	// the accessibility tree — the row's `label` prop provides the announced
-	// name. CheckboxInput still requires a string label, so pass one through when
-	// the row label is a plain string.
-	const checkboxLabel = $derived(typeof label === 'string' ? label : '');
-
 	function handleClick(): void {
 		if (isDisabled) return;
 		onChange?.(!value);
@@ -131,8 +125,12 @@
 	}
 
 	const itemTheme = $derived(themeProps('dropdown-menu-item', { size: menuSize }));
-	const markerBoxAttrs = checkboxMarkerBoxAttrs();
 	const itemXstyle = $derived(checkboxItemXstyle(isDisabled, xstyle));
+
+	// A menu checkbox and a form checkbox are the same component now, so a theme
+	// that replaces `checkbox` reaches both.
+	const checkboxIndicator = useIndicator('checkbox');
+	const CheckboxControl = $derived(checkboxIndicator.current);
 </script>
 
 {#snippet iconSlot()}
@@ -144,9 +142,17 @@
 {/snippet}
 
 {#snippet marker()}
-	<div aria-hidden="true" inert class={markerBoxAttrs.class} style={markerBoxAttrs.style}>
-		<CheckboxInput label={checkboxLabel} isLabelHidden {value} {isDisabled} size={controlSize} />
-	</div>
+	<!--
+		No wrapper: the `astryx-checkbox` target is already on the indicator's own
+		element, so the menu adds only its placement rules. A wrapper here would
+		have duplicated the indicator's control size and moved nothing themeable.
+	-->
+	<CheckboxControl
+		state={value ? 'checked' : 'unchecked'}
+		size={controlSize}
+		{isDisabled}
+		xstyle={checkboxMarkerXstyle}
+	/>
 {/snippet}
 
 <Item
