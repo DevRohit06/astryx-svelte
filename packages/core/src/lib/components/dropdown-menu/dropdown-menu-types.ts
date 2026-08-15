@@ -17,8 +17,16 @@ export interface DropdownMenuItemData {
 	items?: DropdownMenuOption[];
 }
 
-/** A horizontal rule between groups. */
-export interface DropdownMenuDivider {
+/**
+ * A horizontal rule between groups, as a `items` data entry.
+ *
+ * **Renamed from `DropdownMenuDivider` at upstream 0.4.0.** The bare name now
+ * belongs to the compound-mode component, and TypeScript cannot re-export a
+ * value and a type under one name from a single barrel — so the data-mode
+ * option type takes the `Data` suffix its sibling `DropdownMenuItemData`
+ * already carried. A missed import fails at compile time rather than silently.
+ */
+export interface DropdownMenuDividerData {
 	type: 'divider';
 }
 
@@ -29,4 +37,5 @@ export interface DropdownMenuSection {
 	items: DropdownMenuItemData[];
 }
 
-export type DropdownMenuOption = DropdownMenuItemData | DropdownMenuDivider | DropdownMenuSection;
+export type DropdownMenuOption =
+	DropdownMenuItemData | DropdownMenuDividerData | DropdownMenuSection;

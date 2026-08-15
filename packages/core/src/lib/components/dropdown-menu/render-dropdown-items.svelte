@@ -7,35 +7,39 @@
 </script>
 
 <script lang="ts">
-	import Divider from '../divider/divider.svelte';
+	import DropdownMenuDivider from './dropdown-menu-divider.svelte';
 	import DropdownMenuItem from './dropdown-menu-item.svelte';
 	import DropdownMenuSubMenu from './dropdown-menu-sub-menu.svelte';
 	// Self-import is how a Svelte 5 component recurses (`<svelte:self>` is gone).
 	import RenderDropdownItems from './render-dropdown-items.svelte';
 	import { cx } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
-	import { sectionHeadingAttrs, dividerXstyle } from './render-dropdown-items.stylex.js';
+	import { sectionHeadingAttrs } from './render-dropdown-items.stylex.js';
 
 	/**
 	 * Data-mode renderer, ported from upstream's `renderDropdownItems`. Walks the
-	 * `items` array and discriminates on `type`: `divider` → `Divider`, `section`
-	 * → a `role="group"` with an optional `aria-hidden` heading, otherwise a
-	 * `DropdownMenuItem`. Data mode carries only `icon`/`label`/`onClick`/`isDisabled`.
+	 * `items` array and discriminates on `type`: `divider` → `DropdownMenuDivider`,
+	 * `section` → a `role="group"` with an optional `aria-hidden` heading,
+	 * otherwise a `DropdownMenuItem`.
+	 *
+	 * The divider goes through the **component** as of upstream 0.4.0, rather than
+	 * this file styling a `Divider` itself. That is what makes `{type: 'divider'}`
+	 * and `<DropdownMenuDivider />` produce identical DOM, spacing and theme
+	 * target — through 0.3.0 the two paths each drew their own rule and could
+	 * drift.
 	 */
 	const { items }: RenderDropdownItemsProps = $props();
 
 	const heading = sectionHeadingAttrs();
-	// Themeable slots so themes can target the heading and the divider directly
-	// instead of relying on structural selectors. The `Divider` keeps its own
-	// `astryx-divider` class alongside this one, so global divider theming
-	// still applies.
+	// A themeable slot so themes can target the heading directly instead of
+	// relying on structural selectors. The divider's equivalent moved to the
+	// component with the rest of it.
 	const headingTheme = themeProps('dropdown-menu-section-heading');
-	const dividerTheme = themeProps('dropdown-menu-divider');
 </script>
 
 {#each items as item, i (i)}
 	{#if 'type' in item && item.type === 'divider'}
-		<Divider xstyle={dividerXstyle} {...dividerTheme} />
+		<DropdownMenuDivider />
 	{:else if 'type' in item && item.type === 'section'}
 		<div role="group" aria-label={item.title}>
 			{#if item.title}

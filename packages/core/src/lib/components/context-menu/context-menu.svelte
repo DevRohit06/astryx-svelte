@@ -4,14 +4,16 @@
 	import type { StyleArg } from '../../internal/sx.js';
 	import type { DropdownMenuSize } from '../dropdown-menu/dropdown-menu-item.stylex.js';
 	import type {
-		DropdownMenuDivider,
+		DropdownMenuDividerData,
 		DropdownMenuItemData,
 		DropdownMenuOption,
 		DropdownMenuSection
 	} from '../dropdown-menu/dropdown-menu-types.js';
 
 	export type ContextMenuItemData = DropdownMenuItemData;
-	export type ContextMenuDivider = DropdownMenuDivider;
+	// Renamed from `ContextMenuDivider` at upstream 0.4.0 — the bare name is the
+	// component alias now. See `DropdownMenuDividerData`.
+	export type ContextMenuDividerData = DropdownMenuDividerData;
 	export type ContextMenuSection = DropdownMenuSection;
 	export type ContextMenuOption = DropdownMenuOption;
 

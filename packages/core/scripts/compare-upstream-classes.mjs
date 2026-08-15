@@ -1147,13 +1147,22 @@ const CASES = [
 		inline: [['styles.group']]
 	},
 	{
-		// Both modes at once. Upstream's `dist/` keeps only `divider` as an object —
-		// it is handed to `Divider` via `xstyle`, so the compiler could not fold it.
-		// `sectionHeading` reaches its one call site (the `aria-hidden` heading row)
-		// via `stylex.props` and was resolved into a literal class string.
+		// **Inline only at upstream 0.4.0.** The `divider` key that made this case
+		// object-mode-too moved to `DropdownMenuDivider` (below) when the data path
+		// stopped drawing its own rule, leaving `sectionHeading` — one call site,
+		// the `aria-hidden` heading row, reached via `stylex.props` and resolved
+		// into a literal class string.
 		file: 'src/lib/components/dropdown-menu/render-dropdown-items.stylex.js',
 		upstreamFile: 'DropdownMenu/renderDropdownItems.js',
 		inline: [['styles.sectionHeading']]
+	},
+	{
+		// The divider the two menu modes now share, new at upstream 0.4.0. One key,
+		// handed to `Divider` as `xstyle` — a value crossing a component boundary,
+		// which the compiler cannot fold — so `dist/` keeps the object and there is
+		// nothing to claim inline.
+		file: 'src/lib/components/dropdown-menu/dropdown-menu-divider.stylex.js',
+		upstreamFile: 'DropdownMenu/DropdownMenuDivider.js'
 	},
 	{
 		// Both modes at once, and upstream declares Token's styles inline in the

@@ -1,5 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
-import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { sx, type SvelteStyleAttrs } from '../../internal/sx.js';
 import {
 	colorVars,
 	spacingVars,
@@ -16,16 +16,13 @@ const styles = stylex.create({
 		lineHeight: typeScaleVars['--text-supporting-leading'],
 		color: colorVars['--color-text-secondary'],
 		userSelect: 'none'
-	},
-	divider: {
-		marginBlock: spacingVars['--spacing-1']
 	}
+	// The `divider` key that stood here moved to `DropdownMenuDivider` at
+	// upstream 0.4.0 — the data path renders that component now, so the two menu
+	// modes cannot draw different rules.
 });
 
 /** The `aria-hidden` section heading row. */
 export function sectionHeadingAttrs(): SvelteStyleAttrs {
 	return sx(styles.sectionHeading);
 }
-
-/** Passed to `Divider` as `xstyle`. */
-export const dividerXstyle: StyleArg = styles.divider;

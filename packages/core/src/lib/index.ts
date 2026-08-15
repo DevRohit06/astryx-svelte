@@ -348,9 +348,12 @@ export type { DropdownMenuSubMenuProps as BreadcrumbMenuSubMenuProps } from './c
 export type {
 	DropdownMenuOption as BreadcrumbMenuOption,
 	DropdownMenuItemData as BreadcrumbMenuItemData,
-	DropdownMenuDivider as BreadcrumbMenuDivider,
+	DropdownMenuDividerData as BreadcrumbMenuDividerData,
 	DropdownMenuSection as BreadcrumbMenuSection
 } from './components/dropdown-menu/dropdown-menu-types.js';
+// The bare `BreadcrumbMenuDivider` is the component alias now — see the value
+// export below.
+export { default as BreadcrumbMenuDivider } from './components/dropdown-menu/dropdown-menu-divider.svelte';
 // `BreadcrumbContext` itself stays module-private, as upstream's `index.ts` keeps it.
 export type {
 	BreadcrumbsVariant,
@@ -527,10 +530,13 @@ export type { DropdownMenuSubMenuProps as ContextMenuSubMenuProps } from './comp
 export type {
 	ContextMenuProps,
 	ContextMenuItemData,
-	ContextMenuDivider,
+	ContextMenuDividerData,
 	ContextMenuSection,
 	ContextMenuOption
 } from './components/context-menu/context-menu.svelte';
+// The bare `ContextMenuDivider` is the component alias now — see the value
+// export below.
+export { default as ContextMenuDivider } from './components/dropdown-menu/dropdown-menu-divider.svelte';
 export type { CollapsibleGroupProps } from './components/collapsible/collapsible-group.svelte';
 export type { CollapsibleGroupDensity } from './components/collapsible/collapsible-group-context.svelte.js';
 export {
@@ -560,9 +566,14 @@ export type { DropdownMenuSubMenuProps } from './components/dropdown-menu/dropdo
 export type {
 	DropdownMenuOption,
 	DropdownMenuItemData,
-	DropdownMenuDivider,
+	DropdownMenuDividerData,
 	DropdownMenuSection
 } from './components/dropdown-menu/dropdown-menu-types.js';
+// New at upstream 0.4.0 — the compound-mode peer of `{type: 'divider'}`, and
+// what the data path renders too, so neither mode can drift from the other.
+// Claiming the bare name is why the three data types took the `Data` suffix.
+export { default as DropdownMenuDivider } from './components/dropdown-menu/dropdown-menu-divider.svelte';
+export type { DropdownMenuDividerProps } from './components/dropdown-menu/dropdown-menu-divider.svelte';
 export type { DropdownMenuContextValue } from './components/dropdown-menu/dropdown-menu-context.svelte.js';
 export type { DropdownMenuSize } from './components/dropdown-menu/dropdown-menu-item.stylex.js';
 export type { EmptyStateProps } from './components/empty-state/empty-state.svelte';

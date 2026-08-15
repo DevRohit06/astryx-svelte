@@ -59,6 +59,13 @@ export {
 	type UseImageModeOptions
 } from './use-image-mode.svelte.js';
 
+// New at upstream 0.4.0, alongside CodeBlock's themeable copy button.
+export {
+	useClipboard,
+	type UseClipboardOptions,
+	type UseClipboardReturn
+} from './use-clipboard.svelte.js';
+
 export { useInputContainer, type UseInputContainerOptions } from './use-input-container.svelte.js';
 
 // New at upstream 0.4.0, alongside the indicator layer. `UseIndicatorFocusRingOptions`

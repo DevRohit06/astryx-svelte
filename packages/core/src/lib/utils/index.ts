@@ -106,3 +106,12 @@ export { rtlStyles } from './rtl.stylex.js';
 // upstream leaves them — they are the imperative escape hatch for
 // `useIndicatorFocusRing`, not published API.
 export { focusOutlineStyles, focusOutlineProps } from './focus-outline.stylex.js';
+
+// The "should this overlay reclaim focus?" test, new at upstream 0.4.0.
+export { isFocusDetached } from './focus-return.js';
+
+// `interaction-modality.ts` is deliberately NOT re-exported. Upstream keeps it
+// off every barrel — `PanelSearchInput` is its only consumer, plus a test — so
+// it stays module-public and barrel-absent here, on the same standing as
+// `rtlMirrorAttrs` and `__resetDevWarnings`. An extra published symbol is a
+// defect under the parity rule.
