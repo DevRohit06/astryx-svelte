@@ -163,10 +163,10 @@ hand-drawn content.
 
 Sizes measured from upstream source, not estimated.
 
-| Front      | Size                             |
-| ---------- | --------------------------------- |
-| `lab`      | 17 components, ~995 KB            |
-| `charts`   | 35 files                          |
-| `vega`     | 5 files                           |
-| `richtext` | 1 file                            |
-| `build`    | 7 files                           |
+| Front      | Size                   |
+| ---------- | ---------------------- |
+| `lab`      | 17 components, ~995 KB |
+| `charts`   | 35 files               |
+| `vega`     | 5 files                |
+| `richtext` | 1 file                 |
+| `build`    | 7 files                |

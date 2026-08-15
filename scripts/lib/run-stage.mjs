@@ -13,8 +13,19 @@
 import { spawnSync } from 'node:child_process';
 
 const NONDETERMINISM = [
-	// Durations: "1.23s", "456ms", "in 2 m", "(1.2 s)"
-	[/\b\d+(?:\.\d+)?\s?m?s\b/g, '<duration>'],
+	// Durations, but only in timing context: a preceding keyword a test runner
+	// or bundler actually uses ("Duration 4.53s", "done in 1.2s", "built in
+	// 76s", "completed in 900ms"), or a bracketed/parenthesised position
+	// ("(456ms)", "[12.3s]"). A bare number-plus-unit is not enough — that
+	// also matches inside `transition-duration: 200ms, 0.5s;` and
+	// `animation: 0.3s ease`, which is exactly what the class and CSS oracles
+	// print, and stripping it there destroys the diagnostic value of the
+	// captured output.
+	[
+		/\b(?:in|took|after|elapsed|completed in|finished in|Duration)\s+\d+(?:\.\d+)?\s?m?s\b/gi,
+		(m) => m.replace(/\d+(?:\.\d+)?\s?m?s$/, '<duration>')
+	],
+	[/[([]\s*\d+(?:\.\d+)?\s?m?s\s*[)\]]/g, (m) => m[0] + '<duration>' + m[m.length - 1]],
 	// ISO timestamps
 	[/\b\d{4}-\d{2}-\d{2}T[\d:.]+Z?\b/g, '<timestamp>'],
 	// Space-separated timestamps ("2026-08-15 21:29:11"), which the ISO
@@ -30,12 +41,20 @@ const NONDETERMINISM = [
 	[/\b\d{2}:\d{2}:\d{2}\b/g, '<time>'],
 	// Absolute paths on either platform
 	[/[A-Za-z]:[\\/][^\s'"]+/g, '<path>'],
-	[/\/(?:home|Users|tmp)\/[^\s'"]+/g, '<path>'],
-	// Broader POSIX absolute path, not anchored to a fixed root list — the
-	// list above misses a CI runner rooted at `/github/workspace`. Guarded by
-	// a negative lookbehind so it does not fire on the `//` inside a URL
-	// (`http://host/path` stays intact; a bare `/foo/bar` does not).
-	[/(?<!\/)\/(?:[^\s'"/]+\/)+[^\s'"/]+/g, '<path>']
+	// POSIX absolute paths, enumerated by known filesystem root rather than
+	// matched by shape. A previous version of this pattern matched *any*
+	// absolute path (`/(?:[^\s'"/]+\/)+[^\s'"/]+`), which also fires inside
+	// CSS `url(...)` values and package-scoped import specifiers — both of
+	// which are exactly what the class and CSS oracles print:
+	//   url(/static/icon.svg) no-repeat;   ->  url(<path> no-repeat;
+	//   "@astryxdesign/core/Button"        ->  "@astryxdesign<path>"
+	// `/static/` and `/core/` are not filesystem roots, so an enumerated list
+	// cannot match them — only a real root can. Extend this list rather than
+	// widening the shape if a new CI provider needs a root added.
+	[
+		/\/(?:home|Users|tmp|root|var\/folders|github\/workspace|runner|builds|workspace)\/[^\s'"]+/g,
+		'<path>'
+	]
 ];
 
 export function stripNondeterminism(text) {

@@ -33,21 +33,33 @@ jobs:
           BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
-  # `pnpm verify` — build, typecheck, lint, every test project (including the
-  # browser suite: 163 files and ~4,500 cases in real headless Chromium) and
-  # the full-tier status generation, gated against the committed
-  # `port/status.md`. It runs every stage rather than stopping at the first
-  # red one, which a plain sequence of job steps cannot do — a failing step
-  # here would otherwise skip the rest and hide whatever they'd have reported.
+  # `pnpm verify --no-client` — build, typecheck, lint, core's server project
+  # plus both fidelity oracles, every other package's tests, and the
+  # full-tier status generation, gated against the committed `port/status.md`.
+  # It runs every stage rather than stopping at the first red one, which a
+  # plain sequence of job steps cannot do — a failing step here would
+  # otherwise skip the rest and hide whatever they'd have reported.
   #
-  # This folds what used to be two jobs (`lib` and the browser-only `client`)
-  # into one, because `pnpm verify`'s test stage is `pnpm -r test`, which
-  # already runs the browser suite as part of core's own `test` script —
-  # running it again in a second job would just be the same 4,500 cases
-  # twice. The trade-off: a CLI-only change now also pays for the browser
-  # suite, where the old two-job split spared it (this job's condition is the
-  # old `lib` job's, which includes `cli`; the old `client` job's did not). A
-  # docs-only change still does not, which is the property that mattered.
+  # `--no-client` is the load-bearing choice here. An earlier version of this
+  # workflow ran plain `pnpm verify`, which folded this job and the
+  # browser-only `client` job into one — `pnpm verify`'s test stage was `pnpm
+  # -r test`, and running the browser suite again in a second job would just
+  # be the same ~4,500 cases twice. That merge serialised roughly 13 minutes
+  # of work (409 s of tests, 190 s of lint, 76 s build, 51 s typecheck, 33 s
+  # demo build, 21 s Playwright download) into every PR that touched core or
+  # a theme — the common case — where two `needs: changes`-gated jobs used to
+  # run concurrently. `--no-client` restores that: this job runs everything
+  # *except* the browser suite, `client` below runs *only* the browser suite,
+  # and they run in parallel again. The trade-off traded away by that earlier
+  # merge — a CLI-only change paying for the browser suite it doesn't need —
+  # is fixed too: this job's condition (core/cli/themes/global) still covers
+  # `cli`, but `client`'s below does not, exactly as it didn't before the
+  # merge.
+  #
+  # Playwright is still installed here even though this job never runs the
+  # browser suite: `status.mjs --full`'s "Test collection" stage lists every
+  # vitest project, client included, and Vitest's browser mode needs a real
+  # browser to collect from, not just to run.
   lib:
     needs: changes
     if: needs.changes.outputs.global == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.cli == 'true' || needs.changes.outputs.themes == 'true'
@@ -69,17 +81,13 @@ jobs:
       # so a regression here is caught rather than silently tolerated.
       - run: pnpm install --frozen-lockfile
 
-      # The client vitest project runs in a real headless Chromium through
-      # Playwright, and `pnpm install` does not fetch browser binaries — they
-      # live in ~/.cache/ms-playwright, outside node_modules. Without this,
-      # `pnpm verify`'s test stage fails to launch with "Executable doesn't
-      # exist" rather than reporting real results — this is how the suite
-      # went unrun in CI for its entire life before this step existed.
+      # See the job comment: needed for status.mjs's test-collection stage,
+      # not for running the browser suite itself.
       - name: Install the browser the client test project needs
         run: pnpm -F @astryx-svelte/core exec playwright install --with-deps chromium
 
       - name: Verify
-        run: pnpm verify
+        run: pnpm verify --no-client
 
       # Built separately and *after* verify's own build stage — never as part
       # of `pnpm -r build`. Its routes import `packages/themes/neutral/dist/`,
@@ -99,6 +107,43 @@ jobs:
       # catch on the PR that breaks it and expensive to discover mid-publish.
       - name: Every package is still fit to publish
         run: node scripts/check-publish.mjs
+
+  # The browser suite, alone: 163 files and ~4,500 cases in real headless
+  # Chromium, and by far the longest thing here. Runs in parallel with `lib`
+  # rather than after it, so a docs-only or CLI-only change does not pay for
+  # it at all — see the trade-off note on `lib` above. `status.mjs` and the
+  # `port/status.md` drift gate live entirely in `lib`, so they run exactly
+  # once across the workflow; this job reports test results only.
+  client:
+    needs: changes
+    if: needs.changes.outputs.global == 'true' || needs.changes.outputs.core == 'true' || needs.changes.outputs.themes == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      # The client vitest project runs in a real headless Chromium through
+      # Playwright, and `pnpm install` does not fetch browser binaries — they
+      # live in ~/.cache/ms-playwright, outside node_modules. Without this the
+      # whole project fails to launch with "Executable doesn't exist", which is
+      # how it went unrun in CI for its entire life: Typecheck was failing
+      # first, so the Test step never got the chance to say so.
+      - name: Install the browser the client test project needs
+        run: pnpm -F @astryx-svelte/core exec playwright install --with-deps chromium
+
+      # Built for the same reason `lib` builds: the suite imports through `$lib`,
+      # but `svelte-kit sync` and the theme packages it touches expect the
+      # topological build to have run.
+      - name: Build
+        run: pnpm -r build
+
+      - name: Client test project
+        run: pnpm -F @astryx-svelte/core test:client
 
   # The docs site. Runs on its own changes *and* on core's, because the
   # dependency is one-directional: `docs/vite.config.ts` compiles core's StyleX
@@ -138,7 +183,7 @@ jobs:
   # because it means the filter decided the job was irrelevant to this diff.
   ci:
     if: always()
-    needs: [changes, lib, docs]
+    needs: [changes, lib, client, docs]
     runs-on: ubuntu-latest
     steps:
       - name: Every required job passed or was skipped

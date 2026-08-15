@@ -18,11 +18,21 @@
 // for what CI pays for. It is not a substitute for the full gate — the
 // summary line says so explicitly, so a passing `--fast` run can never be
 // mistaken for a passing full one.
+//
+// `--no-client` skips only core's browser suite (`test:client`) while still
+// running its server project, both fidelity oracles, every other package's
+// tests, and the full-tier status generation. Unlike `--fast`, this *is* a
+// legitimate stand-in for the unflagged run when something else is covering
+// the browser suite: CI's `lib` job runs `pnpm verify --no-client` in
+// parallel with a `client` job that runs nothing but the browser suite (see
+// ci.yml), so the two jobs together do exactly what an unflagged `pnpm
+// verify` does, just concurrently instead of serially.
 
 import { execFileSync } from 'node:child_process';
 import { runStage } from './lib/run-stage.mjs';
 
 const fast = process.argv.includes('--fast');
+const noClient = process.argv.includes('--no-client');
 
 // Scratch patterns. `zz-` is this repo's own convention for a throwaway.
 const SCRATCH = /(^|[\\/])(zz-|.*\.scratch\.)/;
@@ -51,7 +61,20 @@ const stages = [
 	// `port/*.md` were never checked — cheap to run, so it stays in both modes.
 	runStage('lint:root', 'pnpm', ['lint:root'])
 ];
-if (!fast) stages.push(runStage('test', 'pnpm', ['-r', 'test']));
+if (!fast) {
+	if (noClient) {
+		// Everything `pnpm -r test` runs except core's `test:client` — that
+		// piece runs in the sibling `client` CI job instead. `test:node` is
+		// core's server project plus both fidelity oracles; the second stage
+		// is every other workspace package's own `test` script.
+		stages.push(
+			runStage('test:node', 'pnpm', ['-F', '@astryx-svelte/core', 'test:node']),
+			runStage('test:rest', 'pnpm', ['-r', '--filter=!@astryx-svelte/core', 'test'])
+		);
+	} else {
+		stages.push(runStage('test', 'pnpm', ['-r', 'test']));
+	}
+}
 stages.push(
 	runStage('status', 'node', fast ? ['scripts/status.mjs'] : ['scripts/status.mjs', '--full'])
 );
@@ -79,5 +102,9 @@ if (failed.length > 0) {
 
 console.log(
 	`\nall ${stages.length} stages passed.` +
-		(fast ? ' (fast mode — test suite and full-tier gates skipped)' : '')
+		(fast
+			? ' (fast mode — test suite and full-tier gates skipped)'
+			: noClient
+				? " (--no-client — core's browser suite skipped, expected to run elsewhere)"
+				: '')
 );

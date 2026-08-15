@@ -1,18 +1,18 @@
 # port/
 
-Everything about *building* this port. Consumer-facing documents (`README.md`, `CHANGELOG.md`,
+Everything about _building_ this port. Consumer-facing documents (`README.md`, `CHANGELOG.md`,
 `CONTRIBUTING.md`) stay at the repo root, and so does `CLAUDE.md`, which Claude Code auto-loads
 from there.
 
-| File                | What goes in it                                                       |
-| ------------------- | --------------------------------------------------------------------- |
-| `todo.md`           | The current goal and the next few items. Nothing landed, no metrics.  |
-| `status.md`         | **Generated.** Every countable claim. Never edit by hand.             |
-| `debts.md`          | Deliberate deviations from upstream, one entry each.                  |
-| `ledger/`           | One file per batch — how the work was actually done.                  |
-| `research/`         | Frozen upstream analysis. Research, not spec: verify against source.  |
-| `design/`           | Design docs and their implementation plans.                           |
-| `upstream-diff.md`  | The standing upstream-versus-port comparison.                         |
+| File               | What goes in it                                                      |
+| ------------------ | -------------------------------------------------------------------- |
+| `todo.md`          | The current goal and the next few items. Nothing landed, no metrics. |
+| `status.md`        | **Generated.** Every countable claim. Never edit by hand.            |
+| `debts.md`         | Deliberate deviations from upstream, one entry each.                 |
+| `ledger/`          | One file per batch — how the work was actually done.                 |
+| `research/`        | Frozen upstream analysis. Research, not spec: verify against source. |
+| `design/`          | Design docs and their implementation plans.                          |
+| `upstream-diff.md` | The standing upstream-versus-port comparison.                        |
 
 ## Where do I write this?
 

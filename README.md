@@ -8,6 +8,7 @@
 	published to npm and have no repo to resolve a relative path against. One URL
 	across all three beats two mechanisms that can drift apart.
 -->
+
 <img
 	src="https://raw.githubusercontent.com/DevRohit06/astryx-svelte/37d3aebd2335e38015274448b541c3b2a746a710/docs/src/lib/assets/favicon.svg"
 	alt=""
@@ -46,15 +47,15 @@ Most ports ask you to trust them. This one is **checked**, because a design syst
 where "is this the same?" has a mechanical answer.
 
 Components are authored against the same design-token references Astryx uses, so the StyleX compiler
-emits byte-identical atomic CSS. Three oracles then diff our output against the *already compiled*
+emits byte-identical atomic CSS. Three oracles then diff our output against the _already compiled_
 classes published in `@astryxdesign/*` — a missing declaration, a wrong value and an invented one all
 fail the build:
 
-| Oracle           | What it proves                                                        | Result             |
-| ---------------- | --------------------------------------------------------------------- | ------------------ |
-| Component classes | 1,528 style keys + 615 inline call sites match upstream's             | **0 mismatches**   |
-| Stylesheet        | 1,463 atomic classes shared with upstream's published `astryx.css`    | **0 differing**    |
-| Theme tokens      | 2,418 declarations across the seven ported themes                     | **0 mismatches**   |
+| Oracle            | What it proves                                                     | Result           |
+| ----------------- | ------------------------------------------------------------------ | ---------------- |
+| Component classes | 1,528 style keys + 615 inline call sites match upstream's          | **0 mismatches** |
+| Stylesheet        | 1,463 atomic classes shared with upstream's published `astryx.css` | **0 differing**  |
+| Theme tokens      | 2,418 declarations across the seven ported themes                  | **0 mismatches** |
 
 It also means the limits are known rather than hoped for. The class oracle cannot see inside a
 `stylex.create` function style, so the stylesheet oracle exists to cover them — and found a real RTL
@@ -62,12 +63,12 @@ bug the day it landed. [`CHANGELOG.md`](CHANGELOG.md) names every limitation in 
 
 ## Packages
 
-| Package                                                    | What it is                                                                |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------- |
-| [`@astryx-svelte/core`](packages/core)                     | The components, the theme system, the composables, the message catalogs   |
-| [`@astryx-svelte/cli`](packages/cli)                       | Docs, search, templates, theme tooling and codemods, for humans and agents |
-| [`@astryx-svelte/theme-*`](packages/themes)                | Eight theme packages, `neutral` being the default Astryx look             |
-| [`docs`](docs)                                             | The documentation site, built out of the same docs the CLI serves         |
+| Package                                     | What it is                                                                 |
+| ------------------------------------------- | -------------------------------------------------------------------------- |
+| [`@astryx-svelte/core`](packages/core)      | The components, the theme system, the composables, the message catalogs    |
+| [`@astryx-svelte/cli`](packages/cli)        | Docs, search, templates, theme tooling and codemods, for humans and agents |
+| [`@astryx-svelte/theme-*`](packages/themes) | Eight theme packages, `neutral` being the default Astryx look              |
+| [`docs`](docs)                              | The documentation site, built out of the same docs the CLI serves          |
 
 Ten packages ship together at **`0.3.1`**. The number is the Astryx release they port, not a count
 of this port's own history — so `0.3.1` means "at parity with Astryx 0.3.0, plus changes upstream has

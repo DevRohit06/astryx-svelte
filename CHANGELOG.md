@@ -154,7 +154,7 @@ wrong — upstream publishes `./astryx.css` from a post-build script, and not po
 an omission, not a constraint.
 
 **`dist` now ships compiled.** Shipping the stylesheet alone was not enough: `svelte-package` does
-not run StyleX, and `stylex.create` *throws* at runtime rather than no-opping, so the stylesheet by
+not run StyleX, and `stylex.create` _throws_ at runtime rather than no-opping, so the stylesheet by
 itself produced a crash rather than a styled page. `prepack` now compiles `dist/**/*.stylex.js`, and
 checks that every class the compiled output references is present in `astryx.css` — the first run
 found 26 that were not, because the two builds hashed `defineVars` companion classes from different
@@ -236,7 +236,7 @@ anywhere unfurled as a bare URL.
 
 - **`packages/cli/README.md` and `packages/core/README.md` both said `template --list` finds
   nothing.** Running the binary returns **43 page templates**, every id matching upstream. The
-  genuinely deferred set is upstream's ~614 *block* templates. This shipped in every tarball and
+  genuinely deferred set is upstream's ~614 _block_ templates. This shipped in every tarball and
   rendered at `/docs/cli`.
 - **Avatar's status dot was mispositioned in RTL.** It was ported against upstream 0.2.0, which used
   a physical `right`; 0.3.0 moved to `insetInlineEnd` and mirrored the `translate` that pushes the
@@ -268,12 +268,12 @@ the CLI reads, so the site and the terminal cannot disagree.
 
 ### Published
 
-| Package                                                                                       | What it is                                                              |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `@astryx-svelte/core`                                                                         | Components, theme system, hooks, message catalogs                       |
-| `@astryx-svelte/cli`                                                                          | Docs, search, page templates, theme tooling and codemods                |
-| `@astryx-svelte/theme-{neutral,butter,chocolate,gothic,matcha,stone,y2k}`                      | Upstream's seven themes                                                 |
-| `@astryx-svelte/theme-liquid-glass`                                                           | macOS translucent materials — **no upstream counterpart**, see below    |
+| Package                                                                   | What it is                                                           |
+| ------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `@astryx-svelte/core`                                                     | Components, theme system, hooks, message catalogs                    |
+| `@astryx-svelte/cli`                                                      | Docs, search, page templates, theme tooling and codemods             |
+| `@astryx-svelte/theme-{neutral,butter,chocolate,gothic,matcha,stone,y2k}` | Upstream's seven themes                                              |
+| `@astryx-svelte/theme-liquid-glass`                                       | macOS translucent materials — **no upstream counterpart**, see below |
 
 ### What is in it
 

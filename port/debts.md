@@ -44,15 +44,15 @@ larger than the two beside them. Equalising was the fix; 16 rather than 20 is th
 relative path was chosen so pnpm's dependency graph would not see a cycle, and it works, but
 **the bundler's graph is not pnpm's**. Core's `build` used to run `vite build` (the workbench)
 before `prepack` (the library), so on any clean checkout core's build demanded an artifact from
-a package that builds *after* core, and rolldown failed with `UNRESOLVED_IMPORT` on both lines.
+a package that builds _after_ core, and rolldown failed with `UNRESOLVED_IMPORT` on both lines.
 It passed on every developer machine because a previous run had left `themes/neutral/dist/` on
 disk; it failed on the first CI run and the first Vercel deploy that ever built core.
 **Fixed by making `build` a library build only** (`npm run prepack`), with the workbench moved
-to `build:demo` and run by CI *after* `pnpm -r build`. That matches upstream, whose core
+to `build:demo` and run by CI _after_ `pnpm -r build`. That matches upstream, whose core
 `build` is `babel + tsc + css + umd` and produces no app at all, and whose `theme-neutral`
 takes core as a **peer** dependency. The debt is that the import still points at a build
 artifact: `pnpm -F @astryx-svelte/core dev` on a fresh clone needs a prior `pnpm -r build`, and
-reading the theme's *source* instead is not an escape — `neutral-theme.ts` imports
+reading the theme's _source_ instead is not an escape — `neutral-theme.ts` imports
 `@astryx-svelte/core/theme/define`, which is core's own `dist/`
 
 ### Page templates carry three unported dependencies, handled two different ways
@@ -82,7 +82,7 @@ neither leaves an import that would break the docs glob-build or a user's scaffo
 The registry skips `scaffold`
 templates, so the slug is not in `entries`. Upstream's `[slug]` redirects any slug — including
 one `generateStaticParams` never generated, since `dynamicParams` defaults true — landing the
-reader on a gallery whose dialog silently cannot open. A 404 says more, but it *is* a
+reader on a gallery whose dialog silently cannot open. A 404 says more, but it _is_ a
 divergence rather than an improvement, and it is recorded as one
 
 ### `/templates/<slug>` is a bounce page, not an HTTP 308
@@ -122,7 +122,7 @@ touches that file
 Not a regression from the
 page templates — it rejects the already-landed ones identically, on `displayName`/`isReady`/
 `isHiddenFromOverview`. Core specs load through `loadDocModule`, not `parseTemplate`, which
-`_adapter.mjs:151` documents as the *integration* path, so nothing is broken today. But the
+`_adapter.mjs:151` documents as the _integration_ path, so nothing is broken today. But the
 canonical `.template.*` schema and the legacy core spec shape have drifted apart, and the next
 person to migrate core specs to `.template.ts` will hit it
 
@@ -341,7 +341,7 @@ Our rest reaches the `<Text>` wrapper; the narrower type makes handler types con
 - **kind:** api-divergence
 - **retires:** never
 
-So `id`/`role`/`aria-*`/`data-*`/handlers its type promises are dropped; we forward rest onto the `<input>`, as `Timestamp`/`List`/`DropdownMenu` do. It is the **only** member of the date/time family upstream leaves closed — `DateInput`, `DateTimeInput` and `DateRangeInput` all rest-spread, each onto its wrapper `<div>`, and this port matches all three targets and orderings exactly. The forwarding is also what forces `syncDisplayValue`: a spread routes every attribute through `set_attributes`, which loses Svelte's compare-against-the-DOM guard on `value` (the hazard recorded in the batch-5 entry below; `NumberInput`'s client-side pin for it was retired at 0.4.1, so `TimeInput`'s own suite is worth re-reading for whether *it* still has an observable symptom), so the value write moves into an attachment
+So `id`/`role`/`aria-*`/`data-*`/handlers its type promises are dropped; we forward rest onto the `<input>`, as `Timestamp`/`List`/`DropdownMenu` do. It is the **only** member of the date/time family upstream leaves closed — `DateInput`, `DateTimeInput` and `DateRangeInput` all rest-spread, each onto its wrapper `<div>`, and this port matches all three targets and orderings exactly. The forwarding is also what forces `syncDisplayValue`: a spread routes every attribute through `set_attributes`, which loses Svelte's compare-against-the-DOM guard on `value` (the hazard recorded in the batch-5 entry below; `NumberInput`'s client-side pin for it was retired at 0.4.1, so `TimeInput`'s own suite is worth re-reading for whether _it_ still has an observable symptom), so the value write moves into an attachment
 
 ### `ChatSendButton` drops its own theme class as of 0.2.0, an upstream regression the forwarding fix introduced
 
