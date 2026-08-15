@@ -42,14 +42,13 @@ matching release of this port. The pin is currently Astryx `0.4.1` — see
 - [ ] Consolidate two homes for one upstream dir — `types.ts`, `themeProps.ts`,
       `sharedResizeObserver.ts` sit under `internal/`; `parseStyleKey` sits with the theme
       compiler. Touches every component's imports, so it's recorded rather than done
+- [ ] **Self-hosting from the theme packages is still open** and is the harder half: it means
+      shipping the woff2 files in each package and declaring the `@font-face` rules there, so a
+      consumer who installs a theme gets its font without a third-party request. The docs site is
+      unblocked either way; a library consumer is not
 
 ### CLI
 
-- [ ] Commands identical to upstream: `docs`, `search`, `discover`, `doctor`, `theme *`,
-      `validate-integration`
-- [ ] Adapted commands: `component` (props + snippets), `template` (`page.tsx` → `+page.svelte`),
-      `swizzle`, `init`
-- [ ] Rename `hook` → `util` with `.alias('hook')`; add `.alias('add')` to `template`
 - [ ] `upgrade` with the full contract (dry-run default, corruption guards) on a `magic-string` +
       `svelte/compiler` runner, since jscodeshift can't parse `.svelte`
 - [ ] Upstream's codemod assets stay deferred, and should stay deferred permanently in their
