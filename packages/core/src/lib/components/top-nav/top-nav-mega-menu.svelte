@@ -83,7 +83,7 @@
 	 * runs before any light dismiss.
 	 *
 	 * Two upstream shapes replicated rather than corrected, both recorded in
-	 * port/todo.md → Known debts. (A third — the trigger writing `aria-haspopup`/
+	 * port/debts.md → Known debts. (A third — the trigger writing `aria-haspopup`/
 	 * `aria-expanded` by hand and never spreading `popover.triggerProps`, so it
 	 * carried no `aria-controls` — was fixed upstream in 0.1.9 and here with it.)
 	 * - `delay`, `hideDelay` and `onOpenChange` are inert in drawer mode:

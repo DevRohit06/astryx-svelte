@@ -53,7 +53,7 @@ import MobileNavProbe from './fixtures/mobile-nav-probe.svelte';
  * re-running, so the teardown's unconditional `dialog.close()` has already fired
  * by the time the `isOpen: false` pass reaches the delayed branch. Upstream has
  * no case for it either, and inventing one would pin behaviour neither library
- * has. Recorded in port/todo.md → Known debts.
+ * has. Recorded in port/debts.md → Known debts.
  */
 
 const originalShowModal = HTMLDialogElement.prototype.showModal;

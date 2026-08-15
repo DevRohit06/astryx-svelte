@@ -173,7 +173,7 @@
 						{:else}
 							<!-- The one package in the set that ports nothing. Saying so is the
 							     whole reason `upstreamPackage` is generated rather than assumed —
-							     see port/todo.md → Known debts. -->
+							     see port/debts.md → Known debts. -->
 							<Text type="supporting" color="secondary">
 								This theme has no upstream Astryx counterpart. It is this port's own, built on the
 								published <code>defineTheme</code> extension point, and adds no component, prop or variant

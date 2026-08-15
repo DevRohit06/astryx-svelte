@@ -14,7 +14,7 @@ import CarouselFixture from './fixtures/carousel-fixture.svelte';
  * Every case goes through `carousel-fixture.svelte`: the port takes `items` plus
  * an `item` snippet where upstream takes children and wraps each with
  * `Children.map`, since a Svelte snippet is one opaque unit that cannot be
- * mapped over (the `OverflowList` precedent — see port/todo.md → Known debts).
+ * mapped over (the `OverflowList` precedent — see port/debts.md → Known debts).
  *
  * Runs in the **client** (real Chromium) project, so upstream's
  * `MockResizeObserver` stub is **gone**: Chromium implements `ResizeObserver`,

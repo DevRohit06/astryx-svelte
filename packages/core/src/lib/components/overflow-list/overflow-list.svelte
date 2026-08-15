@@ -99,7 +99,7 @@
 	 * twice but never *sliced*, so this takes `items` + an `item` snippet and
 	 * slices the data, exactly the shape `useOverflow`'s docstring anticipates.
 	 * The rendered DOM, classes and behaviour are otherwise identical; the API
-	 * difference is recorded in `port/todo.md` under "Known debts", alongside the same
+	 * difference is recorded in `port/debts.md` under "Known debts", alongside the same
 	 * forced snippet translations in `Popover` and `Tooltip`.
 	 */
 	const {

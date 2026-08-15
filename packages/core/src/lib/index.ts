@@ -144,7 +144,7 @@ export { default as IconButton } from './components/icon-button/icon-button.svel
 // `ImperativeAlertDialogLayer`/`ImperativeDialogLayer` are the rendering halves
 // of `useImperativeAlertDialog`/`useImperativeDialog`, replacing upstream's
 // `element: ReactNode` returns. Upstream has no such symbols — same split as
-// `Layer`/`TooltipLayer`/`KeyboardHintLayer`/`LightboxLayer`. See port/todo.md →
+// `Layer`/`TooltipLayer`/`KeyboardHintLayer`/`LightboxLayer`. See port/debts.md →
 // Known debts.
 export { default as ImperativeAlertDialogLayer } from './components/alert-dialog/imperative-alert-dialog-layer.svelte';
 export { default as ImperativeDialogLayer } from './components/dialog/imperative-dialog-layer.svelte';
@@ -166,7 +166,7 @@ export { default as LayoutPanel } from './components/layout/layout-panel.svelte'
 export { default as Lightbox } from './components/lightbox/lightbox.svelte';
 // `LightboxLayer` is the rendering half of `useLightbox`, replacing upstream's
 // `element: ReactNode` return. Upstream has no such symbol — same split as
-// `Layer`/`TooltipLayer`/`KeyboardHintLayer`. See port/todo.md → Known debts.
+// `Layer`/`TooltipLayer`/`KeyboardHintLayer`. See port/debts.md → Known debts.
 export { default as LightboxLayer } from './components/lightbox/lightbox-layer.svelte';
 export { default as Link } from './components/link/link.svelte';
 export { default as LinkProvider } from './components/link/link-provider.svelte';

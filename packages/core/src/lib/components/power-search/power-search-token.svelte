@@ -22,7 +22,7 @@
 	 * behaviour and date formatting all differ (see `power-search.svelte`'s note
 	 * on the two truncators). The docstring is transcribed rather than corrected
 	 * because it is upstream's published prose, but the divergence is real and is
-	 * recorded in port/todo.md's Known debts. A consumer composing on top of this
+	 * recorded in port/debts.md's Known debts. A consumer composing on top of this
 	 * component gets *this* behaviour, not the default token's.
 	 *
 	 * `config` arrives as the public `PowerSearchConfig` and is wrapped here, as

@@ -1435,7 +1435,7 @@ function buildLibraryPackages() {
  * the one difference that matters for this repo: a package's **upstream
  * counterpart is recorded, not assumed**. Seven of the eight declare
  * `@astryxdesign/theme-<slug>` as a devDependency because their oracle diffs
- * against it; `liquid-glass` declares none, because it ports nothing (port/todo.md →
+ * against it; `liquid-glass` declares none, because it ports nothing (port/debts.md →
  * Known debts). Reading the devDependency rather than listing the survivors is
  * what keeps that claim true after the next theme lands.
  *

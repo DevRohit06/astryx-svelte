@@ -23,7 +23,7 @@
 	 * This port types `icon` as `Snippet | IconName`, which rejects them at
 	 * compile time. They are DROPPED rather than substituted: picking some other
 	 * registry icon would be demo content upstream does not have. Recorded under
-	 * "Known debts" in port/todo.md.
+	 * "Known debts" in port/debts.md.
 	 */
 	let lastAction = $state<string | null>(null);
 </script>

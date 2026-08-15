@@ -129,7 +129,7 @@
 
 <!--
 	**The end-content row is 16px, where upstream's is 20px — a deliberate
-	divergence, recorded in port/todo.md under Known debts.** `SharedTopNav` renders
+	divergence, recorded in port/debts.md under Known debts.** `SharedTopNav` renders
 	`<Search size={20} />`, `<Moon size={20} />`, `<Sun size={20} />`,
 	`<HeartHandshake size={20} />` and `<Menu size={20} />`; this port sizes all
 	of them at 16 (`Icon`'s `sm`, 1rem at a 16px root) on the maintainer's call.

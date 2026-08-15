@@ -436,7 +436,7 @@ describe('HoverCard', () => {
 	 *   `svelte/server`'s `render` on a fixture inside this file throws
 	 *   `Cannot read properties of null (reading 'nodes')` out of the *client*
 	 *   template runtime. Closing this needs a third vitest project that
-	 *   transforms components twice; recorded under "Known debts" in port/todo.md.
+	 *   transforms components twice; recorded under "Known debts" in port/debts.md.
 	 *   The property it protects is not unguarded in the meantime: the two node
 	 *   cases pin the server markup as inline-safe phrasing content with no
 	 *   `<div>`, which is the shape the mismatch came from.

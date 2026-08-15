@@ -51,7 +51,7 @@ if (!existsSync(upstream)) {
  * track fills, Tree's `indent`, `rowStatus`'s `dot`, every `--_var` carrier. A
  * clean run therefore means "every *static* style matches", which is a narrower
  * claim than the report's wording suggests, and the reason it is stated here
- * rather than left to be re-derived. Recorded under Known debts in port/todo.md with
+ * rather than left to be re-derived. Recorded under Known debts in port/debts.md with
  * what closing it would take.
  *
  * Each entry maps one of our style modules to the upstream module holding the

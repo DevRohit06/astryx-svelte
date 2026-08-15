@@ -87,7 +87,7 @@
 	 * So a string body is announced through the singleton regions, and a snippet
 	 * body falls back to the toast's own (born-with-content) region — i.e. exactly
 	 * the behaviour this port had before, with no regression, but without the
-	 * 0.3.0 gain. **This deferral belongs in port/todo.md → Known debts, beside the
+	 * 0.3.0 gain. **This deferral belongs in port/debts.md → Known debts, beside the
 	 * `ToastContent` entry it descends from; it is not recorded there yet.**
 	 */
 	function toastText(body: ToastContent): string {
@@ -338,7 +338,7 @@
 	const visibleToasts = $derived(toasts.slice(-maxVisible));
 
 	// Upstream builds this with truthiness checks, so an inset of `0` is ignored.
-	// Replicated rather than fixed — see port/todo.md → Known debts.
+	// Replicated rather than fixed — see port/debts.md → Known debts.
 	const insetStyle = $derived.by(() => {
 		const parts: string[] = [];
 		if (inset?.top) parts.push(`top:${inset.top}px`);
