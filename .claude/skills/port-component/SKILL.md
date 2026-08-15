@@ -10,8 +10,9 @@ how invented API gets in.
 
 ## 1. Spec — before writing anything
 
-Check `port/todo.md` first: the component may be partly done, blocked on an unported primitive, or listed
-under "Known debts" with a deliberate deviation.
+Check `port/todo.md` first for open work, and `port/debts.md` for a recorded deviation — the
+component may be partly done, blocked on an unported primitive, or already carry a deliberate
+divergence there.
 
 Then run the **`astryx-parity`** agent against the upstream original to extract the complete
 inventory — props and defaults, variants, rendered elements, ARIA, exports, and what its own tests
@@ -57,9 +58,11 @@ Run the **`astryx-test-parity`** agent to port upstream's `.test.tsx` suite case
 
 ## 6. Close out
 
-- `pnpm -r build && pnpm -r check && pnpm -r lint && pnpm -r test` — all clean.
+- `pnpm verify --fast` — every stage clean. (`close-batch` runs the full `pnpm verify` gate once the
+  whole batch is done.)
 - Re-run **`astryx-parity`** to catch drift between the spec and what actually got written, in both
   directions. Anything the port has that upstream doesn't is a defect to remove.
-- Update `port/todo.md`: move the component into the Done list, refresh the counts in the Status table,
-  and record any deliberate deviation under "Known debts".
+- Update `port/todo.md`'s Next/Open work for what changed, add this batch's `port/ledger/` entry for
+  how it was built, and record any deliberate deviation in `port/debts.md` with a machine-readable
+  head. Never hand-write a count — `pnpm verify` regenerates `port/status.md`.
 - Add the demo to the core dev routes showing **upstream's documented API only**, not invented usage.

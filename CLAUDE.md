@@ -9,8 +9,8 @@ monorepo: `packages/core` (components), `packages/cli`, `packages/themes/*`, `do
 
 **If it's not in Astryx, it's not here.** Invented props, extra variants, nicer defaults and
 hand-drawn demo content are _defects_, not improvements — that includes the demo routes, which must
-show upstream's documented API. Upstream bugs are documented in `port/todo.md` under "Known debts" rather
-than replicated.
+show upstream's documented API. Upstream bugs are documented in `port/debts.md` rather than
+replicated.
 
 Upstream's source is cloned at **`reference/astryx-upstream/`** — gitignored, present locally, and
 the thing to read. Read it _before_ porting, not after: source, `.doc.mjs`, tests, storybook, and
@@ -22,11 +22,21 @@ instructions for this one — they describe a React codebase, a different test r
 repo does not have. The content is kept under the new name, and its StyleX capability table is
 worth consulting; it just must not auto-load.
 
-`port/todo.md` is the live status and backlog (what's next, the batch history, known debts). Read the
-relevant section before starting work; update it when work lands. **`port/ledger/` is its companion**
-— the per-component implementation notes (what each unit does, the translations it needed, its
-oracle and test posture). Status and open decisions go in `port/todo.md`; how a component was built goes
-in `port/ledger/`.
+**`port/` holds everything about building this port**, and `port/README.md` maps what goes where.
+`port/todo.md` is the backlog — the current goal and what's next, no metrics and no batch history.
+`port/status.md` is **generated** by `scripts/status.mjs` and must never be hand-edited; `pnpm
+verify` regenerates it and fails when the committed file has drifted. `port/debts.md` records every
+deliberate divergence from upstream with a machine-readable head (`units`, `kind`, `retires`).
+`port/ledger/` holds one file per batch — how the work was actually done. `port/research/` is frozen
+upstream analysis: research, not spec, so verify it against source before trusting it.
+
+**Never write a metric into prose.** A count belongs in `port/status.md` and nowhere else — that is
+what stopped "100 / 100" surviving three batches after upstream moved to 101, in a file that ended up
+telling readers not to trust its own numbers.
+
+Batches open with the `start-batch` skill and close with `close-batch`, which runs the audit agents
+below and carries the **promotion rule**: a lesson that constrains future work moves into this file
+or an agent's file, in the same commit — never left stranded in a ledger entry or a research file.
 
 ## Subagents
 
@@ -44,6 +54,11 @@ Five agents in `.claude/agents/` own distinct axes. Use them — they encode thi
 ## Commands
 
 ```sh
+pnpm verify        # the gate: every stage runs and every result reports, then port/status.md is
+                   #   regenerated and diffed against what's committed. Prefer this to chaining
+                   #   build/check/lint/test with && — that reports "failed" identically whether
+                   #   one stage failed or both ran, and once hid six real errors behind the first.
+pnpm verify --fast # skips the ~4,500-case browser suite; for gating a commit locally.
 pnpm -r build     # must run before check — theme-neutral typechecks against core's built dist/,
                   #   and the docs generator reads props types out of that same dist/
 pnpm -r check     # svelte-check + tsc
@@ -148,4 +163,8 @@ reproduce. Such a file says so at the top and mutation-checks its fixes.
 - Every component declares its props interface in `<script module>`, exports it, and re-exports it
   from `src/lib/index.ts` — upstream publishes props types, so we do too.
 - Relative imports use the `.js` extension even for `.ts` sources.
+- Any event a component handles itself must be destructured out of `$props()` and invoked
+  explicitly, in upstream's documented order — `{...rest}` beside an explicit handler for the same
+  event is one object literal, and the last key silently wins. `ComplexSelector` shipped with a
+  consumer's `onclick` discarded exactly this way (`port/ledger/026-selector-family.md`).
 - Prettier: **tabs**, single quotes, **no trailing commas**, 100 columns.

@@ -7,18 +7,18 @@ tools: Read, Grep, Glob, Bash, Write, Edit
 You port upstream's test suites, **case for case**, and the count is the contract: if
 upstream has 23 cases, this repo has 23 — or fewer, with every absence named in the file
 and justified. A suite that tests what our port happens to do is worthless; upstream's
-assertions are the specification, and the aim is to keep them *verbatim* wherever the
+assertions are the specification, and the aim is to keep them _verbatim_ wherever the
 language allows.
 
 ## Where things live
 
-| What | Path |
-|---|---|
-| Upstream suite | `reference/astryx-upstream/packages/core/src/<Name>/<Name>.test.tsx` |
-| Upstream hook suites | `reference/astryx-upstream/packages/core/src/hooks/<name>.test.ts(x)` |
-| Our suites | `packages/core/src/tests/` |
-| Our fixtures | `packages/core/src/tests/fixtures/` |
-| Vitest config (two projects) | `packages/core/vite.config.ts` |
+| What                         | Path                                                                  |
+| ---------------------------- | --------------------------------------------------------------------- |
+| Upstream suite               | `reference/astryx-upstream/packages/core/src/<Name>/<Name>.test.tsx`  |
+| Upstream hook suites         | `reference/astryx-upstream/packages/core/src/hooks/<name>.test.ts(x)` |
+| Our suites                   | `packages/core/src/tests/`                                            |
+| Our fixtures                 | `packages/core/src/tests/fixtures/`                                   |
+| Vitest config (two projects) | `packages/core/vite.config.ts`                                        |
 
 Fixtures live outside `src/lib` on purpose, so `svelte-package` never sees them and they
 cannot reach `dist/`. Never put a fixture in `src/lib`.
@@ -38,9 +38,9 @@ you hit one, restate the assertion so it checks what the title claims, and comme
 **`render` from `vitest-browser-svelte` v3 is async-only.** Always `await render(...)`.
 
 **There is no `renderHook`.** A hook has to run inside a component's init, so the
-substitute is two fixtures: a *probe* that runs the hook and renders what it returned, and
-where the hook needs context, a *provider* that wraps it (self-nesting if upstream has a
-nested case). A hook returning *handlers* rather than a value needs one more move — the
+substitute is two fixtures: a _probe_ that runs the hook and renders what it returned, and
+where the hook needs context, a _provider_ that wraps it (self-nesting if upstream has a
+nested case). A hook returning _handlers_ rather than a value needs one more move — the
 probe renders nothing and exposes them as an instance `export const`, which
 `render(...).component` hands back. That is the closest thing Svelte has to
 `result.current`.
@@ -52,7 +52,7 @@ serves every "React passes an element as a prop" case, by taking the slot name a
 until it has.
 
 **Keep upstream's stubs.** `fetch`, `ResizeObserver`, `OffscreenCanvas`,
-`createImageBitmap`, `navigator.userAgentData` — every one of them matters *more* here
+`createImageBitmap`, `navigator.userAgentData` — every one of them matters _more_ here
 than upstream, because jsdom simply lacks the API where a real browser would issue a real
 network request, observe real layout, or report the real machine. Removing a stub makes
 the test test the environment.
@@ -63,7 +63,7 @@ unmount. `useLongPress` fakes `setTimeout`/`clearTimeout` and nothing else.
 
 **Do not invent coverage.** A case with no upstream counterpart is allowed only when it
 pins a Svelte-specific hazard upstream gets for free (the four `MetadataList` SSR cases
-are the precedent). It must say so in a comment and be recorded in `port/todo.md`.
+are the precedent). It must say so in a comment and be recorded in `port/debts.md`.
 
 ## Cases that legitimately have no counterpart
 
@@ -95,15 +95,15 @@ And these get a **counterpart** rather than a translation, which must be comment
 4. Run it: `pnpm -F @astryx-svelte/core test:unit -- --run`. Report the real output. If the
    browser project cannot start, say that plainly rather than reporting the node project's
    result as the suite's.
-5. A failure is a finding about the *port* until proven otherwise. Do not weaken an
+5. A failure is a finding about the _port_ until proven otherwise. Do not weaken an
    assertion to make it pass; that converts a real defect into a green tick.
 
 ## Output
 
 Lead with `N/M upstream cases ported` and the suite's pass/fail line verbatim.
 
-| # | Upstream case | Status | Ours (`file:line`) |
-|---|---------------|--------|--------------------|
+| #   | Upstream case | Status | Ours (`file:line`) |
+| --- | ------------- | ------ | ------------------ |
 
 Status is one of **ported** (assertion unchanged), **restated** (assertion changed — say
 why), **counterpart** (different mechanism, same question), **dropped** (with the reason),

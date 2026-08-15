@@ -19,7 +19,6 @@ incident — are not `Selector` work either; they now have their own file,
 
 ## Components
 
-
 `Selector`, `MultiSelector` and `ComplexSelector` in one batch, plus the new shared primitive
 `field/panel-search-input.svelte` they lean on. The clear-button convergence (#4876) and the
 `data-disabled` root state reach these three too; the input-family section above describes both, so
@@ -162,7 +161,6 @@ is now a **keyboard** ring where the old one drew on a mouse click too. `Selecto
 `MultiSelector`'s ghost triggers gain the same style, for the same reason: a ghost trigger has no
 bordered wrapper of its own.
 
-
 ### Oracle bookkeeping
 
 Three mode flips and one new case, each landed with its style edit:
@@ -183,7 +181,6 @@ Three mode flips and one new case, each landed with its style edit:
 standing start. The CSS oracle lost the two invented `complex-selector` rules and now reports nothing
 from this family.
 
-
 ## What the audits caught
 
 ### One parity correction outside the brief
@@ -198,11 +195,11 @@ and keep it.
 
 The `astryx-parity` and `astryx-idiom` passes both ran after the components were written, and between them found five things worth recording — four of which were **pre-existing** rather than introduced by this batch, which is the argument for running them on a rewrite and not only on a new port.
 
-**`ComplexSelector` was dropping the consumer's `onclick` entirely.** Upstream destructures `onClick: onClickProp` (`ComplexSelector.tsx:268`) and composes it — `composeEventHandlers(onClickProp, () => { if (!isDisabled) popover.toggle(); })` — so a consumer handler runs first and can veto the toggle with `preventDefault()`. This port never destructured it, so `onclick` survived into `...rest` and the spread sat *before* the explicit `onclick=`. Compiled, that is one object literal where the last key wins, so the forwarded handler was discarded outright: `<ComplexSelector onclick={…}>` fired nothing and opened anyway. Now inlined as the two-step `MobileNav` and `SideNavCollapseButton` already use. The general rule, and it is `planning/06` H12 verbatim: **any event a component handles itself must be destructured out of `$props()` and invoked explicitly, in upstream's documented order** — a `{...rest}` beside an explicit handler for the same event is never a merge.
+**`ComplexSelector` was dropping the consumer's `onclick` entirely.** Upstream destructures `onClick: onClickProp` (`ComplexSelector.tsx:268`) and composes it — `composeEventHandlers(onClickProp, () => { if (!isDisabled) popover.toggle(); })` — so a consumer handler runs first and can veto the toggle with `preventDefault()`. This port never destructured it, so `onclick` survived into `...rest` and the spread sat _before_ the explicit `onclick=`. Compiled, that is one object literal where the last key wins, so the forwarded handler was discarded outright: `<ComplexSelector onclick={…}>` fired nothing and opened anyway. Now inlined as the two-step `MobileNav` and `SideNavCollapseButton` already use. The general rule, and it is `planning/06` H12 verbatim: **any event a component handles itself must be destructured out of `$props()` and invoked explicitly, in upstream's documented order** — a `{...rest}` beside an explicit handler for the same event is never a merge.
 
 `Selector` and `MultiSelector` were checked for the same shape and are faithful: their `{...rest}` sits before `onkeydown` on the inner `<button>`, and so does upstream's JSX, so React drops a forwarded `onkeydown` too.
 
-**`PanelSearchInput` omitted the wrong handler name.** It shipped `Omit<BaseProps<HTMLInputElement>, 'onchange'>`, reasoning by name from upstream's `Omit<…, 'onChange'>`. But React's `onChange` on a text input *is* the input event, and the handler this component binds its own value callback to is `oninput` — which, because the rest spread deliberately comes **after** it, a caller could have silently replaced, leaving a search box that types but never filters. `onchange` is never set here and has no React counterpart to omit, so it passes through. `TextInput` omits `'oninput'` for exactly this reason and was the precedent to have read. Unreachable in practice today (neither selector passes it, and the component is not exported), which is why it is second on the list rather than first — but it is the kind of thing that only stays unreachable by luck.
+**`PanelSearchInput` omitted the wrong handler name.** It shipped `Omit<BaseProps<HTMLInputElement>, 'onchange'>`, reasoning by name from upstream's `Omit<…, 'onChange'>`. But React's `onChange` on a text input _is_ the input event, and the handler this component binds its own value callback to is `oninput` — which, because the rest spread deliberately comes **after** it, a caller could have silently replaced, leaving a search box that types but never filters. `onchange` is never set here and has no React counterpart to omit, so it passes through. `TextInput` omits `'oninput'` for exactly this reason and was the precedent to have read. Unreachable in practice today (neither selector passes it, and the component is not exported), which is why it is second on the list rather than first — but it is the kind of thing that only stays unreachable by luck.
 
 **The `statusButton` inline→object flip had a third call site.** `use-input-status-icon.stylex.ts` composes `focusOutlineStyles.focusVisible` at its one call site exactly as upstream does, so its oracle case needed the same mode flip `selector` and `multi-selector` got — and without it the class oracle stayed red on a key whose atoms were already correct. The rule that generalises: **when a shared style helper is adopted, every case claiming `inline` for a call site that now composes it needs re-reading, and they are found by grepping the helper's name** rather than by waiting for each to fail in turn.
 
@@ -212,7 +209,7 @@ The `astryx-parity` and `astryx-idiom` passes both ran after the components were
 
 The idiom pass additionally confirmed, empirically rather than by reading, the four translation decisions this batch was least sure of: `$.component` re-reads the `SelectionMark` derived so a `<Theme>` swap does re-resolve the mark; `useCombobox`'s options bag is rebuilt per call so `optimistic.current` is read at event time; a top-level `$effect` is deferred to `pop()` and therefore runs after the whole template subtree, so `searchEl` and `anchorEl` are populated before any measurement or focus; and `{@const}` compiles to a `$derived`, so the per-row `multi-selector-option` target restamps its `data-*` while the hoisted, argument-free `themeProps` calls correctly do not.
 
-It also corrected one clause of a comment I wrote: `use-selected-item-offset.svelte.ts`'s header claimed `$effect.pre` would be wrong because "the items being measured would not be there yet". They would — the layer's content is rendered unconditionally, so the rows exist from mount. The real reason plain `$effect` is right is that this must observe the *patched* DOM after `showPopover()` has run. Conclusion unchanged, justification corrected.
+It also corrected one clause of a comment I wrote: `use-selected-item-offset.svelte.ts`'s header claimed `$effect.pre` would be wrong because "the items being measured would not be there yet". They would — the layer's content is rendered unconditionally, so the rows exist from mount. The real reason plain `$effect` is right is that this must observe the _patched_ DOM after `showPopover()` has run. Conclusion unchanged, justification corrected.
 
 ### The Selector family — port findings (`port/ledger/_inbox.md` staging)
 
@@ -261,12 +258,16 @@ It also corrected one clause of a comment I wrote: `use-selected-item-offset.sve
       green (838/838), and both class and CSS oracles report nothing from `selector`,
       `multi-selector`, `complex-selector` or `panel-search-input`
 
-
-
 ## Rules promoted
 
-Not promoted at the time. `027-upstream-0.4.1-infrastructure.md` carries the port-binding fix and CI
-split that used to be described here; see that file's own Rules promoted for the accurate version.
+The `ComplexSelector` `onclick` finding, above: **any event a component handles itself must be
+destructured out of `$props()` and invoked explicitly, in upstream's documented order** — restated
+as H12 in `port/research/06-react-to-svelte-patterns.md`, but not promoted at the time this batch
+landed. It now lives in `CLAUDE.md`'s Conventions section, which points back here as the incident
+that motivated it.
+
+`027-upstream-0.4.1-infrastructure.md` carries the port-binding fix and CI split that used to be
+described here; see that file's own Rules promoted for the accurate version.
 
 ## Debts opened
 
