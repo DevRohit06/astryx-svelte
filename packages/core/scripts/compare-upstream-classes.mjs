@@ -1016,34 +1016,28 @@ const CASES = [
 		]
 	},
 	{
-		// Object mode for the radio chrome and the three size groups: the row
-		// applies them via runtime `stylex.props` beside a dynamic `[size]` index
-		// and several conditionals, so the compiler could not fold the merge and
-		// left the objects live in `dist/`. The `18/20/22/24/8/10` px size literals
-		// are px in upstream's source too, and the published dist matches, so no
-		// px→rem lag as with Icon.
+		// **Down to the row chrome at upstream 0.4.0, and no marker.** The circle,
+		// its inner dot and their two size ramps moved into `RadioIndicator`;
+		// `radio.markers.stylex.ts` was deleted, because the element the hover tint
+		// lands on is no longer one this component renders — the row now applies
+		// the shared `indicatorScope`, and the marker-normalised keys moved to the
+		// indicator's case with it.
 		//
-		// `radioUnchecked` and `radioChecked` embed
-		// `when.ancestor(':hover', radioScope)`; a `defineMarker()`'s class is
-		// derived from its module's path and cannot match upstream's by name, so
-		// those two keys diff as marker-normalised CSS — the same fallback the
-		// Switch and OverlayScrim marker paths use. The `radio.markers` module holds
-		// only the marker (no container styles), so it rides here as this case's
-		// `marker` rather than as a standalone case that would compare nothing.
+		// The wrapper also stopped carrying a focus ring. It used to hardcode a
+		// `border-radius: 50%` so the ring matched a circle it did not own; the
+		// ring is now painted on the indicator's own element by
+		// `useIndicatorFocusRing`, which takes whatever shape the theme's
+		// replacement actually has.
 		//
-		// `labelDisabled` is the one inline call site: upstream resolves the label's
+		// Two inline call sites. `labelDisabled` — upstream resolves the label's
 		// disabled dim into a two-entry lookup table keyed by `!!isDisabled << 0`,
-		// where only the disabled branch carries a class, leaving no object for it.
-		// It lives in our `styles` group, which upstream's `dist/` `styles` object
-		// omits, so object mode never reaches it.
+		// where only the disabled branch carries a class, leaving no object for it;
+		// it lives in our `styles` group, which upstream's `dist/` `styles` object
+		// omits, so object mode never reaches it. And the new `indicatorSlot`,
+		// whose lone `display: contents` folds to one class.
 		file: 'src/lib/components/radio-list/radio-list-item.stylex.js',
 		upstreamFile: 'RadioList/RadioListItem.js',
-		marker: {
-			file: 'src/lib/components/radio-list/radio.markers.stylex.js',
-			upstreamFile: 'RadioList/radio.markers.stylex.js',
-			name: 'radioScope'
-		},
-		inline: [['styles.labelDisabled']]
+		inline: [['styles.labelDisabled'], ['styles.indicatorSlot']]
 	},
 	{
 		// Both modes at once. Upstream's `dist/` keeps exactly four of `styles`
@@ -1701,31 +1695,25 @@ const CASES = [
 		// ships `var(--_tab-indicator-bottom, -1px)`.
 	},
 	{
-		// Both modes, plus the `checkboxScope` marker. Upstream declares
-		// CheckboxInput's styles inline in the component file rather than a style
-		// module, and keeps the group names `styles` / `wrapperSizeStyles` /
-		// `checkboxSizeStyles` / `checkmarkSizeStyles` / `indeterminateSizeStyles`,
-		// so ours need no rename.
+		// Both modes. Upstream declares CheckboxInput's styles inline in the
+		// component file rather than a style module, and keeps the group names
+		// `styles` / `wrapperSizeStyles`, so ours need no rename.
 		//
-		// Object mode covers all five groups. Every call site that touches them
-		// carries a dynamic `[size]` index or a conditional (the marker on the row,
-		// the checked/unchecked pick, the two disabled guards), so the compiler
-		// could fold none of them and left the objects live in `dist/`. The
-		// 18/20/22/24/8/10/12/14 px size literals are px in upstream's source too
-		// and the published dist agrees, so there is no px->rem lag as with Icon.
+		// **Down to two groups at upstream 0.4.0, and no marker.** The box, the
+		// tick, the mixed-state bar and their three size ramps moved into
+		// `CheckboxIndicator`; `checkbox.markers.stylex.ts` was deleted outright,
+		// because the element the hover tint lands on is no longer one this
+		// component renders — the row now applies the shared `indicatorScope`, and
+		// the marker-normalised keys moved to the indicator's case with it. What
+		// is left here draws no checkbox at all: the row, the positioned wrapper,
+		// the visually-hidden `<input>`, the `display: contents` indicator slot and
+		// the label column.
 		//
-		// `checkboxFocus`, `checkboxUnchecked`, `checkboxChecked`,
-		// `checkboxDisabled` and `checkboxDisabledUnchecked` embed
-		// `when.ancestor(...)` against `checkboxScope`. A `defineMarker()`'s class
-		// is derived from its module's path and cannot match upstream's by name, so
-		// those five diff as marker-normalised CSS — the same fallback
-		// `radioScope` / `switchScope` / `treeItemScope` use. The markers module
-		// holds only the marker, so it rides here rather than as a standalone case
-		// that would compare nothing.
+		// Two inline call sites, both plain `stylex.props` with no dynamic style
+		// beside them, so the compiler resolved each into a literal: the label
+		// column (`x78zum5 xdt5ytf x1lsbc85`) and the new indicator slot, whose
+		// lone `display: contents` folds to one class.
 		//
-		// `styles.labelWrapper` is the one inline call site: the label column is a
-		// plain `stylex.props` with no dynamic style beside it, so the compiler
-		// resolved it into the literal `x78zum5 xdt5ytf x1lsbc85`.
 		// `dynamicWidthStyles.width` compiles to a function on both sides, so
 		// neither extractor sees it. `styles.description` is declared upstream and
 		// never applied — `FieldLabel` renders the description — and `dist/`
@@ -1733,12 +1721,7 @@ const CASES = [
 		// needs no skip, exactly as `Switch`'s `description` key is.
 		file: 'src/lib/components/checkbox-input/checkbox-input.stylex.js',
 		upstreamFile: 'CheckboxInput/CheckboxInput.js',
-		marker: {
-			file: 'src/lib/components/checkbox-input/checkbox.markers.stylex.js',
-			upstreamFile: 'CheckboxInput/checkbox.markers.stylex.js',
-			name: 'checkboxScope'
-		},
-		inline: [['styles.labelWrapper']]
+		inline: [['styles.labelWrapper'], ['styles.indicatorSlot']]
 	},
 	{
 		// Pure object mode. `styles.selected` is the only style the module declares,

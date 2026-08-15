@@ -9,6 +9,6 @@ import * as stylex from '@stylexjs/stylex';
  *
  * Its class is derived from this module's path, so it cannot match upstream's by
  * name — the oracle compares the rules that carry it marker-normalised, as it
- * does for `radioScope`/`switchScope`/`treeItemScope`.
+ * does for `indicatorScope`/`switchScope`/`treeItemScope`.
  */
 export const tabScope: ReturnType<typeof stylex.defineMarker> = stylex.defineMarker();

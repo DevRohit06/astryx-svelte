@@ -130,15 +130,15 @@
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import {
-		checkboxBoxAttrs,
-		checkboxCheckmarkAttrs,
 		checkboxContainerAttrs,
 		checkboxFieldAttrs,
-		checkboxIndeterminateMarkAttrs,
+		checkboxIndicatorSlotAttrs,
 		checkboxInputAttrs,
 		checkboxLabelWrapperAttrs,
 		checkboxWrapperAttrs
 	} from './checkbox-input.stylex.js';
+	import { useIndicator } from '../indicator/use-indicator.svelte.js';
+	import { useIndicatorFocusRing } from '../../hooks/use-indicator-focus-ring.svelte.js';
 
 	/**
 	 * A checkbox input for toggling boolean (or mixed) values, ported from
@@ -197,7 +197,6 @@
 
 	const isIndeterminate = $derived(optimistic.current === 'indeterminate');
 	const isChecked = $derived(optimistic.current === true);
-	const isCheckedOrIndeterminate = $derived(isChecked || isIndeterminate);
 
 	// Disabled-reason tooltip. Disabled controls swallow pointer events, so the
 	// tooltip listeners attach to the checkbox row (which always exists) and the
@@ -296,17 +295,25 @@
 	const containerAttrs = $derived(checkboxContainerAttrs(isLabelHidden, isDisabled));
 	const wrapperAttrs = $derived(checkboxWrapperAttrs(size));
 	const inputAttrs = $derived(checkboxInputAttrs(size, isDisabled));
-	const boxTheme = $derived(
-		themeProps('checkbox', {
-			size,
-			checked: isChecked ? 'checked' : isIndeterminate ? 'indeterminate' : null,
-			disabled: isDisabled ? 'disabled' : null
-		})
-	);
-	const boxAttrs = $derived(checkboxBoxAttrs(size, isCheckedOrIndeterminate, isDisabled));
-	const checkmarkAttrs = $derived(checkboxCheckmarkAttrs(size, isChecked));
-	const indeterminateMarkAttrs = $derived(checkboxIndeterminateMarkAttrs(size, isIndeterminate));
+	const indicatorSlotAttrs = checkboxIndicatorSlotAttrs();
 	const labelWrapperAttrs = checkboxLabelWrapperAttrs();
+
+	// The checkbox visual is a component the theme resolves, not markup this file
+	// owns — so it carries its own `checkbox-indicator` theme target, its own
+	// state colours and its own size ramp. Resolved once and read reactively, so
+	// a `<Theme>` swap changes which component draws.
+	const checkboxIndicator = useIndicator('checkbox');
+	const CheckboxControl = $derived(checkboxIndicator.current);
+
+	// The focusable `<input>` is `opacity: 0`, so the ring has to be painted on
+	// the indicator beside it — and the indicator may be third-party code that
+	// never draws one. The owner paints it imperatively instead, on whatever
+	// element the indicator actually rendered.
+	let indicatorSlot = $state<HTMLElement | null>(null);
+	const { focusProps } = useIndicatorFocusRing(() => ({
+		container: indicatorSlot,
+		isDisabled
+	}));
 </script>
 
 <div
@@ -326,7 +333,19 @@
 		class={containerAttrs.class}
 		style={containerAttrs.style}
 	>
-		<div class={wrapperAttrs.class} style={wrapperAttrs.style}>
+		<!--
+			`focusin`/`focusout`, not `focus`/`blur`: the focusable element is the
+			`<input>` *inside* this wrapper, and the plain events do not bubble.
+			Upstream's React `onFocus`/`onBlur` are already delegated-and-bubbling,
+			so this is the same wiring under the names the DOM uses — the same
+			correction `useKeyboardHint` records.
+		-->
+		<div
+			class={wrapperAttrs.class}
+			style={wrapperAttrs.style}
+			onfocusin={focusProps.onFocus}
+			onfocusout={focusProps.onBlur}
+		>
 			<input
 				{...rest}
 				{@attach attachIndeterminate}
@@ -349,28 +368,28 @@
 				class={inputAttrs.class}
 				style={inputAttrs.style}
 			/>
-			<div
-				aria-hidden="true"
-				{...boxTheme}
-				class={cx(boxTheme.class, boxAttrs.class)}
-				style={boxAttrs.style}
-			>
-				{#if isBusy}
-					<Spinner size="sm" shade="inherit" />
-				{:else}
-					<svg viewBox="0 0 10 10" class={checkmarkAttrs.class} style={checkmarkAttrs.style}>
-						<path
-							d="M8.5 2.5L4 7.5L1.5 5"
-							stroke="currentColor"
-							stroke-width="1.5"
-							fill="none"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-						/>
-					</svg>
-					<div class={indeterminateMarkAttrs.class} style={indeterminateMarkAttrs.style}></div>
-				{/if}
-			</div>
+			<!--
+				A container holding ONLY the indicator, so the focus ring has an
+				unambiguous target whatever a theme renders. `display: contents` keeps
+				it out of layout entirely.
+			-->
+			{#snippet busyIndicator()}
+				<Spinner size="sm" shade="inherit" />
+			{/snippet}
+			<span bind:this={indicatorSlot} class={indicatorSlotAttrs.class}>
+				<!--
+					`children` replaces the state mark but keeps the indicator's place, so
+					the row does not shift while a change action is pending. Passed as an
+					explicit prop rather than slot content because it is conditional:
+					`undefined` when idle is what the indicator's null check reads.
+				-->
+				<CheckboxControl
+					state={isIndeterminate ? 'indeterminate' : isChecked ? 'checked' : 'unchecked'}
+					{size}
+					{isDisabled}
+					children={isBusy ? busyIndicator : undefined}
+				/>
+			</span>
 		</div>
 		<div class={labelWrapperAttrs.class} style={labelWrapperAttrs.style}>
 			<FieldLabel

@@ -61,6 +61,17 @@ export {
 
 export { useInputContainer, type UseInputContainerOptions } from './use-input-container.svelte.js';
 
+// New at upstream 0.4.0, alongside the indicator layer. `UseIndicatorFocusRingOptions`
+// has no upstream counterpart — upstream takes `(containerRef, isDisabled)` as
+// positional arguments, and this port's hook convention passes options through a
+// getter so the container can be a `bind:this` target that is still null at call
+// time. The return type keeps upstream's name and shape.
+export {
+	useIndicatorFocusRing,
+	type UseIndicatorFocusRingOptions,
+	type UseIndicatorFocusRingReturn
+} from './use-indicator-focus-ring.svelte.js';
+
 export {
 	useInputStatusIcon,
 	type UseInputStatusIconOptions,

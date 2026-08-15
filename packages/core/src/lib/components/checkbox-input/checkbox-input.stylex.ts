@@ -3,24 +3,23 @@ import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import {
 	colorVars,
 	spacingVars,
-	radiusVars,
-	durationVars,
-	easeVars,
 	typographyVars,
 	typeScaleVars,
-	fontWeightVars,
-	borderVars
+	fontWeightVars
 } from '../../styles/tokens.stylex.js';
 import type { SizeValue } from '../../internal/types.js';
-import { checkboxScope } from './checkbox.markers.stylex.js';
+import { indicatorScope } from '../indicator/indicator.markers.stylex.js';
 
 /**
  * `CheckboxInput`'s styles, ported from Astryx's `CheckboxInput/CheckboxInput.tsx`.
  *
- * The box's focus outline and the checked/unchecked hover tints are entirely CSS
- * via `when.ancestor(..., checkboxScope)` — see `checkbox.markers.stylex.ts` for
- * the marker they resolve against. The four size ramps are fixed pixels,
- * transcribed from upstream.
+ * **This component no longer draws a checkbox.** Upstream 0.4.0 moved the box,
+ * the tick, the mixed-state bar and their three size ramps into
+ * `CheckboxIndicator`, so what is left here is the row, the positioned wrapper,
+ * the visually-hidden native `<input>` and the label column. The row still owns
+ * the hover marker — now the shared `indicatorScope` rather than a
+ * `checkboxScope` of its own — because the thing being tinted is a component
+ * the theme chose, not an element this file renders.
  */
 
 const styles = stylex.create({
@@ -51,112 +50,11 @@ const styles = stylex.create({
 	inputDisabled: {
 		cursor: 'not-allowed'
 	},
-	checkbox: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		borderWidth: borderVars['--border-width'],
-		borderStyle: 'solid',
-		borderRadius: radiusVars['--radius-inner'],
-		transitionProperty: 'background-color, border-color',
-		transitionDuration: {
-			default: durationVars['--duration-fast'],
-			'@media (prefers-reduced-motion: reduce)': '0s'
-		},
-		transitionTimingFunction: easeVars['--ease-standard']
-	},
-	checkboxFocus: {
-		outline: {
-			default: 'none',
-			[stylex.when.ancestor(':has(:focus-visible)', checkboxScope)]:
-				`2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: null,
-			[stylex.when.ancestor(':has(:focus-visible)', checkboxScope)]: '2px'
-		}
-	},
-	// State-dependent colors with ancestor hover behavior
-	checkboxUnchecked: {
-		// Foreground for the inherit-shade loading spinner (reads currentColor):
-		// brand accent on the light surface fill.
-		color: colorVars['--color-accent'],
-		borderColor: {
-			default: colorVars['--color-border-emphasized'],
-			[stylex.when.ancestor(':hover', checkboxScope)]: {
-				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-border-emphasized']}, ${colorVars['--color-tint-hover']} 20%)`
-			}
-		},
-		backgroundColor: {
-			default: colorVars['--color-background-surface'],
-			[stylex.when.ancestor(':hover', checkboxScope)]: {
-				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-background-surface']}, ${colorVars['--color-tint-hover']} 5%)`
-			}
-		}
-	},
-	checkboxChecked: {
-		// Foreground for the inherit-shade loading spinner (reads currentColor):
-		// on-accent color against the accent fill.
-		color: colorVars['--color-on-accent'],
-		borderColor: {
-			default: colorVars['--color-accent'],
-			[stylex.when.ancestor(':hover', checkboxScope)]: {
-				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`
-			}
-		},
-		backgroundColor: {
-			default: colorVars['--color-accent'],
-			[stylex.when.ancestor(':hover', checkboxScope)]: {
-				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`
-			}
-		}
-	},
-	checkboxDisabled: {
-		opacity: 0.5,
-		borderColor: {
-			default: colorVars['--color-border'],
-			[stylex.when.ancestor(':hover', checkboxScope)]: {
-				'@media (hover: hover)': colorVars['--color-border']
-			}
-		}
-	},
-	checkboxDisabledUnchecked: {
-		backgroundColor: {
-			default: colorVars['--color-background-muted'],
-			[stylex.when.ancestor(':hover', checkboxScope)]: {
-				'@media (hover: hover)': colorVars['--color-background-muted']
-			}
-		}
-	},
-	checkmark: {
-		display: 'none',
-		color: {
-			default: colorVars['--color-on-accent'],
-			// Forced colors (Windows High Contrast) does not reliably force an SVG
-			// stroke painted with currentColor, so the check stays the same white as
-			// the flattened (Canvas) box fill — a white check on a white box.
-			// CanvasText keeps it perceivable on the Canvas box, matching the
-			// indeterminate mark (WCAG 1.4.11).
-			'@media (forced-colors: active)': 'CanvasText'
-		}
-	},
-	checkmarkVisible: {
-		display: 'block'
-	},
-	indeterminateMark: {
-		display: 'none',
-		backgroundColor: {
-			default: colorVars['--color-on-accent'],
-			// Forced colors (Windows High Contrast) strips painted backgrounds,
-			// which would make the indeterminate bar invisible; CanvasText keeps it
-			// perceivable on the Canvas box fill (WCAG 1.4.11). The checkmark carries
-			// the matching CanvasText treatment on its own style.
-			'@media (forced-colors: active)': 'CanvasText'
-		},
-		borderRadius: radiusVars['--radius-full']
-	},
-	indeterminateMarkVisible: {
-		display: 'block'
+	// Holds only the indicator, so the focus ring has one unambiguous target.
+	// `display: contents` adds no box of its own — the indicator keeps whatever
+	// layout relationship it already had with the wrapper.
+	indicatorSlot: {
+		display: 'contents'
 	},
 	labelWrapper: {
 		display: 'flex',
@@ -187,38 +85,11 @@ const wrapperSizeStyles = stylex.create({
 	}
 });
 
-const checkboxSizeStyles = stylex.create({
-	sm: {
-		width: 20,
-		height: 20
-	},
-	md: {
-		width: 24,
-		height: 24
-	}
-});
-
-const checkmarkSizeStyles = stylex.create({
-	sm: {
-		width: 12,
-		height: 12
-	},
-	md: {
-		width: 14,
-		height: 14
-	}
-});
-
-const indeterminateSizeStyles = stylex.create({
-	sm: {
-		width: 10,
-		height: 2
-	},
-	md: {
-		width: 12,
-		height: 2
-	}
-});
+// The `checkboxSizeStyles` / `checkmarkSizeStyles` / `indeterminateSizeStyles`
+// ramps that stood here moved to `CheckboxIndicator` at upstream 0.4.0, along
+// with the ten style keys that drew the box, the tick and the mixed-state bar.
+// This component no longer draws a checkbox — it renders whichever indicator
+// the theme resolves for the `checkbox` name and lets that draw itself.
 
 /** The two checkbox sizes, keyed off the wrapper ramp as upstream's type is. */
 export type CheckboxInputSize = keyof typeof wrapperSizeStyles;
@@ -237,8 +108,14 @@ export function checkboxFieldAttrs(
 }
 
 /**
- * The checkbox *row*. Carries the `checkboxScope` marker (dropped while
- * disabled) that the box's hover/focus rules resolve against.
+ * The checkbox *row*. Carries the shared `indicatorScope` marker (dropped while
+ * disabled) that the indicator's hover rules resolve against, so the whole row
+ * drives the visual rather than the box alone.
+ *
+ * This was `checkboxScope`, from a `checkbox.markers.stylex.ts` beside this
+ * file, until upstream 0.4.0 deleted that module: the marker now belongs to the
+ * indicator layer, because the element it tints is no longer one this component
+ * renders.
  */
 export function checkboxContainerAttrs(
 	isLabelHidden: boolean,
@@ -247,7 +124,7 @@ export function checkboxContainerAttrs(
 	return sx(
 		styles.container,
 		isLabelHidden && styles.containerLabelHidden,
-		!isDisabled && checkboxScope
+		!isDisabled && indicatorScope
 	);
 }
 
@@ -265,40 +142,14 @@ export function checkboxInputAttrs(size: CheckboxInputSize, isDisabled: boolean)
 	return sx(styles.input, wrapperSizeStyles[size], isDisabled && styles.inputDisabled);
 }
 
-/** The visual box, coloured by checked/indeterminate and dimmed while disabled. */
-export function checkboxBoxAttrs(
-	size: CheckboxInputSize,
-	isCheckedOrIndeterminate: boolean,
-	isDisabled: boolean
-): SvelteStyleAttrs {
-	return sx(
-		styles.checkbox,
-		checkboxSizeStyles[size],
-		!isDisabled && styles.checkboxFocus,
-		isCheckedOrIndeterminate ? styles.checkboxChecked : styles.checkboxUnchecked,
-		isDisabled && styles.checkboxDisabled,
-		isDisabled && !isCheckedOrIndeterminate && styles.checkboxDisabledUnchecked
-	);
-}
-
-/** The tick glyph — always in the DOM, revealed by `display` when checked. */
-export function checkboxCheckmarkAttrs(
-	size: CheckboxInputSize,
-	isChecked: boolean
-): SvelteStyleAttrs {
-	return sx(styles.checkmark, checkmarkSizeStyles[size], isChecked && styles.checkmarkVisible);
-}
-
-/** The mixed-state bar — always in the DOM, revealed when indeterminate. */
-export function checkboxIndeterminateMarkAttrs(
-	size: CheckboxInputSize,
-	isIndeterminate: boolean
-): SvelteStyleAttrs {
-	return sx(
-		styles.indeterminateMark,
-		indeterminateSizeStyles[size],
-		isIndeterminate && styles.indeterminateMarkVisible
-	);
+/**
+ * A container holding ONLY the indicator, so the focus ring has an unambiguous
+ * target whatever a theme renders. `display: contents` keeps it out of layout
+ * entirely, so the indicator keeps the layout relationship it already had with
+ * the wrapper.
+ */
+export function checkboxIndicatorSlotAttrs(): SvelteStyleAttrs {
+	return sx(styles.indicatorSlot);
 }
 
 /** The column holding the label and description. */
