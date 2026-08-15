@@ -8,22 +8,39 @@
  * `useTableRowExpansionState` was removed — so it is exactly the transition a
  * codemod exists for.
  *
- * **One entry, not upstream's three.** Upstream's v0.4.0 folder also stages
- * `rename-dropdown-menu-radio-dot-target` and `rename-menu-divider-data-types`,
- * both of which rewrite `data-*` attribute selectors in a consumer's CSS against
- * React DOM output. Neither is ported here yet; they are separate migrations
- * with their own parity work, and inventing them alongside this one would be
- * shipping untested rewrites over consumer stylesheets.
+ * All three of upstream's v0.4.0 transforms are here, in upstream's order.
+ * `migrate-table-rowexpansion-to-tree` landed first and the two renames
+ * followed; an earlier version of this header claimed the renames "rewrite
+ * `data-*` attribute selectors in a consumer's CSS against React DOM output",
+ * which was simply wrong about both — one renames a **theme target string** and
+ * the class it renders, the other renames **type-only imports** — and the
+ * deferral it justified is now closed.
  */
 
+import renameDropdownMenuRadioDotTarget, {
+	meta as renameDropdownMenuRadioDotTargetMeta
+} from './rename-dropdown-menu-radio-dot-target.mjs';
 import migrateTableRowExpansionToTree, {
 	meta as migrateTableRowExpansionToTreeMeta
 } from './migrate-table-rowexpansion-to-tree.mjs';
+import renameMenuDividerDataTypes, {
+	meta as renameMenuDividerDataTypesMeta
+} from './rename-menu-divider-data-types.mjs';
 
 export default [
+	{
+		name: 'rename-dropdown-menu-radio-dot-target',
+		transform: renameDropdownMenuRadioDotTarget,
+		meta: renameDropdownMenuRadioDotTargetMeta
+	},
 	{
 		name: 'migrate-table-rowexpansion-to-tree',
 		transform: migrateTableRowExpansionToTree,
 		meta: migrateTableRowExpansionToTreeMeta
+	},
+	{
+		name: 'rename-menu-divider-data-types',
+		transform: renameMenuDividerDataTypes,
+		meta: renameMenuDividerDataTypesMeta
 	}
 ];

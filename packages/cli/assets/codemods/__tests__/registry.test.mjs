@@ -44,8 +44,11 @@ describe('registry', () => {
 		test('returns v0.4.0 transforms for range 0.3.1 to 0.4.0', async () => {
 			const results = await getTransformsBetween('0.3.1', '0.4.0');
 			expect(results.map((r) => r.version)).toEqual(['0.4.0']);
+			// Upstream's order, which the manifest preserves.
 			expect(results[0].transforms.map((t) => t.name)).toEqual([
-				'migrate-table-rowexpansion-to-tree'
+				'rename-dropdown-menu-radio-dot-target',
+				'migrate-table-rowexpansion-to-tree',
+				'rename-menu-divider-data-types'
 			]);
 		});
 

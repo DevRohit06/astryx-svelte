@@ -106,10 +106,16 @@ describe('upgrade() — receipts', () => {
 		const res = await upgrade({ list: true });
 		expect(res.type).toBe('upgrade.list');
 		expect(Array.isArray(res.data)).toBe(true);
-		// Upstream asserts a non-empty list. This port's registry is empty by
-		// design, so `[]` is the answer — asserted rather than skipped so the
-		// emptiness cannot drift unnoticed.
-		expect(res.data).toEqual([]);
+		// Upstream asserts a non-empty list, and so does this now. It asserted `[]`
+		// until the v0.4.0 manifest landed — `latestVersion` is the registry's max
+		// version, so `collectAllCodemods` went non-empty the moment a transform was
+		// registered, and this case had been failing unnoticed ever since because
+		// CI was dying at Typecheck before it could run.
+		expect(res.data.map((c) => c.name)).toEqual([
+			'rename-dropdown-menu-radio-dot-target',
+			'migrate-table-rowexpansion-to-tree',
+			'rename-menu-divider-data-types'
+		]);
 		// The public list entry is the stripped shape (no `pr`).
 		for (const entry of res.data) {
 			expect(entry).toHaveProperty('name');
