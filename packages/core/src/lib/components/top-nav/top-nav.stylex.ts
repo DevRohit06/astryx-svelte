@@ -144,10 +144,12 @@ export function topNavDrawerItemsAttrs(): SvelteStyleAttrs {
 	return sx(styles.drawerItems);
 }
 
-/** The spacing around the divider between the TopNav items and SideNav content. */
-export function topNavDrawerDividerAttrs(): SvelteStyleAttrs {
-	return sx(styles.drawerDivider);
-}
+/**
+ * The spacing around the divider between the TopNav items and SideNav content,
+ * passed to `<Divider xstyle>` rather than to a wrapper `<div>` (#4775) — the
+ * margin belongs to the rule itself, so the box that used to carry it is gone.
+ */
+export const topNavDrawerDividerStyle: StyleArg = styles.drawerDivider;
 
 /** The wrapper around drawer content supplied by `AppShell`. Emits no class. */
 export function topNavDrawerExtraContentAttrs(): SvelteStyleAttrs {

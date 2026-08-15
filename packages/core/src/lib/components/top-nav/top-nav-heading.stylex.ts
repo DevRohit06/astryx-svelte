@@ -132,6 +132,16 @@ const styles = stylex.create({
 		minHeight: spacingVars['--spacing-7'],
 		color: colorVars['--color-icon-secondary']
 	},
+	// The registry chevron is a 1em SVG, so it has always rendered at the
+	// heading's inherited font size. Icon's size box would repin it to a fixed
+	// rem (the nearest, sm, is 1rem = 16px vs the 14px base here), so hold the
+	// glyph on the inherited em — the 28px chevron box above is unchanged, and
+	// the glyph keeps tracking the surrounding text.
+	chevronGlyph: {
+		width: '1em',
+		height: '1em',
+		fontSize: 'inherit'
+	},
 	headerEndContent: {
 		flexShrink: 0,
 		display: 'flex',
@@ -165,14 +175,9 @@ const styles = stylex.create({
 		marginInline: spacingVars['--spacing-1'],
 		cursor: 'pointer'
 	},
+	// Composes over `chevron` — the flipped popover copy differs only by the
+	// rotation, so it carries just that.
 	popoverChevron: {
-		flexShrink: 0,
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		minWidth: spacingVars['--spacing-7'],
-		minHeight: spacingVars['--spacing-7'],
-		color: colorVars['--color-icon-secondary'],
 		transform: 'rotate(180deg)'
 	},
 	// Declared upstream and applied nowhere — see the module comment.
@@ -238,15 +243,26 @@ export function topNavHeadingRowAttrs(): SvelteStyleAttrs {
 	return sx(styles.headingRow);
 }
 
-/** The static chevron shown when a menu exists but the whole block is the trigger. */
-export function topNavHeadingChevronAttrs(): SvelteStyleAttrs {
-	return sx(styles.chevron);
-}
+/**
+ * The static chevron, passed to the `Icon`'s `xstyle` the way upstream passes
+ * `[styles.chevron, styles.chevronGlyph]` (#4838). The 28px box is the
+ * hit/alignment box, so it stays on the glyph's own element rather than on a
+ * wrapper it would then have to fill; `chevronGlyph` holds the glyph itself on
+ * the inherited em so `Icon size="sm"` cannot repin it to 16px.
+ */
+export const topNavHeadingChevronStyle: StyleArg = [styles.chevron, styles.chevronGlyph];
 
 /** The chevron as its own focusable button, inside a heading that has links. */
 export function topNavHeadingChevronButtonAttrs(): SvelteStyleAttrs {
 	return sx(styles.chevron, styles.interactive);
 }
+
+/**
+ * The glyph inside a chevron *trigger*. The `<button>` stays a button — it owns
+ * the accessible name and the handlers — and keeps the 28px box and the colour,
+ * so the `Icon` only has to avoid resizing itself.
+ */
+export const topNavHeadingChevronGlyphStyle: StyleArg = styles.chevronGlyph;
 
 /** The trailing slot pushed to the end of the heading row. */
 export function topNavHeadingEndContentAttrs(): SvelteStyleAttrs {
@@ -263,7 +279,13 @@ export function topNavHeadingPopoverHeadingAttrs(): SvelteStyleAttrs {
 	return sx(styles.popoverHeading);
 }
 
-/** The replica's chevron, flipped to point back up at the trigger. */
-export function topNavHeadingPopoverChevronAttrs(): SvelteStyleAttrs {
-	return sx(styles.popoverChevron);
-}
+/**
+ * The replica's chevron, flipped to point back up at the trigger. `popoverChevron`
+ * composes over the other two rather than restating them, which is upstream's
+ * `[styles.chevron, styles.chevronGlyph, styles.popoverChevron]`.
+ */
+export const topNavHeadingPopoverChevronStyle: StyleArg = [
+	styles.chevron,
+	styles.chevronGlyph,
+	styles.popoverChevron
+];

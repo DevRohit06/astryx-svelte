@@ -60,6 +60,14 @@ const styles = stylex.create({
 	chevron: {
 		display: 'inline-flex',
 		alignItems: 'center',
+		// The registry chevron is a 1em SVG, so it has always rendered at the
+		// trigger's own font size (--text-label-size). Icon's size box would repin
+		// it to a fixed rem (the nearest, sm, is 1rem = 16px vs the 14px here), so
+		// hold it on the inherited em: same pixels, and still tracks the type
+		// scale when a theme changes the label size.
+		width: '1em',
+		height: '1em',
+		fontSize: 'inherit',
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
@@ -94,7 +102,10 @@ const styles = stylex.create({
 	// own content, keeping the surface radius/shadow static at the edges.
 	// Internal scroll is a stopgap until the mobile bottom-sheet lands.
 	panelViewportFit: {
-		display: 'flex',
+		display: {
+			default: 'none',
+			':popover-open': 'flex'
+		},
 		flexDirection: 'column',
 		maxHeight: `calc(100% - ${spacingVars['--spacing-3']})`
 	},
@@ -160,6 +171,11 @@ const styles = stylex.create({
 	},
 	drawerChevron: {
 		display: 'inline-flex',
+		// Same em pin as styles.chevron above — the drawer header inherits
+		// --text-label-size from navItemStyles.item.
+		width: '1em',
+		height: '1em',
+		fontSize: 'inherit',
 		transitionProperty: 'transform',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
@@ -206,9 +222,13 @@ export function megaMenuTriggerAttrs(isOpen: boolean, xstyle?: StyleArg): Svelte
 	return focusOutlineProps.focusVisible(styles.trigger, isOpen && styles.triggerOpen, xstyle);
 }
 
-/** The trigger's chevron, rotated while open. */
-export function megaMenuChevronAttrs(isOpen: boolean): SvelteStyleAttrs {
-	return sx(styles.chevron, isOpen && styles.chevronOpen);
+/**
+ * The trigger's chevron, rotated while open — passed to the `Icon`'s `xstyle`
+ * as upstream's `[styles.chevron, isOpen && styles.chevronOpen]` array (#4838),
+ * so the wrapper `<span>` that used to hold it is gone.
+ */
+export function megaMenuChevronStyle(isOpen: boolean): StyleArg {
+	return [styles.chevron, isOpen && styles.chevronOpen];
 }
 
 /** The `role="menu"` surface — the mega menu supplies its own, not the popover's. */
@@ -221,10 +241,12 @@ export function megaMenuPanelContentAttrs(): SvelteStyleAttrs {
 	return sx(styles.panelContent);
 }
 
-/** The items column — grows twice as fast as the featured column. */
-export function megaMenuWrapperAttrs(): SvelteStyleAttrs {
-	return sx(styles.menuWrapper);
-}
+/**
+ * The items column — grows twice as fast as the featured column. Passed to
+ * `<Grid xstyle>` rather than to a wrapper `<div>` (#4775): the flex sizing
+ * belongs to the grid itself, so the box that used to carry it is gone.
+ */
+export const megaMenuWrapperStyle: StyleArg = styles.menuWrapper;
 
 /** The featured column. */
 export function megaMenuFeaturedAttrs(): SvelteStyleAttrs {
@@ -241,9 +263,9 @@ export function megaMenuDrawerHeaderAttrs(): SvelteStyleAttrs {
 	return sx(navItemStyles.item, styles.drawerHeader);
 }
 
-/** The drawer header's chevron, rotated while expanded. */
-export function megaMenuDrawerChevronAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(styles.drawerChevron, isExpanded && styles.drawerChevronExpanded);
+/** The drawer header's chevron, rotated while expanded. Also an `Icon` `xstyle` (#4838). */
+export function megaMenuDrawerChevronStyle(isExpanded: boolean): StyleArg {
+	return [styles.drawerChevron, isExpanded && styles.drawerChevronExpanded];
 }
 
 /** The `0fr → 1fr` grid that animates the drawer section open. */

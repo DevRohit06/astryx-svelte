@@ -47,7 +47,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useMenuHover } from '../../internal/use-menu-hover.svelte.js';
-	import { useIcon } from '../icon/use-icon.svelte.js';
+	import Icon from '../icon/icon.svelte';
 	import { useLinkComponent } from '../link/link-context.svelte.js';
 	import LinkElement from '../link/link-element.svelte';
 	import Link from '../link/link.svelte';
@@ -55,13 +55,14 @@
 	import PopoverLayer from '../popover/popover-layer.svelte';
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import {
-		topNavHeadingChevronAttrs,
 		topNavHeadingChevronButtonAttrs,
+		topNavHeadingChevronGlyphStyle,
+		topNavHeadingChevronStyle,
 		topNavHeadingEndContentAttrs,
 		topNavHeadingHeadingAttrs,
 		topNavHeadingHeadingLinkAttrs,
 		topNavHeadingLogoAttrs,
-		topNavHeadingPopoverChevronAttrs,
+		topNavHeadingPopoverChevronStyle,
 		topNavHeadingPopoverContentAttrs,
 		topNavHeadingPopoverHeadingAttrs,
 		topNavHeadingPopoverOverlap,
@@ -119,8 +120,6 @@
 	const linkResolved = $derived(resolveLink(as));
 	const popoverId = $props.id();
 
-	const chevronIcon = useIcon(() => 'chevronDown');
-
 	// A linked logo needs its own accessible name (the image itself is
 	// decorative). Prefer an explicit logoLabel, fall back to the heading text.
 	const logoLinkLabel = $derived(logoLabel ?? heading);
@@ -167,12 +166,10 @@
 	const headingLinkAttrs = topNavHeadingHeadingLinkAttrs();
 	const subheadingAttrs = topNavHeadingSubheadingAttrs();
 	const rowAttrs = topNavHeadingRowAttrs();
-	const chevronAttrs = topNavHeadingChevronAttrs();
 	const chevronButtonAttrs = topNavHeadingChevronButtonAttrs();
 	const endContentAttrs = topNavHeadingEndContentAttrs();
 	const popoverContentAttrs = topNavHeadingPopoverContentAttrs();
 	const popoverHeadingAttrs = topNavHeadingPopoverHeadingAttrs();
-	const popoverChevronAttrs = topNavHeadingPopoverChevronAttrs();
 
 	function stopPropagation(event: MouseEvent): void {
 		event.stopPropagation();
@@ -272,9 +269,7 @@
 {/snippet}
 
 {#snippet chevronElement()}
-	<span class={chevronAttrs.class} style={chevronAttrs.style}
-		>{@render chevronIcon.current?.()}</span
-	>
+	<Icon icon="chevronDown" size="sm" color="secondary" xstyle={topNavHeadingChevronStyle} />
 {/snippet}
 
 {#snippet headerEndContentElement()}
@@ -286,6 +281,10 @@
 {/snippet}
 
 {#snippet chevronTriggerButton()}
+	<!--
+		Stays a `<button>`: this box is the popover trigger, so it carries the
+		accessible name and the handlers — only the glyph moves to `Icon` (#4838).
+	-->
 	<button
 		type="button"
 		aria-label={t('@astryx.topNav.heading.openMenu')}
@@ -294,14 +293,12 @@
 		class={chevronButtonAttrs.class}
 		style={chevronButtonAttrs.style}
 	>
-		{@render chevronIcon.current?.()}
+		<Icon icon="chevronDown" size="sm" color="inherit" xstyle={topNavHeadingChevronGlyphStyle} />
 	</button>
 {/snippet}
 
 {#snippet popoverFlippedChevron()}
-	<span class={popoverChevronAttrs.class} style={popoverChevronAttrs.style}>
-		{@render chevronIcon.current?.()}
-	</span>
+	<Icon icon="chevronDown" size="sm" color="secondary" xstyle={topNavHeadingPopoverChevronStyle} />
 {/snippet}
 
 <!--

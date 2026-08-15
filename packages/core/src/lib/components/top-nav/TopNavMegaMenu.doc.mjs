@@ -14,6 +14,11 @@ export default {
 	keywords: ['topnav', 'navbar', 'appbar', 'header', 'toolbar', 'navigation', 'menubar', 'topbar'],
 	group: 'Navigation',
 	category: 'Navigation',
+	playground: {
+		wrapper: {
+			component: 'TopNav'
+		}
+	},
 	props: [
 		{
 			name: 'label',
