@@ -3,7 +3,11 @@ import { render } from 'vitest-browser-svelte';
 import Probe from './fixtures/long-press-probe.svelte';
 
 /**
- * Ported from Astryx's `hooks/useLongPress.test.tsx`, all eight cases.
+ * Ported from Astryx's `hooks/useLongPress.test.tsx` at **v0.4.1**, all nine
+ * cases, in upstream's order and with its titles and assertions. None dropped.
+ * (The header previously said eight; v0.4.1 added "cancels when a second finger
+ * touches down mid-press" alongside the fix that made `ontouchstart` clear on
+ * multi-touch instead of returning with the timer still armed.)
  *
  * Upstream's synthetic touch event carries only `touches`, and so does ours —
  * the hook reads nothing else. `result.current` becomes the probe's instance
@@ -14,6 +18,18 @@ import Probe from './fixtures/long-press-probe.svelte';
  * `queueMicrotask`, which is what Svelte schedules its own work on, so faking
  * everything would stall mount and unmount — and those are exactly what the
  * last case is about.
+ *
+ * ## Why this stays in the **client** project
+ *
+ * Nothing here touches a real node — the events are plain objects and the only
+ * clock is `setTimeout` — so the hook looks like a candidate for the node
+ * project, the way `use-typeahead` moved. It is not one. The last case is about
+ * the hook's `$effect(() => clear)` teardown, and a `.svelte.ts` module compiled
+ * for `svelte/server` elides `$effect` entirely: the hook would still return
+ * working handlers, there would simply be no effect to tear down and no
+ * component to unmount. Porting it to node would mean *dropping* upstream's
+ * ninth case, and the count is the contract. So all nine stay here, and all nine
+ * are verified only where a browser can start.
  */
 
 function touchEvent(touches: { clientX: number; clientY: number }[]) {
@@ -73,6 +89,22 @@ describe('useLongPress', () => {
 			touchEvent([
 				{ clientX: 0, clientY: 0 },
 				{ clientX: 5, clientY: 5 }
+			])
+		);
+		vi.advanceTimersByTime(500);
+		expect(onLongPress).not.toHaveBeenCalled();
+	});
+
+	it('cancels when a second finger touches down mid-press', async () => {
+		const onLongPress = vi.fn();
+		const { component } = await probe(onLongPress);
+
+		component.handlers.ontouchstart(touchEvent([{ clientX: 0, clientY: 0 }]));
+		// A second finger joins before the press fires (e.g. pinch-to-zoom).
+		component.handlers.ontouchstart(
+			touchEvent([
+				{ clientX: 0, clientY: 0 },
+				{ clientX: 50, clientY: 50 }
 			])
 		);
 		vi.advanceTimersByTime(500);

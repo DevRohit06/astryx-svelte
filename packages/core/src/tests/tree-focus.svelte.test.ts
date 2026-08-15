@@ -3,11 +3,21 @@ import { render } from 'vitest-browser-svelte';
 import Tree, { type TreeNode } from './fixtures/tree-focus-fixture.svelte';
 
 /**
- * Ported from Astryx's `hooks/useTreeFocus.test.tsx` — **13 upstream cases at
- * v0.3.0 (4 linear, 3 Arrow Left/Right, 3 RTL, 3 activation + typeahead), 13
- * here, none dropped**. (The previous header said "all nine cases"; upstream had
- * ten even then, and 0.3.0 added the three RTL cases. The count was wrong, not
- * the coverage.)
+ * Ported from Astryx's `hooks/useTreeFocus.test.tsx` — **16 upstream cases at
+ * v0.4.1 (4 linear, 3 Arrow Left/Right, 3 RTL, 6 activation + typeahead), 16
+ * here, none dropped**. (The header has been wrong twice: it once said "all nine
+ * cases" when upstream had ten, then "13 at v0.3.0" — correct at the time.
+ * v0.4.1 adds the three typeahead cases that pin the two #4844 fixes the hook's
+ * private typeahead just took: a repeated letter *cycles* instead of extending
+ * the query to "aa", and the `+1` offset that skips the current item applies
+ * only to a single-character query, so a multi-character query can still match
+ * the item it is refining.)
+ *
+ * Runs in the **client** project and cannot leave it: the hook reads
+ * `document.activeElement`, moves focus with `.focus()`, resolves visible
+ * treeitems with `querySelectorAll`, detects direction through
+ * `getComputedStyle` (`isRtlElement`) and repairs its roving tab stop with a
+ * `MutationObserver`. None of that exists under `svelte/server`.
  *
  * The one translation is timing. Upstream's `fireEvent` + React state update is
  * synchronous, so it presses ArrowRight twice in a row to expand a parent and
@@ -219,5 +229,65 @@ describe('useTreeFocus activation + typeahead', () => {
 		screen.getByTestId('a').element().focus();
 		keyDown(tree, { key: 'c' });
 		await expect.element(screen.getByTestId('c')).toHaveFocus();
+	});
+
+	/*
+	 * The three typeahead cases below assert with the plain, non-retrying
+	 * `expect(element).toHaveFocus()` rather than the file's usual
+	 * `await expect.element(...)`. Typeahead moves focus synchronously inside
+	 * `focusItem`, so there is nothing to wait for — and an `await` between two
+	 * presses is actively harmful here, because the hook's buffer resets after
+	 * 500ms. A retry that took longer than that would restart the buffer and let
+	 * both remaining cases pass for the wrong reason.
+	 */
+
+	it('typeahead cycles through same-letter matches on repeated presses', async () => {
+		const nodes: TreeNode[] = [
+			{ id: 'apple', label: 'Apple', level: 1 },
+			{ id: 'apricot', label: 'Apricot', level: 1 },
+			{ id: 'avocado', label: 'Avocado', level: 1 }
+		];
+		const screen = await render(Tree, { props: { collapsed: nodes } });
+		const tree = screen.getByRole('tree').element();
+		screen.getByTestId('apple').element().focus();
+
+		keyDown(tree, { key: 'a' });
+		expect(screen.getByTestId('apricot').element()).toHaveFocus();
+
+		// A repeat must cycle, not extend the query to "aa" (as useTypeahead does).
+		keyDown(tree, { key: 'a' });
+		expect(screen.getByTestId('avocado').element()).toHaveFocus();
+	});
+
+	it('typeahead searches from the top when no treeitem has focus', async () => {
+		const nodes: TreeNode[] = [
+			{ id: 'apple', label: 'Apple', level: 1 },
+			{ id: 'banana', label: 'Banana', level: 1 },
+			{ id: 'avocado', label: 'Avocado', level: 1 }
+		];
+		const screen = await render(Tree, { props: { collapsed: nodes } });
+		const tree = screen.getByRole('tree').element();
+
+		// No .focus() call: with no current item, the first match must win.
+		keyDown(tree, { key: 'a' });
+		expect(screen.getByTestId('apple').element()).toHaveFocus();
+	});
+
+	it('typeahead keeps focus on an item that still matches the refined buffer', async () => {
+		const nodes: TreeNode[] = [
+			{ id: 'apple', label: 'Apple', level: 1 },
+			{ id: 'banana', label: 'Banana', level: 1 },
+			{ id: 'apricot', label: 'Apricot', level: 1 }
+		];
+		const screen = await render(Tree, { props: { collapsed: nodes } });
+		const tree = screen.getByRole('tree').element();
+		screen.getByTestId('apple').element().focus();
+
+		keyDown(tree, { key: 'a' });
+		expect(screen.getByTestId('apricot').element()).toHaveFocus();
+
+		// "ap" refines the search; Apricot still matches, so focus holds.
+		keyDown(tree, { key: 'p' });
+		expect(screen.getByTestId('apricot').element()).toHaveFocus();
 	});
 });
