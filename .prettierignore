@@ -1,0 +1,27 @@
+# Root-level prettier ignore. Each package already has its own `.prettierignore`
+# for `pnpm -r lint`; this one governs `lint:root`, which checks the repo root
+# and `port/*.md` — the documents no package-scoped gate ever reached.
+
+# Vendored dependencies. Never ours to format.
+node_modules
+
+# The upstream Astryx clone, cloned read-only as porting reference. Its prose
+# and code are Meta's, not this port's, and reformatting it would just be
+# unreviewable diff noise against a tree we don't own.
+reference
+
+# Imported historical prose (one file per shipped batch). Provably does not
+# converge under `prettier --write` — a multi-paragraph list item gets its
+# continuation paragraphs re-indented deeper on every pass (6 -> 10 -> ... ->
+# 30 spaces observed), which past ~4 extra spaces renders as an indented code
+# block in GFM. That is silent content corruption, not a formatting nit, so
+# the ledger is excluded rather than rewritten to fit the gate.
+port/ledger
+
+# SvelteKit's generated build output for the docs site.
+docs/.svelte-kit
+
+# `svelte-package` output for every publishable package. Built artifacts, not
+# source — and `packages/core/dist/**/*.stylex.js` ships deliberately
+# uncompiled (see CLAUDE.md), so it is not representative source to format.
+packages/*/dist

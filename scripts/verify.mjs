@@ -46,7 +46,10 @@ if (scratch.length > 0) {
 const stages = [
 	runStage('build', 'pnpm', ['-r', 'build']),
 	runStage('check', 'pnpm', ['-r', 'check']),
-	runStage('lint', 'pnpm', ['-r', 'lint'])
+	runStage('lint', 'pnpm', ['-r', 'lint']),
+	// `pnpm -r lint` runs prettier inside each package, so the repo root and
+	// `port/*.md` were never checked — cheap to run, so it stays in both modes.
+	runStage('lint:root', 'pnpm', ['lint:root'])
 ];
 if (!fast) stages.push(runStage('test', 'pnpm', ['-r', 'test']));
 stages.push(

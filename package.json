@@ -16,6 +16,7 @@
     "check": "pnpm -r check",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
+    "lint:root": "prettier --check port/*.md *.md",
     "format": "pnpm -r format",
     "check:publish": "node scripts/check-publish.mjs",
     "status": "node scripts/status.mjs",
@@ -29,6 +30,7 @@
     "docs"
   ],
   "devDependencies": {
+    "prettier": "^3.8.3",
     "publint": "^0.3.21"
   }
 }
