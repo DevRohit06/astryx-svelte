@@ -1,10 +1,19 @@
 <script lang="ts" module>
-	export type CompoundScenario = 'items' | 'endContent' | 'disabled' | 'divider' | 'mixed';
+	export type CompoundScenario =
+		| 'items'
+		| 'endContent'
+		| 'disabled'
+		| 'divider'
+		| 'menuDivider'
+		| 'mixed'
+		| 'destructive'
+		| 'defaultVariant';
 </script>
 
 <script lang="ts">
 	import DropdownMenu from '$lib/components/dropdown-menu/dropdown-menu.svelte';
 	import DropdownMenuItem from '$lib/components/dropdown-menu/dropdown-menu-item.svelte';
+	import DropdownMenuDivider from '$lib/components/dropdown-menu/dropdown-menu-divider.svelte';
 	import Divider from '$lib/components/divider/divider.svelte';
 
 	/**
@@ -46,10 +55,19 @@
 		<DropdownMenuItem label="Edit" onClick={editClick} />
 		<Divider />
 		<DropdownMenuItem label="Delete" onClick={deleteClick} />
+	{:else if scenario === 'menuDivider'}
+		<DropdownMenuItem label="Edit" />
+		<DropdownMenuDivider />
+		<DropdownMenuItem label="Delete" />
 	{:else if scenario === 'mixed'}
 		<DropdownMenuItem label="Always" onClick={() => {}} />
 		{#if showConditional}
 			<DropdownMenuItem label="Conditional" onClick={() => {}} />
 		{/if}
+	{:else if scenario === 'destructive'}
+		<DropdownMenuItem label="Delete" variant="destructive" onClick={() => {}} />
+		<DropdownMenuItem label="Edit" onClick={() => {}} />
+	{:else if scenario === 'defaultVariant'}
+		<DropdownMenuItem label="Edit" onClick={() => {}} />
 	{/if}
 </DropdownMenu>

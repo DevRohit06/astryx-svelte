@@ -76,6 +76,11 @@
 	 * pass `items` for a data-driven menu, or `DropdownMenuItem` children for a
 	 * compound one. Built on `Popover` (`role: 'none'` so the inner `role="menu"`
 	 * is the exposed semantics), following the APG menu-button pattern.
+	 *
+	 * Initial focus on open follows the input modality: a keyboard open (Enter /
+	 * Space / ArrowDown on the trigger) focuses the first enabled item (APG
+	 * menu-button); a pointer open focuses the menu container itself so no item
+	 * reads as pre-selected, and the first ArrowDown then moves to item 1.
 	 */
 	const {
 		button: buttonFromProps,
@@ -176,6 +181,19 @@
 	// the effect below must fire on `popover.isOpen` alone.
 	let shouldFocusOnOpen = false;
 
+	// The menu container — the focus target for a pointer open, and the fallback
+	// when no item is focusable. `DropdownMenuSubMenu`'s flyout has the same pair.
+	let menuEl = $state<HTMLElement | null>(null);
+
+	// How the next open was initiated. Keyboard (and programmatic) opens focus the
+	// first enabled item per the APG menu-button pattern; pointer opens focus the
+	// menu container instead, so no item is visually highlighted as if
+	// pre-selected (#4477). Reset to 'keyboard' after every open so programmatic
+	// controlled opens keep the item-focus behavior. A plain `let` — upstream's
+	// `openModalityRef`, and like `shouldFocusOnOpen` it must not be a dependency
+	// of the focus effect below.
+	let openModality: 'keyboard' | 'pointer' = 'keyboard';
+
 	// Sync controlled open state → popover.
 	$effect(() => {
 		if (!isControlled) return;
@@ -190,29 +208,49 @@
 		});
 	});
 
-	// Move focus into the menu only after the layer has committed open.
-	// `popover.isOpen` is the sole tracked read — `shouldFocusOnOpen` is a plain
-	// `let`, so testing it here creates no dependency and needs no `untrack`.
+	// Move focus into the menu only after the layer has committed open, honoring
+	// the input modality: keyboard (and programmatic) opens land on the first
+	// enabled item per the APG menu-button pattern; pointer opens focus the menu
+	// container itself (`tabindex={-1}`) so no item is highlighted as if
+	// pre-selected (#4477). Container focus keeps arrows, typeahead, Escape and
+	// Tab in the menu's `onkeydown`, and is also the fallback when no item is
+	// focusable (e.g. all disabled), mirroring the submenu flyout fallback.
+	//
+	// `popover.isOpen` is the sole tracked read — `shouldFocusOnOpen` and
+	// `openModality` are plain `let`s, so testing them here creates no dependency
+	// and needs no `untrack`.
 	$effect(() => {
 		if (!popover.isOpen || !shouldFocusOnOpen) return;
 		shouldFocusOnOpen = false;
-		requestAnimationFrame(() => list.focusFirst());
+		requestAnimationFrame(() => {
+			if (openModality === 'pointer' || !list.focusFirst()) {
+				menuEl?.focus();
+			}
+			openModality = 'keyboard';
+		});
 	});
 
-	function openAndFocus(): void {
+	function openAndFocus(modality: 'keyboard' | 'pointer' = 'keyboard'): void {
+		openModality = modality;
 		shouldFocusOnOpen = true;
 		popover.show();
 	}
 
-	function handleButtonClick(): void {
+	function handleButtonClick(e: MouseEvent): void {
 		if (Date.now() - lastHideTime < 50) return;
 		onClick?.();
+		// `detail === 0` marks a synthesized click (screen reader / AT activation):
+		// treat it as keyboard so those users still land on the first item. Real
+		// pointer clicks report detail >= 1. Upstream tests the event here rather
+		// than reading `utils/interaction-modality.ts` — followed as written.
+		const modality = e.detail === 0 ? 'keyboard' : 'pointer';
 		if (isControlled) {
+			if (!controlledIsOpen) openModality = modality;
 			onOpenChange?.(!controlledIsOpen);
 		} else if (popover.isOpen) {
 			popover.hide();
 		} else {
-			openAndFocus();
+			openAndFocus(modality);
 		}
 	}
 
@@ -301,8 +339,10 @@
 	-->
 	<div
 		{...rest}
+		bind:this={menuEl}
 		id={menuId}
 		role="menu"
+		tabindex={-1}
 		aria-label={button.label}
 		onkeydown={listKeyDown}
 		class={cx(themeClass, menuAttrs.class, className)}

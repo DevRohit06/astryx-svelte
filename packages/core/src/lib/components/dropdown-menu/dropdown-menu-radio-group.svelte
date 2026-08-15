@@ -54,6 +54,7 @@
 		label,
 		hasCloseOnSelect = true,
 		children,
+		xstyle,
 		class: className,
 		style: styleProp,
 		...rest
@@ -63,7 +64,7 @@
 	// the live `value` rather than the one that existed when it mounted.
 	setDropdownMenuRadioGroupContext(() => ({ value, onChange, hasCloseOnSelect }));
 
-	const groupAttrs = radioGroupAttrs();
+	const groupAttrs = $derived(radioGroupAttrs(xstyle));
 </script>
 
 <div

@@ -93,7 +93,9 @@ const styles = stylex.create({
 		textAlign: 'start'
 	},
 	label: {
-		color: colorVars['--color-text-primary'],
+		// Falls back to the primary text token; a parent (e.g. a destructive menu
+		// item) can recolor the label by setting --_item-label-color.
+		color: `var(--_item-label-color, ${colorVars['--color-text-primary']})`,
 		fontSize: typeScaleVars['--text-body-size'],
 		lineHeight: typeScaleVars['--text-body-leading']
 	},
@@ -108,7 +110,8 @@ const styles = stylex.create({
 		WebkitBoxOrient: 'vertical'
 	},
 	description: {
-		color: colorVars['--color-text-secondary'],
+		// Companion to --_item-label-color for the secondary line.
+		color: `var(--_item-description-color, ${colorVars['--color-text-secondary']})`,
 		fontSize: typeScaleVars['--text-supporting-size'],
 		lineHeight: typeScaleVars['--text-supporting-leading']
 	},

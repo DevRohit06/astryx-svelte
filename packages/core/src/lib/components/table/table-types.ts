@@ -299,6 +299,18 @@ export interface BodyRowRenderProps {
 	htmlProps: HTMLAttributes<HTMLTableRowElement>;
 	xstyle: StyleArg[];
 	children: Snippet;
+	/**
+	 * Extra content rendered as a sibling immediately after this row's `<tr>`.
+	 * Plugins use it to append a full-width detail-panel `<tr>` (e.g. row
+	 * expansion). Multiple plugins compose by wrapping the previous `afterRow`.
+	 *
+	 * `ReactNode` upstream, a `Snippet` here — and **sibling** is the load-bearing
+	 * word on both sides. Upstream returns `<>{row}{afterRow}</>` from its row
+	 * renderer; `base-table.svelte` renders it after `</TableRow>`, never inside
+	 * it, because a `<tr>` nested in a `<tr>` is invalid markup the parser
+	 * silently reparents.
+	 */
+	afterRow?: Snippet;
 }
 
 /** Props passed through the plugin pipeline for each body `<td>` */
@@ -387,6 +399,12 @@ export interface TableContextAction {
 	group?: string;
 	/** When true, the item renders as checked (e.g. the active sort direction). */
 	checked?: boolean;
+	/**
+	 * Visual variant. `'destructive'` renders the action in the error color for
+	 * dangerous operations (e.g. Delete row).
+	 * @default 'default'
+	 */
+	variant?: 'default' | 'destructive';
 }
 
 /**

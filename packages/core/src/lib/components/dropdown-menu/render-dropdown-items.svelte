@@ -1,8 +1,55 @@
 <script lang="ts" module>
-	import type { DropdownMenuOption } from './dropdown-menu-types.js';
+	import type {
+		DropdownMenuItemData,
+		DropdownMenuOption,
+		DropdownMenuSection
+	} from './dropdown-menu-types.js';
+	import type { DropdownMenuItemProps } from './dropdown-menu-item.svelte';
 
 	export interface RenderDropdownItemsProps {
 		items: DropdownMenuOption[];
+	}
+
+	/**
+	 * Keyed by `item.id` when the caller supplies one, else by position. NOT by
+	 * label: an item that reports its own result (a copy row swapping to
+	 * "Copied") would change key mid-interaction, remounting the row and dropping
+	 * keyboard focus. Position is the safe default because a menu's rows are
+	 * usually fixed; a menu whose items reorder or filter needs `id` for the same
+	 * reason.
+	 */
+	function itemKey(item: DropdownMenuItemData, index: number): string {
+		return `item-${item.id ?? index}`;
+	}
+
+	function sectionKey(section: DropdownMenuSection, index: number): string {
+		return `section-${section.id ?? index}`;
+	}
+
+	/**
+	 * One `{#each}` block covers all three option shapes, so the key has to as
+	 * well; upstream's three `key=` expressions become this one discriminator.
+	 */
+	function optionKey(option: DropdownMenuOption, index: number): string {
+		if ('type' in option) {
+			return option.type === 'divider' ? `divider-${index}` : sectionKey(option, index);
+		}
+		return itemKey(option, index);
+	}
+
+	/**
+	 * The props one leaf row forwards to `DropdownMenuItem`.
+	 *
+	 * `items` selects the submenu shape rather than being an item prop, and `id`
+	 * is identity for the keyed `{#each}` rather than something `DropdownMenuItem`
+	 * renders, so both are stripped. Every remaining field of
+	 * `DropdownMenuItemData` is a `DropdownMenuItem` prop by construction (the
+	 * type is `Pick`ed from `DropdownMenuItemProps`), so the data path forwards
+	 * them wholesale and can't silently drop a field the data API advertises.
+	 */
+	function leafProps(item: DropdownMenuItemData): DropdownMenuItemProps {
+		const { items: _submenuItems, id: _id, ...itemProps } = item;
+		return itemProps;
 	}
 </script>
 
@@ -37,7 +84,7 @@
 	const headingTheme = themeProps('dropdown-menu-section-heading');
 </script>
 
-{#each items as item, i (i)}
+{#each items as item, i (optionKey(item, i))}
 	{#if 'type' in item && item.type === 'divider'}
 		<DropdownMenuDivider />
 	{:else if 'type' in item && item.type === 'section'}
@@ -52,13 +99,8 @@
 					{item.title}
 				</div>
 			{/if}
-			{#each item.items as sub (sub.label)}
-				<DropdownMenuItem
-					icon={sub.icon}
-					label={sub.label}
-					onClick={sub.onClick}
-					isDisabled={sub.isDisabled}
-				/>
+			{#each item.items as sub, j (itemKey(sub, j))}
+				<DropdownMenuItem {...leafProps(sub)} />
 			{/each}
 		</div>
 	{:else if item.items && item.items.length > 0}
@@ -71,11 +113,6 @@
 			<RenderDropdownItems items={item.items} />
 		</DropdownMenuSubMenu>
 	{:else}
-		<DropdownMenuItem
-			icon={item.icon}
-			label={item.label}
-			onClick={item.onClick}
-			isDisabled={item.isDisabled}
-		/>
+		<DropdownMenuItem {...leafProps(item)} />
 	{/if}
 {/each}
