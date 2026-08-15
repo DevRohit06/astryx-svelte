@@ -10,6 +10,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMenu.tsx` styles.
@@ -45,14 +46,6 @@ const styles = stylex.create({
 			':hover': {
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
-		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
 		},
 		border: 'none',
 		fontFamily: 'inherit'
@@ -99,15 +92,7 @@ const styles = stylex.create({
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
 		},
-		border: 'none',
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		border: 'none'
 	},
 	menuItemIcon: {
 		display: 'flex',
@@ -202,7 +187,7 @@ export const topNavMenuOffset = styles.menuOffset;
 
 /** The desktop trigger button. */
 export function topNavMenuTriggerAttrs(isOpen: boolean, xstyle?: StyleArg): SvelteStyleAttrs {
-	return sx(styles.trigger, isOpen && styles.triggerOpen, xstyle);
+	return focusOutlineProps.focusVisible(styles.trigger, isOpen && styles.triggerOpen, xstyle);
 }
 
 /** The trigger's chevron, rotated while open. */
@@ -217,7 +202,7 @@ export function topNavMenuContainerAttrs(): SvelteStyleAttrs {
 
 /** A `role="menuitem"` row in the popover. */
 export function topNavMenuItemAttrs(): SvelteStyleAttrs {
-	return sx(styles.menuItem);
+	return focusOutlineProps.focusVisible(styles.menuItem);
 }
 
 /** The 40px icon tile on a popover row. */

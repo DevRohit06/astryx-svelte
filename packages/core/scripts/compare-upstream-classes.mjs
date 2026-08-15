@@ -110,6 +110,23 @@ const BUILTIN_DEFAULT_MARKER = 'stylex.defaultMarker()';
 
 const CASES = [
 	{
+		// The shared focus ring, new at upstream 0.4.1. It sits first because every
+		// other case now depends on it: the ring used to be written out per
+		// component, and consolidating it here is what moved the drifted offsets.
+		//
+		// **Object mode only, and that is the whole module.** All four keys
+		// (`focusVisible`, `focusWithin`, `publishFocusVisibleVars`,
+		// `focusWithinOrPublished`) are handed to `stylex.props` through the
+		// `makeFocusOutlineProps` closure rather than applied at a literal call
+		// site, so the compiler folds none of them and upstream's `dist/` carries
+		// the finished object. Nothing is left over to claim inline.
+		//
+		// The group keeps upstream's `focusOutlineStyles` name, so the diff needs
+		// no rename — only the filename differs (kebab-case, per this port).
+		file: 'src/lib/utils/focus-outline.stylex.js',
+		upstreamFile: 'utils/focusOutline.stylex.js'
+	},
+	{
 		file: 'src/lib/components/text/text.stylex.js',
 		upstreamFile: 'Text/text.stylex.js'
 	},

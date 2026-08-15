@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
-import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import type { StyleArg, SvelteStyleAttrs } from '../../internal/sx.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import {
 	colorVars,
 	fontWeightVars,
@@ -54,15 +55,6 @@ const styles = stylex.create({
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
-		},
-		// Focus ring via focus-visible
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: null,
-			':focus-visible': '2px'
 		}
 	},
 	overlap: {
@@ -101,7 +93,7 @@ export function avatarGroupOverflowAttrs(
 	{ numericSize, overlap, isInteractive }: AvatarGroupOverflowAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.base,
 		isInteractive && styles.button,
 		styles.overlap,

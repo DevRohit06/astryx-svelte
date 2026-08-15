@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex';
 import type { CardVariant } from '../card/card.stylex.js';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { colorVars, durationVars, easeVars } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 const styles = stylex.create({
 	interactive: {
@@ -9,14 +10,7 @@ const styles = stylex.create({
 		cursor: 'pointer',
 		transitionProperty: 'box-shadow, border-color',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		outlineOffset: '2px'
-	},
-	focusWithin: {
-		':has(:focus-visible)': {
-			outline: `2px solid ${colorVars['--color-accent']}`,
-			outlineOffset: '2px'
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	// Hover overlay guarded by `@media (hover: hover)` so touch devices don't
 	// show a stuck hover; the active/pressed state works everywhere.
@@ -154,7 +148,7 @@ export function selectableCardXstyle(
 ): StyleArg {
 	return [
 		styles.interactive,
-		styles.focusWithin,
+		focusOutlineStyles.focusWithin,
 		isSelected && selectedStyleForVariant(variant),
 		!isDisabled && styles.overlay,
 		!isDisabled && styles.hoverOnPointer,

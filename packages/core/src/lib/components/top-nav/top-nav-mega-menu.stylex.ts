@@ -12,6 +12,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMegaMenu.tsx` styles.
@@ -48,14 +49,6 @@ const styles = stylex.create({
 			':hover': {
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
-		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
 		},
 		border: 'none',
 		fontFamily: 'inherit'
@@ -210,7 +203,7 @@ export const megaMenuPanelViewportFit = styles.panelViewportFit;
 
 /** The desktop trigger button. */
 export function megaMenuTriggerAttrs(isOpen: boolean, xstyle?: StyleArg): SvelteStyleAttrs {
-	return sx(styles.trigger, isOpen && styles.triggerOpen, xstyle);
+	return focusOutlineProps.focusVisible(styles.trigger, isOpen && styles.triggerOpen, xstyle);
 }
 
 /** The trigger's chevron, rotated while open. */

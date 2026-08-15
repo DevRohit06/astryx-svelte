@@ -9,6 +9,7 @@ import {
 	typeScaleVars,
 	fontWeightVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `Outline/Outline.tsx` styles.
@@ -105,10 +106,6 @@ const styles = stylex.create({
 		},
 		':active': {
 			backgroundColor: colorVars['--color-overlay-pressed']
-		},
-		':focus-visible': {
-			outline: `2px solid ${colorVars['--color-accent']}`,
-			outlineOffset: 2
 		}
 	},
 	activeLink: {
@@ -180,7 +177,7 @@ export function outlineLinkAttrs(
 	level: number,
 	isActive: boolean
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.link,
 		densityStyles[density],
 		getIndentStyle(level),

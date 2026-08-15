@@ -12,6 +12,7 @@ import {
 } from '../../styles/tokens.stylex.js';
 import { tabScope } from './tab.markers.stylex.js';
 import type { TabListSize } from './tab-list-context.svelte.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TabList/Tab.tsx` styles.
@@ -47,15 +48,7 @@ const styles = stylex.create({
 		whiteSpace: 'nowrap',
 		transitionProperty: 'color',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	hoverBg: {
 		position: 'absolute',
@@ -162,7 +155,7 @@ export function tabAttrs(
 	isFill: boolean,
 	xstyle: StyleArg
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.base,
 		sizeStyles[size],
 		isSelected && styles.selected,

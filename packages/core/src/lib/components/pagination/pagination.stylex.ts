@@ -9,6 +9,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `Pagination/Pagination.tsx`, where the one style group is
@@ -70,15 +71,7 @@ const styles = stylex.create({
 		cursor: 'pointer',
 		transitionProperty: 'background-color',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	dotSm: {
 		width: spacingVars['--spacing-1-5'],
@@ -162,7 +155,7 @@ export function paginationDotAttrs(
 	isActive: boolean,
 	isDisabled: boolean
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.dot,
 		isSm && styles.dotSm,
 		isActive && styles.dotActive,

@@ -74,6 +74,15 @@ export interface ThemingTarget {
 	className: string;
 	visualProps?: string[];
 	states?: string[];
+	/**
+	 * Set on a target upstream still emits but has superseded, naming the one to
+	 * migrate to. New at Astryx 0.4.x, which opened deprecation windows on two
+	 * families at once: the per-component clear-icon targets (superseded by the
+	 * shared `input-clear-icon`) and the indicator targets renamed to the
+	 * component-name convention (`checkbox` → `checkbox-indicator`, and so on).
+	 * Both old names still render, so this is guidance rather than a removal.
+	 */
+	deprecatedFor?: string;
 }
 
 export interface ComponentVar {
@@ -89,6 +98,14 @@ export interface DerivedVar {
 	vars?: string[];
 	expand?: string;
 	formula?: string;
+	/**
+	 * Maps the property onto the var *without* also emitting it on the class
+	 * element. New at Astryx 0.4.x for `TextArea`, whose wrapper must stay flush
+	 * at `padding: 0` so the native resize grip keeps its true-corner position —
+	 * a theme's `paddingInline` therefore has to reach the internal
+	 * `--_textarea-inline-padding` var and land nowhere else.
+	 */
+	replaces?: boolean;
 }
 
 export interface ThemingDoc {

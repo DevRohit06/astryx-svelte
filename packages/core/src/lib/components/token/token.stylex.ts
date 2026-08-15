@@ -10,6 +10,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Extensible colour map for `Token`.
@@ -81,14 +82,6 @@ const styles = stylex.create({
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
 		}
 	},
 	disabled: {
@@ -116,16 +109,6 @@ const styles = stylex.create({
 		overflow: 'hidden',
 		minWidth: 0
 	},
-	focusVisibleOutline: {
-		outline: {
-			default: null,
-			':has(:focus-visible)': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':has(:focus-visible)': '2px'
-		}
-	},
 	removeButton: {
 		all: 'unset',
 		display: 'inline-flex',
@@ -139,10 +122,6 @@ const styles = stylex.create({
 		width: '16px',
 		height: '16px',
 		color: 'inherit',
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
 		'::after': {
 			content: '""',
 			position: 'absolute',
@@ -234,7 +213,7 @@ export function tokenRootAttrs(
 		sizeStyles[size],
 		colorStyles[color],
 		interactive && styles.interactive,
-		focusWithin && styles.focusVisibleOutline,
+		focusWithin && focusOutlineStyles.focusWithin,
 		isDisabled && styles.disabled,
 		xstyle
 	);

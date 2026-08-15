@@ -11,6 +11,7 @@ import {
 	typographyVars
 } from '../../styles/tokens.stylex.js';
 import type { CollapsibleGroupDensity } from './collapsible-group-context.svelte.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 const styles = stylex.create({
 	root: {
@@ -29,16 +30,8 @@ const styles = stylex.create({
 		fontWeight: fontWeightVars['--font-weight-semibold'],
 		color: colorVars['--color-text-primary'],
 		textAlign: 'start',
-		paddingBlock: 0,
+		paddingBlock: 0
 		// `all: unset` wipes the UA focus outline; restore a keyboard-only ring.
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
 	},
 	// Capsize: trim leading from text triggers.
 	triggerLabel: {
@@ -124,7 +117,7 @@ export function collapsibleTriggerAttrs(
 	density: CollapsibleGroupDensity | null,
 	isDisabled: boolean
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.trigger,
 		density != null && triggerDensity[density],
 		isDisabled && styles.triggerDisabled

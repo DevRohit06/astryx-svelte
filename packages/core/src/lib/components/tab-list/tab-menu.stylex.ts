@@ -12,6 +12,7 @@ import {
 } from '../../styles/tokens.stylex.js';
 import { tabScope } from './tab.markers.stylex.js';
 import type { TabListSize } from './tab-list-context.svelte.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TabList/TabMenu.tsx` styles.
@@ -48,15 +49,7 @@ const styles = stylex.create({
 		textDecoration: 'none',
 		transitionProperty: 'color',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	triggerSelected: {
 		color: colorVars['--color-text-primary'],
@@ -155,10 +148,6 @@ const styles = stylex.create({
 			':hover': {
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
-		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
 		}
 	},
 	menuItemSelected: {
@@ -255,7 +244,7 @@ export function tabMenuHeadingAttrs(): SvelteStyleAttrs {
 
 /** One `role="menuitem"` row. */
 export function tabMenuItemAttrs(isSelected: boolean): SvelteStyleAttrs {
-	return sx(styles.menuItem, isSelected && styles.menuItemSelected);
+	return focusOutlineProps.focusVisible(styles.menuItem, isSelected && styles.menuItemSelected);
 }
 
 /** The icon + label group inside a row. */

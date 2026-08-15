@@ -9,6 +9,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 const indeterminateSlide = stylex.keyframes({
 	'0%': {
@@ -137,14 +138,6 @@ const styles = stylex.create({
 		// (e.g. a taller "flag" tick that overhangs the bar, or per-variant
 		// contrast) with `defineTheme`; no dedicated CSS vars needed.
 		backgroundColor: colorVars['--color-text-primary'],
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		},
 		transform: {
 			default: 'translate(-50%, -50%)',
 			':is([dir="rtl"] *)': 'translate(50%, -50%)'
@@ -227,7 +220,7 @@ export function progressBarTrackAttrs(isIndeterminate: boolean): SvelteStyleAttr
 }
 
 export function progressBarMarkAttrs(): SvelteStyleAttrs {
-	return sx(styles.mark);
+	return sx(focusOutlineStyles.focusVisible, styles.mark);
 }
 
 export function progressBarFillAttrs(

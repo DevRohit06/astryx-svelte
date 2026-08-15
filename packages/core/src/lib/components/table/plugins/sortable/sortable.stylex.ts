@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type SvelteStyleAttrs } from '../../../../internal/sx.js';
 import { colorVars, radiusVars, spacingVars } from '../../../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from the styles declared in Astryx's
@@ -24,11 +25,6 @@ const sortStyles = stylex.create({
 		width: '100%',
 		height: '100%',
 		textAlign: 'inherit',
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: '2px',
 		borderRadius: radiusVars['--radius-inner']
 	},
 	iconWrapperUnsorted: {
@@ -53,7 +49,7 @@ const sortStyles = stylex.create({
 
 /** The full-bleed button that makes a sortable header clickable. */
 export function sortButtonAttrs(): SvelteStyleAttrs {
-	return sx(sortStyles.button);
+	return focusOutlineProps.focusVisible(sortStyles.button);
 }
 
 /** The icon wrapper — dimmed until hover/focus while the column is unsorted. */

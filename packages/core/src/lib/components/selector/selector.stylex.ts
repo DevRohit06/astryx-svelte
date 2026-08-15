@@ -8,7 +8,6 @@ import {
 import type { InputStatusType } from '../field/types.js';
 import { groupStyles } from '../input-group/group-styles.stylex.js';
 import {
-	borderVars,
 	colorVars,
 	durationVars,
 	easeVars,
@@ -19,6 +18,7 @@ import {
 	typeScaleVars,
 	typographyVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `Selector/Selector.tsx`, where the styles are inline in
@@ -128,14 +128,6 @@ const styles = stylex.create({
 			':focus-within': 'none'
 		},
 		fontWeight: fontWeightVars['--font-weight-medium'],
-		outline: {
-			default: 'none',
-			':has(:focus-visible)': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':has(:focus-visible)': '3px'
-		},
 		transitionProperty: 'background-image, background-color, color, opacity, transform',
 		transform: {
 			default: 'scale(1)',
@@ -161,12 +153,7 @@ const styles = stylex.create({
 		borderStyle: 'none',
 		backgroundColor: 'transparent',
 		cursor: 'pointer',
-		borderRadius: radiusVars['--radius-element'],
-		outline: {
-			default: 'none',
-			':focus-visible': `${borderVars['--border-width']} solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: 1
+		borderRadius: radiusVars['--radius-element']
 	},
 	statusButton: {
 		display: 'flex',
@@ -179,12 +166,7 @@ const styles = stylex.create({
 		backgroundColor: 'transparent',
 		color: 'inherit',
 		cursor: 'pointer',
-		borderRadius: radiusVars['--radius-element'],
-		outline: {
-			default: 'none',
-			':focus-visible': `${borderVars['--border-width']} solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: 1
+		borderRadius: radiusVars['--radius-element']
 	},
 
 	// Dropdown container
@@ -381,7 +363,7 @@ export function selectorClearButtonAttrs(): SvelteStyleAttrs {
 
 /** The focusable status button that opens the `tooltip` variant's info-tip. */
 export function selectorStatusButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.statusButton);
+	return sx(focusOutlineStyles.focusVisible, styles.statusButton);
 }
 
 /** The scrolling `role="listbox"`, transparent until the overlay offset is measured. */

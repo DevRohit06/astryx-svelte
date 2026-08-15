@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import { container, type SpacingToken } from '../../internal/container.stylex.js';
 import type { SpacingStep } from '../../internal/types.js';
 import {
@@ -41,15 +42,7 @@ const styles = stylex.create({
 		opacity: 0,
 		animationDuration: durationVars['--duration-medium-max'],
 		animationTimingFunction: easeVars['--ease-standard'],
-		animationFillMode: 'backwards',
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		animationFillMode: 'backwards'
 	},
 	// Applied via isOpen prop — avoids :where([open]) attribute selectors
 	// which have zero specificity and can lose to default styles depending
@@ -203,7 +196,7 @@ export function dialogAttrs({
 	// the reason its comment on `dynamicStyles.position` gives: StyleX cannot
 	// analyze a helper, so the literal must receive finished strings.
 	const offsets = position != null && !isFullscreen ? resolveDialogPositionOffsets(position) : null;
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.dialog,
 		isOpen && styles.open,
 		styles.backdrop,

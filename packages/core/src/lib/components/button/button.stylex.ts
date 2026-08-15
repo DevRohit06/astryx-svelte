@@ -4,6 +4,7 @@ import {
 	colorVars,
 	durationVars,
 	easeVars,
+	focusVars,
 	fontWeightVars,
 	radiusVars,
 	shadowVars,
@@ -12,6 +13,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import type { Elevation } from '../../internal/types.js';
 import type { ButtonGroupContextValue } from '../../internal/contexts.svelte.js';
 
@@ -46,6 +48,15 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
  */
 const styles = stylex.create({
 	base: {
+		// Kept as a public themeable var (documented in Button.doc.mjs) even though
+		// it now defaults to the shared token: removing it would break any theme
+		// setting it, for no gain. It overrides the shared offset, so a theme can
+		// still tune the ring distance on buttons specifically.
+		'--button-focus-offset': focusVars['--focus-outline-offset'],
+		outlineOffset: {
+			default: '0',
+			':focus-visible': 'var(--button-focus-offset)'
+		},
 		position: 'relative',
 		display: 'inline-flex',
 		alignItems: 'center',
@@ -168,55 +179,30 @@ const hoverOverlay = {
 	':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
 } as const;
 
-const focusOutlineOffset = {
-	default: '0',
-	':focus-visible': 'var(--button-focus-offset)'
-} as const;
-
 const variants = stylex.create({
 	primary: {
 		backgroundColor: colorVars['--color-accent'],
 		color: colorVars['--color-on-accent'],
-		backgroundImage: hoverOverlay,
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		'--button-focus-offset': '3px',
-		outlineOffset: focusOutlineOffset
+		backgroundImage: hoverOverlay
 	},
 	secondary: {
 		backgroundColor: colorVars['--color-neutral'],
 		color: colorVars['--color-text-primary'],
-		backgroundImage: hoverOverlay,
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		'--button-focus-offset': '3px',
-		outlineOffset: focusOutlineOffset
+		backgroundImage: hoverOverlay
 	},
 	ghost: {
 		backgroundColor: 'transparent',
 		color: colorVars['--color-text-primary'],
-		backgroundImage: hoverOverlay,
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		'--button-focus-offset': '3px',
-		outlineOffset: focusOutlineOffset
+		backgroundImage: hoverOverlay
 	},
 	destructive: {
 		backgroundColor: colorVars['--color-error'],
 		color: colorVars['--color-on-error'],
-		backgroundImage: hoverOverlay,
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-error']}`
-		},
-		'--button-focus-offset': '3px',
-		outlineOffset: focusOutlineOffset
+		// The ring matches the variant it rings: an accent-colored outline on a
+		// red button reads as another control's focus. Only the color differs —
+		// width, style and offset come from the shared outline.
+		outlineColor: { default: null, ':focus-visible': colorVars['--color-error'] },
+		backgroundImage: hoverOverlay
 	}
 });
 
@@ -352,10 +338,9 @@ export function buttonRootAttrs(input: ButtonRootStyleInput): SvelteStyleAttrs {
 	} = input;
 	const horizontal = group?.orientation === 'horizontal';
 
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.base,
 		sizeStyles[size],
-		variants[variant as keyof typeof variants],
 		isIconOnly && styles.iconOnly,
 		isDisabled && styles.disabled,
 		isAriaDisabled && styles.ariaDisabled,
@@ -370,6 +355,10 @@ export function buttonRootAttrs(input: ButtonRootStyleInput): SvelteStyleAttrs {
 		// each segment casting its own shadow onto its neighbours.
 		!group && elevationStyles[elevation],
 		width != null && dynamicStyles.width(width),
+		// AFTER the shared focus outline: the outline supplies width/style/offset
+		// for every variant, and `destructive` re-colors just the ring to match
+		// its own surface. Ordering is the mechanism — StyleX is last-wins.
+		variants[variant as keyof typeof variants],
 		xstyle
 	);
 }

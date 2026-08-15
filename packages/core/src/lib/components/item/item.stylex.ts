@@ -8,6 +8,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `Item/Item.tsx`.
@@ -44,16 +45,6 @@ const styles = stylex.create({
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			},
 			':active': colorVars['--color-overlay-pressed']
-		}
-	},
-	focusVisibleOutline: {
-		outline: {
-			default: 'none',
-			':has(:focus-visible)': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':has(:focus-visible)': '2px'
 		}
 	},
 	highlighted: {
@@ -186,7 +177,7 @@ export function itemRootAttrs(
 		densityStyles[density],
 		align === 'start' && styles.alignStart,
 		isInteractive && styles.interactive,
-		isInteractive && styles.focusVisibleOutline,
+		isInteractive && focusOutlineStyles.focusWithin,
 		isHighlighted && styles.highlighted,
 		isSelected && styles.selected,
 		isDisabled && !hasParentRole && styles.disabled,

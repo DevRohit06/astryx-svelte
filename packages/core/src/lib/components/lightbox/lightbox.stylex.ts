@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { colorVars, spacingVars, typeScaleVars } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 const styles = stylex.create({
 	dialog: {
@@ -51,16 +52,6 @@ const styles = stylex.create({
 		cursor: {
 			default: 'zoom-in',
 			'@media (hover: hover)': 'zoom-in'
-		}
-	},
-	zoomTarget: {
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
 		}
 	},
 	imageWrapperZoomed: {
@@ -156,10 +147,11 @@ export function lightboxMediaGroupAttrs(): SvelteStyleAttrs {
  * `dragging` beats both. The compiled lookup table in the published `dist/`
  * encodes exactly that precedence, so reordering these would change the merge.
  *
- * `zoomTarget` sits second, as upstream applies it — it only carries the
- * focus-visible ring for the wrapper's `role="button"` state and shares no
- * property with the cursor styles, so its position is fidelity rather than
- * precedence.
+ * The shared focus ring sits second, as upstream applies it — it is the
+ * wrapper's `role="button"` focus affordance and shares no property with the
+ * cursor styles, so its position is fidelity rather than precedence. Through
+ * 0.3.0 this was a local `zoomTarget` key holding a hand-written ring; upstream
+ * 0.4.1 replaced the key outright with `focusOutlineStyles.focusVisible`.
  */
 export function lightboxImageWrapperAttrs(
 	isZoomTarget: boolean,
@@ -169,7 +161,7 @@ export function lightboxImageWrapperAttrs(
 ): SvelteStyleAttrs {
 	return sx(
 		styles.imageWrapper,
-		isZoomTarget && styles.zoomTarget,
+		isZoomTarget && focusOutlineStyles.focusVisible,
 		isZoomable && styles.imageWrapperZoomable,
 		isZoomed && styles.imageWrapperZoomed,
 		isDragging && styles.imageWrapperDragging

@@ -9,6 +9,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import type { TreeListDensity } from './tree-list-types.js';
+import { focusOutlineProps, focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `TreeList/TreeListItem.tsx` styles.
@@ -39,20 +40,14 @@ const styles = stylex.create({
 		width: '100%',
 		// The treeitem row is the roving-tabindex focus owner; suppress the
 		// native focus ring in favor of the row's :focus-visible outline below.
-		outline: 'none',
+		outline: 'none'
 		// Publish this row's own focus state as an inheritable CSS variable
 		// instead of matching it via an ancestor selector. Every nested <li>
 		// redeclares these vars (default: 'none' / '0'), so a descendant row's
 		// default shadows an ancestor's active value — the ring can never leak
 		// past the nearest containing treeitem, however deep the tree nests.
-		'--_tree-focus-outline': {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		'--_tree-focus-outline-offset': {
-			default: '0',
-			':focus-visible': '2px'
-		}
+		// That publication is `focusOutlineProps.publishFocusVisibleVars` at the
+		// call site now, rather than two hand-rolled `--_tree-focus-*` vars.
 	},
 	childGroup: {
 		margin: 0,
@@ -71,7 +66,8 @@ const styles = stylex.create({
 		alignItems: 'center',
 		gap: spacingVars['--spacing-2'],
 		paddingInline: spacingVars['--spacing-2'],
-		outline: 'none',
+		// No `outline: 'none'` here: this element receives the shared focus ring,
+		// which already defaults to none, and the shorthand would erase it.
 		overflow: 'hidden',
 		position: 'relative',
 		boxSizing: 'border-box',
@@ -94,19 +90,6 @@ const styles = stylex.create({
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		}
-	},
-	focusVisibleOutline: {
-		outline: {
-			// Reads the row's own --_tree-focus-outline (published on the <li> in
-			// `wrapper`), which resolves to the nearest containing treeitem only.
-			default: 'var(--_tree-focus-outline, none)',
-			// Also support inner focusable actions.
-			':has(:focus-visible)': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: 'var(--_tree-focus-outline-offset, 0)',
-			':has(:focus-visible)': '2px'
 		}
 	},
 	disabled: {
@@ -248,7 +231,7 @@ const descriptionSizeStyles = stylex.create({
 
 /** The `<li role="treeitem">`, publishing its own focus state as custom properties. */
 export function treeItemWrapperAttrs(): SvelteStyleAttrs {
-	return sx(styles.wrapper);
+	return focusOutlineProps.publishFocusVisibleVars(styles.wrapper);
 }
 
 /** The `<ul role="group">` holding an expanded item's children. */
@@ -283,7 +266,7 @@ export function treeItemContentWrapperAttrs(
 		styles.contentWrapper,
 		densityStyles[density],
 		hasInteractiveStyles && styles.interactive,
-		hasInteractiveStyles && styles.focusVisibleOutline,
+		hasInteractiveStyles && focusOutlineStyles.focusWithinOrPublished,
 		isDisabled && styles.disabled,
 		isSelected && styles.selected
 	);

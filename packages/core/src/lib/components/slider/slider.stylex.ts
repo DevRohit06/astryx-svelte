@@ -10,6 +10,7 @@ import {
 	typographyVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * `Slider`'s styles, ported from Astryx's `Slider/Slider.tsx`.
@@ -119,16 +120,6 @@ const styles = stylex.create({
 			':hover': {
 				'@media (hover: hover)': `color-mix(in srgb, ${colorVars['--color-accent']}, ${colorVars['--color-tint-hover']} 15%)`
 			}
-		}
-	},
-	thumbFocusVisible: {
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
 		}
 	},
 	thumbDisabled: {
@@ -267,7 +258,7 @@ export function sliderThumbAttrs(isHorizontal: boolean, isDisabled: boolean): Sv
 		styles.thumb,
 		isHorizontal ? styles.thumbHorizontal : rtlStyles.centerInline('50%'),
 		!isDisabled && styles.thumbHover,
-		!isDisabled && styles.thumbFocusVisible,
+		!isDisabled && focusOutlineStyles.focusVisible,
 		isDisabled && styles.thumbDisabled
 	);
 }

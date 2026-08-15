@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import {
 	colorVars,
 	durationVars,
@@ -49,17 +50,7 @@ const styles = stylex.create({
 		color: colorVars['--color-icon-secondary']
 	},
 	interactive: {
-		cursor: 'pointer',
-		// The focus ring is drawn by the container, not the button inside it, so
-		// it follows the container's radius rather than the button's box.
-		outline: {
-			default: null,
-			':has(:focus-visible)': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':has(:focus-visible)': '2px'
-		}
+		cursor: 'pointer'
 	},
 	// Hover/pressed overlay — the exact same treatment as ClickableCard and
 	// SelectableCard. A transparent `::after` tints on hover/press instead of
@@ -146,7 +137,7 @@ export function thumbnailRootAttrs(isDisabled: boolean, xstyle?: StyleArg): Svel
  * into them — which is also why the compiler can fold this call site again.
  */
 export function thumbnailImageContainerAttrs(isInteractive: boolean): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusWithin(
 		styles.imageContainer,
 		isInteractive && styles.interactive,
 		isInteractive && styles.overlay,

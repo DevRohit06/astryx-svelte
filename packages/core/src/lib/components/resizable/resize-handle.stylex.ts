@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import { rtlStyles } from '../../utils/rtl.stylex.js';
 import {
 	colorVars,
@@ -66,15 +67,7 @@ const styles = stylex.create({
 		backgroundColor: colorVars['--color-border'],
 		transitionProperty: 'background-color',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		outline: {
-			default: 'none',
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: null,
-			':focus-visible': spacingVars['--spacing-0-5']
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	// Overlay mode — absolutely positioned inside the parent panel
 	// instead of being a sibling in flex flow. Used when the handle
@@ -241,7 +234,7 @@ export function resizeHandleAttrs(
 	}: ResizeHandleAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		styles.handle,
 		isOverlay && styles.overlay,
 		isOverlay && (isHorizontal ? styles.overlayHorizontal : styles.overlayVertical),

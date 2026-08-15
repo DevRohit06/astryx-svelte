@@ -11,6 +11,7 @@ import {
 	typeScaleVars,
 	typographyVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `CodeBlock/CodeBlock.tsx`, where the styles are inline in
@@ -180,18 +181,10 @@ const styles = stylex.create({
 	},
 	headerCollapsible: {
 		cursor: 'pointer',
-		userSelect: 'none',
+		userSelect: 'none'
 		// Restore a keyboard-only focus ring with the standard token/offset so this
 		// disclosure control matches the rest of the system (Collapsible, TabMenu);
 		// otherwise it falls back to the inconsistent UA default outline.
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
-		}
 	},
 	code: {
 		display: 'block',
@@ -326,7 +319,7 @@ export function codeBlockHeaderRowAttrs(hasLineNumbers: boolean): SvelteStyleAtt
 
 /** The header's inner control — a `role="button"` disclosure when collapsible. */
 export function codeBlockHeaderAttrs(canCollapse: boolean): SvelteStyleAttrs {
-	return sx(styles.header, canCollapse && styles.headerCollapsible);
+	return focusOutlineProps.focusVisible(styles.header, canCollapse && styles.headerCollapsible);
 }
 
 /** The title/language text. */

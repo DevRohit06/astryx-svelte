@@ -8,7 +8,6 @@ import {
 } from '../field/input-styles.stylex.js';
 import type { InputStatusType } from '../field/types.js';
 import {
-	borderVars,
 	colorVars,
 	radiusVars,
 	sizeVars,
@@ -16,6 +15,7 @@ import {
 	typeScaleVars,
 	typographyVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `DateTimeInput/DateTimeInput.tsx`, where the styles are
@@ -48,12 +48,7 @@ const styles = stylex.create({
 		borderStyle: 'none',
 		backgroundColor: 'transparent',
 		cursor: 'pointer',
-		borderRadius: radiusVars['--radius-element'],
-		outline: {
-			default: 'none',
-			':focus-visible': `${borderVars['--border-width']} solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: 1
+		borderRadius: radiusVars['--radius-element']
 	},
 	iconButtonDisabled: {
 		cursor: 'not-allowed'
@@ -166,7 +161,11 @@ export function dateTimeInputTimeWrapperAttrs(
  * field is effectively disabled.
  */
 export function dateTimeInputIconButtonAttrs(isDisabled = false): SvelteStyleAttrs {
-	return sx(styles.iconButton, isDisabled && styles.iconButtonDisabled);
+	return sx(
+		focusOutlineStyles.focusVisible,
+		styles.iconButton,
+		isDisabled && styles.iconButtonDisabled
+	);
 }
 
 /** The leading clock glyph's flex box in the time field. */

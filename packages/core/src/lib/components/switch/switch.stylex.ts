@@ -7,7 +7,8 @@ import {
 	durationVars,
 	easeVars,
 	typographyVars,
-	typeScaleVars
+	typeScaleVars,
+	focusVars
 } from '../../styles/tokens.stylex.js';
 import type { SizeValue } from '../../internal/types.js';
 
@@ -151,15 +152,22 @@ const styles = stylex.create({
 			'@media (forced-colors: active)': 'CanvasText'
 		}
 	},
+	// The one ring in the system not drawn by the shared focus-outline styles. The focusable
+	// element is the visually-hidden input, so the ring has to key off a component
+	// scope marker — and a marker cannot be shared across components without
+	// leaking focus state from an outer one, so it cannot live in the utility.
+	// StyleX also cannot inline a constant imported from another module, so the
+	// values are read from the tokens the utility reads.
 	trackFocus: {
 		outline: {
 			default: 'none',
 			[stylex.when.ancestor(':has(:focus-visible)', switchScope)]:
-				`2px solid ${colorVars['--color-accent']}`
+				`${focusVars['--focus-outline-width']} ${focusVars['--focus-outline-style']} ${focusVars['--focus-outline-color']}`
 		},
 		outlineOffset: {
 			default: null,
-			[stylex.when.ancestor(':has(:focus-visible)', switchScope)]: '2px'
+			[stylex.when.ancestor(':has(:focus-visible)', switchScope)]:
+				focusVars['--focus-outline-offset']
 		}
 	},
 	// State-dependent colors with ancestor hover behavior

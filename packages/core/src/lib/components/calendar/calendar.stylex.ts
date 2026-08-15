@@ -11,6 +11,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Ported from Astryx's `Calendar/styles.ts`, which — unusually for this port —
@@ -281,14 +282,6 @@ export const dayCellTheme = stylex.create({
 			':hover': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			}
-		},
-		outline: {
-			default: null,
-			':focus-visible': `2px solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: {
-			default: '0',
-			':focus-visible': '2px'
 		}
 	},
 
@@ -466,7 +459,7 @@ export function dayButtonAttrs(state: {
 }): SvelteStyleAttrs {
 	const todayPlain = state.isToday && !state.isSelected && !state.isInRange;
 	const todayInRange = state.isToday && !state.isSelected && state.isInRange;
-	return sx(
+	return focusOutlineProps.focusVisible(
 		dayCellStyles.day,
 		dayCellTheme.day,
 		state.isOutside && dayCellStyles.dayOutside,
