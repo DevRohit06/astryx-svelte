@@ -101,7 +101,12 @@ const styles = stylex.create({
 	navButton: {
 		position: 'absolute',
 		top: '50%',
-		transform: 'translateY(-50%)',
+		// The individual `translate` property, not `transform`: this style now
+		// lands on the Button root, and a `transform` here replaces the Button's
+		// own transform rules — measured: the `scale(0.98)` press feedback stops
+		// firing. `translate` composes with them, reproducing exactly what the
+		// removed wrapper element did (wrapper translated, button scaled).
+		translate: '0 -50%',
 		zIndex: 1
 	},
 	navPrev: {
@@ -187,17 +192,20 @@ export function lightboxCaptionAttrs(): SvelteStyleAttrs {
 	return sx(styles.caption);
 }
 
-export function lightboxCloseButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.closeButton);
-}
-
-export function lightboxNavButtonAttrs(direction: 'prev' | 'next'): SvelteStyleAttrs {
-	return sx(styles.navButton, direction === 'prev' ? styles.navPrev : styles.navNext);
-}
-
 export function lightboxCounterAttrs(): SvelteStyleAttrs {
 	return sx(styles.counter);
 }
 
-/** Passed to `IconButton`'s `xstyle`, as upstream passes `styles.controlButton`. */
+/**
+ * Handed to `IconButton`'s `xstyle`, as upstream hands over the same styles.
+ *
+ * These were `…Attrs()` builders on wrapper `<div>`s until #4775, which deleted
+ * the wrappers and put the positioning on the Button root itself. That is why
+ * `navButton` had to move from `transform` to `translate` — see the note at the
+ * declaration.
+ */
 export const lightboxControlButtonStyle = styles.controlButton;
+export const lightboxCloseButtonStyle = styles.closeButton;
+export const lightboxNavButtonStyle = styles.navButton;
+export const lightboxNavPrevStyle = styles.navPrev;
+export const lightboxNavNextStyle = styles.navNext;

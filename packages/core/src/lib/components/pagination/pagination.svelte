@@ -222,6 +222,7 @@
 	import Selector from '../selector/selector.svelte';
 	import Text from '../text/text.svelte';
 	import {
+		PAGE_SIZE_SELECTOR_WIDTH,
 		paginationActivePageStyle,
 		paginationControlsAttrs,
 		paginationDotAttrs,
@@ -232,7 +233,6 @@
 		paginationInputLabelAttrs,
 		paginationInputTotalAttrs,
 		paginationPageSizeSelectorAttrs,
-		paginationPageSizeSelectorControlAttrs,
 		paginationRootAttrs
 	} from './pagination.stylex.js';
 
@@ -469,7 +469,6 @@
 	const dotsContainerAttrs = paginationDotsContainerAttrs();
 	const inputGroupAttrs = paginationInputGroupAttrs();
 	const pageSizeSelectorAttrs = paginationPageSizeSelectorAttrs();
-	const pageSizeSelectorControlAttrs = paginationPageSizeSelectorControlAttrs();
 	// The RTL mirror lives on its own wrapper span, outside anything that could
 	// set `transform` — the rule `rtl.stylex.ts`'s header records.
 	const mirrorAttrs = rtlMirrorAttrs();
@@ -657,17 +656,21 @@
 	>
 		{#if pageSizeOptions != null && pageSizeOptions.length > 0}
 			<div class={pageSizeSelectorAttrs.class} style={pageSizeSelectorAttrs.style}>
-				<div class={pageSizeSelectorControlAttrs.class} style={pageSizeSelectorControlAttrs.style}>
-					<Selector
-						label={itemsPerPageLabel}
-						isLabelHidden
-						options={pageSizeOptions.map((opt) => String(opt))}
-						value={String(pageSize)}
-						onChange={handlePageSizeChange}
-						size={buttonSize}
-						{isDisabled}
-					/>
-				</div>
+				<!--
+					`width`, not `xstyle`: Selector's xstyle lands on the trigger box,
+					while `width` sizes the whole field — which is what the removed
+					wrapper did.
+				-->
+				<Selector
+					label={itemsPerPageLabel}
+					isLabelHidden
+					options={pageSizeOptions.map((opt) => String(opt))}
+					value={String(pageSize)}
+					onChange={handlePageSizeChange}
+					size={buttonSize}
+					{isDisabled}
+					width={PAGE_SIZE_SELECTOR_WIDTH}
+				/>
 			</div>
 		{/if}
 		<div class={controlsAttrs.class} style={controlsAttrs.style}>

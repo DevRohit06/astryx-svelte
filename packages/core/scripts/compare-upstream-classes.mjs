@@ -1458,22 +1458,19 @@ const CASES = [
 		// beats both, all three sharing `cursor`) is preserved by the order, not by
 		// the claims.
 		//
-		// `styles.closeButton` and the two `navButton` pairs are a DIFFERENT story
-		// and their claims stay. Upstream #4775 deleted the wrapper `<div>`s these
-		// styles sat on and moved them onto `IconButton`'s own `xstyle`
+		// `styles.closeButton`, `navButton`, `navPrev` and `navNext` are OBJECT mode
+		// and have no claims. #4775 deleted the wrapper `<div>`s they sat on and
+		// moved them onto `IconButton`'s own `xstyle`
 		// (`xstyle: [styles.closeButton, styles.controlButton]`, and likewise for
-		// `navPrev`/`navNext`), which is why `dist/` keeps them as objects too —
-		// but `lightbox.svelte` still renders those wrappers. Deleting the claims
-		// would make the oracle green over a component that has not been ported,
-		// which is the one thing object mode cannot see. The `styles.navButton`
-		// object mismatch beside them is the same PR's other half and is a real
-		// divergence in `lightbox.stylex.ts`: upstream uses the individual
-		// `translate: '0 -50%'` where we still use `transform: 'translateY(-50%)'`,
-		// deliberately, because the style now lands on the Button root and a
-		// `transform` there replaces Button's own rules and kills the `scale(0.98)`
-		// press feedback. Verified against the source clone, which agrees with
-		// `dist/` — this is not a lag. Both are tracked under Known debts in
-		// TODO.md; port #4775 and then rewrite this case's tail.
+		// the two nav pairs), so they cross a component boundary and `dist/` keeps
+		// them as objects on both sides.
+		//
+		// `navButton` uses the individual `translate: '0 -50%'` rather than
+		// `transform: 'translateY(-50%)'`, and that is load-bearing rather than
+		// stylistic: the style lands on the Button root now, and a `transform`
+		// there REPLACES Button's own transform rules — the `scale(0.98)` press
+		// feedback stops firing. `translate` composes with them, reproducing what
+		// the removed wrapper did (wrapper translated, button scaled).
 		//
 		// The remaining keys each reach exactly one call site and were resolved
 		// into literal class strings.
@@ -1484,9 +1481,6 @@ const CASES = [
 			['styles.mediaGroup'],
 			['styles.video'],
 			['styles.caption'],
-			['styles.closeButton'],
-			['styles.navButton', 'styles.navPrev'],
-			['styles.navButton', 'styles.navNext'],
 			['styles.counter']
 		]
 	},
@@ -2395,15 +2389,13 @@ const CASES = [
 		// nothing to diff it against in either mode. The reverse of a skip, as
 		// `Selector`'s `itemCheckmark` and `Collapsible`'s `triggerDisabled` are.
 		//
-		// **`styles.pageSizeSelectorControl` is KEPT and is EXPECTED TO FAIL.** It
-		// is not a stale claim: upstream #4775 deleted the `width:80` wrapper
-		// `<div>` outright and passes `width={PAGE_SIZE_SELECTOR_WIDTH}` to
-		// `<Selector>` instead ("`width`, not `xstyle`: Selector's xstyle lands on
-		// the trigger box, while `width` sizes the whole field — which is what the
-		// removed wrapper did", `Pagination.js`). Our `pagination.svelte` still
-		// renders the wrapper, so this is real unported work and the mismatch is
-		// the oracle doing its job. Delete the claim and the key together when
-		// #4775 lands. Tracked under Known debts in TODO.md.
+		// `styles.pageSizeSelectorControl` is gone with #4775, which deleted the
+		// `width:80` wrapper `<div>` outright and passes
+		// `width={PAGE_SIZE_SELECTOR_WIDTH}` to `<Selector>` instead. The prop
+		// rather than an `xstyle` is load-bearing: Selector's `xstyle` lands on the
+		// trigger box while `width` sizes the whole field, which is what the
+		// wrapper was doing — moving the style to `xstyle` would have silently
+		// narrowed what it applied to.
 		file: 'src/lib/components/pagination/pagination.stylex.js',
 		upstreamFile: 'Pagination/Pagination.js',
 		inline: [
@@ -2412,7 +2404,6 @@ const CASES = [
 			['styles.infoText'],
 			['styles.dotsContainer'],
 			['styles.pageSizeSelector'],
-			['styles.pageSizeSelectorControl'],
 			// 0.3.0's `input` variant. `inputTotal` / `inputTotalSm` are DELIBERATELY
 			// unclaimed: upstream declares them identically to `inputLabel` /
 			// `inputLabelSm`, so the compiler hashes both pairs to the same atomic

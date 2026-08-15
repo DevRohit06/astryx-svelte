@@ -90,17 +90,20 @@ const flyoutStyles = stylex.create({
 		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	popover: {
-		minWidth: '160px',
-		// Small inline gap so the flyout doesn't sit flush against the parent menu.
-		marginInlineStart: spacingVars['--spacing-1'],
-		marginInlineEnd: spacingVars['--spacing-1']
+		minWidth: '160px'
 	},
 	popoverCustomWidth: (width: string | number) => ({
-		minWidth: typeof width === 'number' ? `${width}px` : width,
-		marginInlineStart: spacingVars['--spacing-1'],
-		marginInlineEnd: spacingVars['--spacing-1']
+		minWidth: typeof width === 'number' ? `${width}px` : width
 	})
 });
+
+/**
+ * The clearance that used to be a hand-rolled `marginInline` pair on both
+ * popover styles. It moves to `<PopoverLayer offset>` at 0.4.x (#4951), which
+ * sets the gap on both edges of the placement axis — a single-edge margin is
+ * stranded on the wrong side when `position-try-fallbacks` flips the flyout.
+ */
+export const dropdownMenuSubMenuOffset = spacingVars['--spacing-1'];
 
 /** The `xstyle` array handed to the trigger `Item`. */
 export function subMenuTriggerXstyle(

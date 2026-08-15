@@ -72,6 +72,7 @@
 		MENU_ITEM_SELECTOR
 	} from './menu-item-roles.js';
 	import {
+		dropdownMenuSubMenuOffset,
 		subMenuCaretAttrs,
 		subMenuFlyoutAttrs,
 		subMenuPopoverXstyle,
@@ -388,7 +389,13 @@
 	data-size={menuSize}
 />
 
-<Layer {layer} placement="end" alignment="start" xstyle={layerXstyle}>
+<Layer
+	{layer}
+	placement="end"
+	alignment="start"
+	offset={dropdownMenuSubMenuOffset}
+	xstyle={layerXstyle}
+>
 	<div
 		bind:this={menuEl}
 		{@attach list.attachList}

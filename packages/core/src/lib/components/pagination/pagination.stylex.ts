@@ -115,9 +115,6 @@ const styles = stylex.create({
 		alignItems: 'center',
 		gap: spacingVars['--spacing-2']
 	},
-	pageSizeSelectorControl: {
-		width: 80
-	},
 	disabled: {
 		opacity: 0.5,
 		pointerEvents: 'none' as const
@@ -193,7 +190,12 @@ export function paginationPageSizeSelectorAttrs(): SvelteStyleAttrs {
 	return sx(styles.pageSizeSelector);
 }
 
-/** The fixed-width box the page-size `Selector` sits in. */
-export function paginationPageSizeSelectorControlAttrs(): SvelteStyleAttrs {
-	return sx(styles.pageSizeSelectorControl);
-}
+/**
+ * Width (px) of the page-size `Selector` field.
+ *
+ * This was a `pageSizeSelectorControl` style on a wrapper `<div>` until #4775.
+ * It is a prop now because `Selector`'s `xstyle` lands on the trigger box while
+ * `width` sizes the whole field — the wrapper was sizing the outer element, so
+ * moving the style to `xstyle` would have silently narrowed what it applied to.
+ */
+export const PAGE_SIZE_SELECTOR_WIDTH = 80;
