@@ -17,7 +17,9 @@
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
     "format": "pnpm -r format",
-    "check:publish": "node scripts/check-publish.mjs"
+    "check:publish": "node scripts/check-publish.mjs",
+    "status": "node scripts/status.mjs",
+    "status:full": "node scripts/status.mjs --full"
   },
   "workspaces": [
     "packages/*",
