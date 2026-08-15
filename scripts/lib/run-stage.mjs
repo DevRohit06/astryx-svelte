@@ -17,9 +17,25 @@ const NONDETERMINISM = [
 	[/\b\d+(?:\.\d+)?\s?m?s\b/g, '<duration>'],
 	// ISO timestamps
 	[/\b\d{4}-\d{2}-\d{2}T[\d:.]+Z?\b/g, '<timestamp>'],
+	// Space-separated timestamps ("2026-08-15 21:29:11"), which the ISO
+	// pattern above misses because it requires a literal `T`.
+	[/\b\d{4}-\d{2}-\d{2}[ ]\d{2}:\d{2}:\d{2}(?:\.\d+)?\b/g, '<timestamp>'],
+	// 12-hour wall-clock times. Vite's dep-optimizer logger prefixes lines
+	// with exactly this: "9:29:11 pm [vite] (client) Re-optimizing
+	// dependencies because lockfile has changed" — fires reliably on a cold
+	// cache, which is the normal state of a fresh CI checkout. Ordered before
+	// the bare 24-hour pattern below so the am/pm suffix is consumed with it.
+	[/\b\d{1,2}:\d{2}:\d{2}\s?(?:am|pm|AM|PM)\b/g, '<time>'],
+	// 24-hour clock times not already covered above ("14:03:07").
+	[/\b\d{2}:\d{2}:\d{2}\b/g, '<time>'],
 	// Absolute paths on either platform
 	[/[A-Za-z]:[\\/][^\s'"]+/g, '<path>'],
-	[/\/(?:home|Users|tmp)\/[^\s'"]+/g, '<path>']
+	[/\/(?:home|Users|tmp)\/[^\s'"]+/g, '<path>'],
+	// Broader POSIX absolute path, not anchored to a fixed root list — the
+	// list above misses a CI runner rooted at `/github/workspace`. Guarded by
+	// a negative lookbehind so it does not fire on the `//` inside a URL
+	// (`http://host/path` stays intact; a bare `/foo/bar` does not).
+	[/(?<!\/)\/(?:[^\s'"/]+\/)+[^\s'"/]+/g, '<path>']
 ];
 
 export function stripNondeterminism(text) {

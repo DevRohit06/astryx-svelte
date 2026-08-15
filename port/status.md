@@ -14,7 +14,7 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.4.1                                               |
-| Ledger entries            | 0                                                                        |
+| Ledger entries            | 28                                                                       |
 
 ## Debts
 

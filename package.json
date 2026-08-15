@@ -19,7 +19,9 @@
     "format": "pnpm -r format",
     "check:publish": "node scripts/check-publish.mjs",
     "status": "node scripts/status.mjs",
-    "status:full": "node scripts/status.mjs --full"
+    "status:full": "node scripts/status.mjs --full",
+    "verify": "node scripts/verify.mjs",
+    "verify:fast": "node scripts/verify.mjs --fast"
   },
   "workspaces": [
     "packages/*",
