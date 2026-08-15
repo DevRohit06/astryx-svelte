@@ -223,7 +223,7 @@ Grouped by what they need rather than by changelog order.
 
 - Upstream localized the remaining hardcoded assistive-tech strings: AvatarGroup overflow label,
   CodeBlock copy announcement, Button loading announcement, MetadataList show more/less, Table
-  row-expansion context-menu actions, keyboard hint. **`TODO.md` records "hard-coded English" as a
+  row-expansion context-menu actions, keyboard hint. **`../todo.md` records "hard-coded English" as a
   Known debt of this port** — this retires it upstream-first rather than by local invention.
 - `FieldLabel` localizes the Required/Optional indicator (`@astryx.field.required`/`.optional`).
 - **31 new catalog keys**, 0 changed, 0 extra — see §7.

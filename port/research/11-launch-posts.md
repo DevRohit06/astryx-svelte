@@ -77,7 +77,7 @@ Every one says "unofficial, not affiliated with Meta" — keep that line.
 > ```
 >
 > Known gaps so nobody finds them the hard way: upstream's `lab` package (17 components) isn't
-> started, and 434 upstream test cases still have no counterpart here. Both tracked in `TODO.md`.
+> started, and 434 upstream test cases still have no counterpart here. Both tracked in `../todo.md`.
 >
 > Very interested in what breaks on real projects.
 

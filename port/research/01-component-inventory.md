@@ -5184,7 +5184,7 @@ Svelte has no `useOptimistic`. This must be built as a shared rune — something
 is a prerequisite for M3. Getting this wrong silently breaks the async-action contract of half
 the form library.
 
-> **Corrected while building it** (`internal/optimistic.svelte.ts`; see `TODO.md`). This
+> **Corrected while building it** (`internal/optimistic.svelte.ts`; see `../todo.md`). This
 > section originally said the value reverts "if the promise rejects". That is the visible
 > effect, not the mechanism: React drops the override when the *transition ends*, whatever
 > the outcome — a success only looks like no revert because the parent has meanwhile

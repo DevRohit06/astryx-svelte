@@ -12,7 +12,7 @@
 >    Building headings would have been invented layout.
 > 3. **§B5's `redirect(308, …)` cannot be prerendered**, because the prerenderer also enqueues the
 >    redirect destination and this one carries a query string. It is a bounce page; see
->    `TODO.md` → Known debts.
+>    `../todo.md` → Known debts.
 >
 > §B6's icon row was also wrong in the prompts derived from it (it briefly said `@lucide/svelte`);
 > the repo's rule is registry stand-ins, as ~103 files in `docs/src/lib/examples/` already show.
@@ -110,7 +110,7 @@ Per template, the registry records `slug`, `name`, `displayName`, `description`,
 `hasSvelte` is what keeps the gallery honest while the batches land, exactly as
 `coverage.examplesPending` does for blocks. A template with no transcription yet is **recorded
 and counted, not listed** — the gallery renders only `isReady && !isHiddenFromOverview &&
-hasSvelte`, and the pending count goes to `coverage.js` so `TODO.md` has a number to track.
+hasSvelte`, and the pending count goes to `coverage.js` so `../todo.md` has a number to track.
 
 ### B3 · Grouping
 
@@ -196,8 +196,8 @@ ones. Line counts are upstream's `page.tsx`.
 not-ready or hidden is transcribed and recorded, and stays out of the gallery listing, because
 the flags are upstream's editorial call and inverting them would be invented content.
 
-Each batch ends with `pnpm -r build && pnpm -r check && pnpm -r lint` clean, `PORTED.md` updated,
-and the pending count in `TODO.md` moved.
+Each batch ends with `pnpm -r build && pnpm -r check && pnpm -r lint` clean, `../ported.md` updated,
+and the pending count in `../todo.md` moved.
 
 ### B8 · Tests
 

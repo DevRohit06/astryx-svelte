@@ -1,7 +1,7 @@
 # Batch 17 — tracking upstream 0.1.7 → 0.2.0
 
 Research and plan for the first batch that follows a released upstream _version_ rather than porting
-new surface at a fixed one. Status lives in [`TODO.md`](../TODO.md); this file is the detail.
+new surface at a fixed one. Status lives in [`todo.md`](../todo.md); this file is the detail.
 
 **Sources.** `reference/astryx-upstream/packages/core/CHANGELOG.md` and `packages/cli/CHANGELOG.md`
 at tag **`v0.2.0`** (commit `e4013c900`, 2026-07-30). Every count below was extracted from those
