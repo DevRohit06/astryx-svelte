@@ -8,13 +8,13 @@ import CarouselFixture from './fixtures/carousel-fixture.svelte';
  * The 8 originally ported cases were the ones outside upstream's two nested
  * `describe`s; 0.3.0's `hasLoop` (4) and `handleRef` (4) groups are ported here
  * in full, which is what took the count to 16. Still unported, from 0.2.0 and
- * recorded in TODO.md as part of the batch-9 test-parity debt: the 3
+ * recorded in port/todo.md as part of the batch-9 test-parity debt: the 3
  * `slide semantics` cases and the 4 `Shift + wheel horizontal scroll` cases.
  *
  * Every case goes through `carousel-fixture.svelte`: the port takes `items` plus
  * an `item` snippet where upstream takes children and wraps each with
  * `Children.map`, since a Svelte snippet is one opaque unit that cannot be
- * mapped over (the `OverflowList` precedent — see TODO.md → Known debts).
+ * mapped over (the `OverflowList` precedent — see port/todo.md → Known debts).
  *
  * Runs in the **client** (real Chromium) project, so upstream's
  * `MockResizeObserver` stub is **gone**: Chromium implements `ResizeObserver`,

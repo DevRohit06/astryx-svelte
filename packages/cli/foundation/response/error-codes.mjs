@@ -36,8 +36,8 @@
  * Codes for commands that have not landed yet (blog, upgrade, theme)
  * are present and unused, exactly as an append-only list requires.
  *
- * Upstream's own count is 43, not the 53 quoted in `planning/02` §1.3 and
- * `TODO.md`; verified against the `Object.freeze` block at both `v0.1.7` and
+ * Upstream's own count is 43, not the 53 quoted in `port/research/02` §1.3 and
+ * `port/todo.md`; verified against the `Object.freeze` block at both `v0.1.7` and
  * `v0.3.0`, which are byte-identical in membership and order.
  */
 

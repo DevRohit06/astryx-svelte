@@ -83,7 +83,7 @@ We know the exact size of that blind spot because we measured it rather than ass
 0** — while the bug was live in 13 call sites.
 
 A verification tool that has never been shown to fail is a tool nobody has tested. That number is in
-`TODO.md` under known debts, with the reproduction, because the useful thing about a blind spot is
+`port/todo.md` under known debts, with the reproduction, because the useful thing about a blind spot is
 knowing where it is.
 
 ## The failure mode the oracles do not cover at all

@@ -32,7 +32,7 @@
  * `manifest` (an `api → cli` cycle). Upstream did not avoid it here:
  * `foundation/config/project.mjs` and
  * `foundation/integrations/integration-warnings.mjs` both reach up into this
- * module. Ported as-is for parity and recorded in TODO.md's known debts,
+ * module. Ported as-is for parity and recorded in port/todo.md's known debts,
  * because changing the layering would move a published module's path.
  */
 

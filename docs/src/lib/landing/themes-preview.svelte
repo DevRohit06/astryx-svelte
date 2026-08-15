@@ -11,7 +11,7 @@
 	 * than a preference.** Upstream's `ThemesPreview` is a live `ThemeShowcaseStore`
 	 * — the `theme-showcase` page template — scaled into a cropped window, beside a
 	 * three-swatch rail and a cursive "Aa" in Butter's display face. The store is
-	 * `page.tsx` and no page template is ported (TODO.md → Phase 5), so two thirds
+	 * `page.tsx` and no page template is ported (port/todo.md → Phase 5), so two thirds
 	 * of that tile has no source here. Faking a storefront would be the invented
 	 * demo content the parity rule forbids.
 	 *

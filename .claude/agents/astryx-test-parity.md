@@ -63,7 +63,7 @@ unmount. `useLongPress` fakes `setTimeout`/`clearTimeout` and nothing else.
 
 **Do not invent coverage.** A case with no upstream counterpart is allowed only when it
 pins a Svelte-specific hazard upstream gets for free (the four `MetadataList` SSR cases
-are the precedent). It must say so in a comment and be recorded in `TODO.md`.
+are the precedent). It must say so in a comment and be recorded in `port/todo.md`.
 
 ## Cases that legitimately have no counterpart
 

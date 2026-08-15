@@ -85,7 +85,7 @@
 	 * `id`/`aria-*`/handler its type promises is silently discarded. We forward
 	 * onto the element the type names, as `DropdownMenu` and `Timestamp` already
 	 * do. The drawer and mobile-bar branches render no such button, so nothing is
-	 * forwarded there — see TODO.md → Known debts.
+	 * forwarded there — see port/todo.md → Known debts.
 	 *
 	 * @example
 	 * ```svelte

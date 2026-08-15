@@ -9,7 +9,7 @@
 	 * Upstream pairs each button's outline Heroicon with its solid counterpart
 	 * (`Star`, `Bookmark`, `Bell`/`BellSlash`). The registry ships none of those
 	 * pairs, so this substitutes built-ins that still differ between states — the
-	 * point the block makes. Retires with the icon registry (TODO.md).
+	 * point the block makes. Retires with the icon registry (port/todo.md).
 	 */
 	let isFavorited = $state(false);
 	let isBookmarked = $state(true);

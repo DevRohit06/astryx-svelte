@@ -340,7 +340,7 @@
 				// carrying it (with this comment) in `TextInput` and `NumberInput`,
 				// and unlike `TimeInput` this component renders no in-group status
 				// element — so upstream's `aria-describedby` points at nothing inside
-				// a group. Recorded in TODO.md under Known debts.
+				// a group. Recorded in port/todo.md under Known debts.
 				!inputGroup && statusVariant !== 'tooltip' && status?.message ? statusMessageID : null,
 				// The tooltip variant renders no message box; describe the input by the
 				// tooltip's content instead so the status is still announced.

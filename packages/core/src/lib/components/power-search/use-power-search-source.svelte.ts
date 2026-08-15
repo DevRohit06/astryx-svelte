@@ -48,7 +48,7 @@ import type { InternalConfig } from './use-internal-config.svelte.js';
  *   semantics upstream never states (does the value keep interior whitespace?
  *   does the content-search item, which deliberately uses the raw query, trim
  *   too?), and inventing an answer is what the parity rule forbids. Recorded in
- *   TODO.md's Known debts.
+ *   port/todo.md's Known debts.
  * - **The content-search item is prepended with the raw query** — original case,
  *   untrimmed, in its id, its label and its filter value — and is not added to
  *   `seen`. That is what makes `"  Foo"` searchable as literal text.

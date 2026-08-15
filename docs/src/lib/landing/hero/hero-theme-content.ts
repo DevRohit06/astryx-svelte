@@ -30,7 +30,7 @@
  * local-theme seam the `astryx` brand slide does — a sentinel name, an entry in
  * each table, a branch in `themeFor()` — rather than a fabricated
  * `@astryxdesign/*` key, so nothing in this file claims upstream publishes a
- * theme it does not. See TODO.md, Known debts.
+ * theme it does not. See port/todo.md, Known debts.
  */
 
 import type { DefinedTheme } from '@astryx-svelte/core/theme';
@@ -51,7 +51,7 @@ const ASTRYX = 'astryx';
 /**
  * Sentinel for `@astryx-svelte/theme-liquid-glass`, which has **no upstream
  * package name** to key on — it is this port's one deliberate non-upstream
- * theme (TODO.md, Known debts).
+ * theme (port/todo.md, Known debts).
  *
  * It rides the same seam `ASTRYX` does rather than being forced into
  * `THEME_OBJECTS`: that map is keyed by upstream's identifiers on purpose, so

@@ -9,7 +9,7 @@
 	 * Upstream passes Heroicons' `Pencil`/`DocumentDuplicate`/`Trash` components;
 	 * item icons are registry names or snippets here, and the registry ships none
 	 * of the three, so these are built-in substitutions. Retires with the icon
-	 * registry (TODO.md).
+	 * registry (port/todo.md).
 	 */
 </script>
 

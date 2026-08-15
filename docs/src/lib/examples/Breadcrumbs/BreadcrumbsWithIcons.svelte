@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `Home` and `Cog6Tooth`; the registry has no house
 	 * glyph but does ship `wrench`, so `Home` substitutes a built-in and
-	 * `Cog6Tooth` is a near-exact swap. Retires with the icon registry (TODO.md).
+	 * `Cog6Tooth` is a near-exact swap. Retires with the icon registry (port/todo.md).
 	 */
 </script>
 

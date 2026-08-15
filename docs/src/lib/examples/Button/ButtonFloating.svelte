@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `Plus`; the registry ships no such name, so this
 	 * substitutes a built-in — the same substitution `ButtonWithIcon` makes,
-	 * retiring with the icon registry (TODO.md).
+	 * retiring with the icon registry (port/todo.md).
 	 */
 	const VARIANTS = [
 		{ variant: 'primary', label: 'Primary' },

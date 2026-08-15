@@ -33,7 +33,7 @@
  * 5. **Comment syntax.** Markup comments are HTML comments.
  *
  * Two upstream defects are corrected rather than inherited, both recorded in
- * TODO.md: the `XDS`-prefixed tag name (registry-core.mjs) and the dropped
+ * port/todo.md: the `XDS`-prefixed tag name (registry-core.mjs) and the dropped
  * `isDefault` flag on app-component imports (`referenceBlock`).
  *
  * @input  validated doc (nodes carry .bound) + registry

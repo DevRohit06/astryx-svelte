@@ -20,7 +20,7 @@ import type { NavHeadingMenuSize } from './nav-menu-context.svelte.js';
  *
  * `border: 'none'` emits nothing (StyleX drops the shorthand); the reset's
  * universal `border-width: 0` is what actually removes it. Kept for parity — see
- * TODO.md → Phase 0.
+ * port/todo.md → Phase 0.
  */
 const styles = stylex.create({
 	root: {

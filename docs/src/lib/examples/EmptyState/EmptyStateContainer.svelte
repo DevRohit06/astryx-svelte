@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `FolderPlusIcon`; the registry has no folder
 	 * glyph, so this substitutes a built-in. Retires with the icon registry
-	 * (TODO.md).
+	 * (port/todo.md).
 	 */
 </script>
 

@@ -186,7 +186,7 @@ check):
   a feature is added and then removed inside the same version, the prose describes an intermediate
   state that never shipped. **`git show <tag>:<path>` is the spec; the changelog is only the index
   of where to look** — which is the pre-flight's "verify the description against upstream source"
-  item applying to upstream's own prose, not just to `planning/01`.
+  item applying to upstream's own prose, not just to `01`.
 
 ---
 

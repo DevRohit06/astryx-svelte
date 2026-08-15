@@ -9,7 +9,7 @@
 	 * `hasClear` is the arm of `SelectorProps` where `value` and `onChange` widen
 	 * to include `null`, so the parameter is annotated — TS will not contextually
 	 * type an inline arrow against a discriminated union in a Svelte props object
-	 * (the limitation recorded in TODO.md).
+	 * (the limitation recorded in port/todo.md).
 	 */
 
 	let value = $state<string | null>('engineering');

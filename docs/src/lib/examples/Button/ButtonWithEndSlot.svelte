@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes `label={3}` and `label={12}` — numbers, which its
 	 * `ReactNode` type accepts. `Badge.label` is `string | Snippet` here, so the
-	 * counts are written as strings; the rendered output is identical (TODO.md
+	 * counts are written as strings; the rendered output is identical (port/todo.md
 	 * records the divergence).
 	 */
 </script>

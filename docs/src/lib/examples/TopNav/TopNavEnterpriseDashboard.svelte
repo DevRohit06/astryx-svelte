@@ -6,7 +6,7 @@
 	import Heroicons, so they are registry substitutions: `CubeIcon` → `stop`,
 	`HomeIcon` → `menu`, `DocumentTextIcon` → `copy`, `BellIcon` → `warning` —
 	stand-ins rather than true matches, the same ones the demo routes make.
-	Retires with the icon registry (TODO.md).
+	Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import { Button, Icon, NavIcon, TopNav, TopNavHeading, TopNavItem } from '@astryx-svelte/core';

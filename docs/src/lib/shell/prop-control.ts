@@ -7,7 +7,7 @@ import type { PlaygroundConfig, PropEntry } from '$lib/generated/types.js';
  * Upstream's counterpart is `component-detail/parsePropType.ts`, and it works
  * from a different input: upstream parses the React type string an author wrote
  * in a `.doc.mjs`, while this port reads the type the compiler resolved out of
- * `packages/core/dist` (the props-page audit, TODO.md Phase 5). That is a
+ * `packages/core/dist` (the props-page audit, port/todo.md Phase 5). That is a
  * strictly better input for this job — a string-literal union arrives already
  * expanded, so `<select>` options are read off the type rather than hand-listed,
  * and a prop whose type upstream could only describe as `ReactNode` arrives here

@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `ArrowLeftIcon`; the registry ships
 	 * `chevronLeft`, so this is a near-direct swap. Retires with the icon
-	 * registry (TODO.md).
+	 * registry (port/todo.md).
 	 */
 </script>
 

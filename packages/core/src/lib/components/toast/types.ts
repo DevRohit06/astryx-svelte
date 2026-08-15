@@ -20,7 +20,7 @@ export type ToastDismissReason = 'auto' | 'manual';
  * value rather than writing it as component content. There is therefore no
  * markup position for Svelte to capture, so the slot is `string | Snippet`:
  * the same leaf-slot discrimination (`typeof === 'function'`) the rest of the
- * port uses. See TODO.md → Known debts.
+ * port uses. See port/todo.md → Known debts.
  */
 export type ToastContent = string | Snippet;
 

@@ -50,7 +50,7 @@ import {
  *   wrapper is a `display: contents` `<div>` carrying `measureRef`, so the
  *   component renders exactly that div and takes the attachment as a bound
  *   prop. The provider is bound **once, outside the transform** — a changing
- *   component reference would remount the whole table (TODO.md, batch-11
+ *   component reference would remount the whole table (port/todo.md, batch-11
  *   contract note).
  * - **The resize handle rides a keyed bound snippet.**
  *   `HeaderCellRenderProps.overlay` is a zero-argument `Snippet` closing over

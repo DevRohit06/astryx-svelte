@@ -34,7 +34,7 @@
 	 * toggle over the preview, and the install block. What upstream puts *in* the
 	 * preview is `ThemeShowcaseStore` — a page template out of
 	 * `packages/cli/assets/templates/pages/theme-showcase/`, whose source is
-	 * `page.tsx`. No page template is ported (TODO.md → Phase 5), so there is
+	 * `page.tsx`. No page template is ported (port/todo.md → Phase 5), so there is
 	 * nothing to render there and inventing a storefront would be exactly the
 	 * hand-drawn demo content the parity rule forbids. The preview shows upstream's
 	 * own **showcase blocks** instead — the same files the component pages render,
@@ -173,7 +173,7 @@
 						{:else}
 							<!-- The one package in the set that ports nothing. Saying so is the
 							     whole reason `upstreamPackage` is generated rather than assumed —
-							     see TODO.md → Known debts. -->
+							     see port/todo.md → Known debts. -->
 							<Text type="supporting" color="secondary">
 								This theme has no upstream Astryx counterpart. It is this port's own, built on the
 								published <code>defineTheme</code> extension point, and adds no component, prop or variant

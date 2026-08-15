@@ -83,7 +83,7 @@ import { whenWired } from './trigger-wiring.js';
  * `forwards ref` gets a counterpart rather than a transcription: upstream's
  * `ref` lands on the `<time>`, and this port has no public seam onto that
  * element — `...rest` reaches the `<Text>` wrapper instead (the closed-prop-root
- * discrepancy `TODO.md` records for this component). The case asserts the seam
+ * discrepancy `port/todo.md` records for this component). The case asserts the seam
  * this port actually has.
  */
 

@@ -14,7 +14,7 @@
 	sliced through `Children.toArray`. A Svelte snippet is one opaque unit that
 	cannot be sliced, so ours takes `items` plus an `item` snippet and slices the
 	data instead; the category buttons ride that seam. `overflowRenderer` is a
-	snippet for the same reason. (TODO.md → Known debts records the API
+	snippet for the same reason. (port/todo.md → Known debts records the API
 	difference.)
 
 	Upstream's `LibraryCard` and `LibrarySection` are components; a page template

@@ -6,7 +6,7 @@
 	The two nav items import Heroicons upstream, so those are registry
 	substitutions: `HomeIcon` → `menu`, `FolderIcon` → `copy`. Stand-ins rather
 	than true matches, the same ones the demo routes make. Retires with the icon
-	registry (TODO.md).
+	registry (port/todo.md).
 -->
 <script lang="ts">
 	import { Button, Icon, MobileNav, SideNavItem, SideNavSection } from '@astryx-svelte/core';

@@ -18,7 +18,7 @@
 	Upstream's send glyph is lucide's `Send`. Registry substitution: this port's
 	built-in set is the 26 the components themselves need, and `arrowUp` is the
 	nearest reading of "submit this message". Retires with the icon registry
-	(TODO.md → Phase 3).
+	(port/todo.md → Phase 3).
 -->
 {#snippet sendIcon()}<Icon icon="arrowUp" size="sm" />{/snippet}
 

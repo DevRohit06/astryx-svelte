@@ -9,7 +9,7 @@
  * every lookup is an `existsSync` probe at a predictable place.
  *
  * Neither half holds here, and both were measured before being replaced (see
- * TODO.md, slice 2). Our directories are kebab-case; **98 of 191 exported
+ * port/todo.md, slice 2). Our directories are kebab-case; **98 of 191 exported
  * components have no directory of their own** (`AvatarStatusDot` lives in
  * `avatar/`, `ChatComposer` in `chat/`); and a filename rule breaks three ways
  * at once — aliased re-exports (`BreadcrumbMenuItem` *is* `dropdown-menu-item.svelte`),

@@ -15,7 +15,7 @@ Invented props, extra variants, nicer defaults and hand-drawn demo content are _
 improvements. That includes demo routes and template content, which must show upstream's
 documented API rather than a tidied-up version of it.
 
-Where upstream has a bug, we reproduce the bug and record it in `TODO.md` under "Known debts". A
+Where upstream has a bug, we reproduce the bug and record it in `port/todo.md` under "Known debts". A
 fix that upstream has not made is a divergence, and divergences are how a port stops being a port.
 
 If you think upstream is wrong about something, the place to argue it is
@@ -44,12 +44,12 @@ and the already-compiled `dist/` in `node_modules/@astryxdesign/core`.
 
 Two live documents track the work:
 
-- **`TODO.md`** — status and backlog: what's next, the batch history, the known debts. Read the
+- **`port/todo.md`** — status and backlog: what's next, the batch history, the known debts. Read the
   relevant section before starting; update it when your work lands.
 - **`PORTED.md`** — the per-component implementation notes: what each unit does, the translations
   it needed, its oracle and test posture.
 
-Status and open decisions go in `TODO.md`. _How_ a component was built goes in `PORTED.md`.
+Status and open decisions go in `port/todo.md`. _How_ a component was built goes in `PORTED.md`.
 
 ## Getting set up
 
@@ -143,7 +143,7 @@ one.
 at `packages/cli/assets/templates/pages/<slug>/+page.svelte`. Every component they need is already
 exported, so this is transcription rather than component work — a good first contribution.
 
-**Port a component.** Check `TODO.md` for what's unported, read upstream's source and tests first,
+**Port a component.** Check `port/todo.md` for what's unported, read upstream's source and tests first,
 then follow the loop below.
 
 **Improve the docs site.** `docs/` is a SvelteKit app; its content is generated from upstream's
@@ -163,7 +163,7 @@ and neither the oracle nor a ported test caught it. Those are the most valuable 
    getters, `$derived` caching through a server render, un-`untrack`ed attachments),
    `astryx-oracle`, `astryx-test-parity`, and `astryx-surface`.
 5. **Verify** — `pnpm -r build && pnpm -r check && pnpm -r lint && pnpm -r test`, all clean.
-6. **Write it down** — `PORTED.md` for how, `TODO.md` for status.
+6. **Write it down** — `PORTED.md` for how, `port/todo.md` for status.
 
 ## Pull requests
 

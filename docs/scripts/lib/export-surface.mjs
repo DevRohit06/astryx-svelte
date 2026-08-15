@@ -22,7 +22,7 @@ import ts from 'typescript';
  * an export back to its source, and a filename rule gets it wrong: ten
  * `Breadcrumb*` names are `dropdown-menu-*.svelte` published under another
  * name, `HStack` is `hstack.svelte`, and `Theme` is not under `components/` at
- * all. TODO.md's slice-2 entry measured this — name → directory is not a
+ * all. port/todo.md's slice-2 entry measured this — name → directory is not a
  * function — and concluded "the barrel is the index and the filesystem is not a
  * naming convention". `emit-core-docs.mjs` is the first caller that needs the
  * other half of that index.

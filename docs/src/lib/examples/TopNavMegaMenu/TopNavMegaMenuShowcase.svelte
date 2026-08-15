@@ -7,7 +7,7 @@
 	`wrench`, `ShieldCheckIcon` → `success`, and `MagnifyingGlassIcon` →
 	`search`, which is a true match rather than a stand-in. Upstream sizes each
 	one `width={20} height={20}`, which is the registry `Icon`'s default `md`.
-	Retires with the icon registry (TODO.md).
+	Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import {

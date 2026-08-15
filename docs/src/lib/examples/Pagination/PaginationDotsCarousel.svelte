@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' solid `StarIcon`; the registry ships no star, so
 	 * this substitutes a built-in and keeps upstream's `color="warning"`, which is
-	 * what carries the rating read. Retires with the icon registry (TODO.md).
+	 * what carries the rating read. Retires with the icon registry (port/todo.md).
 	 */
 
 	const REVIEWS = [

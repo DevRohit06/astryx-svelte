@@ -20,7 +20,7 @@
  * own `Pagination` suite (`Pagination.test.tsx:600-735`), which is the most
  * thorough test of the pattern in the repo:
  *
- * - **The revert is not conditional on failure.** `planning/01` §6.3 describes
+ * - **The revert is not conditional on failure.** `port/research/01` §6.3 describes
  *   it as "revert automatically if the promise rejects", which is the visible
  *   effect but not the mechanism. React reverts when the transition *ends*,
  *   whatever the outcome — a success looks like no revert only because the
@@ -43,7 +43,7 @@
  * `startTransition` marks the boundary that triggers the revert. Svelte has no
  * transition concept, so the only thing that can know when to revert is
  * whatever owns the call — which is why this is one object with a `run` rather
- * than the tuple plus a separate transition. `planning/01` §6.3 proposed the
+ * than the tuple plus a separate transition. `port/research/01` §6.3 proposed the
  * same shape.
  *
  * @example

@@ -128,7 +128,7 @@
 	 */
 	// Upstream declares `BaseProps<HTMLTimeElement>`, naming the semantic `<time>`
 	// root its `ref` points at — but it never forwards its rest props anywhere (see
-	// the known debt in TODO.md). Ours does forward them, to the `<Text>` wrapper,
+	// the known debt in port/todo.md). Ours does forward them, to the `<Text>` wrapper,
 	// so `HTMLElement` is the element they actually reach. Typing this
 	// `HTMLTimeElement` makes the handler types contravariantly incompatible with
 	// `Text`'s own props, which is the compiler pointing at the same discrepancy.

@@ -16,7 +16,7 @@ So your question is never "did they use `$derived`?" It is **"does this produce 
 observable behaviour as the React original, in SSR, during hydration, and after every
 prop change?"**
 
-`planning/06-react-to-svelte-patterns.md` is the canonical pattern reference (§1 hooks,
+`port/research/06-react-to-svelte-patterns.md` is the canonical pattern reference (§1 hooks,
 §3 context, §4 props, §5 layers, §8 SSR). Read the section that covers whatever the
 component uses before judging it.
 
@@ -28,7 +28,7 @@ component uses before judging it.
 | Upstream hooks | `reference/astryx-upstream/packages/core/src/hooks/` |
 | Our port | `packages/core/src/lib/components/<kebab-name>/` |
 | Our hooks | `packages/core/src/lib/hooks/` |
-| Pattern canon | `planning/06-react-to-svelte-patterns.md` |
+| Pattern canon | `port/research/06-react-to-svelte-patterns.md` |
 | Typecheck | `pnpm -F @astryx-svelte/core check` |
 
 ## Method
@@ -124,7 +124,7 @@ from an empty one, and only the omitted one is absent.
 
 Absence of `mergeRefs`, `mergeProps`, `composeEventHandlers`, `isRenderable`,
 `useIsomorphicLayoutEffect`, `forwardRef`/`ref` props, `useCallback`, `act()`, and
-`useTheme` (replaced by `getComputedStyle`). Svelte obviates each; `planning/06` records
+`useTheme` (replaced by `getComputedStyle`). Svelte obviates each; `port/research/06` records
 why. A `setState(prev => …)` equality bail-out disappearing into `$state` equality is
 also correct — unless the bail-out was doing something equality cannot, which is worth
 one line of checking rather than a finding.

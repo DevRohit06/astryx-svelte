@@ -28,7 +28,7 @@ import {
  *
  * `border: 'none'` on the dialog emits nothing (StyleX drops the shorthand); the
  * reset's universal `border-width: 0` is what actually removes the UA's 3px
- * `<dialog>` border. See TODO.md → Phase 0.
+ * `<dialog>` border. See port/todo.md → Phase 0.
  */
 const styles = stylex.create({
 	dialog: {

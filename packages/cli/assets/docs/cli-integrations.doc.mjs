@@ -9,7 +9,7 @@
  * integration installed alongside this port be loaded and its `.tsx` read as
  * `.svelte`. (The `astryx` package.json field the scanner reads keeps upstream's
  * spelling, because its payload — a docs directory, a category string — is
- * framework-neutral. Same principle, opposite conclusion. See TODO.md, slice 3.)
+ * framework-neutral. Same principle, opposite conclusion. See port/todo.md, slice 3.)
  *
  * The source extension follows: a contributed component is `Acme.svelte` beside
  * `Acme.doc.ts`, and a template is `AcmeLandingPage.svelte` beside

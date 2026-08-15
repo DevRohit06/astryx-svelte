@@ -41,7 +41,7 @@ import TopNavMenuFixture, { type TopNavMenuItemSpec } from './fixtures/top-nav-m
  * popup's exposed semantics are its child `role="menu"`.
  *
  * The port forwards rest props onto the desktop trigger where upstream drops
- * them (see the component's docs and TODO.md → Known debts). No case in this
+ * them (see the component's docs and port/todo.md → Known debts). No case in this
  * suite asserts a prop is absent, so none needed restating for it.
  */
 

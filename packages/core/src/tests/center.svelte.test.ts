@@ -8,7 +8,7 @@ import SlotProbe from './fixtures/slot-probe.svelte';
  * with this batch.
  *
  * `Center` had **no ported suite at all**, a pre-existing gap recorded in
- * TODO.md; the 11 cases upstream carried at 0.2.0 (rendering, `axis`, the four
+ * port/todo.md; the 11 cases upstream carried at 0.2.0 (rendering, `axis`, the four
  * size props, `isInline`, `xstyle`, `className`/`style`, `data-testid`) are
  * still unported and are deliberately left counted here rather than closed
  * quietly. What lands is exactly the 5 cases 0.3.0 added for the new `padding` /

@@ -29,7 +29,7 @@ import {
  * Upstream also folds in its `domainTokens/` (data-viz) group, which this port
  * does not ship — and **omits `borderDefaults`**, which it does ship and does
  * publish a `BorderVarName` type for. That looks like an upstream bug, so it is
- * recorded in TODO.md rather than corrected here: including the group would put
+ * recorded in port/todo.md rather than corrected here: including the group would put
  * a `--border-width` key in `tokenVars` and in every `useTheme().tokens` that
  * upstream's does not have.
  */

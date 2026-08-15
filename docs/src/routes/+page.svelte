@@ -28,7 +28,7 @@
 	 * **`BlogShowcase` is not ported.** Upstream renders it between
 	 * `AboutShowcase` and `DiscoverShowcase`, built on `blogRegistry` +
 	 * `BlogCard`/`BlogFeatureCard`. `/blog` is outside the v1 cut and the posts are
-	 * Meta's, so the section is omitted rather than filled (TODO.md → Phase 5).
+	 * Meta's, so the section is omitted rather than filled (port/todo.md → Phase 5).
 	 */
 
 	// The layout's instance, not a new one — see `setColorModeContext`. Reading a

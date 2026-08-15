@@ -35,7 +35,7 @@ import { selectedBgColor } from './selection.stylex.js';
  * `useMemo` pair is for — a stable plugin identity that still reads fresh
  * config. That stability is load-bearing here and not merely tidy, because
  * `transformTableContext` must return a **stable component reference** or the
- * table remounts on every selection change (TODO.md, batch 11).
+ * table remounts on every selection change (port/todo.md, batch 11).
  */
 
 // =============================================================================

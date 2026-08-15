@@ -13,7 +13,7 @@
 	 * The cover has three arms, in upstream's order: an authored `coverImage`
 	 * wins; otherwise a title carrying a version renders `release-cover-art`;
 	 * otherwise upstream falls through to its generative `BlogCoverArt`, **which
-	 * this port has not yet built** — see TODO.md. Until it does, a non-release
+	 * this port has not yet built** — see port/todo.md. Until it does, a non-release
 	 * post with no `coverImage` gets the muted field and nothing on it, so the
 	 * card still lays out rather than collapsing.
 	 *

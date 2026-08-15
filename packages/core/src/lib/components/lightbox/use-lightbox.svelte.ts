@@ -68,7 +68,7 @@ export interface UseLightboxReturn {
  * `<LightboxLayer {lightbox} />` — the same split `useLayer` → `<Layer>`,
  * `useTooltip` → `<TooltipLayer>` and `useKeyboardHint` → `<KeyboardHintLayer>`
  * already take. `LightboxLayer` is therefore an export upstream has no
- * counterpart for; see TODO.md → Known debts.
+ * counterpart for; see port/todo.md → Known debts.
  *
  * @example
  * ```svelte

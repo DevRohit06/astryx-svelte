@@ -23,7 +23,7 @@
 	import type { TableColumn } from '$lib/index.js';
 	// Upstream reads the raw token defaults from `@astryxdesign/core/theme` for the
 	// inline pill colours in `CustomCellRenderer`. This port publishes them from
-	// no barrel (see TODO.md's "No public path to the tokens"), so the demo
+	// no barrel (see port/todo.md's "No public path to the tokens"), so the demo
 	// imports the declaration site directly — legal from a `.svelte` file
 	// because it is the *tokens* module being imported, not `@stylexjs/stylex`.
 	import {

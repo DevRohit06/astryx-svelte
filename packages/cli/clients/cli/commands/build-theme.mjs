@@ -36,7 +36,7 @@ import { themeBuild, importSpecifier } from '../../../api/theme/build/build.mjs'
  * The one path that differs from upstream, and only because the bin does:
  * upstream's lives at `clients/cli/bin/astryx.mjs`, ours at
  * `bin/astryx-svelte.mjs` (the location `package.json#bin` already declared —
- * see TODO.md's slice 1 note).
+ * see port/todo.md's slice 1 note).
  */
 function resolveCliBin() {
 	const commandsDir = path.dirname(fileURLToPath(import.meta.url));

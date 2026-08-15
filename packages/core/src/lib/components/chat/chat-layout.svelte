@@ -84,7 +84,7 @@
 	 * exactly.** `hasVisibleContent` asks whether React was handed `null`,
 	 * `false` or an empty array; a `Snippet` is an opaque function, so "did the
 	 * caller pass something that renders nothing?" is undecidable here — the
-	 * empty-slot-detection question `TODO.md` still lists as open. The test is
+	 * empty-slot-detection question `port/todo.md` still lists as open. The test is
 	 * therefore `children == null`, which agrees with upstream on the two cases
 	 * a consumer actually writes (a snippet, or none) and differs only for a
 	 * snippet that renders nothing at all.

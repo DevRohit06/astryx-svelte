@@ -18,7 +18,7 @@
  *
  * The single import points up into `api/`, which inverts this package's
  * layering. That is upstream's shape, replicated for parity and recorded in
- * TODO.md's known debts — see the note in the imported module.
+ * port/todo.md's known debts — see the note in the imported module.
  */
 
 import { validateLoadedIntegration } from '../../api/integration/validate-integration.mjs';

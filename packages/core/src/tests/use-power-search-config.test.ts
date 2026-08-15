@@ -38,7 +38,7 @@ import type { PowerSearchFilter } from '$lib/components/power-search/types.js';
  * `edge cases` block covers `'unknown_op'`, which is `false` under both
  * spellings and so passes identically; no upstream case reaches a
  * `Object.prototype` key, so nothing here is weakened by the fix. See the
- * module header and TODO.md's Known debts.
+ * module header and port/todo.md's Known debts.
  */
 
 // =============================================================================

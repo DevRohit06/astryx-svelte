@@ -10,7 +10,7 @@ how invented API gets in.
 
 ## 1. Spec — before writing anything
 
-Check `TODO.md` first: the component may be partly done, blocked on an unported primitive, or listed
+Check `port/todo.md` first: the component may be partly done, blocked on an unported primitive, or listed
 under "Known debts" with a deliberate deviation.
 
 Then run the **`astryx-parity`** agent against the upstream original to extract the complete
@@ -19,7 +19,7 @@ assert. Upstream lives at `reference/astryx-upstream/`; its compiled output is i
 `node_modules/@astryxdesign/core/dist/`.
 
 Do not proceed on a partial spec. If upstream depends on a primitive this port doesn't have yet, say
-so and stop — half-built is worse than absent, and `TODO.md` records that choice.
+so and stop — half-built is worse than absent, and `port/todo.md` records that choice.
 
 ## 2. Author
 
@@ -60,6 +60,6 @@ Run the **`astryx-test-parity`** agent to port upstream's `.test.tsx` suite case
 - `pnpm -r build && pnpm -r check && pnpm -r lint && pnpm -r test` — all clean.
 - Re-run **`astryx-parity`** to catch drift between the spec and what actually got written, in both
   directions. Anything the port has that upstream doesn't is a defect to remove.
-- Update `TODO.md`: move the component into the Done list, refresh the counts in the Status table,
+- Update `port/todo.md`: move the component into the Done list, refresh the counts in the Status table,
   and record any deliberate deviation under "Known debts".
 - Add the demo to the core dev routes showing **upstream's documented API only**, not invented usage.

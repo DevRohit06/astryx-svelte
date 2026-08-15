@@ -72,7 +72,7 @@ Report all of these:
 - **Structural drift** — different element type (`div` vs `span`), different nesting,
   a wrapper we added or dropped
 - **Undocumented deferral** — something skipped for a real reason (an unported
-  dependency such as `Tooltip` or `i18n`) but not recorded in `TODO.md` under "Known
+  dependency such as `Tooltip` or `i18n`) but not recorded in `port/todo.md` under "Known
   debts" and not carrying an oracle `skip` with a reason
 - **Source/dist disagreement** — the two upstream copies differ
 

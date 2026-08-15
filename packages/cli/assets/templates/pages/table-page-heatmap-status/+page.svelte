@@ -4,7 +4,7 @@
 
 	**The heatmap is deferred, not dropped.** Upstream's `OutageHeatmap` renders
 	`Chart` / `ChartAxis` / `ChartHeatmapGL` from `@astryxdesign/lab`, and `lab`
-	has never been started in this port (TODO.md, Phase 6 — 17 components, 180
+	has never been started in this port (port/todo.md, Phase 6 — 17 components, 180
 	files, and four of them need decisions before they need porting). There is no
 	`@astryx-svelte/lab` to import from, so the chart block below is transcribed
 	in place as a comment rather than either silently omitted or pointed at a

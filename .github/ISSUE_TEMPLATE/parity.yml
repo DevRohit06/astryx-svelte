@@ -14,7 +14,7 @@ body:
         drift, so a divergence you found by hand is one that slipped past both.
 
         **Upstream bugs are not parity bugs.** If upstream does something wrong and we do the same
-        wrong thing, that's correct behaviour here — it belongs in `TODO.md` under "Known debts",
+        wrong thing, that's correct behaviour here — it belongs in `port/todo.md` under "Known debts",
         not in this form.
 
   - type: input

@@ -6,7 +6,7 @@
 	are registry substitutions: `UserPlusIcon` → `info`, `LockClosedIcon` →
 	`stop`, `SparklesIcon` → `wrench`, `ShieldCheckIcon` → `success`. Stand-ins
 	rather than true matches, the same ones the demo routes make. Retires with
-	the icon registry (TODO.md).
+	the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import { ChatMessageList, ChatSystemMessage, Icon, Stack, Text } from '@astryx-svelte/core';

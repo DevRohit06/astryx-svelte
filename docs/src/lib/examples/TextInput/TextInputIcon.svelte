@@ -10,7 +10,7 @@
 	 * registry ships no person, envelope or padlock glyph, so all three substitute
 	 * the same built-in — the substitution `Switch` and `CheckboxInput` already
 	 * make for `Bell`/`Envelope`/`ShieldCheck`. Retires with the icon registry
-	 * (TODO.md).
+	 * (port/todo.md).
 	 */
 
 	let name = $state('');

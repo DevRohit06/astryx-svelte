@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `FolderIcon`/`DocumentIcon`; the registry ships
 	 * neither glyph, so both substitute a built-in — the same gap the `TreeList`
-	 * demo's `WithIcons` story records. Retires with the icon registry (TODO.md).
+	 * demo's `WithIcons` story records. Retires with the icon registry (port/todo.md).
 	 */
 </script>
 

@@ -33,7 +33,7 @@
 	 * `useLightbox` takes its options as a getter and its rendering half is a
 	 * component, because a Svelte hook cannot return markup: upstream's
 	 * `lightbox.element` is `<LightboxLayer {lightbox} />` here. Both are this
-	 * port's standing shapes (TODO.md).
+	 * port's standing shapes (port/todo.md).
 	 *
 	 * `Thumbnail.onClick` is likewise `onclick` here — the port lowercases the
 	 * callback props that land on a real DOM node, keeping upstream's casing only

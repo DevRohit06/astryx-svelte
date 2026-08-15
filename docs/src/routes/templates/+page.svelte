@@ -31,7 +31,7 @@
 	 * (43 whole pages) and `type: 'block'` (629 once `alsoExampleFor` targets are
 	 * counted), and only the pages had no Svelte rewrite. Showing the half that
 	 * existed was the right call while that was true. It is being made false one
-	 * batch at a time (`planning/10-page-templates-and-community.md` §B7), so the
+	 * batch at a time (`port/research/10-page-templates-and-community.md` §B7), so the
 	 * page is now what upstream's is.
 	 *
 	 * **The blocks are not kept alongside them.** Upstream's `/templates` shows no

@@ -51,7 +51,7 @@ if (!existsSync(upstream)) {
  * track fills, Tree's `indent`, `rowStatus`'s `dot`, every `--_var` carrier. A
  * clean run therefore means "every *static* style matches", which is a narrower
  * claim than the report's wording suggests, and the reason it is stated here
- * rather than left to be re-derived. Recorded under Known debts in TODO.md with
+ * rather than left to be re-derived. Recorded under Known debts in port/todo.md with
  * what closing it would take.
  *
  * Each entry maps one of our style modules to the upstream module holding the
@@ -3861,7 +3861,7 @@ function markerClassOf(code, name) {
  * is a hash of its content, so it is the *thing being identified* rather than
  * part of the identity. The marker class is a hash of its module's path, which
  * ours cannot match. And upstream's build pads specificity with `:not(#\#)`
- * where ours emits `@layer` — the open `useCSSLayers` item in TODO.md, and a
+ * where ours emits `@layer` — the open `useCSSLayers` item in port/todo.md, and a
  * difference in how the rule is *ordered*, not in what it does.
  */
 function normaliseRule(rule, ownClass, markerClass) {

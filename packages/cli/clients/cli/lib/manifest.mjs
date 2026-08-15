@@ -311,7 +311,7 @@ export function buildManifest(program, opts = {}) {
 	return {
 		// The CLI's own identity, not the design system's — this is the binary an
 		// agent invokes. Upstream emits 'astryx'; ours is 'astryx-svelte', per
-		// `planning/02` §7.2. Everything else about the payload is byte-compatible.
+		// `port/research/02` §7.2. Everything else about the payload is byte-compatible.
 		name: 'astryx-svelte',
 		version,
 		apiVersion: API_VERSION,

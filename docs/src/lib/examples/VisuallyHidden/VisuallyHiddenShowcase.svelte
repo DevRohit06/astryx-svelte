@@ -24,7 +24,7 @@
 	 * Upstream passes Heroicons' `ArrowDownTray`/`Share`/`Trash` and
 	 * `SpeakerWave`; the registry ships neither, so this uses built-ins — the same
 	 * substitution the demo routes already make, and it retires with the icon
-	 * registry (TODO.md).
+	 * registry (port/todo.md).
 	 */
 	const actions: { label: string; icon: IconName }[] = [
 		{ label: 'Download', icon: 'arrowDown' },

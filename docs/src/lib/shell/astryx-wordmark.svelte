@@ -13,7 +13,7 @@
 	 * **Not ported: `hero/AstryxWordmark.tsx`.** Upstream has a *second* wordmark
 	 * component with different artwork (viewBox `0 0 217 33`) and a docstring
 	 * saying the hero uses it — but nothing imports it. `HeroThemeReel` renders
-	 * `AstryxLogo` from `logos.tsx`, which is this file. TODO.md already records
+	 * `AstryxLogo` from `logos.tsx`, which is this file. port/todo.md already records
 	 * the general trap: a file existing upstream is not evidence upstream renders
 	 * it; grep for the import first.
 	 *

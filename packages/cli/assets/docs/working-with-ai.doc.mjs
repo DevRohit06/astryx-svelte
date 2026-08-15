@@ -9,7 +9,7 @@
  * live service, which answers with *React* component documentation. Carrying it
  * over would hand a Svelte user React docs through a config file they are told
  * to paste verbatim; that is the `Button.icon` mistake with a network hop. This
- * port ships no MCP server. Recorded in TODO.md so the section returns if one
+ * port ships no MCP server. Recorded in port/todo.md so the section returns if one
  * is ever written rather than being quietly forgotten.
  */
 

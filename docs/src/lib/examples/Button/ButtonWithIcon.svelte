@@ -9,7 +9,7 @@
 	 * Upstream passes Heroicons' `Plus`/`PencilSquare`/`ArrowDownTray`/`Trash`;
 	 * the registry ships none of the four, so this substitutes built-ins — the
 	 * same substitution the demo routes make, retiring with the icon registry
-	 * (TODO.md).
+	 * (port/todo.md).
 	 */
 </script>
 

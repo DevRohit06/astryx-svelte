@@ -60,7 +60,7 @@
 	 * angle brackets would be a defect, not a nicety: svelte2tsx locates the style
 	 * block by scanning the whole file for its opening tag, so a literal one in a
 	 * comment makes `svelte-check` report the script as never closed while `vite`
-	 * compiles the file happily. See TODO.md → Known debts.)
+	 * compiles the file happily. See port/todo.md → Known debts.)
 	 *
 	 * Upstream also wraps each table in a `Card`, and inside that a
 	 * `<Theme theme={neutralTheme} mode={mode}>` — "resolve swatches against the

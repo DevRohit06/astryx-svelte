@@ -122,7 +122,7 @@ export const CONFIG_BASENAMES = [
  * `bugs` or `homepage` and has no git remote, so there is no correct URL to
  * write down yet. Reading the field means the answer appears the moment the
  * package declares one, and until then `issuesUrl()` returns `undefined` rather
- * than a plausible-looking address that goes nowhere. Recorded in TODO.md as a
+ * than a plausible-looking address that goes nowhere. Recorded in port/todo.md as a
  * release-checklist item.
  *
  * @returns {string|undefined}

@@ -369,7 +369,7 @@ export function useTableFiltering<T extends Record<string, unknown>>(
 
 	// Bound once, not per `transformTableContext()` call: a provider whose
 	// component *reference* changes tears down and rebuilds the table's whole
-	// subtree (TODO.md, batch 11). Upstream can afford to rebuild its plugin
+	// subtree (port/todo.md, batch 11). Upstream can afford to rebuild its plugin
 	// object when `variant` changes because React re-uses the element type; here
 	// the variant travels into the provider as a getter instead.
 	const provider = withProps(FilteringScope, { config, variant });

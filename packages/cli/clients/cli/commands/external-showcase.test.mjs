@@ -16,7 +16,7 @@
  *
  * This is the one place block discovery is exercised end to end today: core
  * ships no block templates (`assets/templates/blocks/` does not exist — see
- * TODO.md), so an external package is the only real producer, and it is a
+ * port/todo.md), so an external package is the only real producer, and it is a
  * first-class one rather than a stand-in.
  */
 

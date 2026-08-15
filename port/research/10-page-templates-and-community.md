@@ -26,7 +26,7 @@ Design for two independent pieces of Phase 5 work, agreed 2026-08-09:
 They share no code and can land in either order. A is one sitting; B is batched.
 
 Spec lives here rather than under `docs/`, because `docs/` is the SvelteKit docs app and
-`planning/NN-topic.md` is this repo's established location for design notes.
+`NN-topic.md` is this repo's established location for design notes.
 
 ---
 

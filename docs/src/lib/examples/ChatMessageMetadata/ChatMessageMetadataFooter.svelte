@@ -6,7 +6,7 @@
 	are registry substitutions: `ClipboardDocumentIcon` → `copy` (an exact
 	match), `ArrowPathIcon` → `arrowsUpDown`, `HandThumbUpIcon` → `success`,
 	`HandThumbDownIcon` → `error`. Stand-ins rather than true matches, the same
-	ones the demo routes make. Retires with the icon registry (TODO.md).
+	ones the demo routes make. Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import {

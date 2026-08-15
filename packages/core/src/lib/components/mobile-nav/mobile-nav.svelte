@@ -145,7 +145,7 @@
 	 * drawer therefore disappears rather than sliding out. Replicated rather than
 	 * fixed: `display` is driven by the `isOpen` prop, so the panel is
 	 * `display: none` before either path runs and no transform transition could
-	 * play regardless — see TODO.md → Known debts.
+	 * play regardless — see port/todo.md → Known debts.
 	 */
 	$effect(() => {
 		const dialog = dialogEl;

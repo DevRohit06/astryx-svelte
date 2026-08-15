@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `Funnel` and `Plus`. The registry ships `funnel`
 	 * — a direct swap — but has no plus, so *Add* substitutes a built-in. Retires
-	 * with the icon registry (TODO.md).
+	 * with the icon registry (port/todo.md).
 	 */
 	const SIZES = [
 		{ size: 'sm', label: 'Small' },

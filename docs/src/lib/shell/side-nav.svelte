@@ -36,7 +36,7 @@
 	 * a `Libraries` group over its `packageRegistry` and a `What's New` row at
 	 * `/changelog`. The group is here now that `/docs/core` and `/docs/cli` are
 	 * real pages; the row is not, because there is no `/changelog` route and no
-	 * changelog data (TODO.md keeps it out of the v1 cut), and a nav row pointing
+	 * changelog data (port/todo.md keeps it out of the v1 cut), and a nav row pointing
 	 * at a 404 is worse than its absence.
 	 *
 	 * The group reads the **slim** `package-registry.js`, never the README text

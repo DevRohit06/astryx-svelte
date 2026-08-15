@@ -40,7 +40,7 @@
  *    templates, and nothing from core — `packages/cli/assets/templates/` ships
  *    only the bundled themes, so `discoverTemplates` finds no core pages or
  *    blocks to index. The gather is upstream's own code; what it reaches is the
- *    asset gap recorded in TODO.md.
+ *    asset gap recorded in port/todo.md.
  * 3. Follow-up commands carry this port's bin and verb: a `hook` result's
  *    command is `astryx-svelte util <name>`. See search.type.mjs on why the
  *    *domain* is still `hook`.

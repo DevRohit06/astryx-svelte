@@ -46,7 +46,7 @@ const THEMES_BY_SLUG: Record<string, DefinedTheme> = {
  * this list falls to the end alphabetically").
  *
  * `chocolate` is one of those two upstream as well: its docsite depends on six
- * packages and orders six. `liquid-glass` is this port's own (TODO.md → Known
+ * packages and orders six. `liquid-glass` is this port's own (port/todo.md → Known
  * debts), so no upstream order could have covered it.
  */
 const THEME_ORDER = ['neutral', 'stone', 'gothic', 'matcha', 'y2k', 'butter'];

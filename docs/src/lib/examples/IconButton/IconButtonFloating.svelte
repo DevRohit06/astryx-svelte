@@ -11,7 +11,7 @@
 	 * name it — so there is no IconButton-specific prop behind this block.
 	 *
 	 * Upstream passes Heroicons' `Plus`; the registry ships no such name, so this
-	 * substitutes a built-in, retiring with the icon registry (TODO.md).
+	 * substitutes a built-in, retiring with the icon registry (port/todo.md).
 	 */
 	const VARIANTS = [
 		{ variant: 'primary', label: 'Primary' },

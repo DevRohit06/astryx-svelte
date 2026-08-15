@@ -40,7 +40,7 @@ import type { OverflowItemData } from './fixtures/overflow-list-fixture.svelte';
  *   a callback ran.
  * - **`exposes a displayName for devtools` is dropped.** Svelte components have
  *   no `displayName` surface. Recorded, with the rest of the port's `displayName`
- *   drops, in TODO.md.
+ *   drops, in port/todo.md.
  *
  * The API shape differs from upstream (`items` + snippets, not compositional
  * children) — see the component's port note; every upstream child becomes an
@@ -398,7 +398,7 @@ describe('OverflowList', () => {
 		});
 
 		// Dropped: upstream's `exposes a displayName for devtools`. Svelte
-		// components have no `displayName` surface; recorded in TODO.md.
+		// components have no `displayName` surface; recorded in port/todo.md.
 	});
 
 	describe('maxVisibleItems (cap)', () => {

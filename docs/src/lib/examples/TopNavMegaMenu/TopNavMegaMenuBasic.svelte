@@ -6,7 +6,7 @@
 	`RocketLaunchIcon` → `arrowUp`, `BookOpenIcon` → `copy`. Upstream sizes each
 	one `width={20} height={20}`, which is the registry `Icon`'s default `md`.
 	Stand-ins rather than true matches, the same ones the demo routes make.
-	Retires with the icon registry (TODO.md).
+	Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import {

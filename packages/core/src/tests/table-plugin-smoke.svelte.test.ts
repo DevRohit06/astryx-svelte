@@ -23,7 +23,7 @@ import TableSortableFixture from './fixtures/table-sortable-fixture.svelte';
  * 1. A bound provider still reaches its subtree with its state, on both the
  *    server and client compile targets.
  * 2. The provider's component reference is **stable** across transform calls.
- *    TODO.md records this as a contract note from batch 11: a dynamic component
+ *    port/todo.md records this as a contract note from batch 11: a dynamic component
  *    whose reference changes tears down and rebuilds the whole table.
  */
 

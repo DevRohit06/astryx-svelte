@@ -4,7 +4,7 @@
  * Upstream's file also carries `DISCORD_URL`, `FACEBOOK_URL`, `INSTAGRAM_URL`,
  * `THREADS_URL` and `X_URL`. Those are Meta's own accounts, and this port ships
  * neither its trademarks nor its accounts — the same call `site-footer.svelte`
- * already made for the social block (TODO.md → Release & governance). They are
+ * already made for the social block (port/todo.md → Release & governance). They are
  * absent rather than repointed.
  *
  * `GITHUB_REPO` is likewise not ported here: `shell/nav-items.ts` already owns

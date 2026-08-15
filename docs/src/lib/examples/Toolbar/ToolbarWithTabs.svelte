@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `PlusIcon`; the registry ships no plus glyph, so
 	 * this substitutes a built-in — the same gap the `TabList` demo's
-	 * `WithActions` story records. Retires with the icon registry (TODO.md).
+	 * `WithActions` story records. Retires with the icon registry (port/todo.md).
 	 */
 
 	// Upstream hoists this to a `CSSProperties` const; the Svelte counterpart is a

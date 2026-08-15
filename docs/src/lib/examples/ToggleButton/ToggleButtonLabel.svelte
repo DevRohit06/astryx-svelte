@@ -9,7 +9,7 @@
 	 * Upstream passes Heroicons' `Eye`/`EyeSlash`, `Funnel` and `MapPin`. The
 	 * registry's `eyeSlash` and `funnel` are true matches; `Eye` and `MapPin` have
 	 * no counterpart and substitute a built-in. Retires with the icon registry
-	 * (TODO.md).
+	 * (port/todo.md).
 	 */
 
 	let isVisible = $state(true);

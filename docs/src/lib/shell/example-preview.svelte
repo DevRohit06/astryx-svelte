@@ -48,7 +48,7 @@
 {:else}
 	<!--
 		No upstream counterpart: upstream has no un-ported blocks. The ten this
-		port cannot render yet are blocked on unported components (TODO.md), and
+		port cannot render yet are blocked on unported components (port/todo.md), and
 		the gap is countable in `coverage`, so the frame says so rather than
 		rendering empty.
 	-->

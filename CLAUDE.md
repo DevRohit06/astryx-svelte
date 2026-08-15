@@ -9,7 +9,7 @@ monorepo: `packages/core` (components), `packages/cli`, `packages/themes/*`, `do
 
 **If it's not in Astryx, it's not here.** Invented props, extra variants, nicer defaults and
 hand-drawn demo content are _defects_, not improvements — that includes the demo routes, which must
-show upstream's documented API. Upstream bugs are documented in `TODO.md` under "Known debts" rather
+show upstream's documented API. Upstream bugs are documented in `port/todo.md` under "Known debts" rather
 than replicated.
 
 Upstream's source is cloned at **`reference/astryx-upstream/`** — gitignored, present locally, and
@@ -22,10 +22,10 @@ instructions for this one — they describe a React codebase, a different test r
 repo does not have. The content is kept under the new name, and its StyleX capability table is
 worth consulting; it just must not auto-load.
 
-`TODO.md` is the live status and backlog (what's next, the batch history, known debts). Read the
+`port/todo.md` is the live status and backlog (what's next, the batch history, known debts). Read the
 relevant section before starting work; update it when work lands. **`PORTED.md` is its companion**
 — the per-component implementation notes (what each unit does, the translations it needed, its
-oracle and test posture). Status and open decisions go in `TODO.md`; how a component was built goes
+oracle and test posture). Status and open decisions go in `port/todo.md`; how a component was built goes
 in `PORTED.md`.
 
 ## Subagents
@@ -73,7 +73,7 @@ pipeline** read the upstream `@astryxdesign/*` packages, which are devDependenci
 
 ## The docs site
 
-`TODO.md`'s Phase 5 is the current goal. Two things about `docs/` are easy to get wrong:
+`port/todo.md`'s Phase 5 is the current goal. Two things about `docs/` are easy to get wrong:
 
 - **It compiles core's StyleX itself.** `dist/` ships `.stylex.js` _uncompiled_ — `svelte-package`
   transpiles TypeScript and does not run StyleX — so `docs/vite.config.ts` runs the same

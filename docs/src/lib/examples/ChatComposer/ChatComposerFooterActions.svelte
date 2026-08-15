@@ -6,7 +6,7 @@
 	are registry substitutions: `SparklesIcon` → `wrench`, `Cog6ToothIcon` →
 	`wrench` (upstream's own settings glyph, and the substitution the AppShell
 	blocks already make), `MicrophoneIcon` → `microphone`, which is exact.
-	Retires with the icon registry (TODO.md).
+	Retires with the icon registry (port/todo.md).
 
 	`DropdownMenu`'s `button` takes `ButtonProps` on both sides, so its `icon`
 	is a snippet here and `children` — the visible label — stays a string.

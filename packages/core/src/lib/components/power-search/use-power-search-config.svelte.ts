@@ -46,7 +46,7 @@ import type {
  * reachable from deserialised filter state, which is a real code path for a
  * search UI whose filters round-trip through a URL. `Object.hasOwn` says what
  * the `in` was reaching for with no semantics to invent, so it is used here and
- * the divergence is recorded in TODO.md's Known debts.
+ * the divergence is recorded in port/todo.md's Known debts.
  */
 
 // =============================================================================

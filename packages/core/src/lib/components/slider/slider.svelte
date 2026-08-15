@@ -12,7 +12,7 @@
 	 * Note that `Slider` is a **closed prop list**: upstream declares
 	 * `BaseProps<HTMLDivElement>` but destructures a fixed set with no rest
 	 * spread, so `id`/`role`/`aria-*`/handlers are accepted by the type and
-	 * dropped at runtime. Replicated — see `TODO.md`'s known debts.
+	 * dropped at runtime. Replicated — see `port/todo.md`'s known debts.
 	 */
 	export interface SliderBaseProps extends Omit<BaseProps<HTMLDivElement>, 'onchange'> {
 		/** Label text for the slider (always rendered for accessibility). */

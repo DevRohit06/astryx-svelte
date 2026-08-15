@@ -5,7 +5,7 @@ Dated **2026-08-11**, against upstream's clone at `reference/astryx-upstream/` a
 API, CLI, themes/CSS, tests, and core runtime modules.
 
 This is a point-in-time audit, not a living document. Anything here that stays open belongs in
-`TODO.md`; anything about how a unit was built belongs in `PORTED.md`. Its purpose is the thing
+`todo.md`; anything about how a unit was built belongs in `PORTED.md`. Its purpose is the thing
 neither of those files could give: a **measured** answer to "where has this port drifted, in both
 directions."
 
@@ -30,7 +30,7 @@ Ten findings change what someone should do next.
 | 4   | No package declared `main`                                            | packaging | FIXED    |
 | 5   | "434 uncovered upstream test cases" is wrong; it is **577**           | tests     | NEW      |
 | 6   | Four ported suites contradict their own headers                       | tests     | NEW      |
-| 7   | `TODO.md`'s reason for not porting `lab`/`charts`/`vega` is false     | packaging | NEW      |
+| 7   | `todo.md`'s reason for not porting `lab`/`charts`/`vega` is false     | packaging | NEW      |
 | 8   | The theme `.` export means something different from upstream's        | themes    | NEW      |
 | 9   | The onboarding nudge chain was never ported; `postinstall` is dead    | CLI       | NEW      |
 | 10  | `packages/cli/README.md` ships a claim its own code disproves         | CLI       | NEW      |
@@ -55,7 +55,7 @@ Added to core and all eight themes. The CLI correctly still has none: upstream's
 
 ### 1.2 The unported upstream packages were scoped out for a false reason — NEW
 
-`TODO.md:3618-3626` explains not porting `@astryxdesign/build` as "build tooling, not a
+`todo.md:3618-3626` explains not porting `@astryxdesign/build` as "build tooling, not a
 consumer-facing package" whose job "may already be done by this repo's own theme build scripts". Both
 halves are wrong. It is `private: false`, versioned 0.3.0 in lockstep with core, sits in
 `.changeset/config.json`'s `fixed` group, and publishes four bundler integrations — `./babel`,
@@ -149,7 +149,7 @@ throws `ERR_PACKAGE_PATH_NOT_EXPORTED`; `./tokens` is ours alone.
 path to derive a theme from upstream's** — which is the entire point of upstream's default entry.
 Affects all eight theme packages; unrecorded.
 
-### 2.4 No `.stylex` token subpath — RECORDED (`TODO.md:5518`)
+### 2.4 No `.stylex` token subpath — RECORDED (`todo.md:5518`)
 
 Upstream ships `./theme/tokens` and `./theme/tokens.stylex`; the second is how a consumer authors
 their own StyleX against Astryx tokens. `dist/styles/tokens.stylex.js` **already ships in our
@@ -206,7 +206,7 @@ Five missing exports, four of them already tracked:
   cases".
 - `SizeProvider` — `RECORDED (:5505)`. Name drift; `setSizeContext` stands in.
 - `./vite` and `./theme/define` are subpaths with no upstream counterpart, both documented in-file as
-  deliberate but **neither in `TODO.md`** — `NEW`.
+  deliberate but **neither in `todo.md`** — `NEW`.
 
 **Clean:** all 271 `.svelte` files declare props in `<script module>`; **0** anonymous shapes in the
 built `.d.ts`; 101/101 component directories with nothing invented; `./i18n` exact; `./hooks` 0
@@ -223,8 +223,8 @@ agree on both exit code and `code` string. 27/27 doc assets and 20/20 topics exa
 ### 5.1 `packages/cli/README.md:529-537` is wrong and published — NEW
 
 It states *"`template --list` finds nothing from core… core contributes no page or block templates
-yet."* Measured: **43 templates, all 43 ids matching upstream.** `TODO.md:2521` repeats the stale
-claim while `TODO.md:13` and `CHANGELOG.md:79` say the opposite. This README ships in every tarball
+yet."* Measured: **43 templates, all 43 ids matching upstream.** `todo.md:2521` repeats the stale
+claim while `todo.md:13` and `CHANGELOG.md:79` say the opposite. This README ships in every tarball
 and renders at `/docs/cli`. The genuinely deferred half is the ~614 **block** templates (657 upstream
 vs 43 here) — that is what the sentence should say.
 
@@ -243,7 +243,7 @@ Consequence: **our hidden `postinstall` command is dead code that nothing invoke
 
 `stylex-setup` (`api/doctor/doctor.mjs:606`). Verified by running both: ours emits 9 checks /
 `info:6`, upstream 8 / `info:5`. `data.checks` length and `summary` are machine-read by agents. It
-never returns `fail`, so exit codes are safe — but it is unrecorded in `TODO.md`, `CHANGELOG.md` and
+never returns `fail`, so exit codes are safe — but it is unrecorded in `todo.md`, `CHANGELOG.md` and
 `PORTED.md`, and the README's own Checks table lists 8 rows and omits it.
 
 It was added deliberately in this branch and is genuinely useful. It needs a record and a README row,
@@ -263,7 +263,7 @@ is different — it restores a name upstream has.)
 
 ### 6.1 "434 upstream cases have no counterpart" is wrong — the number is 577 — NEW
 
-This is published in `CHANGELOG.md` and `TODO.md`.
+This is published in `CHANGELOG.md` and `todo.md`.
 
 The 434 came from auditing only upstream files **whose filename had no match here**. That method is
 structurally blind to a suite which *has* a counterpart file and drops a third of its cases.
@@ -331,20 +331,20 @@ computing it in place.
 Upstream's barrel publishes 22, at both the clone and the published `dist/hooks/index.d.ts`. All 22
 **are** ported, so only the prose is wrong — but it ships inside `dist/*.d.ts` (`hooks/index.ts:4`,
 `internal/optimistic.svelte.ts:8`, `internal/theme-mode.svelte.ts:9`) as well as `CHANGELOG.md:78`
-and `TODO.md:122`.
+and `todo.md:122`.
 
 ### 7.3 Smaller — NEW
 
 `useSize` drops upstream's `<T extends string>` generic, so a consumer's own size union cannot be
 typed (nothing internal regresses: all 18 upstream call sites are `useSize(sizeProp, 'md')`).
 `useKeyboardHint` requires an options getter with a required `id`, so upstream's own no-argument call
-does not compile — the cause is recorded as a class at `TODO.md:3433`, just not for this hook.
+does not compile — the cause is recorded as a class at `todo.md:3433`, just not for this hook.
 
 ### 7.4 The vendored catalogs have no mechanical guard — NEW
 
 The claim checks out: `en.json` is 250/250 keys byte-identical in the same key order, and
 `fr-FR`/`pseudo` are byte-identical too. But **nothing in `pnpm -r test` re-verifies any of it**, and
-`TODO.md:769-772` records the exact failure mode already happening once — 31 keys behind, with
+`todo.md:769-772` records the exact failure mode already happening once — 31 keys behind, with
 nothing reporting it — and closing it with a habit rather than a check. An ~8-line server test gates
 it.
 
@@ -363,14 +363,14 @@ the code they describe.
 
 | Record                       | Says                                          | Actually                                                      |
 | ---------------------------- | --------------------------------------------- | ------------------------------------------------------------- |
-| `TODO.md:2521`, `cli/README.md:529` | core contributes no templates            | 43 templates, all ids matching upstream                       |
-| `TODO.md:3618-3626`          | `@astryxdesign/build` is not consumer-facing  | stable-published, in the fixed group, 4 bundler integrations   |
-| `TODO.md:122`, `CHANGELOG.md:78` | 19 hooks                                  | 22, all ported                                                |
-| `TODO.md` / `CHANGELOG.md`   | 434 uncovered upstream cases                  | 577                                                           |
-| `TODO.md:5516`               | `sideEffects` lists only `**/*.css`           | retired in batch 18; re-verified against `dist/`               |
-| `TODO.md:4801`, `:5505`      | `ButtonVariantMap` missing                    | exported at `index.ts:1180`                                    |
-| `TODO.md:4816`               | the `./theme` gap is 73 names                 | 22                                                            |
-| `TODO.md:5455`               | `./base.css` is the only extra subpath        | 11 subpath keys; `./vite` and `./theme/define` are also ours   |
+| `todo.md:2521`, `cli/README.md:529` | core contributes no templates            | 43 templates, all ids matching upstream                       |
+| `todo.md:3618-3626`          | `@astryxdesign/build` is not consumer-facing  | stable-published, in the fixed group, 4 bundler integrations   |
+| `todo.md:122`, `CHANGELOG.md:78` | 19 hooks                                  | 22, all ported                                                |
+| `todo.md` / `CHANGELOG.md`   | 434 uncovered upstream cases                  | 577                                                           |
+| `todo.md:5516`               | `sideEffects` lists only `**/*.css`           | retired in batch 18; re-verified against `dist/`               |
+| `todo.md:4801`, `:5505`      | `ButtonVariantMap` missing                    | exported at `index.ts:1180`                                    |
+| `todo.md:4816`               | the `./theme` gap is 73 names                 | 22                                                            |
+| `todo.md:5455`               | `./base.css` is the only extra subpath        | 11 subpath keys; `./vite` and `./theme/define` are also ours   |
 | `cli/index.mjs:20-25`        | postinstall slices deferred                   | landed 2026-08-09; the comment is stale                        |
 
 ---
@@ -406,7 +406,7 @@ All verified, all in `packages/core` unless noted.
 - `src/lib/styles/base.css` — the full layer order.
 - `README.md` — the styling section rewritten around two routes; the false "cannot ship pre-built
   CSS" claim and the stale "no `astryx.css`" bullet removed.
-- `docs/src/app.html`, `CLAUDE.md`, `CHANGELOG.md`, `TODO.md` — records brought in line.
+- `docs/src/app.html`, `CLAUDE.md`, `CHANGELOG.md`, `todo.md` — records brought in line.
 
 `pnpm -r lint` clean, `svelte-check` 0 errors across 2,066 files, all three oracles green, and
 `check-publish` reports all ten packages fit to publish.

@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `Cog6ToothIcon` and `ChevronRightIcon`. The
 	 * registry's `chevronRight` is a true match; it ships no cog, so that one
-	 * substitutes a built-in and retires with the icon registry (TODO.md).
+	 * substitutes a built-in and retires with the icon registry (port/todo.md).
 	 */
 </script>
 

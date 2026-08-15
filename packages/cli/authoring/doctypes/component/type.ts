@@ -33,7 +33,7 @@ export interface ComponentBaseDoc {
 	 *  this port's component directories are kebab-case
 	 *  (`src/lib/components/text-input`) while the name stays PascalCase, so
 	 *  how a doc file maps onto its directory is an open decision — see
-	 *  `TODO.md`. */
+	 *  `port/todo.md`. */
 	name: string;
 	/** Human-readable display name with spaces between words, used by the
 	 *  docsite gallery and sidebar. Matches the import name visually (so

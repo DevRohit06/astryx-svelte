@@ -62,7 +62,7 @@ Three rules:
 
 - **A skip is never a way to silence a mismatch.** It records a deliberate absence. If our
   key exists and differs, that is a finding, and the answer is a fix or an entry in
-  `TODO.md`'s known debts — not a skip.
+  `port/todo.md`'s known debts — not a skip.
 - **Skips self-retire, at both levels.** A key-level skip whose key starts matching, and a
   group-level skip whose group matches in full, both fail the run with "delete the skip".
   That is by design: a skip that no longer excuses anything is as much rot as one that
@@ -102,7 +102,7 @@ Work down this list before concluding our styles are wrong:
 ## Output
 
 Lead with the run's own summary line, verbatim, and the delta you caused:
-`N style keys + M inline call sites, 0 mismatches, K skips` — before and after. `TODO.md`'s
+`N style keys + M inline call sites, 0 mismatches, K skips` — before and after. `port/todo.md`'s
 status table carries those numbers, so state them precisely enough to update it.
 
 Then:
@@ -112,4 +112,4 @@ Then:
 
 Then a paragraph for each mismatch you could not resolve inside the oracle, saying whether
 it is a defect in our `.stylex.ts`, a source/dist lag, or a deliberate absence that now
-needs a skip and a `TODO.md` line. Never report a run you did not actually execute.
+needs a skip and a `port/todo.md` line. Never report a run you did not actually execute.

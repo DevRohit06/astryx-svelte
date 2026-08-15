@@ -7,7 +7,7 @@
 	`HomeIcon` → `menu`, `FolderIcon` → `copy`, `ChartBarIcon` → `viewColumns`,
 	`Cog6ToothIcon` → `wrench`, `UsersIcon` → `info`. Stand-ins rather than true
 	matches, the same ones the demo routes make. Retires with the icon registry
-	(TODO.md).
+	(port/todo.md).
 -->
 <script lang="ts">
 	import { Button, Icon, MobileNav, SideNavItem, SideNavSection } from '@astryx-svelte/core';

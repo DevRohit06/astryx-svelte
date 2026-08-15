@@ -50,7 +50,7 @@ export function sourceImporterFor(id: string): (() => Promise<string>) | null {
  * `<Component>/<Block>` under this app's `src/lib/examples/`; a page template is
  * a slug under `packages/cli/assets/templates/pages/`, authored there because
  * upstream ships page templates through the **CLI** as scaffolding assets and
- * the docsite merely renders them (`planning/10-page-templates-and-community.md`
+ * the docsite merely renders them (`port/research/10-page-templates-and-community.md`
  * §B1). Reaching out of `docs/` for them is therefore the arrangement, not a
  * workaround — and it costs nothing at the module graph, because
  * `@astryx-svelte/core` is already a devDependency of `packages/cli`, so a

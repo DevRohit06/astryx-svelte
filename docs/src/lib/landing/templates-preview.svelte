@@ -11,7 +11,7 @@
 	 * (`product-gallery`, `ide`, `payment-form`, `login-split`,
 	 * `settings-sidebar`, `ai-chat-landing`, `product-detail`) and renders each
 	 * one's `page.tsx` at 1100px through `TemplateThumbnail`. Not one page
-	 * template is ported (TODO.md → Phase 5), so those seven slugs resolve to
+	 * template is ported (port/todo.md → Phase 5), so those seven slugs resolve to
 	 * nothing here. The **block** templates all do exist — 619 of them reach
 	 * `/templates` — so the tile shows six of those instead, through the same
 	 * `ShowcaseThumbnail` the components gallery uses.

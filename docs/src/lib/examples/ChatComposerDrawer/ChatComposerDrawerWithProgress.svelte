@@ -5,7 +5,7 @@
 	Upstream imports Heroicons here rather than inlining the SVGs, so the icons
 	are registry substitutions: `AtSymbolIcon` → `info`, `PaperClipIcon` → `copy`.
 	Stand-ins rather than true matches, the same ones the AppShell blocks make.
-	Retires with the icon registry (TODO.md). React's fragment around the two
+	Retires with the icon registry (port/todo.md). React's fragment around the two
 	header buttons needs no counterpart — a snippet body is already one.
 -->
 <script lang="ts">

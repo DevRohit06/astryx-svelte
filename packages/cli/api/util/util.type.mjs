@@ -7,7 +7,7 @@
  * Svelte has no hooks. Upstream's `hook` command lists React hooks; the same
  * things here are runes-based composables in `.svelte.ts` modules, so the verb
  * is `util` with `hook` kept as a `.alias(...)` and the response discriminators
- * are `util.*` (planning/02 §857). The *doctype* stays `hook` — `HookDoc` is
+ * are `util.*` (port/research/02 §857). The *doctype* stays `hook` — `HookDoc` is
  * what an author writes and what `authoring/doctypes/hook/parse.mjs` validates —
  * so this file reads `HookDoc` and returns `util.*`. The rename is a
  * command-surface rename and stops at the command surface.

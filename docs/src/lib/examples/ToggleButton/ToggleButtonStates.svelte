@@ -8,7 +8,7 @@
 	/**
 	 * Upstream pairs Heroicons' outline `Star` with its solid twin. The registry
 	 * ships no such pair, so this substitutes built-ins that still differ between
-	 * states. Retires with the icon registry (TODO.md).
+	 * states. Retires with the icon registry (port/todo.md).
 	 */
 </script>
 

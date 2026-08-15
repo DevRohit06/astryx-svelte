@@ -3,7 +3,7 @@
 A Svelte 5 port of [Astryx](https://astryx.atmeta.com/), Meta's open source design
 system. Unofficial; not affiliated with Meta.
 
-Detailed research lives in [`planning/`](./planning); the design rationale behind each
+Detailed research lives in [`research/`](./research); the design rationale behind each
 landed item lives in git history. This file is the **live status and backlog** only —
 what's ported, what's next, known debts.
 
@@ -71,7 +71,7 @@ there is no upstream Svelte answer to copy. Scope `lab` only after that is settl
 | Tokens            | **184 / 184** at upstream 0.3.0, verified against source — down from 186 because 0.3.0's "remove long-deprecated compatibility APIs" deleted the `--transition-fast` / `--transition-normal` shorthand pair (and `transitionDefaults` / `transitionVars` / `TransitionVarName` with it). The published 0.3.0 dist carries no `transition` token at all; ours had no consumer and reached no barrel, so removal was clean. `liquid-glass`'s `check-theme.mjs` reads the count out of core's **built `dist/`** and reports 184, 0 unknown — which is what proves it. Note that 184 is the _ambient vocabulary_ of known token names, not a per-theme declared count (liquid-glass itself declares 106). The **`en` catalog is 250 / 250**, byte-identical to upstream and prettier-ignored to stay that way, alongside `fr-FR` (upstream's own 3-key partial) and `pseudo`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | Theme output      | **2,418 declarations match upstream across seven theme packages, 0 mismatches** (2026-08-08) — butter 430/433, chocolate 289/292, gothic **345/345**, matcha 303/306, neutral 339/342, stone 355/358, y2k 357/360. The oracle is **bidirectional**: a missing declaration, a wrong value, an invented one or a stale allowlist entry all **fail the run**. The 3-per-theme remainder is the `color-scheme` rules `base.css` owns, so the arithmetic checks itself — 2,436 upstream − 18 = 2,418, and **gothic needs no allowlist at all**, because a dark-only theme declares no `[light, dark]` pairs and upstream emits no `html[data-theme=…]` block for it. Both `chocolate` and `stone` were green on their first run. **The eighth package, `liquid-glass`, is not in that total** — it ports nothing, so there is no upstream CSS to diff. It carries `scripts/check-theme.mjs` instead, asserting every token name it declares is one of core's 184 and every component it overrides is a real `themeProps()` name, both read out of core's **built `dist/`**. Those are the two failures the diff oracle catches for free everywhere else, and neither fails loudly alone: `defineTheme` accepts any string and `generateThemeRules` emits a rule for any string, so a typo compiles to CSS that parses, loads and styles nothing. It caught one on its first run — see the `chat` entry under Known debts                                                                                                                                    |
 | Component classes | **1,528 style keys (19 as marker-normalised CSS) + 615 inline call sites, 0 skips, 0 mismatches**, re-derived 2026-08-08. The skip list is **empty** — every "published dist lags source" deferral the port ever wrote retired itself when the pin moved to 0.3.0, and the last three (RTL keyframes) went when explicit `enterEndRtl`/`enterStartRtl`/`indeterminateSlideRtl` landed. **But read what a clean run does and does not claim:** it covers every _static_ style and **no function style at all**, because a `stylex.create` arrow value carries no `$$css` for `extractGroups` to find — 54 of them across 32 modules, recorded under [Known debts](#known-debts). Batch 18 proved that blindness rather than asserting it: **inverting the `!isDisabled` status-hover guard in `text-input` left the oracle at 0 mismatches, exit 0**, while the bug was live in 13 call sites. Three rules the oracle work has settled: **where upstream keeps its styles decides which oracle mode applies** (a separate style module defeats StyleX's fold, so it is object-mode only — batch 12/`Calendar`); **an unused declaration needs a skip only if our build still emits the class**, which with the attrs-function convention it usually does not (batch 14); and **a module that only composes already-verified components adds no atomic CSS at all** (batch 15). A component can be in _both_ modes at once — declaring only the object side leaves the folded literals unaccounted for, which is what the leftover check exists to catch |
-| Typecheck / lint  | `pnpm -r check` clean (**core 2,121 files, 0 errors, 32 warnings, 20 files with problems; docs 1,505 files, 0 errors, 0 warnings**); `pnpm -r lint` clean, exit 0; `pnpm -r build` exit 0. All re-derived 2026-08-08. Two lessons this gate cost, both still live: **a lint gate chained with `&&` reports "failed" identically whether one stage failed or both ran** — `prettier --check . && eslint .` meant a stray scratch file short-circuited eslint entirely, hiding six real errors for several batches; and **the gate is only as trustworthy as the tree is quiet**, since a scratch file deleted between eslint's enumeration and its read fails the run on a path that no longer exists. A batch that leaves `zz-*.mjs` in a package root has not finished A third, found 2026-08-08: **the root `TODO.md` and `PORTED.md` are not in the lint gate at all** — `pnpm -r lint` runs `prettier --check .` inside each *package*, and nothing checks the repo root, which is how malformed blocks accumulated here unnoticed. Worse, `prettier --write` does **not converge** on this file: a multi-paragraph list item has its continuation paragraphs re-indented deeper on every pass (6 → 10 → … → 30 spaces observed), and past ~4 extra spaces markdown renders them as an indented *code block* rather than prose. The stable form for extra detail under a `- [ ]` item is a nested `  - ` bullet, which round-trips; 57 lines were normalised back. Do not run `prettier --write` here expecting a fixed point. |
+| Typecheck / lint  | `pnpm -r check` clean (**core 2,121 files, 0 errors, 32 warnings, 20 files with problems; docs 1,505 files, 0 errors, 0 warnings**); `pnpm -r lint` clean, exit 0; `pnpm -r build` exit 0. All re-derived 2026-08-08. Two lessons this gate cost, both still live: **a lint gate chained with `&&` reports "failed" identically whether one stage failed or both ran** — `prettier --check . && eslint .` meant a stray scratch file short-circuited eslint entirely, hiding six real errors for several batches; and **the gate is only as trustworthy as the tree is quiet**, since a scratch file deleted between eslint's enumeration and its read fails the run on a path that no longer exists. A batch that leaves `zz-*.mjs` in a package root has not finished A third, found 2026-08-08: **the root `todo.md` and `PORTED.md` are not in the lint gate at all** — `pnpm -r lint` runs `prettier --check .` inside each *package*, and nothing checks the repo root, which is how malformed blocks accumulated here unnoticed. Worse, `prettier --write` does **not converge** on this file: a multi-paragraph list item has its continuation paragraphs re-indented deeper on every pass (6 → 10 → … → 30 spaces observed), and past ~4 extra spaces markdown renders them as an indented *code block* rather than prose. The stable form for extra detail under a `- [ ]` item is a nested `  - ` bullet, which round-trips; 57 lines were normalised back. Do not run `prettier --write` here expecting a fixed point. |
 | Public types      | every component exports its props type (in `<script module>`, re-exported from `index.ts`, carried into `.d.ts`). **Now load-bearing beyond typing**: the docs generator reads the props table out of `dist/**/*.d.ts`, so a component that stops exporting its interface silently loses its documented types. The theme packages' generated `.d.ts` is on the same footing and was **wrong in shipped packages** until batch 18 — `literalType()` guarded on `typeof value === 'string'`, so numeric palette values emitted `readonly hue: { }` instead of `readonly hue: 291`. Nothing caught it: the runtime value was always right, `{}` is valid TS so `check` stayed green, and the theme oracles diff CSS declarations rather than declaration files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | Docs site         | **629 example blocks live, 0 pending**; **211 of 213** upstream doc entries documented and **0 documented props core does not declare**, 72 sidebar entries + 26 utilities, 20 topics, 42 page templates, 8 theme packages, 1 blog post, against **502 core exports and 457 props interfaces** (re-derived 2026-08-10 — every figure in this row moved since 2026-08-08, so read them from `pnpm -F docs generate` rather than from here). **That 0 is a different 0 from the one this row used to report**, and the difference is the whole props-page audit below: the old one was an artefact of a report that could not see the case it existed for, while 85 rows rendered "not declared by core"; the new one is 1,876 rows with every type from the compiler, 56 unverified rows all carrying a stated reason, and the interface count up 417 → 457. **Both undocumented entries are umbrella family pages, not components** — `Chat` and `Resizable`. Upstream ships no `Chat.tsx` and no `Resizable.tsx`; each `.doc.mjs` is a family-overview entry whose `displayName` matches no export, so the generator's ported-check drops it while documenting every member it names. All 15 Chat components have their own pages, as do `ResizeHandle` and `useResizable`. The pair is a docs-site gap, not a port gap. **The upstream total moved 210 → 213 and the cause is not established**: the counting expression (`normalised.length`) has not changed since the initial commit and the `@astryxdesign/core` pin is exact at 0.3.0, so the 210 recorded on 2026-08-08 was measured against a different `docs/node_modules` state. Re-derive this figure; do not carry it forward. The shell is fully dogfooded: a real `AppShell`/`TopNav`/`SideNav`, a `CommandPalette` for `⌘K` and an `Outline` for the on-this-page aside. **All 8 themes are wired and verified on `vite dev`** — nine `@scope ([data-astryx-theme=…])` blocks live in the CSSOM, 0 console errors. **Live at <https://astryx-svelte.rohitk06.in/> since 2026-08-10**, built from `main` — so a doc fix reaches readers only on redeploy. Two rules this row cost: **porting a component reopens this backlog**, because a newly documented component drags its blocks in with it; and **`hasSvelte` is per registry _target_**, so a block reached through `alsoExampleFor` needs a copy under _each_ target directory. **Run `pnpm -F docs generate` and read the number; do not predict it**                                                                                                                                                                                                                                                                                           |
 | Tests             | **196 files, 5,066 passed, 0 failed** — client **162 files / 4,255 passed** and server **34 files / 811 passed** (re-derived 2026-08-10, unchanged from 2026-08-08; `@astryx-svelte/cli` adds **102 files / 1,937 passed**, 1 file skipped and 25 todo). **The client number is a chunked pass reconciled two ways**, which is the honest form: 14 chunks of 12, all exit 0, 159 files counted back against 159 on disk, _and_ the summed case total matching `vitest list`'s collected 4,190 exactly — that pair was measured before the four suites below added 65 more — a tally summed from chunk logs is only as complete as the loop that wrote it. Suites are ported **case for case and the count is the contract**. Batch 18 closed 22 wrong headers (~59 cases restored, all passing first run) and then 88 more across eleven files, which exposed two live bugs. **But the honest figure is the one in [Testing](#testing): 434 upstream cases are still missing**, and no header audit could have found them, because a suite with no counterpart file here has no header to be wrong — that blindness had already let a real `ChatComposer` bug ship. Five rules the suites have cost: **the contract has to be re-derived from the upstream source**, never from a brief or a grep; **a restatement can make a vacuous upstream assertion load-bearing**; **"this assertion is vacuous" is itself a claim to mutation-check**; **pure modules stay in the _server_ project**; and **coverage beyond upstream needs a hazard with no upstream analogue**                                                                                                                                                                               |
@@ -160,7 +160,7 @@ most important primitive; `<Layer>` replaces upstream's `render`); **all 19 hook
 `useGridFocus`, `useTreeFocus`, `useKeyboardHint`, `useStreamingText`) — **this phase's hook
 list is closed**, `useStreamingText` having landed with batch 11.
 
-**Not ported** (`planning/06`, Svelte obviates each): `mergeRefs`, `isRenderable`,
+**Not ported** (`research/06`, Svelte obviates each): `mergeRefs`, `isRenderable`,
 `mergeProps`, `composeEventHandlers`, `useIsomorphicLayoutEffect`; `useTheme()` replaced
 by `getComputedStyle`.
 
@@ -203,7 +203,7 @@ date/time family, which the docs site does not use, before touching anything tha
 live.
 
 What changed the ordering is a measurement, not a preference. Every component
-[`planning/04`](./planning/04-docs-site.md) §2 builds the docs _chrome_ from is unported:
+[`research/04`](./research/04-docs-site.md) §2 builds the docs _chrome_ from is unported:
 `AppShell`, `SideNav`, `TopNav`, `MobileNav`, `CommandPalette`, `Outline`, `Markdown`, `Table`,
 `Theme`, `LayerProvider`. Three of them are in "the five riskiest". Taken literally that makes the
 docs site cost ~28k LOC before its first page renders.
@@ -229,11 +229,11 @@ port every component in it, then close the batch out together.
 **One step is now part of closing a batch, learned the hard way twice:** re-run
 `pnpm -F docs generate` and check the pending example count is still exactly the API-blocked ten.
 Documenting a component pulls its example blocks in with it, so a port that ignores them silently
-reopens a backlog `TODO.md` claims is closed — `Outline` added 4 and `CommandPalette` 18.
+reopens a backlog `todo.md` claims is closed — `Outline` added 4 and `CommandPalette` 18.
 
 **Per-batch process** (a trimmed `port-component`): spec from upstream → author
 `.stylex.ts` + `.svelte` → wire the class oracle → port the test suite case-for-case →
-`TODO.md` + demo route. **Testing is scoped:** run the new component's suite plus its direct
+`todo.md` + demo route. **Testing is scoped:** run the new component's suite plus its direct
 dependents' suites and `test:parity`, not the full `pnpm -r test`. A full run happens once at
 batch close, not per component.
 
@@ -250,7 +250,7 @@ batch close, not per component.
 - [x] **Batch 3 — nav & tree surfaces** — **DONE**, see [PORTED.md](./PORTED.md)
   - `NavMenu` · 456 · `Icon`/`Link`/`Text` ✔
   - `TreeList` · 1015 · `useTreeFocus` ✔
-  - `TabList` · 1139 · `Popover`/`SizeContext` ✔ — **corrected `planning/01`**: it does _not_ need the
+  - `TabList` · 1139 · `Popover`/`SizeContext` ✔ — **corrected `research/01`**: it does _not_ need the
     `OverflowList` items+snippet precedent, because it never slices its children (the overflow story
     wraps them in `Carousel`, which does)
   - (`NavItem/` is **not a component** — one shared `navItemStyles.stylex.ts` consumed by `SideNav`/`TopNav`; it lands with them)
@@ -399,7 +399,7 @@ batch close, not per component.
   **Four audits ran at close. The code came back faithful; the _record_ around it did not.**
   - `astryx-parity`: **0 behavioural defects** across all 22 files and both token renderers, barrel
     confirmed name-for-name. Its 8 findings were documentation — four file headers claiming a debt
-    was "recorded in TODO.md" when no entry existed, a mis-stated subpath count, a stale status
+    was "recorded in todo.md" when no entry existed, a mis-stated subpath count, a stale status
     table, and a false claim about a `'use client'` directive. **A header comment is an assertion
     and rots like one**; three of the eight were claims I wrote and did not check.
   - `astryx-idiom`: **one real latent defect**, fixed — `untrack(() => onSave)(…)` untracks the
@@ -506,7 +506,7 @@ batch close, not per component.
     opposite of the `tree` plugin dir.
   - **All 19 `@astryx.chat*` i18n keys were already in `en.json`**, checked against the source's
     call sites rather than assumed.
-  - **`planning/01`'s description is correct on all four claims**, the first time it has been —
+  - **`research/01`'s description is correct on all four claims**, the first time it has been —
     `createPortal` (one site, `ChatComposerInput`), the contenteditable composer,
     `useSpeechRecognition`, and IntersectionObserver scroll anchoring (in `ChatMessageList`, for
     scroll-to-top infinite scroll; `useChatNewMessages` uses the _Resize_ observer, which is what
@@ -610,7 +610,7 @@ batch close, not per component.
     upstream omits (`onsubmit` was missing, so the DOM handler collided with the component's own);
     the demo route carried invented copy under a header claiming transcription, now replaced with
     upstream's actual `AllStatuses`, `WithStats`, `DensityComparison`, `MultiBubble` and
-    `WithStatusTop` stories; and three source comments cited `TODO.md` for debts it did not record —
+    `WithStatusTop` stories; and three source comments cited `todo.md` for debts it did not record —
     fixed by adding the rows (hard-coded English, the unread `label`, the `defaultIsExpanded` JSDoc,
     the content-keying hazard, the `string | Snippet` leaf slots) and by repointing the analyser
     comment at `PORTED.md`, where it belongs.
@@ -679,7 +679,7 @@ batch close, not per component.
   itself a lint error and would otherwise be "fixed" by adding the fourth back.
 
 - [x] **Batch 17 — track upstream 0.2.0 — DONE, split into 17a/17b/17c.** Full plan in
-      [`planning/08-upstream-0.2.0.md`](./planning/08-upstream-0.2.0.md) — workstreams, sequencing,
+      [`research/08-upstream-0.2.0.md`](./research/08-upstream-0.2.0.md) — workstreams, sequencing,
       open decisions and done criteria. **The split is the point, not bookkeeping:** a batch this
       size run as one unit would sit red for its whole life, and a gate that is expected to be red
       tells you nothing. Each sub-batch closes green.
@@ -782,7 +782,7 @@ shouldResume)` that fires `onNavigateEnd` **exactly once per `onNavigateStart`**
       off the code.
 
     **And a third recurrence of the record-rot pattern.** `button.svelte`'s link branch carried a
-    comment calling this "the deferred `as`/LinkProvider work" — and `TODO.md` recorded no such
+    comment calling this "the deferred `as`/LinkProvider work" — and `todo.md` recorded no such
     deferral. That is the same failure batch 14 and 15 each found (_a header comment is an assertion
     and rots like one_); three occurrences make it a standing hazard rather than an incident, and
     the fix here was to land the work rather than write the entry.
@@ -795,7 +795,7 @@ shouldResume)` that fires `onNavigateEnd` **exactly once per `onNavigateStart`**
     `tooltip` default that **changes existing rendering**; `Timestamp.tooltipEntries` and
     `DateInput.format` are one unit, sharing a new `tooltipEntries.ts` and the
     `date_long`/`date_weekday` formats. Sizing the tail from the prop count would under-plan it by
-    a lot. **`Avatar` also has an open decision** — see `planning/08` §11a: upstream reads the
+    a lot. **`Avatar` also has an open decision** — see `research/08` §11a: upstream reads the
     status element's `label` off the React node (`getStatusLabel`) to compose "Jane Doe, Online",
     and a Svelte `Snippet` has no props to read.
 
@@ -1391,7 +1391,7 @@ astryx-theme` — so the theme silently shadowed `size` for every type it styled
   - **`AvatarGroup` overwrote a consumer's `onfocusin`** instead of composing it, where its
     `onkeydown` already composed. Upstream wraps both in `composeEventHandlers`.
 
-  **And the rest-spread convention now needs restating rather than reapplying.** `TODO.md`'s
+  **And the rest-spread convention now needs restating rather than reapplying.** `todo.md`'s
   standing entry says rest is spread first everywhere, recorded once, to be revisited _as one
   decision_ — precisely so the set does not go inconsistent. This batch flipped five components to
   upstream's per-component position because each was observable, which is the state that entry was
@@ -1538,7 +1538,7 @@ outside day as today`) was the single case our 41 was short of its 42; the test-
 
 - [ ] **Batch 18 — track upstream 0.3.0, and end in the port's first release — IN PROGRESS, split
       into 18a/18b/18c.** Full plan in
-      [`planning/09-upstream-0.3.0.md`](./planning/09-upstream-0.3.0.md) — workstreams, sequencing,
+      [`research/09-upstream-0.3.0.md`](./research/09-upstream-0.3.0.md) — workstreams, sequencing,
       open decisions and done criteria. `@astryxdesign/core@0.3.0` and the five theme packages
       shipped after batch 17. **This is the second release-tracking batch, and the first run with
       the intent of ending in a release of this port rather than in another green gate.**
@@ -1643,7 +1643,7 @@ outside day as today`) was the single case our 41 was short of its 42; the test-
     with `cmp`, not by eye. `fr-FR.json` came too (upstream's is still a 3-key partial), and
     **`pseudo.json` is now carried** — it is upstream surface, the parity rule says match it, and
     `"./locales/*.json"` is a wildcard export so it publishes with no manifest change. The open
-    decision recorded in `planning/09` §9.1 is therefore closed in favour of carrying it.
+    decision recorded in `research/09` §9.1 is therefore closed in favour of carrying it.
 
   - **18a — `rtlStyles.centerInline` is ported and all six call sites are on it. Oracle 124 → 103,
     with `slider`, `resize-handle` and `use-popover` at zero.** This port did have the bug, at
@@ -1654,7 +1654,7 @@ outside day as today`) was the single case our 41 was short of its 42; the test-
     `hitAreaCenteredX` outright and stripped the centring pair from the rest; this port now matches
     key for key. Popover's was the physical-`left` **KEEP disable 17a recorded deliberately**, and
     its stated reasoning is verbatim what upstream has now formalised into the helper — so the
-    disable retires, as `planning/09` §A1 predicted.
+    disable retires, as `research/09` §A1 predicted.
 
     **A claim written earlier in this entry was wrong and is corrected here.** It said three further
     Slider keys carried a "hand-rolled" `':is([dir="rtl"] *)': 'translate(50%, …)'` compensation.
@@ -1734,7 +1734,7 @@ outside day as today`) was the single case our 41 was short of its 42; the test-
       in a single run by flipping the property and reading the hash.
 
   - **A changelog describes a release's history, not its contents — and following it produced a
-    false entry in this batch's own plan.** `planning/09` said `Dialog.position` "gains logical
+    false entry in this batch's own plan.** `research/09` said `Dialog.position` "gains logical
     `start`/`end` and deprecates physical `left`/`right`. Both work; logical wins when both set",
     quoting 0.3.0's changelog. **At the `v0.3.0` tag there is no physical arm at all.** Commit
     `827f17387` added the logical pair and deprecated the physical one; commit `e6beddb4e` — the
@@ -1746,7 +1746,7 @@ outside day as today`) was the single case our 41 was short of its 42; the test-
     `.d.ts` instead of trusting the brief, which is what it was told to do. **`git show <tag>:<path>`
     is the spec; the changelog is only the index of where to look.** That is the pre-flight's
     "verify the description against upstream source" item applying to _upstream's own prose_ rather
-    than to `planning/01` — and it means `DialogPosition` is a **breaking change for consumers**:
+    than to `research/01` — and it means `DialogPosition` is a **breaking change for consumers**:
     `position={{left}}` → `{{start}}`, `{{right}}` → `{{end}}`. No consumer exists in this repo.
 
   - **NINE lying suite headers in one batch, and the class of lie matters more than the count.**
@@ -1899,7 +1899,7 @@ below.
       because its `syntaxTheme` prop and `highlight-styles.ts`'s `:root` block both require it. The
       batch plan listed its dependencies as satisfied. Read what a component _imports_, then what
       those import, before writing a number down.
-- [ ] **Verify `planning/01`'s description against upstream source.** It is research, not spec, and
+- [ ] **Verify `research/01`'s description against upstream source.** It is research, not spec, and
       it has been wrong three times. `Lightbox` was described as a Popover-API overlay with a focus
       trap and autoplay timing — all three wrong (it is a native `<dialog>`, browser-owned focus, no
       autoplay). `TabList` was said to need the `OverflowList` items+snippet precedent; it never
@@ -1929,7 +1929,7 @@ below.
 
 ---
 
-### Blocking design decisions (`planning/01` §6.11)
+### Blocking design decisions (`research/01` §6.11)
 
 Settled: `xstyle` (public prop on every `BaseProps` component, threaded as the final `sx()`
 arg — not appended via `cx` — so StyleX atomic dedup makes an override _replace_);
@@ -1970,7 +1970,7 @@ Done: theme compiler (`defineTheme`, `parseStyleKey`, expanders, `generateThemeC
       `<name>IconRegistry` from every theme package and we publish none.
 
   - **This entry was wrong twice, and both errors are instructive.** It said 26 icons; it is 28
-    (`matcha-theme.ts` also said 26, `planning/07` says 25 — three sources, three numbers, none
+    (`matcha-theme.ts` also said 26, `research/07` says 25 — three sources, three numbers, none
     checked against core's own `IconName` union). And it recorded the shape as
     `Partial<IconRegistry>` of snippets → `registerIcons`, which is **actively wrong**:
     `registerIcons()` warns-once telling the caller to prefer `defineTheme({icons})`, so the
@@ -2082,7 +2082,7 @@ the two can disagree indefinitely without any gate noticing.
 
 ## Phase 4 — CLI
 
-**The next front after the release** (decided 2026-08-07). Per `planning/02`: Astryx has **no
+**The next front after the release** (decided 2026-08-07). Per `research/02`: Astryx has **no
 registry** — components ship as an npm package that publishes its `src/`, and the CLI reads from
 `node_modules`. Do **not** graft on a hosted registry.
 
@@ -2104,7 +2104,7 @@ before.
 So **293 code files (~1.5 MB)** is the port — refined once slice 1 landed: **117 of those are
 tests**, so **176 are source modules**. The 1,502 asset files are mostly transcription or
 adaptation. `foundation/xle/` is an isolated subsystem that can land in a later milestone without
-blocking anything — `planning/02` already rates it lowest priority.
+blocking anything — `research/02` already rates it lowest priority.
 
 ### Slice 1 — landed 2026-08-08
 
@@ -2128,7 +2128,7 @@ tests. Still `"private": true` — that flag comes off when the CLI is genuinely
       `type`, `code` and exit code
 - [x] **The append-only `ERR_*` codes — there are 43, not 53.** Verified against the frozen object at
       both tags; `v0.1.7` and `v0.3.0` are byte-identical in membership *and* order. **The "53" in
-      `planning/02` §1.3 and in this checklist was wrong.** All 43 transcribed in upstream's order and
+      `research/02` §1.3 and in this checklist was wrong.** All 43 transcribed in upstream's order and
       grouping, including codes for commands not yet ported (blog, layout, upgrade), as append-only
       requires. **Upstream bug, not replicated:** its `error-codes.d.ts` declares only **41** —
       `ERR_UNKNOWN_POST` and `ERR_FETCH_FAILED` are missing from the union, so a TypeScript consumer
@@ -2151,7 +2151,7 @@ tests. Still `"private": true` — that flag comes off when the CLI is genuinely
   `ERR_UNKNOWN_COMMAND` with the "did you mean" list — exactly what an agent depends on when it
   guesses a verb wrong. Caught by the ported test, confirmed against the upstream binary.
 
-**Three corrections to `planning/02`, all of it 0.1.7-era where it disagrees:**
+**Three corrections to `research/02`, all of it 0.1.7-era where it disagrees:**
 
 - **The `src/{api,commands,lib,…}` layout in §7.3 no longer exists.** At v0.3.0 upstream is
   root-level `api/` + `clients/cli/` + `foundation/` + `authoring/`. Slice 1 follows v0.3.0, because
@@ -2162,7 +2162,7 @@ tests. Still `"private": true` — that flag comes off when the CLI is genuinely
   non-interactive. §7.3's "interactive `@clack/prompts` wizard" is 0.1.7-era; the dependency has been
   removed.
 - **`blog` is no longer hidden and *is* on the JSON allowlist** (`blog.list` / `blog.detail`), and
-  **`build` is now JSON-supported** (`build.help` / `build.kit`). `planning/02` says the opposite for
+  **`build` is now JSON-supported** (`build.help` / `build.kit`). `research/02` says the opposite for
   both, true at 0.1.7.
 
 ### Slice 2 — Foundation II, landed 2026-08-08
@@ -2644,7 +2644,7 @@ signature going async ripples through every caller in both slices.
 
 ## Phase 5 — Docs site (the current goal)
 
-Per `planning/04`: **278 pages**, no MDX. Content comes from executable `.doc.mjs` modules,
+Per `research/04`: **278 pages**, no MDX. Content comes from executable `.doc.mjs` modules,
 specified by `docs-types.ts`.
 
 ### The props-page audit — 2026-08-08
@@ -2978,7 +2978,7 @@ console errors. Client JS **+558 B (+0.013%)**.
       lines and an Attribution section that names what is derived (component APIs, tokens,
       documentation prose, the case-for-case test suites) and what is this port's own (the Svelte 5
       implementation, the StyleX adapter, the codemod runner).
-      **`planning/05-shadcn-svelte-playbook.md` guessed the notice wrong**, and told us to check:
+      **`research/05-shadcn-svelte-playbook.md` guessed the notice wrong**, and told us to check:
       it says to reproduce `Copyright (c) Meta Platforms, Inc. and affiliates`, where
       `facebook/astryx/LICENSE` and the published `@astryxdesign/cli` both read
       **`Copyright (c) 2026 Meta Platforms, Inc.`** — no "and affiliates", and with a year. The
@@ -2991,7 +2991,7 @@ console errors. Client JS **+558 B (+0.013%)**.
       not happened. **The `@astryx-svelte` org must be created on npm first** — a scoped publish
       does not auto-create it. `npm publish` is then the only remaining step, and the install
       instructions become true the moment it runs
-- [ ] **Send the blessing message.** `planning/05-shadcn-svelte-playbook.md` item 9: reach out to
+- [ ] **Send the blessing message.** `research/05-shadcn-svelte-playbook.md` item 9: reach out to
       the Astryx maintainers the way huntabyte did with shadcn — "it costs one message and it is
       the difference between a welcomed port and a cease-and-desist". Cheaper before the first
       publish than after
@@ -3151,7 +3151,7 @@ work rather than component work, itemised under [After launch](#after-launch).
       identical output. Replicates upstream's `requireDisplayName()` build gate
 - [x] **Props typed from our own declarations, not upstream's strings.** 1027 of 1049 documented
       props resolve against `packages/core/dist/**/*.d.ts`; the remaining 22 each carry a written
-      reason. This was the correction that mattered: `planning/04` risk #2 proposed mapping
+      reason. This was the correction that mattered: `research/04` risk #2 proposed mapping
       `ReactNode` → `string | Snippet`, but `Button.icon` is `Snippet` here with **no string
       branch**, so the mapping would have documented an API that throws. Upstream's `.doc.mjs`
       supplies the prose; the compiler supplies the types
@@ -3616,7 +3616,7 @@ upstream's type admits its own icon set and ours admitted nothing. `IconType` is
       expired the same day and are restored to upstream's shape; see Known debts for the rest
 - [ ] `/blog` (5, mdsvex) · `/themes` browser
 - [ ] **`/playground`** — `svelte/compiler` in a Web Worker + CodeMirror 6. Deliberately last:
-      `planning/04` §6.3 is right that this is a different problem in Svelte than upstream's
+      `research/04` §6.3 is right that this is a different problem in Svelte than upstream's
       `ts.transpileModule`, and mechanisms A + B cover nearly all the per-component docs value
       without it
 - [ ] `/mcp` — `@modelcontextprotocol/sdk` in a `+server.ts`, over the same registries
@@ -4531,7 +4531,7 @@ changed to make room for it. A reader of the component set cannot tell it exists
 with no rest spread, silently dropping `id`/`role`/`aria-*`/handlers; we forward rest, as
 every other component does — documenting the contradiction rather than reproducing it):
 
-**Batch 17c re-read this whole block against 0.2.0, which is what §4.1 of `planning/08` asked
+**Batch 17c re-read this whole block against 0.2.0, which is what §4.1 of `research/08` asked
 for. Three entries retired because upstream caught up, and the shape of the remaining ones is
 worth stating: this is no longer a list of "places upstream is inconsistent", it is a list of
 places upstream is inconsistent _and has not fixed_.** `FieldLabel` (0.1.9) and `ChatSendButton`
@@ -4570,7 +4570,7 @@ which differs per component and is load-bearing (see each component's comment).
       dropped". Two of the missing cases are the RTL track-click pair — which is the assertion
       that would settle the separately-recorded "Slider's pointer math is still unported". 3. **The `statusVariant forwarding` block is one gap, not six.** Upstream ships it in **12**
       suites; this port has it in **3**, all newly ported at 17c. Nine suites lack it (18 cases),
-      while `TODO.md` records `statusVariant` on all twelve as landed at 17b. 4. **The theme-target assertions never came with the targets** (Calendar, DateInput,
+      while `todo.md` records `statusVariant` on all twelve as landed at 17b. 4. **The theme-target assertions never came with the targets** (Calendar, DateInput,
       DateRangeInput, DateTimeInput, Collapsible). The entry above says all sixteen "now emit",
       and they do — this is the second half of the same "two halves verified by different tools"
       hazard, now in its test form. 5. The 0.2.0 APG/a11y assertions for TopNavMenu (−8), TopNav (−8), TopNavMegaMenu (−5),
@@ -4887,7 +4887,7 @@ directory's worth of work:**
       map _except_ the one on the highest-fan-in component.
 
       **`TokenColorMap` was briefly the second and is now closed** (17c). 0.2.0 added the seam and
-      `TODO.md` recorded it as surface to port; `token.stylex.ts` still carried a hand-written union
+      `todo.md` recorded it as surface to port; `token.stylex.ts` still carried a hand-written union
       whose comment asserted _"upstream has no augmentation seam"_ — true when written, false for a
       release. **A fourth instance of the batch-17 pattern**: a widened *type* with no new prop name
       is invisible to the docs generator, and only the surface sweep saw it. The count moved 12 → 13
@@ -5225,7 +5225,7 @@ directory's worth of work:**
 - [ ] **`TableContextProvider` is now published, resolving an inconsistency the batch created.** It
       and `BaseTablePlugins` are the same thing — Svelte-only names with no upstream counterpart,
       each sitting on a _published_ signature — and the batch shipped one published and one not.
-      TODO.md's own note on that family says publishing some while withholding others "is the one
+      todo.md's own note on that family says publishing some while withholding others "is the one
       option that is not defensible", so `TablePlugin.transformTableContext`'s return type is now
       nameable. Same argument that published `TableFilterFieldRef`.
 - [ ] **`src/lib/index.ts` no longer re-exports `power-search/types.js` with `export type *`.** The
@@ -5357,7 +5357,7 @@ directory's worth of work:**
       the inferred literal — carrying no `renderCell` — satisfies both. This is the same invariance
       that `src/tests/render-table.ts` already documents for `render()`; it now has a consumer-facing
       face, which is worth a second look before release.
-- [ ] **TODO.md's batch-6 note attributes some type adjustments to `exactOptionalPropertyTypes`,
+- [ ] **todo.md's batch-6 note attributes some type adjustments to `exactOptionalPropertyTypes`,
       and that flag is not set anywhere in the repo** — not in any checked-in `tsconfig.json` nor in
       the generated `.svelte-kit` ones. Pre-existing to this batch and harmless, but the note should
       either be corrected or the flag turned on deliberately, because docs blocks are currently
@@ -5710,7 +5710,7 @@ directory's worth of work:**
 - [ ] **Upstream i18n gap (replicated):** the two announcement strings (`"<alt>, N of M"` / `"Image N of M"`) are hard-coded English, unlike the four button/dialog labels which do go through `useTranslator`
 - [ ] **Upstream doc gap:** `defaultIndex` and `hasAutoPlay` are real props (present in `LightboxProps` and the shipped `.d.ts`) but are absent from `Lightbox.doc.mjs`'s props table in both locales. Ported from source, per the Icon px→rem precedent
 - [ ] **Test suite ported** in `src/tests/lightbox.svelte.test.ts` — all 26 of upstream's `it` cases, client (Chromium) project (native `<dialog>` + `useAnnounce`'s real `requestAnimationFrame`). Reuses upstream's `showModal`/`close` `vi.fn` mock, as the `Dialog` suites do, so the "calls showModal" spy works and the top-layer side effects stay out. Two cases changed shape: `forwards ref to dialog element` is an **attachment counterpart** (no `ref` prop in this port), and `does not render caption when not provided` gains a second, discriminating assertion because StyleX hashes the class upstream's `[class*="caption"]` selector looks for. Nothing dropped. Both load-bearing behaviours were mutation-checked: an always-announce effect fails the two silence cases, and unmounting the nav buttons at the range boundary fails all three boundary cases
-- [ ] `Lightbox` renders **nothing at all** — not even the `<dialog>` — when `media` is empty, matching upstream's `return null`. Its `hasAutoPlay` is only the `<video autoplay>` attribute: there is no timer and no auto-advance. Pan is **unclamped** (a zoomed image can be dragged out of view) and zoom is a 1↔2 double-click toggle with no wheel or pinch. `planning/01` described this component as a Popover-API overlay with a focus trap and autoplay timing; all three were wrong and that row has been corrected
+- [ ] `Lightbox` renders **nothing at all** — not even the `<dialog>` — when `media` is empty, matching upstream's `return null`. Its `hasAutoPlay` is only the `<video autoplay>` attribute: there is no timer and no auto-advance. Pan is **unclamped** (a zoomed image can be dragged out of view) and zoom is a 1↔2 double-click toggle with no wheel or pinch. `research/01` described this component as a Popover-API overlay with a focus trap and autoplay timing; all three were wrong and that row has been corrected
 
 **Batch 1 — slot translation and seams:**
 
