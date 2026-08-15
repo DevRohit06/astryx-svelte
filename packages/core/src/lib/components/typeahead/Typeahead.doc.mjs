@@ -33,6 +33,9 @@ export default {
 				className: 'astryx-typeahead-dropdown'
 			},
 			{
+				className: 'astryx-typeahead-empty-state'
+			},
+			{
 				className: 'astryx-typeahead-item'
 			}
 		]

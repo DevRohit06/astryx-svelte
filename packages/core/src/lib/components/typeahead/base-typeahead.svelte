@@ -562,6 +562,9 @@
 	const dropdownAttrs = baseTypeaheadDropdownAttrs();
 	const itemContentAttrs = baseTypeaheadItemContentAttrs();
 	const emptyStateAttrs = baseTypeaheadEmptyStateAttrs();
+	// New at 0.4.x (#4862): the no-results row became a theme target of its own,
+	// so a theme can restyle it without reaching through the dropdown.
+	const emptyStateTheme = themeProps('typeahead-empty-state');
 </script>
 
 <!-- svelte-ignore a11y_autofocus -->
@@ -628,7 +631,11 @@
 		style={dropdownAttrs.style}
 	>
 		{#if results.length === 0 && hasSearched}
-			<div class={emptyStateAttrs.class} style={emptyStateAttrs.style}>
+			<div
+				{...emptyStateTheme}
+				class={cx(emptyStateTheme.class, emptyStateAttrs.class)}
+				style={emptyStateAttrs.style}
+			>
 				{emptySearchResultsText}
 			</div>
 		{:else}
