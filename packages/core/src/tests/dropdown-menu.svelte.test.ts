@@ -488,7 +488,14 @@ describe('DropdownMenu items', () => {
 		item.focus();
 		item.click();
 
-		const renamed = menuItem(screen.container, 'Copied');
+		// Upstream awaits `user.click`, which settles the state update inside
+		// `act()`. There is no counterpart here and none is needed — the `$state`
+		// write flushes on its own — but it flushes in a *microtask*, so the query
+		// has to retry rather than read the DOM in the same tick as the click.
+		let renamed!: HTMLElement;
+		await vi.waitFor(() => {
+			renamed = menuItem(screen.container, 'Copied');
+		});
 		expect(renamed).toBe(item);
 		expect(renamed).toHaveFocus();
 	});
