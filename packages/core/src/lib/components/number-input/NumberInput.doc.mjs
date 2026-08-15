@@ -24,7 +24,8 @@ export default {
 		targets: [
 			{
 				className: 'astryx-number-input',
-				visualProps: ['size', 'status']
+				visualProps: ['size', 'status'],
+				states: ['disabled', 'readonly']
 			}
 		]
 	},
@@ -39,6 +40,11 @@ export default {
 			{
 				guidance: true,
 				description: 'Show units (e.g. "%" or "GB") so users know what the number represents.'
+			},
+			{
+				guidance: true,
+				description:
+					'Set isWheelEnabled={false} when the input appears in a scrolling surface where wheel gestures should always scroll the page.'
 			},
 			{
 				guidance: false,
@@ -75,6 +81,11 @@ export default {
 				name: 'Placeholder',
 				required: false,
 				description: 'Placeholder text shown when the input is empty.'
+			},
+			{
+				name: 'Number steppers',
+				required: false,
+				description: 'Optional buttons that increment or decrement by the configured step.'
 			}
 		]
 	},
@@ -127,6 +138,13 @@ export default {
 			name: 'isDisabled',
 			type: 'boolean',
 			description: 'Whether the input is disabled.'
+		},
+		{
+			name: 'isReadOnly',
+			type: 'boolean',
+			description:
+				'Makes the input read-only: the value is shown at full opacity and still submits with the form, but cannot be edited. Unlike isDisabled, a read-only input is not dimmed and stays in the tab order. Stepping is off in every form while read-only: arrow keys, the wheel, and the number steppers. isDisabled takes precedence when both are set.',
+			default: 'false'
 		},
 		{
 			name: 'disabledMessage',
@@ -183,6 +201,25 @@ export default {
 			type: 'number | null',
 			description: 'Step increment for the input.',
 			default: '1'
+		},
+		{
+			name: 'formatValue',
+			type: '(value: number) => string',
+			description:
+				'Formats the committed value while the input is not focused. The raw numeric value is shown on focus for editing and the formatted value is exposed through aria-valuetext.'
+		},
+		{
+			name: 'isWheelEnabled',
+			type: 'boolean',
+			description:
+				'Whether scrolling the wheel over the focused input steps the value. Disable this when page scrolling should always take priority.',
+			default: 'true'
+		},
+		{
+			name: 'hasNumberSteppers',
+			type: 'boolean',
+			description: 'Shows increment and decrement buttons at the end of the input.',
+			default: 'false'
 		},
 		{
 			name: 'units',

@@ -13,6 +13,7 @@ import {
 	colorVars,
 	radiusVars,
 	sizeVars,
+	spacingVars,
 	typeScaleVars,
 	typographyVars
 } from '../../styles/tokens.stylex.js';
@@ -21,37 +22,30 @@ import {
  * Ported from Astryx's `NumberInput/NumberInput.tsx`, where the styles are
  * inline in the component file rather than in a module of their own.
  *
- * `input`, `inputDisabled` and `clearButton` are byte-identical to `TextInput`'s
- * — upstream restates them rather than sharing, and StyleX's content-derived
- * hashes make both copies compile to the same atomic classes. They are restated
- * here for the same reason: the oracle diffs this module against upstream's
- * `NumberInput` output, not `TextInput`'s.
+ * `input` and `inputDisabled` are byte-identical to `TextInput`'s — upstream
+ * restates them rather than sharing, and StyleX's content-derived hashes make
+ * both copies compile to the same atomic classes. They are restated here for the
+ * same reason: the oracle diffs this module against upstream's `NumberInput`
+ * output, not `TextInput`'s.
+ *
+ * At 0.4.1 (#4896) the control became a **text-backed spinbutton**, so the
+ * native-spinner suppression (`MozAppearance: 'textfield'` and the two
+ * `::-webkit-*-spin-button` blocks) is gone from upstream's `input` — there is no
+ * `type="number"` left to grow spinners. The component draws its own steppers
+ * instead, which is what the six keys from `numberSteppers` down are for.
  *
  * `styles.wrapper`'s `zIndex: 1` duplicates `inputWrapperStyles.base`'s and so
  * emits no class of its own — but upstream's `dist/` declares `styles` as an
- * object containing exactly `wrapper`, so dropping it would fail object mode.
+ * object containing `wrapper`, `wrapperWithNumberSteppers` and `incrementIcon`,
+ * so dropping it would fail object mode.
  */
 
 const styles = stylex.create({
 	wrapper: {
 		zIndex: 1
 	},
-	clearButton: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		padding: 0,
-		margin: 0,
-		borderWidth: 0,
-		borderStyle: 'none',
-		backgroundColor: 'transparent',
-		cursor: 'pointer',
-		borderRadius: radiusVars['--radius-element'],
-		outline: {
-			default: 'none',
-			':focus-visible': `${borderVars['--border-width']} solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: 1
+	wrapperWithNumberSteppers: {
+		paddingInlineEnd: 0
 	},
 	input: {
 		display: 'block',
@@ -60,18 +54,6 @@ const styles = stylex.create({
 		borderWidth: 0,
 		borderStyle: 'none',
 		padding: 0,
-		// Hide the browser's native number spinners; the component provides its own
-		// affordances (keyboard entry, optional clear button) and the spinners
-		// clash with the input's visual treatment and sizing.
-		MozAppearance: 'textfield',
-		'::-webkit-inner-spin-button': {
-			WebkitAppearance: 'none',
-			margin: 0
-		},
-		'::-webkit-outer-spin-button': {
-			WebkitAppearance: 'none',
-			margin: 0
-		},
 		fontFamily: typographyVars['--font-family-body'],
 		fontSize: {
 			default: typeScaleVars['--text-body-size'],
@@ -99,6 +81,58 @@ const styles = stylex.create({
 		lineHeight: typeScaleVars['--text-body-leading'],
 		color: colorVars['--color-text-secondary'],
 		flexShrink: 0
+	},
+	numberSteppers: {
+		alignSelf: 'stretch',
+		display: 'flex',
+		flexDirection: 'column',
+		flexShrink: 0,
+		width: spacingVars['--spacing-4'],
+		marginBlock: `calc(-1 * ${spacingVars['--spacing-1']})`,
+		borderInlineStartWidth: borderVars['--border-width'],
+		borderInlineStartStyle: 'solid',
+		borderInlineStartColor: colorVars['--color-border-emphasized'],
+		overflow: 'hidden',
+		borderStartEndRadius: radiusVars['--radius-element'],
+		borderEndEndRadius: radiusVars['--radius-element']
+	},
+	numberStepperButton: {
+		boxSizing: 'border-box',
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		flex: 1,
+		minHeight: 0,
+		padding: 0,
+		margin: 0,
+		borderWidth: 0,
+		borderStyle: 'none',
+		color: colorVars['--color-icon-secondary'],
+		backgroundColor: colorVars['--color-background-surface'],
+		backgroundImage: {
+			default: null,
+			':hover': {
+				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
+			},
+			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
+		},
+		cursor: 'pointer',
+		// The steppers are `tabIndex={-1}` and hand focus to the input, so they
+		// take no focus ring of their own — deliberately *not* `focusOutlineProps`.
+		outline: 'none'
+	},
+	numberStepperButtonDisabled: {
+		color: colorVars['--color-icon-disabled'],
+		cursor: 'not-allowed',
+		backgroundImage: 'none'
+	},
+	decrementButton: {
+		borderBlockStartWidth: borderVars['--border-width'],
+		borderBlockStartStyle: 'solid',
+		borderBlockStartColor: colorVars['--color-border-emphasized']
+	},
+	incrementIcon: {
+		transform: 'rotate(180deg)'
 	}
 });
 
@@ -122,11 +156,13 @@ export function numberInputWrapperAttrs(
 	statusType: InputStatusType | undefined,
 	isDisabled: boolean,
 	inGroup: boolean,
+	hasNumberSteppers: boolean,
 	xstyle: StyleArg
 ): SvelteStyleAttrs {
 	return sx(
 		inputWrapperStyles.base,
 		styles.wrapper,
+		hasNumberSteppers && styles.wrapperWithNumberSteppers,
 		sizeStyles[size],
 		isDisabled && inputWrapperStyles.disabled,
 		statusType && inputStatusBorderStyles[statusType],
@@ -138,8 +174,9 @@ export function numberInputWrapperAttrs(
 }
 
 /**
- * The `<input type="number">`. `inputInvalid` comes last because it *replaces*
- * `input`'s colour rather than joining it — the order is load-bearing.
+ * The `<input type="text" role="spinbutton">`. `inputInvalid` comes last because
+ * it *replaces* `input`'s colour rather than joining it — the order is
+ * load-bearing.
  */
 export function numberInputAttrs(isDisabled: boolean, isInvalid: boolean): SvelteStyleAttrs {
 	return sx(styles.input, isDisabled && styles.inputDisabled, isInvalid && styles.inputInvalid);
@@ -150,7 +187,26 @@ export function numberInputUnitsAttrs(): SvelteStyleAttrs {
 	return sx(styles.units);
 }
 
-/** The inline clear button (hand-rolled upstream, not `Field`'s `InputClearButton`). */
-export function numberInputClearButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.clearButton);
+/** The column holding the increment and decrement buttons. */
+export function numberInputSteppersAttrs(): SvelteStyleAttrs {
+	return sx(styles.numberSteppers);
 }
+
+/**
+ * One stepper button. `isDecrement` adds the divider between the two, and
+ * `isStepperDisabled` folds in the dimmed, no-hover-gradient treatment — both
+ * after the base, as upstream's two `stylex.props` calls order them.
+ */
+export function numberInputStepperButtonAttrs(
+	isDecrement: boolean,
+	isStepperDisabled: boolean
+): SvelteStyleAttrs {
+	return sx(
+		styles.numberStepperButton,
+		isDecrement && styles.decrementButton,
+		isStepperDisabled && styles.numberStepperButtonDisabled
+	);
+}
+
+/** The 180° rotation that turns the shared `chevronDown` glyph into a chevron up. */
+export const numberInputIncrementIconStyle = styles.incrementIcon;
