@@ -7,17 +7,29 @@ import TreeListFixture from './fixtures/tree-list-fixture.svelte';
 import type { TreeListFixtureItem } from './fixtures/tree-list-fixture.svelte';
 
 /**
- * Ported from Astryx's `TreeList/TreeList.test.tsx` — **all 66 of its `it`
- * cases** at v0.3.0. Client (real Chromium) project: focus, roving tabindex and
- * the APG tree keyboard model are the bulk of what is here.
+ * Ported from Astryx's `TreeList/TreeList.test.tsx` — **71 of its 76 `it` cases**
+ * at v0.4.1. Client (real Chromium) project: focus, roving tabindex and the APG
+ * tree keyboard model are the bulk of what is here.
+ *
+ * **The five that are absent are the whole `leaf chevron-column offset`
+ * describe** — `a leaf in a mixed group reserves the chevron column`, `a leaf
+ * under an expandable ancestor reserves the chevron column even when its own
+ * group is all leaves`, `an expanded parent's all-leaf children reserve the
+ * chevron column`, `every row in a flat (all-leaf) tree sits flush` and `leaves
+ * flush in an all-leaf group have the same indent structure as a parent at that
+ * level`. They belong to #4838, the chevron unit that moved the glyph onto
+ * `<Icon xstyle>`, and land with it rather than with the row-gap lever below.
+ *
+ * The **five `row gap lever` cases are new at 0.4.1 (#4540)** and are here.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
  * This header used to read "all 47 of its `it` cases, nothing dropped".
- * Upstream has **66**; the nineteen that were absent — one focus-scoping case
- * and four whole describes (`variant`, `guide theme target`, `indent lever`,
- * `chevron theme target`, `item label theme target`) — are now here, closing
- * the file. Two translations they need, neither weakening anything:
+ * Upstream had **66** at 0.3.0; the nineteen that were absent — one focus-scoping
+ * case and four whole describes (`variant`, `guide theme target`, `indent lever`,
+ * `chevron theme target`, `item label theme target`) — were added then, closing
+ * the file against that tag. Two translations they need, neither weakening
+ * anything:
  *
  * - `generateThemeTestCSS` becomes `generateThemeCss`, this port's function of
  *   the same job and shape (as `multi-selector` and `selector` do).
@@ -153,6 +165,39 @@ function rowOf(container: HTMLElement, label: string): HTMLElement {
 	const li = labelOf(container, label).closest<HTMLElement>('[role="treeitem"]');
 	if (!li) throw new Error(`no treeitem labelled "${label}"`);
 	return li;
+}
+
+/**
+ * Every CSS rule the page has, however it was injected — upstream's
+ * `collectCssText`. `setup-stylex.ts` installs the repo-wide compiled sheet.
+ */
+function injectedCss(): string {
+	let out = '';
+	for (const sheet of Array.from(document.styleSheets)) {
+		try {
+			for (const rule of Array.from(sheet.cssRules)) {
+				out += rule.cssText + '\n';
+			}
+		} catch {
+			// ignore cross-origin sheets
+		}
+	}
+	out += Array.from(document.querySelectorAll('style'))
+		.map((s) => s.textContent || '')
+		.join('\n');
+	return out;
+}
+
+/**
+ * Whether any rule targeting one of `element`'s own classes makes `declaration`.
+ * Scoped rather than a global grep: the injected sheet is repo-wide, so an
+ * unscoped match would pass on any other component's declaration.
+ */
+function hasDeclarationFor(element: Element, declaration: RegExp): boolean {
+	const css = injectedCss();
+	return Array.from(element.classList).some((cls) =>
+		new RegExp(`\\.${cls}\\b[^{]*\\{[^}]*${declaration.source}`, 'i').test(css)
+	);
 }
 
 /** Upstream's `queryByText(label) != null`. */
@@ -589,6 +634,104 @@ describe('TreeList', () => {
 			};
 			expect(indentOf('Mid')).toContain('var(--tree-list-indent)');
 			expect(indentOf('Leaf')).toContain('var(--tree-list-indent)');
+		});
+	});
+
+	// =========================================================================
+	// Inter-row gap lever (--tree-list-row-gap) + guide spanning
+	// =========================================================================
+
+	describe('row gap lever', () => {
+		it('defaults the row gap to a subtle 2px separation', async () => {
+			// The lever is published on the tree-list root; its default is
+			// --spacing-0-5 (2px) so rows have a light separation out of the box. A
+			// theme can widen or close it via the tree-list target.
+			//
+			// Upstream reads the value back with `getComputedStyle`, which in jsdom
+			// hands the declared string straight back. A real Chromium substitutes
+			// `var()` at computed-value time, and `setup-stylex.ts` deliberately does
+			// NOT install the theme tokens, so `--spacing-0-5` is undefined and the
+			// property computes to the empty string. The declaration on the root's own
+			// compiled rule is therefore what is asserted — the same fact, read where
+			// this browser keeps it.
+			const screen = await render(TreeListFixture, {
+				props: { items: simpleItems, tree: { 'data-testid': 'tree' } }
+			});
+			const root = screen.container.querySelector('[data-testid="tree"]') as HTMLElement;
+			expect(hasDeclarationFor(root, /--tree-list-row-gap:\s*var\(--spacing-0-5\)/)).toBe(true);
+		});
+
+		it('lets a theme open a row gap via the tree-list target', () => {
+			// The @layer cascade is not observable from JS, so the generated CSS is
+			// what proves the override reaches the lever.
+			const theme = defineTheme({
+				name: 'tree-list-row-gap-test',
+				components: {
+					'tree-list': {
+						base: { '--tree-list-row-gap': 'var(--spacing-1)' }
+					}
+				}
+			});
+			const css = generateThemeCss(theme);
+			expect(css).toContain('.astryx-tree-list {');
+			expect(css).toContain('--tree-list-row-gap: var(--spacing-1)');
+		});
+
+		it('the guide of a row with a sibling below spans into it (verticalFull)', async () => {
+			// A row that is NOT last in its group bridges the 1px hairline into the
+			// next contiguous sibling so the connector reads as one continuous line.
+			// Assert the APPLIED class on that row's own connector — not a global
+			// stylesheet regex — so the isLast ? verticalLast : verticalFull branch is
+			// actually exercised (Child 1 has Child 2 below it). The debug class name
+			// ports unchanged: our style keys carry upstream's names verbatim and only
+			// the module prefix differs, which a `toContain` does not see.
+			const screen = await render(TreeListFixture, { props: { items: nestedItemsExpanded } });
+			const child1 = rowOf(screen.container, 'Child 1');
+			const guide = child1.firstElementChild?.querySelector('.astryx-tree-list-guide');
+			expect(guide).not.toBeNull();
+			expect(guide?.className).toContain('verticalFull');
+			expect(guide?.className).not.toContain('verticalLast');
+		});
+
+		it('clamps the last-in-group guide so it does not overhang the gap (verticalLast)', async () => {
+			// The last row in a group has nothing below it, so its connector must NOT
+			// run through the row wrapper's bottom padding into empty space — it uses
+			// verticalLast, which subtracts half the row gap. Assert the applied class
+			// on the last child's own connector (Child 2 is last in its group), so a
+			// reverted branch is caught.
+			const screen = await render(TreeListFixture, { props: { items: nestedItemsExpanded } });
+			const child2 = rowOf(screen.container, 'Child 2');
+			const guide = child2.firstElementChild?.querySelector('.astryx-tree-list-guide');
+			expect(guide).not.toBeNull();
+			expect(guide?.className).toContain('verticalLast');
+			expect(guide?.className).not.toContain('verticalFull');
+		});
+
+		it('carries the inter-row gap as collapse-proof padding on the row wrapper, not the paint target', async () => {
+			// Finding from upstream's review: the gap must be `padding-block` (which
+			// cannot collapse) on the row WRAPPER, not `margin-block` on the row box —
+			// a margin there collapses through the position:relative wrapper and the
+			// <li>, delivering only half the configured gap. It also must not sit on
+			// `tree-list-item`, which is a paint seam: layout longhands do not belong
+			// on a paintable target.
+			const screen = await render(TreeListFixture, { props: { items: simpleItems } });
+			const item = screen.container.querySelector<HTMLElement>('.astryx-tree-list-item');
+			expect(item).not.toBeNull();
+			const rowWrapper = item?.parentElement as HTMLElement;
+
+			const rules = injectedCss();
+			// Map the rowWrapper's compiled class to its declaration block and assert
+			// it declares padding-block from the row-gap lever (half above/below).
+			expect(Array.from(rowWrapper.classList).find((c) => c.includes('rowWrapper'))).toBeDefined();
+			expect(rules).toMatch(
+				/padding-block:\s*calc\(\s*var\(--tree-list-row-gap[^)]*\)\s*\/\s*2\s*\)/
+			);
+			// And the paint target (tree-list-item / contentWrapper) must NOT carry a
+			// margin-block gap — the layout seam has moved off the paintable element.
+			expect(
+				Array.from(item?.classList ?? []).find((c) => c.includes('contentWrapper'))
+			).toBeDefined();
+			expect(rules).not.toMatch(/margin-block:\s*calc\([^;]*var\(--tree-list-row-gap/);
 		});
 	});
 

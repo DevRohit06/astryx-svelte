@@ -350,12 +350,21 @@ const CASES = [
 		// rather than a repair. This case was object-mode only, which quietly meant
 		// `styles.track` was checked by nothing: upstream's `dist/` keeps only
 		// `container`, `fill` and `indeterminateFill` as objects and folds `header`,
-		// the label pair, `track` and (new at 0.3.0) `mark` into literal strings, so
-		// object mode had no counterpart to diff them against and reported nothing.
+		// the label pair and `track` into literal strings, so object mode had no
+		// counterpart to diff them against and reported nothing.
 		//
 		// Listing them turns the leftover check on for this module too, so the list
-		// has to be complete — all ten folded sites are claimed and upstream has no
+		// has to be complete — all nine folded sites are claimed and upstream has no
 		// string left over.
+		//
+		// `styles.mark` was the tenth from 0.3.0 and is claimed by NEITHER list as of
+		// 0.4.1 (#4970/#4741) — object mode picks it up instead. The tick's colour
+		// became a runtime choice between `markOnFillStyles[fillVariant]`,
+		// `markOnTrackStyles.trackDisabled` and `markOnTrackStyles.track`, which
+		// defeats the fold, so upstream's `dist/` keeps `mark` and both new colour
+		// groups as live objects and emits no literal string for the tick. Dropping
+		// the inline entry is what keeps the leftover check honest: a claim with no
+		// upstream call site to match is itself a mismatch.
 		file: 'src/lib/components/progress-bar/progress-bar.stylex.js',
 		upstreamFile: 'ProgressBar/ProgressBar.js',
 		inline: [
@@ -367,8 +376,7 @@ const CASES = [
 			['styles.valueLabel'],
 			['styles.valueLabel', 'styles.valueLabelDisabled'],
 			['styles.track'],
-			['styles.track', 'styles.trackClipped'],
-			['styles.mark']
+			['styles.track', 'styles.trackClipped']
 		]
 	},
 	{
@@ -659,6 +667,21 @@ const CASES = [
 		upstreamFile: 'Field/InputClearButton.js'
 	},
 	{
+		// Both modes at once, and the split is the component's structure exactly.
+		// `wrapper` rides `stylex.props(styles.wrapper, xstyle)` and `icon` is
+		// handed to `Icon`'s `xstyle`, so the compiler could fold neither and
+		// upstream's `dist/` keeps both as objects. The three that fold are the row
+		// itself (with and without its keyboard focus ring) and the bare `<input>`.
+		//
+		// The ring pair is the one merge worth naming: `fieldKeyboardFocus` adds a
+		// `boxShadow` the base `field` never sets, so the focused string is exactly
+		// the unfocused one plus two classes (the `default: 'none'` and the
+		// `:has(input:focus-visible)` inset) rather than a replacement.
+		file: 'src/lib/components/field/panel-search-input.stylex.js',
+		upstreamFile: 'Field/PanelSearchInput.js',
+		inline: [['styles.field'], ['styles.field', 'styles.fieldKeyboardFocus'], ['styles.input']]
+	},
+	{
 		// Shared group-member style, imported directly by every InputGroup-aware
 		// control, so upstream's `dist/` keeps it as a plain object. Object mode.
 		file: 'src/lib/components/input-group/group-styles.stylex.js',
@@ -690,11 +713,15 @@ const CASES = [
 		// declares (here just `sizeStyles`).
 		//
 		// `styles` has no object in `dist/` at all: `input` / `inputDisabled` compile
-		// to a two-entry lookup table keyed by `!!isDisabled << 0`, and `clearButton`
-		// to a single literal class string. Those are the three inline call sites.
+		// to a two-entry lookup table keyed by `!!isDisabled << 0`. Those are the two
+		// inline call sites.
+		//
+		// It used to be three. 0.4.x (#4876) converged the family's clear buttons on
+		// the shared `InputClearButton`, so `styles.clearButton` — and the literal
+		// class string it folded to — is gone from both sides.
 		file: 'src/lib/components/text-input/text-input.stylex.js',
 		upstreamFile: 'TextInput/TextInput.js',
-		inline: [['styles.input'], ['styles.input', 'styles.inputDisabled'], ['styles.clearButton']]
+		inline: [['styles.input'], ['styles.input', 'styles.inputDisabled']]
 	},
 	{
 		file: 'src/lib/components/metadata-list/metadata-list.stylex.js',
@@ -782,22 +809,23 @@ const CASES = [
 		]
 	},
 	{
-		// Both modes at once. Upstream declares ComplexSelector's styles inline in
-		// the component file rather than a style module, and keeps the group's name
-		// `styles`, so ours needs no rename. `dist/` keeps ALL 13 keys as a live
-		// object — the container's call site indexes `styles[size]` dynamically, so
-		// the compiler could fold nothing there. What it DID fold is three call
-		// sites with nothing dynamic beside them: the trigger `<button>` and its
-		// text `<span>` are literal class strings, and the chevron slot is a
-		// two-entry lookup table keyed on the popover's open state.
+		// **Object mode only, as of 0.4.1.** Upstream declares ComplexSelector's
+		// styles inline in the component file rather than a style module, and keeps
+		// the group's name `styles`, so ours needs no rename. `dist/` keeps every
+		// key as a live object — the container's call site indexes `styles[size]`
+		// dynamically, so the compiler could fold nothing there, and the chevron's
+		// three keys now cross a component boundary as the `<Icon>`'s `xstyle`
+		// (#4838/#4846), which defeats the fold the same way.
+		//
+		// That leaves `dist/` carrying only two literal class strings — the trigger
+		// `<button>` and its text `<span>` — and BOTH of those keys survive as
+		// objects too, so object mode already checks them atom for atom. The
+		// four-entry `inline` list this case used to carry claimed two sites that no
+		// longer exist and two that were never worth a second check, so it is gone
+		// rather than trimmed: with no `inline` key the leftover check does not run,
+		// and nothing goes unverified.
 		file: 'src/lib/components/complex-selector/complex-selector.stylex.js',
-		upstreamFile: 'ComplexSelector/ComplexSelector.js',
-		inline: [
-			['styles.trigger'],
-			['styles.triggerText'],
-			['styles.triggerIcon'],
-			['styles.triggerIcon', 'styles.triggerIconOpen']
-		]
+		upstreamFile: 'ComplexSelector/ComplexSelector.js'
 	},
 	{
 		// Object mode. `<Theme>` picks one of three `colorScheme` styles by `mode`,
@@ -957,14 +985,18 @@ const CASES = [
 			file: 'src/lib/components/switch/switch.markers.stylex.js',
 			upstreamFile: 'Switch/switch.markers.stylex.js',
 			name: 'switchScope'
-		},
+		}
 		// **Object mode only since 0.2.0.** The `size` prop turned every one of
 		// these call sites into a dynamic `[size]` index, so the compiler can no
 		// longer fold any of them and `dist/` keeps them all as objects. The
 		// previous 13-entry `inline` list is gone with the fold — batch 12's rule
 		// (where upstream keeps its styles decides the mode) arriving from the
 		// other direction, a second time this batch after `TreeList.wrapper`.
-		inline: [['styles.statusGap']]
+		//
+		// `styles.statusGap` was the last inline holdout and went the same way at
+		// 0.4.x (#4815's neighbour): the detached `FieldStatus` no longer sits in a
+		// spacer `<div>` of its own, it takes the gap through its `xstyle` prop —
+		// a value crossing a component boundary, which the compiler cannot fold.
 	},
 	{
 		// Both `styles` (chrome + focus ring) and `linkColorStyles` (the per-colour
@@ -1171,18 +1203,25 @@ const CASES = [
 		// Both modes at once, and upstream declares Token's styles inline in the
 		// component file rather than a style module, keeping the group names
 		// `styles`/`sizeStyles`/`colorStyles`, so ours need no rename. Object mode
-		// covers `styles.base`, `styles.interactive`, `styles.disabled` and
-		// `styles.focusVisibleOutline` — they reach `stylex.props` alongside the
-		// dynamic `sizeStyles[size]`/`colorStyles[color]` indices and conditionals,
-		// so the compiler could not fold them and left the objects live in `dist/`.
-		// The whole `sizeStyles` and `colorStyles` groups ride the same runtime
+		// covers `styles.base`, `styles.interactive` and `styles.disabled` — they
+		// reach `stylex.props` alongside the dynamic
+		// `sizeStyles[size]`/`colorStyles[color]` indices and conditionals, so the
+		// compiler could not fold them and left the objects live in `dist/`. The
+		// whole `sizeStyles` and `colorStyles` groups ride the same runtime
 		// `stylex.props`, so both survive as objects too.
 		//
-		// `styles.label`, `styles.labelHidden`, `styles.invisibleButton` and
-		// `styles.removeButton` resolve into literal class strings: `label` and
-		// `label`+`labelHidden` are the two branches of the `!!isLabelHidden << 0`
-		// lookup table, `invisibleButton` the click container's hidden `<button>`,
-		// and `removeButton` the trailing remove (X) button.
+		// `styles.removeButton` joined them at 0.4.x (#4973): the remove button had
+		// no ring at all, and now goes through `focusOutlineProps.focusVisible(...)`
+		// — a runtime call the compiler cannot fold — so `dist/` carries the object
+		// and there is no literal string left to claim inline.
+		// (`styles.focusVisibleOutline` is gone from that list for a different 0.4.x
+		// reason: the interactive branches take the shared `focusOutlineStyles`
+		// instead, so the key no longer exists on either side.)
+		//
+		// `styles.label`, `styles.labelHidden` and `styles.invisibleButton` resolve
+		// into literal class strings: `label` and `label`+`labelHidden` are the two
+		// branches of the `!!isLabelHidden << 0` lookup table, and `invisibleButton`
+		// the click container's hidden `<button>`.
 		//
 		// NOT "each reaches exactly one call site", which this comment claimed until
 		// 0.3.0 — the link-with-remove rework gave `Token` a fourth render branch, so
@@ -1192,12 +1231,7 @@ const CASES = [
 		// emissions collapse and one claim still accounts for both sites.
 		file: 'src/lib/components/token/token.stylex.js',
 		upstreamFile: 'Token/Token.js',
-		inline: [
-			['styles.label'],
-			['styles.label', 'styles.labelHidden'],
-			['styles.invisibleButton'],
-			['styles.removeButton']
-		]
+		inline: [['styles.label'], ['styles.label', 'styles.labelHidden'], ['styles.invisibleButton']]
 	},
 	{
 		// Both modes at once. Upstream declares SelectableCard's styles inline in
@@ -1603,12 +1637,23 @@ const CASES = [
 	},
 	{
 		// Pure inline mode — upstream's `dist/` carries no style object for this
-		// module at all: both call sites are static, so the compiler folded each
-		// into a literal class string. The `left` offsets are per-instance calcs
-		// and stay inline `style` on both sides, so they never reach a class.
+		// module at all: every call site is static, so the compiler folded each into
+		// a literal class string. The `left` offsets are per-instance calcs and stay
+		// inline `style` on both sides, so they never reach a class.
+		//
+		// The `verticalLast` combination is the third site, new at 0.4.1 (#4540):
+		// the terminus segment is clamped by half the `--tree-list-row-gap` lever so
+		// it does not overhang the last row. It reads as static to the compiler even
+		// though the choice is `isLast ? verticalLast : verticalFull`, because
+		// upstream writes the ternary *inside* `stylex.props` — both arms fold, and
+		// both have to be claimed or the leftover check fires.
 		file: 'src/lib/components/tree-list/tree-list-branches.stylex.js',
 		upstreamFile: 'TreeList/TreeListBranches.js',
-		inline: [['styles.container'], ['styles.verticalLine', 'styles.verticalFull']]
+		inline: [
+			['styles.container'],
+			['styles.verticalLine', 'styles.verticalFull'],
+			['styles.verticalLine', 'styles.verticalLast']
+		]
 	},
 	{
 		// Both modes. The row merges a dynamic `densityStyles[density]` with four
@@ -1627,14 +1672,13 @@ const CASES = [
 		file: 'src/lib/components/tree-list/tree-list-item.stylex.js',
 		upstreamFile: 'TreeList/TreeListItem.js',
 		inline: [
-			// `wrapper` folded in 0.2.0 and was an object before it. Nothing about the
-			// declaration changed — dropping `treeItemScope` did it. The `<li>` used to
-			// merge the marker in, and a merge is what kept StyleX from folding the
-			// call site; applied alone, it collapses to a literal string. A second
-			// instance of the batch-12 rule, from the other direction: the mode follows
-			// upstream's call site, so a case can move between modes on a release that
-			// touches no style value at all.
-			['styles.wrapper'],
+			// `wrapper` folded in 0.2.0 — dropping `treeItemScope` did it, with nothing
+			// about the declaration changing — and UNfolded again at 0.4.1, when the
+			// `<li>` went back to merging (`focusOutlineProps.publishFocusVisibleVars`
+			// took the retired marker's place). It is claimed by neither list now;
+			// object mode has it. A third instance of the batch-12 rule, and the
+			// clearest: the mode follows upstream's call site, so a key can move
+			// between modes twice on releases that touch no style value at all.
 			['styles.childGroup'],
 			['styles.treeBranches'],
 			['styles.rowWrapper'],
@@ -1645,9 +1689,13 @@ const CASES = [
 			['styles.startContent'],
 			['styles.endContent'],
 			['styles.chevronContainer'],
-			['styles.chevronButton'],
-			['styles.chevronSvg', 'styles.chevronExpanded'],
-			['styles.chevronSvg', 'styles.chevronCollapsed']
+			['styles.chevronButton']
+			// The two `chevronSvg` combinations left the inline list at 0.4.1 (#4838)
+			// for the same reason `wrapper` did, one step further out: the chevron now
+			// rides an `<Icon xstyle>` rather than being drawn here, so the styles
+			// cross a component boundary and StyleX has no single call site to fold.
+			// `chevronSvg`/`chevronExpanded`/`chevronCollapsed` are objects in
+			// upstream's `dist/` again and object mode covers them.
 		]
 	},
 	{
@@ -1810,42 +1858,57 @@ const CASES = [
 		]
 	},
 	{
-		// Both modes at once — `TextInput`'s shape exactly, one variant wider.
-		// Upstream declares NumberInput's styles inline in the component file rather
-		// than a style module, and keeps the group names `styles`/`sizeStyles`, so
-		// ours need no rename.
+		// Both modes at once. Upstream declares NumberInput's styles inline in the
+		// component file rather than a style module, and keeps the group names
+		// `styles`/`sizeStyles`, so ours need no rename.
 		//
 		// Object mode reaches only what `dist/` still carries: a `styles` object
-		// holding `wrapper` alone, plus all three `sizeStyles` keys. Both ride the
+		// holding `wrapper`, `wrapperWithNumberSteppers` and `incrementIcon`, plus
+		// all three `sizeStyles` keys. The first two and the size keys ride the
 		// wrapper's one runtime `stylex.props`, which merges the shared
 		// `inputWrapperStyles` / `inputStatus*Styles` groups, a dynamic
 		// `sizeStyles[size]` index, `groupStyles.inGroup` and an `xstyle` spread, so
-		// the compiler could fold none of it. Those shared groups are `Field`'s and
-		// `InputGroup`'s published API, checked in their own modules; composing them
-		// here neither re-checks nor double-counts them, since object mode only walks
-		// the objects `dist/` declares.
+		// the compiler could fold none of it; `incrementIcon` survives because it is
+		// handed to `Icon`'s `xstyle` prop, which is a runtime merge in another
+		// component. Those shared groups are `Field`'s and `InputGroup`'s published
+		// API, checked in their own modules; composing them here neither re-checks
+		// nor double-counts them, since object mode only walks the objects `dist/`
+		// declares.
 		//
 		// `styles.wrapper` is only `zIndex: 1` — the declaration
 		// `inputWrapperStyles.base` already makes — so it emits that same class
 		// (`x1vjfegm`) rather than one of its own. Upstream keeps it anyway and so do
 		// we: `dist/` declares the object, and dropping the key would leave object
-		// mode with nothing to compare and trip the empty-case guard.
+		// mode one key short.
 		//
-		// The other five `styles` keys have no object in `dist/` at all. The
-		// `<input>` compiles to a four-entry lookup table keyed by
-		// `!!isDisabled << 1 | !!!isInputValid << 0`, and `units` and `clearButton`
-		// each to a single literal class string — the six inline call sites below.
+		// The other eight `styles` keys have no object in `dist/` at all — and this
+		// is the case worth naming, because the six stepper declarations added by
+		// #4896 look like function styles and are not. Each is applied at exactly one
+		// call site with a statically known combination, so StyleX folded every one
+		// into a literal class string: the `<input>` compiles to a four-entry lookup
+		// table keyed by `!!isDisabled << 1 | !!!isInputValid << 0`, `units` and
+		// `numberSteppers` to one string each, and the two stepper buttons to a
+		// two-entry table apiece (enabled/disabled, with `decrementButton` folded
+		// into the second pair). Ten inline call sites, all listed below — an
+		// `inline:` list, not a skip. `grep -n 'className:'` on the compiled file
+		// counts the fold sites directly and is the check to run before reaching for
+		// a skip.
+		//
 		// Order is load-bearing on the two invalid branches: `inputInvalid` narrows
 		// `color` only, so it *replaces* `input`'s `x1tgivj0` with `xv1l7n4` rather
 		// than joining it, the same merge `TextArea`'s `counterError` relies on.
 		// `inputDisabled` narrows `cursor`, which `input` never sets, so it simply
-		// joins as `x1h6gzvc`.
+		// joins as `x1h6gzvc`. The stepper pairs are the same shape:
+		// `numberStepperButtonDisabled` replaces the button's `color` and
+		// `backgroundImage` and joins its `cursor`.
 		//
-		// `input`, `inputDisabled` and `clearButton` are byte-identical to
-		// `TextInput`'s — upstream restates them rather than sharing — so the same
-		// classes are checked twice over, once against each upstream file. That is
-		// the point: the oracle diffs this module against `NumberInput`'s output, and
-		// a divergence in either copy has to surface against its own counterpart.
+		// `input` and `inputDisabled` are byte-identical to `TextInput`'s — upstream
+		// restates them rather than sharing — so the same classes are checked twice
+		// over, once against each upstream file. That is the point: the oracle diffs
+		// this module against `NumberInput`'s output, and a divergence in either copy
+		// has to surface against its own counterpart. (`clearButton` used to be the
+		// third such twin; #4876 moved the affordance to the shared
+		// `InputClearButton`, so the key and its inline entry are both gone.)
 		file: 'src/lib/components/number-input/number-input.stylex.js',
 		upstreamFile: 'NumberInput/NumberInput.js',
 		inline: [
@@ -1854,7 +1917,11 @@ const CASES = [
 			['styles.input', 'styles.inputDisabled'],
 			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid'],
 			['styles.units'],
-			['styles.clearButton']
+			['styles.numberSteppers'],
+			['styles.numberStepperButton'],
+			['styles.numberStepperButton', 'styles.numberStepperButtonDisabled'],
+			['styles.numberStepperButton', 'styles.decrementButton'],
+			['styles.numberStepperButton', 'styles.decrementButton', 'styles.numberStepperButtonDisabled']
 		]
 	},
 	{
@@ -1909,11 +1976,15 @@ const CASES = [
 		// `color` only, so it *replaces* `input`'s `x1tgivj0` with `xv1l7n4` rather
 		// than joining it, the same merge `NumberInput` relies on.
 		//
-		// `input`, `inputDisabled`, `inputInvalid` and `clearButton` are
-		// byte-identical to `NumberInput`'s and `TextInput`'s — upstream restates
-		// them rather than sharing — so the same classes are checked three times
-		// over, once against each upstream file. That is the point: a divergence in
-		// any copy has to surface against its own counterpart.
+		// `input`, `inputDisabled` and `inputInvalid` are byte-identical to
+		// `NumberInput`'s and `TextInput`'s — upstream restates them rather than
+		// sharing — so the same classes are checked three times over, once against
+		// each upstream file. That is the point: a divergence in any copy has to
+		// surface against its own counterpart.
+		//
+		// `styles.clearButton` was a sixth call site until 0.4.x (#4876) converged
+		// the family's clear buttons on the shared `InputClearButton`. It is gone
+		// from both sides, along with the literal class string it folded to.
 		file: 'src/lib/components/time-input/time-input.stylex.js',
 		upstreamFile: 'TimeInput/TimeInput.js',
 		inline: [
@@ -1921,8 +1992,7 @@ const CASES = [
 			['styles.input'],
 			['styles.input', 'styles.inputInvalid'],
 			['styles.input', 'styles.inputDisabled'],
-			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid'],
-			['styles.clearButton']
+			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid']
 		]
 	},
 	{
@@ -1931,29 +2001,30 @@ const CASES = [
 		// than a style module, and keeps the group names `styles`/`sizeStyles`, so
 		// ours need no rename.
 		//
-		// Object mode reaches `sizeStyles` alone, for the same reason `TimeInput`'s
-		// does: all three keys ride the wrapper's one runtime `stylex.props`, which
-		// merges the shared `inputWrapperStyles` / `inputStatus*Styles` groups, a
-		// dynamic `sizeStyles[size]` index, `groupStyles.inGroup` and an `xstyle`
-		// spread. (`statusIconMap`/`statusIconColorMap` are plain string maps, not
+		// Object mode reaches `sizeStyles` for the same reason `TimeInput`'s does:
+		// all three keys ride the wrapper's one runtime `stylex.props`, which merges
+		// the shared `inputWrapperStyles` / `inputStatus*Styles` groups, a dynamic
+		// `sizeStyles[size]` index, `groupStyles.inGroup` and an `xstyle` spread.
+		// (`statusIconMap`/`statusIconColorMap` are plain string maps, not
 		// `stylex.create` output, so the extractor skips them — their values are
 		// string literals rather than nested style objects.)
 		//
-		// The five `styles` keys are the six inline call sites below. Upstream emits
-		// **seven** literal class strings, but two are byte-identical: the leading
-		// calendar-toggle button and the trailing clear button both compile to bare
-		// `styles.iconButton`, and the extractor keys on the normalised class set,
-		// so they collapse to one entry. Adding a seventh here would fail as an
-		// unmatched combination rather than double-count.
+		// It reaches `styles.iconButton`/`styles.iconButtonDisabled` too, and that
+		// is 0.4.x. Two changes landed on the calendar toggle at once: it composes
+		// the shared `focusOutlineStyles.focusVisible` (an import from another
+		// module, which the compiler cannot fold into a literal), and the trailing
+		// clear button — the *other* site those two keys used to serve — converged
+		// on `InputClearButton` (#4876). So upstream's `dist/` now carries the pair
+		// as objects with no literal string left, and the two `inline` claims this
+		// list used to open with are gone rather than merely renamed.
 		//
+		// The remaining three `styles` keys are the four inline call sites below.
 		// Order is load-bearing on the two invalid branches: `inputInvalid` narrows
 		// `color` only, so it *replaces* `input`'s `x1tgivj0` with `xv1l7n4` rather
 		// than joining it — the same merge `TimeInput` and `NumberInput` rely on.
 		file: 'src/lib/components/date-input/date-input.stylex.js',
 		upstreamFile: 'DateInput/DateInput.js',
 		inline: [
-			['styles.iconButton'],
-			['styles.iconButton', 'styles.iconButtonDisabled'],
 			['styles.input'],
 			['styles.input', 'styles.inputDisabled'],
 			['styles.input', 'styles.inputInvalid'],
@@ -1961,17 +2032,24 @@ const CASES = [
 		]
 	},
 	{
-		// Both modes at once. Object mode reaches `sizeStyles` alone — the same
-		// wrapper-merge story as `DateInput`. (`statusIconMap`/`statusIconColorMap`
-		// are plain string maps, not `stylex.create` output, so the extractor skips
-		// them.)
+		// Both modes at once. Object mode reaches `sizeStyles` — the same
+		// wrapper-merge story as `DateInput` — plus the four keys 0.4.x moved off
+		// the inline list. (`statusIconMap`/`statusIconColorMap` are plain string
+		// maps, not `stylex.create` output, so the extractor skips them.)
 		//
-		// The ten inline call sites are the whole of `styles`. Two things about the
-		// trigger's four are worth naming, because both are merges rather than
-		// accumulations: `triggerPlaceholder` narrows `color` only, so it *replaces*
-		// `trigger`'s `x1tgivj0` with `xv1l7n4`; `triggerDisabled` narrows `cursor`,
-		// which `trigger` already sets to `pointer`, so it likewise replaces rather
-		// than joins. All four combinations are reachable — a disabled field with no
+		// `iconButton`/`iconButtonDisabled` went the way `DateInput`'s did: the
+		// calendar toggle composes the imported `focusOutlineStyles.focusVisible`,
+		// and the clear button that shared the pair converged on `InputClearButton`
+		// (#4876). `presetButton`/`presetButtonActive` moved for the first half of
+		// that reason alone — the preset rail's buttons compose the same shared
+		// ring, so the compiler can no longer fold either branch.
+		//
+		// The six inline call sites are what is left. Two things about the trigger's
+		// four are worth naming, because both are merges rather than accumulations:
+		// `triggerPlaceholder` narrows `color` only, so it *replaces* `trigger`'s
+		// `x1tgivj0` with `xv1l7n4`; `triggerDisabled` narrows `cursor`, which
+		// `trigger` already sets to `pointer`, so it likewise replaces rather than
+		// joins. All four combinations are reachable — a disabled field with no
 		// value shows the placeholder — so none is a correlated-pair artifact.
 		//
 		// This component composes **no** `groupStyles.inGroup`, unlike every other
@@ -1979,16 +2057,12 @@ const CASES = [
 		file: 'src/lib/components/date-range-input/date-range-input.stylex.js',
 		upstreamFile: 'DateRangeInput/DateRangeInput.js',
 		inline: [
-			['styles.iconButton'],
-			['styles.iconButton', 'styles.iconButtonDisabled'],
 			['styles.trigger'],
 			['styles.trigger', 'styles.triggerPlaceholder'],
 			['styles.trigger', 'styles.triggerDisabled'],
 			['styles.trigger', 'styles.triggerPlaceholder', 'styles.triggerDisabled'],
 			['styles.popoverLayout'],
-			['styles.presetSidebar'],
-			['styles.presetButton'],
-			['styles.presetButton', 'styles.presetButtonActive']
+			['styles.presetSidebar']
 		]
 	},
 	{
@@ -2004,7 +2078,12 @@ const CASES = [
 		// upstream declares both, and dropping either would leave a `dist/` key
 		// unaccounted for.
 		//
-		// The remaining five `styles` keys are the seven inline sites below. The
+		// `iconButton`/`iconButtonDisabled` joined them at 0.4.x, for `DateInput`'s
+		// two reasons at once: the calendar toggle composes the imported
+		// `focusOutlineStyles.focusVisible`, and the clear button that shared the
+		// pair converged on `InputClearButton` (#4876).
+		//
+		// The remaining three `styles` keys are the five inline sites below. The
 		// four-entry input table is shared by *both* `<input>`s — the date field and
 		// the time field pass the same three keys in the same order — so upstream
 		// emits four strings rather than eight, and listing the combination once is
@@ -2012,8 +2091,6 @@ const CASES = [
 		file: 'src/lib/components/date-time-input/date-time-input.stylex.js',
 		upstreamFile: 'DateTimeInput/DateTimeInput.js',
 		inline: [
-			['styles.iconButton'],
-			['styles.iconButton', 'styles.iconButtonDisabled'],
 			['styles.icon'],
 			['styles.input'],
 			['styles.input', 'styles.inputDisabled'],
@@ -2148,57 +2225,58 @@ const CASES = [
 		// component file rather than a style module, and keeps the group names
 		// `styles`/`sizeStyles`/`itemSizeStyles`, so ours need no rename.
 		//
-		// Object mode reaches the eleven `styles` keys `dist/` still declares (0.3.0's
-		// ghost trigger adds `triggerGhost` and `triggerGhostDisabled`) plus all
-		// three `sizeStyles` and all three `itemSizeStyles`. Two runtime call sites
-		// are what keep them from folding: the trigger container merges `Field`'s
+		// Object mode reaches the `styles` keys `dist/` still declares (0.3.0's ghost
+		// trigger adds `triggerGhost` and `triggerGhostDisabled`) plus all three
+		// `sizeStyles` and all three `itemSizeStyles`. Two runtime call sites are
+		// what keep most of them from folding: the trigger container merges `Field`'s
 		// `inputWrapperStyles` / `inputStatus*Styles`, a dynamic `sizeStyles[size]`
 		// index, `groupStyles.inGroup` and an `xstyle` spread; the option row merges
 		// a dynamic `itemSizeStyles[size]` index with three conditionals. Those
 		// shared `Field`/`InputGroup` groups are checked in their own modules, so
 		// composing them here neither re-checks nor double-counts them.
 		//
-		// `styles.popover`, `styles.divider` and `styles.sectionDivider` survive as
-		// objects for a third reason: each is handed to another component's `xstyle`
-		// (`<Layer>`'s and `Divider`'s), so the compiler cannot see the call site at
-		// all. `itemSizeStyles.lg` is an empty declaration on both sides, so its
-		// object is `{$$css: true}` and it contributes no pairs — the same shape
-		// `Section`'s empty padding keys have.
+		// `styles.popover`, `styles.divider`, and — new at 0.4.1 — `triggerIcon`,
+		// `triggerIconRotation`, `triggerIconOpen` and `searchRowInput` survive as
+		// objects for a second reason: each is handed to another component's
+		// `xstyle` (`<Layer>`'s, `<Divider>`'s, the chevron `<Icon>`'s, and
+		// `PanelSearchInput`'s), so the compiler cannot see the call site at all.
+		// `itemSizeStyles.lg` is an empty declaration on both sides, so its object is
+		// `{$$css: true}` and it contributes no pairs — the same shape `Section`'s
+		// empty padding keys have.
 		//
-		// The remaining thirteen `styles` keys have no object in `dist/`. Twelve of
-		// them are the inline call sites below; the thirteenth, `itemCheckmark`, is
-		// **dead upstream** — declared and never applied, so `dist/` folds it away
-		// entirely and there is nothing to diff it against in either mode. That is
-		// the reverse of a skip (a skip excuses a key upstream has and we defer), and
-		// it is the same standing `tab-menu.stylex.js`'s identically-named key and
+		// **`statusButton` moved inline → object at 0.4.1**, and the atoms did not
+		// change at all: its one call site now merges `focusOutlineStyles.focusVisible`
+		// from `utils/focusOutline.stylex`, and a style imported across a module
+		// boundary defeats the fold. Only the mode was wrong, which is exactly the
+		// failure an oracle that checked one mode only would have missed.
+		//
+		// The remaining `styles` keys have no object in `dist/` and are the ten
+		// inline call sites below, except `itemCheckmark`, which is **dead
+		// upstream** — declared and never applied, so `dist/` folds it away entirely
+		// and there is nothing to diff it against in either mode. That is the reverse
+		// of a skip (a skip excuses a key upstream has and we defer), and it is the
+		// same standing `tab-menu.stylex.js`'s identically-named key and
 		// `Collapsible`'s `triggerDisabled` already have.
 		//
-		// One merge is load-bearing rather than additive: `triggerIconStatus` sets
-		// `transition: 'none'`, which *replaces* the three `transition*` longhands
-		// `triggerIcon` declares — so the status branches emit a string one class
-		// shorter than the plain one, which is the merge working. The chevron's four
-		// entries are the lookup table keyed by
-		// `!!(!status && isOpen) << 1 | !!status << 0`; all four are listed even
-		// though `open + status` is unreachable at runtime (the two conditions are
-		// correlated and the compiler does not notice), because it folds to a string
-		// of its own that would otherwise read as an unclaimed upstream style — the
-		// same reasoning `FileInput`'s correlated pair records.
+		// The four dropdown entries are one call site's conditional matrix, not four
+		// sites: `dropdownInput` is gated on `variant !== 'ghost'` and `dropdownHidden`
+		// on `!isPositioned`, and the compiler folds every combination. `dropdownInput`
+		// narrows `paddingInline` only, so it *replaces* the base's `x7a5moj` with
+		// `x2hg6jq` rather than joining it — the emitted string stays the same length,
+		// which is the merge working.
 		file: 'src/lib/components/selector/selector.stylex.js',
 		upstreamFile: 'Selector/Selector.js',
 		inline: [
 			['styles.trigger'],
 			['styles.triggerLabel'],
-			['styles.triggerIcon'],
-			['styles.triggerIcon', 'styles.triggerIconOpen'],
-			['styles.triggerIcon', 'styles.triggerIconStatus'],
-			['styles.triggerIcon', 'styles.triggerIconOpen', 'styles.triggerIconStatus'],
-			['styles.clearButton'],
 			['styles.dropdown'],
+			['styles.dropdown', 'styles.dropdownInput'],
 			['styles.dropdown', 'styles.dropdownHidden'],
-			['styles.searchWrapper'],
-			['styles.statusButton'],
+			['styles.dropdown', 'styles.dropdownInput', 'styles.dropdownHidden'],
 			['styles.emptyState'],
-			['styles.itemContent']
+			['styles.sectionHeading'],
+			['styles.itemContent'],
+			['styles.itemMarkColumn']
 		]
 	},
 	{
@@ -2328,27 +2406,28 @@ const CASES = [
 		// (`styles`/`sizeStyles`/`itemSizeStyles`/`selectAllSizeStyles`), so none
 		// needs a rename.
 		//
-		// Object mode reaches eleven `styles` keys (0.3.0's ghost trigger adds
-		// `triggerGhost` and `triggerGhostDisabled`) plus all three size ramps.
-		// `triggerContainer`/`triggerPlaceholder` ride the container's runtime
+		// Object mode reaches the `styles` keys `dist/` still declares (0.3.0's ghost
+		// trigger adds `triggerGhost` and `triggerGhostDisabled`) plus all three size
+		// ramps. `triggerContainer`/`triggerPlaceholder` ride the container's runtime
 		// `stylex.props`, which merges `Field`'s wrapper/status groups, a dynamic
 		// `sizeStyles[size]` index, `groupStyles.inGroup` and an `xstyle` spread;
 		// `item`/`selectAllWrapper`/`itemHighlighted`/`itemDisabled` ride the option
-		// row's, which indexes two size ramps dynamically; and
-		// `popover`/`divider`/`sectionDivider` survive because each is handed to
-		// another component's `xstyle` (`<Layer>`'s and `Divider`'s), so the compiler
-		// cannot see the call site at all — the same reason `Selector`'s do.
+		// row's, which indexes two size ramps dynamically; and `popover`, `divider`
+		// and — new at 0.4.1 — `triggerIcon`, `triggerIconRotation` and
+		// `triggerIconOpen` survive because each is handed to another component's
+		// `xstyle` (`<Layer>`'s, `<Divider>`'s and the chevron `<Icon>`'s), so the
+		// compiler cannot see the call site at all — the same reason `Selector`'s do.
 		//
-		// The remaining sixteen `styles` keys have no object in `dist/` and are the
-		// seventeen inline call sites below (the chevron contributes four and the
-		// item label two). The chevron's entries are the lookup table keyed by
-		// `!!(!status && isOpen) << 1 | !!status << 0`; all four are listed even
-		// though `open + status` is unreachable at runtime, because it folds to a
-		// string of its own that would otherwise read as an unclaimed upstream
-		// style — the same reasoning `Selector`'s identical table records. And as
-		// there, `triggerIconStatus`'s `transition: 'none'` *replaces* the three
-		// `transition*` longhands `triggerIcon` declares, so the status branches emit
-		// a shorter string than a naive union would, which is the merge working.
+		// **`statusButton` moved inline → object at 0.4.1**, with unchanged atoms:
+		// its call site now merges `focusOutlineStyles.focusVisible` across a module
+		// boundary, which defeats the fold. `Selector`'s identical key made the same
+		// move for the same reason.
+		//
+		// The remaining `styles` keys have no object in `dist/` and are the eleven
+		// inline call sites below. The checkbox contributes two: `checkboxDecorativeEnd`
+		// is new at 0.4.1 and adds `marginInlineStart: auto` for
+		// `indicatorPosition="end"`, so the pair is an additive merge rather than a
+		// replacement.
 		file: 'src/lib/components/multi-selector/multi-selector.stylex.js',
 		upstreamFile: 'MultiSelector/MultiSelector.js',
 		inline: [
@@ -2357,17 +2436,11 @@ const CASES = [
 			['styles.triggerText'],
 			['styles.triggerBadges'],
 			['styles.triggerOverflow'],
-			['styles.triggerIcon'],
-			['styles.triggerIcon', 'styles.triggerIconOpen'],
-			['styles.triggerIcon', 'styles.triggerIconStatus'],
-			['styles.triggerIcon', 'styles.triggerIconOpen', 'styles.triggerIconStatus'],
-			['styles.clearButton'],
 			['styles.dropdown'],
-			['styles.searchWrapper'],
-			['styles.statusButton'],
+			['styles.sectionHeading'],
 			['styles.checkboxDecorative'],
+			['styles.checkboxDecorative', 'styles.checkboxDecorativeEnd'],
 			['styles.itemLabel'],
-			['styles.itemLabel', 'styles.itemLabelDisabled'],
 			['styles.emptyState']
 		]
 	},
@@ -2410,14 +2483,14 @@ const CASES = [
 		// branch and dropped both keys from the object — hence two inline entries for
 		// what reads as a single call site. `dynamicStyles.width` compiles to a
 		// function on both sides, which neither mode reaches.
+		//
+		// `headerText` left the inline list at 0.4.x: #4775 dropped the style-only
+		// `<span>` that wrapped a string header and put the inset on
+		// `<Heading xstyle>` instead, so it crosses a component boundary and the
+		// compiler has no element of its own to fold it onto. Object mode has it.
 		file: 'src/lib/components/mobile-nav/mobile-nav.stylex.js',
 		upstreamFile: 'MobileNav/MobileNav.js',
-		inline: [
-			['styles.header'],
-			['styles.header', 'styles.headerNoTitle'],
-			['styles.headerText'],
-			['styles.content']
-		]
+		inline: [['styles.header'], ['styles.header', 'styles.headerNoTitle'], ['styles.content']]
 	},
 	{
 		// Both modes. Only the two root merges survived as objects (each takes an
@@ -2425,6 +2498,11 @@ const CASES = [
 		// folded. `styles.drawerExtraContent` is an **empty** object on both sides —
 		// it compiles to nothing and upstream's `dist/` spreads `...{}`, so the div
 		// carries no class attribute and there is no string to diff.
+		//
+		// `drawerDivider` joined them at 0.4.x: #4775 dropped the style-only
+		// `<div>` that wrapped the rule, so the margin now rides `<Divider xstyle>`
+		// — a component prop the compiler cannot fold, and `dist/` carries the
+		// object.
 		file: 'src/lib/components/top-nav/top-nav.stylex.js',
 		upstreamFile: 'TopNav/TopNav.js',
 		inline: [
@@ -2435,8 +2513,7 @@ const CASES = [
 			['styles.rightSection'],
 			['styles.endContent'],
 			['styles.mobileBarEnd'],
-			['styles.drawerItems'],
-			['styles.drawerDivider']
+			['styles.drawerItems']
 		]
 	},
 	{
@@ -2448,7 +2525,14 @@ const CASES = [
 	},
 	{
 		// Both modes. `root`, `menuTrigger` and `popoverOverlap` stay objects; the
-		// text/logo/chevron wrappers are each one static call site.
+		// text/logo wrappers are each one static call site.
+		//
+		// `chevron`, `chevronGlyph` and `popoverChevron` are objects as of 0.4.x:
+		// #4838 dropped the `<span>` wrappers around the glyph, so all three now
+		// ride an `<Icon xstyle={[…]}>` **array**, which the compiler cannot fold.
+		// `['styles.chevron', 'styles.interactive']` survives as the one folded
+		// chevron site left — the trigger `<button>`, which keeps its own
+		// `stylex.props` because it owns the accessible name and the handlers.
 		//
 		// `styles.popover` is declared upstream and **applied nowhere** — only
 		// `popoverOverlap` reaches a layer. StyleX drops unreferenced keys, so
@@ -2467,37 +2551,35 @@ const CASES = [
 			['styles.heading'],
 			['styles.heading', 'styles.headingLink'],
 			['styles.headingRow'],
-			['styles.chevron'],
 			['styles.chevron', 'styles.interactive'],
 			['styles.headerEndContent'],
 			['styles.popoverContent'],
-			['styles.popoverHeading'],
-			['styles.popoverChevron']
+			['styles.popoverHeading']
 		]
 	},
 	{
-		// Both modes, two groups. `menuOffset` is handed to `usePopover`'s options
-		// *and* the layer, and the two drawer keys ride merges with
-		// `navItemStyles.item`, so those three stayed objects. Everything else is a
-		// lone call site; the trigger and both chevrons carry a boolean conditional,
-		// which the compiler emits as one literal per branch — hence two entries
-		// apiece for what reads as a single site.
+		// Both modes, two groups. `drawerStyles.header` and `drawerStyles.item` ride
+		// merges with `navItemStyles.item`, so they stayed objects. Everything
+		// listed below is a lone folded call site; `drawerStyles.items` carries a
+		// boolean conditional, which the compiler emits as one literal per branch —
+		// hence two entries for what reads as a single site.
+		//
+		// Five more keys became objects at 0.4.x, none of them foldable:
+		// `trigger`/`triggerOpen` and `menuItem` now route through
+		// `focusOutlineProps.focusVisible(...)` (#4654), and `chevron`/`chevronOpen`
+		// plus `drawerStyles.chevron`/`chevronExpanded` ride `<Icon xstyle={[…]}>`
+		// arrays after #4838 dropped their wrapper `<span>`s. `menuOffset` is gone
+		// from the group entirely — #4951 deleted the key and passes the token to
+		// `render`'s `offset` instead of baking a `marginBlockStart`.
 		file: 'src/lib/components/top-nav/top-nav-menu.stylex.js',
 		upstreamFile: 'TopNav/TopNavMenu.js',
 		inline: [
-			['styles.trigger'],
-			['styles.trigger', 'styles.triggerOpen'],
-			['styles.chevron'],
-			['styles.chevron', 'styles.chevronOpen'],
 			['styles.menuContainer'],
-			['styles.menuItem'],
 			['styles.menuItemIcon'],
 			['styles.menuItemContent'],
 			['styles.menuItemTitle'],
 			['styles.menuItemDescription'],
 			['drawerStyles.section'],
-			['drawerStyles.chevron'],
-			['drawerStyles.chevron', 'drawerStyles.chevronExpanded'],
 			['drawerStyles.items'],
 			['drawerStyles.items', 'drawerStyles.itemsExpanded'],
 			['drawerStyles.itemsInner'],
@@ -2507,22 +2589,23 @@ const CASES = [
 		]
 	},
 	{
-		// Both modes. `panelAnimation` (handed to the layer's `xstyle`) and
-		// `drawerHeader` (merged with `navItemStyles.item`) stayed objects.
+		// Both modes. `panelAnimation` and `panelViewportFit` (both handed to the
+		// layer's `xstyle`) and `drawerHeader` (merged with `navItemStyles.item`)
+		// stayed objects.
+		//
+		// Seven more joined them at 0.4.x, none foldable: `trigger`/`triggerOpen`
+		// route through `focusOutlineProps.focusVisible(...)` (#4654);
+		// `chevron`/`chevronOpen` and `drawerChevron`/`drawerChevronExpanded` ride
+		// `<Icon xstyle={[…]}>` arrays after #4838 dropped their wrapper `<span>`s;
+		// and `menuWrapper` is now `<Grid xstyle>` — a component prop — after #4775
+		// dropped the style-only `<div>` around the grid.
 		file: 'src/lib/components/top-nav/top-nav-mega-menu.stylex.js',
 		upstreamFile: 'TopNav/TopNavMegaMenu.js',
 		inline: [
-			['styles.trigger'],
-			['styles.trigger', 'styles.triggerOpen'],
-			['styles.chevron'],
-			['styles.chevron', 'styles.chevronOpen'],
 			['styles.panelContainer'],
 			['styles.panelContent'],
-			['styles.menuWrapper'],
 			['styles.featured'],
 			['styles.drawerSection'],
-			['styles.drawerChevron'],
-			['styles.drawerChevron', 'styles.drawerChevronExpanded'],
 			['styles.drawerItems'],
 			['styles.drawerItems', 'styles.drawerItemsExpanded'],
 			['styles.drawerItemsInner'],
@@ -2530,8 +2613,10 @@ const CASES = [
 		]
 	},
 	{
-		// Both modes. Only `drawerItem` stays an object (it rides a merge with
-		// `navItemStyles.item`); the desktop card and both content columns folded.
+		// Both modes. `drawerItem` stays an object (it rides a merge with
+		// `navItemStyles.item`), and so does `desktop` as of 0.4.x — #4654 routes
+		// the desktop card through `focusOutlineProps.focusVisible(...)`, which the
+		// compiler cannot fold. Both content columns folded.
 		//
 		// `drawerItemDescription` has **no entry of its own on purpose**: it declares
 		// the same four properties as `desktopDescription` in a different order, so
@@ -2542,7 +2627,6 @@ const CASES = [
 		file: 'src/lib/components/top-nav/top-nav-mega-menu-item.stylex.js',
 		upstreamFile: 'TopNav/TopNavMegaMenuItem.js',
 		inline: [
-			['styles.desktop'],
 			['styles.desktopIcon'],
 			['styles.desktopContent'],
 			['styles.desktopTitle'],

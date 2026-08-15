@@ -84,8 +84,11 @@
 	 * over the track.
 	 *
 	 * A mark's height, width and colour are directly themeable via the
-	 * `progressbar-mark` target — e.g. a taller "goal flag" tick that overhangs
-	 * the bar (centred, so the overhang is symmetric):
+	 * `progressbar-mark` target. The target reflects `data-placement` (`"fill"`
+	 * when the mark sits inside the filled area, `"track"` when it is still out on
+	 * the bare track) and `data-variant` (the fill's variant), so a theme can
+	 * style the two cases separately — e.g. a taller "goal flag" tick that
+	 * overhangs the bar (centred, so the overhang is symmetric):
 	 *
 	 * @example
 	 * ```ts
@@ -136,6 +139,13 @@
 	// Marks make no sense without a determinate value, so they are only drawn in
 	// determinate mode. Non-finite mark values are dropped; the rest are clamped
 	// to the track edges, matching the bar's own `clampedValue`.
+	//
+	// Each mark also records whether it lands on the filled part of the bar
+	// (`isOnFill`), which decides its colour: a mark inside the fill reads against
+	// the variant colour, one out on the bare track reads against the track. A
+	// mark exactly at the fill's leading edge counts as on the fill — it is the
+	// "reached the target" moment — except at zero progress, where there is no
+	// fill for it to sit on.
 	const resolvedMarks = $derived(
 		!isIndeterminate && marks
 			? marks
@@ -143,7 +153,12 @@
 					.map((mark) => {
 						const clamped = Math.min(Math.max(0, mark.value), safeMax);
 						const pct = safeMax > 0 ? (clamped / safeMax) * 100 : 0;
-						return { value: mark.value, label: mark.label, pct };
+						return {
+							value: mark.value,
+							label: mark.label,
+							pct,
+							isOnFill: percentage > 0 && pct <= percentage
+						};
 					})
 			: []
 	);
@@ -154,20 +169,28 @@
 	const labelAttrs = $derived(progressBarLabelAttrs(isLabelHidden, isDisabled));
 	const valueLabelAttrs = $derived(progressBarValueLabelAttrs(isDisabled));
 	const fill = $derived(progressBarFillAttrs(fillVariant, isIndeterminate));
-	const markAttrs = progressBarMarkAttrs();
 
 	const theme = $derived(themeProps('progressbar', { variant }));
 	const trackTheme = themeProps('progressbar-track');
 	const fillTheme = $derived(themeProps('progressbar-fill', { variant: fillVariant }));
-	const markTheme = themeProps('progressbar-mark');
 </script>
 
 <!--
 	The tick element. It is both the tooltip's anchor and the pending-branch
 	fallback shown while the lazy tooltip chunk loads, so the tick is always
 	visible and the label attaches once ready.
+
+	`placement` is reflected as `data-placement` (and a class) so a theme can style
+	the two cases separately on the `progressbar-mark` target; `variant` mirrors
+	the fill's variant for the same reason. Both are per-mark, so they are resolved
+	here rather than once in the `<script>`.
 -->
-{#snippet markTick(pct: number)}
+{#snippet markTick(pct: number, isOnFill: boolean)}
+	{@const markTheme = themeProps('progressbar-mark', {
+		variant: fillVariant,
+		placement: isOnFill ? 'fill' : 'track'
+	})}
+	{@const markAttrs = progressBarMarkAttrs(fillVariant, isOnFill, isDisabled)}
 	<!--
 		Focusable and never `aria-hidden`: a mark always stands for something
 		meaningful, and the tab stop is how a keyboard user reveals its label. The
@@ -242,10 +265,10 @@
 		-->
 		{#each resolvedMarks as mark, index (index)}
 			{#await import('./progress-bar-mark-tooltip.svelte')}
-				{@render markTick(mark.pct)}
+				{@render markTick(mark.pct, mark.isOnFill)}
 			{:then { default: ProgressBarMarkTooltip }}
 				<ProgressBarMarkTooltip content={mark.label}>
-					{@render markTick(mark.pct)}
+					{@render markTick(mark.pct, mark.isOnFill)}
 				</ProgressBarMarkTooltip>
 			{/await}
 		{/each}

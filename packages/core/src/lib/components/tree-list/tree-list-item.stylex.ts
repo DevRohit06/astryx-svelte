@@ -58,7 +58,18 @@ const styles = stylex.create({
 		paddingInlineStart: spacingVars['--spacing-2']
 	},
 	rowWrapper: {
-		position: 'relative'
+		position: 'relative',
+		// Inter-row gap. Half the public `--tree-list-row-gap` lever sits above and
+		// half below the row box; because this is PADDING (not margin) it cannot
+		// collapse, so adjacent rows end up a full gap apart — and it rides the
+		// `rowWrapper`, which carries no theme target, so the paintable
+		// `tree-list-item` stays a pure paint seam (layout lives off it). The `<li>`s
+		// stay contiguous — the gap is padding INSIDE each `<li>`, not space between
+		// them — so the per-`<li>` connector guide can still span it and read as a
+		// continuous line (see `tree-list-branches`). The lever's default is a subtle
+		// `--spacing-0-5` (2px, set on the tree-list root); a theme widens or closes
+		// it via the `tree-list` target.
+		paddingBlock: 'calc(var(--tree-list-row-gap, 0px) / 2)'
 	},
 	contentWrapper: {
 		borderRadius: radiusVars['--radius-element'],

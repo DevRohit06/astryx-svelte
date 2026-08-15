@@ -64,7 +64,7 @@
 		mobileNavDialogAttrs,
 		mobileNavDrawerAttrs,
 		mobileNavHeaderAttrs,
-		mobileNavHeaderTextAttrs
+		mobileNavHeaderTextStyle
 	} from './mobile-nav.stylex.js';
 
 	/**
@@ -245,7 +245,6 @@
 	// button. (It still renders the empty `<Heading>`, which is upstream being
 	// internally inconsistent for that input; the class is the part we can match.)
 	const headerAttrs = $derived(mobileNavHeaderAttrs(!!header));
-	const headerTextAttrs = mobileNavHeaderTextAttrs();
 	const contentAttrs = mobileNavContentAttrs();
 </script>
 
@@ -269,9 +268,13 @@
 		<!-- Header — content + close button -->
 		<div class={headerAttrs.class} style={headerAttrs.style}>
 			{#if hasStringHeader}
-				<span class={headerTextAttrs.class} style={headerTextAttrs.style}>
-					<Heading level={2}>{header as string}</Heading>
-				</span>
+				<!--
+					The inset rides the `Heading`'s own `xstyle`, as upstream's
+					`<Heading level={2} xstyle={styles.headerText}>` does (#4775). It used
+					to be a wrapper `<span>` here, which put an element in the drawer
+					header that upstream's DOM does not have.
+				-->
+				<Heading level={2} xstyle={mobileNavHeaderTextStyle}>{header as string}</Heading>
 			{:else if header != null}
 				{@render (header as Snippet)()}
 			{/if}

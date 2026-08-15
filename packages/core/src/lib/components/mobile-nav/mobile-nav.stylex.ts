@@ -189,10 +189,14 @@ export function mobileNavHeaderAttrs(hasHeader: boolean): SvelteStyleAttrs {
 	return sx(styles.header, !hasHeader && styles.headerNoTitle);
 }
 
-/** The `<span>` wrapping a string header's `<Heading level={2}>`. */
-export function mobileNavHeaderTextAttrs(): SvelteStyleAttrs {
-	return sx(styles.headerText);
-}
+/**
+ * The inset on a string header's `<Heading level={2}>`.
+ *
+ * Exported as the bare style rather than as attrs, because it is handed to the
+ * `Heading` as `xstyle` — upstream's `<Heading level={2} xstyle={styles.headerText}>`
+ * — instead of being applied to an element here.
+ */
+export const mobileNavHeaderTextStyle = styles.headerText;
 
 /** The scrollable body below the header. */
 export function mobileNavContentAttrs(): SvelteStyleAttrs {

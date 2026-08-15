@@ -4,13 +4,16 @@ import { render } from 'vitest-browser-svelte';
 import ProgressBar from '$lib/components/progress-bar/progress-bar.svelte';
 
 /**
- * Ported from Astryx's `ProgressBar/ProgressBar.test.tsx` at v0.3.0.
+ * Ported from Astryx's `ProgressBar/ProgressBar.test.tsx` at v0.4.1.
  *
- * **Upstream 45 cases, 45 here.** No case is dropped; the count is the contract.
+ * **Upstream 54 cases, 54 here.** No case is dropped; the count is the contract.
  * The suite is a late addition — `ProgressBar` landed before the case-for-case
- * discipline, and `marks` is what finally brought it.
+ * discipline, and `marks` is what finally brought it. Nine cases arrived with
+ * 0.4.1's mark work (#4970/#4741): eight for the on-fill/on-track colour split
+ * and its `data-placement`/`data-variant` reflection, one for the derived vars
+ * the tick's `width`/`height` now read.
  *
- * Three translations, all following patterns earlier suites set:
+ * Four translations, all following patterns earlier suites set:
  *
  * - **`forwards ref to outer container`** becomes an attachment travelling in
  *   the rest props, which `ProgressBar` spreads onto its root — Svelte has no
@@ -23,6 +26,10 @@ import ProgressBar from '$lib/components/progress-bar/progress-bar.svelte';
  *   the next microtask instead of racing a cold module fetch. Note the barrel
  *   import in `setup-stylex.ts` does *not* pull this module in — it is reachable
  *   only through that dynamic import, which is the point of the split.
+ * - **The two cases that compare two bars side by side unmount the first before
+ *   rendering the second**, having captured its classes. Upstream keeps both
+ *   `container`s live because Testing Library scopes each to its own; the
+ *   `DropdownMenu` parity suite settled this shape here.
  *
  * Two assertions are **scoped tighter than upstream's**, not loosened. Upstream
  * greps the whole injected stylesheet for `translate(-50%, -50%)`; here
@@ -40,6 +47,18 @@ beforeAll(async () => {
 });
 
 const MARK = '.astryx-progressbar-mark';
+
+/**
+ * The StyleX atomic classes on an element, without the stable `astryx-*` theme
+ * classes and the bare variant/placement tokens — so a comparison reflects the
+ * resolved styles, not the reflected props. Upstream's helper.
+ */
+function styleClasses(el: HTMLElement): string {
+	return Array.from(el.classList)
+		.filter((c) => /^x[a-z0-9]+$/.test(c))
+		.sort()
+		.join(' ');
+}
 
 /** Every CSS rule the page has, however it was injected. Upstream's helper. */
 function injectedCss(): string {
@@ -440,6 +459,166 @@ describe('ProgressBar', () => {
 			expect(screen.container.querySelectorAll(MARK)).toHaveLength(0);
 		});
 
+		// Mark colour follows what the mark sits on: inside the filled area it takes
+		// the fill variant's on-colour, out on the bare track it takes the primary
+		// text colour. The choice is reflected as `data-placement` (plus
+		// `data-variant`, mirroring the fill) so themes can target it and tests can
+		// assert it without reading atomic class names.
+		it('marks the ticks inside the filled area as placed on the fill', async () => {
+			const screen = await render(ProgressBar, {
+				props: {
+					value: 60,
+					label: 'Progress',
+					marks: [
+						{ value: 25, label: 'Behind' },
+						{ value: 90, label: 'Ahead' }
+					]
+				}
+			});
+			const marks = screen.container.querySelectorAll<HTMLElement>(MARK);
+			expect(marks[0]).toHaveAttribute('data-placement', 'fill');
+			expect(marks[1]).toHaveAttribute('data-placement', 'track');
+			// Different placements resolve to different colour styles.
+			expect(styleClasses(marks[0])).not.toBe(styleClasses(marks[1]));
+		});
+
+		it('treats a mark exactly at the current value as on the fill', async () => {
+			const screen = await render(ProgressBar, {
+				props: { value: 70, label: 'Progress', marks: [{ value: 70, label: 'Goal' }] }
+			});
+			expect(screen.container.querySelector(MARK)).toHaveAttribute('data-placement', 'fill');
+		});
+
+		it('places every mark on the track at zero progress', async () => {
+			// With no fill drawn, even a mark at 0 sits on the bare track.
+			const screen = await render(ProgressBar, {
+				props: {
+					value: 0,
+					label: 'Progress',
+					marks: [
+						{ value: 0, label: 'Start' },
+						{ value: 50, label: 'Goal' }
+					]
+				}
+			});
+			const marks = screen.container.querySelectorAll<HTMLElement>(MARK);
+			expect(marks[0]).toHaveAttribute('data-placement', 'track');
+			expect(marks[1]).toHaveAttribute('data-placement', 'track');
+			expect(styleClasses(marks[0])).toBe(styleClasses(marks[1]));
+		});
+
+		it('mirrors the fill variant on marks so the on-color matches the bar', async () => {
+			const screen = await render(ProgressBar, {
+				props: {
+					value: 80,
+					variant: 'warning',
+					label: 'Budget used',
+					marks: [
+						{ value: 50, label: 'Half' },
+						{ value: 95, label: 'Cap' }
+					]
+				}
+			});
+			const marks = screen.container.querySelectorAll<HTMLElement>(MARK);
+			expect(marks[0]).toHaveAttribute('data-variant', 'warning');
+			expect(marks[0]).toHaveAttribute('data-placement', 'fill');
+			expect(marks[1]).toHaveAttribute('data-variant', 'warning');
+			expect(marks[1]).toHaveAttribute('data-placement', 'track');
+		});
+
+		it('uses the disabled variant for marks when the bar is disabled', async () => {
+			const screen = await render(ProgressBar, {
+				props: {
+					value: 80,
+					variant: 'error',
+					isDisabled: true,
+					label: 'Canceled',
+					marks: [{ value: 50, label: 'Half' }]
+				}
+			});
+			expect(screen.container.querySelector(MARK)).toHaveAttribute('data-variant', 'disabled');
+		});
+
+		it('keeps one plain foreground on both sides for neutral and disabled bars', async () => {
+			// The neutral/disabled fill is the muted grey — it carries no semantic
+			// weight and has no on-token, so a mark on it takes the same plain
+			// foreground it would have out on the track.
+			for (const props of [{ variant: 'neutral' } as const, { isDisabled: true } as const]) {
+				const screen = await render(ProgressBar, {
+					props: {
+						value: 60,
+						label: 'Progress',
+						...props,
+						marks: [
+							{ value: 20, label: 'On fill' },
+							{ value: 90, label: 'On track' }
+						]
+					}
+				});
+				const marks = screen.container.querySelectorAll<HTMLElement>(MARK);
+				expect(marks[0]).toHaveAttribute('data-placement', 'fill');
+				expect(marks[1]).toHaveAttribute('data-placement', 'track');
+				expect(styleClasses(marks[0])).toBe(styleClasses(marks[1]));
+				screen.unmount();
+			}
+		});
+
+		it("dims a disabled bar's marks below a live one's", async () => {
+			// A disabled bar is deliberately low-emphasis (its label and value text
+			// drop to muted colours), so its marks step down to the secondary
+			// foreground on both sides rather than shouting over the greyed-out bar.
+			// A live neutral bar — same muted grey fill — keeps the full-contrast
+			// primary foreground.
+			const MARKS = [
+				{ value: 20, label: 'On fill' },
+				{ value: 90, label: 'On track' }
+			];
+			const liveScreen = await render(ProgressBar, {
+				props: { value: 60, variant: 'neutral', label: 'A', marks: MARKS }
+			});
+			const live = Array.from(liveScreen.container.querySelectorAll<HTMLElement>(MARK)).map(
+				styleClasses
+			);
+			liveScreen.unmount();
+
+			const offScreen = await render(ProgressBar, {
+				props: { value: 60, isDisabled: true, label: 'B', marks: MARKS }
+			});
+			const off = Array.from(offScreen.container.querySelectorAll<HTMLElement>(MARK)).map(
+				styleClasses
+			);
+
+			expect(off[0]).not.toBe(live[0]);
+			expect(off[1]).not.toBe(live[1]);
+		});
+
+		it('recolors marks per variant when they sit on the fill', async () => {
+			// Two bars at the same progress with different variants give their
+			// on-fill marks different colours (different atomic classes), while their
+			// on-track marks stay the same foreground colour.
+			const MARKS = [
+				{ value: 20, label: 'On fill' },
+				{ value: 90, label: 'On track' }
+			];
+			const accentScreen = await render(ProgressBar, {
+				props: { value: 60, variant: 'accent', label: 'A', marks: MARKS }
+			});
+			const accent = Array.from(accentScreen.container.querySelectorAll<HTMLElement>(MARK)).map(
+				styleClasses
+			);
+			accentScreen.unmount();
+
+			const errorScreen = await render(ProgressBar, {
+				props: { value: 60, variant: 'error', label: 'B', marks: MARKS }
+			});
+			const error = Array.from(errorScreen.container.querySelectorAll<HTMLElement>(MARK)).map(
+				styleClasses
+			);
+
+			expect(accent[0]).not.toBe(error[0]);
+			expect(accent[1]).toBe(error[1]);
+		});
+
 		it('renders every mark as a focusable trigger (label is required, never decorative)', async () => {
 			const screen = await render(ProgressBar, {
 				props: { value: 50, label: 'Progress', marks: [{ value: 80, label: 'Goal' }] }
@@ -541,11 +720,28 @@ describe('ProgressBar', () => {
 			expect(hasDeclarationFor(progressbar, /overflow:\s*hidden/)).toBe(true);
 		});
 
+		it('sizes the mark through the derived vars, so a theme override cannot lose the cascade', async () => {
+			// width/height are declared as `var(--_progressbar-mark-*)` and nothing
+			// else declares those vars, so the value a theme sets on the
+			// `progressbar-mark` target lands even in a consumer whose StyleX is
+			// unlayered and would otherwise outrank `@layer astryx-theme`.
+			const screen = await render(ProgressBar, {
+				props: { value: 50, label: 'Progress', marks: [{ value: 80, label: 'M' }] }
+			});
+			const mark = screen.container.querySelector<HTMLElement>(MARK) as HTMLElement;
+			expect(hasDeclarationFor(mark, /width:\s*var\(--_progressbar-mark-width,\s*2px\)/)).toBe(
+				true
+			);
+			expect(hasDeclarationFor(mark, /height:\s*var\(--_progressbar-mark-height,\s*8px\)/)).toBe(
+				true
+			);
+		});
+
 		it('renders the mark on the stable progressbar-mark target, centered for symmetric overhang', async () => {
 			// The mark's width/height/color are directly overridable via the
-			// `progressbar-mark` theme target (no dedicated CSS vars). It is centred
-			// on the track (translate -50%,-50%) so a themed taller tick overhangs the
-			// bar symmetrically above and below without being clipped.
+			// `progressbar-mark` theme target. It is centred on the track
+			// (translate -50%,-50%) so a themed taller tick overhangs the bar
+			// symmetrically above and below without being clipped.
 			const screen = await render(ProgressBar, {
 				props: { value: 50, label: 'Progress', marks: [{ value: 80, label: 'M' }] }
 			});
