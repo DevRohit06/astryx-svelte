@@ -519,6 +519,48 @@ describe('Timestamp', () => {
 		expect(tsIn(screen.container).getAttribute('aria-label')).toBeNull();
 	});
 
+	// An abbreviation like "PST" or "GMT+2" is an unexpanded abbreviation to a
+	// screen-reader user (WCAG 3.1.4) — the AT-facing aria-label must spell the
+	// timezone out in full, while visible text keeps the compact short form.
+	it('uses the long timezone name in the aria-label (WCAG 3.1.4)', async () => {
+		const oneHourAgo = new Date(Date.now() - 3600 * 1000);
+		const screen = await render(Timestamp, {
+			props: {
+				value: oneHourAgo.getTime() / 1000,
+				format: 'relative',
+				hasTooltip: false,
+				'data-testid': 'ts'
+			}
+		});
+
+		const longTz =
+			new Intl.DateTimeFormat(undefined, { timeZoneName: 'long' })
+				.formatToParts(oneHourAgo)
+				.find((p) => p.type === 'timeZoneName')?.value ?? '';
+		expect(longTz).not.toBe('');
+		expect(tsIn(screen.container).getAttribute('aria-label')).toContain(longTz);
+	});
+
+	it('keeps the short timezone form in visible text when isTimezoneShown', async () => {
+		const date = new Date('2026-03-25T10:00:00Z');
+		const screen = await render(Timestamp, {
+			props: {
+				value: '2026-03-25T10:00:00Z',
+				format: 'time',
+				isTimezoneShown: true,
+				'data-testid': 'ts'
+			}
+		});
+
+		const tzPart = (form: 'short' | 'long') =>
+			new Intl.DateTimeFormat(undefined, { timeZoneName: form })
+				.formatToParts(date)
+				.find((p) => p.type === 'timeZoneName')?.value ?? '';
+		const text = tsIn(screen.container).textContent ?? '';
+		expect(text).toContain(tzPart('short'));
+		expect(text).not.toContain(tzPart('long'));
+	});
+
 	// --- Input handling ---
 
 	it('accepts Unix timestamp in seconds', async () => {
