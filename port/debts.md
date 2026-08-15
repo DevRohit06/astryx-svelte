@@ -1000,13 +1000,13 @@ declaration keeping its name
 Deliberate, but it means a malformed upstream doc breaks the docs
 build rather than degrading it
 
-### Table blocks in the component props tables still render a plain `<table>`
+### Table blocks in reference docs still render a plain `<table>`
 
 - **units:** docs (shell/props-table.svelte)
 - **kind:** unported
 - **retires:** when `props-table.svelte` migrates to `Table`
 
-, and so do the component
+Table blocks in reference docs still render a plain `<table>`, and so do the component
 props tables — but the reason has changed. `Table` is no longer unported: its core landed with
 batch 11, so this is now a _docs-site migration_ rather than a blocked feature, and it is the
 obvious first dogfooding job of the next docs pass. Upstream's own `PropsTablePattern` story is
