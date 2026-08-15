@@ -73,6 +73,8 @@ export type {
 } from './components/chat/chat-context.svelte.js';
 export { useSpeechRecognition } from './components/chat/use-speech-recognition.svelte.js';
 export { useChatDictation } from './components/chat/use-chat-dictation.svelte.js';
+export { default as CheckIndicator } from './components/indicator/check-indicator.svelte';
+export { default as CheckboxIndicator } from './components/indicator/checkbox-indicator.svelte';
 export { default as CheckboxInput } from './components/checkbox-input/checkbox-input.svelte';
 export { default as CheckboxList } from './components/checkbox-list/checkbox-list.svelte';
 export { default as CheckboxListItem } from './components/checkbox-list/checkbox-list-item.svelte';
@@ -207,6 +209,7 @@ export {
 export { default as Popover } from './components/popover/popover.svelte';
 export { default as PopoverLayer } from './components/popover/popover-layer.svelte';
 export { default as ProgressBar } from './components/progress-bar/progress-bar.svelte';
+export { default as RadioIndicator } from './components/indicator/radio-indicator.svelte';
 export { default as RadioList } from './components/radio-list/radio-list.svelte';
 export { default as RadioListItem } from './components/radio-list/radio-list-item.svelte';
 export { default as ResizeHandle } from './components/resizable/resize-handle.svelte';
@@ -477,6 +480,8 @@ export type { ChatDictationButtonProps } from './components/chat/chat-dictation-
 // `CheckboxListContext`/`CheckboxListContextValue` stay module-private, as
 // upstream's `CheckboxList/index.ts` keeps them — unlike `RadioList`'s, which
 // does publish its context.
+export type { CheckIndicatorProps } from './components/indicator/check-indicator.svelte';
+export type { CheckboxIndicatorProps } from './components/indicator/checkbox-indicator.svelte';
 export type { CheckboxInputProps } from './components/checkbox-input/checkbox-input.svelte';
 export type { CheckboxInputSize } from './components/checkbox-input/checkbox-input.stylex.js';
 export type { CheckboxListProps } from './components/checkbox-list/checkbox-list.svelte';
@@ -735,6 +740,7 @@ export type {
 	ProgressBarMark,
 	ProgressBarProps
 } from './components/progress-bar/progress-bar.svelte';
+export type { RadioIndicatorProps } from './components/indicator/radio-indicator.svelte';
 export type { RadioListProps } from './components/radio-list/radio-list.svelte';
 export type { RadioListItemProps } from './components/radio-list/radio-list-item.svelte';
 // Upstream publishes the `RadioListContext` object itself (like `SizeContext`),
@@ -1321,6 +1327,42 @@ export {
 // return type for the hook anywhere, so the interface stays module-public and
 // off the barrel — the `focusableSelector` rule.
 export { useIcon } from './components/icon/use-icon.svelte.js';
+
+// The indicator layer, new at upstream 0.4.0. `useIndicator` is published here
+// rather than from `hooks/index.ts` for the same reason `useIcon` is: upstream
+// publishes it from `Indicator/index.ts`.
+//
+// `UseCoreIndicatorReturn` / `UseAnyIndicatorReturn` have **no upstream
+// counterpart** — upstream's hook returns the component itself, because React
+// re-runs the body when the theme changes. Here the value has to stay live
+// across a `<Theme>` swap, so it comes back on an object with a `current`
+// getter, and the two shapes of that object are named so a consumer can type a
+// variable holding one. Same standing as the other `Use*Return` interfaces this
+// port adds for the identical reason.
+export { defaultIndicators, getIndicator } from './components/indicator/indicator-registry.js';
+export { useIndicator } from './components/indicator/use-indicator.svelte.js';
+export { indicatorScope } from './components/indicator/indicator.markers.stylex.js';
+export type {
+	CoreIndicatorName,
+	IndicatorRegistrySource
+} from './components/indicator/indicator-registry.js';
+export type {
+	UseAnyIndicatorReturn,
+	UseCoreIndicatorReturn
+} from './components/indicator/use-indicator.svelte.js';
+export type {
+	IndicatorComponent,
+	IndicatorFamily,
+	IndicatorFamilyMap,
+	IndicatorMap,
+	IndicatorName,
+	IndicatorNameOfFamily,
+	IndicatorPosition,
+	IndicatorProps,
+	IndicatorRegistry,
+	IndicatorSize,
+	IndicatorState
+} from './components/indicator/types.js';
 export type {
 	ProgressBarFillVariant,
 	ProgressBarVariant,

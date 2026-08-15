@@ -127,6 +127,53 @@ const CASES = [
 		upstreamFile: 'utils/focusOutline.stylex.js'
 	},
 	{
+		// The indicator layer, new at upstream 0.4.0. Three components draw the
+		// stateful control visuals — the checkbox box, the radio circle, the mark
+		// on a chosen option — that CheckboxInput, RadioListItem and the selection
+		// components used to draw themselves.
+		//
+		// Upstream keeps its styles in the component file, so `dist/` folds every
+		// static call site into a literal string and keeps as an object only what
+		// a runtime merge touches. Both modes therefore apply, and the size ramps
+		// are indexed by a `size` prop, which defeats the fold outright.
+		//
+		// `unchecked`/`checked`/`disabled`/`disabledUnchecked` embed
+		// `when.ancestor(':hover', indicatorScope)`. A `defineMarker()`'s class is
+		// derived from its module's path and cannot match upstream's by name, so
+		// those keys diff as **marker-normalised CSS** — the same fallback the
+		// Switch, RadioList and OverlayScrim marker paths already use. The marker
+		// module holds only the marker, so it rides here rather than as a
+		// standalone case that would compare nothing.
+		file: 'src/lib/components/indicator/checkbox-indicator.stylex.js',
+		upstreamFile: 'Indicator/CheckboxIndicator.js',
+		marker: {
+			file: 'src/lib/components/indicator/indicator.markers.stylex.js',
+			upstreamFile: 'Indicator/indicator.markers.stylex.js',
+			name: 'indicatorScope'
+		}
+	},
+	{
+		// Same shape as CheckboxIndicator above, one family down: no partial
+		// state, so no `indeterminateMark` pair, and the chrome is a circle with
+		// an inner dot instead of a box with a tick.
+		file: 'src/lib/components/indicator/radio-indicator.stylex.js',
+		upstreamFile: 'Indicator/RadioIndicator.js',
+		marker: {
+			file: 'src/lib/components/indicator/indicator.markers.stylex.js',
+			upstreamFile: 'Indicator/indicator.markers.stylex.js',
+			name: 'indicatorScope'
+		}
+	},
+	{
+		// The default single-selection mark renders no chrome — it IS the glyph,
+		// an `<Icon>` — so the only styles here are the children slot that stands
+		// where the glyph would and the two foreground colours it carries. No
+		// marker: this indicator reads no ancestor state, because a listbox row
+		// that marks selection takes focus itself.
+		file: 'src/lib/components/indicator/check-indicator.stylex.js',
+		upstreamFile: 'Indicator/CheckIndicator.js'
+	},
+	{
 		file: 'src/lib/components/text/text.stylex.js',
 		upstreamFile: 'Text/text.stylex.js'
 	},

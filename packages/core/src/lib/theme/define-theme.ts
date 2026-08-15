@@ -11,6 +11,7 @@ import { resolveOnMedia, type OnMediaOverrides, type ResolvedOnMedia } from './o
 import { registerTheme } from './theme-registry.js';
 import type { SyntaxThemeDefinition } from './syntax/define-syntax-theme.js';
 import type { IconRegistry } from '../components/icon/icon-registry.js';
+import type { IndicatorRegistry } from '../components/indicator/types.js';
 
 /**
  * Ported from Astryx's `src/theme/defineTheme.ts`, covering the surface the
@@ -114,6 +115,19 @@ export interface ThemeConfig {
 	 * made the last theme mounted win — and upstream removed that at 0.3.0.
 	 */
 	icons?: Partial<IconRegistry>;
+	/**
+	 * Indicator overrides — replaces the components that draw stateful control
+	 * visuals with the theme's own, by name.
+	 *
+	 * Replacement is by indicator name, not per call site, so a single entry
+	 * reaches every component that draws that indicator: mapping `check` to
+	 * `RadioIndicator` gives radio visuals to every single-selection mark in the
+	 * app.
+	 *
+	 * Each entry is checked against its indicator's family, so a replacement
+	 * must accept the states that family passes.
+	 */
+	indicators?: IndicatorRegistry;
 	/** Additions to the defaults for content on a dark surface (`<MediaTheme>`). */
 	onDark?: OnMediaOverrides;
 	/** Additions to the defaults for content on a light surface. Same shape as `onDark`. */
