@@ -67,14 +67,30 @@
 	const actionsAttrs = $derived(emptyStateActionsAttrs(isCompact));
 	const textGroup = emptyStateTextGroupAttrs();
 	const theme = $derived(themeProps('empty-state', { variant: isCompact ? 'compact' : null }));
+	// New at 0.4.x (#4942): the title and description became theme targets in
+	// their own right, so a theme can restyle the copy without reaching through
+	// the container.
+	const titleTheme = $derived(
+		themeProps('empty-state-title', { variant: isCompact ? 'compact' : null })
+	);
+	const descriptionTheme = $derived(
+		themeProps('empty-state-description', { variant: isCompact ? 'compact' : null })
+	);
 </script>
 
+<!--
+	`rest` spreads FIRST, so `role="status"` cannot be clobbered by a caller
+	(#4826). It used to spread last, which made the announcement this component
+	exists for silently overridable by any consumer passing `role`. `class` and
+	`style` still come after, so a caller's own class/style continue to win —
+	upstream's `mergeProps` has the same shape.
+-->
 <div
+	{...rest}
 	{...theme}
 	role="status"
 	class={cx(theme.class, container.class, className)}
 	style={mergeStyle(container.style, styleProp as string | undefined)}
-	{...rest}
 >
 	{#if icon}
 		<div aria-hidden="true">{@render icon()}</div>
@@ -84,7 +100,8 @@
 		     a semantic choice, so the tag moves and the styling does not. -->
 		<svelte:element
 			this={`h${headingLevel}` as const}
-			class={titleAttrs.class}
+			{...titleTheme}
+			class={cx(titleTheme.class, titleAttrs.class)}
 			style={titleAttrs.style}
 		>
 			{title}
@@ -93,7 +110,13 @@
 			<!-- A <div>, never a <p>: the description accepts arbitrary content and
 			     a <p> cannot legally contain block children, which hydrates wrong.
 			     `margin: 0` in the style means it looks the same either way. -->
-			<div class={descriptionAttrs.class} style={descriptionAttrs.style}>{description}</div>
+			<div
+				{...descriptionTheme}
+				class={cx(descriptionTheme.class, descriptionAttrs.class)}
+				style={descriptionAttrs.style}
+			>
+				{description}
+			</div>
 		{/if}
 	</div>
 	{#if actions}

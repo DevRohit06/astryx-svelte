@@ -271,6 +271,11 @@
 	const selectableItems = $derived(buildSelectableItems(optimisticResults.current));
 
 	function handleClose(): void {
+		// Invalidate any in-flight search. Most sources don't implement cancel(),
+		// and a response that resolves after close would still pass runSearch's
+		// version check and re-commit the stale query/results into the closed
+		// palette (visible as a ghost query on reopen while bootstrap is pending).
+		searchVersion++;
 		// Reset both committed and optimistic search on close
 		search = '';
 		searchResults = [];

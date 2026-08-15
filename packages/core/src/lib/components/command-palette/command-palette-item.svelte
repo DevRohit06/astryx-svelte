@@ -58,6 +58,12 @@
 		xstyle,
 		class: className,
 		style: styleProp,
+		// Destructured out of `rest` so the row's own handlers can COMPOSE with a
+		// consumer's rather than shadow them (#4725). Spread into the element, an
+		// attribute handler declared after `{...rest}` silently wins, where React
+		// ran both — so a caller's `onclick` was being dropped on the floor.
+		onclick: onclickProp,
+		onmouseenter: onmouseenterProp,
 		...rest
 	}: CommandPaletteItemProps = $props();
 
@@ -104,7 +110,8 @@
 		}
 	});
 
-	function handleClick(): void {
+	function handleClick(event: MouseEvent): void {
+		onclickProp?.(event as Parameters<NonNullable<typeof onclickProp>>[0]);
 		if (isDisabled) {
 			return;
 		}
@@ -115,7 +122,8 @@
 		}
 	}
 
-	function handleMouseEnter(): void {
+	function handleMouseEnter(event: MouseEvent): void {
+		onmouseenterProp?.(event as Parameters<NonNullable<typeof onmouseenterProp>>[0]);
 		if (isDisabled || !ctx || itemIndex < 0) {
 			return;
 		}
