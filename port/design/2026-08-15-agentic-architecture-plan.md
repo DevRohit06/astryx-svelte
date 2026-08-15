@@ -330,7 +330,38 @@ echo "debts:  $(grep -c '^- \[[ x]\]' port/debts.md)"
 Expected: `242` and `129`, summing to 371. **If they do not sum to 371, stop** — an entry has been
 dropped, and nothing else in this task may proceed until the sum is right.
 
-- [ ] **Step 3: Convert each entry to a heading with a head**
+- [ ] **Step 3: Verify each of the 129 is still true — most are not**
+
+This port compares itself against upstream mechanically and continuously, so a debt written six
+batches ago has usually retired itself without anyone striking it out. The section is a write-only
+log. Three mechanical facts settle most of it before you read a word of prose:
+
+```bash
+# The class oracle's deferral list — every "published dist lags source" entry ever written
+grep -n "ABSENT_UPSTREAM = " packages/core/scripts/compare-upstream-classes.mjs   # => []
+# Components ported
+ls -d packages/core/src/lib/components/*/ | wc -l
+# Docs blocks still pending
+pnpm -F docs generate 2>&1 | grep -i pending
+```
+
+The skip list is **empty**. Therefore **every entry whose debt is a deferred oracle verification is
+retired** — there is nothing left deferred. Likewise every entry reading "unblock when their
+component lands" or "deferred until X is ported", because the component set is complete.
+
+For each of the 129, decide: **is this still true of the tree in front of you?** Check the named
+component, module or file. An entry survives only if you can point at the code that still diverges.
+
+- **Survives** — gets a head and stays in `port/debts.md`.
+- **Retired** — moves to `port/ledger/_inbox.md` under `## Retired — <original group>`, with one
+  added line naming what retired it ("the skip list is empty", "`Chat` landed in batch 16",
+  "0 pending blocks"). Never delete one; a retired debt is history and Task 3 files it.
+
+Do not carry an entry forward because it is plausible. The point of this pass is that the surviving
+list is short enough to be read, and true enough to be trusted. Report the survivor count — do not
+predict it, and do not aim for a target.
+
+- [ ] **Step 3b: Convert each surviving entry to a heading with a head**
 
 Each debt is currently a `- [ ] **<title>.** <prose>` bullet. Convert every one to:
 
@@ -383,6 +414,16 @@ process.exit(bad === 0 ? 0 : 1);
 ```
 
 Expected: `<N> entries, 0 incomplete`, exit 0.
+
+Then re-reconcile, because Step 3 moved the retired entries across:
+
+```bash
+echo "debts:  $(grep -c '^### ' port/debts.md)"
+echo "inbox:  $(grep -c '^- \[[ x]\]' port/ledger/_inbox.md)"
+```
+
+The two must still sum to **371**. The split will no longer be 129/242 — it moved by however many
+entries Step 3 retired, and that is the number this task exists to discover.
 
 - [ ] **Step 5: Cut the section out of `todo.md` and leave a pointer**
 
