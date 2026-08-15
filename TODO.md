@@ -6398,6 +6398,15 @@ _Locale gaps in upstream's own docs, recorded because the docs site renders them
       one:** make a truncated run exit non-zero and say so (the reporting is the dangerous half),
       then split the projects across instances. Until then, never run the suite concurrently with
       anything else, and treat any full-run number produced under contention as unmeasured.
+      **Partly addressed**: `run-client-tests.mjs` now runs its chunks concurrently
+      (`CLIENT_CHUNK_CONCURRENCY`, default `max(2, min(4, cpus - 1))`). This is not the same thing
+      as the contention hazard above and does not reopen it — the danger there is _two runs sharing
+      one browser_, where this gives every chunk its own process, browser and Vite server, which
+      was already true and was only ever run serially. The reporting half of the debt was closed
+      earlier by the files-run-vs-files-on-disk reconciliation, which a concurrent run does not
+      weaken: it is a sum, and a chunk that collects nothing still subtracts from it. What remains
+      open is the real fix — one run that survives all 163 files, so cross-chunk state leakage is
+      exercised again.
 
 **Batch 11 — upstream 0.4.1 port findings:**
 

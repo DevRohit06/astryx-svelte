@@ -35,6 +35,7 @@
  */
 
 import * as fs from 'node:fs';
+import * as os from 'node:os';
 import * as path from 'node:path';
 import { spawn } from 'node:child_process';
 import { createRequire } from 'node:module';
@@ -67,6 +68,33 @@ const SIZE = Number(process.env.CLIENT_CHUNK_SIZE ?? 12);
  * pass — the same 12 files passed on the run before and the run after.
  */
 const RETRIES = Number(process.env.CLIENT_CHUNK_RETRIES ?? 2);
+
+/**
+ * How many chunks run at once.
+ *
+ * Chunks were already independent by construction — each is a fresh process
+ * with its own browser and its own Vite server, which is the whole reason the
+ * chunking exists — so running several at a time needs no isolation work. It
+ * was sequential only because it was written that way.
+ *
+ * The default is derived from the host rather than fixed, and capped at 4. The
+ * binding constraint is memory, not cores: a chunk is one headless Chromium
+ * plus one Vite dev server, ~1 GB together, and the default GitHub Codespace is
+ * **2 cores / 8 GB**. `cpus - 1` leaves a core for the parent and whatever else
+ * shares the box; the floor of 2 is what makes a 2-core Codespace faster than
+ * it is today rather than identical to it; the cap of 4 keeps peak memory near
+ * 4 GB so an 8 GB machine is not swapping. On a 16-core runner more would be
+ * possible, but a chunk that dies from CPU starvation costs a retry and a
+ * confusing log, and the wall-clock difference past 4 is small next to that.
+ *
+ * `CLIENT_CHUNK_CONCURRENCY=1` restores the old strictly-serial behaviour,
+ * which is what to reach for when bisecting a crash — interleaved output makes
+ * that harder, and serial output is streamed live where concurrent output is
+ * buffered per chunk.
+ */
+const CONCURRENCY = Number(
+	process.env.CLIENT_CHUNK_CONCURRENCY ?? Math.max(2, Math.min(4, os.cpus().length - 1))
+);
 
 /**
  * Vitest's entry resolved as a JS file and run through `process.execPath`,
@@ -116,20 +144,28 @@ const retried = [];
  * option and is the correct one here, because it fails *loudly*: a summary that
  * stops matching makes the chunk count as failed rather than as zero.
  *
+ * Streaming is conditional on running serially. Interleaving several chunks'
+ * live output would produce a log no one can read and, worse, one where a
+ * failure cannot be attributed to a chunk — so concurrent runs capture only and
+ * the caller prints each chunk's output as one block when it finishes. That
+ * still keeps a CI log alive: a block lands every time a chunk completes, which
+ * is the property the streaming was there for.
+ *
  * @param {string[]} args
+ * @param {boolean} stream
  * @returns {Promise<{code: number | null, output: string}>}
  */
-function runChunk(args) {
+function runChunk(args, stream) {
 	return new Promise((resolve) => {
 		const child = spawn(process.execPath, args, { cwd: CORE });
 		let output = '';
 		child.stdout.on('data', (data) => {
 			output += data;
-			process.stdout.write(data);
+			if (stream) process.stdout.write(data);
 		});
 		child.stderr.on('data', (data) => {
 			output += data;
-			process.stderr.write(data);
+			if (stream) process.stderr.write(data);
 		});
 		child.on('close', (code) => resolve({ code, output }));
 	});
@@ -145,22 +181,39 @@ function runChunk(args) {
 const ANSI = new RegExp(`${String.fromCharCode(27)}\\[[0-9;]*m`, 'g');
 const stripAnsi = (text) => text.replace(ANSI, '');
 
-for (const [index, chunk] of chunks.entries()) {
+const serial = CONCURRENCY <= 1;
+
+/**
+ * Run one chunk to a verdict, retries included. Returns rather than mutating
+ * the tallies, so the caller can fold results in **chunk order** however they
+ * finished — a concurrent run completes out of order, and a failure list whose
+ * order changes between runs is a worse log than a slower one.
+ *
+ * @param {number} index
+ * @param {string[]} chunk
+ */
+async function settleChunk(index, chunk) {
 	const label = `chunk ${index + 1}/${chunks.length}`;
-	console.log(`\n──────── ${label} ────────`);
-
 	const args = [vitestBin, '--run', '--project=client', ...chunk, ...process.argv.slice(2)];
+	/** @type {string[]} */
+	const retries = [];
+	let banner = `\n──────── ${label} ────────\n`;
 
-	let code, plain, fileLine, caseLine;
+	if (serial) process.stdout.write(banner);
+
+	let code, plain, fileLine, caseLine, output;
 
 	for (let attempt = 0; attempt <= RETRIES; attempt++) {
 		if (attempt > 0) {
-			console.log(`\n  ${label} lost its browser, not a case — retry ${attempt} of ${RETRIES}.\n`);
-			retried.push(`${label} (×${attempt})`);
+			const note = `\n  ${label} lost its browser, not a case — retry ${attempt} of ${RETRIES}.\n\n`;
+			if (serial) process.stdout.write(note);
+			else banner += note;
+			retries.push(`${label} (×${attempt})`);
 		}
 
-		const result = await runChunk(args);
+		const result = await runChunk(args, serial);
 		code = result.code;
+		output = result.output;
 		plain = stripAnsi(result.output);
 		fileLine = plain.match(/Test Files\s+(\d+) passed\s+\((\d+)\)/);
 		caseLine = plain.match(/Tests\s+(\d+) passed\s+\((\d+)\)/);
@@ -171,15 +224,59 @@ for (const [index, chunk] of chunks.entries()) {
 		if (ok || !isInfrastructureFailure(plain)) break;
 	}
 
-	if (code !== 0 || !fileLine || !caseLine) {
-		failed.push({ label, chunk, code });
-		console.log(`  ${label} FAILED (exit ${code})`);
-		continue;
-	}
+	const ok = code === 0 && fileLine && caseLine;
+	const verdict = ok
+		? `  ${label} ok — ${fileLine[1]} files, ${caseLine[1]} cases\n`
+		: `  ${label} FAILED (exit ${code})\n`;
 
-	ranFiles += Number(fileLine[1]);
-	ranCases += Number(caseLine[1]);
-	console.log(`  ${label} ok — ${fileLine[1]} files, ${caseLine[1]} cases`);
+	// Concurrent: the whole chunk lands as one block now that it is finished, so
+	// its output is contiguous and attributable. Serial already streamed it.
+	process.stdout.write(serial ? verdict : banner + output + verdict);
+
+	return {
+		label,
+		chunk,
+		code,
+		ok,
+		retries,
+		files: ok ? Number(fileLine[1]) : 0,
+		cases: ok ? Number(caseLine[1]) : 0
+	};
+}
+
+/**
+ * A fixed pool of `CONCURRENCY` workers pulling from a shared cursor, rather
+ * than `Promise.all` over slices: chunks do not take equal time (a chunk of
+ * heavy suites can run twice as long as a light one), and slicing would leave
+ * workers idle waiting for the slowest slice to drain.
+ */
+const results = new Array(chunks.length);
+let cursor = 0;
+
+async function worker() {
+	for (;;) {
+		const index = cursor++;
+		if (index >= chunks.length) return;
+		results[index] = await settleChunk(index, chunks[index]);
+	}
+}
+
+console.log(
+	serial
+		? '  running chunks serially (CLIENT_CHUNK_CONCURRENCY=1)\n'
+		: `  running up to ${CONCURRENCY} chunks at a time on ${os.cpus().length} core(s)\n`
+);
+
+await Promise.all(Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, worker));
+
+for (const result of results) {
+	if (result.ok) {
+		ranFiles += result.files;
+		ranCases += result.cases;
+	} else {
+		failed.push({ label: result.label, chunk: result.chunk, code: result.code });
+	}
+	retried.push(...result.retries);
 }
 
 if (failed.length > 0) {
