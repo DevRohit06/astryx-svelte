@@ -55,7 +55,7 @@ fail the build:
 | ----------------- | ------------------------------------------------------------------ | ---------------- |
 | Component classes | 1,528 style keys + 615 inline call sites match upstream's          | **0 mismatches** |
 | Stylesheet        | 1,463 atomic classes shared with upstream's published `astryx.css` | **0 differing**  |
-| Theme tokens      | 2,418 declarations across the seven ported themes                  | **0 mismatches** |
+| Theme tokens      | 2,418 declarations across the eight ported themes                  | **0 mismatches** |
 
 It also means the limits are known rather than hoped for. The class oracle cannot see inside a
 `stylex.create` function style, so the stylesheet oracle exists to cover them — and found a real RTL
@@ -70,9 +70,10 @@ bug the day it landed. [`CHANGELOG.md`](CHANGELOG.md) names every limitation in 
 | [`@astryx-svelte/theme-*`](packages/themes) | Eight theme packages, `neutral` being the default Astryx look              |
 | [`docs`](docs)                              | The documentation site, built out of the same docs the CLI serves          |
 
-Ten packages ship together at **`0.3.1`**. The number is the Astryx release they port, not a count
-of this port's own history — so `0.3.1` means "at parity with Astryx 0.3.0, plus changes upstream has
-no counterpart for". `docs` is the eleventh workspace package and is not published.
+Ten packages ship together at **`0.4.1`**. The number is the Astryx release they port, not a count
+of this port's own history — so `0.4.1` means "at parity with Astryx 0.4.1, plus changes upstream has
+no counterpart for" (see [`CHANGELOG.md`](CHANGELOG.md) for what a version collision does to that
+scheme). `docs` is the eleventh workspace package and is not published.
 
 ## The parity rule
 

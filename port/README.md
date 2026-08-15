@@ -21,4 +21,6 @@ from there.
 - **How a component was built** — the current batch's `ledger/` entry.
 - **A rule that constrains future work** — `CLAUDE.md` or the relevant `.claude/agents/*.md`.
   The ledger keeps only a pointer. This is the promotion rule, and `close-batch` enforces it.
-- **What to do next** — `todo.md`, and keep it under 150 lines.
+- **What to do next** — `todo.md`. Keep it a readable backlog — cut what's landed on sight, but
+  never cut open work just to hit a line count; a shorter file that hides a still-open item is
+  worse than a longer one that doesn't.
