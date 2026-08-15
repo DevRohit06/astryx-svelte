@@ -184,15 +184,38 @@ export function expandColorScale(config: ColorScaleConfig): ColorScaleTokens {
 	const textSecondaryLightTone = isHigh ? 20 : 30;
 	const textSecondaryDarkTone = isHigh ? 80 : 70;
 
+	// Borders track contrast the same way text does: high contrast pulls the
+	// emphasized border tone toward mid-scale (stronger against both the near-
+	// white light surface and the near-black dark surface) and thickens the
+	// otherwise-decorative subtle hairline by doubling its alpha, so structural
+	// boundaries stay perceivable for users who opt into high contrast.
+	const borderSubtleAlpha = isHigh ? 0.2 : 0.1;
+
 	// Emphasized borders outline form controls (CheckboxInput, Selector), so they
 	// are non-text UI boundaries under WCAG 1.4.11 and must reach 3:1 against the
-	// surface they sit on. The preferred tones (70 light / 30 dark) land around
-	// 2.2:1 / 1.8:1, so bump the tone toward the opposing extreme until the ratio
-	// passes. Text tones need no such loop: their spacing guarantees >= 4.5:1 for
-	// any hue/chroma (see file header).
+	// surface they sit on. High contrast starts at a more aggressive tone (50 vs
+	// 70/30), guaranteeing a stronger result; standard contrast starts at 70/30
+	// and walks toward mid-scale only as far as needed. Text tones need no such
+	// loop: their spacing guarantees >= 4.5:1 for any hue/chroma (see file header).
+	const borderEmphasizedStartLight = isHigh ? 50 : 70;
+	const borderEmphasizedStartDark = isHigh ? 50 : 30;
 	const borderEmphasized = ld(
-		ensureContrastTone(seedHue, neutralVariantChroma, 70, -1, N[99], NON_TEXT_MIN_CONTRAST),
-		ensureContrastTone(seedHue, neutralVariantChroma, 30, 1, N[10], NON_TEXT_MIN_CONTRAST)
+		ensureContrastTone(
+			seedHue,
+			neutralVariantChroma,
+			borderEmphasizedStartLight,
+			-1,
+			N[99],
+			NON_TEXT_MIN_CONTRAST
+		),
+		ensureContrastTone(
+			seedHue,
+			neutralVariantChroma,
+			borderEmphasizedStartDark,
+			1,
+			N[10],
+			NON_TEXT_MIN_CONTRAST
+		)
 	);
 
 	return {
@@ -239,8 +262,12 @@ export function expandColorScale(config: ColorScaleConfig): ColorScaleTokens {
 		'--color-background-inverted': ld(N[10], N[99]),
 
 		// Border
-		// Decorative hairline (~1.1:1 by design) — not a WCAG 1.4.11 boundary.
-		'--color-border': ld(hexWithAlpha(N[10], 0.1), hexWithAlpha(N[95], 0.1)),
+		// Decorative hairline — not a WCAG 1.4.11 boundary. High contrast
+		// doubles the alpha so structural boundaries stay perceivable.
+		'--color-border': ld(
+			hexWithAlpha(N[10], borderSubtleAlpha),
+			hexWithAlpha(N[95], borderSubtleAlpha)
+		),
 		'--color-border-emphasized': borderEmphasized,
 
 		// Effects

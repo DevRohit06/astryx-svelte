@@ -26,6 +26,7 @@
 	import Button from '../button/button.svelte';
 	import Icon from '../icon/icon.svelte';
 	import { cx, mergeStyle } from '../../internal/sx.js';
+	import { themeProps } from '../../internal/theme-props.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import {
 		chatDictationBarAttrs,
@@ -81,6 +82,8 @@
 
 	const sizeConfig = $derived(SIZE_CONFIG[size]);
 
+	// Constant — the target takes no visual props, so there is nothing to track.
+	const theme = themeProps('chat-dictation-button');
 	const wrapper = $derived(chatDictationButtonWrapperAttrs(xstyle));
 	const barsContainer = $derived(chatDictationBarsContainerAttrs());
 	const bar = $derived(chatDictationBarAttrs());
@@ -99,7 +102,8 @@
 {#if !isHiddenWhenUnsupported || dictation.isSupported}
 	<span
 		{...rest}
-		class={cx(wrapper.class, className)}
+		{...theme}
+		class={cx(theme.class, wrapper.class, className)}
 		style={mergeStyle(wrapper.style, styleProp as string | undefined)}
 	>
 		{#if dictation.isListening}

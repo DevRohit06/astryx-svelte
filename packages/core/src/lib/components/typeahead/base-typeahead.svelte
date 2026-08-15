@@ -119,6 +119,9 @@
 <script lang="ts" generics="T extends SearchableItem">
 	import { getKey } from '../../utils/get-key.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
+	// Imported from the module, not the barrel: upstream keeps `isImeKeyEvent`
+	// out of `hooks/index.ts` too, and its consumers reach it directly.
+	import { isImeKeyEvent } from '../../hooks/use-focus-trap.svelte.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import Icon from '../icon/icon.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';
@@ -436,6 +439,17 @@
 	function handleKeyDown(e: KeyboardEvent): void {
 		externalOnKeyDown?.(e);
 		if (e.defaultPrevented) {
+			return;
+		}
+
+		// An IME candidate window uses Enter to commit the composition and
+		// Escape/ArrowUp/ArrowDown/Home/End to navigate its own candidates.
+		// Without this guard, a composing Enter both fires handleSelect AND
+		// clears the input via handleSelect's setQuery(''), so the IME's
+		// subsequent compositionend then writes the still-pending syllable
+		// into the freshly-cleared field -- producing a second, spurious
+		// selection on the next real Enter.
+		if (isImeKeyEvent(e)) {
 			return;
 		}
 
