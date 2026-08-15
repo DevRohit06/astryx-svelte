@@ -31,15 +31,50 @@ const styles = stylex.create({
 	// Fixed positioning mode
 	fixed: {
 		position: 'fixed'
-	}
+	},
+	// Clearance from the anchor. Set on BOTH edges of the placement axis, not
+	// just the one facing the anchor: `position-try-fallbacks` can flip the
+	// layer to the opposite side at paint time, and a single-edge margin then
+	// lands on the far side and the gap vanishes (#4803).
+	offsetBlock: (offset: string) => ({
+		marginBlockStart: offset,
+		marginBlockEnd: offset
+	}),
+	offsetInline: (offset: string) => ({
+		marginInlineStart: offset,
+		marginInlineEnd: offset
+	})
 });
+
+/** Upstream's `toCssLength` — a bare number is px. */
+function toCssLength(value: number | string): string {
+	return typeof value === 'number' ? `${value}px` : value;
+}
 
 /**
  * Resolve the popover container's classes.
  *
  * Reproduces both of upstream's `stylex.props` calls: `renderContext` combines
  * `base` with the caller's `xstyle`, `renderFixed` puts `fixed` between them.
+ *
+ * `offset` composes between the two, as upstream does at `useLayer.tsx:589-596`:
+ * anchor mode only (custom mode owns its own insets), and the axis follows the
+ * placement — block for `above`/`below`, inline for `start`/`end`. Both are
+ * `stylex.create` **function styles**, so the class oracle cannot see them; the
+ * CSS oracle is what proves this one.
  */
-export function layerAttrs(isFixed: boolean, xstyle?: StyleArg): SvelteStyleAttrs {
-	return sx(styles.base, isFixed && styles.fixed, xstyle);
+export function layerAttrs(
+	isFixed: boolean,
+	xstyle?: StyleArg,
+	offset?: number | string,
+	positioning: 'anchor' | 'custom' = 'anchor',
+	placement: 'above' | 'below' | 'start' | 'end' = 'above'
+): SvelteStyleAttrs {
+	const offsetStyle =
+		positioning === 'anchor' && offset
+			? placement === 'above' || placement === 'below'
+				? styles.offsetBlock(toCssLength(offset))
+				: styles.offsetInline(toCssLength(offset))
+			: null;
+	return sx(styles.base, isFixed && styles.fixed, offsetStyle, xstyle);
 }

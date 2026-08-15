@@ -31,10 +31,18 @@ const tokenValueStyles = stylex.create({
 export const popoverLayerStyles = stylex.create({
 	layer: {
 		width: 'anchor-size(width)',
-		minWidth: 400,
-		marginTop: spacingVars['--spacing-1']
+		minWidth: 400
 	}
 });
+
+/**
+ * The clearance upstream passes as `popover.render(…, {offset})` at 0.4.x
+ * (#4951). It used to be a `marginTop` baked into `layer` above, which a
+ * `position-try-fallbacks` flip would strand on the wrong edge. Exported from
+ * here rather than read in the markup, so the token import stays out of the
+ * `.svelte` file.
+ */
+export const powerSearchPopoverOffset = spacingVars['--spacing-1'];
 
 const resultCountStyles = stylex.create({
 	text: {

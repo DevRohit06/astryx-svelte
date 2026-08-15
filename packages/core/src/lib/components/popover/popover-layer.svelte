@@ -17,6 +17,13 @@
 		/** Alignment along the placement axis. Upstream's `render` prop. */
 		alignment?: LayerAlignment;
 		/**
+		 * Clearance from the trigger, as a CSS length. Upstream's `render` prop,
+		 * new at 0.4.x (#4951) — surfaces that used to bake a `marginBlockStart`
+		 * into their own popover style pass this instead, so the gap survives a
+		 * `position-try-fallbacks` flip.
+		 */
+		offset?: number | string;
+		/**
 		 * StyleX styles for the layer's positioned container — upstream's
 		 * `render` prop `xstyle` (the `[popoverXstyle, gap, layerAnimations]`
 		 * array `Popover` builds). Distinct from the hook's `xstyle` option,
@@ -38,6 +45,9 @@
 </script>
 
 <script lang="ts">
+	import { cx } from '../../internal/sx.js';
+	import { stableClassName } from '../../internal/naming.js';
+	import { themeProps } from '../../internal/theme-props.js';
 	import Button from '../button/button.svelte';
 	import Layer from '../layer/layer.svelte';
 	import {
@@ -67,6 +77,7 @@
 		popover,
 		placement,
 		alignment,
+		offset,
 		xstyle,
 		style: styleProp,
 		children
@@ -74,18 +85,31 @@
 
 	// contentWrapper + (hasSurface && surface) + the hook's option xstyle.
 	const contentWrapper = $derived(popoverContentWrapperAttrs(popover.hasSurface, popover.xstyle));
+
+	// The surface is created here, not by the calling component, so a component
+	// that wants its popup themeable cannot reach it on its own — a target it
+	// renders itself would land on the content INSIDE this box. `popover-surface`
+	// is the shared class every popup carries; `surfaceTarget` names this one.
+	const surfaceTheme = $derived(themeProps('popover-surface'));
+	const surfaceClass = $derived(
+		cx(
+			surfaceTheme.class,
+			popover.surfaceTarget != null ? stableClassName(popover.surfaceTarget) : undefined,
+			contentWrapper.class
+		)
+	);
 	const closeWrapper = popoverCloseButtonWrapperAttrs();
 
 	const isDialog = $derived(popover.role === 'dialog');
 </script>
 
-<Layer layer={popover.layer} {placement} {alignment} {xstyle} style={styleProp}>
+<Layer layer={popover.layer} {placement} {alignment} {offset} {xstyle} style={styleProp}>
 	<div
 		{@attach popover.attachContent}
 		role={isDialog ? 'dialog' : undefined}
 		aria-modal={isDialog && popover.isModal ? true : undefined}
 		aria-label={isDialog ? popover.dialogLabel : undefined}
-		class={contentWrapper.class}
+		class={surfaceClass}
 		style={contentWrapper.style}
 	>
 		{@render children()}

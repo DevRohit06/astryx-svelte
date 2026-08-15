@@ -70,9 +70,12 @@ export interface UseTypeaheadReturn {
 function isPrintableCharacter(event: KeyboardEvent): boolean {
 	return (
 		event.key.length === 1 &&
+		// Alt alone is not excluded: Option+letter on macOS composes a printable
+		// character (Option+a → "å"), and dropping those makes accented labels
+		// untypeable. Real chords still carry ctrl or meta — including AltGr,
+		// which sets ctrlKey on Windows and Linux.
 		!event.ctrlKey &&
 		!event.metaKey &&
-		!event.altKey &&
 		// A lone space is used for activation in menus, not typeahead-from-empty.
 		event.key !== ' '
 	);
@@ -121,8 +124,11 @@ export function useTypeahead(options: () => UseTypeaheadOptions): UseTypeaheadRe
 		const { getItemLabels, onMatch, getCurrentIndex, resetMs = 750, isDisabled } = options();
 
 		// A bare Space with no active buffer is not typeahead (menus activate on
-		// Space); once the user is mid-typing, Space extends the query.
-		const isSpaceMidType = event.key === ' ' && buffer.length > 0;
+		// Space); once the user is mid-typing, Space extends the query. Chorded
+		// with ctrl or meta it is neither — that is an OS or IME shortcut, and
+		// consuming it would append a raw space that poisons the whole buffer.
+		const isSpaceMidType =
+			event.key === ' ' && !event.ctrlKey && !event.metaKey && buffer.length > 0;
 		if (!isPrintableCharacter(event) && !isSpaceMidType) {
 			return false;
 		}
@@ -140,11 +146,16 @@ export function useTypeahead(options: () => UseTypeaheadOptions): UseTypeaheadRe
 		buffer = nextBuffer;
 		scheduleReset(resetMs);
 
-		const start = getCurrentIndex?.() ?? -1;
+		const current = getCurrentIndex?.() ?? -1;
 		const count = labels.length;
-		// When repeating a single char, start the search AFTER the current item
-		// so we advance; otherwise include the current item.
-		const offset = isRepeatSameChar ? 1 : 0;
+		const hasCurrent = current >= 0;
+		const start = hasCurrent ? current : 0;
+		// A single-character search starts AFTER the current item, so pressing a
+		// letter walks to the next item beginning with it instead of re-matching
+		// the one already selected (native <select> and APG getIndexByLetter).
+		// Once the buffer is longer it is refining a match, so the current item
+		// stays in range. With nothing current there is nothing to advance past.
+		const offset = hasCurrent && nextBuffer.length === 1 ? 1 : 0;
 
 		for (let i = 0; i < count; i++) {
 			const index = (start + offset + i + count) % count;

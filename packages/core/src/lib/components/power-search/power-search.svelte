@@ -157,7 +157,11 @@
 	import { formatFilterValue } from './format-filter-value.js';
 	import PowerSearchEditPopover from './power-search-edit-popover.svelte';
 	import PowerSearchTokenValue from './power-search-token-value.svelte';
-	import { popoverLayerStyles, powerSearchResultCountAttrs } from './power-search.stylex.js';
+	import {
+		popoverLayerStyles,
+		powerSearchPopoverOffset,
+		powerSearchResultCountAttrs
+	} from './power-search.stylex.js';
 	import { resolveOperatorLabel } from './resolve-operator-label.js';
 	import type { PowerSearchAuxData, PowerSearchItem } from './types.js';
 	import { useInternalConfig } from './use-internal-config.svelte.js';
@@ -679,6 +683,7 @@
 	{popover}
 	placement="below"
 	alignment="start"
+	offset={powerSearchPopoverOffset}
 	xstyle={[popoverLayerStyles.layer, layerAnimations.below]}
 >
 	{#if popoverPartialFilter}
