@@ -79,13 +79,16 @@ const RETRIES = Number(process.env.CLIENT_CHUNK_RETRIES ?? 2);
  *
  * The default is derived from the host rather than fixed, and capped at 4. The
  * binding constraint is memory, not cores: a chunk is one headless Chromium
- * plus one Vite dev server, ~1 GB together, and the default GitHub Codespace is
- * **2 cores / 8 GB**. `cpus - 1` leaves a core for the parent and whatever else
- * shares the box; the floor of 2 is what makes a 2-core Codespace faster than
- * it is today rather than identical to it; the cap of 4 keeps peak memory near
- * 4 GB so an 8 GB machine is not swapping. On a 16-core runner more would be
- * possible, but a chunk that dies from CPU starvation costs a retry and a
- * confusing log, and the wall-clock difference past 4 is small next to that.
+ * plus one Vite dev server, ~1 GB together, and the smallest GitHub Codespace
+ * is **2 cores / 4 GB** — GitHub's own docs said 8 GB until that was reported
+ * and corrected (github/docs#28019), so 8 is the number to distrust here.
+ * `cpus - 1` leaves a core for the parent and whatever else shares the box; the
+ * floor of 2 is what makes a 2-core Codespace faster than it is today rather
+ * than identical to it, and 2 × ~1 GB still fits in 4 GB; the cap of 4 keeps
+ * peak memory near 4 GB, which is why it must not be raised on core count
+ * alone. On a 16-core runner more would be possible, but a chunk that dies from
+ * CPU starvation costs a retry and a confusing log, and the wall-clock
+ * difference past 4 is small next to that.
  *
  * `CLIENT_CHUNK_CONCURRENCY=1` restores the old strictly-serial behaviour,
  * which is what to reach for when bisecting a crash — interleaved output makes

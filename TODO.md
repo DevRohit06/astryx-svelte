@@ -6407,6 +6407,20 @@ _Locale gaps in upstream's own docs, recorded because the docs site renders them
       weaken: it is a sum, and a chunk that collects nothing still subtracts from it. What remains
       open is the real fix — one run that survives all 163 files, so cross-chunk state leakage is
       exercised again.
+- [ ] **oxlint cannot replace eslint here, and the reason is Svelte templates — not speed and not
+      the custom rule.** Evaluated at oxlint v1.62-era (2026-08) because `pnpm -F …/core lint`
+      measures **1m24**. Two things that sound like blockers are not: JS-authored plugins reached
+      alpha in 2026-03 with "most existing ESLint plugins without modification" and 100% conformance
+      on ESLint's 33,006 built-in-rule tests, so `eslint-rules/no-physical-properties.js` would very
+      likely run unmodified; and raw speed is a ~4.8x win. The blocker is coverage: oxlint lints the
+      `<script>` blocks of a `.svelte` file and **not the template**, where much of
+      `svelte.configs.recommended` lives — and core is **559 `.svelte` files** against 643 `.ts`.
+      So the honest framing is an *additional* fast pass over the `.ts` half, not a replacement, and
+      it buys a fraction of 1m24 against a 25-minute client suite. Revisit when oxlint ships Svelte
+      template support (on their roadmap; `sveltejs/svelte#17665` tracks the same question for
+      upstream Svelte's own repo). **oxc has no test runner at all** — `@oxc-node/core` is a
+      TypeScript register hook for Node's built-in runner, which is unrelated to 163 browser suites
+      in headless Chromium, so nothing in that toolchain addresses the gate that actually costs time.
 
 **Batch 11 — upstream 0.4.1 port findings:**
 
