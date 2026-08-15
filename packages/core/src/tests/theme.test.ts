@@ -143,6 +143,147 @@ describe('defineTheme', () => {
 	});
 });
 
+/**
+ * Upstream has 9 cases in its own `defineTheme extends` block; **all 9 are
+ * here**, plus one for indicators.
+ *
+ * That tenth is not coverage beyond upstream's — upstream merges `indicators`
+ * in `defineTheme` exactly as it merges `icons`, and simply has no case for it
+ * in this block. Porting the merge without it would leave a branch of the code
+ * this commit adds with nothing exercising it.
+ *
+ * Upstream reads inherited tokens off `child.tokens`. This port's counterpart is
+ * `child.resolvedTokens` — upstream has one token map where this has two, and
+ * the resolved one is the equivalent (see `tokens.ts`). The two typography cases
+ * are the ones that would pass against the wrong map and then be worthless: they
+ * assert on *generated* tokens, which never appear in the raw map at all.
+ */
+describe('defineTheme extends', () => {
+	/** Icons are snippets here where they are strings upstream; only identity matters. */
+	const snippet = (id: string) => Object.assign(() => {}, { id }) as never;
+
+	it('inherits tokens from base theme', () => {
+		const base = defineTheme({
+			name: 'base',
+			tokens: { '--color-accent': '#0077B6', '--radius-container': '16px' }
+		});
+		const child = defineTheme({ name: 'child', extends: base });
+		expect(child.resolvedTokens['--color-accent']).toBe('#0077B6');
+		expect(child.resolvedTokens['--radius-container']).toBe('16px');
+	});
+
+	it('overrides base tokens with explicit tokens', () => {
+		const base = defineTheme({
+			name: 'base',
+			tokens: { '--color-accent': '#0077B6', '--radius-container': '16px' }
+		});
+		const child = defineTheme({
+			name: 'child',
+			extends: base,
+			tokens: { '--color-accent': '#FF0000' }
+		});
+		expect(child.resolvedTokens['--color-accent']).toBe('#FF0000');
+		expect(child.resolvedTokens['--radius-container']).toBe('16px');
+	});
+
+	it('inherits component overrides from base theme', () => {
+		const base = defineTheme({
+			name: 'base',
+			components: {
+				button: {
+					base: { fontWeight: '600' },
+					'variant:secondary': { backgroundColor: 'rgba(0,0,0,0.06)' }
+				}
+			}
+		});
+		const child = defineTheme({ name: 'child', extends: base });
+		expect(child.components?.button?.base).toEqual({ fontWeight: '600' });
+		expect(child.components?.button?.['variant:secondary']).toEqual({
+			backgroundColor: 'rgba(0,0,0,0.06)'
+		});
+	});
+
+	it('merges component overrides — child wins', () => {
+		const base = defineTheme({
+			name: 'base',
+			components: { button: { base: { fontWeight: '600', borderRadius: '4px' } } }
+		});
+		const child = defineTheme({
+			name: 'child',
+			extends: base,
+			components: { button: { base: { fontWeight: '700' } } }
+		});
+		expect(child.components?.button?.base).toEqual({
+			fontWeight: '700',
+			borderRadius: '4px'
+		});
+	});
+
+	it('merges icons — child overrides base', () => {
+		const base = defineTheme({ name: 'base', icons: { close: snippet('X'), menu: snippet('M') } });
+		const child = defineTheme({
+			name: 'child',
+			extends: base,
+			icons: { close: snippet('Y') }
+		});
+		expect(child.icons?.close).toHaveProperty('id', 'Y');
+		expect(child.icons?.menu).toHaveProperty('id', 'M');
+	});
+
+	it('inherits icons when child has none', () => {
+		const base = defineTheme({ name: 'base', icons: { close: snippet('X') } });
+		const child = defineTheme({ name: 'child', extends: base });
+		expect(child.icons?.close).toHaveProperty('id', 'X');
+	});
+
+	it('merges indicators — child overrides base, siblings survive', () => {
+		const base = defineTheme({
+			name: 'base',
+			indicators: { check: snippet('base-check'), radio: snippet('base-radio') }
+		});
+		const child = defineTheme({
+			name: 'child',
+			extends: base,
+			indicators: { check: snippet('child-check') }
+		});
+		expect(child.indicators?.check).toHaveProperty('id', 'child-check');
+		expect(child.indicators?.radio).toHaveProperty('id', 'base-radio');
+	});
+
+	it('uses child name, not base name', () => {
+		const base = defineTheme({ name: 'base' });
+		const child = defineTheme({ name: 'my-brand', extends: base });
+		expect(child.name).toBe('my-brand');
+	});
+
+	it('inherits font family tokens from base theme', () => {
+		const base = defineTheme({
+			name: 'base',
+			typography: {
+				body: { family: 'Geist', fallbacks: 'sans-serif' },
+				scale: { base: 14, ratio: 1.2 }
+			}
+		});
+		const child = defineTheme({ name: 'child', extends: base });
+		expect(child.resolvedTokens['--font-family-body']).toBe('Geist, sans-serif');
+	});
+
+	it('typography in child overrides base typography tokens', () => {
+		const base = defineTheme({
+			name: 'base',
+			typography: { scale: { base: 14, ratio: 1.2 } }
+		});
+		const child = defineTheme({
+			name: 'child',
+			extends: base,
+			typography: { scale: { base: 16, ratio: 1.25 } }
+		});
+		expect(child.resolvedTokens['--font-size-base']).not.toBe(
+			base.resolvedTokens['--font-size-base']
+		);
+	});
+});
+
 describe('generateThemeCss', () => {
 	const theme = defineTheme({
 		name: 'demo',

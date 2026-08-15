@@ -2058,18 +2058,25 @@ Done: theme compiler (`defineTheme`, `parseStyleKey`, expanders, `generateThemeC
       docs site is unblocked either way; a library consumer is not
 - [ ] Decide the `@scope` floor (Baseline only since 2025-12-12) — fall back to descendant selectors, or require it?
 
-Deferred without loss (no shipped theme needs it): **`extends`** — now the only one left. **Two
-items have come off this list, and neither left on its own terms.** The radius expander went when
-y2k landed. HCT-generative **`color` went in batch 18**, and it went for a reason the list did not
-anticipate: not a shipped theme needing it, but a _surface_ audit noticing `theme/index.ts` was
-missing `expandColorScale` entirely. That turned out to be a gap predating v0.2.0 that also required
-two absent dependency modules (`hct.ts`, `contrast.ts`), and it carried 63 upstream test cases —
-`defineTheme`'s header called it "omitted **for now**", which is a deferral with a to-do attached,
-not a decision.
+Deferred without loss (no shipped theme needs it): **this list is now empty.** All three items came
+off it, and **not one left on the terms the list set.** The radius expander went when y2k landed.
+HCT-generative **`color` went in batch 18**, for a reason the list did not anticipate: not a shipped
+theme needing it, but a _surface_ audit noticing `theme/index.ts` was missing `expandColorScale`
+entirely — a gap predating v0.2.0 that also required two absent dependency modules (`hct.ts`,
+`contrast.ts`) and carried 63 upstream test cases. `defineTheme`'s header called it "omitted **for
+now**", which is a deferral with a to-do attached, not a decision.
 
-So the standing lesson is now doubly earned: **a "no shipped theme uses it" deferral is only as good
-as the set of shipped themes** — and `chocolate` and `stone` are about to enlarge that set, which is
-the moment to re-test `extends` against them rather than assuming it stays deferred.
+**`extends` went last, and it is the one that should have gone first.** The deferral held that a
+consumer would at worst hit a silently ignored key. That was wrong on the facts: the CLI's shipped
+`assets/docs/theme.doc.mjs` had been documenting `extends` the whole time, upstream's prose and
+worked example carried over verbatim. The published surface was promising it while `defineTheme`
+dropped it on the floor.
+
+So the standing lesson is now earned three times over, and it is sharper than the version this
+paragraph used to carry: **"no shipped theme uses it" is a claim about this repo's themes and
+nothing else.** It is not a claim about the published type, the generated docs, or what a consumer
+will reach for — and when the docs pipeline reads from a different source than the implementation,
+the two can disagree indefinitely without any gate noticing.
 
 ---
 
@@ -6437,12 +6444,20 @@ _Locale gaps in upstream's own docs, recorded because the docs site renders them
       boundary leaves the gate green by construction. Worth a third check that resolves call sites,
       or at minimum a rule that a style key deleted in the same commit as a shared-module adoption
       must appear as a wrap somewhere
-- [ ] **`ThemeConfig` has no `extends`, where upstream's does.** Pre-existing — not introduced by
-      0.4.1 — but 0.4.1 is what made it visible: upstream themes the indicators by merging through a
-      parent theme, and with no `extends` that merge is a no-op for us. Nothing in the port is
-      _wrong_ today because no shipped theme uses it, and all seven theme oracles are green; the debt
-      is that a downstream consumer writing an upstream-shaped theme config gets a silently ignored
-      key. Port `extends` before advertising theme authoring
+- [x] **`ThemeConfig` has no `extends`, where upstream's does.** ~~Nothing in the port is _wrong_
+      today because no shipped theme uses it; the debt is that a downstream consumer writing an
+      upstream-shaped theme config gets a silently ignored key.~~ **Ported.** The framing above was
+      too generous by one step: the CLI's shipped `assets/docs/theme.doc.mjs` was already
+      documenting `extends` — upstream's prose carried over verbatim, down to the worked example —
+      so this was not a key a consumer might reasonably not know about, it was **a documented
+      feature that did nothing**. Merges tokens, components, icons and indicators with the base at
+      lowest precedence and the child's `name` always winning, which is upstream's set; `syntax`
+      inherits through `resolvedTokens` and the on-media maps are resolved unconditionally, so
+      neither needs a branch. The one translation that mattered: the pre-seed reads
+      `base.resolvedTokens`, not `base.tokens`, because upstream has one token map where this port
+      has two — seeding the raw map would inherit only what the base's author typed by hand and
+      drop every generated token. All 9 upstream cases ported plus one for indicators, which
+      upstream merges without covering
 - [ ] **The client vitest project could not be executed for any of the 0.4.1 batch.** Its browser
       server fails to bind with `EACCES: permission denied ::1:<port>` in this environment, so ~162
       files — including the six rewritten container-reveal cases — are **unrun**, not passing. Each
