@@ -100,6 +100,32 @@ function renderedClassLiterals() {
 						classes.add(m[1]);
 					}
 				}
+				// `themeProps`' third argument can emit further stable classes that
+				// appear in no literal of their own: `legacyNames` is how a RENAMED
+				// target keeps emitting its old class through a deprecation window
+				// (the indicator layer renamed `checkbox` -> `checkbox-indicator`,
+				// `radio` -> `radio-indicator`, `radio-dot` -> `radio-indicator-dot`).
+				// Without this the old names read as orphans and the check fails on
+				// docs that are correct — the rename is exactly what it exists to
+				// keep honest, so it has to see both halves.
+				const legacy = /legacyNames:\s*\[([^\]]*)\]/g;
+				let block;
+				while ((block = legacy.exec(text)) !== null) {
+					for (const name of block[1].matchAll(/'([^']+)'/g)) {
+						classes.add(name[1]);
+					}
+				}
+				// `usePopover`'s `surfaceTarget` is the same shape of problem. The
+				// popup SURFACE is created by the hook, not by the calling component,
+				// so the component cannot stamp a target on it directly — it names one
+				// through this option and `popover-layer.svelte` applies
+				// `stableClassName(popover.surfaceTarget)`, a variable. The literal
+				// therefore only ever appears at the call site, as an option value.
+				const surfaceTarget = /surfaceTarget:\s*'([^']+)'/g;
+				let surface;
+				while ((surface = surfaceTarget.exec(text)) !== null) {
+					classes.add(surface[1]);
+				}
 			}
 		}
 	};
