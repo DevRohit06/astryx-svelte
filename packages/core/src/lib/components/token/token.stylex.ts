@@ -10,7 +10,7 @@ import {
 	spacingVars,
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
-import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { focusOutlineProps, focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 /**
  * Extensible colour map for `Token`.
@@ -229,7 +229,17 @@ export function tokenInvisibleButtonAttrs(): SvelteStyleAttrs {
 	return sx(styles.invisibleButton);
 }
 
-/** The trailing remove (X) button. */
+/**
+ * The trailing remove (X) button.
+ *
+ * The ring comes first so a caller style could re-colour it — the rule
+ * `focusOutlineProps` states — and it is composed here rather than declared in
+ * `styles.removeButton` because 0.4.x (#4973) is precisely the fix for this
+ * button having had *no* ring: `all: 'unset'` cleared the UA outline and nothing
+ * put one back, so a keyboard user tabbing onto it saw nothing. The shared
+ * longhands outrank the `all` shorthand whatever the merge order, which is what
+ * makes composing it here enough.
+ */
 export function tokenRemoveButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.removeButton);
+	return focusOutlineProps.focusVisible(styles.removeButton);
 }

@@ -590,7 +590,17 @@
 	// follow-up from #3389.
 	const popoverOverrideStyle = 'top:anchor(top);left:anchor(start)';
 
-	const theme = $derived(themeProps('tokenizer', { size, status: status?.type }));
+	// `disabled` reflects as `data-disabled` (and as a bare state class) so a theme
+	// can reach the state without duplicating the component's own conditionals.
+	// One derived value, spread onto both render branches — upstream writes the
+	// same `themeProps` call twice, once per branch.
+	const theme = $derived(
+		themeProps('tokenizer', {
+			size,
+			status: status?.type,
+			disabled: isDisabled ? 'disabled' : null
+		})
+	);
 	const wrapperAttrs = $derived(
 		tokenizerWrapperAttrs(size, status?.type, value.length > 0, isTruncated, isDisabled)
 	);

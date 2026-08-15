@@ -8,25 +8,23 @@ import {
 } from '../field/input-styles.stylex.js';
 import type { InputStatusType } from '../field/types.js';
 import { groupStyles } from '../input-group/group-styles.stylex.js';
-import {
-	borderVars,
-	colorVars,
-	radiusVars,
-	sizeVars,
-	typeScaleVars,
-	typographyVars
-} from '../../styles/tokens.stylex.js';
+import { colorVars, sizeVars, typeScaleVars, typographyVars } from '../../styles/tokens.stylex.js';
 
 /**
  * Ported from Astryx's `TimeInput/TimeInput.tsx`, where the styles are inline in
  * the component file rather than in a module of their own.
  *
- * `input`, `inputDisabled`, `inputInvalid` and `clearButton` are byte-identical
- * to `NumberInput`'s and `TextInput`'s — upstream restates them in each file
+ * `input`, `inputDisabled` and `inputInvalid` are byte-identical to
+ * `NumberInput`'s and `TextInput`'s — upstream restates them in each file
  * rather than sharing, and StyleX's content-derived hashes make every copy
  * compile to the same atomic classes. They are restated here for the same
  * reason: the oracle diffs this module against upstream's `TimeInput` output,
  * so a divergence has to surface against *its* counterpart, not a sibling's.
+ *
+ * There is no `clearButton`. 0.4.x (#4876) converged the whole input family on
+ * the shared `InputClearButton`, which draws its ring from `focusOutlineStyles`
+ * — this module's copy was one of the two that hand-drew a 1px `--color-accent`
+ * ring nothing else in the system used.
  *
  * The one shape difference from `NumberInput` is that `sizeStyles` carries a
  * `minWidth` here — upstream sets `minWidth: 120` on all three sizes, so the
@@ -67,23 +65,6 @@ const styles = stylex.create({
 	},
 	inputInvalid: {
 		color: colorVars['--color-text-secondary']
-	},
-	clearButton: {
-		display: 'flex',
-		alignItems: 'center',
-		justifyContent: 'center',
-		padding: 0,
-		margin: 0,
-		borderWidth: 0,
-		borderStyle: 'none',
-		backgroundColor: 'transparent',
-		cursor: 'pointer',
-		borderRadius: radiusVars['--radius-element'],
-		outline: {
-			default: 'none',
-			':focus-visible': `${borderVars['--border-width']} solid ${colorVars['--color-accent']}`
-		},
-		outlineOffset: 1
 	}
 });
 
@@ -136,9 +117,4 @@ export function timeInputIconAttrs(): SvelteStyleAttrs {
  */
 export function timeInputAttrs(isDisabled: boolean, isInvalid: boolean): SvelteStyleAttrs {
 	return sx(styles.input, isDisabled && styles.inputDisabled, isInvalid && styles.inputInvalid);
-}
-
-/** The inline clear button (hand-rolled upstream, not `Field`'s `InputClearButton`). */
-export function timeInputClearButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.clearButton);
 }

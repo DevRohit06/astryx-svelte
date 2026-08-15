@@ -24,7 +24,8 @@ export default {
 		targets: [
 			{
 				className: 'astryx-text-input',
-				visualProps: ['size', 'status']
+				visualProps: ['size', 'status'],
+				states: ['disabled', 'readonly']
 			}
 		]
 	},
@@ -181,6 +182,13 @@ export default {
 			name: 'isDisabled',
 			type: 'boolean',
 			description: 'Disables the input, preventing interaction and dimming the element.',
+			default: 'false'
+		},
+		{
+			name: 'isReadOnly',
+			type: 'boolean',
+			description:
+				'Makes the input read-only: the value is shown at full opacity and still submits with the form, but cannot be edited. Unlike isDisabled, a read-only input is not dimmed and stays in the tab order. isDisabled takes precedence when both are set.',
 			default: 'false'
 		},
 		{

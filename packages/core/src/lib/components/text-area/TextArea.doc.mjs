@@ -23,7 +23,24 @@ export default {
 		targets: [
 			{
 				className: 'astryx-textarea',
-				visualProps: ['size', 'status']
+				visualProps: ['size', 'status'],
+				states: ['disabled', 'readonly']
+			}
+		],
+		vars: [
+			{
+				name: '--_textarea-inline-padding',
+				description:
+					"Inline padding of the textarea's text. The wrapper stays flush (padding: 0) so the native resize grip sits in the true corner; this var carries the inset on the inner <textarea>, and the start icon, status/spinner, and character counter align to it.",
+				default: 'var(--spacing-2)',
+				private: true
+			}
+		],
+		derived: [
+			{
+				property: 'paddingInline',
+				vars: ['--_textarea-inline-padding'],
+				replaces: true
 			}
 		]
 	},
@@ -131,6 +148,13 @@ export default {
 			name: 'isDisabled',
 			type: 'boolean',
 			description: 'Disables the textarea, preventing interaction.',
+			default: 'false'
+		},
+		{
+			name: 'isReadOnly',
+			type: 'boolean',
+			description:
+				'Makes the textarea read-only: the value is shown at full opacity and still submits with the form, but cannot be edited. Unlike isDisabled, a read-only textarea is not dimmed and stays in the tab order. isDisabled takes precedence when both are set.',
 			default: 'false'
 		},
 		{

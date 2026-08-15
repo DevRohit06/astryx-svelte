@@ -58,6 +58,15 @@
 		 */
 		isDisabled?: boolean;
 		/**
+		 * Whether the input is read-only.
+		 * The value is shown at full opacity and still submits with the form, but
+		 * cannot be edited. Unlike `isDisabled`, a read-only input is not dimmed and
+		 * stays in the tab order — use it for a value the user should see and send
+		 * but not change. `isDisabled` takes precedence when both are set.
+		 * @default false
+		 */
+		isReadOnly?: boolean;
+		/**
 		 * Why the field is disabled, shown in a tooltip. Setting it keeps the
 		 * control focusable — it takes `aria-disabled` and `readonly` instead of the
 		 * native `disabled`, so the reason stays discoverable by keyboard.
@@ -137,17 +146,13 @@
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
 	import InputStatusIcon from '../../hooks/input-status-icon.svelte';
 	import Field from '../field/field.svelte';
-	import Icon from '../icon/icon.svelte';
+	import InputClearButton from '../field/input-clear-button.svelte';
 	import Spinner from '../spinner/spinner.svelte';
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
-	import {
-		textInputAttrs,
-		textInputClearButtonAttrs,
-		textInputWrapperAttrs
-	} from './text-input.stylex.js';
+	import { textInputAttrs, textInputWrapperAttrs } from './text-input.stylex.js';
 
 	/**
 	 * A single-line text field with the whole `Field` shell around it — or, when
@@ -174,6 +179,7 @@
 		isOptional = false,
 		isRequired = false,
 		isDisabled = false,
+		isReadOnly = false,
 		disabledMessage,
 		startIcon,
 		status,
@@ -265,8 +271,10 @@
 	// character assertion in upstream's suite depends on.
 	function handleChange(e: Event): void {
 		// TextInput does NOT disable during busy — only aria-busy — so this guard is
-		// plain `isDisabled` (unlike TextArea's `effectivelyDisabled`).
-		if (isDisabled) {
+		// plain `isDisabled`/`isReadOnly` (unlike TextArea's `effectivelyDisabled`).
+		// The value cannot change while either holds (the field is `readonly`), but
+		// guard the handler too so the optimistic value and callbacks never fire.
+		if (isDisabled || isReadOnly) {
 			return;
 		}
 		const newValue = (e.target as HTMLInputElement).value;
@@ -303,12 +311,22 @@
 		disabled: isDisabled
 	}));
 
-	const theme = $derived(themeProps('text-input', { size, status: status?.type ?? null }));
+	// `disabled` / `readonly` reflect as `data-disabled` / `data-readonly` (and as
+	// bare state classes) so a theme can reach both states without duplicating the
+	// component's own conditionals. `readonly` selects no style key — the point of
+	// the state is that it is NOT dimmed.
+	const theme = $derived(
+		themeProps('text-input', {
+			size,
+			status: status?.type ?? null,
+			disabled: isDisabled ? 'disabled' : null,
+			readonly: isReadOnly ? 'readonly' : null
+		})
+	);
 	const wrapperAttrs = $derived(
 		textInputWrapperAttrs(size, status?.type, isDisabled, inputGroup != null, xstyle)
 	);
 	const controlAttrs = $derived(textInputAttrs(isDisabled));
-	const clearAttrs = textInputClearButtonAttrs();
 </script>
 
 {#snippet inputWrapper()}
@@ -329,7 +347,7 @@
 			{...rest}
 			bind:this={input}
 			{id}
-			name={htmlName}
+			name={isDisabled ? undefined : htmlName}
 			{type}
 			value={optimistic.current}
 			{placeholder}
@@ -337,7 +355,7 @@
 			onkeydown={onEnter || onkeydown ? handleKeyDown : undefined}
 			disabled={isDisabled && !showsDisabledMessage}
 			aria-disabled={showsDisabledMessage ? 'true' : undefined}
-			readonly={showsDisabledMessage || undefined}
+			readonly={isReadOnly || showsDisabledMessage || undefined}
 			autofocus={hasAutoFocus}
 			data-autofocus={hasAutoFocus || undefined}
 			aria-describedby={aria.ariaDescribedBy}
@@ -348,16 +366,11 @@
 			class={controlAttrs.class}
 			style={controlAttrs.style}
 		/>
-		{#if hasClear && value !== '' && !isDisabled}
-			<button
-				type="button"
+		{#if hasClear && value !== '' && !isDisabled && !isReadOnly}
+			<InputClearButton
+				label={t('@astryx.textInput.clearLabel', { label })}
 				onclick={handleClear}
-				aria-label={t('@astryx.textInput.clearLabel', { label })}
-				class={clearAttrs.class}
-				style={clearAttrs.style}
-			>
-				<Icon icon="close" size="sm" color="secondary" />
-			</button>
+			/>
 		{/if}
 		{#if isBusy}<Spinner size="sm" />{/if}
 		<InputStatusIcon {statusIcon} />

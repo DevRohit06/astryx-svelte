@@ -3,7 +3,7 @@
 	import type { SizeValue } from '../../internal/types.js';
 	import type { InputStatus, InputStatusType } from '../field/types.js';
 	import type { FieldStatusVariant } from '../field-status/field-status.stylex.js';
-	import type { ISODateString } from '../../utils/date-types.js';
+	import type { DayOfWeek, DayOfWeekName, ISODateString } from '../../utils/date-types.js';
 	import type { TimestampFormat } from '../timestamp/timestamp-format.js';
 	// `DateInputSize` is published from `date-input.stylex.ts`, derived from the
 	// size style keys — the arrangement `TextInput`/`NumberInput`/`TimeInput` use.
@@ -155,6 +155,13 @@
 		 */
 		numberOfMonths?: 1 | 2;
 		/**
+		 * First day of week in the calendar popover. Accepts a number
+		 * (0 = Sunday … 6 = Saturday) or a three-letter day name ('sun'–'sat',
+		 * case-insensitive).
+		 * @default 0
+		 */
+		weekStartsOn?: DayOfWeek | DayOfWeekName;
+		/**
 		 * How a committed date is displayed:
 		 * - `'date_long'`: long-month date, e.g. "March 21, 2026" (the default)
 		 * - `'date'`: short-month date, e.g. "Mar 21, 2026"
@@ -190,6 +197,8 @@
 	import { themeProps } from '../../internal/theme-props.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
+	import { isFocusDetached } from '../../utils/focus-return.js';
+	import { stableClassName } from '../../internal/naming.js';
 	import { parseDateInput } from '../../utils/date-parser.js';
 	import { formatSharedDate, plainDateFromISO, plainDateToISO } from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
@@ -199,6 +208,7 @@
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
 	import InputStatusIcon from '../../hooks/input-status-icon.svelte';
 	import Field from '../field/field.svelte';
+	import InputClearButton from '../field/input-clear-button.svelte';
 	import Icon from '../icon/icon.svelte';
 	import Spinner from '../spinner/spinner.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';
@@ -252,6 +262,10 @@
 		labelTooltip,
 		hasClear = false,
 		numberOfMonths = 1,
+		// Deliberately no default: it is forwarded raw, and `Calendar` owns both the
+		// `= 0` fallback and the name→number normalisation. Defaulting here too would
+		// state the same fact twice, in the file that does not decide it.
+		weekStartsOn,
 		format = 'date_long',
 		width,
 		xstyle,
@@ -411,7 +425,18 @@
 		id: popoverID,
 		dialogLabel: t('@astryx.dateInput.dialogLabel'),
 		closeButtonLabel: t('@astryx.dateInput.closeCalendar'),
-		onHide: () => input?.focus()
+		// Return focus to the input when the calendar closes — but only when the
+		// dismiss left focus detached (Escape, or a click on non-focusable empty
+		// space), which the focus trap cannot restore on its own. A native
+		// `popover="auto"` light-dismiss fires synchronously with the pointer event
+		// that moved focus, so if the user clicked another control — the clear
+		// button, another field, anywhere — focus has already landed there;
+		// reclaiming it would fight their click.
+		onHide: () => {
+			if (isFocusDetached()) {
+				input?.focus();
+			}
+		}
 	}));
 
 	/** Toggle from the button — moves focus into the calendar. */
@@ -517,12 +542,21 @@
 		}
 	}
 
-	const theme = $derived(themeProps('date-input', { size, status: status?.type ?? null }));
+	// `disabled` reflects as `data-disabled` (and as a bare state class) so a theme
+	// can reach the state without duplicating the component's own conditionals.
+	// Keyed off `isDisabled`, not `isEffectivelyDisabled`: a busy field is not a
+	// disabled one, and upstream reflects the prop.
+	const theme = $derived(
+		themeProps('date-input', {
+			size,
+			status: status?.type ?? null,
+			disabled: isDisabled ? 'disabled' : null
+		})
+	);
 	const wrapperAttrs = $derived(
 		dateInputWrapperAttrs(size, status?.type, isEffectivelyDisabled, inputGroup != null, xstyle)
 	);
 	const toggleAttrs = $derived(dateInputIconButtonAttrs(isEffectivelyDisabled));
-	const clearAttrs = dateInputIconButtonAttrs();
 	const controlAttrs = $derived(dateInputAttrs(isEffectivelyDisabled, !isInputValid));
 </script>
 
@@ -597,22 +631,20 @@
 			would get no feedback that their entry was rejected (WCAG 3.3.1).
 		-->
 		<VisuallyHidden as="div" role="alert" aria-live="assertive">
-			{!isInputValid ? 'Invalid date' : ''}
+			{!isInputValid ? t('@astryx.dateInput.invalidDate') : ''}
 		</VisuallyHidden>
 		{#if hasClear && value !== undefined && !isEffectivelyDisabled}
-			<button
-				type="button"
+			<!--
+				The shared clear affordance. It stamps `astryx-input-clear-icon` on the
+				glyph; `iconClassName` keeps this component's original
+				`astryx-date-input-clear-icon` target beside it through a deprecation
+				window, so a theme written against the old name still reaches the icon.
+			-->
+			<InputClearButton
+				label={t('@astryx.dateInput.clear', { label })}
 				onclick={handleClear}
-				aria-label={t('@astryx.dateInput.clear', { label })}
-				class={clearAttrs.class}
-				style={clearAttrs.style}
-			>
-				<!--
-					Stable theme target on the clear glyph itself — see the toggle icon
-					above for why it sits on the icon rather than the button.
-				-->
-				<Icon icon="close" size="sm" color="secondary" {...themeProps('date-input-clear-icon')} />
-			</button>
+				iconClassName={stableClassName('date-input-clear-icon')}
+			/>
 		{/if}
 		{#if isBusy}<Spinner size="sm" />{/if}
 		<InputStatusIcon {statusIcon} />
@@ -626,6 +658,7 @@
 				{max}
 				{dateConstraints}
 				{numberOfMonths}
+				{weekStartsOn}
 			/>
 		</PopoverLayer>
 		{#if showsDisabledMessage && disabledMessage}

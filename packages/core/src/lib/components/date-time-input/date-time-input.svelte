@@ -2,7 +2,7 @@
 	import type { BaseProps } from '../../base-props.js';
 	import type { SizeValue } from '../../internal/types.js';
 	import type { InputStatus, InputStatusType } from '../field/types.js';
-	import type { ISODateString } from '../../utils/date-types.js';
+	import type { DayOfWeek, DayOfWeekName, ISODateString } from '../../utils/date-types.js';
 	import type { ISOTimeString } from '../../utils/time-parser.js';
 	import type { DateTimeInputSize } from './date-time-input.stylex.js';
 
@@ -148,6 +148,13 @@
 		 * @default 1
 		 */
 		numberOfMonths?: 1 | 2;
+		/**
+		 * First day of week in the calendar. Accepts a number
+		 * (0 = Sunday … 6 = Saturday) or a three-letter day name ('sun'–'sat',
+		 * case-insensitive).
+		 * @default 0
+		 */
+		weekStartsOn?: DayOfWeek | DayOfWeekName;
 	}
 
 	/** Module-private, as upstream's are. */
@@ -210,12 +217,15 @@
 		plainDateToISO
 	} from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useAnnounce } from '../../hooks/use-announce.js';
+	import { isFocusDetached } from '../../utils/focus-return.js';
 	import Calendar from '../calendar/calendar.svelte';
 	import type { CalendarHandle } from '../calendar/calendar.svelte';
 	import { useCalendarConstraints } from '../calendar/use-calendar-constraints.svelte.js';
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
 	import InputStatusIcon from '../../hooks/input-status-icon.svelte';
 	import Field from '../field/field.svelte';
+	import InputClearButton from '../field/input-clear-button.svelte';
 	import Icon from '../icon/icon.svelte';
 	import Spinner from '../spinner/spinner.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';
@@ -275,6 +285,9 @@
 		status,
 		labelTooltip,
 		numberOfMonths = 1,
+		// Deliberately no default: it is forwarded raw, and `Calendar` owns both the
+		// `= 0` fallback and the name→number normalisation.
+		weekStartsOn,
 		width,
 		xstyle,
 		class: className,
@@ -283,6 +296,10 @@
 	}: DateTimeInputProps = $props();
 
 	const t = useTranslator();
+	// Speaks arrow-key stepping results through the persistent live regions:
+	// stepping programmatically rewrites a plain textbox's value, which screen
+	// readers do not announce on their own (WCAG 4.1.2).
+	const announce = useAnnounce();
 	const placeholder = $derived(placeholderFromProps ?? t('@astryx.dateTimeInput.placeholder'));
 	const timePlaceholder = $derived(
 		timePlaceholderFromProps ?? t('@astryx.dateTimeInput.timePlaceholder')
@@ -466,7 +483,18 @@
 		id: popoverID,
 		dialogLabel: t('@astryx.dateTimeInput.dialogLabel'),
 		closeButtonLabel: t('@astryx.dateInput.closeCalendar'),
-		onHide: () => dateInput?.focus()
+		// Return focus to the date field when the calendar closes — but only when
+		// the dismiss left focus detached (Escape, or a click on non-focusable empty
+		// space), which the focus trap cannot restore on its own. A native
+		// `popover="auto"` light-dismiss fires synchronously with the pointer event
+		// that moved focus, so if the user clicked another control — the time field,
+		// the clear button, anywhere — focus has already landed there; reclaiming it
+		// would fight their click.
+		onHide: () => {
+			if (isFocusDetached()) {
+				dateInput?.focus();
+			}
+		}
 	}));
 
 	function handleCalendarToggle(): void {
@@ -653,6 +681,9 @@
 				const combined = combineDateTime(valueParts.date, newTime);
 				if (combined) {
 					fireChange(combined);
+					// Screen readers do not announce the programmatic value rewrite,
+					// so speak the new time explicitly (WCAG 4.1.2).
+					announce(formatDisplayTime(newTime, hasSeconds));
 				}
 			}
 		}
@@ -670,7 +701,17 @@
 		disabled: isEffectivelyDisabled
 	}));
 
-	const theme = $derived(themeProps('date-time-input', { size, status: status?.type ?? null }));
+	// `disabled` reflects as `data-disabled` (and as a bare state class) so a theme
+	// can reach the state without duplicating the component's own conditionals.
+	// Keyed off `isDisabled`, not `isEffectivelyDisabled`: a busy field is not a
+	// disabled one, and upstream reflects the prop.
+	const theme = $derived(
+		themeProps('date-time-input', {
+			size,
+			status: status?.type ?? null,
+			disabled: isDisabled ? 'disabled' : null
+		})
+	);
 	const rowAttrs = $derived(dateTimeInputRowAttrs(xstyle));
 	const dateWrapperAttrs = $derived(
 		dateTimeInputDateWrapperAttrs(size, status?.type, isEffectivelyDisabled)
@@ -688,7 +729,6 @@
 		themeProps('date-time-input-time-segment', { size, status: status?.type ?? null })
 	);
 	const toggleAttrs = $derived(dateTimeInputIconButtonAttrs(isEffectivelyDisabled));
-	const clearAttrs = dateTimeInputIconButtonAttrs();
 	const iconAttrs = dateTimeInputIconAttrs();
 	const dateControlAttrs = $derived(dateTimeInputAttrs(isEffectivelyDisabled, !isDateInputValid));
 	const timeControlAttrs = $derived(dateTimeInputAttrs(isEffectivelyDisabled, !isTimeInputValid));
@@ -773,18 +813,10 @@
 				rejected (WCAG 3.3.1).
 			-->
 			<VisuallyHidden as="div" role="alert" aria-live="assertive">
-				{!isDateInputValid ? 'Invalid date' : ''}
+				{!isDateInputValid ? t('@astryx.dateInput.invalidDate') : ''}
 			</VisuallyHidden>
 			{#if hasClear && value !== undefined && !isEffectivelyDisabled}
-				<button
-					type="button"
-					onclick={handleClear}
-					aria-label={t('@astryx.dateInput.clear', { label })}
-					class={clearAttrs.class}
-					style={clearAttrs.style}
-				>
-					<Icon icon="close" size="sm" color="secondary" />
-				</button>
+				<InputClearButton label={t('@astryx.dateInput.clear', { label })} onclick={handleClear} />
 			{/if}
 			{#if isBusy}<Spinner size="sm" />{/if}
 			<InputStatusIcon {statusIcon} />
@@ -827,7 +859,7 @@
 				technology (WCAG 3.3.1).
 			-->
 			<VisuallyHidden as="div" role="alert" aria-live="assertive">
-				{!isTimeInputValid ? 'Invalid time' : ''}
+				{!isTimeInputValid ? t('@astryx.timeInput.invalidTime') : ''}
 			</VisuallyHidden>
 		</div>
 	</div>
@@ -842,6 +874,7 @@
 			max={calendarMax}
 			{dateConstraints}
 			{numberOfMonths}
+			{weekStartsOn}
 		/>
 	</PopoverLayer>
 

@@ -79,6 +79,15 @@
 		 */
 		isDisabled?: boolean;
 		/**
+		 * Whether the textarea is read-only.
+		 * The value is shown at full opacity and still submits with the form, but
+		 * cannot be edited. Unlike `isDisabled`, a read-only textarea is not dimmed
+		 * and stays in the tab order — use it for a value the user should see and
+		 * send but not change. `isDisabled` takes precedence when both are set.
+		 * @default false
+		 */
+		isReadOnly?: boolean;
+		/**
 		 * Why the field is disabled, shown in a tooltip. Setting it keeps the
 		 * control focusable — it takes `aria-disabled` and `readonly` instead of the
 		 * native `disabled`, so the reason stays discoverable by keyboard.
@@ -207,6 +216,7 @@
 		placeholder,
 		rows = 3,
 		isDisabled = false,
+		isReadOnly = false,
 		disabledMessage,
 		status,
 		statusVariant = 'attached',
@@ -344,10 +354,10 @@
 	// per edit, and would break the counter, the optimistic value and every
 	// `onChange`-per-character assertion in upstream's suite.
 	function handleChange(e: Event): void {
-		// Value can't change while showing a disabled message (the field is
-		// read-only and non-native-disabled), but guard the handler too so the
-		// optimistic value and callbacks never fire.
-		if (isDisabled) {
+		// Value can't change while showing a disabled message or while read-only
+		// (the field is `readonly` and non-native-disabled), but guard the handler
+		// too so the optimistic value and callbacks never fire.
+		if (isDisabled || isReadOnly) {
 			return;
 		}
 		const newValue = (e.target as HTMLTextAreaElement).value;
@@ -378,14 +388,28 @@
 		disabled: effectivelyDisabled
 	}));
 
-	const theme = $derived(themeProps('textarea', { size, status: status?.type ?? null }));
+	// `disabled` / `readonly` reflect as `data-disabled` / `data-readonly` (and as
+	// bare state classes) so a theme can reach both states without duplicating the
+	// component's own conditionals. `readonly` selects no style key — the point of
+	// the state is that it is NOT dimmed.
+	const theme = $derived(
+		themeProps('textarea', {
+			size,
+			status: status?.type ?? null,
+			disabled: isDisabled ? 'disabled' : null,
+			readonly: isReadOnly ? 'readonly' : null
+		})
+	);
 	const wrapperAttrs = $derived(textAreaWrapperAttrs(status?.type, isDisabled, xstyle));
 	const areaAttrs = $derived(
 		textAreaAttrs(
 			size,
 			isDisabled,
 			startIcon != null,
-			status != null || isBusy,
+			// The end slot's own render condition, not `status != null`: `detached`
+			// suppresses the on-field glyph, so gating on the prop would reserve
+			// trailing space for an icon that never appears.
+			isBusy || statusIcon.hasIcon,
 			isBusy && statusIcon.hasIcon,
 			maxLength != null
 		)
@@ -434,7 +458,7 @@
 			{...rest}
 			bind:this={textarea}
 			{id}
-			name={htmlName}
+			name={isDisabled ? undefined : htmlName}
 			value={optimistic.current}
 			oninput={handleChange}
 			{onpaste}
@@ -444,7 +468,7 @@
 			{rows}
 			disabled={isDisabled && !showsDisabledMessage}
 			aria-disabled={showsDisabledMessage ? 'true' : undefined}
-			readonly={showsDisabledMessage || undefined}
+			readonly={isReadOnly || showsDisabledMessage || undefined}
 			spellcheck={hasSpellCheck}
 			autofocus={hasAutoFocus}
 			data-autofocus={hasAutoFocus || undefined}

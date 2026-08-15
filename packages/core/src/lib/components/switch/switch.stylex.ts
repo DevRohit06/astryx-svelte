@@ -322,7 +322,12 @@ export function switchLabelWrapperAttrs(size: SwitchSize): SvelteStyleAttrs {
 	return sx(styles.labelWrapper, labelWrapperSizeStyles[size]);
 }
 
-/** The spacer above a detached status message. */
-export function switchStatusGapAttrs(): SvelteStyleAttrs {
-	return sx(styles.statusGap);
-}
+/**
+ * The gap above a detached status message, passed to `FieldStatus`'s `xstyle`.
+ *
+ * It used to wrap the message in a spacer `<div>`; 0.4.x hands the margin to the
+ * message box itself instead, which is one element fewer and — because the value
+ * crosses a component boundary — the reason upstream's `dist/` keeps
+ * `styles.statusGap` as an object rather than a folded class string.
+ */
+export const switchStatusGapStyle = styles.statusGap;

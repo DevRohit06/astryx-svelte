@@ -24,7 +24,8 @@ export default {
 		targets: [
 			{
 				className: 'astryx-tokenizer',
-				visualProps: ['size', 'status']
+				visualProps: ['size', 'status'],
+				states: ['disabled']
 			}
 		]
 	},

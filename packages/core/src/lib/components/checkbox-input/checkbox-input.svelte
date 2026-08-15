@@ -346,6 +346,25 @@
 			onfocusin={focusProps.onFocus}
 			onfocusout={focusProps.onBlur}
 		>
+			<!--
+				`form=""` detaches the control from its owning form while it is
+				disabled-with-a-reason.
+
+				`disabledMessage` deliberately drops the native `disabled` attribute so
+				the reason stays focus-discoverable — but `required` is still on the
+				element, and an un-disabled required checkbox the user cannot toggle
+				fails constraint validation forever: the form can never submit, and the
+				browser's "please check this box" bubble points at a control nothing
+				can change.
+
+				`form` names the *id* of the form to associate with, and no element can
+				have the empty id — so the empty string associates the input with no
+				form at all. It leaves constraint validation and form data entirely
+				while staying visible, focusable and labelled. Dropping `required`
+				instead would let a genuinely required field submit empty once it was
+				re-enabled; setting `disabled` would take back the focusability the
+				message needs.
+			-->
 			<input
 				{...rest}
 				{@attach attachIndeterminate}
@@ -356,6 +375,7 @@
 				checked={isChecked}
 				disabled={isDisabled && !isFocusableDisabled}
 				aria-disabled={isFocusableDisabled ? 'true' : undefined}
+				form={isFocusableDisabled ? '' : undefined}
 				readonly={isReadOnly}
 				required={isRequired}
 				onchange={handleChange}

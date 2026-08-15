@@ -5,19 +5,38 @@ import { createAttachmentKey } from 'svelte/attachments';
 import TextInput from '$lib/components/text-input/text-input.svelte';
 import IconSlotProbe from './fixtures/icon-slot-probe.svelte';
 import BindHarness from './fixtures/text-input-bind.svelte';
+import TextInputForm from './fixtures/text-input-form.svelte';
 import TextInputGroupProbe from './fixtures/text-input-group-probe.svelte';
 
 /**
- * Astryx's `TextInput/TextInput.test.tsx`, ported case for case — **all 61 of
- * upstream's 61** at v0.3.0, plus one beyond upstream (`supports two-way
- * bind:value`) that pins the `$bindable` decision. Sibling of
- * `text-area.svelte.test.ts`, which solved the same translation problems first;
- * this file follows it.
+ * Astryx's `TextInput/TextInput.test.tsx`, ported case for case — **all 74 of
+ * upstream's 74** at v0.4.1, plus one beyond upstream (`supports two-way
+ * bind:value`) that pins the `$bindable` decision. **75 `it` in the file.**
+ * Sibling of `text-area.svelte.test.ts`, which solved the same translation
+ * problems first; this file follows it.
+ *
+ * ## The 0.4.1 batch (61 → 74)
+ *
+ * Thirteen cases came with `isReadOnly` and the form-participation fix: the
+ * `form participation` describe (3), the `isReadOnly` describe (6), and the two
+ * theme-state describes at the bottom of the file (`data-disabled` /
+ * `data-readonly` on the root target, 2 each). Two translations, noted at the
+ * cases:
+ *
+ * - the six that read `FormData` go through `text-input-form.svelte`, because a
+ *   Svelte test cannot pass a `<form>` as markup children of the component under
+ *   test the way upstream's JSX does. Same fixture shape as
+ *   `checkbox-input-form.svelte` and `number-input-form.svelte`.
+ * - `hides the clear button` keeps upstream's *unnamed* `queryByRole('button')`.
+ *   The clear affordance is the shared `InputClearButton` (a ghost `Button`)
+ *   here, not the bare `<button>` upstream inlined at 0.3.0, so a query that
+ *   matched the old markup shape would not survive; the role query does, and a
+ *   read-only field renders no button at all.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
- * This header used to read "52 upstream cases, 52 here". Upstream has **61**;
- * the nine that were absent are now here — the whole `TextInput statusVariant
+ * This header used to read "52 upstream cases, 52 here". Upstream had **61** at
+ * v0.3.0; the nine that were absent are now here — the whole `TextInput statusVariant
  * forwarding` describe (the `attached`/`detached` pair plus the six
  * `statusVariant="tooltip"` cases) and `has no dangling aria-describedby ids
  * inside InputGroup (WCAG 1.3.1)`, which goes through the new
@@ -416,6 +435,139 @@ describe('TextInput', () => {
 				props: { label: 'Name', value: '', onChange: noop }
 			});
 			await expect.element(screen.getByRole('textbox')).not.toHaveAttribute('name');
+		});
+	});
+
+	// Upstream renders `<form><TextInput …/></form>` as JSX children of `render`.
+	// A Svelte test cannot pass markup children to the component under test, so
+	// the form lives in `text-input-form.svelte` and the cases reach it through
+	// `container.querySelector('form')` — the assertions are upstream's verbatim.
+	describe('form participation', () => {
+		it('submits the value under htmlName', async () => {
+			const screen = await render(TextInputForm, {
+				props: {
+					textInput: { label: 'Owner', htmlName: 'owner', value: 'alice', onChange: noop }
+				}
+			});
+			const data = new FormData(screen.container.querySelector('form')!);
+			expect(data.get('owner')).toBe('alice');
+		});
+
+		it('is excluded from form data when disabled', async () => {
+			const screen = await render(TextInputForm, {
+				props: {
+					textInput: {
+						label: 'Owner',
+						htmlName: 'owner',
+						value: 'alice',
+						onChange: noop,
+						isDisabled: true
+					}
+				}
+			});
+			expect([...new FormData(screen.container.querySelector('form')!).keys()]).toEqual([]);
+		});
+
+		// Regression: a disabledMessage swaps the native `disabled` attribute for
+		// aria-disabled + readOnly so the reason stays focus-discoverable, but
+		// read-only fields still submit — the name has to be withheld too.
+		it('is excluded from form data when disabled, even with a disabledMessage', async () => {
+			const screen = await render(TextInputForm, {
+				props: {
+					textInput: {
+						label: 'Owner',
+						htmlName: 'owner',
+						value: 'alice',
+						onChange: noop,
+						isDisabled: true,
+						disabledMessage: 'You need the Editor role to change this'
+					}
+				}
+			});
+			expect([...new FormData(screen.container.querySelector('form')!).keys()]).toEqual([]);
+		});
+	});
+
+	describe('isReadOnly', () => {
+		it('marks the input read-only', async () => {
+			const screen = await render(TextInput, {
+				props: { label: 'Owner', value: 'alice', onChange: noop, isReadOnly: true }
+			});
+			await expect.element(screen.getByRole('textbox')).toHaveAttribute('readonly');
+		});
+
+		it('still submits its value with the form', async () => {
+			const screen = await render(TextInputForm, {
+				props: {
+					textInput: {
+						label: 'Owner',
+						htmlName: 'owner',
+						value: 'alice',
+						onChange: noop,
+						isReadOnly: true
+					}
+				}
+			});
+			expect(new FormData(screen.container.querySelector('form')!).get('owner')).toBe('alice');
+		});
+
+		it('does not call onChange when the user types', async () => {
+			const handleChange = vi.fn();
+			const screen = await render(TextInput, {
+				props: { label: 'Owner', value: 'alice', onChange: handleChange, isReadOnly: true }
+			});
+			// Ported as upstream writes it — unlike the `isDisabled` cases, nothing
+			// here trips Playwright's actionability check: a read-only input is
+			// neither `disabled` nor `aria-disabled`, so `type` focuses it and sends
+			// real keys. Chromium's editor refuses the insert, and the `oninput`
+			// guard refuses the callback, so neither layer can mask the other.
+			await userEvent.type(screen.getByRole('textbox'), 'xyz');
+			expect(handleChange).not.toHaveBeenCalled();
+		});
+
+		it('stays focusable and is not disabled', async () => {
+			const screen = await render(TextInput, {
+				props: { label: 'Owner', value: 'alice', onChange: noop, isReadOnly: true }
+			});
+			const input = screen.getByRole('textbox');
+			await expect.element(input).not.toBeDisabled();
+			await userEvent.tab();
+			await expect.element(input).toHaveFocus();
+		});
+
+		it('hides the clear button', async () => {
+			const screen = await render(TextInput, {
+				props: {
+					label: 'Owner',
+					value: 'alice',
+					onChange: noop,
+					hasClear: true,
+					isReadOnly: true
+				}
+			});
+			// Upstream's *unnamed* `queryByRole('button')`, kept unnamed on purpose:
+			// the clear affordance is the shared `InputClearButton` (a ghost
+			// `Button`) here rather than the bare `<button>` upstream inlined, so a
+			// query tied to the old markup would not survive the change — the role
+			// query does, and a read-only field renders no button at all.
+			expect(screen.getByRole('button').query()).toBeNull();
+		});
+
+		it('lets isDisabled win when both are set', async () => {
+			const screen = await render(TextInputForm, {
+				props: {
+					textInput: {
+						label: 'Owner',
+						htmlName: 'owner',
+						value: 'alice',
+						onChange: noop,
+						isReadOnly: true,
+						isDisabled: true
+					}
+				}
+			});
+			await expect.element(screen.getByRole('textbox')).toBeDisabled();
+			expect([...new FormData(screen.container.querySelector('form')!).keys()]).toEqual([]);
 		});
 	});
 
@@ -862,5 +1014,45 @@ describe('TextInput statusVariant forwarding', () => {
 		const statusButton = buttonLoc.element();
 		const tooltip = screen.getByRole('tooltip', { includeHidden: true }).element();
 		expect(statusButton.getAttribute('aria-describedby')).toContain(tooltip.id);
+	});
+});
+
+describe('TextInput disabled theme state', () => {
+	// Reflecting isDisabled on the root theming target lets a theme gate its own
+	// hover/border treatment on disabled (data-disabled + a .disabled variant),
+	// mirroring how status is reflected — without structural :has() CSS.
+	it('reflects disabled on the root target so themes can gate paint on it', async () => {
+		const screen = await render(TextInput, {
+			props: { label: 'Name', value: '', onChange: noop, isDisabled: true }
+		});
+		const root = screen.container.querySelector('.astryx-text-input');
+		expect(root).toHaveAttribute('data-disabled', 'disabled');
+		expect(root).toHaveClass('disabled');
+	});
+
+	it('omits data-disabled when enabled, like status does', async () => {
+		const screen = await render(TextInput, {
+			props: { label: 'Name', value: '', onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-text-input');
+		expect(root).not.toHaveAttribute('data-disabled');
+	});
+});
+
+describe('TextInput readonly theme state', () => {
+	it('reflects readonly on the root target so themes can gate paint on it', async () => {
+		const screen = await render(TextInput, {
+			props: { label: 'Name', value: '', onChange: noop, isReadOnly: true }
+		});
+		const root = screen.container.querySelector('.astryx-text-input');
+		expect(root).toHaveAttribute('data-readonly', 'readonly');
+	});
+
+	it('omits data-readonly when editable', async () => {
+		const screen = await render(TextInput, {
+			props: { label: 'Name', value: '', onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-text-input');
+		expect(root).not.toHaveAttribute('data-readonly');
 	});
 });

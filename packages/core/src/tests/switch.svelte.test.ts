@@ -9,10 +9,19 @@ import SwitchBind from './fixtures/switch-bind.svelte';
 import { cssIn, forcedColorsCssIn } from './forced-colors.js';
 
 /**
- * Astryx's `Switch/Switch.test.tsx`, ported case for case — **47** upstream
- * cases at v0.3.0, **47** of them here, plus one beyond upstream (`supports
+ * Astryx's `Switch/Switch.test.tsx`, ported case for case — **49** upstream
+ * cases at v0.4.1, **49** of them here, plus one beyond upstream (`supports
  * two-way bind:value`) that pins the `$bindable` decision (justified below, and
- * recorded in TODO.md). **48 `it` in the file.** Nothing is dropped.
+ * recorded in TODO.md). **50 `it` in the file.** Nothing is dropped.
+ *
+ * v0.3.0 → v0.4.1 added the two `form participation` cases about a required
+ * control that is disabled *with a reason* (`form=""` detaches it from
+ * constraint validation, since dropping `disabled` alone would leave a required
+ * checkbox nothing can satisfy). Both are ported verbatim, through the existing
+ * `switch-form.svelte` fixture. The same release moved the detached
+ * `FieldStatus`'s gap off a spacer `<div>` and onto its `xstyle`; no case here
+ * asserted that wrapper (the two `labelPosition` cases count the children of the
+ * *row*, above the status), so nothing needed updating.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
@@ -696,6 +705,41 @@ describe('Switch', () => {
 			const form = screen.container.querySelector('form')!;
 			const data = new FormData(form);
 			expect(data.get('notify')).toBe('on');
+		});
+
+		it('does not block form submission when required and disabled with a disabledMessage', async () => {
+			const screen = await render(SwitchForm, {
+				props: {
+					switches: [
+						{
+							label: 'Notify',
+							htmlName: 'notify',
+							value: false,
+							onChange: noop,
+							isRequired: true,
+							isDisabled: true,
+							disabledMessage: 'Notifications are turned off org-wide'
+						}
+					]
+				}
+			});
+			// `disabledMessage` drops the native `disabled` so the reason stays
+			// focus-discoverable, but `required` is still on the element — so the
+			// control is detached from the form with `form=""` instead. No element can
+			// have the empty id, so it owns no form: out of constraint validation and
+			// out of the form data, while staying visible, focusable and labelled.
+			expect(screen.container.querySelector('form')!.checkValidity()).toBe(true);
+		});
+
+		it('still blocks submission when required and off but enabled', async () => {
+			const screen = await render(SwitchForm, {
+				props: {
+					switches: [
+						{ label: 'Notify', htmlName: 'notify', value: false, onChange: noop, isRequired: true }
+					]
+				}
+			});
+			expect(screen.container.querySelector('form')!.checkValidity()).toBe(false);
 		});
 
 		it('is excluded from form data when disabled, even with a disabledMessage', async () => {

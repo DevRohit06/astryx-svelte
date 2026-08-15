@@ -15,23 +15,44 @@ import type { DateRange } from '$lib/utils/date-types.js';
 
 /**
  * Astryx's `DateRangeInput/DateRangeInput.test.tsx`, ported case for case —
- * **40** upstream cases at v0.3.0 (19 directly in `describe('DateRangeInput')`,
+ * **45** upstream cases at v0.4.1 (19 directly in `describe('DateRangeInput')`,
  * 5 in `describe('hasClear')`, 2 in `describe('presets')`, 8 in
- * `describe('disabledMessage')`, 2 in `describe('DateRangeInput statusVariant
- * forwarding')` and 4 in `describe('DateRangeInput icon theme targets')`), **all
- * 40 here**. There is no `displayName` case, no snapshot and no no-JSX
- * construction form in the file, so nothing is React-only except the ref case,
- * which gets a counterpart.
+ * `describe('disabledMessage')`, 2 + a nested 3-case `describe('weekStartsOn')`
+ * in `describe('DateRangeInput statusVariant forwarding')`, 4 in
+ * `describe('DateRangeInput icon theme targets')` and 2 in
+ * `describe('DateRangeInput disabled theme state')`), **all 45 here**. There is
+ * no `displayName` case, no snapshot and no no-JSX construction form in the
+ * file, so nothing is React-only except the ref case, which gets a counterpart.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
  * This header used to read "34 upstream cases … 34 here, none dropped".
- * Upstream has **40**. The `DateRangeInput statusVariant forwarding` block and
- * the four-case `DateRangeInput icon theme targets` block have both been ported
- * since, closing the file. The last of those four swaps upstream's
- * `generateThemeTestCSS` for this port's `generateThemeCss` — both return the
- * flat stylesheet string, and it is the substitution `multi-selector` and
- * `selector` already made.
+ * Upstream had **40** at v0.3.0. The `DateRangeInput statusVariant forwarding`
+ * block and the four-case `DateRangeInput icon theme targets` block have both
+ * been ported since, closing the file at that tag. The last of those four swaps
+ * upstream's `generateThemeTestCSS` for this port's `generateThemeCss` — both
+ * return the flat stylesheet string, and it is the substitution
+ * `multi-selector` and `selector` already made.
+ *
+ * ## v0.4.1 (#4876, #4900)
+ *
+ * Upstream grew five cases and amended two:
+ *
+ * - `describe('weekStartsOn')` (3), nested inside `DateRangeInput statusVariant
+ *   forwarding` exactly where upstream puts it, however odd that reads.
+ * - `describe('DateRangeInput disabled theme state')` (2), for the root's new
+ *   `data-disabled`/`disabled` reflection.
+ * - `renders astryx-date-range-input-clear-icon on the clear glyph` was renamed
+ *   to `renders astryx-input-clear-icon (plus the legacy alias) on the clear
+ *   glyph` and gained the shared-target assertion, and `renders the default
+ *   icons (secondary color, sm size) byte-identically` was renamed to `routes
+ *   the clear glyph through the shared clear button (default look unchanged)`
+ *   with its filter list updated. Both are upstream's amended text, verbatim.
+ *
+ * Upstream's `openAndReadWeekdays` carries a comment about jsdom role queries
+ * skipping the top layer. That constraint does not exist here — Chromium's
+ * popover content is queryable — but the helper still reads the columnheaders
+ * off the container directly, which is upstream's assertion unchanged.
  *
  * Upstream imports `getButton`/`queryButton` from `__tests__/fastRoleQueries`
  * instead of `getByRole('button', {name})` purely for jsdom speed — its own
@@ -100,6 +121,9 @@ import type { DateRange } from '$lib/utils/date-types.js';
 const noop = (): void => {};
 
 const range: DateRange = { start: '2026-03-15', end: '2026-03-22' };
+
+/** The `render()` result, for helpers that need both locators and container. */
+type Screen = Awaited<ReturnType<typeof render>>;
 
 describe('DateRangeInput', () => {
 	it('renders with label', async () => {
@@ -565,6 +589,41 @@ describe('DateRangeInput statusVariant forwarding', () => {
 			'detached'
 		);
 	});
+
+	describe('weekStartsOn', () => {
+		// Upstream's helper takes the container because jsdom's role queries skip
+		// the top layer. Chromium's do not, but the columnheaders are still read
+		// off the container directly — upstream's assertion unchanged. The click
+		// is `userEvent`'s rather than a synthetic `fireEvent.click`, which is what
+		// the rest of this file already does.
+		const openAndReadWeekdays = async (screen: Screen): Promise<(string | null)[]> => {
+			await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+			return Array.from(screen.container.querySelectorAll('[role="columnheader"]'))
+				.slice(0, 7)
+				.map((h) => h.textContent);
+		};
+
+		it('defaults to a Sunday-first week', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: null, onChange: noop }
+			});
+			expect(await openAndReadWeekdays(screen)).toEqual(['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']);
+		});
+
+		it('forwards a numeric weekStartsOn to the calendar', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: null, onChange: noop, weekStartsOn: 1 }
+			});
+			expect(await openAndReadWeekdays(screen)).toEqual(['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']);
+		});
+
+		it('accepts a three-letter day name', async () => {
+			const screen = await render(DateRangeInput, {
+				props: { label: 'Range', value: null, onChange: noop, weekStartsOn: 'mon' }
+			});
+			expect(await openAndReadWeekdays(screen)).toEqual(['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']);
+		});
+	});
 });
 
 describe('DateRangeInput icon theme targets', () => {
@@ -578,16 +637,19 @@ describe('DateRangeInput icon theme targets', () => {
 		return icon as HTMLElement;
 	};
 
-	it('renders astryx-date-range-input-clear-icon on the clear glyph', async () => {
+	it('renders astryx-input-clear-icon (plus the legacy alias) on the clear glyph', async () => {
 		const screen = await render(DateRangeInput, {
 			props: { label: 'Range', value: range, onChange: noop, hasClear: true }
 		});
-		// The stable target lands on the icon element itself (not the button), so a
-		// theme can restyle just this glyph (color, size, hover) via defineTheme —
-		// a button-level target could not reach the icon's own color/size.
+		// The canonical target lands on the icon element itself (not the button),
+		// so a theme can restyle just this glyph (color, size, hover) via
+		// defineTheme — a button-level target could not reach the icon's own
+		// color/size. The original per-component name rides along for a
+		// deprecation window.
 		const clearLoc = screen.getByRole('button', { name: 'Clear Range' });
 		await expect.element(clearLoc).toBeInTheDocument();
 		const icon = iconIn(clearLoc.element() as HTMLElement);
+		expect(icon).toHaveClass('astryx-input-clear-icon');
 		expect(icon).toHaveClass('astryx-date-range-input-clear-icon');
 		expect(icon).toHaveClass('astryx-icon');
 	});
@@ -605,11 +667,12 @@ describe('DateRangeInput icon theme targets', () => {
 		expect(icon).toHaveAttribute('data-state', 'collapsed');
 	});
 
-	it('renders the default icons (secondary color, sm size) byte-identically', async () => {
-		// Pixel-identical default guard: the glyphs must carry the exact same
-		// StyleX color/size classes as a standalone secondary/sm icon. The added
-		// target class is purely additive — it changes nothing until a theme
-		// targets it.
+	it('routes the clear glyph through the shared clear button (default look unchanged)', async () => {
+		// Default-look guard for the clear affordance. It now composes the shared
+		// InputClearButton (a ghost Button with a secondary/sm glyph), so aside
+		// from its target classes the glyph matches a standalone `secondary`/`sm`
+		// close icon — the default clear look is defined once, in InputClearButton.
+		// (The calendar-toggle glyph is covered separately.)
 		const screen = await render(DateRangeInput, {
 			props: { label: 'Range', value: range, onChange: noop, hasClear: true }
 		});
@@ -617,22 +680,20 @@ describe('DateRangeInput icon theme targets', () => {
 		await expect.element(clearLoc).toBeInTheDocument();
 		const clearIcon = iconIn(clearLoc.element() as HTMLElement);
 
-		const refScreen = await render(Icon, {
+		const clearRefScreen = await render(Icon, {
 			props: { icon: 'close', size: 'sm', color: 'secondary' }
 		});
-		const refIcon = refScreen.container.querySelector('.astryx-icon') as HTMLElement;
+		const clearRefIcon = clearRefScreen.container.querySelector('.astryx-icon') as HTMLElement;
 
 		const styleClasses = (el: HTMLElement) =>
 			el.className
 				.split(' ')
 				.filter(
-					(c) =>
-						c !== 'astryx-date-range-input-clear-icon' &&
-						c !== 'astryx-date-range-input-toggle-icon'
+					(c) => c !== 'astryx-input-clear-icon' && c !== 'astryx-date-range-input-clear-icon'
 				)
 				.sort();
 
-		expect(styleClasses(clearIcon)).toEqual(styleClasses(refIcon));
+		expect(styleClasses(clearIcon)).toEqual(styleClasses(clearRefIcon));
 	});
 
 	it('exposes the icon targets so a theme reaches icon color, size, and hover', () => {
@@ -665,5 +726,24 @@ describe('DateRangeInput icon theme targets', () => {
 		expect(css).toContain(':hover');
 		expect(css).toContain('12px');
 		expect(css).toContain('14px');
+	});
+});
+
+describe('DateRangeInput disabled theme state', () => {
+	it('reflects disabled on the root target so themes can gate paint on it', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop, isDisabled: true }
+		});
+		const root = screen.container.querySelector('.astryx-date-range-input');
+		expect(root).toHaveAttribute('data-disabled', 'disabled');
+		expect(root).toHaveClass('disabled');
+	});
+
+	it('omits data-disabled when enabled, like status does', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Range', value: null, onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-date-range-input');
+		expect(root).not.toHaveAttribute('data-disabled');
 	});
 });

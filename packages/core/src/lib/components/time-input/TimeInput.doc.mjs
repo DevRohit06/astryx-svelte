@@ -25,7 +25,8 @@ export default {
 		targets: [
 			{
 				className: 'astryx-time-input',
-				visualProps: ['size', 'status']
+				visualProps: ['size', 'status'],
+				states: ['disabled']
 			}
 		]
 	},

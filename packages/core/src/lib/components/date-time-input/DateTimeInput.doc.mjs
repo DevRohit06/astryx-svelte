@@ -25,7 +25,8 @@ export default {
 		targets: [
 			{
 				className: 'astryx-date-time-input',
-				visualProps: ['size', 'status']
+				visualProps: ['size', 'status'],
+				states: ['disabled']
 			},
 			{
 				className: 'astryx-date-time-input-date-segment',
@@ -261,6 +262,13 @@ export default {
 			type: '1 | 2',
 			description: 'Number of months displayed simultaneously in the calendar.',
 			default: '1'
+		},
+		{
+			name: 'weekStartsOn',
+			type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
+			description:
+				'First day of week in the calendar. A number (0 = Sunday to 6 = Saturday) or a three-letter day name.',
+			default: '0'
 		},
 		{
 			name: 'width',
