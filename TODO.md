@@ -5865,10 +5865,19 @@ directory's worth of work:**
       route to a consumer at all. Do **not** "fix" it by adding them to the root barrel: upstream's
       `Selector/index.ts` deliberately withholds them, so root-exporting would convert a missing
       export into an over-export. This is the concrete cost of the per-component-subpath debt
-- [ ] **`use-typeahead.svelte.test.ts` was renamed** from `typeahead.svelte.test.ts` to free the
-      filename for the component's suite. It is the type-to-select _hook_'s suite
+- [x] **`use-typeahead.test.ts` was renamed** from `typeahead.svelte.test.ts` to free the filename
+      for the component's suite. It is the type-to-select _hook_'s suite
       (`hooks/useTypeahead.test.tsx`), unrelated to the `Typeahead` component, and is the one hook
-      suite that keeps its `use-` prefix
+      suite that keeps its `use-` prefix. **At 0.4.1 it also moved from the client project to the
+      server one** and lost its `.svelte` infix: the hook reads `key` and four modifier flags off a
+      keyboard event and touches no node, no window and no layout, so it only ever sat in the client
+      project because node has no `KeyboardEvent` _constructor_. A small `extends Event` stand-in
+      carrying exactly those fields replaces it — deliberately not more, so a future `useTypeahead`
+      reaching for `getModifierState` fails loudly instead of passing against a fake. Upstream's own
+      suite runs under jsdom, so its `new KeyboardEvent(...)` is a reimplementation too. This makes
+      `compute-overflow.test.ts:7-9`'s claim that `use-typeahead` follows the pure-module rule true
+      rather than aspirational, and the suite is now runnable in an environment that cannot bind a
+      browser port
 
 **Batch 7 — the imperative handle, slot translation, and two closed-prop roots:**
 
