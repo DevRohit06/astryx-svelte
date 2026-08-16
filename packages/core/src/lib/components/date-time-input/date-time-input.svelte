@@ -463,7 +463,9 @@
 	// writes both hints as bare English literals with no translator key.
 	const resolvedTimePlaceholder = $derived.by(() => {
 		if (isTimeFocused && !timeDisplayValue) {
-			return hourFormat === '12h' ? 'e.g., 2:30 PM' : 'e.g., 14:30';
+			return hourFormat === '12h'
+				? t('@astryx.dateTimeInput.timeHint12h')
+				: t('@astryx.dateTimeInput.timeHint24h');
 		}
 		return timePlaceholder;
 	});

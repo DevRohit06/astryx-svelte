@@ -10,7 +10,7 @@ export default {
 	displayName: 'Side Nav Collapse Button',
 	subComponentOf: 'SideNav',
 	description:
-		'Toggle button for sidenav collapse. Place inside SideNav (reads context automatically) or outside (pass handleRef). Renders as an icon-only ghost button by default.',
+		'Toggle button for sidenav collapse. Place inside SideNav (reads context automatically) or outside it (hand the same controlled collapsible config to both). Renders as an icon-only ghost button by default.',
 	keywords: [
 		'sidenav',
 		'sidebar',
@@ -29,16 +29,27 @@ export default {
 	isHiddenFromOverview: true,
 	props: [
 		{
+			name: 'collapsible',
+			type: 'SideNavControlledCollapsible',
+			description:
+				'The same controlled collapsible config passed to SideNav. Only needed when the button is rendered outside the sidenav, where collapse context cannot reach it.'
+		},
+		{
 			name: 'handleRef',
 			type: 'SideNavImperativeCollapseHandle | null',
-			description:
-				'Imperative collapse handle from SideNav. Only needed when the button is rendered outside the sidenav.'
+			description: 'Deprecated. Imperative collapse handle from SideNav; pass collapsible instead.'
 		},
 		{
 			name: 'label',
 			type: 'string',
 			description:
 				'Custom button label. When provided, renders as a text button with chevron. When omitted, renders icon-only.'
+		},
+		{
+			name: 'size',
+			type: "'sm' | 'md' | 'lg'",
+			description:
+				"Button size. Defaults to the size its container cascades ('sm' inside a SideNav footer) and to 'md' with no container. Set it when the button sits outside a sized container and has to match its neighbours."
 		},
 		{
 			name: 'children',

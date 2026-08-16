@@ -23,7 +23,13 @@ import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
  */
 
 const TRACK_SIZE = 4;
-const THUMB_SIZE = 20;
+/**
+ * Exported because the component needs the same number for its thumb-travel
+ * geometry. Upstream is one file, so it reads a module-private const; the split
+ * here means the number has to cross the module boundary rather than be written
+ * down twice.
+ */
+export const THUMB_SIZE = 20;
 
 const styles = stylex.create({
 	sliderRow: {
@@ -42,6 +48,15 @@ const styles = stylex.create({
 	},
 	trackContainerHorizontal: {
 		height: THUMB_SIZE,
+		// The whole track is the tap target (a click anywhere on it moves the
+		// slider), but it is only THUMB_SIZE (20px) tall — under the WCAG 2.5.8 AA
+		// 24px minimum. Floor its block size to 24px on touch pointers only. The
+		// rail and thumb center on 50%, so they stay put; only the invisible
+		// tappable area grows. Desktop (fine pointer) is unchanged.
+		minBlockSize: {
+			default: null,
+			'@media (pointer: coarse)': '24px'
+		},
 		width: '100%',
 		cursor: 'pointer'
 	},

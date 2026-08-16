@@ -15,7 +15,15 @@ import { observeResize, unobserveResize } from './shared-resize-observer.js';
  * This only ever runs in the browser: attachments do not execute during SSR, so
  * the server renders the untruncated markup and the first client pass measures.
  */
-export interface Truncation {
+/**
+ * Upstream's `UseTruncationOptions`. A getter rather than a plain object: reading
+ * `maxLines` inside the attachment is what registers the dependency, which is
+ * upstream's `useCallback` dependency list expressed as reactivity.
+ */
+export type UseTruncationOptions = () => number;
+
+/** Upstream's `UseTruncationReturn`, with `ref` replaced by `attach`. */
+export interface UseTruncationReturn {
 	/** Whether the content currently overflows its clamp. */
 	readonly isTruncated: boolean;
 	/** The element's full text, for the tooltip or `title` fallback. */
@@ -24,7 +32,7 @@ export interface Truncation {
 	readonly attach: Attachment<HTMLElement>;
 }
 
-export function createTruncation(maxLines: () => number): Truncation {
+export function useTruncation(maxLines: UseTruncationOptions): UseTruncationReturn {
 	let isTruncated = $state(false);
 	let fullText = $state('');
 

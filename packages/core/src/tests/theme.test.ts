@@ -284,6 +284,75 @@ describe('defineTheme extends', () => {
 	});
 });
 
+/**
+ * Upstream's `describe('typography weight derivation')` (`theme/defineTheme.test.ts`),
+ * all six cases. New here rather than restated: this port had no role-level
+ * `weight` at all until it was added, which `port/debts.md` recorded as an
+ * `api-divergence` — `typography: {heading: {weight: 'semibold'}}` typechecked
+ * and was silently ignored.
+ *
+ * Read from `resolvedTokens`, not `tokens`: this port keeps the raw input map on
+ * `tokens` and the generated map on `resolvedTokens`, where upstream merges both
+ * into `tokens`. These assert on *generated* tokens, so the wrong map would make
+ * every one of them vacuous — the same note the two typography cases above carry.
+ */
+describe('typography weight derivation', () => {
+	it('applies heading weight from typography role', () => {
+		const theme = defineTheme({
+			name: 'heading-weight',
+			typography: { scale: { base: 14, ratio: 1.2 }, heading: { weight: 'bold' } }
+		});
+		// All heading levels should get bold weight
+		expect(theme.resolvedTokens['--text-heading-1-weight']).toBe('var(--font-weight-bold)');
+		expect(theme.resolvedTokens['--text-heading-4-weight']).toBe('var(--font-weight-bold)');
+	});
+
+	it('per-level heading weights override default heading weight', () => {
+		const theme = defineTheme({
+			name: 'per-level',
+			typography: {
+				scale: { base: 14, ratio: 1.2 },
+				heading: { weight: 'semibold', weights: { 3: 'bold', 4: 'bold' } }
+			}
+		});
+		expect(theme.resolvedTokens['--text-heading-1-weight']).toBe('var(--font-weight-semibold)');
+		expect(theme.resolvedTokens['--text-heading-3-weight']).toBe('var(--font-weight-bold)');
+		expect(theme.resolvedTokens['--text-heading-4-weight']).toBe('var(--font-weight-bold)');
+	});
+
+	it('body weight flows to text body token', () => {
+		const theme = defineTheme({
+			name: 'body-weight',
+			typography: { scale: { base: 14, ratio: 1.2 }, body: { weight: 'medium' } }
+		});
+		expect(theme.resolvedTokens['--text-body-weight']).toBe('var(--font-weight-medium)');
+	});
+
+	it('code weight flows to text code token', () => {
+		const theme = defineTheme({
+			name: 'code-weight',
+			typography: { scale: { base: 14, ratio: 1.2 }, code: { weight: 'medium' } }
+		});
+		expect(theme.resolvedTokens['--text-code-weight']).toBe('var(--font-weight-medium)');
+	});
+
+	it('named weight maps to var reference', () => {
+		const theme = defineTheme({
+			name: 'named-weight',
+			typography: { scale: { base: 14, ratio: 1.2 }, heading: { weight: 'normal' } }
+		});
+		expect(theme.resolvedTokens['--text-heading-1-weight']).toBe('var(--font-weight-normal)');
+	});
+
+	it('raw CSS weight value passes through', () => {
+		const theme = defineTheme({
+			name: 'raw-weight',
+			typography: { scale: { base: 14, ratio: 1.2 }, heading: { weight: '900' } }
+		});
+		expect(theme.resolvedTokens['--text-heading-1-weight']).toBe('900');
+	});
+});
+
 describe('generateThemeCss', () => {
 	const theme = defineTheme({
 		name: 'demo',

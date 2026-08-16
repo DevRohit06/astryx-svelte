@@ -1,5 +1,7 @@
+import { untrack } from 'svelte';
 import type { Attachment } from 'svelte/attachments';
 import { addAnchorName, readAnchorNames, removeAnchorName } from './anchor-name.js';
+import { resolveLayerPortalTarget } from './layer-host.js';
 
 /**
  * The core layer primitive, ported from Astryx's `Layer/useLayer.tsx`. Every
@@ -79,6 +81,16 @@ interface BaseLayerOptions {
 /** Options for context mode (CSS anchor positioning) */
 export interface ContextLayerOptions extends BaseLayerOptions {
 	mode: 'context';
+	/**
+	 * Defer mounting the final layer and resolving its inline/portal position
+	 * until `show()` is requested. Hiding unmounts it while the inert marker
+	 * remains at the render position. Use this when rich content must never
+	 * enter an unsafe ancestor, even briefly, and does not need to exist while
+	 * closed.
+	 *
+	 * @default false
+	 */
+	lazyMount?: boolean;
 }
 
 /** Options for fixed mode (manual positioning) */
@@ -118,8 +130,42 @@ interface LayerRenderable {
 	readonly fallbackStyle: string | undefined;
 }
 
+/**
+ * Where a context layer's container should mount, resolved from the inert
+ * marker's real position in the DOM.
+ */
+export interface ContextLayerMount {
+	/** Null means the marker's parent is safe and the layer stays inline. */
+	portalTarget: HTMLElement | null;
+	/**
+	 * Logical writing context lost when moving outside an unsafe ancestor, as a
+	 * CSS declaration string. Upstream builds a `CSSProperties` object; `<Layer>`
+	 * merges inline styles as strings, so this is the same content in the shape
+	 * this port's style pipeline consumes.
+	 */
+	portalStyle: string;
+}
+
 /** Return type for context mode */
 export interface ContextLayerReturn extends LayerRenderable {
+	/**
+	 * Attach to the inert `<template>` marker `<Layer>` renders at the layer's
+	 * real position in the template. Its parent is what decides whether the
+	 * container can stay inline or needs a corrective portal — and, because the
+	 * marker outlives the container, it also reports a move if the render call
+	 * relocates while the hook stays mounted. Upstream's `sentinelRef`.
+	 *
+	 * Typed `Attachment<HTMLElement>`, not `HTMLTemplateElement`: attachments are
+	 * contravariant in their element, so Svelte's `<template>` slot only accepts
+	 * the wider type — and nothing here reads a template-specific member.
+	 */
+	readonly attachSentinel: Attachment<HTMLElement>;
+
+	/**
+	 * Null until the marker resolves (and again after a `lazyMount` hide), which
+	 * is `<Layer>`'s signal not to render the container yet.
+	 */
+	readonly contextMount: ContextLayerMount | null;
 	/**
 	 * Attach to the trigger element. Injects this layer's anchor name for CSS
 	 * anchor positioning, and removes it again on detach. Upstream's `ref`.
@@ -162,12 +208,40 @@ export interface FixedLayerReturn extends LayerRenderable {
 }
 
 /**
+ * The two properties a corrective portal would silently change.
+ *
+ * Custom properties are deliberately NOT snapshotted: the portal target is the
+ * closest safe ancestor, so theme variables continue to inherit and update
+ * there. These two can be set on the unsafe chain itself and directly affect the
+ * logical anchor-positioning keywords the layer uses. Only values the portal
+ * would actually lose are overridden; matching values keep inheriting from the
+ * target so a later direction change stays live.
+ */
+function readPortalWritingContext(element: HTMLElement, portalTarget: HTMLElement): string {
+	const view = element.ownerDocument.defaultView;
+	if (!view) {
+		return '';
+	}
+	const sourceStyle = view.getComputedStyle(element);
+	const targetStyle = view.getComputedStyle(portalTarget);
+
+	const declarations: string[] = [];
+	if (sourceStyle.direction !== targetStyle.direction) {
+		declarations.push(`direction:${sourceStyle.direction}`);
+	}
+	if (sourceStyle.writingMode !== targetStyle.writingMode) {
+		declarations.push(`writing-mode:${sourceStyle.writingMode}`);
+	}
+	return declarations.join(';');
+}
+
+/**
  * Map logical placement/alignment to a CSS position-area value.
  *
  * Uses the self-* logical keyword family: the inline axis resolves against
- * the popover's own inherited direction (the layer renders inside the
- * trigger's subtree, so it inherits `direction` and mirrors in RTL with no
- * JS). The block axis is direction-neutral but must come from the same
+ * the popover's own direction (inherited inline, or preserved when portaled),
+ * so it mirrors in RTL without placement-specific JS. The block axis is
+ * direction-neutral but must come from the same
  * keyword family — mixing physical `top` with `self-inline-*` produces an
  * invalid position-area (computes to `none`, which pins the popover to the
  * viewport corner because the base styles zero the UA margins).
@@ -285,8 +359,28 @@ export function useLayer(
 	const anchorId = $derived(`--astryx-layer-${options().id.replace(/:/g, '')}`);
 	const lightDismiss = $derived(options().lightDismiss ?? false);
 
+	// `lazyMount` is context-only, and read reactively for the same reason
+	// upstream re-reads it every render: a consumer may flip it with a prop.
+	const lazyMount = $derived(
+		mode === 'context' ? ((options() as ContextLayerOptions).lazyMount ?? false) : false
+	);
+
 	let isOpen = $state(false);
 	let popover: HTMLElement | null = null;
+	// The element the current logical open state was applied to. A portal-target
+	// change replaces the popover element; keeping the old reference lets the
+	// attachment recognise and reopen its replacement.
+	let openedPopover: HTMLElement | null = null;
+	// The trigger, kept so `showPopover` can name it as the popover's invoker
+	// `source`. It was not needed before 0.4.2 — the anchor-name attachment does
+	// its own cleanup, so nothing else read the element.
+	let triggerEl: HTMLElement | null = null;
+	// The inert marker at the layer's real position in the template.
+	let sentinel: HTMLElement | null = null;
+	let contextMount = $state<ContextLayerMount | null>(null);
+	// A show() that arrives before the container mounts is replayed when its
+	// popover attachment runs.
+	let pendingShow = false;
 
 	// Rendered visibility for the no-Popover-API fallback; `undefined` whenever
 	// the API is present, so nothing is emitted on a supporting browser. See
@@ -294,28 +388,94 @@ export function useLayer(
 	// `popover.style.display` write.
 	let fallbackDisplay = $state<'block' | 'none' | undefined>(undefined);
 
-	function show(): void {
+	function showPopoverElement(element: HTMLElement): void {
 		// Finding infra-4: the Popover API is unsupported on Safari <17 and
 		// Firefox <125. On those browsers `showPopover` does not exist, so
 		// calling it unconditionally throws a TypeError and the layer never
 		// opens. Guard behind a feature check; when the API is missing, fall
 		// back to plain visibility (the [popover] attribute is inert there, so
 		// the element sits in normal flow) so the layer still becomes visible.
-		if (popover && !isOpen) {
-			if (typeof popover.showPopover === 'function') {
-				popover.showPopover();
-			} else {
-				fallbackDisplay = 'block';
-			}
+		if (typeof element.showPopover === 'function') {
+			// The trigger is passed as the popover's invoker `source`: a layer
+			// hosted away from its trigger then still takes its sequential focus
+			// order (and its popover nesting) from the trigger rather than from
+			// its own DOM position. Browsers without the option ignore it.
+			element.showPopover({ source: triggerEl ?? undefined });
+		} else {
+			fallbackDisplay = 'block';
+		}
+		openedPopover = element;
+	}
+
+	/**
+	 * Whether `element` is the container the *current* mount resolves to. A
+	 * context popover left over from a previous mount must not be reopened.
+	 */
+	function isCurrentContextPopover(element: HTMLElement): boolean {
+		if (mode !== 'context') {
+			return true;
+		}
+		const mount = contextMount;
+		if (mount === null) {
+			return false;
+		}
+		const expectedParent = mount.portalTarget ?? sentinel?.parentElement ?? null;
+		return element.parentElement === expectedParent;
+	}
+
+	function requestContextMount(): void {
+		if (mode !== 'context') {
+			return;
+		}
+		const inlineParent = sentinel?.parentElement ?? null;
+		if (!sentinel || !inlineParent) {
+			return;
+		}
+		const portalTarget = resolveLayerPortalTarget(inlineParent);
+		const portalStyle = portalTarget ? readPortalWritingContext(sentinel, portalTarget) : '';
+		// Bail out when the resolve lands on the mount we already have. Upstream
+		// re-sets an equal `contextMount` freely: React re-renders into the *same*
+		// `createPortal` container and no DOM moves. Here the object's identity is
+		// what `<Layer>`'s `{@attach intoPortal(...)}` is keyed on, so a new-but-equal
+		// mount tears the attachment down — running its `() => node.remove()` — and
+		// re-appends. Removing a *showing* popover evicts it from the top layer
+		// without firing `toggle`, and `attachPopover` does not re-run to re-show it,
+		// so the layer is hidden for good. Equality here makes every re-resolve that
+		// changes nothing cost nothing.
+		const current = contextMount;
+		if (current && current.portalTarget === portalTarget && current.portalStyle === portalStyle) {
+			return;
+		}
+		contextMount = { portalTarget, portalStyle };
+	}
+
+	function clearContextMount(): void {
+		if (mode !== 'context' || !lazyMount) {
+			return;
+		}
+		contextMount = null;
+	}
+
+	function show(): void {
+		const candidate = popover;
+		const element = candidate && isCurrentContextPopover(candidate) ? candidate : null;
+		if (!element) {
+			pendingShow = true;
+			requestContextMount();
+			return;
+		}
+		if (!isOpen) {
+			showPopoverElement(element);
 			isOpen = true;
 			options().onShow?.();
 		}
 	}
 
 	function hide(): void {
+		pendingShow = false;
 		if (isOpen) {
-			// See the infra-4 note in `show`: mirror the same guard on hide so
-			// unsupported browsers degrade gracefully instead of throwing.
+			// See the infra-4 note in `showPopoverElement`: mirror the same guard on
+			// hide so unsupported browsers degrade gracefully instead of throwing.
 			if (popover) {
 				if (typeof popover.hidePopover === 'function') {
 					popover.hidePopover();
@@ -323,9 +483,11 @@ export function useLayer(
 					fallbackDisplay = 'none';
 				}
 			}
+			openedPopover = null;
 			isOpen = false;
 			options().onHide?.();
 		}
+		clearContextMount();
 	}
 
 	/**
@@ -336,6 +498,7 @@ export function useLayer(
 	 */
 	const attachTrigger: Attachment<HTMLElement> = (element) => {
 		const name = anchorId;
+		triggerEl = element;
 		addAnchorName(element, name);
 
 		// `anchor-name` lives in the element's *inline style*, and that element
@@ -360,6 +523,37 @@ export function useLayer(
 		return () => {
 			observer.disconnect();
 			removeAnchorName(element, name);
+			if (triggerEl === element) {
+				triggerEl = null;
+			}
+		};
+	};
+
+	/**
+	 * The inert marker's attachment. Reading `lazyMount` is the only tracked read
+	 * here; the resolve itself runs untracked so the attachment does not
+	 * subscribe to whatever `getComputedStyle` and the options getter touch.
+	 *
+	 * `isOpen` is `$state` and must be read through `untrack`. Upstream reads
+	 * `isOpenRef.current` — a ref, which cannot schedule anything — so its
+	 * callback depends only on `[lazyMount, requestContextMount]`. Reading the
+	 * `$state` directly subscribes this attachment to it, and then opening the
+	 * layer re-runs the attachment, re-resolves the mount and moves the popover
+	 * out of the top layer mid-open. `pendingShow` is a plain `let` and is safe
+	 * either way; it is inside the `untrack` because the two are one condition.
+	 */
+	const attachSentinel: Attachment<HTMLElement> = (element) => {
+		sentinel = element;
+		if (!lazyMount || untrack(() => pendingShow || isOpen)) {
+			// The render call may have moved while the hook stayed mounted. Resolve
+			// again from the newly attached marker rather than reusing a portal
+			// target from its previous position.
+			untrack(requestContextMount);
+		}
+		return () => {
+			if (sentinel === element) {
+				sentinel = null;
+			}
 		};
 	};
 
@@ -381,12 +575,23 @@ export function useLayer(
 		const handleToggle = (event: Event) => {
 			const toggleEvent = event as ToggleEvent;
 			if (toggleEvent.newState === 'closed' && isOpen) {
+				openedPopover = null;
 				isOpen = false;
 				options().onHide?.();
+				clearContextMount();
 			}
 		};
 
 		element.addEventListener('toggle', handleToggle);
+
+		if (pendingShow) {
+			pendingShow = false;
+			untrack(show);
+		} else if (isOpen && openedPopover !== element && isCurrentContextPopover(element)) {
+			// Changing a portal target remounts the container. Preserve the logical
+			// open state without firing `onShow` again for the replacement element.
+			untrack(() => showPopoverElement(element));
+		}
 
 		return () => {
 			element.removeEventListener('toggle', handleToggle);
@@ -400,6 +605,10 @@ export function useLayer(
 		return {
 			attachTrigger,
 			attachPopover,
+			attachSentinel,
+			get contextMount() {
+				return contextMount;
+			},
 			get anchorId() {
 				return anchorId;
 			},

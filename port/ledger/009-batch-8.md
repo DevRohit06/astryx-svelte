@@ -85,7 +85,11 @@ Not recorded separately from the component notes above.
       the first unmount deletes — leaving the survivor unstyled with nothing to re-inject it. Ours
       counts, and removes the tag at zero. Invisible for `__built` themes, which is every theme this
       repo ships, and that is exactly why it was worth fixing rather than waiting for a report
-- [ ] **Upstream bug (documented, not replicated-away): `tokenDefaults` omits `borderDefaults`.**
+- [x] **Upstream bug (documented, not replicated-away): `tokenDefaults` omits `borderDefaults`.**
+      ~~See below.~~ **Retired at upstream 0.4.2** (#5026), which folded `borderDefaults` into
+      `CoreTokenName` and `tokenDefaults`. This port followed in `028-upstream-0.4.2.md`, and
+      `focusDefaults` — missing here but present upstream since before 0.4.1 — landed in the same
+      pass. The original entry follows.
       Upstream ships the group, publishes a `BorderVarName` type for it, and then leaves it out of
       the flat map — so `tokenVars` and every `useTheme().tokens` is missing `--border-width`. Ours
       matches the omission, because the parity rule puts upstream bugs here rather than in the code:

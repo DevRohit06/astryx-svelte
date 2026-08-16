@@ -62,6 +62,12 @@ export default {
 			type: "'first' | 'middle' | 'last'",
 			description:
 				'Position within a multi-bubble group. Controls corner radius reduction on the sender side. Leave unset for standalone bubbles (full radius).'
+		},
+		{
+			name: 'width',
+			type: 'SizeValue',
+			description:
+				'Width of the bubble (number = pixels, string = used as-is). When set, replaces the default max(80%, 280px) width cap. Combine with variant="ghost" to let custom content (an artifact card, attachments) span the full message column.'
 		}
 	]
 };

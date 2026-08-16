@@ -27,6 +27,7 @@ export {
 // (`POOL`, `POOL_SIZE`, `m0`…`m5`, `RevealSlot`), all equally internal.
 export {
 	useContainerReveal,
+	type ContainerRevealOptions,
 	type ContentRevealOptions,
 	type UseContainerRevealOptions,
 	type UseContainerRevealReturn
@@ -36,10 +37,12 @@ export { useDevWarning } from './use-dev-warning.svelte.js';
 
 export { useEntryAnimation, type EntryAnimationPreset } from './use-entry-animation.js';
 
-// `hasActiveFocusTrapEscape` and `isImeKeyEvent` are deliberately absent, as
-// they are from upstream's barrel: Dialog is their only consumer and imports
-// them from the module directly.
+// `hasActiveFocusTrapEscape` and `isImeKeyEvent` joined upstream's barrel at
+// 0.4.2 (#5023): they coordinate nested traps and skip IME composition keys, so
+// an overlay outside this package needs them too.
 export {
+	hasActiveFocusTrapEscape,
+	isImeKeyEvent,
 	useFocusTrap,
 	type UseFocusTrapOptions,
 	type UseFocusTrapReturn

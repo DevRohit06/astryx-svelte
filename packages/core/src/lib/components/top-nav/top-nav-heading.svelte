@@ -285,7 +285,14 @@
 		Stays a `<button>`: this box is the popover trigger, so it carries the
 		accessible name and the handlers — only the glyph moves to `Icon` (#4838).
 	-->
+	<!--
+		The hover hook's trigger attachment belongs on this chevron button, not the
+		heading root: it is the focus-restore target, and the root is a `<div>`,
+		which cannot take focus. The popover's own trigger attachment stays on the
+		root because the panel anchors to the whole heading.
+	-->
 	<button
+		{@attach menuHover.attachTrigger}
 		type="button"
 		aria-label={t('@astryx.topNav.heading.openMenu')}
 		onclick={openMenuFromChevron}
@@ -310,7 +317,7 @@
 		type="button"
 		class={popoverHeadingAttrs.class}
 		style={popoverHeadingAttrs.style}
-		onclick={menuHover.triggerProps.onclick}
+		onclick={menuHover.close}
 	>
 		{#if logo}
 			<span class={logoAttrs.class} style={logoAttrs.style}>{@render logo()}</span>
@@ -341,7 +348,7 @@
 			-->
 			<div role="menu" aria-label={heading ?? t('@astryx.topNav.heading.dialogLabel')}>
 				{#if menu}
-					<NavHeadingCloseScope closeMenu={popover.hide}>
+					<NavHeadingCloseScope closeMenu={menuHover.close}>
 						{@render menu()}
 					</NavHeadingCloseScope>
 				{/if}

@@ -24,7 +24,7 @@ export default {
 		targets: [
 			{
 				className: 'astryx-heading',
-				visualProps: ['level', 'color']
+				visualProps: ['level', 'color', 'type']
 			},
 			{
 				className: 'astryx-text',

@@ -399,10 +399,11 @@ const CASES = [
 	{
 		file: 'src/lib/components/avatar/avatar.stylex.js',
 		upstreamFile: 'Avatar/Avatar.js',
-		// `image` and the icon plate's bare `fallback` are each applied at one
-		// call site with no dynamic style beside them, so the compiler resolved
+		// `image`, the icon plate's bare `fallback`, and — as of 0.4.2, which moved
+		// the size off it onto the wrapper (#5030) — `content` are each applied at
+		// one call site with no dynamic style beside them, so the compiler resolved
 		// them and left no object entry behind.
-		inline: [['styles.image'], ['styles.fallback']]
+		inline: [['styles.image'], ['styles.fallback'], ['styles.content']]
 	},
 	{
 		file: 'src/lib/components/avatar/avatar-status-dot.stylex.js',
@@ -2807,10 +2808,20 @@ const CASES = [
 		// `chevronGlyph` is object mode for the same reason and, being new with
 		// #4838, never had an inline claim to delete.
 		//
-		// `['styles.chevron', 'styles.interactive']` **stays**: that pair is not an
-		// `<Icon>` at all but the chevron's own `<button>`, which upstream still
-		// folds into a literal (`x2lah0s x78zum5 … x1yc453h xe9uy6x`). The glyph
-		// inside it is what moved, and it moved to `chevronGlyph`.
+		// `['styles.chevron', 'styles.interactive']` used to stay: that pair is not
+		// an `<Icon>` at all but the chevron's own `<button>`, which upstream once
+		// folded into a literal. The glyph inside it is what moved for #4838, and
+		// it moved to `chevronGlyph`.
+		//
+		// **Three more pairs joined the objects at 0.4.2**, when the SideNav
+		// hardening pass put every focusable row on the shared focus ring: a call
+		// site that reads `focusOutlineProps.focusVisible(a, b)` passes its styles
+		// through a *runtime function*, which the compiler cannot fold, so `dist/`
+		// keeps the keys as objects and emits no inline string. That is the same
+		// mechanism as an `xstyle` crossing a component boundary. `styles.icon`
+		// **stays** inline: it has two call sites, and only the link variant
+		// (`sideNavHeadingIconLinkAttrs`) took the ring — the plain span is not
+		// focusable, still folds, and is what the inline entry matches.
 		file: 'src/lib/components/side-nav/side-nav-heading.stylex.js',
 		upstreamFile: 'SideNav/SideNavHeading.js',
 		inline: [
@@ -2818,12 +2829,9 @@ const CASES = [
 			['styles.textContainer'],
 			['styles.superheading'],
 			['styles.heading'],
-			['styles.heading', 'styles.headingLink'],
 			['styles.headingRow'],
-			['styles.chevron', 'styles.interactive'],
 			['styles.headerEndContent'],
-			['styles.popoverContent'],
-			['styles.popoverHeading']
+			['styles.popoverContent']
 		]
 	},
 	{
@@ -2846,14 +2854,19 @@ const CASES = [
 		// `styles.root` is object-only since 0.2.0 — all three of its call sites
 		// take `xstyle`, so none folds to a literal. The object diff above still
 		// covers it.
+		//
+		// **`expandToggle` and `splitAction` joined the objects at 0.4.2**: the
+		// hardening pass put both on the shared focus ring, and a call site that
+		// reads `focusOutlineProps.focusVisible(...)` passes its styles through a
+		// runtime function the compiler cannot fold. Same mechanism as the three
+		// `side-nav-heading` pairs above. Their inline claims are deleted rather
+		// than repaired — there is no literal left upstream to match.
 		inline: [
 			['styles.label'],
 			['styles.endContent'],
 			['styles.childrenCollapsible'],
 			['styles.childrenCollapsible', 'styles.childrenCollapsed'],
 			['styles.childrenInner'],
-			['styles.expandToggle'],
-			['styles.splitAction'],
 			['styles.popoverSurface'],
 			['styles.popoverHeader']
 		]

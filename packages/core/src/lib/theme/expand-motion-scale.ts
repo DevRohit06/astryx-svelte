@@ -8,6 +8,9 @@
  *
  * A "snappy" theme lowers the bases, a "cinematic" one raises them, and the
  * proportional relationships hold automatically.
+ *
+ * SYNC: When modified, update:
+ * - /packages/cli/assets/theme.template.ts (the annotated field reference)
  */
 
 export interface MotionScaleConfig {

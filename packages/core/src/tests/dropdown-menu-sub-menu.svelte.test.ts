@@ -496,6 +496,84 @@ describe('DropdownMenuSubMenu accessibility (WCAG 2.2 / APG)', () => {
 	});
 });
 
+/**
+ * Upstream's `describe('DropdownMenuSubMenu hover/click guard')`, new at 0.4.2
+ * with the #3121 `useMenuHover` consolidation — the submenu gained the guard it
+ * never had. All three cases.
+ *
+ * Timing translation is `menu-hover.svelte.test.ts`'s: upstream drives fake
+ * timers and `act()`, these wait out real ones. The hover is dispatched
+ * synthetically for the same reason the other menu suites do it — a real pointer
+ * press hit-tests into a flyout that deliberately overlaps its own trigger.
+ */
+describe('DropdownMenuSubMenu hover/click guard', () => {
+	/** The hook's `DEFAULT_CLICK_GUARD_MS`. */
+	const CLICK_GUARD_MS = 500;
+
+	async function openTrigger() {
+		const screen = await render(SubMenu, { props: { scenario: 'move' } });
+		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
+		const trigger = item(screen.container, 'Move to');
+		return { screen, trigger };
+	}
+
+	function hover(el: HTMLElement): void {
+		el.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+	}
+
+	it('keeps the flyout open when a hover-open is immediately clicked', async () => {
+		const { screen, trigger } = await openTrigger();
+
+		hover(trigger);
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		});
+
+		trigger.click();
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+			expect(document.activeElement).toBe(item(screen.container, 'Folder A'));
+		});
+	});
+
+	it('closes on a click that lands well after the hover-open', async () => {
+		const { trigger } = await openTrigger();
+
+		hover(trigger);
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		});
+		// Past the guard: a deliberate dismissal, not a follow-on.
+		await new Promise((resolve) => setTimeout(resolve, CLICK_GUARD_MS + 100));
+
+		trigger.click();
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'false');
+		});
+	});
+
+	it('moves focus into the flyout synchronously on a click-open', async () => {
+		const { screen, trigger } = await openTrigger();
+
+		trigger.click();
+
+		// No waitFor and no flush: focus must already be inside the flyout when the
+		// click handler returns, which is what "synchronously" means and what a
+		// deferred (rAF) focus would fail.
+		//
+		// Scoped to the flyout rather than read through `item(container, …)`: the
+		// flyout renders *inline*, inside the trigger row's own subtree, so the
+		// trigger's `textContent` contains "Folder A" too and the container-wide
+		// lookup can return the trigger itself.
+		const flyout = flyoutFor(screen.container, trigger);
+		const firstItem = Array.from(flyout.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+			(row) => row.textContent?.trim().includes('Folder A')
+		);
+		expect(firstItem).toBeDefined();
+		expect(document.activeElement).toBe(firstItem);
+	});
+});
+
 describe('DropdownMenuSubMenu theming slots', () => {
 	it('exposes a themeable slot on the submenu indicator icon', async () => {
 		const screen = await render(SubMenu, { props: { scenario: 'move' } });

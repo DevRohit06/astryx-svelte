@@ -17,10 +17,16 @@ import { Context } from '../../internal/context.js';
  */
 export type FormLayoutDirection = 'vertical' | 'horizontal' | 'horizontal-labels';
 
-const formLayoutContext = new Context<() => FormLayoutDirection>('astryx.formLayout');
+/**
+ * Published, because upstream publishes `FormLayoutContext` from
+ * `FormLayout/index.ts` — `setFormLayoutContext`/`useFormLayout` are the Svelte
+ * wrappers around it, not a replacement for it. Same shape as
+ * `RadioListContext` and `SizeContext`.
+ */
+export const FormLayoutContext = new Context<() => FormLayoutDirection>('astryx.formLayout');
 
 export function setFormLayoutContext(get: () => FormLayoutDirection): void {
-	formLayoutContext.set(get);
+	FormLayoutContext.set(get);
 }
 
 /**
@@ -33,5 +39,5 @@ export function setFormLayoutContext(get: () => FormLayoutDirection): void {
  * descendants at whatever the provider held on mount.
  */
 export function useFormLayout(): () => FormLayoutDirection {
-	return formLayoutContext.getOr(() => 'vertical');
+	return FormLayoutContext.getOr(() => 'vertical');
 }

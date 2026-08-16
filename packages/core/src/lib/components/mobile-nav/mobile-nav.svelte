@@ -252,13 +252,20 @@
 	<Icon icon="close" color="inherit" />
 {/snippet}
 
+<!--
+	`{...rest}` sits after the theme/class/style block and before the explicit
+	attributes, which is upstream's position exactly: a consumer's `data-*` beats
+	the theme reflection, while `aria-label`, `onclick` and `oncancel` — which this
+	component owns — beat a consumer's. `onclick` is composed rather than
+	overridden (`handleDialogClick` calls `onclickProp` first).
+-->
 <dialog
 	bind:this={dialogEl}
 	id={dialogId}
-	{...rest}
 	{...theme}
 	class={cx(theme.class, dialogAttrs.class, className)}
 	style={mergeStyle(dialogAttrs.style, styleProp as string | undefined)}
+	{...rest}
 	aria-label={label ?? (hasStringHeader ? (header as string) : t('@astryx.mobileNav.navigation'))}
 	onclick={handleDialogClick}
 	oncancel={handleCancel}

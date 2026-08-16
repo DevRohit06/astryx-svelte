@@ -260,7 +260,7 @@ export function megaMenuDrawerSectionAttrs(): SvelteStyleAttrs {
 
 /** The drawer-mode disclosure header. */
 export function megaMenuDrawerHeaderAttrs(): SvelteStyleAttrs {
-	return sx(navItemStyles.item, styles.drawerHeader);
+	return focusOutlineProps.focusVisible(navItemStyles.item, styles.drawerHeader);
 }
 
 /** The drawer header's chevron, rotated while expanded. Also an `Icon` `xstyle` (#4838). */

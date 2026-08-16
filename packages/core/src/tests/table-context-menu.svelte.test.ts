@@ -150,7 +150,15 @@ describe('Table body context menu', () => {
 		// Right-click the first body cell (Alice).
 		const alice = screen.getByText('Alice', { exact: true }).element();
 		rightClick(alice);
-		const items = menuItems(alice.closest('td')!, 'Delete row');
+		// Scoped to the render container, not the `<td>`, as every other case here
+		// is. Upstream 0.4.2's corrective portal (#5039) hosts a context layer
+		// outside ancestors that cannot legally contain it, and a `<td>` inside
+		// `<tr>`/`<tbody>`/`<table>` is four of them — a menu left in a table row is
+		// markup the parser reparents. Only the right-clicked cell's menu is open,
+		// so the container query still returns exactly Alice's (the "no plugin
+		// contributes actions" case above is what pins that: a closed cell
+		// contributes no menuitem at all).
+		const items = menuItems(screen.container, 'Delete row');
 		expect(items.length).toBeGreaterThan(0);
 		items[0].click();
 		expect(onSelect).toHaveBeenCalledWith('1');

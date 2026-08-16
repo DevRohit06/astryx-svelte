@@ -89,6 +89,12 @@ export default {
 			description:
 				'Enables collapse behavior for items with children. Pass true for uncontrolled (starts expanded), or an object for controlled mode.',
 			default: 'false'
+		},
+		{
+			name: 'size',
+			type: "'sm' | 'md' | 'lg'",
+			description: 'Size variant for the nav item row.',
+			default: "'md'"
 		}
 	]
 };

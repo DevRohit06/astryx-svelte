@@ -269,10 +269,12 @@ const loadingStyles = stylex.create({
  * their button (a tooltip'd Button renders button + layer; DropdownMenu renders
  * trigger + popover), so the layer would take the `:last-child` slot and the real
  * trailing button would keep square corners. Layers always carry the native
- * `popover` attribute and are never in-flow, so "last member" means: no following
- * element sibling that isn't a popover.
+ * `popover` attribute and are never in-flow. Context layers also retain an inert
+ * `<template>` marker so they can re-resolve their position. Neither element is a
+ * group member, so "last member" means: no following element sibling besides
+ * those two pieces of layer infrastructure.
  */
-const IS_LAST_ITEM = ':not(:has(~ *:not([popover])))';
+const IS_LAST_ITEM = ':not(:has(~ *:not([popover]):not(template)))';
 
 const groupStyles = stylex.create({
 	horizontal: {

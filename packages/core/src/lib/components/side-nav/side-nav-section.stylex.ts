@@ -15,11 +15,10 @@ import {
  * group's `aria-labelledby` points at the title — removing it would leave the
  * group unnamed.
  *
- * That hiding is **not** StyleX on either side: upstream writes a plain inline
- * style object and merges it after `stylex.props`, so it wins over the atomic
- * classes without needing a specificity escape. {@link sideNavSectionHiddenStyle}
- * is the same declaration as a Svelte inline-style string, and it never enters
- * the class oracle.
+ * That hiding is **not** StyleX on either side, and as of upstream 0.4.2 it is
+ * not local either: both sides render the hidden branch through the shared
+ * `VisuallyHidden` component rather than a hand-rolled clip rectangle, so the
+ * treatment is maintained in one place. Nothing about it reaches this module.
  */
 const styles = stylex.create({
 	root: {
@@ -72,15 +71,6 @@ const styles = stylex.create({
 		gap: spacingVars['--spacing-0-5']
 	}
 });
-
-/**
- * Upstream's `visuallyHiddenStyle` — a plain `CSSProperties` literal merged
- * after `stylex.props`, transcribed as an inline-style string. Applied to the
- * header when the section header is hidden or the sidebar is collapsed.
- */
-export const sideNavSectionHiddenStyle =
-	'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;' +
-	'clip:rect(0, 0, 0, 0);white-space:nowrap;border-width:0';
 
 /** The section root. */
 export function sideNavSectionRootAttrs(xstyle: StyleArg): SvelteStyleAttrs {

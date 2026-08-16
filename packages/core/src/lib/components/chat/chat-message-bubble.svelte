@@ -1,6 +1,7 @@
 <script lang="ts" module>
 	import type { Snippet } from 'svelte';
 	import type { BaseProps } from '../../base-props.js';
+	import type { SizeValue } from '../../internal/types.js';
 	import type {
 		ChatMessageBubbleGroup,
 		ChatMessageBubbleVariant as ChatMessageBubbleVariantType
@@ -47,6 +48,15 @@
 		 * Leave unset for standalone bubbles (full radius).
 		 */
 		group?: ChatMessageBubbleGroup;
+
+		/**
+		 * Width of the bubble.
+		 * Numbers are treated as pixels, strings are used as-is (e.g. `"100%"`).
+		 * When set, replaces the default `max(80%, 280px)` width cap; leave unset
+		 * to keep the cap. Combine with `variant="ghost"` to let custom content
+		 * (an artifact card, attachments) span the full message column.
+		 */
+		width?: SizeValue;
 	}
 </script>
 
@@ -88,6 +98,7 @@
 		name,
 		metadata,
 		group,
+		width,
 		xstyle,
 		class: className,
 		style: styleProp,
@@ -100,7 +111,9 @@
 	const isUser = $derived(sender === 'user');
 
 	const theme = $derived(themeProps('chat-message-bubble', { sender, variant, density }));
-	const content = $derived(chatMessageBubbleContentAttrs(sender, density, variant, group, xstyle));
+	const content = $derived(
+		chatMessageBubbleContentAttrs(sender, density, variant, group, width, xstyle)
+	);
 	const nameAttrs = $derived(chatMessageBubbleNameAttrs(density, isUser));
 	const metadataAttrs = $derived(chatMessageBubbleMetadataAttrs(density, isUser));
 </script>

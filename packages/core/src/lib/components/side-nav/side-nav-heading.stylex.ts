@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { navItemStyles } from '../nav-item/nav-item.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import {
 	colorVars,
 	fontWeightVars,
@@ -235,7 +236,7 @@ export function sideNavHeadingRootAttrs(xstyle: StyleArg): SvelteStyleAttrs {
 
 /** The heading root when the whole block is a link or a popover trigger. */
 export function sideNavHeadingTriggerRootAttrs(xstyle: StyleArg): SvelteStyleAttrs {
-	return sx(styles.root, styles.menuTrigger, xstyle);
+	return focusOutlineProps.focusVisible(styles.root, styles.menuTrigger, xstyle);
 }
 
 /** The collapsed static heading — centred, unpadded. */
@@ -245,12 +246,25 @@ export function sideNavHeadingCollapsedRootAttrs(xstyle: StyleArg): SvelteStyleA
 
 /** The collapsed heading as a link — the shared nav item, centred. */
 export function sideNavHeadingCollapsedLinkAttrs(xstyle: StyleArg): SvelteStyleAttrs {
-	return sx(navItemStyles.item, styles.rootCollapsed, xstyle);
+	return focusOutlineProps.focusVisible(navItemStyles.item, styles.rootCollapsed, xstyle);
 }
 
 /** The collapsed heading as a menu trigger. */
 export function sideNavHeadingCollapsedTriggerAttrs(xstyle: StyleArg): SvelteStyleAttrs {
-	return sx(navItemStyles.item, styles.rootCollapsed, styles.menuTrigger, xstyle);
+	return focusOutlineProps.focusVisible(
+		navItemStyles.item,
+		styles.rootCollapsed,
+		styles.menuTrigger,
+		xstyle
+	);
+}
+
+/**
+ * The icon slot when it is a link — a separate tab stop, so it rings. The plain
+ * `sideNavHeadingIconAttrs` span below is not focusable and must not.
+ */
+export function sideNavHeadingIconLinkAttrs(): SvelteStyleAttrs {
+	return focusOutlineProps.focusVisible(styles.icon);
 }
 
 /** The icon slot. */
@@ -275,7 +289,7 @@ export function sideNavHeadingHeadingAttrs(isCompact = false): SvelteStyleAttrs 
 
 /** The heading rendered as its own link, inside the mixed-mode row. */
 export function sideNavHeadingHeadingLinkAttrs(): SvelteStyleAttrs {
-	return sx(styles.heading, styles.headingLink);
+	return focusOutlineProps.focusVisible(styles.heading, styles.headingLink);
 }
 
 /** The subheading line. */
@@ -297,7 +311,7 @@ export const sideNavHeadingChevronStyle = styles.chevron;
 
 /** The chevron as its own focusable button, inside a heading that has links. */
 export function sideNavHeadingChevronButtonAttrs(): SvelteStyleAttrs {
-	return sx(styles.chevron, styles.interactive);
+	return focusOutlineProps.focusVisible(styles.chevron, styles.interactive);
 }
 
 /**
@@ -318,7 +332,7 @@ export function sideNavHeadingPopoverContentAttrs(): SvelteStyleAttrs {
 
 /** The heading replica at the top of the popover, which closes it on click. */
 export function sideNavHeadingPopoverHeadingAttrs(): SvelteStyleAttrs {
-	return sx(styles.popoverHeading);
+	return focusOutlineProps.focusVisible(styles.popoverHeading);
 }
 
 /** The replica's chevron, flipped to point back up at the trigger. */

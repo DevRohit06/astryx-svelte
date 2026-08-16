@@ -3,6 +3,7 @@ import { render } from 'vitest-browser-svelte';
 import { userEvent } from 'vitest/browser';
 import type { LocatorSelectors } from 'vitest/browser';
 import TopNavMenuFixture, { type TopNavMenuItemSpec } from './fixtures/top-nav-menu-fixture.svelte';
+import { expectSharedFocusRing } from './shared-focus-ring.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMenu.test.tsx` — all 12 of its `it` cases,
@@ -255,5 +256,31 @@ describe('keyboard navigation (APG menu pattern)', () => {
 		// attribute is rendered from `popover.isOpen`, and Svelte flushes that write
 		// on a microtask rather than inside the dispatch. The assertion is unchanged.
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+	});
+});
+
+/**
+ * Upstream's `describe('TopNavMenu — drawer focus ring')`, both cases, new at
+ * 0.4.2 alongside the identical pair on `TopNavMegaMenu`. `TopNavMenu`'s half of
+ * that change *was* ported when the batch landed; the mega menu's was not, which
+ * is why only the mega menu's pair goes red without its fix.
+ */
+describe('TopNavMenu — drawer focus ring', () => {
+	const drawerItems: TopNavMenuItemSpec[] = [
+		{ title: 'Analytics', description: 'Track user behavior', href: '/analytics' }
+	];
+
+	it('draws the shared ring on the drawer section header', async () => {
+		const screen = await render(TopNavMenuFixture, {
+			props: { mode: 'drawer', props: { label: 'Products' }, items: drawerItems }
+		});
+		expectSharedFocusRing(screen.getByRole('button', { name: /Products/ }).element());
+	});
+
+	it('draws the shared ring on a drawer item', async () => {
+		const screen = await render(TopNavMenuFixture, {
+			props: { mode: 'drawer', props: { label: 'Products' }, items: drawerItems }
+		});
+		expectSharedFocusRing(screen.getByRole('link', { name: /Analytics/ }).element());
 	});
 });

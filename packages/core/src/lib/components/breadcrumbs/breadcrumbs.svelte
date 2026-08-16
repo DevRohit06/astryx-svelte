@@ -69,11 +69,11 @@
 </script>
 
 <nav
-	{...rest}
 	aria-label={label}
 	{...theme}
 	class={cx(theme.class, navAttrs.class, className)}
 	style={mergeStyle(navAttrs.style, styleProp as string | undefined)}
+	{...rest}
 >
 	<ol class={listAttrs.class} style={listAttrs.style}>{@render children()}</ol>
 </nav>

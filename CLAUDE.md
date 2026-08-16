@@ -105,6 +105,11 @@ wrong:
   version `packages/core` targets. Prose is reused verbatim; prop _types_ are read from
   `packages/core/dist/**/*.d.ts`, because upstream's are React types and mapping them guesses wrong
   (`Button.icon` is `ReactNode` upstream and `Snippet` here, with no string branch).
+- **`packages/core/src/lib/**/*.doc.mjs` are generated, and hand-editing them is a mistake** — each
+  says so at the top. `docs/scripts/emit-core-docs.mjs` writes them from the pinned upstream
+  `.doc.mjs` plus core's built `dist/**/*.d.ts`, so after a version bump the whole prose delta lands
+  with `pnpm -r build && pnpm -F docs emit-core-docs` (17 files at 0.4.2), and `--check` fails on
+  drift. They are the CLI's discovery corpus, not just the docs site's.
 
 ## The fidelity oracles
 
@@ -155,6 +160,13 @@ a `$state` write flushes on its own and `expect.element` retries.
 
 Upstream suites are ported **case for case**; the count is the contract. Any dropped case is named in
 the file with its reason.
+
+**The count is a contract against upstream's file at the _current pin_, so a version bump
+invalidates every header that states one** — re-derive them in the same batch, and diff the test
+delta as scope rather than as follow-up (`track-upstream` step 5b). Four headers were false at
+0.4.2, each making a real gap look accounted for, and the two Layer defects that shipped were
+exactly what the unported cases existed to catch. A dropped case's stated reason expires too:
+`button-group` carried "`DropdownMenu` is not ported" for three batches after it was.
 
 Coverage _beyond_ upstream needs a high bar: a hazard with **no upstream analogue**, which the ported
 suites structurally cannot catch — a Svelte-specific DOM or reactivity failure React cannot

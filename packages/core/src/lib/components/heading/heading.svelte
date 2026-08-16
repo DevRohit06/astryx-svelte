@@ -51,7 +51,7 @@
 <script lang="ts">
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
-	import { createTruncation } from '../../internal/truncation.svelte.js';
+	import { useTruncation } from '../../internal/truncation.svelte.js';
 	import { lineClampStyle, truncationTooltipContentAttrs } from '../text/text.stylex.js';
 	import { LEVEL_TO_TAG, headingAttrs } from './heading.stylex.js';
 
@@ -82,7 +82,7 @@
 	const resolvedWordBreak = $derived(wordBreak ?? (maxLines === 1 ? 'break-all' : 'break-word'));
 	const resolvedDisplay = $derived(maxLines > 0 || hasCapsize ? 'block' : display);
 
-	const truncation = createTruncation(() => maxLines);
+	const truncation = useTruncation(() => maxLines);
 
 	const tooltipPlacement = $derived<LayerPlacement>(
 		typeof hasTruncateTooltip === 'string' ? hasTruncateTooltip : 'above'
@@ -122,12 +122,12 @@
 <svelte:element
 	this={LEVEL_TO_TAG[level]}
 	bind:this={headingEl}
-	{...rest}
 	{...theme}
 	class={cx(theme.class, attrs.class, className)}
 	style={mergeStyle(attrs.style, lineClampStyle(maxLines), styleProp as string | undefined)}
 	title={tooltipEnabled ? truncation.fullText : undefined}
 	aria-level={accessibilityLevel && accessibilityLevel !== level ? accessibilityLevel : undefined}
+	{...rest}
 	{@attach truncation.attach}
 >
 	{@render children()}

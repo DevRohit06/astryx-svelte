@@ -28,11 +28,11 @@
 <script lang="ts">
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useSideNavCollapse } from './side-nav-collapse-context.svelte.js';
 	import {
 		sideNavSectionEndContentAttrs,
 		sideNavSectionHeaderAttrs,
-		sideNavSectionHiddenStyle,
 		sideNavSectionItemsAttrs,
 		sideNavSectionRootAttrs,
 		sideNavSectionSubtitleAttrs,
@@ -85,6 +85,20 @@
 	const itemsAttrs = sideNavSectionItemsAttrs();
 </script>
 
+{#snippet headerContent()}
+	<span class={titleContainerAttrs.class} style={titleContainerAttrs.style}>
+		<span id={titleId} class={titleAttrs.class} style={titleAttrs.style}>{title}</span>
+		{#if subtitle}
+			<span class={subtitleAttrs.class} style={subtitleAttrs.style}>{subtitle}</span>
+		{/if}
+	</span>
+	{#if endContent}
+		<span class={endContentAttrs.class} style={endContentAttrs.style}>
+			{@render endContent()}
+		</span>
+	{/if}
+{/snippet}
+
 <div
 	{...rest}
 	{...theme}
@@ -94,21 +108,21 @@
 	aria-labelledby={titleId}
 	data-testid={testId}
 >
-	<div
-		class={headerAttrs.class}
-		style={shouldHideHeader ? sideNavSectionHiddenStyle : headerAttrs.style}
-	>
-		<span class={titleContainerAttrs.class} style={titleContainerAttrs.style}>
-			<span id={titleId} class={titleAttrs.class} style={titleAttrs.style}>{title}</span>
-			{#if subtitle}
-				<span class={subtitleAttrs.class} style={subtitleAttrs.style}>{subtitle}</span>
-			{/if}
-		</span>
-		{#if endContent}
-			<span class={endContentAttrs.class} style={endContentAttrs.style}>
-				{@render endContent()}
-			</span>
-		{/if}
-	</div>
+	<!--
+		The hidden branch is `VisuallyHidden`, not a hand-rolled clip rectangle, as
+		of upstream 0.4.2: the shared component is the one place that treatment is
+		maintained, and the local copy had drifted from it. The two branches are
+		separate elements rather than one element with a conditional style, exactly
+		as upstream's are.
+	-->
+	{#if shouldHideHeader}
+		<VisuallyHidden as="div">
+			{@render headerContent()}
+		</VisuallyHidden>
+	{:else}
+		<div class={headerAttrs.class} style={headerAttrs.style}>
+			{@render headerContent()}
+		</div>
+	{/if}
 	<div class={itemsAttrs.class} style={itemsAttrs.style}>{@render children()}</div>
 </div>

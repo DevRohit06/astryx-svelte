@@ -15,9 +15,16 @@
 		logo?: { img?: boolean; text?: string; testid?: string };
 		/** `menu` slot: a single `<a>` with this href and text. */
 		menu?: { href: string; text: string };
+		/**
+		 * `menu` slot as `role="menuitem"` rows — upstream's `menuItems` fragment
+		 * for the hover/click-guard block. `tabindex="-1"` matches real menu items,
+		 * because a bare `role="menuitem"` div is not focusable and the focus
+		 * assertions would be vacuous without it. Takes precedence over `menu`.
+		 */
+		menuItems?: string[];
 	}
 
-	const { props = {}, logo, menu }: Props = $props();
+	const { props = {}, logo, menu, menuItems }: Props = $props();
 </script>
 
 {#snippet logoSlot()}
@@ -35,4 +42,14 @@
 	{#if menu}<a href={menu.href}>{menu.text}</a>{/if}
 {/snippet}
 
-<TopNavHeading {...props} logo={logo ? logoSlot : undefined} menu={menu ? menuSlot : undefined} />
+{#snippet menuItemsSlot()}
+	{#each menuItems ?? [] as label (label)}
+		<div role="menuitem" tabindex="-1">{label}</div>
+	{/each}
+{/snippet}
+
+<TopNavHeading
+	{...props}
+	logo={logo ? logoSlot : undefined}
+	menu={menuItems ? menuItemsSlot : menu ? menuSlot : undefined}
+/>

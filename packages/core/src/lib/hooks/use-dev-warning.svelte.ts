@@ -15,8 +15,14 @@ import { devWarn } from '../utils/dev-warning.js';
  * list that varies, and the hook's contract includes re-checking it — upstream
  * warns when the condition flips false → true after mount. A plain boolean read
  * once could not do that, so it comes in as a getter and the `$effect` tracks
- * it. `component` and `message` stay plain strings, as `useMediaQuery`'s
- * `serverDefault` does beside its getter.
+ * it. `component` stays a plain string.
+ *
+ * **`message` also takes a getter**, which upstream gets for free: its `message`
+ * is an ordinary argument re-evaluated on every render and listed in the
+ * effect's dependency array, so an interpolated message always reports current
+ * values. A string captured once at init cannot — `Timestamp` interpolates the
+ * value that failed to parse, and a captured string would report the mount-time
+ * one instead. That is why `Timestamp` used to expand this hook inline.
  *
  * **The latch is a plain `let`.** Upstream's `useRef(false)` exists to hold a
  * value across renders without causing one; a closure variable in a hook that
@@ -44,14 +50,14 @@ import { devWarn } from '../utils/dev-warning.js';
  */
 export function useDevWarning(
 	component: string,
-	message: string,
+	message: string | (() => string),
 	condition: () => boolean = () => true
 ): void {
 	let hasWarned = false;
 	$effect(() => {
 		if (condition() && !hasWarned) {
 			hasWarned = true;
-			devWarn(component, message);
+			devWarn(component, typeof message === 'function' ? message() : message);
 		}
 	});
 }

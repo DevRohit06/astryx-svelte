@@ -151,25 +151,26 @@ describe('trigger re-wiring when the wrapper’s first element child is swapped'
 	});
 
 	describe('HoverCard', () => {
-		function layerIn(container: HTMLElement): HTMLElement {
-			const el = container.querySelector('[popover]');
-			if (!(el instanceof HTMLElement)) {
-				throw new Error('expected a hover card layer');
-			}
-			return el;
-		}
+		// No `layerIn` helper here, where the Tooltip block above has one:
+		// `HoverCard` opts into `lazyMount` (#5039), so a closed card has no layer
+		// to find, and every case below reads its wiring off the trigger instead.
 
 		it('moves aria-describedby onto the new trigger element', async () => {
+			// Read off the outgoing trigger rather than off the layer. `HoverCard`
+			// opts into `useLayer`'s `lazyMount` as of upstream 0.4.2 (#5039), so a
+			// closed card has no layer element to take an id from — while the
+			// wiring under test, which is the hook's id either way, is on the
+			// trigger from the first render.
 			const screen = await render(HoverCardTriggerSwap);
-			const layer = layerIn(screen.container);
 			const button = screen.getByTestId('button-trigger').element() as HTMLElement;
-			expect(button.getAttribute('aria-describedby')).toBe(layer.id);
+			const describedBy = button.getAttribute('aria-describedby');
+			expect(describedBy).toBeTruthy();
 
 			screen.component.swap();
 
 			await vi.waitFor(() => {
 				const link = screen.getByTestId('link-trigger').element() as HTMLElement;
-				expect(link.getAttribute('aria-describedby')).toBe(layer.id);
+				expect(link.getAttribute('aria-describedby')).toBe(describedBy);
 			});
 		});
 
@@ -204,11 +205,14 @@ describe('trigger re-wiring when the wrapper’s first element child is swapped'
 		});
 
 		it('moves the anchor name onto the new trigger element', async () => {
+			// The anchor is read off the outgoing trigger, not off the layer's
+			// `position-anchor` — see the `aria-describedby` case above for why the
+			// layer is not there to read. The two are the same string by
+			// construction (`useLayer`'s `--astryx-layer-${id}`), and it is the
+			// trigger's copy this case is about.
 			const screen = await render(HoverCardTriggerSwap);
-			const layer = layerIn(screen.container);
 			const button = screen.getByTestId('button-trigger').element() as HTMLElement;
-			const anchor = positionAnchorOf(layer);
-			expect(soleAnchorName(button)).toBe(anchor);
+			const anchor = soleAnchorName(button);
 
 			screen.component.swap();
 

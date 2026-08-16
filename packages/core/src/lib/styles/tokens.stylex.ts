@@ -15,6 +15,10 @@
  *
  * This file must keep the `.stylex.ts` extension — `defineVars` is only valid in
  * a StyleX-compiled module.
+ *
+ * SYNC: adding or removing a token FAMILY (a whole `*Defaults` group) also
+ * means updating:
+ * - /packages/cli/assets/theme.template.ts (its inventory of what exists)
  */
 
 import * as stylex from '@stylexjs/stylex';

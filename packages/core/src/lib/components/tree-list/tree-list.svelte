@@ -154,6 +154,15 @@
 	// the hook's repair pass preserves that seeded `tabindex="0"`.
 	const initialTabbableId = $derived(findInitialTabbableId(items));
 
+	// Whether any *top-level* item can expand. Upstream computes it exactly this
+	// way — `items.some(...)` on the prop, outside `renderItems`, which shadows the
+	// name during recursion — so a tree whose only expandable item is nested deep
+	// does not reserve the column. Leaves consult it to decide whether to hold a
+	// chevron-width gutter open; a wholly flat tree holds none.
+	const hasExpandableItems = $derived(
+		items.some((item) => item.children != null && item.children.length > 0)
+	);
+
 	/**
 	 * Enter/Space activation: prefer the treeitem's own inner action (link or
 	 * button); return true when handled so the hook does not also toggle. Scoped
@@ -211,6 +220,7 @@
 			startContent={item.startContent}
 			endContent={item.endContent}
 			{hasChildren}
+			{hasExpandableItems}
 			onClick={item.onClick}
 			href={item.href}
 			target={item.target}

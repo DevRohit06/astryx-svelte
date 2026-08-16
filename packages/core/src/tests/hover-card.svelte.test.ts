@@ -2,12 +2,15 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import HoverCard from './fixtures/hover-card-fixture.svelte';
 import HoverCardParagraph from './fixtures/hover-card-paragraph.svelte';
+import HoverCardInLink from './fixtures/hover-card-in-link.svelte';
+import HoverCardSafeHost from './fixtures/hover-card-safe-host.svelte';
+import HoverCardNestedTheme from './fixtures/hover-card-nested-theme.svelte';
 import { TIMER_BUDGET } from './timer-budget.js';
 import { whenWired } from './trigger-wiring.js';
 
 /**
- * Ported from Astryx's `HoverCard/HoverCard.test.tsx`. Twenty of its
- * twenty-four cases live here.
+ * Ported from Astryx's `HoverCard/HoverCard.test.tsx` at v0.4.2, which declares
+ * twenty-eight cases. Twenty-four of them live here.
  *
  * Three of the remaining four are server-side and live in `hover-card.test.ts`,
  * which runs in the node project against `svelte/server` — the repo rule that
@@ -61,12 +64,34 @@ function layerIn(container: HTMLElement): HTMLElement {
 }
 
 /**
+ * The layer, or null. `HoverCard` opts into `lazyMount` as of upstream 0.4.2, so
+ * a *closed* card has no container at all — only the inert marker — and the
+ * cases that assert its absence need a lookup that does not throw.
+ */
+function maybeLayerIn(container: HTMLElement): HTMLElement | null {
+	const el = container.querySelector('[popover]');
+	return el instanceof HTMLElement ? el : null;
+}
+
+/** Open the card and wait for its container to mount. */
+async function open(container: HTMLElement, selector?: string): Promise<HTMLElement> {
+	mouse(await triggerIn(container, selector), 'mouseenter');
+	await vi.waitFor(() => {
+		expect(maybeLayerIn(container)).not.toBeNull();
+	});
+	return layerIn(container);
+}
+
+/**
  * Async because it waits for the trigger to be *wired*, not merely present —
  * see `trigger-wiring.ts`. Every interaction below goes through here so the
  * precondition cannot be forgotten at a call site.
  */
-async function triggerIn(container: HTMLElement): Promise<HTMLElement> {
-	const el = container.querySelector('button, a, span[tabindex]');
+async function triggerIn(container: HTMLElement, selector?: string): Promise<HTMLElement> {
+	// `selector` narrows for the trees that wrap the card in another interactive
+	// element — in `hover-card-in-link.svelte` the outer `<a>` would win the
+	// default query, and hovering it opens nothing.
+	const el = container.querySelector(selector ?? 'button, a, span[tabindex]');
 	if (!(el instanceof HTMLElement)) {
 		throw new Error('expected a trigger');
 	}
@@ -90,19 +115,29 @@ describe('HoverCard', () => {
 	});
 
 	it('exposes the floating layer as role="group" when no label is provided', async () => {
-		const screen = await render(HoverCard);
+		const screen = await render(HoverCard, { props: { delay: 0 } });
 		// A group may validly be unnamed; an unnamed dialog may not. Without a
 		// label the layer must not claim the dialog role.
 		// `getByRole(…, {hidden: true})` → a container query; see the header.
-		expect(screen.container.querySelector('[role="group"]')).toHaveTextContent('Card content');
+		// Nothing is mounted until the card opens (`lazyMount`, upstream 0.4.2).
+		expect(screen.container.querySelector('[role="group"]')).toBeNull();
 		expect(screen.container.querySelector('[role="dialog"]')).toBeNull();
+
+		await open(screen.container);
+
+		expect(screen.container.querySelector('[role="group"]')).toHaveTextContent('Card content');
 	});
 
 	it('exposes the floating layer as a named dialog when label is provided', async () => {
-		const screen = await render(HoverCard, { props: { label: 'Profile preview' } });
-		// The layer is hidden while closed, so assert the accessible name via the
-		// aria-label attribute on the role-carrying element — accname computation
-		// returns '' for hidden elements.
+		const screen = await render(HoverCard, {
+			props: { label: 'Profile preview', delay: 0 }
+		});
+		expect(screen.container.querySelector('[role="dialog"]')).toBeNull();
+
+		await open(screen.container);
+
+		// Assert the accessible name via the aria-label attribute on the
+		// role-carrying element — accname computation returns '' for a hidden one.
 		const dialog = screen.container.querySelector('[role="dialog"]')!;
 		expect(dialog).toHaveAttribute('aria-label', 'Profile preview');
 		expect(dialog).toHaveTextContent('Card content');
@@ -119,29 +154,108 @@ describe('HoverCard', () => {
 		expect(paragraph?.querySelector('div')).toBeNull();
 	});
 
-	it('renders the floating layer with inline-safe markup (no block elements in a paragraph)', async () => {
-		// HoverCard renders its floating layer inline (no portal), so the layer
-		// must be phrasing content to stay valid — and stay put on hydration —
-		// inside a <p>. Assert the layer popover element is a <span> and that the
-		// paragraph contains no <div> descendants at all.
-		const screen = await render(HoverCardParagraph);
+	it('portals block content before showing and restores the marker after hiding', async () => {
+		// Restated at upstream 0.4.2 (#5039), which inverted the fact this case
+		// asserts. It used to be "the layer is a <span> and stays inside the <p>",
+		// because the layer rendered inline and had to be phrasing content. A
+		// paragraph is now an *unsafe* host: the layer mounts as a <div> outside
+		// it, and only the inert <template> marker is left at the render position.
+		const screen = await render(HoverCardParagraph, { props: { delay: 0, hideDelay: 0 } });
 
 		const paragraph = screen.container.querySelector('p');
-		const layer = layerIn(screen.container);
-
-		expect(layer).not.toBeNull();
-		expect(layer.tagName).toBe('SPAN');
-		// The whole layer subtree lives inside the paragraph with no block boxes.
-		expect(paragraph?.contains(layer)).toBe(true);
+		expect(maybeLayerIn(screen.container)).toBeNull();
+		expect(paragraph?.querySelector('template')).not.toBeNull();
 		expect(paragraph?.querySelector('div')).toBeNull();
+
+		const layer = await open(screen.container);
+
+		expect(layer.tagName).toBe('DIV');
+		expect(paragraph?.contains(layer)).toBe(false);
+		expect(layer).toHaveTextContent('Card content');
+
+		mouse(await triggerIn(screen.container), 'mouseleave');
+
+		await vi.waitFor(() => {
+			expect(maybeLayerIn(screen.container)).toBeNull();
+			expect(paragraph?.querySelector('template')).not.toBeNull();
+		});
 	});
 
-	it('does not show content initially', async () => {
+	it('hosts the floating layer outside a wrapping link', async () => {
+		// Interactive ancestors capture the layer's own interactions: a card left
+		// inside an <a> puts its links and buttons inside that link, so clicking
+		// one navigates.
+		const screen = await render(HoverCardInLink, { props: { delay: 0 } });
+
+		const link = screen.container.querySelector('a[href="#profile"]')!;
+		expect(maybeLayerIn(screen.container)).toBeNull();
+
+		const layer = await open(screen.container, 'span[tabindex]');
+
+		expect(link.contains(layer)).toBe(false);
+	});
+
+	it('keeps a safe layer inline at its render position', async () => {
+		const screen = await render(HoverCardSafeHost, { props: { delay: 0 } });
+
+		const layer = await open(screen.container);
+		const following = screen.getByRole('button', { name: 'Following control' }).element();
+
+		// The marker's parent is safe, so nothing moves: the container mounts where
+		// the layer was written, immediately before the next control.
+		expect(layer.nextElementSibling).toBe(following);
+	});
+
+	it('does not render content initially', async () => {
 		const screen = await render(HoverCard);
-		// Content is in DOM (popover not open but element exists)
-		const content = layerIn(screen.container);
-		expect(content).toBeInTheDocument();
-		expect(content).toHaveTextContent('Card content');
+		// `lazyMount`: only the inert marker exists until the card is asked to open.
+		expect(maybeLayerIn(screen.container)).toBeNull();
+		expect(screen.container.querySelector('template')).not.toBeNull();
+	});
+
+	it('keeps a paragraph portal inside the nearest nested theme scope', async () => {
+		const screen = await render(HoverCardNestedTheme, { props: { delay: 0 } });
+
+		const layer = await open(screen.container);
+		const innerThemeScope = screen.container.querySelector(
+			'[data-astryx-theme="hovercard-inner-test"]'
+		);
+
+		expect(innerThemeScope).not.toBeNull();
+		expect(layer.querySelector('button')).not.toBeNull();
+		expect(layer.parentElement).toBe(innerThemeScope);
+		expect(innerThemeScope?.contains(layer)).toBe(true);
+		expect(screen.container.querySelector('p')?.contains(layer)).toBe(false);
+	});
+
+	/**
+	 * Counterpart to upstream's `does not freeze computed CSS variables on a
+	 * paragraph portal`. Upstream stubs `window.getComputedStyle` to answer with a
+	 * fixed map of custom properties, because jsdom resolves none — so its version
+	 * can only check that nothing was written *onto* the element.
+	 *
+	 * A real browser resolves them, so the stronger half is available and is the
+	 * one that matters: a property set on the corrective host *after* the layer
+	 * moved there still reaches it. A snapshot taken at portal time would not
+	 * update, and an absent-inline-property check alone cannot tell the two apart.
+	 */
+	it('does not freeze computed CSS variables on a paragraph portal', async () => {
+		const screen = await render(HoverCardParagraph, { props: { delay: 0 } });
+
+		const layer = await open(screen.container);
+		expect(screen.container.querySelector('p')?.contains(layer)).toBe(false);
+
+		// Nothing about the theme is snapshotted onto the element…
+		const inline = Array.from({ length: layer.style.length }, (_, i) => layer.style.item(i));
+		expect(inline.some((property) => property.startsWith('--'))).toBe(false);
+
+		// …so a custom property set on the corrective host still reaches it live.
+		const host = layer.parentElement as HTMLElement;
+		host.style.setProperty('--test-hovercard-color', 'rgb(1, 2, 3)');
+		expect(getComputedStyle(layer).getPropertyValue('--test-hovercard-color').trim()).toBe(
+			'rgb(1, 2, 3)'
+		);
+		host.style.removeProperty('--test-hovercard-color');
 	});
 
 	/**
@@ -156,9 +270,10 @@ describe('HoverCard', () => {
 	 * — and it holds under any theme rather than only the default one.
 	 */
 	it('applies the theme body font to the floating layer', async () => {
-		const screen = await render(HoverCard);
+		// The card has to be open for the container to exist at all (`lazyMount`).
+		const screen = await render(HoverCard, { props: { delay: 0 } });
 
-		const layer = layerIn(screen.container);
+		const layer = await open(screen.container);
 		const bodyFont = getComputedStyle(document.documentElement)
 			.getPropertyValue('--font-family-body')
 			.trim();

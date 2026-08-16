@@ -14,12 +14,18 @@ import { radiusVars, borderVars } from '../../styles/tokens.stylex.js';
  * Upstream keeps this out of the public `InputGroup/index.ts` barrel — consumers
  * import `./groupStyles` directly — so this module is likewise internal.
  *
- * The four-class radius corners are load-bearing: the `:has(+ [popover]…)`
- * selectors round the trailing member even when the *last* DOM sibling is a
- * popover it owns (a `Selector`/`DateInput`'s dropdown). `InputGroupText` drops
- * those variants because a text addon never has a popover sibling — do not copy
- * one shape onto the other.
+ * The trailing-corner selector is load-bearing: it rounds the trailing member
+ * even when the *last* DOM sibling is layer infrastructure the member owns (a
+ * `Selector`/`DateInput`'s dropdown). `InputGroupText` uses a plain `:last-child`
+ * because a text addon never has a layer sibling — do not copy one shape onto
+ * the other.
  */
+
+// A grouped control may be followed by context-layer infrastructure rather
+// than another control. Neither the inert marker nor the popover is a visual
+// group member, so skip both when finding the trailing edge.
+const IS_LAST_ITEM = ':not(:has(~ *:not([popover]):not(template)))';
+
 export const groupStyles = stylex.create({
 	inGroup: {
 		flex: 1,
@@ -39,15 +45,11 @@ export const groupStyles = stylex.create({
 		},
 		borderStartEndRadius: {
 			default: 0,
-			':last-child': radiusVars['--radius-element'],
-			':has(+ [popover]:last-child)': radiusVars['--radius-element'],
-			':has(+ [popover] + [popover]:last-child)': radiusVars['--radius-element']
+			[IS_LAST_ITEM]: radiusVars['--radius-element']
 		},
 		borderEndEndRadius: {
 			default: 0,
-			':last-child': radiusVars['--radius-element'],
-			':has(+ [popover]:last-child)': radiusVars['--radius-element'],
-			':has(+ [popover] + [popover]:last-child)': radiusVars['--radius-element']
+			[IS_LAST_ITEM]: radiusVars['--radius-element']
 		},
 		':focus-within': {
 			zIndex: 1

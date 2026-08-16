@@ -17,6 +17,7 @@
 		positioning,
 		placement,
 		alignment,
+		offset,
 		layerStyle,
 		triggerStyle,
 		triggerDir
@@ -24,6 +25,8 @@
 		positioning?: 'anchor' | 'custom';
 		placement?: LayerPlacement;
 		alignment?: LayerAlignment;
+		/** Gap between the layer and its anchor, on the placement's own axis. */
+		offset?: number | string;
 		layerStyle?: string;
 		triggerStyle?: string;
 		triggerDir?: 'ltr' | 'rtl';
@@ -42,6 +45,6 @@
 >
 	trigger
 </button>
-<Layer {layer} {positioning} {placement} {alignment} style={layerStyle}>
+<Layer {layer} {positioning} {placement} {alignment} {offset} style={layerStyle}>
 	<span>content</span>
 </Layer>

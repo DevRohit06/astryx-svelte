@@ -15,6 +15,9 @@
 		/**
 		 * A named size (`xsm` 20px, `sm` 24px, `md` 36px, `lg` 48px, `xl` 128px)
 		 * or a specific pixel value.
+		 *
+		 * Inside an `AvatarGroup` the group's `size` wins: a group sizes its members
+		 * uniformly, so this prop is ignored there.
 		 * @default 'md'
 		 */
 		size?: AvatarSize;
@@ -86,6 +89,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useDevWarning } from '../../hooks/use-dev-warning.svelte.js';
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import { createAttachmentKey } from 'svelte/attachments';
@@ -142,8 +146,13 @@
 	const showFallbackImage = $derived(
 		!showImage && !!fallbackSrc && erroredFallbackSrc !== fallbackSrc
 	);
-	const showInitials = $derived(!showImage && !showFallbackImage && !!name);
-	const showIcon = $derived(!showImage && !showFallbackImage && !name);
+	// A whitespace-only string carries no identity. Without this it produces no
+	// initials (getInitials trims to nothing) and no default icon (a space is
+	// truthy), leaving an empty plate behind a blank accessible name.
+	const meaningfulName = $derived(name?.trim() ? name : undefined);
+	const meaningfulAlt = $derived(alt?.trim() ? alt : undefined);
+	const showInitials = $derived(!showImage && !showFallbackImage && !!meaningfulName);
+	const showIcon = $derived(!showImage && !showFallbackImage && !meaningfulName);
 
 	// The status element's accessible label, handed up by `AvatarStatusDot`
 	// rather than read off it — see `setAvatarStatusLabelSink`.
@@ -158,7 +167,7 @@
 	// name nor a labelled status, the avatar is decorative — expose it as
 	// `presentation`/`aria-hidden` rather than announcing a generic "Avatar".
 	const t = useTranslator();
-	const nameLabel = $derived(alt || name);
+	const nameLabel = $derived(meaningfulAlt || meaningfulName);
 	const accessibleName = $derived(
 		nameLabel && statusLabel
 			? t('@astryx.avatar.nameWithStatus', { name: nameLabel, status: statusLabel })
@@ -197,7 +206,7 @@
 	// Note: the *visible* tooltip prefers `name` (not `alt`); the *accessible
 	// name* on the root still uses `alt || name` above, independent of this.
 	const tooltipContent = $derived(
-		tooltip === false ? undefined : typeof tooltip === 'string' ? tooltip : name
+		tooltip === false ? undefined : typeof tooltip === 'string' ? tooltip : meaningfulName
 	);
 	const trimmedTooltip = $derived(tooltipContent?.trim());
 	const showTooltip = $derived(trimmedTooltip != null && trimmedTooltip !== '');
@@ -228,28 +237,23 @@
 	);
 
 	// An interactive control with no accessible name is an unacceptable control
-	// name. Warn in the same client-safe way sibling components do (Field,
-	// Timestamp, Popover) — a plain `console.warn`, never gated on `process.env`.
+	// name. `useDevWarning` is the shared guardrail: it warns once per mount
+	// rather than on every render, and compiles out of production builds.
 	//
-	// **Transcribed, not overlooked.** Every other warning in this package routes
-	// through `devWarn`/`useDevWarning`; upstream's `Avatar.tsx` is the one site
-	// that still writes a bare, ungated `console.warn`, and the comment above is
-	// its own justification for it. Its siblings have since moved on, so the
-	// reasoning no longer holds upstream either — but the code at v0.3.0 is what
-	// it is, and changing it here would be an invented improvement. Left alone
-	// deliberately; a sweep that "fixes" this is a parity regression.
-	$effect(() => {
-		if (isInteractive && !accessibleName) {
-			console.warn(
-				'Avatar: an interactive avatar (with `href` or `onclick`) needs a ' +
-					'meaningful accessible name. Pass `alt` or `name`.'
-			);
-		}
-	});
+	// Upstream's `Avatar.tsx` was the last site in the package still writing a
+	// bare, ungated `console.warn` — kept here verbatim while that was true, and
+	// moved onto the shared hook the moment 0.4.2 moved upstream's (#5030).
+	useDevWarning(
+		'Avatar',
+		'an interactive avatar (with `href` or `onclick`) needs a meaningful ' +
+			'accessible name. Pass `alt` or `name`.',
+		() => isInteractive && !accessibleName
+	);
 
 	const wrapper = $derived(
 		avatarWrapperAttrs(
 			{
+				size: numericSize,
 				groupOverlap: group?.().overlap ?? null,
 				isInteractive
 			},
@@ -263,7 +267,7 @@
 	// Upstream needs the identical cast (`props as React.HTMLAttributes<HTMLElement>`).
 	const interactivePassthrough = $derived(rest as HTMLAttributes<HTMLElement>);
 
-	const content = $derived(avatarContentAttrs(numericSize));
+	const content = avatarContentAttrs();
 	const image = avatarImageAttrs();
 	const initials = $derived(avatarInitialsAttrs(numericSize));
 	const icon = avatarIconAttrs();
@@ -347,7 +351,7 @@
 			/>
 		{:else if showInitials}
 			<div class={cx(fallbackTheme.class, initials.class)} style={initials.style}>
-				{getInitials(name as string)}
+				{getInitials(meaningfulName as string)}
 			</div>
 		{:else if showIcon}
 			<div class={cx(fallbackTheme.class, icon.class)} style={icon.style}>

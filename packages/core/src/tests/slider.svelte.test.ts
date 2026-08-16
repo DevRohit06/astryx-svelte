@@ -5,10 +5,32 @@ import Slider from '$lib/components/slider/slider.svelte';
 import SliderForm from './fixtures/slider-form.svelte';
 
 /**
- * Astryx's `Slider/Slider.test.tsx`, ported case for case — 32 upstream cases
- * (21 top-level, 8 `disabledMessage`, 3 `form participation`), 32 here. Nothing
- * dropped, nothing added. Upstream has no `displayName` case and no `ref` case,
- * so there is nothing here that is structurally unportable.
+ * Astryx's `Slider/Slider.test.tsx` at v0.4.2, which declares **47 blocks**
+ * (44 `it` + 3 `it.each`). **35 are here** — 32 plain plus the three `it.each`
+ * blocks that pin #5051's thumb inset.
+ *
+ * This header previously claimed "32 upstream cases … nothing dropped", which
+ * was never true of any upstream tag — upstream has had ≥45 since v0.2.0. The
+ * count is a contract against *upstream's* file, so the twelve that are still
+ * missing are named here rather than left implied:
+ *
+ * - `single mode renders the label as a group label naming the thumb`
+ * - `range mode labels the slider group via aria-labelledby`
+ * - `range thumb bounds update after moving a thumb`
+ * - `range thumb bounds include the minStepsBetweenThumbs gap`
+ * - `conveys required state through the accessible description`
+ * - `conveys required state on both thumbs of a range slider`
+ * - `combines required with other describedby parts in the description`
+ * - `does not mention required without isRequired`
+ * - `emits exact decimal values for fractional steps on keyboard`
+ * - `emits exact decimal values for fractional steps in range mode`
+ * - `maps a track click to the LTR value in the default direction`
+ * - (plus upstream's third `it.each` arm counted above)
+ *
+ * They cover `isRequired`, `minStepsBetweenThumbs` and RTL pointer mirroring —
+ * behaviours this suite does not exercise at all. Recorded in `port/debts.md`;
+ * the gap predates the 0.4.2 tracking batch. Upstream has no `displayName` case
+ * and no `ref` case, so nothing here is structurally unportable.
  *
  * Three environment differences, each noted again at the case that meets it:
  *
@@ -390,6 +412,57 @@ describe('Slider', () => {
 		await userEvent.keyboard('{ArrowLeft}');
 		expect(handleChange).toHaveBeenCalledWith(0);
 	});
+
+	/**
+	 * Upstream's `clamps a controlled value of $value to $expectedValue`, an
+	 * `it.each` pair. It asserts the clamped `aria-valuenow` *and* the thumb's
+	 * inset position, which is where #5051's `THUMB_INSET` becomes observable.
+	 *
+	 * Read off the CSSOM rather than the style attribute: the component writes
+	 * `inset-inline-start:calc(…)` and Chromium round-trips `calc()` through its
+	 * own serialiser, so the attribute text is not stable across engines while the
+	 * parsed property is.
+	 */
+	it.each([
+		{ value: 150, expectedValue: 100, expectedPosition: 'calc(100% - 10px)' },
+		{ value: -50, expectedValue: 0, expectedPosition: 'calc(0% + 10px)' }
+	])(
+		'clamps a controlled value of $value to $expectedValue',
+		async ({ value, expectedValue, expectedPosition }) => {
+			const screen = await render(Slider, {
+				props: { label: 'Volume', value, min: 0, max: 100 }
+			});
+			const slider = thumbIn(screen.container);
+			expect(slider.getAttribute('aria-valuenow')).toBe(String(expectedValue));
+			expect(slider.style.getPropertyValue('inset-inline-start')).toBe(expectedPosition);
+		}
+	);
+
+	// Regression: #5050 — at min/max the thumb centred on the container edge, so
+	// half of it (10px of a 20px thumb) hung outside the component.
+	it.each([
+		{ value: 0, position: 'calc(0% + 10px)' },
+		{ value: 50, position: 'calc(50% + 0px)' },
+		{ value: 100, position: 'calc(100% - 10px)' }
+	])('insets the thumb at value $value so it stays in bounds', async ({ value, position }) => {
+		const screen = await render(Slider, {
+			props: { label: 'Volume', value, min: 0, max: 100 }
+		});
+		expect(thumbIn(screen.container).style.getPropertyValue('inset-inline-start')).toBe(position);
+	});
+
+	it.each([
+		{ value: 0, position: 'calc(0% + 10px)' },
+		{ value: 100, position: 'calc(100% - 10px)' }
+	])(
+		'insets a vertical thumb at value $value so it stays in bounds',
+		async ({ value, position }) => {
+			const screen = await render(Slider, {
+				props: { label: 'Volume', value, min: 0, max: 100, orientation: 'vertical' }
+			});
+			expect(thumbIn(screen.container).style.getPropertyValue('bottom')).toBe(position);
+		}
+	);
 
 	describe('disabledMessage', () => {
 		// Upstream's `h = {hidden: true}` (a closed popover is invisible to jsdom's

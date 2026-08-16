@@ -10,7 +10,13 @@
 	const {
 		content
 	}: {
-		content: 'contenteditable' | 'inert' | 'anchor' | 'aria-hidden' | 'aria-hidden-last';
+		content:
+			| 'contenteditable'
+			| 'inert'
+			| 'anchor'
+			| 'aria-hidden'
+			| 'aria-hidden-last'
+			| 'programmatic-only';
 	} = $props();
 
 	const trap = useFocusTrap(() => ({ isActive: true }));
@@ -37,6 +43,12 @@
 			<div aria-hidden="true">
 				<button type="button" data-testid="aria-hidden-btn">Hidden from AT</button>
 			</div>
+		{:else if content === 'programmatic-only'}
+			<!--
+				Nothing tabbable, only a programmatic focus target — upstream's
+				`tabIndex={-1}` read-only dialog body, new at 0.4.2 with #5023.
+			-->
+			<div tabindex="-1" data-testid="programmatic-target">Read-only dialog content</div>
 		{:else}
 			<a href="#link" data-testid="anchor">Link</a>
 		{/if}

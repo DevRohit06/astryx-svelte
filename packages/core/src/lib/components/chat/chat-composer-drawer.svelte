@@ -116,11 +116,12 @@
 	const content = $derived(chatComposerDrawerContentAttrs(canCollapse && isCollapsed));
 </script>
 
+<!-- `{...rest}` last, matching upstream's trailing `{...htmlProps}`. -->
 <div
-	{...rest}
 	{...theme}
 	class={cx(theme.class, root.class, className)}
 	style={mergeStyle(root.style, styleProp as string | undefined)}
+	{...rest}
 >
 	{#if count != null}
 		<div

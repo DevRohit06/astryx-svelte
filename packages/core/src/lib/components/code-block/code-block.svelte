@@ -626,14 +626,12 @@
 	the tree looks fine.
 -->
 {#snippet block()}
+	<!-- `{...rest}` last, matching upstream's trailing `{...props}`. -->
 	<pre
-		{...rest}
 		{...theme}
 		class={cx(theme.class, rootAttrs.class, className)}
-		style={mergeStyle(
-			rootAttrs.style,
-			styleProp as string | undefined
-		)}>{#if showHeader}{@render headerRow()}{/if}{#if canCollapse}{@render collapsibleBody()}{:else}{@render codeBody()}{/if}{#if !showHeader && hasCopyButton}{@render copyButton()}{/if}</pre>
+		style={mergeStyle(rootAttrs.style, styleProp as string | undefined)}
+		{...rest}>{#if showHeader}{@render headerRow()}{/if}{#if canCollapse}{@render collapsibleBody()}{:else}{@render codeBody()}{/if}{#if !showHeader && hasCopyButton}{@render copyButton()}{/if}</pre>
 {/snippet}
 
 {#if syntaxTheme}

@@ -40,6 +40,7 @@
 	import Icon from '../icon/icon.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';
 	import { usePopover } from '../popover/use-popover.svelte.js';
+	import { useMenuHover } from '../../internal/use-menu-hover.svelte.js';
 	import { useTopNavSlot } from './top-nav-context.svelte.js';
 	import {
 		megaMenuChevronStyle,
@@ -117,29 +118,10 @@
 	// Upstream's `mega-menu-${label.toLowerCase().replace(/\s+/g, '-')}`.
 	const drawerMenuId = $derived(`mega-menu-${label.toLowerCase().replace(/\s+/g, '-')}`);
 
-	/**
-	 * How long after a hover-open a click still counts as *confirming* that open
-	 * rather than toggling it shut. Upstream's `CLICK_GUARD_MS`.
-	 */
-	const CLICK_GUARD_MS = 500;
+	/** The panel is a grid of links, not `role="menuitem"` rows. */
+	const PANEL_ITEM_SELECTOR = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 	let triggerButton = $state<HTMLButtonElement>();
-	// Upstream reads the panel through `popover.contentRef.current`. Our
-	// `usePopover` exposes `attachContent` as an Attachment, with no ref to read,
-	// so the panel element is bound here instead. `<PopoverLayer>` renders the
-	// hidden close button *after* `children`, so the first focusable descendant is
-	// the same element from either box.
-	let panelElement = $state<HTMLDivElement>();
-	// Plain `let`s: upstream's refs, none of which drive a render.
-	let showTimeout: ReturnType<typeof setTimeout> | null = null;
-	let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-	// When the current open came from hover, and whether it has been pinned.
-	// Upstream's `hoverOpenedAtRef` / `stickyRef`, which replaced the single
-	// `clickLocked` boolean: a hover open is transient, a click or keyboard open
-	// is pinned, and a click that lands inside the guard window promotes the
-	// first into the second instead of dismissing it.
-	let hoverOpenedAt = 0;
-	let sticky = false;
 
 	const popover = usePopover(() => ({
 		id: popoverId,
@@ -160,11 +142,24 @@
 		// treated as an ordinary outside interaction.
 		hasLightDismiss: true,
 		onShow: () => onOpenChange?.(true),
-		onHide: () => {
-			hoverOpenedAt = 0;
-			sticky = false;
-			onOpenChange?.(false);
-		}
+		onHide: () => onOpenChange?.(false)
+	}));
+
+	// The whole hover machine — open/hide delays, the hover→click guard, keyboard
+	// activation and focus restoration — is the shared `useMenuHover` as of 0.4.2.
+	// This component used to carry its own copy (#4555); #3121 moved that logic
+	// into the hook so every hover-opening menu behaves the same way.
+	const menuHover = useMenuHover(() => ({
+		show: popover.show,
+		hide: popover.hide,
+		isOpen: popover.isOpen,
+		isEnabled: true,
+		showDelay: delay,
+		hideDelay,
+		itemSelector: PANEL_ITEM_SELECTOR,
+		// Trigger sits outside an auto popover; the invoker relationship exempts it
+		// from light dismiss.
+		popoverId: popover.id
 	}));
 
 	// Anchor the popover to the parent <nav> (the TopNav), not to the trigger —
@@ -179,90 +174,6 @@
 		}
 		return popover.attachTrigger(nav as HTMLElement);
 	});
-
-	$effect(() => () => clearTimeouts());
-
-	function clearTimeouts(): void {
-		if (showTimeout) {
-			clearTimeout(showTimeout);
-			showTimeout = null;
-		}
-		if (hideTimeout) {
-			clearTimeout(hideTimeout);
-			hideTimeout = null;
-		}
-	}
-
-	function scheduleShow(): void {
-		clearTimeouts();
-		showTimeout = setTimeout(() => {
-			hoverOpenedAt = Date.now();
-			popover.show({ skipAutoFocus: true });
-		}, delay);
-	}
-
-	function scheduleHide(): void {
-		clearTimeouts();
-		hideTimeout = setTimeout(() => {
-			popover.hide();
-		}, hideDelay);
-	}
-
-	function focusFirstPanelItem(): void {
-		panelElement
-			?.querySelector<HTMLElement>(
-				'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-			)
-			?.focus();
-	}
-
-	function handleTriggerMouseEnter(): void {
-		clearTimeouts();
-		if (!popover.isOpen) {
-			scheduleShow();
-		}
-	}
-
-	function handlePanelMouseEnter(): void {
-		clearTimeouts();
-	}
-
-	function handleMouseLeave(): void {
-		if (!sticky) {
-			scheduleHide();
-		}
-	}
-
-	function handleClick(event: MouseEvent): void {
-		// Cancel the native invoker toggle so this guard is the single source of
-		// truth for trigger activation. `popovertarget` still establishes the
-		// invoker relationship used by native light dismiss and stacking.
-		event.preventDefault();
-		clearTimeouts();
-
-		if (event.detail === 0) {
-			// Keyboard activation: pin, and move focus into the panel.
-			sticky = true;
-			hoverOpenedAt = 0;
-			if (popover.isOpen) {
-				focusFirstPanelItem();
-			} else {
-				popover.show();
-			}
-		} else if (!popover.isOpen) {
-			sticky = true;
-			popover.show({ skipAutoFocus: true });
-		} else if (Date.now() - hoverOpenedAt < CLICK_GUARD_MS) {
-			// A click that naturally follows a hover-open confirms the open state
-			// instead of toggling the panel shut. From here it behaves like any
-			// other click-open and stays pinned until explicit dismissal.
-			sticky = true;
-			hoverOpenedAt = 0;
-		} else {
-			popover.hide();
-			triggerButton?.focus();
-		}
-	}
 
 	const theme = themeProps('top-nav-mega-menu');
 	const drawerTheme = themeProps('top-nav-mega-menu', { mode: 'drawer' });
@@ -323,12 +234,10 @@
 	<button
 		{...rest}
 		bind:this={triggerButton}
+		{@attach menuHover.attachTrigger}
 		type="button"
 		{...popover.triggerProps}
-		popovertarget={popover.id}
-		onclick={handleClick}
-		onmouseenter={handleTriggerMouseEnter}
-		onmouseleave={handleMouseLeave}
+		{...menuHover.triggerProps}
 		{...theme}
 		class={cx(theme.class, triggerAttrs.class, className)}
 		style={mergeStyle(triggerAttrs.style, styleProp as string | undefined)}
@@ -355,11 +264,12 @@
 			which is what 0.1.9 corrected.
 		-->
 		<div
-			bind:this={panelElement}
+			{@attach menuHover.attachMenu}
 			role="group"
 			aria-label={label}
-			onmouseenter={handlePanelMouseEnter}
-			onmouseleave={handleMouseLeave}
+			onmouseenter={menuHover.contentProps.onmouseenter}
+			onmouseleave={menuHover.contentProps.onmouseleave}
+			onkeydown={menuHover.contentProps.onkeydown}
 			class={panelContainerAttrs.class}
 			style={panelContainerAttrs.style}
 		>

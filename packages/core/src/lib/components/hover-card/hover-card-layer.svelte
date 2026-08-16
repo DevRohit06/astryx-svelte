@@ -87,7 +87,6 @@
 	alignment={renderAlignment}
 	role={hoverCard.role}
 	aria-label={hoverCard.label}
-	as="span"
 	xstyle={[hoverCard.xstyle, layerAnimations[renderPlacement], xstyle]}
 	class={cx(themeProps('hovercard').class, className)}
 	style={style ?? undefined}
@@ -100,18 +99,24 @@
 		descendant. Native `blur` does not bubble, so `onblur` would never fire for
 		the case the handler exists to serve.
 
-		The keydown handler is why the a11y rule fires: the span is a styling and
+		A `<div>` as of 0.4.2: `useLayer` mounts the container only after verifying
+		or correcting its parent, so the card's content no longer has to be
+		phrasing-safe and can use block markup (#5039).
+
+		The keydown handler is why the a11y rule fires: the div is a styling and
 		event surface, and the ARIA pattern is completed by the `role="dialog"` on
-		the layer container above it. Giving this span a role of its own would put
+		the layer container above it. Giving this div a role of its own would put
 		a second element in the accessibility tree where upstream has one.
 	-->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<span
+	<div
 		class={content.class}
 		style={content.style}
 		onmouseenter={hoverCard.handleContentMouseEnter}
 		onmouseleave={hoverCard.handleContentMouseLeave}
 		onkeydown={hoverCard.handleContentKeyDown}
-		onfocusout={hoverCard.handleContentFocusOut}>{@render children()}</span
+		onfocusout={hoverCard.handleContentFocusOut}
 	>
+		{@render children()}
+	</div>
 </Layer>

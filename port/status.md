@@ -13,15 +13,15 @@
 | Missing here              | none                                                                     |
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
-| Upstream pin              | `@astryxdesign/core` 0.4.1                                               |
-| Ledger entries            | 28                                                                       |
+| Upstream pin              | `@astryxdesign/core` 0.4.2                                               |
+| Ledger entries            | 29                                                                       |
 
 ## Debts
 
 | Kind                  | Count  |
 | --------------------- | ------ |
 | api-divergence        | 27     |
-| deliberate-divergence | 44     |
+| deliberate-divergence | 42     |
 | unported              | 11     |
 | upstream-lag          | 12     |
-| **total**             | **94** |
+| **total**             | **92** |

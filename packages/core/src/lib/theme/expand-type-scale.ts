@@ -18,16 +18,46 @@
  * the gap was invisible until something rendered `display-3`. It also meant a
  * theme with a *different* `scale` got upstream's leadings rather than its own,
  * which is the more serious half.
+ *
+ * SYNC: When modified, update:
+ * - /packages/cli/assets/theme.template.ts (the annotated field reference)
  */
 
-export type TypeWeight = 'normal' | 'medium' | 'semibold' | 'bold';
+/**
+ * Named font weight — maps to `var(--font-weight-*)` at the token layer. Raw CSS
+ * values (e.g. `'800'`) are accepted as an escape hatch, matching upstream's
+ * `FontWeight`; `(string & {})` keeps the four names in editor completion while
+ * still admitting any string.
+ */
+export type TypeWeight = 'normal' | 'medium' | 'semibold' | 'bold' | (string & {});
+
+/**
+ * Upstream's `resolveFontWeight`: a named weight becomes a token reference so a
+ * theme that also retunes `--font-weight-*` stays coherent; anything else is a
+ * raw CSS value and passes through untouched.
+ */
+function resolveWeight(weight: TypeWeight): string {
+	const named: Record<string, string> = {
+		normal: 'var(--font-weight-normal)',
+		medium: 'var(--font-weight-medium)',
+		semibold: 'var(--font-weight-semibold)',
+		bold: 'var(--font-weight-bold)'
+	};
+	return named[weight] ?? weight;
+}
 
 export interface TypeRole {
 	/** Primary family name, e.g. 'Figtree'. */
 	family?: string;
 	/** Comma-separated fallback stack appended after `family`. */
 	fallbacks?: string;
-	/** Per-level weight overrides, keyed by heading level. */
+	/**
+	 * Default weight for the whole role. On `heading` it fills every level
+	 * `weights` does not name; on `body` and `code` it sets that text role's
+	 * weight directly. Upstream's `FontRole.weight`.
+	 */
+	weight?: TypeWeight;
+	/** Per-level weight overrides, keyed by heading level. Beats `weight`. */
 	weights?: Record<number, TypeWeight>;
 }
 
@@ -165,14 +195,38 @@ export function expandTypeScale(config: TypographyConfig): TypeScaleTokens {
 	// so a theme that also retunes --font-weight-* stays coherent.
 	const headingWeights = new Map<number, string>();
 	for (const [level, weight] of Object.entries(config.heading?.weights ?? {})) {
-		headingWeights.set(Number(level), `var(--font-weight-${weight})`);
+		headingWeights.set(Number(level), resolveWeight(weight));
+	}
+
+	// The role-level default fills every level `weights` did not name, which is
+	// upstream's `defaultHeadingWeight` loop. `weights` wins where both are set.
+	const defaultHeadingWeight = config.heading?.weight
+		? resolveWeight(config.heading.weight)
+		: undefined;
+
+	// `body` and `code` set their own text role's weight; there is no `large`,
+	// `label` or `supporting` role to carry one, exactly as upstream has none.
+	const textWeights = new Map<string, string>();
+	if (config.body?.weight) {
+		textWeights.set('body', resolveWeight(config.body.weight));
+	}
+	if (config.code?.weight) {
+		textWeights.set('code', resolveWeight(config.code.weight));
 	}
 
 	if (!config.scale) {
 		// Without a scale there are no sizes to derive leadings from, so only the
 		// explicit weight overrides are expressible.
+		if (defaultHeadingWeight) {
+			for (const [level] of HEADING_STEPS) {
+				tokens[`--text-heading-${level}-weight`] = defaultHeadingWeight;
+			}
+		}
 		for (const [level, weight] of headingWeights) {
 			tokens[`--text-heading-${level}-weight`] = weight;
+		}
+		for (const [type, weight] of textWeights) {
+			tokens[`--text-${type}-weight`] = weight;
 		}
 		return tokens;
 	}
@@ -190,13 +244,14 @@ export function expandTypeScale(config: TypographyConfig): TypeScaleTokens {
 	// scale moves both together; leadings are the computed constants above.
 	for (const [level, step] of HEADING_STEPS) {
 		tokens[`--text-heading-${level}-size`] = `var(${SIZE_TOKEN_BY_STEP.get(step)})`;
-		tokens[`--text-heading-${level}-weight`] = headingWeights.get(level) ?? DEFAULT_HEADING_WEIGHT;
+		tokens[`--text-heading-${level}-weight`] =
+			headingWeights.get(level) ?? defaultHeadingWeight ?? DEFAULT_HEADING_WEIGHT;
 		tokens[`--text-heading-${level}-leading`] = String(computeLeading(sizeAt(step)));
 	}
 
 	for (const [type, step] of TEXT_STEPS) {
 		tokens[`--text-${type}-size`] = `var(${SIZE_TOKEN_BY_STEP.get(step)})`;
-		tokens[`--text-${type}-weight`] = DEFAULT_TEXT_WEIGHTS[type];
+		tokens[`--text-${type}-weight`] = textWeights.get(type) ?? DEFAULT_TEXT_WEIGHTS[type];
 		tokens[`--text-${type}-leading`] = String(computeLeading(sizeAt(step)));
 	}
 

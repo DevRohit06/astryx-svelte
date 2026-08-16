@@ -17,14 +17,15 @@ import ButtonGroupHarness from './fixtures/button-group-harness.svelte';
  * arrived with 0.1.9's `elevation` prop; both are ported now and both passed on
  * the first run.)
  *
- * **Dropped: the two `rounds a trailing DropdownMenu trigger, whose popover
- * follows it (%s)` cases.** `DropdownMenu` is not ported. Its only role in that
- * case is to be a member that renders its own `[popover]` sibling after its
- * trigger, and a stub reproducing that shape would be a `<Button>` with a
- * hand-placed popover next to it — which is character for character the
- * `rounds a tooltip'd trailing Button` pair two cases above, asserted against a
- * fixture we wrote rather than against the port. Recorded in port/todo.md; the cases
- * come back with `DropdownMenu`.
+ * **The two `rounds a trailing DropdownMenu trigger, whose popover follows it
+ * (%s)` cases are back.** They were dropped when `DropdownMenu` was unported,
+ * with the note "the cases come back with `DropdownMenu`" — it has been ported
+ * since, so they do. This matters more than the count: the dropped case is the
+ * only one exercising a trailing member that emits **marker + popover** together,
+ * and the marker is exactly what `IS_LAST_ITEM` changed to skip at 0.4.2
+ * (`:not(:has(~ *:not([popover]):not(template)))`). The tooltip'd-`Button`
+ * stand-in happens to have the same shape today; a `DropdownMenu`-specific
+ * sibling order would slip past it.
  *
  * **Restated: `rounds only the last member (first/middle/last)`.** Its last
  * member is a `DropdownMenu`; a `Button` with a `tooltip` stands in, because
@@ -73,7 +74,7 @@ type CompiledRule = {
 	property: string;
 	/** CSS value, e.g. `var(--radius-element)`. */
 	value: string;
-	/** The full compiled selector, e.g. `.xajhecq:not(:has(~ *:not([popover])))`. */
+	/** The full compiled selector, e.g. `.x1rmb4wm:not(:has(~ *:not([popover]):not(template)))`. */
 	selector: string;
 };
 
@@ -302,15 +303,16 @@ describe('ButtonGroup', () => {
 	// ===========================================================================
 	// Trailing radius (issue #2508)
 	//
-	// The trailing end cap cannot be keyed off `:last-child`: members render an
-	// invisible layer AFTER their button (tooltip'd Button, DropdownMenu), and
-	// useLayer renders it inline rather than portaling it, so the layer steals the
-	// slot. See IS_LAST_ITEM in button.stylex.ts.
+	// The trailing end cap cannot be keyed off `:last-child`: members render
+	// invisible layer infrastructure AFTER their button (tooltip'd Button,
+	// DropdownMenu), and useLayer renders a marker plus the layer inline when the
+	// host is safe, so they steal the slot. See IS_LAST_ITEM in
+	// button.stylex.ts.
 	// ===========================================================================
 	describe('trailing radius (#2508)', () => {
 		/** The group members, in DOM order (excludes invisible layer siblings). */
 		const items = (group: HTMLElement): Element[] =>
-			Array.from(group.querySelectorAll(':scope > *:not([popover])'));
+			Array.from(group.querySelectorAll(':scope > *:not([popover]):not(template)'));
 
 		/** A rounded (non-zero) corner is exactly this value in the compiled CSS. */
 		const ROUNDED = 'var(--radius-element)';
@@ -375,11 +377,12 @@ describe('ButtonGroup', () => {
 				for (const selector of selectors) {
 					// `:last-child` is the bug: an inline layer element steals the slot.
 					expect(selector).not.toContain(':last-child');
-					// `[popover]` must survive compilation *verbatim*. StyleX only
-					// statically evaluates a selector key from a same-file const; a
-					// `defineConsts` import compiles to a mangled selector like
+					// `[popover]` and `template` must survive compilation *verbatim*.
+					// StyleX only statically evaluates a selector key from a same-file
+					// const; a `defineConsts` import compiles to a mangled selector like
 					// `[x13pbwiz]` that matches nothing in the DOM.
 					expect(selector).toContain('[popover]');
+					expect(selector).toContain('template');
 				}
 			}
 		);
@@ -439,11 +442,37 @@ describe('ButtonGroup', () => {
 			}
 		);
 
-		// Upstream's `rounds a trailing DropdownMenu trigger, whose popover follows
-		// it (%s)` — two cases — is dropped here. See the file header: DropdownMenu
-		// is not ported, and the only thing the case needs from it is a trigger
-		// followed by its own `[popover]` sibling, which is the pair of cases
-		// immediately above.
+		it.each(['horizontal', 'vertical'] as const)(
+			'rounds a trailing DropdownMenu trigger, whose popover follows it (%s)',
+			async (orientation) => {
+				const screen = await render(ButtonGroupHarness, {
+					props: {
+						label: 'Approve action',
+						orientation,
+						members: [
+							{ label: 'Allow once', variant: 'primary' as const },
+							{
+								kind: 'dropdown-menu' as const,
+								label: 'Allow options',
+								variant: 'primary' as const,
+								items: ['Always allow']
+							}
+						]
+					}
+				});
+
+				const group = groupIn(screen.container);
+				const allow = screen.getByRole('button', { name: 'Allow once' }).element();
+				const trigger = screen.getByRole('button', { name: 'Allow options' }).element();
+
+				// The popover surface is an inline sibling after the trigger.
+				expect(trigger).not.toBe(group.lastElementChild);
+				expect(items(group).at(-1)).toBe(trigger);
+
+				expect(hasRoundedTrailingCorners(trigger, orientation)).toBe(true);
+				expect(hasRoundedTrailingCorners(allow, orientation)).toBe(false);
+			}
+		);
 
 		it('rounds a trailing link (<a>) member with a tooltip', async () => {
 			const screen = await render(ButtonGroupHarness, {

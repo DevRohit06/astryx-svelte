@@ -40,7 +40,8 @@ export default {
 		{
 			name: 'children',
 			type: 'Snippet',
-			description: 'Free-form content: bubbles, asset lists, tool calls, images.',
+			description:
+				'Free-form content: bubbles, asset lists, tool calls, images. Custom (non-bubble) children render flush with the message edge; wrap them in a ghost ChatMessageBubble to align them with the bubble text column.',
 			required: true
 		},
 		{

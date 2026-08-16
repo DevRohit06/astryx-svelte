@@ -11,24 +11,7 @@ import { assertWithin, PathSafetyError } from '../../../foundation/fs/path-safet
 import { AstryxError } from '../../error.mjs';
 import { ERROR_CODES } from '../../../foundation/response/error-codes.mjs';
 import { THEMES_DIR, listThemes, findTheme } from '../_adapter.mjs';
-
-// Stripped from scaffolded files so the consumer's copy doesn't carry our
-// repo boilerplate (mirrors the docsite). Preserves a leading BOM/shebang.
-//
-// Ported unchanged, and it is a guard rather than a transform here: this port's
-// own theme sources carry no Meta copyright line, so it matches nothing today.
-// It is kept because the bundle is a copy of `packages/themes/*/src`, and a
-// theme source adapted from upstream would arrive with the header attached.
-const META_COPYRIGHT_HEADER_RE =
-	/^(\uFEFF?(?:#![^\r\n]*(?:\r?\n))?)\/\/ Copyright \(c\) Meta Platforms, Inc\. and affiliates\.\r?\n(?:\r?\n)*/;
-
-/**
- * @param {string} source
- * @returns {string}
- */
-function stripCopyrightHeader(source) {
-	return source.replace(META_COPYRIGHT_HEADER_RE, '$1');
-}
+import { stripCopyrightHeader } from '../../../foundation/text/copyright-header.mjs';
 
 /**
  * @param {string} slug

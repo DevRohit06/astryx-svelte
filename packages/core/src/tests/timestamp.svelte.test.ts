@@ -6,7 +6,6 @@ import Timestamp from '$lib/components/timestamp/timestamp.svelte';
 import { formatTooltipLines } from '$lib/components/timestamp/tooltip-entries.js';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import TimestampI18nProbe from './fixtures/timestamp-i18n-probe.svelte';
-import { whenWired } from './trigger-wiring.js';
 
 /**
  * Astryx v0.3.0's `Timestamp/Timestamp.test.tsx`, ported case for case — 69
@@ -111,8 +110,44 @@ function cardIn(container: HTMLElement): HTMLElement {
 	return el;
 }
 
-/** Waits for the lazily-imported hover card to mount, then returns its layer. */
+/**
+ * Opens the hover card, waits for its layer to mount, and returns it.
+ *
+ * **It has to open it.** `HoverCard` opts into `useLayer`'s `lazyMount` as of
+ * upstream 0.4.2 (#5039), so a closed card is an inert `<template>` marker and
+ * nothing else — the layer these cases inspect does not exist until something
+ * asks for it. Before that it was mounted from the first render and every case
+ * could reach it cold.
+ *
+ * Hover is the opener, because it is the trigger these cases are about. The
+ * keyboard-reachability case does not come through here at all: it drives a real
+ * `userEvent.tab()`, which is the interaction *it* is about, and a helper that
+ * focused the trigger directly would be asserting something weaker.
+ */
 async function awaitCard(container: HTMLElement): Promise<HTMLElement> {
+	// Not `tsIn`: several of these cases render without a `data-testid`. The
+	// trigger's own `<time>` is the only one in the container before the card
+	// opens (the card renders one of its own).
+	//
+	// `HoverCard` wires whichever element it *found*, so the listeners and the
+	// `aria-describedby` land on the `<time>` or on the `display: contents`
+	// wrapper depending on how the caller nested it. Wait for the attribute
+	// wherever it appears, then drive that same element — dispatching into the
+	// other one is dropped on the floor (see `trigger-wiring.ts`).
+	const time = container.querySelector('time');
+	if (!(time instanceof HTMLElement)) {
+		throw new Error('expected a timestamp element');
+	}
+	await vi.waitFor(() => {
+		expect(container.querySelector('[aria-describedby]')).not.toBeNull();
+	});
+	const trigger =
+		time.closest<HTMLElement>('[aria-describedby]') ??
+		container.querySelector<HTMLElement>('[aria-describedby]');
+	if (!trigger) {
+		throw new Error('expected a wired trigger');
+	}
+	trigger.dispatchEvent(new MouseEvent('mouseenter'));
 	await vi.waitFor(() => cardIn(container));
 	return cardIn(container);
 }
@@ -142,19 +177,6 @@ function copyButtonIn(card: HTMLElement): HTMLButtonElement {
 	const el = card.querySelector('button');
 	if (!(el instanceof HTMLButtonElement)) {
 		throw new Error('expected a copy button');
-	}
-	return el;
-}
-
-/**
- * The element `HoverCard` actually wires. It attaches to the first *element*
- * child of its `display: contents` wrapper, which here is `Text`'s span — the
- * `<time>`'s parent — not the `<time>` itself.
- */
-function triggerFor(time: HTMLElement): HTMLElement {
-	const el = time.parentElement;
-	if (!(el instanceof HTMLElement)) {
-		throw new Error('expected a wired trigger');
 	}
 	return el;
 }
@@ -733,35 +755,25 @@ describe('Timestamp', () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 - 3600, format: 'relative', 'data-testid': 'ts' }
 			});
-			// The card layer mounts inline and carries the full absolute time in its
-			// visible form (short timezone abbreviation) as its single default
-			// copyable row. The aria-label spells the timezone out in full
-			// (WCAG 3.1.4), so the two strings intentionally differ — compare the
-			// card against an independently formatted short-form string.
-			// Compare with normalized whitespace: Intl output can contain narrow
-			// no-break spaces the matcher's own normalization would break on.
-			const card = await awaitCard(screen.container);
-			// Re-read the `<time>` only now: `{#await}`'s pending branch — the
-			// `Suspense` fallback — renders a `<time>` of its own, and the `:then`
-			// branch replaces it with a new node inside the card's wrapper. Upstream
-			// never sees that swap, because a `React.lazy` whose promise is already
-			// resolved (its `beforeAll` warms it) renders without suspending at all.
-			const el = tsIn(screen.container);
-			const datetime = new Date(el.getAttribute('datetime') ?? '');
-			const expected = new Intl.DateTimeFormat(undefined, {
-				year: 'numeric',
-				month: 'long',
-				day: 'numeric',
-				hour: 'numeric',
-				minute: '2-digit',
-				second: '2-digit',
-				timeZoneName: 'short'
-			}).format(datetime);
-			expect(normalize(card.textContent ?? '')).toContain(normalize(expected));
 
-			// The layer having mounted does not mean the trigger is wired — those
-			// are separate effects, and focusing an unwired trigger shows nothing.
-			await whenWired(triggerFor(el));
+			// Restated at upstream 0.4.2. This case used to mount the card first and
+			// compare its text before tabbing, which only worked because the layer
+			// existed while closed; `HoverCard` now opts into `lazyMount` (#5039), so
+			// there is nothing to read until something opens it — and opening it here
+			// by hand is precisely what this case must not do. The content comparison
+			// therefore moves to the end, after the tab has opened the card, which is
+			// exactly how upstream restated its own copy.
+			//
+			// The `<time>` is re-read after the wiring settles, never before: the
+			// trigger is wired by `watchFirstElementChild`, and a node captured
+			// earlier can be a replaced one that looks identical and is not the
+			// element focus lands on.
+
+			// The trigger being present does not mean it is wired — those are
+			// separate effects, and focusing an unwired trigger shows nothing.
+			await vi.waitFor(() => {
+				expect(screen.container.querySelector('[aria-describedby]')).not.toBeNull();
+			});
 
 			// Reset the sequential-navigation starting point. Earlier cases in this
 			// file focus elements that are then unmounted, which leaves Chromium's
@@ -771,14 +783,37 @@ describe('Timestamp', () => {
 			document.body.tabIndex = -1;
 			document.body.focus();
 
-			// Tab onto the timestamp — the only tab stop in the document (the card's
-			// copy button lives inside a closed, `display: none` popover).
+			// Tab onto the timestamp — the only tab stop in the document while the
+			// card is unmounted.
 			await userEvent.tab();
-			expect(el).toHaveFocus();
+			expect(tsIn(screen.container)).toHaveFocus();
 
+			// Focus alone both mounts the card and opens it.
 			await vi.waitFor(() => {
 				expect(cardIn(screen.container).matches(':popover-open')).toBe(true);
 			});
+
+			// Upstream keeps this comparison at 0.4.2 — it *moves* it after the tab,
+			// which is what opens the card, rather than dropping it. Under
+			// `lazyMount` it is not redundant with `renders the unified copyable card
+			// with a single default absolute row`: that case reads a *hover*-mounted
+			// layer, and this is the only place a *focus*-mounted one's content is
+			// read. The card's visible row carries the short timezone abbreviation
+			// while the aria-label spells it out in full (WCAG 3.1.4), so the two
+			// strings intentionally differ — compare against an independently
+			// formatted short-form string, whitespace normalised (Intl emits narrow
+			// no-break spaces).
+			const datetime = new Date(tsIn(screen.container).getAttribute('datetime') ?? '');
+			const expected = new Intl.DateTimeFormat(undefined, {
+				year: 'numeric',
+				month: 'long',
+				day: 'numeric',
+				hour: 'numeric',
+				minute: '2-digit',
+				second: '2-digit',
+				timeZoneName: 'short'
+			}).format(datetime);
+			expect(normalize(cardIn(screen.container).textContent ?? '')).toContain(normalize(expected));
 		});
 
 		it('does not add a tab stop when the hover card is disabled', async () => {

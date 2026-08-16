@@ -1,6 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
-import { typographyVars } from '../../styles/tokens.stylex.js';
+import { typeScaleVars, typographyVars } from '../../styles/tokens.stylex.js';
 
 /**
  * The layer container's own styles, from Astryx's `Layer/useLayer.tsx`.
@@ -24,7 +24,12 @@ const styles = stylex.create({
 		borderWidth: 0,
 		borderStyle: 'none',
 		overflow: 'visible',
+		// A layer is hosted wherever its trigger happens to sit, so type that is
+		// inherited rather than declared makes the same component render at a
+		// different size in different callers.
 		fontFamily: typographyVars['--font-family-body'],
+		fontSize: typeScaleVars['--text-body-size'],
+		lineHeight: typeScaleVars['--text-body-leading'],
 		// Override browser default [popover] background (canvas color)
 		backgroundColor: 'transparent'
 	},

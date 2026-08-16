@@ -14,9 +14,9 @@ import {
  *
  * A static text/icon addon that sits flush against a member control. It carries
  * a muted surface and the same border-collapsing margin as the group members —
- * but with only the two-class radius corners (`:first-child`/`:last-child`),
- * since a text addon never owns a popover sibling the way `group-styles`'
- * `:has(+ [popover])` variants account for.
+ * but with a plain `:first-child`/`:last-child` pair for the radius corners,
+ * since a text addon never owns the layer siblings that `group-styles`'
+ * `IS_LAST_ITEM` selector accounts for.
  */
 const styles = stylex.create({
 	text: {

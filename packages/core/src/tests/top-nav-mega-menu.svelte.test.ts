@@ -4,6 +4,7 @@ import { render } from 'vitest-browser-svelte';
 import TopNavMegaMenuItem from '$lib/components/top-nav/top-nav-mega-menu-item.svelte';
 import MegaMenu from './fixtures/top-nav-mega-menu-fixture.svelte';
 import { TIMER_BUDGET } from './timer-budget.js';
+import { expectSharedFocusRing } from './shared-focus-ring.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMegaMenu.test.tsx` — **all 37 of its `it`
@@ -818,5 +819,37 @@ describe('TopNavMegaMenuItem', () => {
 			props: { mode: 'drawer', item: { title: 'Analytics', href: '/analytics' } }
 		});
 		await expect.element(screen.getByRole('link', { name: /Analytics/ })).toBeInTheDocument();
+	});
+});
+
+/**
+ * Upstream's `describe('TopNavMegaMenu — drawer focus ring')`, both cases, new at
+ * 0.4.2. They are the two that catch the defect the 0.4.2 closing audits found:
+ * `megaMenuItemDrawerAttrs` composed a bare `sx(...)` where upstream composes
+ * `focusOutlineProps.focusVisible(...)`, so a keyboard user got no visible focus
+ * anywhere in the mobile drawer.
+ *
+ * `expectSharedFocusRing` transcribes: `stylex.props(focusOutlineStyles.focusVisible)`
+ * yields the atomic classes the shared ring compiles to, and the assertion is
+ * that the element carries every one of them. That is a real check rather than a
+ * tautology — reverting the fix drops them and this goes red.
+ */
+describe('TopNavMegaMenu — drawer focus ring', () => {
+	it('draws the shared ring on the drawer section header', async () => {
+		const screen = await render(MegaMenu, {
+			props: {
+				mode: 'drawer',
+				menu: { label: 'Products' },
+				items: [{ title: 'Analytics', href: '/analytics' }]
+			}
+		});
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Products' }).element());
+	});
+
+	it('draws the shared ring on a drawer item', async () => {
+		const screen = await render(MegaMenu, {
+			props: { mode: 'drawer', item: { title: 'Analytics', href: '/analytics' } }
+		});
+		expectSharedFocusRing(screen.getByRole('link', { name: /Analytics/ }).element());
 	});
 });

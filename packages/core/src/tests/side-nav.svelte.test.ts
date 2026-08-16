@@ -9,15 +9,42 @@ import HeadingFixture from './fixtures/side-nav-heading-fixture.svelte';
 import IntegrationFixture from './fixtures/side-nav-integration-fixture.svelte';
 import ItemFixture from './fixtures/side-nav-item-fixture.svelte';
 import SectionFixture from './fixtures/side-nav-section-fixture.svelte';
+import { expectNoSharedFocusRing, expectSharedFocusRing } from './shared-focus-ring.js';
+import SizeRefFixture from './fixtures/button-size-reference.svelte';
+import CollapseButtonScope from './fixtures/side-nav-collapse-button-scope.svelte';
 
 /**
- * Ported from Astryx's `SideNav/SideNav.test.tsx` — **all 99 of its `it` cases**
- * at v0.3.0, across the thirteen describe blocks it covers.
+ * Ported from Astryx's `SideNav/SideNav.test.tsx`. Upstream declares **144**
+ * cases at v0.4.2 (it had 99 at v0.3.0 and 101 at v0.4.1); **116 are here**.
  *
- * ## The count, re-derived from the tag (the previous header was wrong)
+ * ## The 0.4.2 delta, stated rather than implied
  *
- * This header used to read "all 94 of its `it` cases … nothing dropped".
- * Upstream has **99**; the five that were absent are the heading-menu popup
+ * The hardening pass added 43 cases. **Seventeen are here**, chosen as the ones
+ * that verify what that pass actually changed:
+ *
+ * - `menu hover/click guard` (4) — the #3121 `useMenuHover` consolidation, which
+ *   this port rewrote from scratch in the same batch.
+ * - `SideNav focus ring (A15)` (8) — every focusable row draws the *shared* ring,
+ *   including each half of a split-action row and not the row itself.
+ * - `SideNav size cascade` (5) — the sidenav publishes its row size to the parts
+ *   of its own output that did not size themselves, which is what
+ *   `internal/size-scope.svelte` (upstream's `SizeProvider`) exists for.
+ *
+ * **Twenty-six are not**: the forced-colors compiled-output assertions, the
+ * flyout hover-intent and coarse-pointer gates, the collapsed-submenu keyboard
+ * path, Tab order, and the catalog-named submenu dialog. Named individually in
+ * `port/debts.md`. They are behaviour this suite does exercise in other shapes,
+ * and porting them properly is a batch of its own — a hurried pass produces
+ * assertions weakened to fit, which is the failure the 0.4.2 audits caught.
+ *
+ * ## The count, re-derived from the tag (an earlier header was wrong twice)
+ *
+ * This header has twice stated a count that was true of no upstream tag —
+ * first "all 94", then "all 99 … at v0.3.0" while the pin had moved to 0.4.2.
+ * The count is a contract against *upstream's file at the current pin*, so it
+ * is re-derived here rather than carried forward.
+ *
+ * Of the five absent at the v0.3.0 re-derivation: they were the heading-menu popup
  * semantics assertions (the APG "a popup menu is not a dialog" block plus its
  * collapsed-mode sibling), and they are here now. They needed one fixture
  * addition — `side-nav-heading-fixture`'s `menuItems`, which fills the `menu`
@@ -570,6 +597,113 @@ describe('SideNavHeading', () => {
 			for (const child of Array.from(menu!.children)) {
 				expect(child).toHaveAttribute('role', 'menuitem');
 			}
+		});
+	});
+
+	/**
+	 * Upstream's four `SideNavHeading` cases for the #3121 `useMenuHover`
+	 * consolidation, added at 0.4.2. All four are here.
+	 *
+	 * Timing translation is the same one `menu-hover.svelte.test.ts` documents:
+	 * upstream drives fake timers and `act()`, these wait out real ones. The
+	 * hover is dispatched synthetically rather than through Playwright for the
+	 * reason `openMenu` above records at length — the popup deliberately covers
+	 * its own trigger, so a real pointer press hit-tests into the popup.
+	 * `SideNavHeading` passes `showDelay: 0`, so a hover-open needs only a tick.
+	 */
+	describe('menu hover/click guard (#3121)', () => {
+		const menuItems = ['Alpha', 'Beta'];
+		/** The hook's `DEFAULT_CLICK_GUARD_MS`. */
+		const CLICK_GUARD_MS = 500;
+
+		async function renderHeading() {
+			const screen = await render(HeadingFixture, {
+				props: { props: { heading: 'My App' }, menuItems, menuItemsFocusable: true }
+			});
+			return {
+				screen,
+				trigger: screen.getByRole('button', { name: 'Open menu' }).element() as HTMLElement
+			};
+		}
+
+		/**
+		 * `mouseenter` does not bubble, and with no hrefs the *whole heading* is the
+		 * trigger — the handler is on the root `<div>`, not on the chevron button
+		 * upstream names. A real pointer entering the button fires `mouseenter` on
+		 * every element it enters, so the synthetic form walks the same chain.
+		 */
+		function hover(el: HTMLElement, root: HTMLElement): void {
+			for (let node: HTMLElement | null = el; node; node = node.parentElement) {
+				node.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+				if (node === root) {
+					break;
+				}
+			}
+		}
+
+		it('keeps the menu open when a hover-open is immediately clicked', async () => {
+			const { screen, trigger } = await renderHeading();
+
+			hover(trigger, screen.container);
+			await vi.waitFor(() => {
+				expect(trigger).toHaveAttribute('aria-expanded', 'true');
+			});
+
+			trigger.click();
+			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		});
+
+		it('closes on a click that lands well after the hover-open', async () => {
+			const { screen, trigger } = await renderHeading();
+
+			hover(trigger, screen.container);
+			await vi.waitFor(() => {
+				expect(trigger).toHaveAttribute('aria-expanded', 'true');
+			});
+			// Past the guard: a deliberate dismissal, not a follow-on.
+			await new Promise((resolve) => setTimeout(resolve, CLICK_GUARD_MS + 100));
+
+			trigger.click();
+			// Awaited where upstream asserts synchronously: its `await user.click()`
+			// already gave React a render, while a native `.click()` returns before
+			// Svelte has flushed the `$state` write to the attribute.
+			await vi.waitFor(() => {
+				expect(trigger).toHaveAttribute('aria-expanded', 'false');
+			});
+		});
+
+		it('leaves focus on the trigger for a hover-open, and moves it in on click', async () => {
+			const { screen, trigger } = await renderHeading();
+
+			hover(trigger, screen.container);
+			await vi.waitFor(() => {
+				expect(trigger).toHaveAttribute('aria-expanded', 'true');
+			});
+			const firstItem = screen.container.querySelector<HTMLElement>('[role="menuitem"]');
+			expect(firstItem).not.toBeNull();
+			expect(document.activeElement).not.toBe(firstItem);
+
+			trigger.click();
+			await vi.waitFor(() => {
+				expect(document.activeElement).toBe(firstItem);
+			});
+		});
+
+		it('returns focus to the trigger on Escape', async () => {
+			const { screen, trigger } = await renderHeading();
+
+			trigger.click();
+			await vi.waitFor(() => {
+				expect(trigger).toHaveAttribute('aria-expanded', 'true');
+			});
+
+			const menu = screen.container.querySelector('[role="menu"]') as HTMLElement;
+			menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+			await vi.waitFor(() => {
+				expect(trigger).toHaveAttribute('aria-expanded', 'false');
+				expect(document.activeElement).toBe(trigger);
+			});
 		});
 	});
 });
@@ -1444,5 +1578,187 @@ describe('SideNavItem — mobile drawer close-on-activate', () => {
 		});
 		await userEvent.click(screen.getByTestId('item'));
 		expect(closeMobileNav).not.toHaveBeenCalled();
+	});
+});
+
+/**
+ * Upstream's `describe('SideNav focus ring (A15)')`, all eight cases, new at
+ * 0.4.2 with the hardening pass. Every focusable row in the sidenav draws the
+ * *shared* ring rather than a per-component one, so a theme that restyles focus
+ * restyles all of them together.
+ *
+ * `expectSharedFocusRing` / `expectNoSharedFocusRing` live in
+ * `shared-focus-ring.ts` because the TopNav suites assert the same thing.
+ */
+describe('SideNav focus ring (A15)', () => {
+	it('draws the shared ring on a link item', async () => {
+		const screen = await render(ItemFixture, {
+			props: { item: { props: { label: 'Dashboard', href: '/dashboard' } } }
+		});
+		expectSharedFocusRing(screen.getByRole('link', { name: 'Dashboard' }).element());
+	});
+
+	it('draws the shared ring on a button item', async () => {
+		const screen = await render(ItemFixture, {
+			props: { item: { props: { label: 'Dashboard', onclick: () => {} } } }
+		});
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Dashboard' }).element());
+	});
+
+	it('draws the shared ring on a collapsed icon-only item', async () => {
+		const screen = await render(ItemFixture, {
+			props: {
+				collapse: 'collapsed',
+				item: { props: { label: 'Dashboard', href: '/dashboard' }, hasStubIcon: true }
+			}
+		});
+		expectSharedFocusRing(screen.getByRole('link', { name: 'Dashboard' }).element());
+	});
+
+	it('draws the shared ring on a collapsed submenu trigger', async () => {
+		const screen = await render(ItemFixture, {
+			props: {
+				collapse: 'collapsed',
+				item: {
+					props: { label: 'Settings' },
+					hasStubIcon: true,
+					children: [{ props: { label: 'General', href: '/settings/general' } }]
+				}
+			}
+		});
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Settings' }).element());
+	});
+
+	it('rings each focusable of a split-action row, and not the row itself', async () => {
+		const screen = await render(ItemFixture, {
+			props: {
+				item: {
+					props: { label: 'Settings', href: '/settings', collapsible: true },
+					children: [{ props: { label: 'General', href: '/settings/general' } }]
+				}
+			}
+		});
+
+		const link = screen.getByRole('link', { name: 'Settings', exact: true }).element();
+		const toggle = screen.getByRole('button', { name: 'Collapse Settings' }).element();
+		expectSharedFocusRing(link);
+		expectSharedFocusRing(toggle);
+
+		// A presentational <div> holding two independent tab stops; ringing it too
+		// would paint a second outline around the whole row.
+		const row = link.parentElement!;
+		expect(row.tagName).toBe('DIV');
+		expect(row.contains(toggle)).toBe(true);
+		expectNoSharedFocusRing(row);
+	});
+
+	it('draws the shared ring on a heading rendered as one link', async () => {
+		const screen = await render(HeadingFixture, {
+			props: { props: { heading: 'My App', headingHref: '/' } }
+		});
+		expectSharedFocusRing(screen.getByRole('link', { name: /My App/ }).element());
+	});
+
+	it('draws the shared ring on a collapsed heading link', async () => {
+		const screen = await render(HeadingFixture, {
+			props: {
+				collapsed: true,
+				props: { heading: 'My App', headingHref: '/' },
+				icon: { text: 'i' }
+			}
+		});
+		expectSharedFocusRing(screen.getByRole('link', { name: 'My App' }).element());
+	});
+
+	it('draws the shared ring on the heading menu trigger', async () => {
+		const screen = await render(HeadingFixture, {
+			props: { props: { heading: 'My App' }, menu: 'menu' }
+		});
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Open menu' }).element());
+	});
+});
+
+/**
+ * Upstream's size-cascade cases, new at 0.4.2: the sidenav publishes its row
+ * size to the parts of its own output that did not size themselves, which is
+ * what `internal/size-scope.svelte` (upstream's `SizeProvider`) exists for.
+ * All five.
+ */
+describe('SideNav size cascade', () => {
+	/**
+	 * Upstream's `sizeOnlyClasses`: the atomic classes a `size` compiles to that
+	 * `md` does not. Comparing against the `md` reference rather than asserting a
+	 * literal class keeps this independent of StyleX's hashing, and the
+	 * `length > 0` guard is upstream's own — if two sizes compiled identically
+	 * every check below would hold vacuously.
+	 */
+	async function sizeOnlyClasses(size: 'sm' | 'lg'): Promise<string[]> {
+		const screen = await render(SizeRefFixture, { props: { size } });
+		const sized = new Set(screen.getByTestId('sized-ref').element().classList);
+		const md = new Set(screen.getByTestId('md-ref').element().classList);
+		const only = [...sized].filter((c) => !md.has(c));
+		expect(only.length).toBeGreaterThan(0);
+		return only;
+	}
+
+	function expectHasAll(el: Element, classes: string[]): void {
+		for (const className of classes) {
+			expect(el.className.split(' ')).toContain(className);
+		}
+	}
+
+	it('renders the built-in collapse button at the row size, not the Button default', async () => {
+		const smClasses = await sizeOnlyClasses('sm');
+		const screen = await render(Fixture, {
+			props: { props: { collapsible: true }, content: { text: 'Dashboard' } }
+		});
+		const collapseButton = screen.getByRole('button', { name: /collapse sidebar/i }).element();
+		expectHasAll(collapseButton, smClasses);
+	});
+
+	it('cascades the same size to footerIcons the consumer did not size', async () => {
+		const smClasses = await sizeOnlyClasses('sm');
+		const screen = await render(Fixture, {
+			props: {
+				props: { collapsible: true },
+				footerIconButton: { testid: 'help' },
+				content: { text: 'Dashboard' }
+			}
+		});
+		expectHasAll(screen.getByTestId('help').element(), smClasses);
+	});
+
+	it('lets an explicit size on a footer icon win over the cascade', async () => {
+		const lgClasses = await sizeOnlyClasses('lg');
+		const screen = await render(Fixture, {
+			props: {
+				props: { collapsible: true },
+				footerIconButton: { testid: 'help', size: 'lg' },
+				content: { text: 'Dashboard' }
+			}
+		});
+		expectHasAll(screen.getByTestId('help').element(), lgClasses);
+	});
+
+	it('honours an explicit size on SideNavCollapseButton outside the nav', async () => {
+		const lgClasses = await sizeOnlyClasses('lg');
+		const screen = await render(CollapseButtonScope, {
+			props: { buttonProps: { size: 'lg', 'data-testid': 'collapse' } }
+		});
+		expectHasAll(screen.getByTestId('collapse').element(), lgClasses);
+	});
+
+	it('centres the chevron instead of seating it on a text baseline', async () => {
+		const screen = await render(CollapseButtonScope, {
+			props: { buttonProps: { 'data-testid': 'collapse' } }
+		});
+		// Icon renders its own `astryx-icon` span around the svg; the RTL-mirror
+		// wrapper this component adds is that span's parent.
+		const iconSpan = screen.getByTestId('collapse').element().querySelector('span.astryx-icon');
+		const mirror = iconSpan?.parentElement;
+		expect(mirror).not.toBeNull();
+		// The RTL-mirror wrapper is a flex item of Button's icon slot, so it takes
+		// its cross-axis position from the slot rather than from a text baseline.
+		expect(getComputedStyle(mirror!).alignSelf).not.toBe('baseline');
 	});
 });

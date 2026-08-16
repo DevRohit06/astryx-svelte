@@ -247,3 +247,29 @@ describe('useFocusTrap focus restoration', () => {
 		await expect.element(prev).toHaveFocus();
 	});
 });
+
+/**
+ * Upstream's `keeps a programmatic focus target when the trap has no tabbable
+ * controls`, added at 0.4.2 with #5023: a modal surface whose body is read-only
+ * must not let Tab escape to the page behind it.
+ *
+ * `fireEvent.keyDown(...) === false` carries over as the return of
+ * `dispatchEvent`, which is what Testing Library returns: `false` means the
+ * event **was** cancelled. So upstream's assertion is that the trap swallows
+ * Tab even with nothing tabbable to move to — which is the whole point, since
+ * letting it through is how focus escapes to the page behind the modal.
+ */
+describe('useFocusTrap with no tabbable controls', () => {
+	it('keeps a programmatic focus target when the trap has no tabbable controls', async () => {
+		const screen = await render(Trap, { props: { content: 'programmatic-only' } });
+		const target = screen.getByTestId('programmatic-target').element() as HTMLElement;
+		target.focus();
+
+		const event = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+		const notCancelled = target.dispatchEvent(event);
+
+		expect(notCancelled).toBe(false);
+		await expect.element(screen.getByTestId('programmatic-target')).toHaveFocus();
+		await expect.element(screen.getByTestId('outside')).not.toHaveFocus();
+	});
+});

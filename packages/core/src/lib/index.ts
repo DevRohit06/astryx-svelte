@@ -1,3 +1,28 @@
+/**
+ * The published API surface, mirroring upstream's per-component `index.ts`
+ * barrels.
+ *
+ * **The rule for Svelte-only names.** This port has types upstream has no
+ * counterpart for, because a Svelte hook returns a live *object* where React
+ * returns a plain value destructured at the call site. Such a name is published
+ * when it appears on an already-published signature — a consumer who cannot
+ * write the type down cannot type their own variable, and that is a hole in the
+ * surface rather than a smaller surface. It stays module-public otherwise.
+ *
+ * That is the argument the `BaseTablePlugins` / `TableContextProvider` and
+ * `TableFilterFieldRef` notes below already make case by case; it is stated here
+ * because the batch-5 sweep found the family growing by roughly one per hook
+ * ported, and publishing some while withholding others was the one option that
+ * could not be defended. The current members are `LinkifySegment`,
+ * `MediaQueryState`, `ImageModeState`, `ScrollOverflow`, `OutlineFromDOMState`,
+ * `OutlineFromMarkdownState`, `StreamingTextState` and `BaseTablePlugins`.
+ *
+ * The converse still holds and is not weakened by this: a name that is
+ * module-private *upstream* stays module-public here (`focusableSelector`,
+ * `resolveLayerPortalTarget`, `THUMB_SIZE`), and a props interface upstream
+ * inlines is not given a published alias.
+ */
+
 export { default as AlertDialog } from './components/alert-dialog/alert-dialog.svelte';
 export { default as AppShell } from './components/app-shell/app-shell.svelte';
 export {
@@ -345,6 +370,7 @@ export type { DropdownMenuCheckboxItemProps as BreadcrumbMenuCheckboxItemProps }
 export type { DropdownMenuRadioGroupProps as BreadcrumbMenuRadioGroupProps } from './components/dropdown-menu/dropdown-menu-radio-group.svelte';
 export type { DropdownMenuRadioItemProps as BreadcrumbMenuRadioItemProps } from './components/dropdown-menu/dropdown-menu-radio-item.svelte';
 export type { DropdownMenuSubMenuProps as BreadcrumbMenuSubMenuProps } from './components/dropdown-menu/dropdown-menu-sub-menu.svelte';
+export type { DropdownMenuDividerProps as BreadcrumbMenuDividerProps } from './components/dropdown-menu/dropdown-menu-divider.svelte';
 export type {
 	DropdownMenuOption as BreadcrumbMenuOption,
 	DropdownMenuItemData as BreadcrumbMenuItemData,
@@ -527,6 +553,7 @@ export type { DropdownMenuCheckboxItemProps as ContextMenuCheckboxItemProps } fr
 export type { DropdownMenuRadioGroupProps as ContextMenuRadioGroupProps } from './components/dropdown-menu/dropdown-menu-radio-group.svelte';
 export type { DropdownMenuRadioItemProps as ContextMenuRadioItemProps } from './components/dropdown-menu/dropdown-menu-radio-item.svelte';
 export type { DropdownMenuSubMenuProps as ContextMenuSubMenuProps } from './components/dropdown-menu/dropdown-menu-sub-menu.svelte';
+export type { DropdownMenuDividerProps as ContextMenuDividerProps } from './components/dropdown-menu/dropdown-menu-divider.svelte';
 export type {
 	ContextMenuProps,
 	ContextMenuItemData,
@@ -795,6 +822,8 @@ export type { SideNavItemProps } from './components/side-nav/side-nav-item.svelt
 export type { SideNavSectionProps } from './components/side-nav/side-nav-section.svelte';
 export type {
 	SideNavCollapseState,
+	SideNavCollapsibleConfig,
+	SideNavControlledCollapsible,
 	SideNavImperativeCollapseHandle
 } from './components/side-nav/side-nav-collapse-context.svelte.js';
 export type { SideNavRenderMode } from './components/side-nav/side-nav-render-context.svelte.js';
@@ -1212,7 +1241,11 @@ export {
 	inputStatusHoverShadowStyles,
 	inputWrapperStyles
 } from './components/field/input-styles.stylex.js';
+// Upstream's `FormLayout/index.ts` publishes the `FormLayoutContext` object
+// itself, as it does `SizeContext` and `RadioListContext`; the setter and reader
+// are this port's wrappers around it, not a substitute for it.
 export {
+	FormLayoutContext,
 	setFormLayoutContext,
 	useFormLayout,
 	type FormLayoutDirection
@@ -1495,6 +1528,20 @@ export {
 	type ButtonGroupOrientation,
 	type ElementSize
 } from './internal/contexts.svelte.js';
+// Upstream's `SizeProvider` (`SizeContext.Provider`). `setSizeContext` is not
+// the counterpart — it cascades to a component's whole subtree, where this
+// scopes to part of one, which is the case upstream needs a provider for.
+export { default as SizeProvider } from './internal/size-scope.svelte';
+export type { SizeScopeProps as SizeProviderProps } from './internal/size-scope.svelte';
+// Upstream publishes `useTruncation` and its two types from `Text/index.ts`.
+// `attach` stands in for upstream's `ref` — an attachment is the Svelte
+// lifecycle a ref callback maps to — and the options are a getter, so reading
+// `maxLines` registers the dependency upstream spells as a dependency list.
+export {
+	useTruncation,
+	type UseTruncationOptions,
+	type UseTruncationReturn
+} from './internal/truncation.svelte.js';
 
 export {
 	InteractiveRoleContext,

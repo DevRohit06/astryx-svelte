@@ -36,6 +36,20 @@ export default {
 				description: 'Border radius of the card',
 				default: 'var(--radius-container)',
 				private: true
+			},
+			{
+				name: '--_card-elevation',
+				description:
+					'Resting shadow of the card, set from the elevation prop. Composed into the card box-shadow list alongside --_card-ring rather than written as boxShadow directly, so a ring and an elevation can coexist.',
+				default: '0 0 transparent',
+				private: true
+			},
+			{
+				name: '--_card-ring',
+				description:
+					'Inset ring drawn in the card box-shadow list. SelectableCard sets it to show selection without taking over the shadow.',
+				default: '0 0 transparent',
+				private: true
 			}
 		],
 		derived: [

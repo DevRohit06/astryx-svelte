@@ -35,7 +35,7 @@ export default {
 			{
 				className: 'astryx-side-nav-item',
 				visualProps: ['size'],
-				states: ['selected']
+				states: ['selected', 'disabled']
 			},
 			{
 				className: 'astryx-side-nav-section'
@@ -55,6 +55,21 @@ export default {
 				guidance: true,
 				description:
 					'Pair outline and filled icon variants so the selected state is visually distinct.'
+			},
+			{
+				guidance: true,
+				description:
+					'Mark the current page with isSelected — it sets aria-current="page", so the current destination is announced rather than carried by color alone.'
+			},
+			{
+				guidance: true,
+				description:
+					'SideNav renders a navigation landmark, and a collapsible item follows the WAI-ARIA APG Disclosure pattern (https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): the toggle carries aria-expanded and aria-controls, and the group it owns is inert while collapsed. Keep item labels short — they are the accessible name in both expanded and icon-only modes.'
+			},
+			{
+				guidance: true,
+				description:
+					'While the nav is collapsed, an item with children shows them in a submenu flyout. On a device that can hover, pointing at the item opens it after a short delay and moving away closes it; a flyout opened by clicking stays open until it is dismissed. On touch, it opens on tap. Do not put an action in there that has no other route to it.'
 			},
 			{
 				guidance: false,
@@ -108,13 +123,14 @@ export default {
 		{
 			name: 'footerIcons',
 			type: 'Snippet',
-			description: 'Footer icon bar.'
+			description:
+				"Footer icon bar. The row cascades a 'sm' size to the interactive children it contains, so its icons and the built-in collapse button come out one height; pass an explicit size on a child to opt out."
 		},
 		{
 			name: 'collapsible',
-			type: 'boolean | { defaultIsCollapsed?: boolean; isCollapsed?: boolean; onCollapsedChange?: (isCollapsed: boolean) => void; hasButton?: boolean; buttonLabel?: string; }',
+			type: 'boolean | SideNavCollapsibleConfig',
 			description:
-				'Enables collapse behavior. true for uncontrolled with default toggle button, or an object for controlled mode and advanced config (defaultIsCollapsed, isCollapsed + onCollapsedChange, hasButton, buttonLabel).',
+				'Enables collapse behavior. true for uncontrolled with default toggle button, or an object for controlled mode and advanced config (defaultIsCollapsed, isCollapsed + onCollapsedChange, hasButton, buttonLabel). A controlled config can also be passed to a SideNavCollapseButton rendered outside this SideNav, so both share one state.',
 			default: 'false'
 		},
 		{
@@ -128,7 +144,7 @@ export default {
 			name: 'handleRef',
 			type: 'SideNavImperativeCollapseHandle | null',
 			description:
-				'Imperative collapse handle for SideNavCollapseButton instances rendered outside this SideNav. Separate from `ref`, which continues to expose the root HTMLElement.'
+				'Deprecated. Imperative collapse handle for SideNavCollapseButton instances rendered outside this SideNav; hand both the same controlled collapsible config instead. Separate from `ref`, which continues to expose the root HTMLElement.'
 		},
 		{
 			name: 'xstyle',

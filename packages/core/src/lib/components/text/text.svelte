@@ -53,7 +53,7 @@
 <script lang="ts">
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
-	import { createTruncation } from '../../internal/truncation.svelte.js';
+	import { useTruncation } from '../../internal/truncation.svelte.js';
 	import {
 		lineClampStyle,
 		resolveStyleType,
@@ -95,7 +95,7 @@
 	const resolvedWordBreak = $derived(wordBreak ?? (maxLines === 1 ? 'break-all' : 'break-word'));
 	const resolvedDisplay = $derived(maxLines > 0 || hasCapsize ? 'block' : display);
 
-	const truncation = createTruncation(() => maxLines);
+	const truncation = useTruncation(() => maxLines);
 
 	const tooltipPlacement = $derived<LayerPlacement>(
 		typeof hasTruncateTooltip === 'string' ? hasTruncateTooltip : 'above'
@@ -136,14 +136,21 @@
 	<span class={tooltipContent.class} style={tooltipContent.style}>{truncation.fullText}</span>
 {/snippet}
 
+<!--
+	`title` before `{...rest}`, as upstream writes it before `{...props}`. The
+	order is load-bearing rather than cosmetic: `title` is `undefined` whenever the
+	text is not truncated, and a later `undefined` *removes* the attribute — so
+	spreading rest first threw away a consumer's own `title` on every untruncated
+	`Text`.
+-->
 <svelte:element
 	this={as}
 	bind:this={textEl}
-	{...rest}
 	{...theme}
 	class={cx(theme.class, attrs.class, className)}
 	style={mergeStyle(attrs.style, lineClampStyle(maxLines), styleProp as string | undefined)}
 	title={tooltipEnabled ? truncation.fullText : undefined}
+	{...rest}
 	{@attach truncation.attach}
 >
 	{@render children()}

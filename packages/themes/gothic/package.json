@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-gothic",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "Gothic theme for astryx-svelte — deep blue-grays and a signature display serif.",
 	"license": "MIT",
 	"repository": {
@@ -52,7 +52,7 @@
 	},
 	"devDependencies": {
 		"@astryx-svelte/core": "workspace:*",
-		"@astryxdesign/theme-gothic": "0.4.1",
+		"@astryxdesign/theme-gothic": "0.4.2",
 		"prettier": "^3.8.3",
 		"prettier-plugin-svelte": "^4.1.0",
 		"svelte": "^5.56.1",

@@ -26,6 +26,24 @@ export interface SideNavCollapseState {
 	isCollapsible: boolean;
 }
 
+/** Object form of `SideNav`'s `collapsible` prop. */
+export interface SideNavCollapsibleConfig {
+	defaultIsCollapsed?: boolean;
+	isCollapsed?: boolean;
+	onCollapsedChange?: (isCollapsed: boolean) => void;
+	hasButton?: boolean;
+	buttonLabel?: string;
+}
+
+/**
+ * The controlled form: the consumer holds the state, so it can be handed to
+ * both `SideNav` and a `SideNavCollapseButton` rendered outside it.
+ */
+export interface SideNavControlledCollapsible extends SideNavCollapsibleConfig {
+	isCollapsed: boolean;
+	onCollapsedChange: (isCollapsed: boolean) => void;
+}
+
 /**
  * The imperative handle a `SideNav` exposes for `SideNavCollapseButton`
  * instances rendered *outside* its tree, where context is unavailable.
@@ -36,6 +54,10 @@ export interface SideNavCollapseState {
  * export reached through `bind:this`, and `SideNavCollapseButton` takes the
  * handle *object* rather than a ref to one. Same translation `Popover`'s
  * `anchorRef` took: bind the thing, not a box holding it.
+ *
+ * @deprecated Pass the same controlled `collapsible` config to `SideNav` and to
+ * the out-of-tree `SideNavCollapseButton` instead. The state then reaches the
+ * button through props rather than through a handle.
  */
 export interface SideNavImperativeCollapseHandle {
 	getCollapseState: () => SideNavCollapseState | null;

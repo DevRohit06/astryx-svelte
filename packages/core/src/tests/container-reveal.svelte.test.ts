@@ -4,7 +4,10 @@ import Probe from './fixtures/container-reveal-probe.svelte';
 import ManyProbe from './fixtures/container-reveal-many-probe.svelte';
 
 /**
- * Upstream's `hooks/useContainerReveal.test.tsx`, ported case for case — all 6.
+ * Upstream's `hooks/useContainerReveal.test.tsx`, ported case for case — all 11
+ * at v0.4.2. The last five arrived with #5084's hover-intent delay and forced
+ * states, which is this port's 0.4.2 tracking batch; they are grouped at the
+ * bottom under their own banner.
  *
  * `renderHook` becomes the probe fixture and `result.current` its instance
  * export. `className` becomes `class` throughout: the hook returns Svelte
@@ -90,6 +93,66 @@ describe('useContainerReveal', () => {
 		const clipped = reveal.getContentRevealProps().class;
 		const preserved = reveal.getContentRevealProps({ isLayoutPreserved: true }).class;
 		expect(clipped).not.toBe(preserved);
+	});
+
+	// -- 0.4.2: the hover-intent delay and the forced states (#5084) -----------
+
+	it('forceState pins each end of the container to its own style block', async () => {
+		const screen = await render(Probe);
+		const { reveal } = screen.component;
+		const auto = reveal.getContainerProps().class;
+		const inactive = reveal.getContainerProps({ forceState: 'inactive' }).class;
+		const active = reveal.getContainerProps({ forceState: 'active' }).class;
+		expect(new Set([auto, inactive, active]).size).toBe(3);
+	});
+
+	it('forceVisibility pins one element, independent of its reveal mode', async () => {
+		const screen = await render(Probe);
+		const { reveal } = screen.component;
+		const auto = reveal.getContentRevealProps().class;
+		const shown = reveal.getContentRevealProps({ forceVisibility: 'shown' }).class;
+		const hidden = reveal.getContentRevealProps({ forceVisibility: 'hidden' }).class;
+		expect(new Set([auto, shown, hidden]).size).toBe(3);
+
+		// The layout-preserved variant has no position to flip, so hidden maps to
+		// its own opacity-only block.
+		expect(
+			reveal.getContentRevealProps({ forceVisibility: 'hidden', isLayoutPreserved: true }).class
+		).not.toBe(hidden);
+	});
+
+	it('hoverDelay publishes the dwell as an inline custom property', async () => {
+		const screen = await render(Probe);
+		const { reveal } = screen.component;
+		// Upstream reads `Object.values(style)` because its `style` is an object;
+		// ours is the serialised `style` attribute string, so the same claim — the
+		// dwell reaches the element as an inline custom property — is a substring
+		// check. `toContain` on a string is the assertion `toContain` on an array
+		// of values was standing in for.
+		expect(reveal.getContainerProps({ hoverDelay: 120 }).style).toContain('120ms');
+		expect(reveal.getContainerProps({ hoverDelay: 0 }).style).toBe(
+			reveal.getContainerProps().style
+		);
+	});
+
+	it('hoverDelay and forceState compose on one container', async () => {
+		const screen = await render(Probe);
+		const { reveal } = screen.component;
+		const props = reveal.getContainerProps({ hoverDelay: 120, forceState: 'inactive' });
+		expect(props.style).toContain('120ms');
+		expect(props.class).not.toBe(reveal.getContainerProps({ hoverDelay: 120 }).class);
+	});
+
+	it('ignores container options while disabled', async () => {
+		const screen = await render(Probe, { props: { options: () => ({ isEnabled: false }) } });
+		const { reveal } = screen.component;
+		// Upstream asserts `toEqual({})`. The Svelte return carries the two
+		// attribute keys whatever the state, so the equivalent claim is that both
+		// are empty — which is what `is inert when disabled` above already asserts
+		// for the no-argument call, restated here with the options supplied.
+		const props = reveal.getContainerProps({ hoverDelay: 120, forceState: 'inactive' });
+		expect(props.class).toBeFalsy();
+		expect(props.style).toBeFalsy();
 	});
 
 	it('mounts a large flat list without a dev warning', async () => {

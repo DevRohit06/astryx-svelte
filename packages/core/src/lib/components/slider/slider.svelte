@@ -2,6 +2,7 @@
 	import type { BaseProps } from '../../base-props.js';
 	import type { SizeValue } from '../../internal/types.js';
 	import type { InputStatus } from '../field/types.js';
+	import { THUMB_SIZE } from './slider.stylex.js';
 
 	/**
 	 * `onChange` is a custom callback (not forwarded to an element), so it keeps
@@ -174,6 +175,44 @@
 		}
 		return ((val - min) / (max - min)) * 100;
 	}
+
+	/**
+	 * Thumb travel is inset by half a thumb at each end — the geometry a native
+	 * `input[type=range]` uses — so the thumb stays inside the component box at
+	 * min and max instead of overhanging it by half its width (#5050). The fill
+	 * and the marks map through the same inset, and `travelFraction` inverts it,
+	 * so the thumb tracks the pointer that grabbed it. Both directions read
+	 * THUMB_SIZE, so a theme cannot resize the thumb through CSS alone.
+	 */
+	const THUMB_INSET = THUMB_SIZE / 2;
+
+	function cssLength(percent: number, px: number): string {
+		// Percentages of the box and step arithmetic both carry binary
+		// floating-point error into the DOM (`calc(33% + 3.3999999999999995px)`).
+		const round = (n: number) => Number(n.toFixed(3));
+		return `calc(${round(percent)}% ${px < 0 ? '-' : '+'} ${Math.abs(round(px))}px)`;
+	}
+
+	function insetPosition(percent: number): string {
+		return cssLength(percent, THUMB_INSET - (percent / 100) * THUMB_SIZE);
+	}
+
+	/** Distance between two inset positions; the inset itself cancels out. */
+	function insetSpan(fromPercent: number, toPercent: number): string {
+		const delta = toPercent - fromPercent;
+		return cssLength(delta, -(delta / 100) * THUMB_SIZE);
+	}
+
+	/** Inverse of `insetPosition`: an offset from the box start back to 0–1. */
+	function travelFraction(offset: number, size: number): number {
+		const travel = size - THUMB_SIZE;
+		if (travel > 0) {
+			return (offset - THUMB_INSET) / travel;
+		}
+		// Narrower than the thumb, so there is no travel to map onto: fall back to
+		// the raw fraction rather than dividing by zero.
+		return size > 0 ? offset / size : 0;
+	}
 </script>
 
 <script lang="ts">
@@ -322,17 +361,21 @@
 		}
 		const rect = track.getBoundingClientRect();
 
+		// Inverse of `insetPosition`: the pointer maps onto the thumb's travel
+		// (the box minus half a thumb at each end), so pressing on the thumb
+		// leaves it where it is instead of jumping.
 		let percent: number;
 		if (isHorizontal) {
 			// In RTL the inline-start (value = min) is the right edge, so measure
 			// the pointer fraction from the right instead of the left. Detected
 			// from the track's computed direction (lazy, only on pointer move).
-			percent = isRtlElement(track)
-				? (rect.right - clientX) / rect.width
-				: (clientX - rect.left) / rect.width;
+			percent = travelFraction(
+				isRtlElement(track) ? rect.right - clientX : clientX - rect.left,
+				rect.width
+			);
 		} else {
 			// Vertical: bottom = min, top = max
-			percent = 1 - (clientY - rect.top) / rect.height;
+			percent = 1 - travelFraction(clientY - rect.top, rect.height);
 		}
 		percent = clamp(percent, 0, 1);
 		const raw = min + percent * (max - min);
@@ -513,28 +556,32 @@
 	// The *vertical* `left: 50%` stays physical: it is a centring constant, and
 	// upstream writes it physically too.
 	const thumbInlineStart = $derived((val: number) =>
-		isHorizontal ? `${getPercent(val, min, max)}%` : null
+		isHorizontal ? insetPosition(getPercent(val, min, max)) : null
 	);
 	const thumbLeft = $derived(() => (isHorizontal ? null : '50%'));
 	const thumbBottom = $derived((val: number) =>
-		isHorizontal ? null : `${getPercent(val, min, max)}%`
+		isHorizontal ? null : insetPosition(getPercent(val, min, max))
 	);
 
 	function markPositionStyle(markValue: number): string {
-		const percent = getPercent(markValue, min, max);
-		return isHorizontal ? `inset-inline-start:${percent}%` : `bottom:${percent}%`;
+		const pos = insetPosition(getPercent(markValue, min, max));
+		return isHorizontal ? `inset-inline-start:${pos}` : `bottom:${pos}`;
 	}
 
+	// Filled track position — ends at the thumb centre, so it uses the same
+	// inset mapping as the thumb.
 	const filledStyle = $derived.by(() => {
 		if (isRange) {
 			const p0 = getPercent(values[0], min, max);
 			const p1 = getPercent(values[1], min, max);
 			return isHorizontal
-				? `inset-inline-start:${p0}%;width:${p1 - p0}%`
-				: `bottom:${p0}%;height:${p1 - p0}%`;
+				? `inset-inline-start:${insetPosition(p0)};width:${insetSpan(p0, p1)}`
+				: `bottom:${insetPosition(p0)};height:${insetSpan(p0, p1)}`;
 		}
 		const p = getPercent(values[0], min, max);
-		return isHorizontal ? `inset-inline-start:0%;width:${p}%` : `bottom:0%;height:${p}%`;
+		return isHorizontal
+			? `inset-inline-start:0%;width:${insetPosition(p)}`
+			: `bottom:0%;height:${insetPosition(p)}`;
 	});
 
 	// Suppress the per-thumb value bubble while the disabled-message tooltip is

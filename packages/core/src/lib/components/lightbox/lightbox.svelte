@@ -116,6 +116,7 @@
 		style: styleProp,
 		onclick: onclickProp,
 		onkeydown: onkeydownProp,
+		oncancel: oncancelProp,
 		...rest
 	}: LightboxProps = $props();
 
@@ -253,6 +254,18 @@
 	}
 
 	function handleCancel(e: Event): void {
+		// Composed, not replaced. Upstream spreads `{...props}` last, so a consumer's
+		// `onCancel` *replaces* this one and Escape silently stops calling
+		// `onOpenChange(false)` — the divergence `port/debts.md` used to record as
+		// "ours is the safer order". Destructuring the handler out and invoking it
+		// explicitly is what `CLAUDE.md` requires anyway, and it makes the rest
+		// spread's position a non-question: the consumer is heard *and* the dialog
+		// still closes.
+		oncancelProp?.(e as Event & { currentTarget: EventTarget & HTMLDialogElement });
+		if (e.defaultPrevented) {
+			// A consumer that called `preventDefault()` is pinning the dialog open.
+			return;
+		}
 		e.preventDefault();
 		handleClose();
 	}
@@ -435,7 +448,6 @@
 {#if currentItem}
 	<dialog
 		bind:this={dialogEl}
-		{...rest}
 		oncancel={handleCancel}
 		onclick={(e) => {
 			handleBackdropClick(e);
@@ -449,6 +461,7 @@
 		{...theme}
 		class={cx(theme.class, dialogAttrs.class, className)}
 		style={mergeStyle(dialogAttrs.style, styleProp as string | undefined)}
+		{...rest}
 	>
 		<div bind:this={containerEl} class={container.class} style={container.style}>
 			<IconButton

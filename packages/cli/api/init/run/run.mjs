@@ -21,6 +21,7 @@ import { installAgentDocs } from '../../../foundation/agent-docs/agent-docs.mjs'
 import { AstryxError } from '../../error.mjs';
 import { ERROR_CODES } from '../../../foundation/response/error-codes.mjs';
 import { logger } from '../../logger.mjs';
+import { themeTemplate } from '../../theme/template/template.mjs';
 
 const VALID_FEATURES = ['agents', 'theme', 'template'];
 const VALID_AGENTS = ['claude', 'cursor', 'codex', 'hermes', 'all'];
@@ -216,6 +217,41 @@ async function applyTemplate(cwd, { templateName }, invocation, data) {
 }
 
 /**
+ * Write the annotated theme template, via the same leaf `astryx-svelte theme
+ * template` uses — init is a convenience wrapper over the theme command, not a
+ * second implementation of it.
+ *
+ * It replaced a one-line hint at upstream 0.4.2 (#5048): pointing at a command
+ * is the weakest form of the help a theme author needs, because the first
+ * problem is not knowing the command but not knowing what the theme surface
+ * contains.
+ *
+ * @param {string} cwd
+ * @param {string} invocation
+ * @param {import('../init.type.mjs').InitRunData} data
+ */
+function applyTheme(cwd, invocation, data) {
+	data.theme = true;
+	try {
+		const { path: written, written: didWrite } = themeTemplate({ cwd }).data;
+		data.themeTemplate = didWrite ? 'created' : 'skipped';
+		data.themeTemplatePath = didWrite ? written : null;
+		logger.log(
+			didWrite
+				? `[ok] Theme template written -> ${written}`
+				: `- ${written} already exists — left as is.`
+		);
+	} catch {
+		// Soft failure, like agent docs: the guidance below is still useful.
+		data.themeTemplate = 'failed';
+		logger.error('Could not write the theme template.');
+	}
+	logger.log(
+		`  Copy it to your theme file and edit, or run \`${invocation} theme add <slug>\` to start from a shipped theme (\`${invocation} theme list\` to browse).`
+	);
+}
+
+/**
  * Run the install path of the non-interactive init flow (the default no-flags
  * install plus `--features` / `--all`). Performs the side effects (agent-docs
  * install, template scaffold) and returns an `init.run` receipt. Progress is
@@ -253,18 +289,15 @@ export async function run(options = {}, { cwd = process.cwd() } = {}) {
 			docsWritten: [],
 			docsError: null,
 			theme: false,
+			themeTemplate: null,
+			themeTemplatePath: null,
 			template: null,
 			templatePath: null,
 			nextSteps: false
 		};
 		for (const feature of features) {
 			if (feature === 'agents') applyAgents(cwd, options, invocation, data);
-			if (feature === 'theme') {
-				logger.log(
-					`[ok] For a custom theme, run \`${invocation} theme\` (browse) or \`${invocation} theme add <slug>\` (scaffold).`
-				);
-				data.theme = true;
-			}
+			if (feature === 'theme') applyTheme(cwd, invocation, data);
 			if (feature === 'template') {
 				await applyTemplate(cwd, { templateName: options.templateName }, invocation, data);
 			}
@@ -281,6 +314,8 @@ export async function run(options = {}, { cwd = process.cwd() } = {}) {
 		docsWritten: [],
 		docsError: null,
 		theme: false,
+		themeTemplate: null,
+		themeTemplatePath: null,
 		template: null,
 		templatePath: null,
 		nextSteps: true

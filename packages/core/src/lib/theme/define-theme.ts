@@ -73,6 +73,13 @@ export type StyleOverrides = Record<string, TokenValue | TokenMap>;
 /** Component overrides, keyed by style key (see parseStyleKey). */
 export type ComponentOverrides = Record<string, Record<string, StyleOverrides>>;
 
+/**
+ * SYNC: `ThemeConfig` is the theme surface. Adding, removing, or renaming a
+ * field means updating:
+ * - /packages/cli/assets/theme.template.ts (documents every field; the drift
+ *   guard is packages/cli/scripts/check-theme-template.test.mjs)
+ * - /packages/cli/assets/docs/theme.doc.mjs (`astryx-svelte docs theme`)
+ */
 export interface ThemeConfig {
 	name: string;
 	typography?: TypographyConfig;

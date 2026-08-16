@@ -1,6 +1,7 @@
 <script lang="ts" module>
 	import type { Snippet } from 'svelte';
 	import type { BaseProps } from '../../base-props.js';
+	import type { SideNavCollapsibleConfig } from './side-nav-collapse-context.svelte.js';
 	import type { ResizableConfig } from '../resizable/use-resizable.svelte.js';
 
 	export interface SideNavProps extends BaseProps<HTMLElement> {
@@ -40,15 +41,7 @@
 		 *
 		 * @default false
 		 */
-		collapsible?:
-			| boolean
-			| {
-					defaultIsCollapsed?: boolean;
-					isCollapsed?: boolean;
-					onCollapsedChange?: (isCollapsed: boolean) => void;
-					hasButton?: boolean;
-					buttonLabel?: string;
-			  };
+		collapsible?: boolean | SideNavCollapsibleConfig;
 	}
 </script>
 
@@ -57,6 +50,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import MobileNav from '../mobile-nav/mobile-nav.svelte';
+	import SizeScope from '../../internal/size-scope.svelte';
 	import ResizeHandle from '../resizable/resize-handle.svelte';
 	import { useResizable } from '../resizable/use-resizable.svelte.js';
 	import SideNavCollapseButton from './side-nav-collapse-button.svelte';
@@ -197,6 +191,13 @@
 	}
 
 	const showResizeHandle = $derived(isResizable && !collapsed);
+	/**
+	 * Cascaded to the icon rows through `SizeContext` so the built-in collapse
+	 * button and the consumer's `footerIcons` come out one height. An explicit
+	 * `size` on a child still wins.
+	 */
+	const FOOTER_ICON_SIZE = 'sm';
+
 	const hasDrawerFooter = $derived(!!(footer || footerIcons));
 	const hasStickyTop = $derived(!!(header || topContent));
 	const hasStickyBottom = $derived(!!(footer || footerIcons));
@@ -243,7 +244,7 @@
 			{#if footer}{@render footer()}{/if}
 			{#if footerIcons}
 				<div class={drawerFooterIconsAttrs.class} style={drawerFooterIconsAttrs.style}>
-					{@render footerIcons()}
+					<SizeScope value={FOOTER_ICON_SIZE}>{@render footerIcons()}</SizeScope>
 				</div>
 			{/if}
 		</div>
@@ -252,13 +253,13 @@
 
 {#snippet navElement()}
 	<nav
-		{...rest}
 		role="navigation"
 		aria-label={t('@astryx.sideNav.label')}
 		data-testid={testId}
 		{...theme}
 		class={cx(theme.class, rootAttrs.class, className)}
 		style={navStyle}
+		{...rest}
 	>
 		{#if hasStickyTop}
 			<div class={stickyTopAttrs.class} style={stickyTopAttrs.style}>
@@ -275,8 +276,10 @@
 			<div class={stickyBottomAttrs.class} style={stickyBottomAttrs.style}>
 				{#if footer}{@render footer()}{/if}
 				<div class={footerRowAttrs.class} style={footerRowAttrs.style}>
-					{#if showCollapseButton}<SideNavCollapseButton />{/if}
-					{#if footerIcons}{@render footerIcons()}{/if}
+					<SizeScope value={FOOTER_ICON_SIZE}>
+						{#if showCollapseButton}<SideNavCollapseButton />{/if}
+						{#if footerIcons}{@render footerIcons()}{/if}
+					</SizeScope>
 				</div>
 			</div>
 		{/if}
@@ -316,12 +319,19 @@
 	>
 		{#if header}{@render header()}{/if}
 		<div class={topbarIconsAttrs.class} style={topbarIconsAttrs.style}>
-			{#if footerIcons}{@render footerIcons()}{/if}
+			<SizeScope value={FOOTER_ICON_SIZE}>{@render footerIcons?.()}</SizeScope>
 		</div>
 	</div>
 {:else if isDrawer}
 	<!-- Drawer mode — the whole sidebar inside its own MobileNav. -->
-	<MobileNav {header} data-testid={testId}>
+	<MobileNav
+		{...rest}
+		{header}
+		data-testid={testId}
+		{xstyle}
+		class={className}
+		style={styleProp as string | undefined}
+	>
 		{#if topContent}{@render topContent()}{/if}
 		{@render children()}
 		{@render drawerFooterBlock()}
