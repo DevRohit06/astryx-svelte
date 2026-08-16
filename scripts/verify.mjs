@@ -33,6 +33,7 @@ import { runStage } from './lib/run-stage.mjs';
 
 const fast = process.argv.includes('--fast');
 const noClient = process.argv.includes('--no-client');
+const noDocs = process.argv.includes('--no-docs');
 
 // Scratch patterns. `zz-` is this repo's own convention for a throwaway.
 const SCRATCH = /(^|[\\/])(zz-|.*\.scratch\.)/;
@@ -53,10 +54,16 @@ if (scratch.length > 0) {
 	process.exit(1);
 }
 
+// `--no-docs` is the sibling of `--no-client`: the `docs` CI job already runs
+// docs' own build, check, lint and test in parallel, so routing them through
+// here too made the `lib` job redo an entire other job's work sequentially.
+// Locally, with no sibling job to lean on, `pnpm verify` still covers docs.
+const docsFilter = noDocs ? ['--filter=!docs'] : [];
+
 const stages = [
-	runStage('build', 'pnpm', ['-r', 'build']),
-	runStage('check', 'pnpm', ['-r', 'check']),
-	runStage('lint', 'pnpm', ['-r', 'lint']),
+	runStage('build', 'pnpm', ['-r', ...docsFilter, 'build']),
+	runStage('check', 'pnpm', ['-r', ...docsFilter, 'check']),
+	runStage('lint', 'pnpm', ['-r', ...docsFilter, 'lint']),
 	// `pnpm -r lint` runs prettier inside each package, so the repo root and
 	// `port/*.md` were never checked — cheap to run, so it stays in both modes.
 	runStage('lint:root', 'pnpm', ['lint:root'])
@@ -69,15 +76,20 @@ if (!fast) {
 		// is every other workspace package's own `test` script.
 		stages.push(
 			runStage('test:node', 'pnpm', ['-F', '@astryx-svelte/core', 'test:node']),
-			runStage('test:rest', 'pnpm', ['-r', '--filter=!@astryx-svelte/core', 'test'])
+			runStage('test:rest', 'pnpm', ['-r', '--filter=!@astryx-svelte/core', ...docsFilter, 'test'])
 		);
 	} else {
 		stages.push(runStage('test', 'pnpm', ['-r', 'test']));
 	}
 }
-stages.push(
-	runStage('status', 'node', fast ? ['scripts/status.mjs'] : ['scripts/status.mjs', '--full'])
-);
+// Always the fast tier, at every mode. `--full` runs the class oracle, the CSS
+// oracle, eight theme suites, `vitest list` and the docs generator — and since
+// the gate results were moved out of the committed file, it produces a
+// **byte-identical** `port/status.md`. Every one of those five is already run
+// by the test stages above, so calling it here was the same work twice for a
+// file that does not change. `node scripts/status.mjs --full` is still there
+// when you want the gate log; the drift gate does not need it.
+stages.push(runStage('status', 'node', ['scripts/status.mjs']));
 
 // The drift gate. `status.mjs` has just rewritten the file; if that changed
 // anything, a committed claim no longer matches the tree.
@@ -100,11 +112,15 @@ if (failed.length > 0) {
 	process.exit(1);
 }
 
+// Name every narrowing in the summary, so a passing run can never be mistaken
+// for a wider one than it was.
+const skipped = [
+	fast && 'the test suite',
+	noClient && "core's browser suite",
+	noDocs && 'docs'
+].filter(Boolean);
+
 console.log(
 	`\nall ${stages.length} stages passed.` +
-		(fast
-			? ' (fast mode — test suite and full-tier gates skipped)'
-			: noClient
-				? " (--no-client — core's browser suite skipped, expected to run elsewhere)"
-				: '')
+		(skipped.length ? ` (skipped: ${skipped.join(', ')} — expected to run elsewhere)` : '')
 );

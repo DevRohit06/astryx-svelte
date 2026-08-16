@@ -21,7 +21,7 @@
 | Kind                  | Count  |
 | --------------------- | ------ |
 | api-divergence        | 27     |
-| deliberate-divergence | 42     |
+| deliberate-divergence | 44     |
 | unported              | 11     |
 | upstream-lag          | 12     |
-| **total**             | **92** |
+| **total**             | **94** |

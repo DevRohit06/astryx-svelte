@@ -105,7 +105,7 @@ jobs:
         run: pnpm -F @astryx-svelte/core exec playwright install --with-deps chromium
 
       - name: Verify
-        run: pnpm verify --no-client
+        run: pnpm verify --no-client --no-docs
 
       # Built separately and *after* verify's own build stage — never as part
       # of `pnpm -r build`. Its routes import `packages/themes/neutral/dist/`,
