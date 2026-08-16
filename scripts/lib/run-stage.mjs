@@ -12,6 +12,11 @@
 
 import { spawnSync } from 'node:child_process';
 
+// Well clear of the slowest legitimate stage (`pnpm -r test` with the browser
+// suite) and well under GitHub's six-hour job cap, so a stuck stage fails with
+// its own name attached instead of taking the whole job down anonymously.
+const DEFAULT_TIMEOUT = 30 * 60 * 1000;
+
 const NONDETERMINISM = [
 	// Durations, but only in timing context: a preceding keyword a test runner
 	// or bundler actually uses ("Duration 4.53s", "done in 1.2s", "built in
@@ -79,15 +84,42 @@ export function runStage(name, command, args, opts = {}) {
 		encoding: 'utf8',
 		shell: process.platform === 'win32',
 		cwd: opts.cwd ?? process.cwd(),
-		maxBuffer: 64 * 1024 * 1024
+		maxBuffer: 64 * 1024 * 1024,
+		// **`stdin` must be closed, not piped.** Without this, `spawnSync`
+		// defaults every stream to a pipe, and a child that reads stdin blocks
+		// on a pipe nothing will ever write to. On Windows `shell: true` hides
+		// it; on Linux it does not. CI's first real run of this gate hung for
+		// six hours in `pnpm verify --no-client` and printed nothing at all
+		// before the runner killed it at its cap.
+		stdio: ['ignore', 'pipe', 'pipe'],
+		// A hang should cost minutes, not a whole CI budget. The slowest
+		// legitimate stage is `pnpm -r test` with the browser suite; 30 minutes
+		// is well clear of it and well under GitHub's six-hour job cap, so a
+		// stuck stage fails with its own name attached instead of taking the
+		// job down anonymously.
+		timeout: opts.timeout ?? DEFAULT_TIMEOUT,
+		killSignal: 'SIGKILL'
 	});
 	// `result.error` is set when `spawnSync` itself couldn't run the command
 	// (e.g. the binary is missing) — stdout/stderr are then null, so silently
 	// dropping it reports `FAIL (exit 1)` with an empty output block and no
 	// clue why. Node sets `status` to null in that case too, and the `?? 1`
 	// below already covers that; this just makes the reason visible.
-	const errorLine = result.error ? `${result.error.message}\n` : '';
-	const output = stripNondeterminism(`${errorLine}${result.stdout ?? ''}${result.stderr ?? ''}`);
+	const timedOut = result.error?.code === 'ETIMEDOUT';
+	const limit = opts.timeout ?? DEFAULT_TIMEOUT;
+	const limitText =
+		limit < 60_000 ? `${Math.round(limit / 1000)}s` : `${Math.round(limit / 60_000)}m`;
+	const errorLine = timedOut
+		? `stage timed out after ${limitText} and was killed — it produced the output below ` +
+			`before hanging\n`
+		: result.error
+			? `${result.error.message}\n`
+			: '';
+	// Strip the *child's* output only. `errorLine` is ours, and running it
+	// through the filter lets the duration pattern eat the very number the
+	// timeout message exists to report ("after 3s" -> "after <duration>").
+	const captured = stripNondeterminism(`${result.stdout ?? ''}${result.stderr ?? ''}`);
+	const output = `${errorLine}${captured}`;
 	return { name, ok: result.status === 0, code: result.status ?? 1, output };
 }
 
