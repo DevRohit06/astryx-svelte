@@ -66,7 +66,7 @@ describe('listTemplates integration', () => {
 		const { listTemplates } = await import('./template.mjs');
 		// listTemplates returns based on CLI_ROOT/assets/templates/pages.
 		// It should return an array (empty here — this port ships no page
-		// template assets yet; see TODO.md).
+		// template assets yet; see port/todo.md).
 		const result = listTemplates();
 		expect(Array.isArray(result)).toBe(true);
 	});

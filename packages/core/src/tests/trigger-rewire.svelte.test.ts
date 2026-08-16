@@ -10,7 +10,7 @@ import TooltipTriggerSwap from './fixtures/tooltip-trigger-swap.svelte';
  * complete at ten and twenty-three in `tooltip.svelte.test.ts` and
  * `hover-card.svelte.test.ts`. They pin a Svelte-specific hazard upstream gets
  * for free, exactly as the four SSR cases in `metadata-list.test.ts` do, and the
- * debt they close is recorded in TODO.md.
+ * debt they close is recorded in port/todo.md.
  *
  * The hazard: both components render a `display: contents` wrapper and wire the
  * hook — listeners, anchor name, merged `aria-describedby` — onto its

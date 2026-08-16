@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `UserIcon`; the registry has no person glyph, so
 	 * this substitutes a built-in — the same substitution the demo routes make,
-	 * retiring with the icon registry (TODO.md).
+	 * retiring with the icon registry (port/todo.md).
 	 */
 	const descriptions: Record<string, string> = {
 		admin: 'Full access to all resources',

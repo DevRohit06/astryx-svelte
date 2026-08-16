@@ -12,7 +12,7 @@ import { cssIn, forcedColorsCssIn } from './forced-colors.js';
  * Astryx's `Switch/Switch.test.tsx`, ported case for case — **49** upstream
  * cases at v0.4.1, **49** of them here, plus one beyond upstream (`supports
  * two-way bind:value`) that pins the `$bindable` decision (justified below, and
- * recorded in TODO.md). **50 `it` in the file.** Nothing is dropped.
+ * recorded in port/todo.md). **50 `it` in the file.** Nothing is dropped.
  *
  * v0.3.0 → v0.4.1 added the two `form participation` cases about a required
  * control that is disabled *with a reason* (`form=""` detaches it from
@@ -820,7 +820,7 @@ describe('Switch', () => {
 		});
 	});
 
-	// Beyond upstream, pinning the `$bindable` decision (recorded in TODO.md):
+	// Beyond upstream, pinning the `$bindable` decision (recorded in port/todo.md):
 	// React has no `bind:` and no counterpart case. A bound parent value tracks a
 	// toggle, so this goes red if `value` ever regresses to non-bindable and
 	// silently stops writing back. The optimistic `changeAction` path deliberately

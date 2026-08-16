@@ -16,17 +16,17 @@ the specification.
 
 ## Where things live
 
-| What | Path |
-|---|---|
-| Upstream source (authoritative for behaviour) | `reference/astryx-upstream/packages/core/src/<Name>/` |
-| Upstream compiled CSS classes (authoritative for styles) | `packages/core/node_modules/@astryxdesign/core/dist/<Name>/` |
-| Upstream storybook usage | `reference/astryx-upstream/apps/storybook/stories/<Name>.stories.tsx` |
-| Upstream i18n catalog | `reference/astryx-upstream/packages/core/locales/en.json` |
-| Our port | `packages/core/src/lib/components/<kebab-name>/` |
-| Our demo page | `packages/core/src/routes/+page.svelte` |
-| Class-parity oracle | `packages/core/scripts/compare-upstream-classes.mjs` |
+| What                                                     | Path                                                                  |
+| -------------------------------------------------------- | --------------------------------------------------------------------- |
+| Upstream source (authoritative for behaviour)            | `reference/astryx-upstream/packages/core/src/<Name>/`                 |
+| Upstream compiled CSS classes (authoritative for styles) | `packages/core/node_modules/@astryxdesign/core/dist/<Name>/`          |
+| Upstream storybook usage                                 | `reference/astryx-upstream/apps/storybook/stories/<Name>.stories.tsx` |
+| Upstream i18n catalog                                    | `reference/astryx-upstream/packages/core/locales/en.json`             |
+| Our port                                                 | `packages/core/src/lib/components/<kebab-name>/`                      |
+| Our demo page                                            | `packages/core/src/routes/+page.svelte`                               |
+| Class-parity oracle                                      | `packages/core/scripts/compare-upstream-classes.mjs`                  |
 
-Note the two upstream copies can disagree: the published `dist/` is a *build* and can
+Note the two upstream copies can disagree: the published `dist/` is a _build_ and can
 lag the source clone even at the same version number. The source is authoritative for
 intent; `dist/` is authoritative for what React actually renders today. When they
 disagree, say so explicitly — that is a finding in its own right, not a detail.
@@ -72,11 +72,11 @@ Report all of these:
 - **Structural drift** — different element type (`div` vs `span`), different nesting,
   a wrapper we added or dropped
 - **Undocumented deferral** — something skipped for a real reason (an unported
-  dependency such as `Tooltip` or `i18n`) but not recorded in `TODO.md` under "Known
-  debts" and not carrying an oracle `skip` with a reason
+  dependency such as `Tooltip` or `i18n`) but not recorded in `port/debts.md` and not
+  carrying an oracle `skip` with a reason
 - **Source/dist disagreement** — the two upstream copies differ
 
-A deferral is acceptable *only* when it is written down. An undocumented one is a
+A deferral is acceptable _only_ when it is written down. An undocumented one is a
 finding even when the reason is good.
 
 ## Idiom translations that are NOT findings
@@ -96,14 +96,26 @@ These are settled and correct. Do not report them:
 - A component-per-file split that differs from upstream's file layout, as long as
   every symbol still exists
 
+## Check `port/debts.md` before reporting
+
+**Before reporting drift, grep `port/debts.md`.** Every deliberate divergence in this port is
+recorded there with a machine-readable head — `units`, `kind` and `retires`. A finding that matches
+an existing entry is not a defect: report it as _already recorded_ and name the entry. Re-reporting
+a known debt every batch is how a real finding gets lost in the noise.
+
+```sh
+grep -n -A3 "^### .*<ComponentName>" port/debts.md
+grep -n -B2 "units:.*<ComponentName>" port/debts.md
+```
+
 ## Output
 
 Lead with a one-line verdict: **PARITY** or **N findings**.
 
 Then a table, most severe first:
 
-| # | Kind | Where (`file:line`) | Upstream | Ours | Fix |
-|---|------|--------------------|----------|------|-----|
+| #   | Kind | Where (`file:line`) | Upstream | Ours | Fix |
+| --- | ---- | ------------------- | -------- | ---- | --- |
 
 Then, for anything requiring judgement, a short paragraph of detail. Cite
 `file:line` on both sides for every row — a finding without a citation is a guess,

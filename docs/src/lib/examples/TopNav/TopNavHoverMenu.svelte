@@ -6,7 +6,7 @@
 	`CubeIcon` → `stop`, `ChartBarIcon` → `viewColumns`, `ShieldCheckIcon` →
 	`success`, `BoltIcon` → `arrowUp`, `CodeBracketIcon` → `wrench`,
 	`UserCircleIcon` → `info`. Stand-ins rather than true matches, the same ones
-	the demo routes make. Retires with the icon registry (TODO.md).
+	the demo routes make. Retires with the icon registry (port/todo.md).
 
 	`TopNavMenuItemData.icon` is a `Snippet` here where upstream's is a
 	`ReactNode`, so each row's icon is a snippet reference in the same data array.

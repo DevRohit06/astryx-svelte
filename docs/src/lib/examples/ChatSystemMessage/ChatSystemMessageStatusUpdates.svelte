@@ -5,7 +5,7 @@
 	Upstream imports Heroicons here rather than inlining the SVGs, so the icons
 	are registry substitutions: `UserPlusIcon` → `info`, `UserMinusIcon` →
 	`close`, `CheckCircleIcon` → `success`. Stand-ins rather than true matches,
-	the same ones the demo routes make. Retires with the icon registry (TODO.md).
+	the same ones the demo routes make. Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import { ChatMessageList, ChatSystemMessage, Icon } from '@astryx-svelte/core';

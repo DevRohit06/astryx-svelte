@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `InboxIcon`; the registry has no inbox glyph, so
 	 * this substitutes a built-in — the same substitution the demo routes make,
-	 * retiring with the icon registry (TODO.md).
+	 * retiring with the icon registry (port/todo.md).
 	 */
 </script>
 

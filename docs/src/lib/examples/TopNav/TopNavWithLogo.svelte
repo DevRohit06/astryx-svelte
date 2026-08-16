@@ -4,7 +4,7 @@
 
 	Upstream imports Heroicons here, so both icons are registry substitutions:
 	`CubeIcon` → `stop`, `UserCircleIcon` → `info` — the same stand-ins the
-	`Selector` demo makes. Retires with the icon registry (TODO.md).
+	`Selector` demo makes. Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import { Button, Icon, NavIcon, TopNav, TopNavHeading, TopNavItem } from '@astryx-svelte/core';

@@ -30,7 +30,7 @@
  *    does; `importUserModule` is reused rather than duplicated.
  * 4. **`assets/templates/pages` and `assets/templates/blocks` do not exist
  *    yet.** Upstream ships 1,329 template asset files; transcribing them is
- *    deferred past this slice (see TODO.md). Discovery is complete and reads
+ *    deferred past this slice (see port/todo.md). Discovery is complete and reads
  *    those directories the moment they appear — until then core contributes
  *    nothing and every walk here is exercised through integration and
  *    external-package templates, which need no assets of ours at all. The

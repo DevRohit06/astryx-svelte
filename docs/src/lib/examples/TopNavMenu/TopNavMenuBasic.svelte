@@ -5,7 +5,7 @@
 	Upstream imports Heroicons here, so both icons are registry substitutions:
 	`ChartBarIcon` → `viewColumns`, `Cog6ToothIcon` → `wrench`. Stand-ins rather
 	than true matches, the same ones the demo routes make. Retires with the icon
-	registry (TODO.md).
+	registry (port/todo.md).
 
 	`TopNavMenuItemData.icon` is a `Snippet` here where upstream's is a
 	`ReactNode`, so each row's icon is a snippet reference in the same data array.

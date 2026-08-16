@@ -9,7 +9,7 @@
 	 * Upstream swaps each outline Heroicon for its solid twin (`Star`, `Bookmark`)
 	 * and `Bell` for `BellSlash`. The registry ships no outline/solid pairs, so
 	 * this substitutes built-ins that still *differ* between states — which is the
-	 * point the block makes. Retires with the icon registry (TODO.md).
+	 * point the block makes. Retires with the icon registry (port/todo.md).
 	 */
 
 	let isFavorited = $state(false);

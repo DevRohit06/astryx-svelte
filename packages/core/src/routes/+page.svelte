@@ -201,7 +201,7 @@
 
 	// Lightbox — the four scenes stand in for upstream's CDN photos, for the
 	// reason `thumbnail-images.ts` documents. `LightboxVideo` has no counterpart
-	// here: it needs a video asset this repo doesn't ship (see TODO.md).
+	// here: it needs a video asset this repo doesn't ship (see port/todo.md).
 	const LIGHTBOX_PHOTOS = [
 		{ src: NIGHT_FOREST, alt: 'Night forest', caption: 'A dense forest under a night sky.' },
 		{ src: MISTY_VALLEY, alt: 'Misty valley', caption: 'A valley under low morning mist.' },
@@ -1013,7 +1013,7 @@ It preserves whitespace and line breaks.
 	// Upstream passes Heroicons' `UserIcon`/`CogIcon`/`BellIcon`; the registry has
 	// no counterpart for any of the three, so this substitutes built-ins — the
 	// substitution the `Switch`/`CheckboxInput`/`NumberInput` icons already make.
-	// Retires with the icon registry (see TODO.md).
+	// Retires with the icon registry (see port/todo.md).
 	const SELECTOR_ICON_OPTIONS: SelectorOptionData[] = [
 		{ value: 'profile', label: 'Profile', icon: 'info' },
 		{ value: 'settings', label: 'Settings', icon: 'menu' },

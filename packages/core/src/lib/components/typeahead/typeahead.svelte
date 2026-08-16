@@ -307,7 +307,7 @@
 		if (item) {
 			requestAnimationFrame(() => {
 				// `Token` exposes no element seam (it neither spreads rest nor takes an
-				// attachment — see TODO.md), so the token is found by the stable
+				// attachment — see port/todo.md), so the token is found by the stable
 				// `astryx-token` class `themeProps` stamps on it, scoped to this
 				// component's own wrapper. Upstream holds a `tokenRef`.
 				const tokenEl = wrapperEl?.querySelector<HTMLElement>(`.${stableClassName('token')}`);

@@ -16,7 +16,7 @@ import { useSpeechRecognition } from './use-speech-recognition.svelte.js';
  * over its *own* `_sharedAudioCtx`, so a consumer who passes no `audioContext`
  * ends up with two of them — one per module — and both hooks open their own
  * microphone stream. Importing the other module's copy would quietly merge them,
- * which is a change, not a fix. `PORTED.md` records it — it is how this unit was
+ * which is a change, not a fix. `port/ledger/` records it — it is how this unit was
  * built, not an open debt.
  *
  * `inputRef` is a getter, the `RefObject` translation `useChatPasteAsToken`

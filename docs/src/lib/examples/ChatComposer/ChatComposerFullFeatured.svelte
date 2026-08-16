@@ -6,7 +6,7 @@
 	are registry substitutions: `AtSymbolIcon` → `info`, `PaperClipIcon` → `copy`,
 	`SparklesIcon` and `Cog6ToothIcon` → `wrench`, `MicrophoneIcon` →
 	`microphone`, which is exact. Stand-ins rather than true matches, the same
-	ones the AppShell blocks make. Retires with the icon registry (TODO.md).
+	ones the AppShell blocks make. Retires with the icon registry (port/todo.md).
 
 	React's fragments around the paired header and footer actions need no
 	counterpart — a snippet body is already one.

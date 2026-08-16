@@ -775,7 +775,7 @@ const usedEntryRowNotes = new Set();
  * Why a documented prop has no declaration in this port.
  *
  * Each of these is a translation the port makes deliberately and records in
- * TODO.md; naming them here keeps the props table honest instead of printing a
+ * port/todo.md; naming them here keeps the props table honest instead of printing a
  * React type as though it were the Svelte API.
  *
  * @param {string} name
@@ -999,7 +999,7 @@ function normaliseEntry(entry, importPathByName, propsIndex, reports) {
 		// `defineTheme` example and a themeable-vars table). This port has not
 		// built it — it needs `Table` and upstream's `themingHelpers` — so the
 		// data is carried unrendered *on purpose*, unlike `slotElements` and the
-		// rest, which were carried by accident and are gone. Tracked in TODO.md.
+		// rest, which were carried by accident and are gone. Tracked in port/todo.md.
 		theming: entry.theming ?? null,
 		// The knobs' seed. `flattenDoc` already treats this as prose the primary
 		// member inherits, so a multi-doc's playground reaches the entry it was
@@ -1330,7 +1330,7 @@ async function buildDocsRegistry() {
  *    come out of `packages/cli/assets/docs`. Membership of `packages/*` is the
  *    honest test here.
  * 3. **No CHANGELOG.** Upstream's registry carries one for `/changelog`, which
- *    is out of the cut and has no data (TODO.md, Phase 5). Generating a field
+ *    is out of the cut and has no data (port/todo.md, Phase 5). Generating a field
  *    nothing renders is the `typeNotes` mistake, so it is not generated.
  *
  * The README text is the port's own prose — these are this repository's files,
@@ -1435,7 +1435,7 @@ function buildLibraryPackages() {
  * the one difference that matters for this repo: a package's **upstream
  * counterpart is recorded, not assumed**. Seven of the eight declare
  * `@astryxdesign/theme-<slug>` as a devDependency because their oracle diffs
- * against it; `liquid-glass` declares none, because it ports nothing (TODO.md →
+ * against it; `liquid-glass` declares none, because it ports nothing (port/debts.md →
  * Known debts). Reading the devDependency rather than listing the survivors is
  * what keeps that claim true after the next theme lands.
  *
@@ -1605,14 +1605,12 @@ function groupOf(category) {
  * The one deliberate difference from upstream's `generateTemplateRegistry`:
  * **`source` is not carried.** Upstream bakes each `page.tsx` into its registry
  * so the tile's "Open in Playground" button can hand the playground a file. This
- * port has no playground (TODO.md), and the bytes it would carry are React —
+ * port has no playground (port/todo.md), and the bytes it would carry are React —
  * 20,339 lines of it, in a module the gallery imports eagerly.
  *
  * Everything else is upstream's shape, **including the scaffold skip below**, so
  * the counts are upstream's: 43 templates ship, 42 are recorded here, and 31 are
- * listed. `planning/10-page-templates-and-community.md` §B7/§B8 says 43 and 32;
- * those were written before the skip was found and are off by the one template
- * it drops.
+ * listed.
  *
  * @returns {Promise<Array<Record<string, any>>>}
  */
@@ -1791,7 +1789,7 @@ export async function generate({ quiet = false } = {}) {
 
 	const templates = await buildTemplateRegistry();
 	// Counted over the whole set, not over the gallery-visible subset: the
-	// backlog `TODO.md` tracks is every page still to transcribe, and a template
+	// backlog `port/todo.md` tracks is every page still to transcribe, and a template
 	// upstream hides from its own overview is still one of them.
 	const templatesPorted = templates.filter((entry) => entry.hasSvelte).length;
 	const templatesPending = templates.length - templatesPorted;
@@ -1814,7 +1812,7 @@ export async function generate({ quiet = false } = {}) {
 	// The README text is split out of the registry on purpose. `package-registry`
 	// is imported by the **root layout**, through the sidebar's Libraries group,
 	// and the bundler does not dedupe a second copy of a string — the mistake
-	// `component-groups.js` cost 93% of the root-layout chunk (TODO.md, Phase 5).
+	// `component-groups.js` cost 93% of the root-layout chunk (port/todo.md, Phase 5).
 	// So the sidebar gets names and slugs, and the ~20 KB of markdown is a
 	// separate module the package page's `load` imports dynamically.
 	const outputs = [

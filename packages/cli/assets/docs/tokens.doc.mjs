@@ -12,7 +12,7 @@
  * `packages/core/src/lib/styles/tokens.stylex.ts`. And the "Usage in StyleX"
  * section is rewritten: upstream imports the `defineVars` objects
  * (`colorVars`, `spacingVars`, ...) from `@astryxdesign/core`, and this port
- * publishes none of them, so a copied example would not resolve. See TODO.md.
+ * publishes none of them, so a copied example would not resolve. See port/todo.md.
  */
 
 /** @type {import('@astryx-svelte/cli/authoring').ReferenceDoc} */

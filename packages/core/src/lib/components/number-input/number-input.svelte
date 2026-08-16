@@ -581,7 +581,7 @@
 	 * stays because it is the faithful translation of `updateInput`, costs one
 	 * string comparison per keystroke, and is what makes the server-only `value`
 	 * spread below coherent. The client-side suite that used to pin it is retired;
-	 * `src/tests/batch-5-server-markup.test.ts` still pins the spread. TODO.md's
+	 * `src/tests/batch-5-server-markup.test.ts` still pins the spread. port/todo.md's
 	 * batch-5 entry has the measurement.
 	 *
 	 * It must stay **reactive** (no `untrack`): since 0.4.1 `displayValue` genuinely

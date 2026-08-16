@@ -173,7 +173,7 @@ export function discoverExternalPackages(startDir = process.cwd()) {
  * (`src/Button`), where ours are kebab-case (`src/lib/components/button`).
  *
  * **That is the right answer here and the wrong one for a component list**, and
- * the difference was settled by measurement (see TODO.md, slice 2). Name →
+ * the difference was settled by measurement (see port/todo.md, slice 2). Name →
  * directory is not a function in this port: 98 of 191 exported components have
  * no directory of their own — `AvatarStatusDot` lives in `avatar/`,
  * `ChatComposer` in `chat/` — and even a filename rule breaks on aliased

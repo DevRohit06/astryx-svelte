@@ -18,7 +18,7 @@ import { computeOverflow } from './compute-overflow.js';
  *
  * Upstream returns two **ref callbacks**; both become attachments, which have
  * the same attach/replace/detach lifecycle. `useIsomorphicLayoutEffect` — one of
- * the modules `planning/06` records as obviated — is a plain `$effect` here: it
+ * the modules `port/research/06` records as obviated — is a plain `$effect` here: it
  * exists upstream only to avoid React's SSR warning about `useLayoutEffect`, and
  * effects do not run during SSR at all in Svelte.
  *

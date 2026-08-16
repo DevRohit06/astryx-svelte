@@ -9,7 +9,7 @@
 	 * Upstream passes Heroicons' `Bold`/`Italic`/`Underline`; the registry ships
 	 * none of them, so each substitutes a built-in that stays distinguishable from
 	 * its siblings — the block is about the toolbar's keyboard hint, not the
-	 * glyphs. Retires with the icon registry (TODO.md).
+	 * glyphs. Retires with the icon registry (port/todo.md).
 	 */
 </script>
 

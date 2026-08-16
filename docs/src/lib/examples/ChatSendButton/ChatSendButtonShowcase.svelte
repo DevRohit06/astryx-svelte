@@ -5,7 +5,7 @@
 	Upstream imports a Heroicon here rather than inlining the SVG, so the icon is
 	a registry substitution: `SparklesIcon` → `wrench`. A stand-in rather than a
 	true match, the same one the demo routes make. Retires with the icon registry
-	(TODO.md).
+	(port/todo.md).
 -->
 <script lang="ts">
 	import { ChatSendButton, Icon, Stack } from '@astryx-svelte/core';

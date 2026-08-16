@@ -11,7 +11,7 @@
 	 * glyph for the rest. The registry ships none of those pairs, so each button
 	 * substitutes a built-in and keeps it across both states — the block's point is
 	 * the *pressed colour*, which is transcribed exactly (`accent`/`yellow`/`red`/
-	 * `blue`). Retires with the icon registry (TODO.md).
+	 * `blue`). Retires with the icon registry (port/todo.md).
 	 */
 
 	let toolbar = $state<Record<string, boolean>>({

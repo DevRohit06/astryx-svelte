@@ -29,7 +29,7 @@ import SelectionTable, {
  *   row that re-renders is the row whose selection changed, and there is no
  *   subscription list at all. Nothing to leak, and no `ref` to hand a row
  *   element to. A stub reproducing React's ref protocol would assert the stub.
- *   Recorded in TODO.md alongside the same decision in
+ *   Recorded in port/todo.md alongside the same decision in
  *   `use-table-selection-perf.svelte.test.ts`.
  *
  * Upstream's `SelectionTable` harness lives in

@@ -12,7 +12,7 @@
 	 * `Bold`/`Italic`/`Underline`/`Strikethrough`. The registry ships none of
 	 * those, so each substitutes a built-in that still differs from its siblings —
 	 * the group is about selection, and the icons only have to stay
-	 * distinguishable. Retires with the icon registry (TODO.md).
+	 * distinguishable. Retires with the icon registry (port/todo.md).
 	 */
 
 	let view = $state<string | null>('list');

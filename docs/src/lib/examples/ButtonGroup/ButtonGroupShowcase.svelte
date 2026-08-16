@@ -9,7 +9,7 @@
 	 * Upstream passes Heroicons' `ClipboardDocument`/`Scissors`/`Clipboard`; the
 	 * registry ships `copy` and `checkDouble` but nothing for cut or paste, so
 	 * this substitutes built-ins — the same substitution the demo routes make,
-	 * retiring with the icon registry (TODO.md).
+	 * retiring with the icon registry (port/todo.md).
 	 */
 </script>
 

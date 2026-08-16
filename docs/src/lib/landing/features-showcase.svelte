@@ -20,7 +20,7 @@
 	 * The Themes and Templates tiles were dropped for several batches — their
 	 * previews are a live theme-showcase store and seven live page templates, and
 	 * both are page templates this port has not transcribed. That forced a
-	 * two-column rebalance which TODO.md recorded as explicitly temporary; this is
+	 * two-column rebalance which port/todo.md recorded as explicitly temporary; this is
 	 * the revert. What changed is that both tiles now have *something real* to
 	 * show: eight published theme packages, and 619 block templates with a
 	 * `/templates` gallery behind them. Each preview's own docstring says exactly
@@ -33,7 +33,7 @@
 	 * **Two hrefs differ from upstream's, both because the target does not exist
 	 * here.** The CLI tile points at `/docs/working-with-ai` rather than
 	 * `/docs/cli` (a package README rendered through `PackageStubPage`, unported —
-	 * TODO.md → After launch); `working-with-ai` is upstream's own topic on the
+	 * port/todo.md → After launch); `working-with-ai` is upstream's own topic on the
 	 * same subject. Everything else resolves to upstream's own path.
 	 */
 
@@ -155,7 +155,7 @@
 			)}
 			<!--
 				Upstream's "Explore" here points at `/docs/cli`, which renders a package
-				README through `PackageStubPage` and is unported (TODO.md → After
+				README through `PackageStubPage` and is unported (port/todo.md → After
 				launch). `working-with-ai` is upstream's own topic on the same subject —
 				agent-readable docs — so the link resolves rather than 404ing. It returns
 				to `/docs/cli` when that page is built.

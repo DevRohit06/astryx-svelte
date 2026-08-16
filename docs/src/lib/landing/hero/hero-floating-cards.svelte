@@ -31,7 +31,7 @@
 	 * **Not ported: the chat composer.** Upstream renders a `ChatComposer` +
 	 * `ChatSendButton` here — breaking out over the product photo in the overlap
 	 * layout, and as its own side-column item in the collage. `Chat` is unported
-	 * (TODO.md → batch 13, 7,336 LOC), so both placements are omitted. The
+	 * (port/todo.md → batch 13, 7,336 LOC), so both placements are omitted. The
 	 * `chatPrompt` field stays in `HeroThemeContent` because it is upstream's data
 	 * shape and the composer returns with the component. The `Plus` icon upstream
 	 * puts on the composer's attachment button goes with it, which is why no
@@ -61,7 +61,7 @@
 	Upstream's badge icon is lucide's `Sparkles`. Registry substitution: this
 	port's built-in set is the 26 the components themselves need, and `info` is
 	the same stand-in the rest of the site makes. Retires with the icon registry
-	(TODO.md → Phase 3).
+	(port/todo.md → Phase 3).
 -->
 {#snippet sparklesIcon()}<Icon icon="info" size="sm" />{/snippet}
 

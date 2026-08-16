@@ -8,7 +8,7 @@
  * **One group is added rather than transcribed: `svelte`.** Upstream has no such
  * language because its examples are TSX, and every example in this port is a
  * `.svelte` file — without it the docs site renders all of its example source
- * unhighlighted. See the case for the reasoning; `TODO.md` records the
+ * unhighlighted. See the case for the reasoning; `port/todo.md` records the
  * divergence.
  */
 
@@ -152,7 +152,7 @@ function buildLanguagePatterns(lang: string): {
 		 * file, and `example-block.svelte` passes `language="svelte"` for all of
 		 * them. Without this case `buildLanguage` returns `null`, `tokenize`
 		 * yields `[]`, and the whole docs site renders its example source as flat
-		 * unhighlighted text. Recorded in `TODO.md` as a deliberate divergence.
+		 * unhighlighted text. Recorded in `port/todo.md` as a deliberate divergence.
 		 *
 		 * Svelte is markup *and* script in one file, which this tokenizer has no
 		 * notion of — it applies one flat, ordered pattern list per language. So

@@ -35,12 +35,12 @@
  *    Upstream maps a theme key to `<core>/src/<Pascal>/<Pascal>.doc.mjs`. Here
  *    the docs are `<core>/src/lib/**\/<Export>.doc.mjs` and the directories are
  *    kebab-case families (`avatar/` backs `AvatarStatusDot`), so name → path is
- *    not a function — TODO.md's slice-2 note. All three doc readers below go
+ *    not a function — port/todo.md's slice-2 note. All three doc readers below go
  *    through one cached index keyed by the rendered class token, which is what
  *    the theme key actually is. Upstream already scans for two of the three.
  * 3. **A custom-variant augmentation targets the root barrel**, because this
  *    port publishes no per-component subpaths (`@astryx-svelte/core/Button`
- *    does not exist — a standing debt in TODO.md, owed to `swizzle`). Verified,
+ *    does not exist — a standing debt in port/todo.md, owed to `swizzle`). Verified,
  *    and mutation-checked, that TypeScript merges an augmentation of a
  *    re-exported interface into the original declaration: augmenting
  *    `ButtonVariantMap` on `@astryx-svelte/core` really does widen

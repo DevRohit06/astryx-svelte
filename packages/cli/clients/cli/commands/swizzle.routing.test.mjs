@@ -165,7 +165,7 @@ describe('swizzle — core feedback routing via config', () => {
 		// Upstream's literal is `https://github.com/facebook/astryx/issues/new`,
 		// which must not be inherited — it would route a *port* bug to Meta's
 		// tracker. `DEFAULT_ISSUES_URL` reads this package's own `bugs` field, and
-		// this repo declares none yet (TODO.md, slice 3), so the assertion is
+		// this repo declares none yet (port/todo.md, slice 3), so the assertion is
 		// against the exported constant rather than a literal.
 		const { DEFAULT_ISSUES_URL } = await import('../../../foundation/config/project.mjs');
 		expect(env.data.feedback?.issuesUrl).toBe(DEFAULT_ISSUES_URL);

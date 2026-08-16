@@ -144,7 +144,7 @@ export { default as IconButton } from './components/icon-button/icon-button.svel
 // `ImperativeAlertDialogLayer`/`ImperativeDialogLayer` are the rendering halves
 // of `useImperativeAlertDialog`/`useImperativeDialog`, replacing upstream's
 // `element: ReactNode` returns. Upstream has no such symbols — same split as
-// `Layer`/`TooltipLayer`/`KeyboardHintLayer`/`LightboxLayer`. See TODO.md →
+// `Layer`/`TooltipLayer`/`KeyboardHintLayer`/`LightboxLayer`. See port/debts.md →
 // Known debts.
 export { default as ImperativeAlertDialogLayer } from './components/alert-dialog/imperative-alert-dialog-layer.svelte';
 export { default as ImperativeDialogLayer } from './components/dialog/imperative-dialog-layer.svelte';
@@ -166,7 +166,7 @@ export { default as LayoutPanel } from './components/layout/layout-panel.svelte'
 export { default as Lightbox } from './components/lightbox/lightbox.svelte';
 // `LightboxLayer` is the rendering half of `useLightbox`, replacing upstream's
 // `element: ReactNode` return. Upstream has no such symbol — same split as
-// `Layer`/`TooltipLayer`/`KeyboardHintLayer`. See TODO.md → Known debts.
+// `Layer`/`TooltipLayer`/`KeyboardHintLayer`. See port/debts.md → Known debts.
 export { default as LightboxLayer } from './components/lightbox/lightbox-layer.svelte';
 export { default as Link } from './components/link/link.svelte';
 export { default as LinkProvider } from './components/link/link-provider.svelte';
@@ -653,7 +653,7 @@ export type { ListItemProps } from './components/list/list-item.svelte';
 // types, and the four parser entry points; `trimStreamingArtifacts` is
 // deliberately absent from it (it reaches consumers only through the
 // `./Markdown/utils` subpath, which this port does not ship — see the
-// per-component-subpath debt in TODO.md). `IncrementalState` is renamed
+// per-component-subpath debt in port/todo.md). `IncrementalState` is renamed
 // `IncrementalParseState` on the barrel, as upstream renames it.
 export type { MarkdownProps } from './components/markdown/markdown.svelte';
 export type {
@@ -726,7 +726,7 @@ export type { OutlineProps } from './components/outline/outline.svelte';
 export type { OutlineItem } from './components/outline/types.js';
 // No `OutlineDensity`: upstream inlines the `'default' | 'compact'` union in
 // `OutlineProps`, so a named alias would be an over-export — the class the
-// `CarouselGap`/`DividerOrientation` entries in TODO.md already record.
+// `CarouselGap`/`DividerOrientation` entries in port/todo.md already record.
 export type {
 	OverflowListProps,
 	OverflowItem

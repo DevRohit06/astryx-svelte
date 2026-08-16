@@ -20,7 +20,7 @@
  * per component directory, sub-components documented in sibling files, and
  * structural pieces with no doc at all. It needs three passes to reassemble
  * that. This port's core ships **one `.doc.mjs` per documented export, named
- * for the export and placed beside its source module** (see TODO.md, "Core
+ * for the export and placed beside its source module** (see port/todo.md, "Core
  * ships 209 .doc.mjs"), so a single walk of `src/lib` *is* the doc index and
  * upstream's second pass (`upgradeFromDoc`) has nothing left to recover. What
  * remains is a plain directory walk plus a dynamic import, which is why this

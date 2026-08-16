@@ -25,7 +25,7 @@ import TopNavItemFixture from './fixtures/top-nav-item-fixture.svelte';
  *
  * The eight not here belong to the 0.2.0 APG/a11y assertions that were not
  * written when the components landed — the behaviour ships, the assertions do
- * not. Tracked with the rest of that gap in `TODO.md`; this header said "all 43"
+ * not. Tracked with the rest of that gap in `port/todo.md`; this header said "all 43"
  * while the file held 46, which is the header-rot failure mode that entry names.
  *
  * Standing translations:

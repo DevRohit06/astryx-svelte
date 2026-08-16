@@ -3,7 +3,7 @@
 // `@astryx-svelte/cli` reads component and hook prose out of core the way
 // upstream's CLI reads it out of `@astryxdesign/core`: co-located `.doc.mjs`
 // modules, discovered by walking the published `src/` tree. This port shipped
-// none, which is why `searchComponents`' Pass 2 finds nothing today (TODO.md,
+// none, which is why `searchComponents`' Pass 2 finds nothing today (port/todo.md,
 // slice 2) and why the doc-driven commands — `component`, `util` / `hook`,
 // `docs`, `search`, `discover` — are blocked.
 //
@@ -21,7 +21,7 @@
 // docs site, so this script reuses that reconciliation rather than repeating
 // it: `reconcile()` returns the entries, and everything below is reshaping.
 //
-// The output layout follows from the same measurement TODO.md's slice-2 entry
+// The output layout follows from the same measurement port/todo.md's slice-2 entry
 // records — name → directory is not a function, so **the barrel is the index**.
 // Each entry is written next to the module its export resolves to, under the
 // export's own name: `BreadcrumbMenuItem` is `dropdown-menu-item.svelte`, so it
@@ -245,7 +245,7 @@ function hookDoc(entry) {
 	doc.returns = (entry.returns ?? []).map((row) => returnRow(row, `${where}.returns`));
 	doc.usage = usageDoc(entry.usage, where);
 	// Upstream's own lists, verbatim. Three of them name a component this port
-	// does not export — see the run's report and TODO.md; they are upstream's
+	// does not export — see the run's report and port/todo.md; they are upstream's
 	// prose and are not silently rewritten here.
 	if (entry.relatedComponents?.length) doc.relatedComponents = entry.relatedComponents;
 	if (entry.relatedHooks?.length) doc.relatedHooks = entry.relatedHooks;
@@ -409,7 +409,7 @@ function findEmitted(dir, found = []) {
  * example". Emitting it verbatim would ship React source as this CLI's answer
  * to "show me an example", which is the `Button.icon` mistake CLAUDE.md names:
  * upstream's prose is reusable, upstream's *code* is not. Translating ten
- * examples by hand is real work and is tracked in TODO.md; inventing them here
+ * examples by hand is real work and is tracked in port/todo.md; inventing them here
  * is not on the table.
  *
  * The list is exact on the class oracle's `skip` rule. An entry that stops
@@ -447,7 +447,7 @@ function assertExampleDeferralIsCurrent(entries) {
 			(appeared.length ? `    now carrying examples: ${appeared.join(', ')}\n` : '') +
 			(gone.length ? `    no longer carrying:    ${gone.join(', ')}\n` : '') +
 			`  These entries are emitted without their examples because upstream's are JSX.\n` +
-			`  Update UPSTREAM_EXAMPLES_NOT_PORTED and the TODO.md entry that counts them.`
+			`  Update UPSTREAM_EXAMPLES_NOT_PORTED and the port/todo.md entry that counts them.`
 	);
 }
 

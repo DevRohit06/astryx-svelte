@@ -15,7 +15,7 @@
  *     external-package equivalents run green in `external-showcase.test.mjs`
  *     and `template-suffix.test.mjs`). What is missing is
  *     `packages/cli/assets/templates/blocks/` — the 1,329 block assets deferred
- *     past slice 6 in TODO.md. **These twelve unblock with the assets, not with
+ *     past slice 6 in port/todo.md. **These twelve unblock with the assets, not with
  *     a slice**, and each names a specific core block (`Badge/`, `Avatar/`,
  *     `Card/`, `Button/`, `ThemeShowcase`) that has to exist first.
  *   - `component("Stack") still returns full Stack doc` is blocked on a **core
@@ -26,7 +26,7 @@
  *     `Stack` therefore falls through `findComponentReadme`'s directory walk
  *     onto `HStack.doc.mjs` and — with no `components` array for
  *     `scopeSubComponent` to match against — comes back named `HStack`. See
- *     TODO.md's known debts.
+ *     port/todo.md's known debts.
  *
  * One case is adapted rather than deferred: `component("CodeBlock") still
  * returns full CodeBlock doc` drops its `data.components` assertion, because

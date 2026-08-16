@@ -185,7 +185,7 @@ export function useTableSortable<
 				// track the column object: `column` arrives as a transform argument, so
 				// a column that keeps its `key` but changes its `header` or
 				// `sortable.sortKey` still re-runs the transform without waking this
-				// derived. See `createSlotBinder`'s contract and TODO.md for that debt.
+				// derived. See `createSlotBinder`'s contract and port/todo.md for that debt.
 				content: bindContent(column.key, () => {
 					config();
 					return {

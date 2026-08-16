@@ -56,7 +56,7 @@ const defaultValue: SideNavCollapseState = {
  * Upstream declares it as a bare `const` inside `SideNavItem.tsx`; here it has to
  * be `export`ed because the context and its consumer are separate modules. It is
  * **barrel-absent on both sides**, so nothing is published either way — but if
- * per-component subpaths ever land (TODO.md → Published surface), this becomes a
+ * per-component subpaths ever land (port/todo.md → Published surface), this becomes a
  * real over-export and should move into `side-nav-item.svelte` rather than gain
  * an entry.
  */

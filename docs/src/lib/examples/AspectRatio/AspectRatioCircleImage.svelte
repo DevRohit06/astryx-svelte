@@ -13,7 +13,7 @@
 			redundant-alt check because screen readers already announce an `<img>`
 			as an image. Kept verbatim — the alt is example content, and the page
 			shows the block's source — with the warning suppressed rather than the
-			text quietly edited. TODO.md records it.
+			text quietly edited. port/todo.md records it.
 		-->
 		<!-- svelte-ignore a11y_img_redundant_alt -->
 		<img

@@ -161,7 +161,7 @@ export function bindCellSnippet<T, A extends object>(
  * delivering the new argument. Closing it needs either a key that encodes the
  * argument (losing focus exactly when the content changes, which may be the
  * right trade) or a reactive handle on the resolved column list. Recorded in
- * TODO.md rather than half-solved.
+ * port/todo.md rather than half-solved.
  */
 export function createSlotBinder<A extends object>(
 	snippet: Snippet<[A]>

@@ -15,7 +15,7 @@ Invented props, extra variants, nicer defaults and hand-drawn demo content are _
 improvements. That includes demo routes and template content, which must show upstream's
 documented API rather than a tidied-up version of it.
 
-Where upstream has a bug, we reproduce the bug and record it in `TODO.md` under "Known debts". A
+Where upstream has a bug, we reproduce the bug and record it in `port/debts.md` under "Known debts". A
 fix that upstream has not made is a divergence, and divergences are how a port stops being a port.
 
 If you think upstream is wrong about something, the place to argue it is
@@ -42,14 +42,19 @@ and the already-compiled `dist/` in `node_modules/@astryxdesign/core`.
 > they read as instructions for this one — they describe a React codebase, a different test runner
 > and a CLI this repo does not have.
 
-Two live documents track the work:
+`port/` tracks the work, and `port/README.md` maps what goes where:
 
-- **`TODO.md`** — status and backlog: what's next, the batch history, the known debts. Read the
-  relevant section before starting; update it when your work lands.
-- **`PORTED.md`** — the per-component implementation notes: what each unit does, the translations
-  it needed, its oracle and test posture.
+- **`port/todo.md`** — the backlog: the current goal and what's next. No metrics, no batch history.
+- **`port/status.md`** — **generated** by `scripts/status.mjs`; `pnpm verify` regenerates it and
+  fails when the committed file has drifted. Never hand-edit it.
+- **`port/debts.md`** — every deliberate divergence from upstream, each with a machine-readable head
+  (`units`, `kind`, `retires`).
+- **`port/ledger/`** — one file per batch: what each unit does, the translations it needed, its
+  oracle and test posture.
+- **`port/research/`** — frozen upstream analysis. Research, not spec: verify it against source.
 
-Status and open decisions go in `TODO.md`. _How_ a component was built goes in `PORTED.md`.
+Read the relevant section before starting; update what changed when your work lands, and never
+write a number by hand — that is what `port/status.md` is for.
 
 ## Getting set up
 
@@ -59,7 +64,7 @@ pnpm -r build     # must run before check — theme-neutral typechecks against c
                   #   and the docs generator reads props types out of that same dist/
 pnpm -r check     # svelte-check + tsc
 pnpm -r lint      # prettier --check && eslint
-pnpm -r test      # vitest + both fidelity oracles
+pnpm -r test      # vitest + all three fidelity oracles
 ```
 
 Day-to-day:
@@ -87,6 +92,11 @@ defence.
 StyleX Babel plugin and diffs the emitted atomic classes against the _already compiled_ ones in
 `@astryxdesign/core`'s published `dist/`. `packages/themes/neutral/scripts/compare-upstream.mjs`
 does the same for theme declarations.
+
+`packages/core/scripts/compare-upstream-css.mjs` is the third, and covers what the first cannot:
+it reads modules statically, so a `stylex.create` **function style** is opaque to it. The CSS
+oracle instead builds the compiled `dist/astryx.css` and diffs it against upstream's published
+sheet, where a function style's output is just another rule.
 
 Authoring `stylex.create` against the same token references upstream uses makes the compiler emit
 byte-identical CSS. The oracles prove that rather than trusting anyone's eyes.
@@ -143,8 +153,8 @@ one.
 at `packages/cli/assets/templates/pages/<slug>/+page.svelte`. Every component they need is already
 exported, so this is transcription rather than component work — a good first contribution.
 
-**Port a component.** Check `TODO.md` for what's unported, read upstream's source and tests first,
-then follow the loop below.
+**Port a component.** Check `port/todo.md` for what's unported and `port/debts.md` for any recorded
+deviation on it, read upstream's source and tests first, then follow the loop below.
 
 **Improve the docs site.** `docs/` is a SvelteKit app; its content is generated from upstream's
 `.doc.mjs` files by `docs/scripts/generate-content.mjs`.
@@ -162,8 +172,10 @@ and neither the oracle nor a ported test caught it. Those are the most valuable 
    (whether the React→Svelte translation is _correct_ — contexts storing values instead of
    getters, `$derived` caching through a server render, un-`untrack`ed attachments),
    `astryx-oracle`, `astryx-test-parity`, and `astryx-surface`.
-5. **Verify** — `pnpm -r build && pnpm -r check && pnpm -r lint && pnpm -r test`, all clean.
-6. **Write it down** — `PORTED.md` for how, `TODO.md` for status.
+5. **Verify** — `pnpm verify`, all clean.
+6. **Write it down** — the batch's `port/ledger/` entry for how, `port/todo.md` for what's next,
+   `port/debts.md` for any deliberate divergence. Never write a number: `pnpm verify` regenerates
+   `port/status.md`.
 
 ## Pull requests
 
@@ -171,7 +183,7 @@ and neither the oracle nor a ported test caught it. Those are the most valuable 
 - Keep the diff to one thing. A component port, a batch of templates, a docs fix.
 - Say in the description **what you read upstream** and **what you had to decide**. A PR that
   names its judgement calls is far quicker to review than one that hides them.
-- Make sure `build`, `check`, `lint` and `test` are all green before asking for review.
+- Make sure `pnpm verify` is green before asking for review.
 
 ## Code of conduct
 

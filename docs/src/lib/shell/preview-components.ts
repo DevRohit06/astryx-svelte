@@ -28,7 +28,7 @@ const exported = core as unknown as Record<string, unknown>;
  * and `Button` are indistinguishable by inspection, and calling a hook as a
  * component throws inside the renderer rather than returning nothing. Nine
  * registry entries are hooks upstream authors as `ComponentDoc`s — the
- * `useTable*` plugins, noted in TODO.md's props-page audit — and they reach this
+ * `useTable*` plugins, noted in port/todo.md's props-page audit — and they reach this
  * function looking exactly like components.
  */
 export function previewComponentFor(name: string): Component<Record<string, unknown>> | null {

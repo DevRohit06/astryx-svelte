@@ -30,7 +30,7 @@ import { createStaticSource } from '$lib/components/typeahead/create-static-sour
  * 2. **A production build cannot catch it either.** `snippet_without_render_tag`
  *    is a dev-only Svelte check — the docs site prerendered 165 pages green with
  *    the bug present, and only the dev server surfaced it. That is the same trap
- *    the hydration sweep in TODO.md records, in a second error class.
+ *    the hydration sweep in port/todo.md records, in a second error class.
  *
  * Mutation-checked: restoring the content form fails both cases below.
  */

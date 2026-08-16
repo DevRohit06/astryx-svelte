@@ -16,8 +16,13 @@
     "check": "pnpm -r check",
     "test": "pnpm -r test",
     "lint": "pnpm -r lint",
+    "lint:root": "prettier --check port/*.md *.md",
     "format": "pnpm -r format",
-    "check:publish": "node scripts/check-publish.mjs"
+    "check:publish": "node scripts/check-publish.mjs",
+    "status": "node scripts/status.mjs",
+    "status:full": "node scripts/status.mjs --full",
+    "verify": "node scripts/verify.mjs",
+    "verify:fast": "node scripts/verify.mjs --fast"
   },
   "workspaces": [
     "packages/*",
@@ -25,6 +30,7 @@
     "docs"
   ],
   "devDependencies": {
+    "prettier": "^3.8.3",
     "publint": "^0.3.21"
   }
 }

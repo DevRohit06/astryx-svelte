@@ -6,7 +6,7 @@
 	`CubeIcon` → `stop`, `ChartBarIcon` → `viewColumns`, `ShieldCheckIcon` →
 	`success`, `BoltIcon` → `arrowUp`, `CodeBracketIcon` → `wrench`,
 	`GlobeAltIcon` → `externalLink`. Stand-ins rather than true matches, the same
-	ones the demo routes make. Retires with the icon registry (TODO.md).
+	ones the demo routes make. Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import {

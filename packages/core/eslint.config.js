@@ -70,7 +70,7 @@ export default defineConfig(
 		// Those disables cannot rot silently: if upstream migrates one of them,
 		// its emitted atomic class changes and the **class oracle** reports the
 		// mismatch. The lint rule guards new physical properties; the oracle
-		// guards the exceptions. See `planning/08-upstream-0.2.0.md` §2.
+		// guards the exceptions. See `port/ledger/018-batch-17a.md`.
 		plugins: { astryx: { rules: { 'no-physical-properties': noPhysicalProperties } } },
 		rules: { 'astryx/no-physical-properties': 'error' }
 	},

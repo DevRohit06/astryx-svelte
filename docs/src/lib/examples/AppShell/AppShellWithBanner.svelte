@@ -6,7 +6,7 @@
 	are registry substitutions: `CubeIcon` → `stop`, `HomeIcon` → `menu`,
 	`ChartBarIcon` → `viewColumns`, `FolderIcon` → `copy`, `UsersIcon` → `info`,
 	`Cog6ToothIcon` → `wrench`. Stand-ins rather than true matches, the same ones
-	the demo routes make. Retires with the icon registry (TODO.md).
+	the demo routes make. Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import {

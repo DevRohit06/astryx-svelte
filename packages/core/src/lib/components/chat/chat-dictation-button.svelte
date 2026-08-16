@@ -43,7 +43,7 @@
 	 * volume-reactive frequency bars that hue-shift once the volume clips.
 	 *
 	 * The accessible name falls back to a hardcoded English string, because
-	 * upstream's does — this component reads no translator. `TODO.md` records it.
+	 * upstream's does — this component reads no translator. `port/todo.md` records it.
 	 *
 	 * @example
 	 * ```svelte

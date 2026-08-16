@@ -68,7 +68,7 @@
 	 *   fall out of a `$derived`, so there is no effect to keep in step.
 	 *
 	 * **"Open in Playground" is dropped**, in the header and on the gallery tile
-	 * alike: `/playground` is not in this port (TODO.md), and `nav-items.ts`'s
+	 * alike: `/playground` is not in this port (port/todo.md), and `nav-items.ts`'s
 	 * standing rule is that linking to a 404 is worse than not linking.
 	 */
 	interface Props {
@@ -101,7 +101,7 @@
 	 * Both halves are wrong here. `@astryx-svelte/cli` is a **private** package,
 	 * so `npx` cannot resolve it — the same fact `package-actions.svelte` refuses
 	 * to print an `npm install` over — and the bare bin is what upstream itself
-	 * hard-codes at all but five of its own command hints (TODO.md, 2026-08-08).
+	 * hard-codes at all but five of its own command hints (port/todo.md, 2026-08-08).
 	 * And the destination is a SvelteKit route directory, because the file the
 	 * CLI copies is `+page.svelte` rather than `page.tsx`
 	 * (`api/template/_adapter.mjs`'s `PAGE_SOURCE_FILE`).

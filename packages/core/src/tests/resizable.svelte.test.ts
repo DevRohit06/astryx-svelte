@@ -11,7 +11,7 @@ import Harness from './fixtures/resize-handle-harness.svelte';
  * **Upstream 18 cases, 14 here.** The header used to claim the suite was
  * "ported whole" and it never was — it is corrected rather than trusted. The
  * four with no counterpart, all predating this slice and all recorded as a gap
- * in `TODO.md` rather than silently dropped:
+ * in `port/todo.md` rather than silently dropped:
  *
  * - `drives the region with the raw pointer delta under LTR`
  * - `inverts the pointer delta under RTL so dragging resizes intuitively`

@@ -16,7 +16,7 @@ import ContextMenuFixture from './fixtures/context-menu-fixture.svelte';
  * with the component change it covers (the APG menus-5 fix).
  *
  * The remaining **9** are a pre-existing coverage gap, NOT a deliberate drop,
- * and they are counted in TODO.md's batch-17c coverage-gap list (`ContextMenu
+ * and they are counted in port/todo.md's batch-17c coverage-gap list (`ContextMenu
  * 40→31`). Batch 18 deliberately closes only what its own changes need.
  *
  * A previous version of this header said "31 of its 33 cases" and explained a

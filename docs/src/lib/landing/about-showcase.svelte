@@ -25,7 +25,7 @@
 	 * institutional claim about its own system, and this port is unofficial and
 	 * not affiliated with Meta — printing it here would assert Meta's adoption
 	 * numbers and history in this project's voice. `site-footer.svelte` already
-	 * made exactly this call for Meta's social and legal blocks (TODO.md →
+	 * made exactly this call for Meta's social and legal blocks (port/todo.md →
 	 * Release & governance); this is the same rule applied to the same kind of
 	 * content. The three columns below are transcribed verbatim, because they are
 	 * product copy about the design system rather than claims about its owner.

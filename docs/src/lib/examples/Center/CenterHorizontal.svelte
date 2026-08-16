@@ -10,7 +10,7 @@
 	 * Upstream passes Heroicons' `Bold`/`Italic`/`Underline`/`ListBullet`/
 	 * `Link`/`Photo`; the registry ships none of the six, so this substitutes
 	 * built-ins — the same substitution the demo routes make, retiring with the
-	 * icon registry (TODO.md).
+	 * icon registry (port/todo.md).
 	 */
 	const tools: { label: string; icon: IconName }[] = [
 		{ label: 'Bold', icon: 'check' },

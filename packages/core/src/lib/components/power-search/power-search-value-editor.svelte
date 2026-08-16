@@ -37,7 +37,7 @@
 	 * show, and the comment is kept because deleting it would hide that the arm
 	 * is deliberately unimplemented rather than missed.
 	 *
-	 * TODO.md described this as type-dispatching "into 15 components". The
+	 * port/todo.md described this as type-dispatching "into 15 components". The
 	 * batch-14 spec pass settled the real numbers: **14 arms, 12 editors, 7
 	 * distinct astryx components** (`TextInput`, `NumberInput`, `DateInput`,
 	 * `TimeInput`, `Selector`, `Tokenizer`, `Typeahead`) plus the caller's own

@@ -5,7 +5,7 @@
 	Upstream imports Heroicons for the two items, so they are registry
 	substitutions: `Cog6ToothIcon` → `wrench`, `UsersIcon` → `info`. Stand-ins
 	rather than true matches, the same ones the demo routes make. Retires with the
-	icon registry (TODO.md).
+	icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import { Button, MobileNav, SideNavItem, SideNavSection } from '@astryx-svelte/core';

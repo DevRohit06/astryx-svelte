@@ -8,7 +8,7 @@
  *
  * `/templates`, `/themes`, `/community` and `/blog` are now built, so both lists
  * carry them in upstream's slot and with upstream's label. Still absent:
- * `/playground` (a `svelte/compiler` Web Worker, deliberately last — TODO.md →
+ * `/playground` (a `svelte/compiler` Web Worker, deliberately last — port/todo.md →
  * Phase 5) and `/changelog` (this port has published no release, so there is
  * nothing for the page to read; upstream's renders each package's
  * `CHANGELOG.md`).

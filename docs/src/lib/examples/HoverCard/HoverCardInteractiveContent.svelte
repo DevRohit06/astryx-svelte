@@ -7,7 +7,7 @@
 
 	/**
 	 * Upstream passes Heroicons' `LinkIcon`; the registry ships `externalLink`, so
-	 * this is a near-exact swap. Retires with the icon registry (TODO.md).
+	 * this is a near-exact swap. Retires with the icon registry (port/todo.md).
 	 */
 </script>
 

@@ -16,7 +16,7 @@
 	 * past `maxLength`, slices to `maxLength - 1` and appends one U+2026 (result
 	 * length `maxLength`). Upstream keeps both, uses this one in the token markup
 	 * and the other in the accessible tokenizer label, and this port keeps each at
-	 * its own call site rather than unifying them. Recorded in TODO.md's Known
+	 * its own call site rather than unifying them. Recorded in port/todo.md's Known
 	 * debts.
 	 */
 	function truncateString(value: string, limit: number): string {

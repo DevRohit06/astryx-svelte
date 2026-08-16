@@ -5,7 +5,7 @@
 	Upstream imports a Heroicon here rather than inlining the SVG, so the icon is
 	a registry substitution: `PaperClipIcon` → `copy`, the same stand-in
 	`FolderIcon` takes in the AppShell blocks. Retires with the icon registry
-	(TODO.md). Upstream's `drawerBorder` is a `CSSProperties` object; here it is a
+	(port/todo.md). Upstream's `drawerBorder` is a `CSSProperties` object; here it is a
 	style string.
 -->
 <script lang="ts">

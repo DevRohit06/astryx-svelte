@@ -499,7 +499,7 @@ export function generateCompressedIndex(
  *
  * Upstream's name is `getXdsVersion` — residue of the pre-rename `XDS` prefix
  * that `component/type.ts` carries too, and corrected here on the same reasoning
- * (TODO.md, slice 3): it is rename residue, not a documented API.
+ * (port/todo.md, slice 3): it is rename residue, not a documented API.
  * @param {string|null} coreDir
  * @returns {string}
  */

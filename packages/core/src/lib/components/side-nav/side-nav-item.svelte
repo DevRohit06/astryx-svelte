@@ -124,7 +124,7 @@
 	 * destructures a closed list with no spread, so `id`/`aria-*`/handlers — and
 	 * `xstyle`/`class`/`style` — are all discarded. We forward, as `DropdownMenu`
 	 * and `Timestamp` do. `data-testid` stays on the *item* element, which is
-	 * where upstream routes it. See TODO.md → Known debts.
+	 * where upstream routes it. See port/debts.md → Known debts.
 	 */
 	let {
 		as,

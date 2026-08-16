@@ -32,7 +32,7 @@ import {
  * below covers the one shape several consumers share verbatim.
  *
  * `borderStyle: 'none'` and `borderWidth: 0` are written out longhand upstream,
- * not as the `border` shorthand StyleX silently drops — see TODO.md → Phase 0.
+ * not as the `border` shorthand StyleX silently drops — see port/todo.md → Phase 0.
  */
 
 /** Size ramp shared by every nav item. Upstream's `NavItemSize`. */

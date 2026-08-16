@@ -7,7 +7,7 @@
 
 	/**
 	 * Upstream passes Heroicons' `InboxIcon`; the registry has no inbox glyph, so
-	 * this substitutes a built-in. Retires with the icon registry (TODO.md).
+	 * this substitutes a built-in. Retires with the icon registry (port/todo.md).
 	 */
 </script>
 

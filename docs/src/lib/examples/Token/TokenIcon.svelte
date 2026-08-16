@@ -10,7 +10,7 @@
 	 * Upstream passes Heroicons' `User`/`Star`/`Tag`/`ShieldCheck`; the registry
 	 * ships none of the four, so this substitutes built-ins — the same
 	 * substitution the demo routes make, retiring with the icon registry
-	 * (TODO.md).
+	 * (port/todo.md).
 	 */
 	const tokens: { label: string; color: 'blue' | 'yellow' | 'purple' | 'green'; icon: IconName }[] =
 		[

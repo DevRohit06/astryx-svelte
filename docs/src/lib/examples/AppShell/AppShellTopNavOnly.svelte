@@ -5,7 +5,7 @@
 	Upstream imports Heroicons here rather than inlining the SVG, so the logo is a
 	registry substitution: `CubeIcon` → `stop`. A stand-in rather than a true
 	match, the same one the demo routes make. Retires with the icon registry
-	(TODO.md).
+	(port/todo.md).
 -->
 <script lang="ts">
 	import {

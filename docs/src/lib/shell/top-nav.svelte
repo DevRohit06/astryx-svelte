@@ -47,7 +47,7 @@
 	 * **Not ported: the Community icon button** (`/community`) and upstream's
 	 * `trackSearch`/`trackClickCta` analytics calls. The first is a route outside
 	 * the v1 cut, and `nav-items.ts` already records why a link to a 404 is worse
-	 * than no link; the second has no counterpart here. Both are in TODO.md.
+	 * than no link; the second has no counterpart here. Both are in port/todo.md.
 	 *
 	 * The desktop links and the mobile hamburger both live in the DOM at all
 	 * times; a pure CSS media query decides which is visible, so the
@@ -129,7 +129,7 @@
 
 <!--
 	**The end-content row is 16px, where upstream's is 20px — a deliberate
-	divergence, recorded in TODO.md under Known debts.** `SharedTopNav` renders
+	divergence, recorded in port/debts.md under Known debts.** `SharedTopNav` renders
 	`<Search size={20} />`, `<Moon size={20} />`, `<Sun size={20} />`,
 	`<HeartHandshake size={20} />` and `<Menu size={20} />`; this port sizes all
 	of them at 16 (`Icon`'s `sm`, 1rem at a 16px root) on the maintainer's call.

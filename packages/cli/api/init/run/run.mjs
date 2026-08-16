@@ -40,7 +40,7 @@ const TEMPLATE_PAGE_FILE = '+page.svelte';
  * That module is slice 6a's and lands separately, so this resolves it lazily and
  * treats *only* a module-not-found as "no templates bundled yet" — every other
  * failure rethrows. A bare `catch` here would be the `tryLoadModule` mistake
- * TODO.md records for `resolve-theme`: it turns a broken template module into a
+ * port/todo.md records for `resolve-theme`: it turns a broken template module into a
  * silent, wrong "0 templates" answer. Self-retiring — once slice 6a lands, the
  * catch stops firing.
  *

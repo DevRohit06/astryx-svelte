@@ -23,7 +23,7 @@ import ButtonGroupHarness from './fixtures/button-group-harness.svelte';
  * trigger, and a stub reproducing that shape would be a `<Button>` with a
  * hand-placed popover next to it — which is character for character the
  * `rounds a tooltip'd trailing Button` pair two cases above, asserted against a
- * fixture we wrote rather than against the port. Recorded in TODO.md; the cases
+ * fixture we wrote rather than against the port. Recorded in port/todo.md; the cases
  * come back with `DropdownMenu`.
  *
  * **Restated: `rounds only the last member (first/middle/last)`.** Its last
@@ -59,7 +59,7 @@ import ButtonGroupHarness from './fixtures/button-group-harness.svelte';
  * than from a string retyped in this file — change `IS_LAST_ITEM` and these go
  * red.
  *
- * The `beforeAll` fetch is also the standing requirement recorded in TODO.md:
+ * The `beforeAll` fetch is also the standing requirement recorded in port/todo.md:
  * nothing in the browser project pulls the compiled stylesheet into the page.
  */
 

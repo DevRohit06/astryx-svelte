@@ -27,7 +27,7 @@
 	 * **What is deliberately not upstream's:** the social and legal blocks. Those
 	 * are Meta's accounts and Meta's terms, and this port ships neither its
 	 * trademarks nor its accounts — the "unofficial / not affiliated" notice
-	 * (TODO.md → Release & governance) is what belongs in that space instead.
+	 * (port/todo.md → Release & governance) is what belongs in that space instead.
 	 *
 	 * The second row's attribution follows the shape shadcn-svelte uses — "Built
 	 * by shadcn. Ported to Svelte by Huntabyte." — which is the established

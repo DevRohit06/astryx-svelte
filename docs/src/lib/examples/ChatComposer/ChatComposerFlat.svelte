@@ -5,7 +5,7 @@
 	Icons are registry substitutions, exactly as `ChatComposerFooterActions`
 	makes them: `SparklesIcon` → `wrench`, `Cog6ToothIcon` → `wrench`,
 	`MicrophoneIcon` → `microphone`, which is exact. Retires with the icon
-	registry (TODO.md).
+	registry (port/todo.md).
 
 	`elevation="none"` is not "the same surface, less shadow": it draws a real
 	border and re-insets the body padding by the border width, so content

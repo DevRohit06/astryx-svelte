@@ -63,7 +63,7 @@ import { useMediaQuery } from '../hooks/use-media-query.svelte.js';
  * upstream. Left as-is: the window is at most `showDelay` wide and closing on
  * mouseleave is the better of the two outcomes. Same "a one-shot flag assumes
  * exactly one intervening event" family as `useHoverCard`'s `isEscapeDismissing`,
- * which TODO.md already records.
+ * which port/todo.md already records.
  */
 
 export interface UseMenuHoverOptions {

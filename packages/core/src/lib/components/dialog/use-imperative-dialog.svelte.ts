@@ -51,7 +51,7 @@ export interface ImperativeDialogReturn {
  * `<ImperativeDialogLayer {dialog} />` — the same split `useLayer` → `<Layer>`,
  * `useTooltip` → `<TooltipLayer>`, `useKeyboardHint` → `<KeyboardHintLayer>` and
  * `useLightbox` → `<LightboxLayer>` already take. `ImperativeDialogLayer` is
- * therefore an export upstream has no counterpart for; see TODO.md → Known
+ * therefore an export upstream has no counterpart for; see port/todo.md → Known
  * debts.
  *
  * `defaultOptions` arrives as a getter, this port's standing shape for hook

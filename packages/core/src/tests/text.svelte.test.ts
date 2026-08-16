@@ -7,7 +7,7 @@ import SlotProbe from './fixtures/slot-probe.svelte';
  * Astryx's `Text/Text.test.tsx` — **3 of upstream's 30**, and the file is new
  * with this batch.
  *
- * `Text` had **no ported suite at all**, a pre-existing gap recorded in TODO.md;
+ * `Text` had **no ported suite at all**, a pre-existing gap recorded in port/todo.md;
  * the 27 cases upstream carried at 0.2.0 (rendering, `as`, the type scale,
  * truncation, `weight`/`size`/`justify`, tabular numbers, custom types) are
  * still unported and are deliberately left counted here rather than closed

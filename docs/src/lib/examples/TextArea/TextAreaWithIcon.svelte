@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `PencilSquareIcon`; the registry ships no pencil
 	 * glyph, so this substitutes a built-in — the same substitution the demo routes
-	 * make. Retires with the icon registry (TODO.md).
+	 * make. Retires with the icon registry (port/todo.md).
 	 */
 
 	let value = $state('');

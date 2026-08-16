@@ -65,7 +65,7 @@
 	 * with no spread, so `id`/`aria-*`/`data-*`/handlers and even `xstyle` are
 	 * discarded — and `tabIndex`, the one inherited attribute it does keep,
 	 * reaches only the desktop branch. We forward, as `DropdownMenu`/`Timestamp`
-	 * do; `tabindex`'s desktop-only routing is replicated. See TODO.md →
+	 * do; `tabindex`'s desktop-only routing is replicated. See port/debts.md →
 	 * Known debts.
 	 */
 	let {
@@ -183,7 +183,7 @@
 	     item — no role, no key handler. Replicated rather than corrected: adding
 	     a role would change the accessibility tree the upstream suite asserts on.
 	     A hrefless mega-menu item is a documented-but-unkeyboardable upstream
-	     shape; see TODO.md → Known debts. -->
+	     shape; see port/debts.md → Known debts. -->
 	<div
 		{...rest}
 		{onclick}

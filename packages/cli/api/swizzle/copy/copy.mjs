@@ -609,7 +609,7 @@ export async function swizzleCopy(component, options = {}) {
 
 	// Upstream strips a leading `XDS` here. That prefix is rename residue from
 	// before the Astryx rename — the same class `component/type.ts` carries and
-	// TODO.md records — and core exports no `XDS*` name on either side, so the
+	// port/todo.md records — and core exports no `XDS*` name on either side, so the
 	// strip is dropped rather than replicated. `swizzle XDSButton` is now an
 	// unknown component with suggestions, not a silent alias.
 	const name = component;

@@ -20,15 +20,15 @@ that is how they must stay here.
 
 ## Where things live
 
-| What | Path |
-|---|---|
-| Upstream per-unit barrels | `reference/astryx-upstream/packages/core/src/<Name>/index.ts` |
-| Upstream package manifest | `reference/astryx-upstream/packages/core/package.json` |
-| Upstream shared barrels | `.../src/{utils,hooks,i18n}/index.ts` |
-| Our barrel | `packages/core/src/lib/index.ts` |
-| Our subpath barrels | `packages/core/src/lib/{utils,hooks,i18n,theme}/index.ts` |
-| Our manifest | `packages/core/package.json` |
-| Built types | `packages/core/dist/**/*.d.ts` (after `pnpm -F @astryx-svelte/core prepack`) |
+| What                      | Path                                                                         |
+| ------------------------- | ---------------------------------------------------------------------------- |
+| Upstream per-unit barrels | `reference/astryx-upstream/packages/core/src/<Name>/index.ts`                |
+| Upstream package manifest | `reference/astryx-upstream/packages/core/package.json`                       |
+| Upstream shared barrels   | `.../src/{utils,hooks,i18n}/index.ts`                                        |
+| Our barrel                | `packages/core/src/lib/index.ts`                                             |
+| Our subpath barrels       | `packages/core/src/lib/{utils,hooks,i18n,theme}/index.ts`                    |
+| Our manifest              | `packages/core/package.json`                                                 |
+| Built types               | `packages/core/dist/**/*.d.ts` (after `pnpm -F @astryx-svelte/core prepack`) |
 
 ## What to check
 
@@ -54,8 +54,8 @@ worked. A local type alias used by the interface has to move up with it.
 **4. Subpath exports.** Upstream publishes one per unit — `./Button`, `./Card`,
 `./InteractiveRoleContext`, ~110 of them. We ship `.`, `./theme`, `./utils`, `./i18n`,
 `./hooks`, `./naming`, `./locales/*.json` and `./base.css`. That gap is a known, recorded
-debt rather than a new finding, so report it only as a status line — but a *newly* added
-upstream subpath, or one of ours that upstream does not have, is a finding.
+debt (`port/debts.md`) rather than a new finding, so report it only as a status line — but
+a _newly_ added upstream subpath, or one of ours that upstream does not have, is a finding.
 
 **5. The manifest ships what the CLI needs.** Astryx has no registry: the tarball is the
 registry, and the CLI reads component sources out of `node_modules`. If `files` ever stops
@@ -72,15 +72,15 @@ Check `files`, `exports`, `svelte`, `types` and `sideEffects` against upstream's
   file is the same
 - `forwardRef`/`ref` types, `mergeProps`, `mergeRefs`, `composeEventHandlers`,
   `isRenderable`, `useTheme` and `useIsomorphicLayoutEffect` — deliberately unported
-- Types with no upstream counterpart that exist *because* of a Svelte-only construct
+- Types with no upstream counterpart that exist _because_ of a Svelte-only construct
   (`LayerProps`, `TooltipLayerProps`), provided they are documented as such
 
 ## Output
 
 Lead with a count: `N missing exports, M over-exports, K props types unpublished`.
 
-| # | Symbol | Kind | Upstream (`file:line`) | Ours (`file:line` or absent) | Fix |
-|---|--------|------|------------------------|------------------------------|-----|
+| #   | Symbol | Kind | Upstream (`file:line`) | Ours (`file:line` or absent) | Fix |
+| --- | ------ | ---- | ---------------------- | ---------------------------- | --- |
 
 Kind is one of **missing export**, **over-export**, **name drift**, **missing props type**,
 **anonymous `.d.ts`**, **subpath**, or **manifest**.

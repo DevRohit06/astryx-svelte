@@ -43,7 +43,7 @@ import IconSlotProbe from './fixtures/icon-slot-probe.svelte';
  * `FieldLabel` is rendered directly wherever it takes no snippet. Its one
  * `labelIcon` case goes through `icon-slot-probe.svelte` rather than the shared
  * `slot-probe.svelte`: `labelIcon` is a `Snippet` here (this port has no
- * `renderIconSlot` — see TODO.md), and the case's assertion is specifically
+ * `renderIconSlot` — see port/todo.md), and the case's assertion is specifically
  * `querySelector('svg')`, which `slot-probe`'s `<span>` could not satisfy. The
  * probe renders upstream's `TestIcon` markup verbatim, so the assertion stands.
  *

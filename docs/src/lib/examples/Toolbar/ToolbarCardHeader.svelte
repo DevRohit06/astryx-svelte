@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `Funnel` and `Plus`. `funnel` is a direct swap;
 	 * the registry has no plus, so *Add user* substitutes a built-in. Retires with
-	 * the icon registry (TODO.md).
+	 * the icon registry (port/todo.md).
 	 */
 </script>
 

@@ -8,7 +8,7 @@
 	/**
 	 * Upstream's JSX omits the space after two of the three `</Code>` tags, so it
 	 * renders "`useState`for local state". Not replicated — an upstream typo is a
-	 * defect to document, not to copy (TODO.md records it).
+	 * defect to document, not to copy (port/todo.md records it).
 	 */
 </script>
 

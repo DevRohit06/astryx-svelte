@@ -14,7 +14,7 @@
  */
 
 /**
- * The distinction is this repo's own, written down in `TODO.md` long before
+ * The distinction is this repo's own, written down in `port/todo.md` long before
  * this script: "the drop makes an innocent file the victim and says nothing
  * about that file, while a timing failure names a case that is genuinely racing
  * something", and "do not read a run's exit code alone — the number that

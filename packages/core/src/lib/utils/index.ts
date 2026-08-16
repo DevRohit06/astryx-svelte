@@ -4,9 +4,9 @@
  *
  * Three of upstream's `utils/` modules landed earlier under `internal/` —
  * `types.ts`, `themeProps.ts`, `sharedResizeObserver.ts` — and `parseStyleKey`
- * sits with the theme compiler that is its only caller. See the note in TODO.md.
+ * sits with the theme compiler that is its only caller. See the note in port/todo.md.
  *
- * Deliberately not ported (`planning/06`): `mergeRefs`, `isRenderable`,
+ * Deliberately not ported (`port/research/06`): `mergeRefs`, `isRenderable`,
  * `mergeProps`, `composeEventHandlers` — Svelte obviates each.
  */
 

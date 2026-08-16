@@ -10,7 +10,7 @@
  *   - `init.remove` (remove/remove.mjs) — the `--remove-agents` path
  *
  * Non-interactive is a v0.3.0 fact, not a port decision: upstream removed its
- * `@clack/prompts` wizard, and `planning/02` §7.3's interactive flow is 0.1.7-era.
+ * `@clack/prompts` wizard sometime after 0.1.7 (see `port/ledger/023-cli-phase-4.md`).
  *
  * This module also re-exports the leaf symbols the CLI + tests import by name
  * (`getNextSteps`) so api/index.mjs, the command handler

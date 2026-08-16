@@ -17,7 +17,7 @@
  *
  * One section is dropped rather than adapted: upstream's "Example Apps" table
  * links five Next.js/Vite example apps in `facebook/astryx`. This port ships no
- * example apps, so the table would be five dead links. Recorded in TODO.md.
+ * example apps, so the table would be five dead links. Recorded in port/todo.md.
  */
 
 /** @type {import('@astryx-svelte/cli/authoring').ReferenceDoc} */

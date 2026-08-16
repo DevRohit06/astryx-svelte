@@ -18,7 +18,7 @@
 
 	/**
 	 * Upstream's `setSelected(prev => …)` has no counterpart here: a `$state`
-	 * binding is assigned directly, the reduction TODO.md records for every block
+	 * binding is assigned directly, the reduction port/todo.md records for every block
 	 * that threads a functional setter.
 	 */
 	const allChecked = $derived(ALL_IDS.every((id) => selected.includes(id)));

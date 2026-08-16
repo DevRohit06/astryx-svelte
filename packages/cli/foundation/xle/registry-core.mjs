@@ -219,7 +219,7 @@ export function normalizeName(name) {
  *   (`@astryxdesign/core/Button` exports `Button`, never `XDSButton`) — its
  *   layout suite only checks that the generated TSX *parses*, so the dangling
  *   identifier is never caught. Replicating it would make every generated file
- *   fail to compile, so it is corrected rather than inherited; see TODO.md.
+ *   fail to compile, so it is corrected rather than inherited; see port/todo.md.
  * - `isNode` looks for `Snippet`, the type this port's docs give renderable
  *   props, where upstream's give `ReactNode`/`ReactElement`.
  *

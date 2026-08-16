@@ -4,7 +4,7 @@
  * Upstream's barrel exports 19 hooks; this file grows as they land. Several of
  * the modules in that directory are never exported at all upstream
  * (`useIsomorphicLayoutEffect`, `useMenuHover`), and of the ones that are, the
- * purely-memoising ones are obviated by runes (`planning/06`).
+ * purely-memoising ones are obviated by runes (`port/research/06`).
  *
  * `__resetLiveRegionsForTest` is deliberately absent: upstream marks it
  * `@internal` and keeps it out of its barrel too, so it is reachable only from

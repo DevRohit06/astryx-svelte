@@ -9,7 +9,7 @@
 	 * `hasClear` widens `onChange` to accept `null`, so the parameter is annotated
 	 * on that arm. `NumberInputProps` is a discriminated union and TS will not
 	 * contextually type an inline arrow against a Svelte props object — the
-	 * limitation recorded in TODO.md.
+	 * limitation recorded in port/todo.md.
 	 */
 
 	let value = $state<number | null>(75);

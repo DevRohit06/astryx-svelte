@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `User`/`Document`/`Bell`; the registry ships
 	 * none of the three, so this substitutes built-ins — the same substitution the
-	 * demo routes make, retiring with the icon registry (TODO.md).
+	 * demo routes make, retiring with the icon registry (port/todo.md).
 	 */
 </script>
 

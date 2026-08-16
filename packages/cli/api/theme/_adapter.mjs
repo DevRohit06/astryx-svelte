@@ -4,7 +4,7 @@
  * by `scripts/generate-cli-themes.mjs`) and resolves a theme by slug. Both leaves
  * sit on this; neither reads the manifest itself.
  *
- * Worth stating plainly, because TODO.md's slice sizing assumed otherwise:
+ * Worth stating plainly, because port/todo.md's slice sizing assumed otherwise:
  * **nothing here loads a theme module.** `theme list` and `theme add` are a JSON
  * read and a file copy. The "plain Node cannot load this port's theme packages"
  * problem belongs to `clients/cli/lib/resolve-theme.mjs` (which answers "what

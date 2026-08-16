@@ -11,7 +11,7 @@ import NumberInput from '$lib/components/number-input/number-input.svelte';
  * `CodeBlock`'s client half is `code-block-pre-whitespace.svelte.test.ts`.
  * `NumberInput`'s **no longer has one**: `number-input-spread-value.svelte.test.ts`
  * was retired at 0.4.1 (#4896) when `type="number"` became a text-backed
- * spinbutton and took the `badInput` hazard with it — see TODO.md's batch-5
+ * spinbutton and took the `badInput` hazard with it — see port/todo.md's batch-5
  * entry. That makes these two cases the *only* remaining pin on the
  * server-only `value` spread, which is why they matter more now than when they
  * were written: without the spread a server-rendered field comes back empty,

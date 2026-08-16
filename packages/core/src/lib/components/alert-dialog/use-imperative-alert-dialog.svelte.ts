@@ -35,7 +35,7 @@ export interface ImperativeAlertDialogReturn {
  * `<Layer>`, `useTooltip` → `<TooltipLayer>`, `useKeyboardHint` →
  * `<KeyboardHintLayer>` and `useLightbox` → `<LightboxLayer>` already take.
  * `ImperativeAlertDialogLayer` is therefore an export upstream has no
- * counterpart for; see TODO.md → Known debts.
+ * counterpart for; see port/debts.md → Known debts.
  *
  * Unlike `useImperativeDialog`, this hook takes no default options: every
  * `show()` replaces the bag outright rather than merging onto it, because

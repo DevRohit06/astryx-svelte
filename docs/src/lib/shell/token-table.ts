@@ -111,7 +111,7 @@ export function tokenTableKind(
  * port renders: `light-dark(rgba(5, 54, 89, 0.1), rgba(223, 226, 229, 0.2))`
  * splits at the comma inside `rgba(`, so `--color-neutral` reads
  * `rgba(5 / 54, 89, 0.1), rgba(…)` — a value that is not a colour. Upstream's
- * own scanner, applied to upstream's other splitter. See TODO.md → Known debts.
+ * own scanner, applied to upstream's other splitter. See port/debts.md → Known debts.
  */
 function topLevelCommaIndex(value: string): number {
 	let depth = 0;
@@ -255,7 +255,7 @@ const ROOT_FONT_SIZE_PX = 16;
  * Upstream writes `Math.round(parseFloat(leading) * parseFloat(fontSize))`,
  * which multiplies a ratio by a *rem* count: `--text-heading-1-size` is
  * `1.5rem`, so its H1 row reads `1.3333 (2px)` on the live site. Converting rem
- * to px first is the same expression with the unit honoured. See TODO.md →
+ * to px first is the same expression with the unit honoured. See port/debts.md →
  * Known debts.
  */
 function lineBoxPx(fontSize: string, leading: string): number | null {

@@ -8,7 +8,7 @@
 
 	**The revenue chart is deferred, not dropped.** Upstream renders `Chart` /
 	`ChartGrid` / `ChartAxis` with the `area()` and `line()` series helpers from
-	`@astryxdesign/charts`, a package this port has never started (TODO.md,
+	`@astryxdesign/charts`, a package this port has never started (port/todo.md,
 	Phase 6). There is no `@astryx-svelte/charts` to import from, so the chart
 	block below is transcribed in place as a comment rather than either silently
 	omitted or pointed at a package that does not resolve — a scaffolded page

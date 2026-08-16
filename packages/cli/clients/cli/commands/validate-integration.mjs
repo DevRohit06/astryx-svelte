@@ -51,7 +51,7 @@ function printHuman(data) {
 // three in `upgrade`'s adapter, `build` and `search`) and hard-codes the bin in
 // every other hint, this string included. Following that site by site is the
 // parity rule; a repo-wide sweep would diverge ~14 hints for no gain. The bin
-// name is the only thing that changes here. Settled in TODO.md, slice 7.
+// name is the only thing that changes here. Settled in port/todo.md, slice 7.
 const NO_MANIFEST_GUIDANCE =
 	'No astryx-svelte.integration.* found next to package.json. ' +
 	'To validate an installed integration: astryx-svelte validate-integration <package>';

@@ -6,7 +6,7 @@
 	are registry substitutions: `PaperAirplaneIcon` → `arrowUp`, `CheckIcon` →
 	`check`, `SparklesIcon` → `wrench`, `XCircleIcon` → `close`. Stand-ins rather
 	than true matches, the same ones the demo routes make — `arrowUp` and `check`
-	happen to be exact. Retires with the icon registry (TODO.md).
+	happen to be exact. Retires with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import { ChatSendButton, Icon, Stack, Text } from '@astryx-svelte/core';

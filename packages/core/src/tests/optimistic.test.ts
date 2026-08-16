@@ -60,7 +60,7 @@ describe('createOptimistic', () => {
 		expect(optimistic.isPending).toBe(false);
 	});
 
-	// The property `planning/01` §6.3 gets wrong: React reverts when the
+	// The subtlety easy to get wrong: React reverts when the
 	// transition *ends*, not only when it rejects. A revert-on-reject
 	// implementation passes every other case in this file and fails this one.
 	it('reverts on success, not only on failure', async () => {

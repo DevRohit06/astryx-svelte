@@ -52,7 +52,7 @@
 
 	Upstream's `isEditingTitle` is only ever set to `false` — nothing flips it
 	true, so the inline title input is unreachable. Reproduced rather than fixed:
-	upstream bugs are recorded in TODO.md, not repaired here.
+	upstream bugs are recorded in port/todo.md, not repaired here.
 -->
 <script lang="ts" module>
 	let nextId = 5;

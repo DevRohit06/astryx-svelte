@@ -14,7 +14,7 @@
 // on so the theme definition can stay TypeScript. `pnpm -r build` orders the
 // first; the `--experimental-strip-types` flag in package.json handles the
 // second. That flag is a no-op from Node 22.18, where stripping is on by
-// default, but the floor here is 22.17 (TODO.md → Phase 0).
+// default, but the floor here is 22.17 (port/todo.md → Phase 0).
 
 import fs from 'node:fs';
 import path from 'node:path';

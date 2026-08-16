@@ -8,7 +8,7 @@
 	/**
 	 * Upstream passes Heroicons' `TagIcon`; the registry has no tag glyph, so this
 	 * substitutes a built-in — the same substitution the demo routes make,
-	 * retiring with the icon registry (TODO.md).
+	 * retiring with the icon registry (port/todo.md).
 	 */
 </script>
 

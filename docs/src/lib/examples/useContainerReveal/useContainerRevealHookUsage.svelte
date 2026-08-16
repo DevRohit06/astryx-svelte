@@ -21,7 +21,7 @@
 
 	Upstream passes Heroicons' `Pencil`/`Trash`; the registry ships neither, so
 	this substitutes `wrench`/`close` — the same substitution `ButtonWithIcon`
-	makes, retiring with the icon registry (TODO.md).
+	makes, retiring with the icon registry (port/todo.md).
 -->
 <script lang="ts">
 	import { Button, Card, Icon, Item, Stack, Text, useContainerReveal } from '@astryx-svelte/core';

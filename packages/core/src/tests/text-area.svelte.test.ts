@@ -56,7 +56,7 @@ import { TIMER_BUDGET } from './timer-budget.js';
  * popover is `display:none` for real here.
  *
  * `startIcon` is a `Snippet` rather than `ReactNode | IconType` (this port has
- * no `renderIconSlot` — see TODO.md), so the two cases that pass one go through
+ * no `renderIconSlot` — see port/todo.md), so the two cases that pass one go through
  * `icon-slot-probe.svelte`, which renders upstream's `TestIcon` markup verbatim
  * as a snippet. Both assert `querySelector('svg')`, which it satisfies exactly.
  *

@@ -132,7 +132,7 @@
 	 * outline's active link. Replicated rather than fixed: minting a per-instance
 	 * name would need the name in an inline style, which is the shape
 	 * `useLayer.attachTrigger` has to repair against Svelte's whole-attribute
-	 * `style` writes. Recorded in TODO.md.
+	 * `style` writes. Recorded in port/todo.md.
 	 *
 	 * @example
 	 * ```svelte

@@ -17,7 +17,7 @@ import HoverCardParagraph from './fixtures/hover-card-paragraph.svelte';
  * — and that half is asserted more strictly than upstream's, by diffing the
  * whole string rather than looking for one attribute in it. Upstream's fourth
  * case, `server markup matches the first client render`, is dropped for the same
- * reason, and is recorded in TODO.md.
+ * reason, and is recorded in port/todo.md.
  */
 describe('HoverCard — SSR', () => {
 	// Regression coverage for the hydration mismatch (#3107). The floating
