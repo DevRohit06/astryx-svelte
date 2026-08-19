@@ -1,0 +1,394 @@
+<script lang="ts" module>
+	import type { Snippet } from 'svelte';
+	import type { BaseProps } from '../../base-props.js';
+	import type { StyleArg } from '../../internal/sx.js';
+	// Aliased locally only so the imports and the re-exports below do not name
+	// the same bindings twice in one module.
+	import type { BottomSheetHeight as BottomSheetHeightValue } from './bottom-sheet-panel.stylex.js';
+	import type { BottomSheetSnapPoint as BottomSheetSnapPointValue } from './snap-offsets.js';
+
+	// Both types live beside this module on either side, and upstream's
+	// `BottomSheetPanel.tsx` re-exports them from the component module, so this
+	// port does too — `BottomSheet.tsx` reads them from here.
+	export type { BottomSheetHeight } from './bottom-sheet-panel.stylex.js';
+	export type { BottomSheetSnapPoint } from './snap-offsets.js';
+
+	export type BottomSheetPanelMotion = 'entering' | 'aligning' | 'fading' | 'exiting';
+
+	export type BottomSheetPanelState =
+		| { kind: 'hidden' }
+		| { kind: 'open'; entering: boolean }
+		| {
+				kind: 'retained';
+				motion: 'covered' | 'aligning' | 'fading';
+				alignmentOffset: number;
+		  }
+		| { kind: 'exiting' };
+
+	export interface BottomSheetPanelProps extends BaseProps<HTMLDivElement> {
+		/**
+		 * Upstream calls this prop `state`. Renamed here because a local binding
+		 * named `state` makes every `$state` rune in the same scope ambiguous with a
+		 * store subscription — Svelte errors on it. This component is internal and
+		 * unexported, so no published API changes.
+		 */
+		panelState: BottomSheetPanelState;
+		height: BottomSheetHeightValue | number | string;
+		children: Snippet;
+		snapPoints?: ReadonlyArray<BottomSheetSnapPointValue>;
+		isSwipeDismissAllowed?: boolean;
+		/** Whether the host has locked page scrolling (a modal, scrim-backed sheet). */
+		isPageScrollLocked?: boolean;
+		onDismiss: () => void;
+		onScrimOpacity: (opacity: number) => void;
+		onElementChange?: (element: HTMLDivElement | null) => void;
+		onMotionStart?: (motion: BottomSheetPanelMotion) => void;
+		onMotionComplete?: (motion: BottomSheetPanelMotion) => void;
+		tabindex?: number;
+		xstyle?: StyleArg;
+	}
+
+	function motionForState(panelState: BottomSheetPanelState): BottomSheetPanelMotion | null {
+		if (panelState.kind === 'open') {
+			return panelState.entering ? 'entering' : null;
+		}
+		if (panelState.kind === 'retained') {
+			return panelState.motion === 'covered' ? null : panelState.motion;
+		}
+		return panelState.kind === 'exiting' ? 'exiting' : null;
+	}
+</script>
+
+<script lang="ts">
+	import { cx, mergeStyle } from '../../internal/sx.js';
+	import { themeProps } from '../../internal/theme-props.js';
+	import { useDevWarning } from '../../hooks/use-dev-warning.svelte.js';
+	import { isValidSnapPoint, resolveSnapPoints } from './snap-offsets.js';
+	import { useMobileKeyboard } from './use-mobile-keyboard.svelte.js';
+	import { useSheetGestures } from './use-sheet-gestures.svelte.js';
+	import { waitForTransition } from './wait-for-transition.js';
+	import {
+		HEIGHT_BUDGETS,
+		MOBILE_KEYBOARD_BOTTOM_CLEARANCE,
+		OVERSCROLL_PADDING,
+		bottomSheetBodyAttrs,
+		bottomSheetHandleBarAttrs,
+		bottomSheetHandlePillAttrs,
+		bottomSheetPanelAttrs
+	} from './bottom-sheet-panel.stylex.js';
+
+	/**
+	 * Ported from Astryx's `BottomSheet/BottomSheetPanel.tsx`.
+	 *
+	 * The visual and gesture surface shared by every `BottomSheet` host. It owns
+	 * everything intrinsic to a sheet surface: height budgets, drag and snap
+	 * gestures, the handle and scrolling body, motion styles, and transition
+	 * completion. It deliberately does not own a dialog, focus, inert state, or
+	 * switcher registration; those belong to the hosting controller.
+	 *
+	 * Not exported from the barrel — upstream keeps it internal.
+	 */
+	let {
+		panelState,
+		height,
+		children,
+		snapPoints,
+		class: className,
+		style: styleProp,
+		tabindex,
+		xstyle,
+		isSwipeDismissAllowed = true,
+		isPageScrollLocked = false,
+		onDismiss,
+		onScrimOpacity,
+		onElementChange,
+		onMotionStart,
+		onMotionComplete,
+		...rest
+	}: BottomSheetPanelProps = $props();
+
+	let element = $state<HTMLDivElement | null>(null);
+
+	// Plain `let`s: motion bookkeeping nothing renders from.
+	// Seeded at init on purpose — upstream's `useRef(state)` does the same, and the
+	// `$effect.pre` below is what keeps it current from then on.
+	// svelte-ignore state_referenced_locally
+	let previousState: BottomSheetPanelState = panelState;
+	let reactivatedEntrance = false;
+	let startedMotion: BottomSheetPanelMotion | null = null;
+	let pendingMotionComplete: BottomSheetPanelMotion | null = null;
+
+	const isEntering = $derived(panelState.kind === 'open' && panelState.entering);
+	const isInteractive = $derived(panelState.kind === 'open');
+	const isPresented = $derived(panelState.kind !== 'hidden');
+	const isRetained = $derived(panelState.kind === 'retained');
+	const isInactive = $derived(isRetained || panelState.kind === 'exiting');
+	const isClosing = $derived(panelState.kind === 'exiting');
+	const isFading = $derived(
+		isRetained && panelState.kind === 'retained' && panelState.motion === 'fading'
+	);
+	const alignmentOffset = $derived(panelState.kind === 'retained' ? panelState.alignmentOffset : 0);
+
+	// Upstream computes this during render, comparing against the previous state
+	// it holds in a ref. `$effect.pre` is the counterpart: it runs before the DOM
+	// updates, which is the same point in the cycle.
+	$effect.pre(() => {
+		const wasEntering = previousState.kind === 'open' && previousState.entering;
+		if (isEntering && !wasEntering) {
+			reactivatedEntrance = previousState.kind === 'retained';
+		} else if (!isEntering) {
+			reactivatedEntrance = false;
+		}
+		previousState = panelState;
+	});
+
+	// The resolver is rebuilt only when the *points* change, not on every drag
+	// frame: its identity is what tells `useSheetGestures` the stops moved. It
+	// reads `snapPoints` at call time, so it resolves against whatever the
+	// viewport is then rather than what it was when the resolver was built.
+	//
+	// Measure the same viewport the height budgets are written against. Those are
+	// `dvh`, which the virtual keyboard does not shrink, so reading
+	// `visualViewport` here would make the two disagree by exactly the keyboard's
+	// height: every detent would move while the sheet it measures did not. A
+	// keyboard is `useMobileKeyboard`'s business — it holds the sheet still and
+	// scrolls the body — and it does not redefine the sheet's detents.
+	function layoutViewportHeight(): number {
+		return typeof window === 'undefined' ? 0 : window.innerHeight;
+	}
+
+	/**
+	 * A stable identity for a set of snap points. Type-tagged, so the fraction
+	 * `0.5` and the (invalid) string `'0.5'` cannot collide on one key.
+	 */
+	const snapPointsKey = $derived(
+		(snapPoints ?? []).map((point) => `${typeof point}:${point}`).join('|')
+	);
+
+	const snapHeights = $derived.by(() => {
+		// Read the key so a change to the points rebuilds the resolver; the points
+		// themselves are read inside it, at call time.
+		const key = snapPointsKey;
+		if (key === '') {
+			return undefined;
+		}
+		return () => resolveSnapPoints(snapPoints ?? [], layoutViewportHeight());
+	});
+
+	const ignoredSnapPointsMessage = $derived.by(() => {
+		const ignored = (snapPoints ?? []).filter((point) => !isValidSnapPoint(point));
+		return ignored.length === 0
+			? ''
+			: `snapPoints ignored ${JSON.stringify(ignored)}. A snap point is a viewport fraction above 0 and up to 1 (0.5 is half the screen), a px length ('320px'), or a percentage ('50%').`;
+	});
+
+	useDevWarning(
+		'BottomSheet',
+		() => ignoredSnapPointsMessage,
+		() => ignoredSnapPointsMessage !== ''
+	);
+
+	const gestures = useSheetGestures({
+		isOpen: () => isInteractive,
+		canDismiss: () => isSwipeDismissAllowed,
+		offscreenBlockEndInset: () => OVERSCROLL_PADDING,
+		onDismiss: () => onDismiss(),
+		snapHeights: () => snapHeights,
+		onScrimOpacity: (opacity) => onScrimOpacity(opacity)
+	});
+
+	useMobileKeyboard({
+		body: () => gestures.bodyElement,
+		bottomClearance: () => MOBILE_KEYBOARD_BOTTOM_CLEARANCE,
+		isEnabled: () => height === 'tall',
+		isFullyExpanded: () => gestures.settledOffset === 0,
+		isPageScrollLocked: () => isPageScrollLocked,
+		isSheetTraveling: () => gestures.isDragging && gestures.dragOffset !== gestures.settledOffset,
+		isOpen: () => isInteractive,
+		isPresented: () => isPresented,
+		sheet: () => element
+	});
+
+	$effect(() => {
+		onElementChange?.(element);
+	});
+
+	const motion = $derived(motionForState(panelState));
+
+	$effect.pre(() => {
+		const current = motion;
+		if (current == null) {
+			return;
+		}
+		startedMotion = null;
+		pendingMotionComplete = null;
+		if (current === 'entering' && reactivatedEntrance) {
+			pendingMotionComplete = current;
+			return;
+		}
+		return waitForTransition(element, current === 'fading' ? 'opacity' : 'transform', () => {
+			if (startedMotion === current) {
+				onMotionComplete?.(current);
+			} else {
+				pendingMotionComplete = current;
+			}
+		});
+	});
+
+	// The snap is transform-only; the layout height reconciles when it lands.
+	// `waitForTransition` — the same helper the motion states use — resolves that
+	// even when no `transitionend` is coming: inline or computed `transition:
+	// none`, a zero duration, and a timer backstop otherwise.
+	$effect.pre(() => {
+		if (gestures.settlingLayoutOffset == null) {
+			return;
+		}
+		return waitForTransition(element, 'transform', gestures.completeScrollAreaSettle);
+	});
+
+	$effect(() => {
+		const current = motion;
+		if (current == null) {
+			return;
+		}
+		onMotionStart?.(current);
+		startedMotion = current;
+		if (pendingMotionComplete === current) {
+			pendingMotionComplete = null;
+			onMotionComplete?.(current);
+		}
+		return () => {
+			if (startedMotion === current) {
+				startedMotion = null;
+			}
+			if (pendingMotionComplete === current) {
+				pendingMotionComplete = null;
+			}
+		};
+	});
+
+	const isNamedHeight = $derived(typeof height === 'string' && height in HEIGHT_BUDGETS);
+	const budget = $derived(
+		isNamedHeight
+			? HEIGHT_BUDGETS[height as BottomSheetHeightValue]
+			: typeof height === 'number'
+				? `${height}px`
+				: (height as string)
+	);
+
+	// The sheet's travel is split across two properties: `layoutOffset` is the
+	// part the scrolling area gives up as layout height, and the remainder is a
+	// compositor transform. Live gestures and snaps only ever move the transform —
+	// the layout height changes at rest, in one reconciling render whose visible
+	// geometry is identical (see `use-sheet-gestures`).
+	//   - dragging above the base restores the full height below the viewport
+	//   - a peek settles with layout 0, so it slides rather than reflowing
+	const geometry = $derived.by(() => {
+		if (gestures.sheetHeight <= 0) {
+			return {
+				transform: undefined as string | undefined,
+				height: undefined as string | undefined
+			};
+		}
+		const layoutOffset = gestures.isDragging
+			? gestures.dragOffset < gestures.settledOffset
+				? 0
+				: gestures.settledLayoutOffset
+			: (gestures.settlingLayoutOffset ?? gestures.settledLayoutOffset);
+		const activeOffset = gestures.isDragging ? gestures.dragOffset : gestures.settledOffset;
+		const translation = activeOffset - layoutOffset;
+
+		// At layout 0 the sheet is its natural height, so leave that to CSS — `hug`
+		// sheets must stay fit-content. While the sheet is in motion it is pinned in
+		// px instead: content reflowing mid-gesture would move the surface out from
+		// under the finger, or under the snap.
+		const isTraveling = gestures.isDragging || gestures.settlingLayoutOffset != null;
+		return {
+			transform: translation !== 0 ? `translateY(${translation}px)` : undefined,
+			height:
+				layoutOffset > 0 || isTraveling
+					? `${Math.max(0, gestures.sheetHeight - Math.max(0, layoutOffset))}px`
+					: undefined
+		};
+	});
+
+	const retainedTransform = $derived(
+		alignmentOffset > 0
+			? [geometry.transform, `translateY(${alignmentOffset}px)`].filter(Boolean).join(' ')
+			: geometry.transform
+	);
+
+	const panelAttrs = $derived(
+		bottomSheetPanelAttrs(
+			isClosing,
+			isFading,
+			isInactive,
+			height === 'hug',
+			height !== 'hug',
+			xstyle
+		)
+	);
+	const theme = themeProps('bottom-sheet');
+	const handleBarAttrs = bottomSheetHandleBarAttrs();
+	const handlePillAttrs = bottomSheetHandlePillAttrs();
+	const bodyAttrs = $derived(bottomSheetBodyAttrs(height === 'tall'));
+
+	/** The panelState-dependent half of the inline style, as upstream's spread is. */
+	const stateStyle = $derived(
+		isInteractive
+			? [
+					gestures.contentProps.style,
+					geometry.transform && `transform: ${geometry.transform}`,
+					geometry.height && `height: ${geometry.height}`
+				]
+			: isRetained
+				? [
+						retainedTransform && `transform: ${retainedTransform}`,
+						geometry.height && `height: ${geometry.height}`
+					]
+				: isClosing
+					? [geometry.height && `height: ${geometry.height}`]
+					: []
+	);
+
+	const inlineStyle = $derived(
+		[`--_sheet-budget: ${budget}`, ...stateStyle.filter(Boolean)].join('; ')
+	);
+</script>
+
+<div
+	{...rest}
+	bind:this={element}
+	tabindex={tabindex ?? -1}
+	{...theme}
+	{...gestures.sheetAttachment}
+	class={cx(theme.class, panelAttrs.class, className)}
+	style={mergeStyle(mergeStyle(panelAttrs.style, inlineStyle), styleProp as string | undefined)}
+>
+	<!--
+		`handleProps` carries its own `style` (the touch-action and grab cursor the
+		drag needs), so it is merged rather than spread over the handle bar's own —
+		upstream's spread order lets one silently win, which is only harmless there
+		because the stylex half happens to be empty.
+	-->
+	<div
+		class={handleBarAttrs.class}
+		{...gestures.handleProps}
+		style={mergeStyle(handleBarAttrs.style, gestures.handleProps.style)}
+		aria-hidden="true"
+	>
+		<div class={handlePillAttrs.class} style={handlePillAttrs.style}></div>
+	</div>
+	<div
+		class={bodyAttrs.class}
+		style={mergeStyle(
+			bodyAttrs.style,
+			gestures.scrollPreservationInset > 0
+				? `padding-block-end: ${gestures.scrollPreservationInset}px`
+				: undefined
+		)}
+		{...gestures.bodyProps}
+	>
+		{@render children()}
+	</div>
+</div>
