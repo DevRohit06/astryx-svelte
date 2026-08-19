@@ -10,9 +10,10 @@
  * astryx-svelte --json theme build <file> --check   -> theme.build.check
  * astryx-svelte --json theme list                   -> theme.list
  * astryx-svelte --json theme add <slug>             -> theme.add
+ * astryx-svelte --json theme template               -> theme.template
  * (file not found / parse error)                    -> CLIError
  *
- * @position api — colocated typedefs for api/theme/{theme,build,add,list,_adapter}
+ * @position api — colocated typedefs for api/theme/{theme,build,add,list,template,_adapter}
  */
 
 /**
@@ -50,6 +51,15 @@
  * @typedef {object} ThemeAddResponse
  * @property {'theme.add'} type
  * @property {{slug: string, displayName: string, maintained: boolean, outputDir: string, entry: string, exportName: string, files: string[]}} data
+ */
+
+/**
+ * astryx-svelte --json theme template
+ * `written: false` with `reason: 'exists'` is a success: the command is safe to
+ * re-run, and an edited template is the consumer's file to keep.
+ * @typedef {object} ThemeTemplateResponse
+ * @property {'theme.template'} type
+ * @property {{path: string, written: boolean, reason: 'exists' | null}} data
  */
 
 // Make this a module so the @typedefs above are importable as types via

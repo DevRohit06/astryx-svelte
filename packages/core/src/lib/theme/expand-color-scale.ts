@@ -26,6 +26,9 @@
  * expander currently ships as a published utility with no in-repo caller. The
  * five upstream cases covering that integration are named as dropped in the test
  * file rather than silently missing.
+ *
+ * SYNC: When modified, update:
+ * - /packages/cli/assets/theme.template.ts (the annotated field reference)
  */
 
 import { contrastRatio } from './contrast.js';

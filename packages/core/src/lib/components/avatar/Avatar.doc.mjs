@@ -39,6 +39,15 @@ export default {
 				className: 'astryx-avatar-status-dot-glyph',
 				visualProps: ['shape']
 			}
+		],
+		vars: [
+			{
+				name: '--_avatar-group-overlap',
+				description:
+					'Negative inline offset applied to every avatar after the first when avatars are stacked in an AvatarGroup. Set from the group size; a more negative value tightens the stack.',
+				default: 'set at runtime from the group avatar size (px)',
+				private: true
+			}
 		]
 	},
 	usage: {
@@ -123,9 +132,9 @@ export default {
 		},
 		{
 			name: 'size',
-			type: "'sm' | 'md' | 'lg' | 'xl' | 'xsm' | 16 | 20 | 24 | 32 | 36 | 40 | 48 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
+			type: "'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 32 | 36 | 40 | 48 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
 			description:
-				"Avatar size. Use a named size ('xsm' 20px, 'sm' 24px, 'md' 36px, 'lg' 48px, 'xl' 128px) or a numeric pixel value. Avatar shares Icon's abbreviated scale, but its tiers are larger because avatars align with media rather than glyphs.",
+				"Avatar size. Use a named size ('xsm' 20px, 'sm' 24px, 'md' 36px, 'lg' 48px, 'xl' 128px) or a numeric pixel value. Avatar shares Icon's abbreviated scale, but its tiers are larger because avatars align with media rather than glyphs. Inside an AvatarGroup the group's size wins and this prop is ignored.",
 			default: "'md'"
 		},
 		{

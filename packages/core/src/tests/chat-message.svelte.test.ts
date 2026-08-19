@@ -5,6 +5,7 @@ import ChatMessageMetadata from '$lib/components/chat/chat-message-metadata.svel
 import ChatSystemMessage from '$lib/components/chat/chat-system-message.svelte';
 import ChatListProbe from './fixtures/chat-list-probe.svelte';
 import ChatMessageProbe from './fixtures/chat-message-probe.svelte';
+import ChatGhostProbe from './fixtures/chat-ghost-bubble-probe.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
@@ -147,6 +148,86 @@ describe('ChatMessageBubble', () => {
 			props: { sender: 'assistant', text: 'Hi', bubbleRest: { 'data-testid': 'my-bubble' } }
 		});
 		expect(screen.container.querySelector('[data-testid="my-bubble"]')).not.toBeNull();
+	});
+
+	// -- 0.4.2: ghost alignment and the width cap (#2574) ----------------------
+
+	/**
+	 * Upstream's `sharedClasses`. StyleX emits one atomic class per declaration,
+	 * so two elements share a class exactly when they share a declaration — which
+	 * is how "these two line up" is asserted without measuring geometry.
+	 */
+	function sharedClasses(a: Element, b: Element): string[] {
+		const bClasses = new Set(Array.from(b.classList));
+		return Array.from(a.classList).filter((c) => bClasses.has(c));
+	}
+
+	function nameSlotIn(container: HTMLElement): Element {
+		const el = container.querySelector('[data-chat-name]');
+		if (!el) {
+			throw new Error('expected a bubble name slot');
+		}
+		return el;
+	}
+
+	it('ghost variant aligns custom content with the bubble text column (#2574)', async () => {
+		// Repro from the issue: a raw child renders flush with the message edge —
+		// it carries none of the inset the bubble's name slot gets.
+		const screen = await render(ChatGhostProbe, {
+			props: { name: 'Navi', hasRawChild: true, ghostTestId: 'ghost' }
+		});
+		const nameSlot = nameSlotIn(screen.container);
+		const raw = screen.container.querySelector('[data-testid="raw"]')!;
+		const ghost = screen.container.querySelector('[data-testid="ghost"]')!;
+
+		// Unwrapped custom content: no shared inset — the misalignment case.
+		expect(sharedClasses(raw, nameSlot)).toEqual([]);
+		// Ghost-wrapped content: shares the bubble slot's paddingInline
+		// declaration, so its text column matches the filled bubble exactly.
+		expect(sharedClasses(ghost, nameSlot).length).toBeGreaterThan(0);
+	});
+
+	it('ghost inset tracks message density', async () => {
+		async function insetAtDensity(density: 'balanced' | 'spacious') {
+			const screen = await render(ChatGhostProbe, {
+				props: { density, name: 'Navi', ghostTestId: `ghost-${density}` }
+			});
+			return sharedClasses(
+				screen.container.querySelector(`[data-testid="ghost-${density}"]`)!,
+				nameSlotIn(screen.container)
+			);
+		}
+
+		const balancedInset = await insetAtDensity('balanced');
+		const spaciousInset = await insetAtDensity('spacious');
+
+		// Both densities align with their own bubble's slot padding...
+		expect(balancedInset.length).toBeGreaterThan(0);
+		expect(spaciousInset.length).toBeGreaterThan(0);
+		// ...and spacious uses a wider inset than balanced.
+		expect(spaciousInset).not.toEqual(balancedInset);
+	});
+
+	it('width prop replaces the default width cap', async () => {
+		const screen = await render(ChatGhostProbe, {
+			props: { cappedTestId: 'capped', ghostTestId: 'full', ghostWidth: '100%' }
+		});
+		const capped = screen.container.querySelector('[data-testid="capped"]') as HTMLElement;
+		const full = screen.container.querySelector('[data-testid="full"]') as HTMLElement;
+
+		// Default bubbles keep the cap; a width bubble replaces it with none.
+		expect(getComputedStyle(capped).maxWidth).toMatch(/^max\(80%,\s*280px\)$/);
+		expect(getComputedStyle(full).maxWidth).toBe('none');
+		// The dynamic width value is set on the element (string passes through).
+		expect(full.getAttribute('style')).toContain('100%');
+	});
+
+	it('numeric width is treated as pixels', async () => {
+		const screen = await render(ChatGhostProbe, {
+			props: { cappedTestId: 'fixed', cappedWidth: 420 }
+		});
+		const fixed = screen.container.querySelector('[data-testid="fixed"]')!;
+		expect(fixed.getAttribute('style')).toContain('420px');
 	});
 });
 

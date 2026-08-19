@@ -168,13 +168,17 @@ export const docs = {
 			content: [
 				{
 					type: 'prose',
-					text: 'Scaffold one with the CLI (recommended) or create it manually with defineTheme. Only override tokens that differ from defaults; omitted tokens use the design system defaults.'
+					text: 'Start from a theme we ship, or write one from scratch with defineTheme. Only override tokens that differ from defaults; omitted tokens use the design system defaults.'
 				},
 				{
 					type: 'code',
 					lang: 'bash',
-					label: 'Scaffold from a published theme',
-					code: 'astryx-svelte theme add neutral'
+					label: 'Browse, then copy a theme in as editable source',
+					code: 'astryx-svelte theme list\nastryx-svelte theme add stone'
+				},
+				{
+					type: 'prose',
+					text: 'For an annotated map of the whole surface — every defineTheme field, the token families, and the component override syntax, each with the CLI command that prints its reference — run `astryx-svelte theme template`. It writes `theme.template.ts` into your project to read and copy from (`astryx-svelte init --features theme` writes it as part of project setup).'
 				}
 			]
 		},
@@ -307,11 +311,16 @@ export const brandTheme = defineTheme({
 		base: { borderRadius: '20px', padding: '24px' }
 	},
 	button: {
-		base: { borderRadius: '9999px', textTransform: 'uppercase' },
-		'variant:ghost': { borderWidth: '2px', borderStyle: 'solid' },
-		// Some components have public CSS vars for properties that don't map
-		// to standard CSS. Set these directly.
-		'--button-press-scale': 'scale(0.95)'
+		base: {
+			borderRadius: '9999px',
+			textTransform: 'uppercase',
+			// Some components have public CSS vars for properties that don't map
+			// to standard CSS. Set these directly. Take the name from
+			// \`astryx-svelte component <Name>\` — a var the component does not
+			// define compiles to CSS that never applies.
+			'--button-focus-offset': '3px'
+		},
+		'variant:ghost': { borderWidth: '2px', borderStyle: 'solid' }
 	}
 }`
 				},

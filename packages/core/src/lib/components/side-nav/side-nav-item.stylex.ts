@@ -1,8 +1,8 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { navItemStyles, type NavItemSize } from '../nav-item/nav-item.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import {
-	borderVars,
 	colorVars,
 	durationVars,
 	easeVars,
@@ -63,7 +63,10 @@ const styles = stylex.create({
 		display: 'grid',
 		gridTemplateRows: '1fr',
 		transitionProperty: 'grid-template-rows',
-		transitionDuration: durationVars['--duration-medium'],
+		transitionDuration: {
+			default: durationVars['--duration-medium'],
+			'@media (prefers-reduced-motion: reduce)': '0s'
+		},
 		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	childrenCollapsed: {
@@ -86,7 +89,10 @@ const styles = stylex.create({
 		// target, not the glyph size, so keep the glyph on the inherited size.
 		fontSize: 'inherit',
 		transitionProperty: 'transform',
-		transitionDuration: durationVars['--duration-fast'],
+		transitionDuration: {
+			default: durationVars['--duration-fast'],
+			'@media (prefers-reduced-motion: reduce)': '0s'
+		},
 		transitionTimingFunction: easeVars['--ease-standard'],
 		flexShrink: 0
 	},
@@ -122,6 +128,7 @@ const styles = stylex.create({
 	splitAction: {
 		display: 'flex',
 		alignItems: 'center',
+		alignSelf: 'stretch',
 		gap: spacingVars['--spacing-2'],
 		flex: 1,
 		minWidth: 0,
@@ -140,14 +147,22 @@ const styles = stylex.create({
 		cursor: 'pointer'
 	},
 	// Popover surface for collapsed items with children
+	// No border and no background: `usePopover` paints the panel this renders
+	// into. Drawing a second surface here put square corners inside its rounded
+	// ones. The radius matches so a theme retargeting `--radius-container`
+	// keeps the two in step.
 	popoverSurface: {
-		borderWidth: borderVars['--border-width'],
-		borderStyle: 'solid',
-		borderColor: colorVars['--color-border'],
+		borderRadius: radiusVars['--radius-container'],
 		paddingBlock: spacingVars['--spacing-1'],
 		paddingInline: spacingVars['--spacing-1'],
-		marginInlineStart: spacingVars['--spacing-1'],
 		minWidth: 180
+	},
+	// The gap from the rail belongs on the positioned layer, where
+	// `DropdownMenu` keeps it. On the content div it insets the content instead,
+	// leaving the panel flush against the rail.
+	popoverGap: {
+		marginInlineStart: spacingVars['--spacing-1'],
+		marginInlineEnd: spacingVars['--spacing-1']
 	},
 	popoverHeader: {
 		paddingInline: spacingVars['--spacing-2'],
@@ -168,18 +183,38 @@ export function sideNavItemRootAttrs(xstyle?: StyleArg): SvelteStyleAttrs {
 	return sx(styles.root, xstyle);
 }
 
-/** The expanded row: the shared nav item with selected/disabled applied. */
+/**
+ * The expanded row: the shared nav item with selected/disabled applied.
+ *
+ * Two shapes of one appearance. On the split-action path the row is a plain
+ * `<div>` container and its *children* take focus, so the ring belongs on them
+ * and this builder must not draw it; everywhere else the row element is itself
+ * the focusable control and `sideNavItemFocusableRowAttrs` is the one to use.
+ */
 export function sideNavItemRowAttrs(
 	size: NavItemSize,
 	isSelected: boolean,
 	isDisabled: boolean
 ): SvelteStyleAttrs {
-	return sx(
+	return sx(...rowStyleArgs(size, isSelected, isDisabled));
+}
+
+function rowStyleArgs(size: NavItemSize, isSelected: boolean, isDisabled: boolean): StyleArg[] {
+	return [
 		navItemStyles.item,
 		navItemStyles[size],
 		isSelected && navItemStyles.selected,
 		isDisabled && navItemStyles.disabled
-	);
+	];
+}
+
+/** The expanded row when the row element is the focusable control. */
+export function sideNavItemFocusableRowAttrs(
+	size: NavItemSize,
+	isSelected: boolean,
+	isDisabled: boolean
+): SvelteStyleAttrs {
+	return focusOutlineProps.focusVisible(...rowStyleArgs(size, isSelected, isDisabled));
 }
 
 /** The collapsed icon-only square — a fixed width matching the size ramp. */
@@ -188,7 +223,9 @@ export function sideNavItemCollapsedAttrs(
 	isSelected: boolean,
 	isDisabled: boolean
 ): SvelteStyleAttrs {
-	return sx(
+	// All three collapsed shapes — trigger, link and button — render a focusable
+	// element, so each draws the shared ring.
+	return focusOutlineProps.focusVisible(
 		navItemStyles.item,
 		navItemStyles[size],
 		styles.itemCollapsed,
@@ -229,12 +266,12 @@ export const sideNavItemChevronExpandedStyle = styles.expandChevronExpanded;
 
 /** The chevron as its own button, in the split-action row. */
 export function sideNavItemExpandToggleAttrs(): SvelteStyleAttrs {
-	return sx(styles.expandToggle);
+	return focusOutlineProps.focusVisible(styles.expandToggle);
 }
 
 /** The primary link/button in the split-action row. */
 export function sideNavItemSplitActionAttrs(): SvelteStyleAttrs {
-	return sx(styles.splitAction);
+	return focusOutlineProps.focusVisible(styles.splitAction);
 }
 
 /** The flyout shown for a collapsed item that has children. */
@@ -246,3 +283,6 @@ export function sideNavItemPopoverSurfaceAttrs(): SvelteStyleAttrs {
 export function sideNavItemPopoverHeaderAttrs(): SvelteStyleAttrs {
 	return sx(styles.popoverHeader);
 }
+
+/** The gap from the rail, applied to the positioned layer rather than the content. */
+export const sideNavItemPopoverGapStyle = styles.popoverGap;

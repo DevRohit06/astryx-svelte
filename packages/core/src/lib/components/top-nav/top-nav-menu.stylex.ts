@@ -250,7 +250,7 @@ export function topNavMenuDrawerSectionAttrs(): SvelteStyleAttrs {
 
 /** The drawer-mode disclosure header — a nav item that also justifies apart. */
 export function topNavMenuDrawerHeaderAttrs(): SvelteStyleAttrs {
-	return sx(navItemStyles.item, drawerStyles.header);
+	return focusOutlineProps.focusVisible(navItemStyles.item, drawerStyles.header);
 }
 
 /** The drawer header's chevron, rotated while expanded. Also an `Icon` `xstyle` (#4838). */
@@ -270,7 +270,7 @@ export function topNavMenuDrawerItemsInnerAttrs(): SvelteStyleAttrs {
 
 /** A drawer-mode row — the shared nav item plus this menu's indent. */
 export function topNavMenuDrawerItemAttrs(): SvelteStyleAttrs {
-	return sx(navItemStyles.item, drawerStyles.item);
+	return focusOutlineProps.focusVisible(navItemStyles.item, drawerStyles.item);
 }
 
 /** The 20px icon slot on a drawer row. */

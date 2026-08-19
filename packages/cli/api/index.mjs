@@ -52,8 +52,11 @@ export { template } from './template/template.mjs';
 export { swizzle } from './swizzle/swizzle.mjs';
 export { init } from './init/init.mjs';
 export { doctor } from './doctor/doctor.mjs';
-export { build, buildHelp, buildKit } from './build/build.mjs';
-export { themeBuild, themeAdd, themeList, listThemes, importSpecifier } from './theme/theme.mjs';
+// `buildHelp`/`buildKit`/`importSpecifier` are module-public and barrel-absent
+// upstream (`api/index.mjs:28,31`), so they stay internals here too — a name on
+// this barrel is a compatibility promise.
+export { build } from './build/build.mjs';
+export { themeBuild, themeAdd, themeList, listThemes } from './theme/theme.mjs';
 export { layoutExpand, layoutCheck, layoutGrammar } from './layout/layout.mjs';
 export { upgrade } from './upgrade/upgrade.mjs';
 // Landed with `validate-integration` but missing from this barrel until slice 5

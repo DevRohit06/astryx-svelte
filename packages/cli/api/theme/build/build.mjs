@@ -76,6 +76,7 @@ import {
 import { ERROR_CODES } from '../../../foundation/response/error-codes.mjs';
 import { AstryxError } from '../../error.mjs';
 import { logger } from '../../logger.mjs';
+import { collectUnloadedFonts, formatFontLoadingHelp } from './font-warning.mjs';
 import { CORE_PACKAGE } from '../../../foundation/discovery/component-discovery.mjs';
 import { loadComponentDoc } from '../../../foundation/discovery/component-loader.mjs';
 
@@ -1340,17 +1341,21 @@ Or with a <link> tag:
   </Theme>
 `);
 
-	// Print font declaration warnings (derived from typography roles). Inert in
-	// both codebases today: neither `defineTheme` puts a `fonts` array on the
-	// theme it returns. Kept verbatim rather than pruned — it is upstream's
-	// output for a theme that carries one, and dropping it would be silent drift.
-	if (resolvedTheme && resolvedTheme.fonts && resolvedTheme.fonts.length > 0) {
-		logger.log(`\n⚠ Theme "${themeDef.name}" requires fonts not included in the build:`);
-		for (const font of resolvedTheme.fonts) {
-			logger.log(`  ${font.family} — add to your document <head>:`);
-			logger.log(`  <link rel="stylesheet" href="${font.url}" />`);
-		}
-		logger.log('');
+	// Fonts the theme names but nothing loads (#5015). Resolved tokens and
+	// component overrides carry the final font-family values on both load
+	// paths, so this sees jiti-resolved and legacy themes alike.
+	//
+	// It replaced a `resolvedTheme.fonts` loop at upstream 0.4.2. That loop was
+	// inert in both codebases — no `defineTheme` ever put a `fonts` array on the
+	// theme it returns — so the warning it was meant to give never fired.
+	const unloadedFonts = collectUnloadedFonts(resolvedTheme);
+	for (const family of unloadedFonts) {
+		const msg = `Font "${family}" is named by this theme but not loaded — add a <link> or @font-face in your app (recipe: astryx-svelte docs typography)`;
+		warningMessages.push(msg);
+		logger.warn(`  [warn] ${msg}`);
+	}
+	if (unloadedFonts.length > 0) {
+		logger.log(formatFontLoadingHelp(themeDef.name, unloadedFonts));
 	}
 
 	return {

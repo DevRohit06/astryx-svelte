@@ -8,6 +8,7 @@ import {
 	typographyVars
 } from '../../styles/tokens.stylex.js';
 import type { ChatDensity, ChatMessageSender } from './chat-context.svelte.js';
+import type { SizeValue } from '../../internal/types.js';
 
 /** Ported from the `styles` block in Astryx's `Chat/ChatMessageBubble.tsx`. */
 export type ChatMessageBubbleVariant = 'filled' | 'ghost';
@@ -147,11 +148,22 @@ function groupFor(group: ChatMessageBubbleGroup | undefined, isUser: boolean) {
 				: null;
 }
 
+// Dynamic styles for sizing props
+const dynamicStyles = stylex.create({
+	sizing: (width: SizeValue) => ({
+		width,
+		// An explicit width replaces the default cap — a full-column or
+		// fixed-width bubble shouldn't also be clamped by max(80%, 280px).
+		maxWidth: 'none'
+	})
+});
+
 export function chatMessageBubbleContentAttrs(
 	sender: ChatMessageSender,
 	density: ChatDensity,
 	variant: ChatMessageBubbleVariant,
 	group: ChatMessageBubbleGroup | undefined,
+	width: SizeValue | undefined,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
 	const isUser = sender === 'user';
@@ -163,6 +175,7 @@ export function chatMessageBubbleContentAttrs(
 		paddingFor(density),
 		variant === 'ghost' && styles.paddingBlockNone,
 		groupFor(group, isUser),
+		width != null && dynamicStyles.sizing(width),
 		xstyle
 	);
 }

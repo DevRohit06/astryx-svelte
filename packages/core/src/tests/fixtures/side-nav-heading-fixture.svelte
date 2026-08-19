@@ -29,6 +29,8 @@
 		 * precedence over `menu` when both are given, which no case does.
 		 */
 		menuItems?: string[];
+		/** Gives each `menuItems` entry `tabindex="-1"`, so focus can land on it. */
+		menuItemsFocusable?: boolean;
 		/** Fills `headerEndContent` with `<span data-testid={testid}>{text}</span>`. */
 		headerEndContent?: { text: string; testid?: string };
 		/** Publishes a collapsed `SideNavCollapseContext` around the heading. */
@@ -43,6 +45,7 @@
 		icon,
 		menu,
 		menuItems,
+		menuItemsFocusable = false,
 		headerEndContent,
 		collapsed = false,
 		provider
@@ -55,7 +58,14 @@
 {#snippet menuSlot()}<div>{menu}</div>{/snippet}
 {#snippet menuItemsSlot()}
 	{#each menuItems ?? [] as label (label)}
-		<div role="menuitem">{label}</div>
+		<!--
+			`tabindex` mirrors upstream, which uses two different `menuItems`
+			fragments: bare `<div role="menuitem">` for the popover-semantics cases
+			and `tabIndex={-1}` for the hover-guard ones, where focus has to land on
+			an item. A `<div>` with no tabindex is not focusable, so without it the
+			focus assertions would be vacuous.
+		-->
+		<div role="menuitem" tabindex={menuItemsFocusable ? -1 : undefined}>{label}</div>
 	{/each}
 {/snippet}
 {#snippet endSlot()}<span data-testid={headerEndContent?.testid}>{headerEndContent?.text}</span

@@ -273,11 +273,14 @@
 	const trackTheme = $derived(
 		themeProps('switch', {
 			checked: isOn ? 'checked' : null,
-			disabled: isDisabled ? 'disabled' : null
+			disabled: isDisabled ? 'disabled' : null,
+			size
 		})
 	);
 	const trackAttrs = $derived(switchTrackAttrs(size, isOn, isDisabled));
-	const thumbTheme = $derived(themeProps('switch-thumb', { checked: isOn ? 'checked' : null }));
+	const thumbTheme = $derived(
+		themeProps('switch-thumb', { checked: isOn ? 'checked' : null, size })
+	);
 	const thumbAttrs = $derived(switchThumbAttrs(size, isOn));
 	const labelWrapperAttrs = $derived(switchLabelWrapperAttrs(size));
 </script>

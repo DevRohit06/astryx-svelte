@@ -313,12 +313,21 @@ export function useFocusTrap(options: () => UseFocusTrapOptions): UseFocusTrapRe
 				lastFocus = target as Element;
 			} else if (isKeyboardNavigation) {
 				// Focus escaped via keyboard - redirect it back
-				focusFirstDescendant(container);
+				const focusedFirst = focusFirstDescendant(container);
 
 				// If we're back at the same element (Shift+Tab from first element),
 				// try focusing the last element instead
-				if (lastFocus === document.activeElement) {
+				if (focusedFirst && lastFocus === document.activeElement) {
 					focusLastDescendant(container);
+				} else if (
+					!focusedFirst &&
+					lastFocus instanceof HTMLElement &&
+					container.contains(lastFocus)
+				) {
+					// A modal surface may intentionally have no tabbable controls and
+					// place initial focus on a tabindex={-1} heading or panel. Preserve
+					// that programmatic focus target instead of letting Tab escape.
+					attemptFocus(lastFocus);
 				}
 
 				lastFocus = document.activeElement;
@@ -387,6 +396,15 @@ export function useFocusTrap(options: () => UseFocusTrapOptions): UseFocusTrapRe
 
 				const focusable = getFocusableElements(container);
 				if (focusable.length === 0) {
+					// There is nowhere to advance to. Keep focus on the current
+					// programmatic target (for example a dialog panel with tabindex=-1)
+					// rather than allowing the browser to move into background content.
+					event.preventDefault();
+					const active = document.activeElement;
+					if (active instanceof HTMLElement && container.contains(active)) {
+						lastFocus = active;
+					}
+					isKeyboardNavigation = false;
 					return;
 				}
 

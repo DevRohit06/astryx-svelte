@@ -75,6 +75,7 @@
 	import Icon from '../icon/icon.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';
 	import { usePopover } from '../popover/use-popover.svelte.js';
+	import { useMenuHover } from '../../internal/use-menu-hover.svelte.js';
 	import Tooltip from '../tooltip/tooltip.svelte';
 	import NavItemElement from './nav-item-element.svelte';
 	import {
@@ -94,6 +95,8 @@
 		sideNavItemPopoverHeaderAttrs,
 		sideNavItemPopoverSurfaceAttrs,
 		sideNavItemRootAttrs,
+		sideNavItemFocusableRowAttrs,
+		sideNavItemPopoverGapStyle,
 		sideNavItemRowAttrs,
 		sideNavItemSplitActionAttrs
 	} from './side-nav-item.stylex.js';
@@ -119,12 +122,14 @@
 	 * - **Otherwise** → a single link or button; when it is collapsible without a
 	 *   primary action, clicking it toggles the children instead of navigating.
 	 *
-	 * **Rest props reach the wrapper `<div>`, where upstream drops them.**
-	 * `SideNavItemProps extends BaseProps<HTMLElement>` on both sides, but upstream
-	 * destructures a closed list with no spread, so `id`/`aria-*`/handlers — and
-	 * `xstyle`/`class`/`style` — are all discarded. We forward, as `DropdownMenu`
-	 * and `Timestamp` do. `data-testid` stays on the *item* element, which is
-	 * where upstream routes it. See port/debts.md → Known debts.
+	 * **Rest props reach the item element**, which is where upstream lands them as
+	 * of 0.4.2. Upstream destructured a closed list with no spread until then, so
+	 * `id`/`aria-*`/handlers were all discarded; this port forwarded them to the
+	 * wrapper `<div>` in the meantime, as the nearest working home. The 0.4.2
+	 * hardening pass added `...rest` to the trigger, the link and the button, and
+	 * this now matches. `xstyle`/`class`/`style` still reach the wrapper, which is
+	 * a remaining divergence — upstream's collapsed-with-children wrapper takes
+	 * neither. `data-testid` stays on the *item* element, as upstream routes it.
 	 */
 	let {
 		as,
@@ -174,7 +179,7 @@
 		hasLightDismiss: true,
 		hasAutoFocus: true,
 		hasCloseButton: false,
-		dialogLabel: `${label} submenu`
+		dialogLabel: t('@astryx.sideNavItem.submenuLabel', { label })
 	}));
 
 	// Collapse state for items with children.
@@ -199,7 +204,10 @@
 	}
 
 	const displayIcon = $derived(isSelected && selectedIcon ? selectedIcon : icon);
-	const iconColor = $derived(isSelected ? 'primary' : isDisabled ? 'disabled' : 'secondary');
+	// `inherit` so a selected row's icon follows the row to HighlightText under
+	// forced colors. Identical to `primary` otherwise: both token families are
+	// emitted from one expression.
+	const iconColor = $derived(isSelected ? 'inherit' : isDisabled ? 'disabled' : 'secondary');
 
 	// When collapsible *and* a primary action (href or onclick) are both set, the
 	// action and the toggle are independent: the label navigates, the chevron
@@ -230,43 +238,36 @@
 		toggleItemCollapse();
 	}
 
-	// Hover handlers for the collapsed popover (mirrors the TopNavMenu pattern).
-	// Plain `let`s — upstream's two refs.
-	let showTimeout: ReturnType<typeof setTimeout> | null = null;
-	let hideTimeout: ReturnType<typeof setTimeout> | null = null;
-
-	function clearPopoverTimeouts(): void {
-		if (showTimeout) {
-			clearTimeout(showTimeout);
-			showTimeout = null;
-		}
-		if (hideTimeout) {
-			clearTimeout(hideTimeout);
-			hideTimeout = null;
-		}
-	}
-
-	$effect(() => () => clearPopoverTimeouts());
-
-	function handlePopoverMouseEnter(): void {
-		clearPopoverTimeouts();
-		showTimeout = setTimeout(() => {
-			popover.show({ skipAutoFocus: true });
-		}, 150);
-	}
-
-	function handlePopoverMouseLeave(): void {
-		clearPopoverTimeouts();
-		hideTimeout = setTimeout(() => {
-			popover.hide();
-		}, 200);
-	}
+	// Pointer half only. The hook's `onkeydown`/`attachMenu` drive a `useListFocus`
+	// over `[role="menuitem"]`, and this flyout is a focus-trapped dialog of
+	// links — wiring them would swallow arrow keys rather than navigate with
+	// them. Keyboard stays with `usePopover`'s trap, as in `DropdownMenuSubMenu`.
+	const menuHover = useMenuHover(() => ({
+		show: popover.show,
+		hide: popover.hide,
+		isOpen: popover.isOpen,
+		isEnabled: isCollapsed && hasChildren,
+		// Standard popover toggling: the flyout opens beside the rail, not over
+		// the icon, so the click after a hover-open is a deliberate dismissal
+		// rather than the #3121 confirmation the nav menus need.
+		clickGuardMs: 0,
+		ownsFocus: false
+	}));
 
 	const theme = $derived(
-		themeProps('side-nav-item', { size, selected: isSelected ? 'selected' : null })
+		themeProps('side-nav-item', {
+			size,
+			selected: isSelected ? 'selected' : null,
+			disabled: isDisabled ? 'disabled' : null
+		})
 	);
 	const rootAttrs = $derived(sideNavItemRootAttrs(xstyle));
+	// Two shapes of the same row appearance: `rowAttrs` for the split-action path,
+	// where the row is a plain <div> container and its children take focus (so the
+	// ring belongs on them); `focusableRowAttrs` for every other path, where the
+	// row element is itself the focusable control.
 	const rowAttrs = $derived(sideNavItemRowAttrs(size, isSelected, isDisabled));
+	const focusableRowAttrs = $derived(sideNavItemFocusableRowAttrs(size, isSelected, isDisabled));
 	const collapsedAttrs = $derived(sideNavItemCollapsedAttrs(size, isSelected, isDisabled));
 	const labelAttrs = sideNavItemLabelAttrs();
 	const endContentAttrs = sideNavItemEndContentAttrs();
@@ -292,6 +293,11 @@
 		...theme,
 		class: cx(theme.class, rowAttrs.class),
 		style: rowAttrs.style
+	});
+	const focusableRowItemAttrs = $derived({
+		...theme,
+		class: cx(theme.class, focusableRowAttrs.class),
+		style: focusableRowAttrs.style
 	});
 </script>
 
@@ -321,18 +327,25 @@
 {#if isCollapsed && !icon}
 	<!-- In collapsed mode: hide items without icons. -->
 {:else if isCollapsed && hasChildren}
-	<!-- Collapsed, with children — an icon-only trigger and a flyout. -->
+	<!--
+		Collapsed, with children — an icon-only trigger and a flyout.
+
+		`{...rest}` sits on the trigger, not this wrapper. Upstream dropped rest
+		entirely until 0.4.2, so this port carried it on the wrapper as the nearest
+		working home; 0.4.2 landed it on the interactive element, which is where a
+		consumer's `aria-*`, `title` or handler actually belongs.
+	-->
 	<div
-		{...rest}
 		class={cx(rootAttrs.class, className)}
 		style={mergeStyle(rootAttrs.style, styleProp as string | undefined)}
 	>
 		<button
 			{@attach popover.attachTrigger}
 			type="button"
-			onclick={popover.toggle}
-			onmouseenter={handlePopoverMouseEnter}
-			onmouseleave={handlePopoverMouseLeave}
+			{...rest}
+			onclick={menuHover.triggerProps.onclick}
+			onmouseenter={menuHover.triggerProps.onmouseenter}
+			onmouseleave={menuHover.triggerProps.onmouseleave}
 			aria-label={label}
 			data-testid={testId}
 			{...popover.triggerProps}
@@ -340,12 +353,12 @@
 		>
 			{#if displayIcon}{@render iconSlot(displayIcon)}{/if}
 		</button>
-		<PopoverLayer {popover} placement="end" alignment="start">
+		<PopoverLayer {popover} placement="end" alignment="start" xstyle={sideNavItemPopoverGapStyle}>
 			<div
 				class={popoverSurfaceAttrs.class}
 				style={popoverSurfaceAttrs.style}
-				onmouseenter={handlePopoverMouseEnter}
-				onmouseleave={handlePopoverMouseLeave}
+				onmouseenter={menuHover.contentProps.onmouseenter}
+				onmouseleave={menuHover.contentProps.onmouseleave}
 				onclick={() => popover.hide()}
 			>
 				<div class={popoverHeaderAttrs.class} style={popoverHeaderAttrs.style}>{label}</div>
@@ -359,7 +372,6 @@
 	<!-- Collapsed, no children — an icon-only link/button with a tooltip. -->
 	<div
 		bind:this={itemEl}
-		{...rest}
 		class={cx(rootAttrs.class, className)}
 		style={mergeStyle(rootAttrs.style, styleProp as string | undefined)}
 	>
@@ -369,6 +381,7 @@
 			{isDisabled}
 			onclick={handleClick}
 			attrs={{
+				...rest,
 				'aria-current': isSelected ? 'page' : undefined,
 				'aria-disabled': isDisabled || undefined,
 				'aria-label': label,
@@ -383,7 +396,6 @@
 {:else}
 	<div
 		bind:this={itemEl}
-		{...rest}
 		class={cx(rootAttrs.class, className)}
 		style={mergeStyle(rootAttrs.style, styleProp as string | undefined)}
 	>
@@ -400,6 +412,7 @@
 					{isDisabled}
 					onclick={handleClick}
 					attrs={{
+						...rest,
 						'aria-current': isSelected ? 'page' : undefined,
 						class: splitActionAttrs.class,
 						style: splitActionAttrs.style
@@ -428,12 +441,13 @@
 				{isDisabled}
 				onclick={handleClick}
 				attrs={{
+					...rest,
 					'aria-current': isSelected ? 'page' : undefined,
 					'aria-disabled': isDisabled || undefined,
 					'aria-expanded': isItemCollapsible ? !isItemCollapsed : undefined,
 					'aria-controls': isItemCollapsible ? `${id}-children` : undefined,
 					'data-testid': testId,
-					...rowItemAttrs
+					...focusableRowItemAttrs
 				}}
 			>
 				{@render itemContent()}

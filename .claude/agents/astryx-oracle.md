@@ -46,6 +46,17 @@ the keys used alongside a dynamic style while resolving the others inline (`Avat
 A case declared in object mode that compares _nothing_ is caught by the empty-case guard —
 that means inline mode, not "no styles".
 
+**A call site that starts going through a runtime helper flips inline → object.** StyleX
+folds a call site it can read statically; it cannot fold one whose styles are arguments to
+a function, so the keys stay objects in `dist/` and the call site emits no class string at
+all. `xstyle` crossing a component boundary is the familiar case; `focusOutlineProps.
+focusVisible(a, b)` is the same mechanism, and upstream 0.4.2's focus-ring adoption flipped
+five `side-nav-*` pairs at once. The tell is **"upstream has no matching call site"** with
+a short, unrelated list of what its inline sites actually are — delete the inline claim
+rather than trying to repair it, and let the object diff cover the keys. The reverse also
+happens: a style that stops taking a dynamic argument starts folding, and needs an inline
+entry it never had (`Avatar`'s `content`, when 0.4.2 moved the size onto the wrapper).
+
 **Finding the upstream file** takes a look, not a guess. It is sometimes
 `<Name>/<name>.stylex.js` and sometimes `<Name>/<Name>.js` with the `stylex.create` inline;
 one of our modules can even map to two upstream files, and two of our modules can map to

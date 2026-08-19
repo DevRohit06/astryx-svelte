@@ -7,9 +7,19 @@ import {
 } from '$lib/components/layer/use-layer.svelte.js';
 import ContextHarness from './fixtures/layer-context-harness.svelte';
 import FixedHarness from './fixtures/layer-fixed-harness.svelte';
+import HostingHarness from './fixtures/layer-hosting-harness.svelte';
+import RelocatingHarness from './fixtures/layer-relocating-harness.svelte';
 
 /**
- * Ported from Astryx's `Layer/useLayer.test.tsx`, all twenty-nine cases.
+ * Ported from Astryx's `Layer/useLayer.test.tsx` at v0.4.2 — **all thirty-two of
+ * its cases**, plus one beyond-upstream case documented at its own site.
+ *
+ * The header twice stated a count that was true of no upstream tag: first "all
+ * twenty-nine cases", which was 0.4.1-minus-`describe('offset')` and named none
+ * of the five it was short, then a corrected twenty-seven while those five were
+ * still missing. They are ported now — `offset` had been implemented since
+ * before 0.4.0 with nothing asserting it — as is the nine-case
+ * `describe('context hosting')` block 0.4.2 added.
  *
  * `getPositionTryFallbacks` is pure and its five cases transcribe. The rendered
  * ones needed two mechanical changes:
@@ -381,6 +391,83 @@ describe('useLayer context positioning', () => {
 		});
 	});
 
+	/**
+	 * Upstream's `describe('offset')`, all five cases. They had never been ported,
+	 * while `offset` itself has been implemented since before 0.4.0 — the header
+	 * said "all twenty-nine cases" and these were the five it was short.
+	 *
+	 * **Counterpart, and stronger.** Upstream reads StyleX's *debug-mode* variable
+	 * names (`--x-marginBlockStart`) off the inline style, because jsdom resolves
+	 * neither the `var()` indirection nor logical margin properties — so the
+	 * declaration is all it can check. Chromium resolves both, so these read the
+	 * computed logical margins instead: that is the fact the declaration stands in
+	 * for, and it also catches a value the engine rejected, which upstream's form
+	 * cannot.
+	 */
+	describe('offset', () => {
+		async function openAndGetOffsets(props: Record<string, unknown>) {
+			const layer = await openContext(props);
+			const computed = getComputedStyle(layer);
+			return {
+				blockStart: computed.marginBlockStart,
+				blockEnd: computed.marginBlockEnd,
+				inlineStart: computed.marginInlineStart,
+				inlineEnd: computed.marginInlineEnd
+			};
+		}
+
+		const NONE = { blockStart: '0px', blockEnd: '0px', inlineStart: '0px', inlineEnd: '0px' };
+
+		it('is flush by default', async () => {
+			expect(await openAndGetOffsets({ placement: 'below' })).toEqual(NONE);
+		});
+
+		// Both edges of the axis, so the gap survives a position-try-fallbacks flip
+		// to the opposite side (#4803).
+		it('clears both block edges for a block placement', async () => {
+			expect(await openAndGetOffsets({ placement: 'above', offset: 8 })).toEqual({
+				...NONE,
+				blockStart: '8px',
+				blockEnd: '8px'
+			});
+		});
+
+		it('clears both inline edges for an inline placement', async () => {
+			expect(await openAndGetOffsets({ placement: 'end', offset: 8 })).toEqual({
+				...NONE,
+				inlineStart: '8px',
+				inlineEnd: '8px'
+			});
+		});
+
+		it('takes a CSS length string', async () => {
+			// Resolved rather than literal: upstream asserts the declaration text
+			// `var(--spacing-1)` survives, which is all jsdom can see. Here the
+			// engine resolves it, so the assertion is that it resolves to the same
+			// length `--spacing-1` holds on the page — and that it is not zero, or
+			// the case would pass against an offset that never applied.
+			const spacing1 = getComputedStyle(document.documentElement)
+				.getPropertyValue('--spacing-1')
+				.trim();
+			expect(spacing1).not.toBe('');
+
+			const offsets = await openAndGetOffsets({
+				placement: 'below',
+				offset: 'var(--spacing-1)'
+			});
+			expect(offsets.blockStart).toBe(offsets.blockEnd);
+			expect(offsets.blockStart).not.toBe('0px');
+			expect(offsets.inlineStart).toBe('0px');
+			expect(offsets.inlineEnd).toBe('0px');
+		});
+
+		it('is ignored under custom positioning, which owns its own insets', async () => {
+			expect(
+				await openAndGetOffsets({ placement: 'below', offset: 8, positioning: 'custom' })
+			).toEqual(NONE);
+		});
+	});
+
 	it('fixed mode emits no anchor-positioning styles', async () => {
 		const screen = await render(FixedHarness, { props: { x: 10, y: 20 } });
 		await screen.getByRole('button', { name: 'opener' }).click();
@@ -388,5 +475,204 @@ describe('useLayer context positioning', () => {
 		const style = styleOf(screen.container.querySelector('[popover]'));
 		expect(style).not.toContain('position-area');
 		expect(style).not.toContain('position-anchor');
+	});
+});
+
+/**
+ * Upstream's `describe('context hosting')`, added at 0.4.2 with #5039. Nine
+ * cases; all nine are here.
+ *
+ * Four of them are **counterparts rather than transcriptions**, and each says so
+ * at its own site. Upstream mocks `window.getComputedStyle` wholesale because
+ * jsdom computes no styles at all, so its assertions are about what the port
+ * *wrote down*. These run in a real Chromium, which computes all of it, so the
+ * same claims are checked against live computed values — strictly stronger, and
+ * in the custom-property cases it is the only form that can distinguish "the
+ * layer inherits from the corrective host" from "the layer got a snapshot of
+ * the host's values", which is the entire point of #5039's
+ * `readPortalWritingContext`.
+ *
+ * `rerender` has no counterpart either: these use a reactive prop on the fixture
+ * and let the `$state` write flush, which is the substitute the other suites
+ * already use.
+ */
+describe('useLayer context hosting', () => {
+	const nativeShowPopover = HTMLElement.prototype.showPopover;
+
+	afterEach(() => {
+		HTMLElement.prototype.showPopover = nativeShowPopover;
+	});
+
+	it('keeps closed content mounted by default for existing consumers', async () => {
+		const screen = await render(ContextHarness);
+
+		expect(screen.container.querySelector('template')).not.toBeNull();
+		expect(screen.container.querySelector('[popover]')).not.toBeNull();
+		expect(screen.container.textContent).toContain('content');
+	});
+
+	it('renders only an inert marker until show is requested', async () => {
+		const screen = await render(HostingHarness);
+
+		const sentinel = screen.container.querySelector('template');
+		expect(sentinel).not.toBeNull();
+		expect(sentinel?.hasAttribute('id')).toBe(false);
+		expect(screen.container.querySelector('[popover]')).toBeNull();
+		expect(screen.container.textContent).not.toContain('Layer action');
+	});
+
+	it('keeps the final layer inline when the JSX position is safe', async () => {
+		const screen = await render(HostingHarness);
+		await screen.getByRole('button', { name: 'Trigger' }).click();
+
+		const layer = await vi.waitFor(() => popoverIn(screen.container));
+		const following = screen.getByRole('button', { name: 'Following control' }).element();
+		expect(layer.parentElement).toBe(screen.container.firstElementChild);
+		expect(layer.nextElementSibling).toBe(following);
+		expect(screen.container.querySelector('template')).not.toBeNull();
+	});
+
+	it('portals out of an unsafe parent and preserves its logical writing context', async () => {
+		const showSpy = vi.fn(HTMLElement.prototype.showPopover);
+		HTMLElement.prototype.showPopover = showSpy;
+
+		const screen = await render(HostingHarness, {
+			props: { unsafe: true, direction: 'rtl', writingMode: 'vertical-rl' }
+		});
+		const trigger = screen.getByRole('button', { name: 'Trigger' }).element();
+		await screen.getByRole('button', { name: 'Trigger' }).click();
+
+		const layer = await vi.waitFor(() => popoverIn(screen.container));
+		const host = screen.container.querySelector('[data-testid="host"]');
+		expect(layer.parentElement).toBe(host);
+		expect(screen.container.querySelector('p')?.contains(layer)).toBe(false);
+		// Counterpart: upstream mocks `getComputedStyle` to answer rtl/vertical-rl
+		// and then asserts `toHaveStyle`. Here the host really carries them, so the
+		// carried context is read off the layer's own computed style.
+		expect(getComputedStyle(layer).direction).toBe('rtl');
+		expect(getComputedStyle(layer).writingMode).toBe('vertical-rl');
+		expect(showSpy).toHaveBeenCalledWith({ source: trigger });
+	});
+
+	it('inherits custom properties from the corrective host without freezing an inline snapshot', async () => {
+		const screen = await render(HostingHarness, {
+			props: { unsafe: true, themeColor: 'rgb(1, 2, 3)' }
+		});
+		await screen.getByRole('button', { name: 'Trigger' }).click();
+
+		const layer = await vi.waitFor(() => popoverIn(screen.container));
+		const host = screen.container.querySelector('[data-testid="host"]') as HTMLElement;
+		expect(layer.parentElement).toBe(host);
+		// Nothing is snapshotted onto the layer…
+		expect(layer.style.getPropertyValue('--test-layer-color')).toBe('');
+		expect(host.style.getPropertyValue('--test-layer-color')).toBe('rgb(1, 2, 3)');
+		// …so the value reaches it by inheritance, live. Upstream cannot check this
+		// half at all — jsdom resolves no custom properties — and it is the half
+		// that fails if the port ever starts copying them onto the element.
+		expect(getComputedStyle(layer).getPropertyValue('--test-layer-color').trim()).toBe(
+			'rgb(1, 2, 3)'
+		);
+
+		await screen.rerender({ unsafe: true, themeColor: 'rgb(4, 5, 6)' });
+
+		await vi.waitFor(() => {
+			expect(
+				getComputedStyle(popoverIn(screen.container)).getPropertyValue('--test-layer-color').trim()
+			).toBe('rgb(4, 5, 6)');
+		});
+		expect(popoverIn(screen.container).style.getPropertyValue('--test-layer-color')).toBe('');
+	});
+
+	it('keeps a shared writing context inheriting live from the corrective host', async () => {
+		const screen = await render(HostingHarness, {
+			props: { unsafe: true, direction: 'rtl', writingMode: 'vertical-rl' }
+		});
+		await screen.getByRole('button', { name: 'Trigger' }).click();
+
+		await vi.waitFor(() => {
+			expect(getComputedStyle(popoverIn(screen.container)).direction).toBe('rtl');
+		});
+
+		await screen.rerender({ unsafe: true, direction: 'ltr', writingMode: 'horizontal-tb' });
+
+		await vi.waitFor(() => {
+			expect(getComputedStyle(popoverIn(screen.container)).direction).toBe('ltr');
+		});
+		expect(getComputedStyle(popoverIn(screen.container)).writingMode).toBe('horizontal-tb');
+	});
+
+	it('re-resolves the host when a persistent render call moves', async () => {
+		const screen = await render(RelocatingHarness, { props: { unsafe: true } });
+
+		const host = screen.container.querySelector('[data-testid="unsafe-host"]');
+		expect(popoverIn(screen.container).parentElement).toBe(host);
+		expect(screen.container.querySelector('p')?.contains(popoverIn(screen.container))).toBe(false);
+
+		await screen.rerender({ unsafe: false });
+
+		await vi.waitFor(() => {
+			const section = screen.container.querySelector('section');
+			expect(popoverIn(screen.container).parentElement).toBe(section);
+			expect(section?.querySelector('template')).not.toBeNull();
+		});
+	});
+
+	it('reopens an open lazy layer after its render call moves', async () => {
+		const onShow = vi.fn();
+		const native = nativeShowPopover;
+		const showSpy = vi.fn(function (this: HTMLElement, options?: unknown) {
+			if (!this.isConnected) {
+				throw new Error('showPopover called on a detached layer');
+			}
+			this.dataset.open = 'true';
+			return (native as (this: HTMLElement, o?: unknown) => void).call(this, options);
+		});
+		HTMLElement.prototype.showPopover = showSpy as typeof HTMLElement.prototype.showPopover;
+
+		const screen = await render(RelocatingHarness, {
+			props: { unsafe: true, lazyMount: true, onShow }
+		});
+		await screen.getByRole('button', { name: 'Trigger' }).click();
+
+		await vi.waitFor(() => {
+			expect(popoverIn(screen.container).getAttribute('data-open')).toBe('true');
+		});
+
+		await screen.rerender({ unsafe: false, lazyMount: true, onShow });
+
+		await vi.waitFor(() => {
+			const layer = popoverIn(screen.container);
+			expect(layer.parentElement).toBe(screen.container.querySelector('[data-testid="safe-host"]'));
+			expect(layer.getAttribute('data-open')).toBe('true');
+		});
+		expect(onShow).toHaveBeenCalledTimes(1);
+	});
+
+	/**
+	 * Beyond upstream, and the reason it earns its place is the bug it was
+	 * written for: `attachSentinel` read the `isOpen` `$state` directly, so
+	 * opening a lazy layer re-ran the attachment, re-resolved `contextMount` to a
+	 * new-but-equal object, and `{@attach intoPortal(...)}` — keyed on that
+	 * object's identity — tore itself down and re-appended the node. Removing a
+	 * *showing* popover evicts it from the top layer without firing `toggle`, and
+	 * nothing re-shows it, so every corrected-out `HoverCard` rendered hidden.
+	 *
+	 * Upstream cannot express this case: React re-renders an equal `contextMount`
+	 * into the same `createPortal` container and moves no DOM, and jsdom has no
+	 * top layer to be evicted from. The whole hazard is Svelte-specific, which is
+	 * the bar `CLAUDE.md` sets for coverage beyond upstream.
+	 *
+	 * Mutation-checked: reverting either half of the fix (the `untrack` in
+	 * `attachSentinel`, or `requestContextMount`'s equality bail-out) fails this.
+	 */
+	it('leaves a corrected-out layer actually showing, not merely mounted', async () => {
+		const screen = await render(HostingHarness, { props: { unsafe: true } });
+		await screen.getByRole('button', { name: 'Trigger' }).click();
+
+		const layer = await vi.waitFor(() => popoverIn(screen.container));
+		await vi.waitFor(() => {
+			expect(layer.matches(':popover-open')).toBe(true);
+		});
+		expect(getComputedStyle(layer).display).not.toBe('none');
 	});
 });

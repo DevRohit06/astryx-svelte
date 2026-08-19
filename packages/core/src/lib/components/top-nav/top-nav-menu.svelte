@@ -131,7 +131,10 @@
 		isOpen: popover.isOpen,
 		isEnabled: true,
 		showDelay: delay,
-		hideDelay
+		hideDelay,
+		// Trigger sits outside an auto popover; the invoker relationship exempts
+		// it from light dismiss.
+		popoverId: popover.id
 	}));
 
 	// The desktop popup is a composite menu widget per the APG menu pattern: a
@@ -142,7 +145,8 @@
 	const list = useListFocus(() => ({
 		itemSelector: '[role="menuitem"]',
 		hasRovingTabIndex: true,
-		onEscape: popover.hide
+		// Not popover.hide: Escape must also restore focus to the trigger.
+		onEscape: menuHover.close
 	}));
 
 	// Upstream reads `listRef.current` for the typeahead's item list, which is the
@@ -264,8 +268,10 @@
 	<button
 		{...rest}
 		{@attach popover.attachTrigger}
+		{@attach menuHover.attachTrigger}
 		type="button"
 		{...popover.triggerProps}
+		popovertarget={menuHover.triggerProps.popovertarget}
 		onclick={menuHover.triggerProps.onclick}
 		onmouseenter={menuHover.triggerProps.onmouseenter}
 		onmouseleave={menuHover.triggerProps.onmouseleave}

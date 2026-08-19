@@ -73,6 +73,7 @@ export const RESPONSE_TYPES = {
 	'theme build': ['theme.build', 'theme.build.check'],
 	'theme list': ['theme.list'],
 	'theme add': ['theme.list', 'theme.add'],
+	'theme template': ['theme.template'],
 	upgrade: ['upgrade.list', 'upgrade.status', 'upgrade.run'],
 	util: ['util.list', 'util.detail', 'util.detail.params'],
 	'validate-integration': ['integration.validate']
@@ -129,6 +130,7 @@ const EXAMPLES = {
 		'astryx-svelte theme add matcha',
 		'astryx-svelte theme add matcha ./src/themes/matcha'
 	],
+	'theme template': ['astryx-svelte theme template', 'astryx-svelte theme template --json'],
 	// Upstream's single example is the bare `astryx upgrade --json`. The second
 	// one here shows the flag that writes, because dry-run is the default and the
 	// most common mistake is expecting the first form to have changed something.

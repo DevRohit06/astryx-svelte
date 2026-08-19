@@ -29,8 +29,8 @@
 		"@stylexjs/stylex": "^0.19.0"
 	},
 	"devDependencies": {
-		"@astryxdesign/cli": "0.4.1",
-		"@astryxdesign/core": "0.4.1",
+		"@astryxdesign/cli": "0.4.2",
+		"@astryxdesign/core": "0.4.2",
 		"@eslint/js": "^10.0.1",
 		"@qwik.dev/partytown": "^0.14.0",
 		"@stylexjs/unplugin": "^0.19.0",

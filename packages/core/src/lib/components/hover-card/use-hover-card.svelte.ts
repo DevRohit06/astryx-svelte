@@ -277,6 +277,10 @@ export function useHoverCard(options: () => HoverCardOptions): HoverCardReturn {
 
 	const layer = useLayer(() => ({
 		mode: 'context',
+		// Rich card content must never enter an invalid paragraph, even briefly:
+		// nothing but the inert marker exists while the card is closed, and the
+		// container's position is resolved at the moment it opens (#5039).
+		lazyMount: true,
 		id: options().id,
 		onShow: options().onShow,
 		onHide: options().onHide

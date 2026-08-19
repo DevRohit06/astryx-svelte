@@ -37,14 +37,15 @@ export default {
 	returns: [
 		{
 			name: 'getContainerProps',
-			type: '() => { class?: string; style?: string; }',
-			description: 'Spread onto the container whose hover/focus-within drives the reveal.'
+			type: '(options?: ContainerRevealOptions) => { class?: string; style?: string; }',
+			description:
+				'Spread onto the container whose hover/focus-within drives the reveal. Accepts hoverDelay (ms the pointer must dwell before the reveal starts — a hover-intent gate like Tooltip\'s and HoverCard\'s delay, so a cursor sweeping across a list leaves nothing painted behind it) and forceState ("active" | "inactive") to pin the trigger state when a caller owns it — a motion gate, a scroll, a row whose menu is open. "inactive" still yields to keyboard focus and coarse pointers.'
 		},
 		{
 			name: 'getContentRevealProps',
 			type: '(options?: ContentRevealOptions) => { class?: string; style?: string; }',
 			description:
-				'Spread onto each revealed (or concealed) child. Accepts isRevealInverted to conceal-on-hover instead of reveal-on-hover, and isLayoutPreserved to reserve the layout box while hidden (opacity-only) and avoid layout shift.'
+				'Spread onto each revealed / concealed child. Accepts isRevealInverted to conceal-on-hover instead of reveal-on-hover, isLayoutPreserved to reserve the layout box while hidden (opacity-only) and avoid layout shift, and forceVisibility ("shown" | "hidden") to pin this one element\'s appearance whatever the container is doing. "hidden" yields to focus.'
 		}
 	],
 	usage: {
@@ -70,6 +71,21 @@ export default {
 				guidance: true,
 				description:
 					'Pass isLayoutPreserved for absolutely-positioned or overlay content to reserve its box and avoid layout shift when it appears.'
+			},
+			{
+				guidance: true,
+				description:
+					'Set a hoverDelay (100-250ms) on rows in a long list, so a cursor travelling across the list does not light up every row it passes; keyboard and touch still reveal immediately.'
+			},
+			{
+				guidance: true,
+				description:
+					'Reach for forceState when something other than the pointer owns the interaction (a drag, a scroll or motion gate, an open row menu), and forceVisibility when just one element should ignore the container.'
+			},
+			{
+				guidance: false,
+				description:
+					"Reach past the API into the hook's private custom properties (--_reveal-opacity and friends) to suppress a reveal; use forceState / forceVisibility, which survive a rename."
 			},
 			{
 				guidance: false,

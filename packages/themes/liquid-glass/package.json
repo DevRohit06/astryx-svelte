@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-liquid-glass",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "Liquid Glass theme for astryx-svelte — macOS translucent materials, capsule controls and the Apple system palette. Has no upstream Astryx counterpart.",
 	"license": "MIT",
 	"repository": {

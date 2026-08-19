@@ -115,3 +115,31 @@ export { isFocusDetached } from './focus-return.js';
 // it stays module-public and barrel-absent here, on the same standing as
 // `rtlMirrorAttrs` and `__resetDevWarnings`. An extra published symbol is a
 // defect under the parity rule.
+
+// -----------------------------------------------------------------------------
+// Upstream's `utils/` directory, reunited with its subpath
+// -----------------------------------------------------------------------------
+//
+// These ten all live in upstream's `utils/index.ts` and were reachable here only
+// from the package root (or, for `parseStyleKey`, from `./theme`), so
+// `import {themeProps} from '@astryx-svelte/core/utils'` failed where upstream's
+// succeeds. Placement, not absence — recorded in `port/debts.md` as the
+// consumer-visible half of the "two homes for one upstream dir" item.
+//
+// The *files* stay where they are: `internal/types.ts`,
+// `internal/theme-props.ts`, `internal/shared-resize-observer.ts` and
+// `theme/parse-style-key.ts` are imported by name across the tree, and moving
+// them is a whole-tree import churn with no consumer-visible effect. The root
+// re-exports stay too, because they have shipped since 0.3.1 and dropping one
+// would break a consumer to tidy a barrel. This adds the subpath upstream has.
+export type { SizeValue } from '../internal/types.js';
+export { parseStyleKey } from '../theme/parse-style-key.js';
+export {
+	themeProps,
+	themeDataAttributes,
+	type ClassProps,
+	type ClassValue,
+	type ThemeProps,
+	type ThemeDataAttributes
+} from '../internal/theme-props.js';
+export { observeResize, unobserveResize } from '../internal/shared-resize-observer.js';

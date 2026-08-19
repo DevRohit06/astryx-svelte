@@ -170,18 +170,12 @@
 		}
 		layer.show();
 		if (options?.focusFirst) {
-			requestAnimationFrame(() => {
-				// Move focus into the flyout. When it has no focusable items yet
-				// (e.g. an async submenu showing only a disabled "Loading…" row via
-				// hasSpinner), focusFirst() finds nothing — fall back to focusing the
-				// flyout container itself so keyboard ownership still transfers off
-				// the parent list. Otherwise the parent would keep focus, letting
-				// arrow keys rove the parent while the empty flyout stays open.
-				const focusedItem = list.focusFirst();
-				if (!focusedItem) {
-					menuEl?.focus();
-				}
-			});
+			// Synchronous by design — see the focus note in `useMenuHover`. A
+			// still-loading flyout has no focusable item, so fall back to the
+			// container: keyboard ownership must leave the parent list either way.
+			if (!list.focusFirst()) {
+				menuEl?.focus();
+			}
 		}
 	}
 
@@ -214,6 +208,10 @@
 
 	// Hover-intent: entering the trigger opens after a short delay; leaving
 	// either surface closes after a delay. Hover-open does not steal focus.
+	//
+	// Hover intent and the shared hover→click guard only: this level owns its own
+	// click handling, roving focus and typeahead. `popover="manual"`, so the
+	// invoker wiring other consumers need does not apply.
 	const menuHover = useMenuHover(() => ({
 		show: showLayer,
 		hide: hideLayer,
@@ -225,8 +223,14 @@
 		if (isDisabled) {
 			return;
 		}
-		// Click toggles the flyout, moving focus into it on open.
+		// Toggles, except for the click that follows a hover-open (#3121).
 		if (isOpen) {
+			if (menuHover.confirmHoverOpen()) {
+				if (!list.focusFirst()) {
+					menuEl?.focus();
+				}
+				return;
+			}
 			close({ focusTrigger: true });
 		} else {
 			open({ focusFirst: true });

@@ -9,6 +9,111 @@ release the port makes on its own has no number of its own to take. 0.3.1 is the
 ports Astryx 0.3.0, exactly as 0.3.0 did, and changes only things upstream has no counterpart for.
 Each entry states its parity target for that reason.
 
+## 0.4.2
+
+Ports Astryx `0.4.2`.
+
+No component was added, deleted or renamed upstream, so this is drift inside directories the port
+already shipped: 28 `packages/core/src` component directories, three hooks, the theme internals, the
+`en` locale catalog, and one new CLI command.
+
+### Layers now correct themselves out of hosts that cannot legally contain them
+
+A context layer renders an inert `<template>` marker at its position and mounts the real container
+where the marker's parent allows it — inline when that parent is safe, portaled to the nearest legal
+ancestor when it is not. A `HoverCard` written inside a `<p>`, a link, a `<td>` or an `<li>` no
+longer depends on the HTML parser to reparent it.
+
+`HoverCard` also defers mounting until it opens, so rich content never enters an invalid paragraph
+even briefly, and every layer declares its own `font-size`/`line-height` rather than inheriting the
+trigger's — the same `Tooltip` no longer renders at 13px from a caption and 20px from a lede.
+
+### One hover-menu machine, five adopters
+
+The hover→click guard, time-bounded reopen suppression, synchronous focus and focus restoration all
+moved into the shared `useMenuHover`. `TopNavMegaMenu` lost its private copy and `SideNavItem` its
+hand-rolled timers; `TopNavMenu`, `TopNavHeading`, `SideNavHeading` and `DropdownMenuSubMenu` gained
+a guard they never had. Hovering a menu open and clicking it no longer dismisses it, and a menu
+dismissed under a stationary pointer no longer springs back open.
+
+### Touch targets, forced colors, and the SideNav hardening pass
+
+`Switch`, `CheckboxInput` and `RadioListItem` floor their tappable area to 24x24 on a coarse pointer
+(WCAG 2.5.8 AA), `Thumbnail` grows a hit inset, and `Slider`'s track floors to 24px. The selected
+SideNav row survives Windows High Contrast — a 6% background tint flattens away entirely under
+forced colors, leaving the current page unmarked — and every focusable row now draws the _shared_
+focus ring, so a theme that restyles focus restyles all of them together.
+
+### New
+
+- **`astryx-svelte theme template`** writes an annotated reference of the whole `defineTheme`
+  surface into your project. It is machine-checked against this port's own types, so it cannot drift
+  into documenting a field that does not exist.
+- **`theme build` warns about fonts you named but never loaded.**
+- **`typography.body/heading/code` take a role-level `weight`**, filling every heading level
+  `weights` does not name. Named weights become token references so retuning `--font-weight-*` moves
+  them too; a raw CSS value passes through.
+- **`ChatMessageBubble.width`**, so ghost-bubble custom content can span the full message column
+  instead of the `max(80%, 280px)` cap.
+- **`useContainerReveal`** gained a hover-intent dwell (`hoverDelay`) and forced states.
+- **`Slider`'s thumb is inset by half its width at each end**, which is the geometry a native
+  `input[type=range]` uses: at min/max it no longer overhangs the component box by 10px.
+- **21 new locale keys.** `CommandPaletteFooter`'s keyboard hints and `DateTimeInput`'s time
+  placeholders stopped being hardcoded English.
+
+### Fixed
+
+Live in shipped behaviour, not style drift:
+
+- **Every `HoverCard` inside a `<p>`, `<a>`, `<td>` or `<li>` mounted hidden and never appeared.**
+  Three faults compounded: the marker's attachment subscribed to the open state, the resolved mount
+  was reallocated on every resolve, and the portal treated "no target" as nothing to do. Any one of
+  them evicted a showing popover from the top layer with nothing left to re-show it.
+- **A layer whose render call moved between two positions vanished**, because the portal removed it
+  and never put it back; if it was open, it did not reopen.
+- **`TopNavMegaMenuItem`'s drawer row drew no focus ring at all** — keyboard users had no visible
+  focus anywhere in the mobile drawer.
+- **`SideNavHeading`'s collapsed flyout could not be dismissed from the keyboard.** Its heading
+  button was still wired to the trigger's click handler, so Enter and Space only re-focused the
+  first item; Escape restored focus to nothing, because the collapsed trigger never registered.
+- **`Switch` and `AvatarGroupOverflow` documented a `size` theming axis they did not emit.** A theme
+  rule written against `[data-size]` silently matched nothing.
+- **A `TreeList` with no expandable items indented every row** by a chevron column none of them had.
+- **`Text` discarded a consumer's `title`** on every untruncated instance: the component wrote
+  `title={undefined}` after the rest spread, and a later `undefined` removes an attribute. The same
+  ordering hid a caller's `aria-label`/`role` on `Breadcrumbs`, `Heading`, `SideNav` and `TopNav`,
+  and let a caller's `oncancel` replace `Lightbox`'s Escape handler.
+- **`--radius-none` was `0.125rem` in four themes.** It is fixed by contract, like `--radius-full`,
+  and must never be scaled.
+- **A whitespace-only `Avatar` name rendered an empty plate** behind a blank accessible name.
+
+### API
+
+- `useTruncation`, `SizeProvider` and `FormLayoutContext` are published, closing the last of the
+  missing exports upstream ships.
+- `themeProps`, `parseStyleKey`, `observeResize` and seven siblings are reachable from
+  `@astryx-svelte/core/utils`, the subpath upstream puts them on. Their existing root exports stay.
+- `BreadcrumbMenuDividerProps` and `ContextMenuDividerProps` complete those two alias families.
+- Three CLI internals (`buildHelp`, `buildKit`, `importSpecifier`) left the `api` barrel, where
+  upstream keeps them module-private.
+
+### Verified
+
+Both fidelity oracles reach zero: 1,621 style keys and 515 inline call sites with **no skips**, and
+`astryx.css` matching upstream across 1,504 shared classes. All seven theme oracles are clean, and
+the token map now matches upstream family for family — same names, same counts, nothing extra on
+either side — for the first time.
+
+**The closing audits found a release blocker in this release's own headline feature**, and the
+corrective-portal defects above are what they turned up. The cause was uncovered code: upstream
+added roughly 90 test cases at this tag and the first pass ported 21, including none of the nine
+that exercise exactly the layer paths that broke. Around 105 cases have since landed across
+thirteen suites — among them the whole 21-case `useMenuHover` suite, which this port had never had
+for a hook it rewrote from scratch. 165 client files, 4,621 cases, plus 854 server cases.
+
+Two suites remain short of upstream and are named in `port/debts.md` rather than left implied:
+`SideNav` (26 cases) and `Slider` (12, predating this release).
+
 ## 0.4.1
 
 Ports Astryx `0.4.1`.

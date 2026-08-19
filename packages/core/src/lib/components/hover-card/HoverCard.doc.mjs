@@ -75,9 +75,9 @@ export default {
 					'Use a HoverCard for content the user must interact with; it disappears when the cursor leaves.'
 			},
 			{
-				guidance: false,
+				guidance: true,
 				description:
-					'Nest a HoverCard whose content has block elements directly inside phrasing-only contexts such as a <p>, <label>, or heading. The card renders inline, so block content there is invalid HTML the browser reparents. Wrap the surrounding text in a block element (e.g. a <div>) instead.'
+					'Prefer placing HoverCard in a block context rather than directly in a <p>, heading, or link. Those placements are supported when necessary through a corrective portal, but the DOM and tab order may differ.'
 			}
 		],
 		anatomy: [

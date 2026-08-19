@@ -25,6 +25,7 @@ import { logger } from '../../../api/logger.mjs';
 import { cliError } from '../lib/cli-error.mjs';
 import { ERROR_CODES } from '../../../foundation/response/error-codes.mjs';
 import { themeAdd } from '../../../api/theme/add/add.mjs';
+import { themeTemplate } from '../../../api/theme/template/template.mjs';
 import { themeList } from '../../../api/theme/list/list.mjs';
 import { themeBuild, importSpecifier } from '../../../api/theme/build/build.mjs';
 
@@ -359,6 +360,57 @@ export function registerTheme(program) {
 							`<Theme theme={${exportName}}>\n  <App />\n</Theme>`
 					),
 					text(`This is your copy of the ${displayName} theme — edit ${entry} to make it your own.`)
+				);
+			}
+		);
+
+	theme
+		.command('template [path]')
+		.description('Write the annotated theme template into your project')
+		.option('-f, --overwrite', 'Replace an existing file')
+		.action(
+			async (
+				/** @type {string | undefined} */ targetPath,
+				/** @type {{overwrite?: boolean}} */ options
+			) => {
+				const json = program.opts().json || false;
+
+				/** @type {import('../../../api/theme/theme.type.mjs').ThemeTemplateResponse} */
+				let result;
+				try {
+					result = themeTemplate({
+						targetPath,
+						overwrite: options.overwrite,
+						cwd: process.cwd()
+					});
+				} catch (e) {
+					const err = /** @type {import('../../../api/error.mjs').AstryxError} */ (e);
+					cliError(err.message, {
+						suggestions: err.suggestions || [],
+						code: err.code
+					});
+					return;
+				}
+
+				if (json) return jsonOut(result);
+
+				// Leaving an edited file alone is a success, not a failure: this command
+				// is safe to re-run, and `init --features theme` calls it every time.
+				if (!result.data.written) {
+					emit(
+						text(`[ok] ${result.data.path} already exists — left untouched.`),
+						text('Pass --overwrite to replace it.')
+					);
+					return;
+				}
+
+				emit(
+					text(`[ok] Wrote ${result.data.path}`),
+					text(
+						'Every defineTheme field, the token families, and the component override syntax — ' +
+							'annotated, with the CLI command that prints the authoritative reference for each.'
+					),
+					text('Copy what you need into your own theme file, then delete it.')
 				);
 			}
 		);

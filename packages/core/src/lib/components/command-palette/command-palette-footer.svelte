@@ -16,6 +16,7 @@
 <script lang="ts">
 	import Kbd from '../kbd/kbd.svelte';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import {
 		commandPaletteFooterAttrs,
@@ -27,10 +28,10 @@
 	 * from Astryx's `CommandPalette/CommandPaletteFooter.tsx`.
 	 *
 	 * When no children are provided, renders default hints using `Kbd` for arrow
-	 * keys, Enter to select, and Escape to close. The three hint labels are
-	 * hard-coded English on both sides — upstream's catalogue has no keys for
-	 * them, and inventing keys would be inventing API (the same standing
-	 * `FileInput`/`MultiSelector` record).
+	 * keys, Enter to select, and Escape to close. The three hint labels were
+	 * hard-coded English on both sides until upstream 0.4.2 added catalogue keys
+	 * for them (#4506); they now resolve from the locale catalogue like the rest
+	 * of the package.
 	 */
 	const {
 		children,
@@ -40,6 +41,7 @@
 		...rest
 	}: CommandPaletteFooterProps = $props();
 
+	const t = useTranslator();
 	const theme = $derived(themeProps('command-palette-footer'));
 	const attrs = $derived(commandPaletteFooterAttrs(xstyle));
 	const hintAttrs = $derived(commandPaletteFooterHintAttrs());
@@ -57,15 +59,15 @@
 		<span class={hintAttrs.class} style={hintAttrs.style}>
 			<Kbd keys="up" />
 			<Kbd keys="down" />
-			Navigate
+			{t('@astryx.commandPalette.footer.navigate')}
 		</span>
 		<span class={hintAttrs.class} style={hintAttrs.style}>
 			<Kbd keys="enter" />
-			Select
+			{t('@astryx.commandPalette.footer.select')}
 		</span>
 		<span class={hintAttrs.class} style={hintAttrs.style}>
 			<Kbd keys="escape" />
-			Close
+			{t('@astryx.commandPalette.footer.close')}
 		</span>
 	{/if}
 </div>

@@ -54,7 +54,12 @@
 	// The `{count, number}` argument means `en` renders a grouping separator
 	// ("4,912 more"), which the raw template literal never did.
 	const label = $derived(t('@astryx.avatarGroup.overflow', { count }));
-	const theme = themeProps('avatar-group-overflow');
+	// `size` is a documented theming axis on this target (`AvatarGroup.doc.mjs`
+	// declares `visualProps: ['size']`), so it has to reach `themeProps` — and it
+	// arrives through the group context, which makes it `$derived` rather than a
+	// mount-time `const`.
+	const size = $derived(group?.().size ?? 'md');
+	const theme = $derived(themeProps('avatar-group-overflow', { size }));
 </script>
 
 {#snippet content()}

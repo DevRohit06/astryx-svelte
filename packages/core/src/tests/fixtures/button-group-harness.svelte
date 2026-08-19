@@ -13,7 +13,8 @@
 	 */
 	export interface GroupMember {
 		/** @default 'button' */
-		kind?: 'button' | 'icon-button' | 'raw' | 'tooltip-wrapped' | 'hover-card-wrapped';
+		kind?:
+			'button' | 'icon-button' | 'raw' | 'tooltip-wrapped' | 'hover-card-wrapped' | 'dropdown-menu';
 		label: string;
 		variant?: ButtonVariant;
 		href?: string;
@@ -24,6 +25,8 @@
 		iconTestId?: string;
 		/** Content of a wrapping `<Tooltip>` / `<HoverCard>`. */
 		content?: string;
+		/** Item labels for a `dropdown-menu` member. */
+		items?: string[];
 	}
 
 	export interface ButtonGroupHarnessProps extends Omit<ButtonGroupProps, 'children'> {
@@ -34,6 +37,7 @@
 <script lang="ts">
 	import Button from '$lib/components/button/button.svelte';
 	import ButtonGroup from '$lib/components/button-group/button-group.svelte';
+	import DropdownMenu from '$lib/components/dropdown-menu/dropdown-menu.svelte';
 	import HoverCard from '$lib/components/hover-card/hover-card.svelte';
 	import IconButton from '$lib/components/icon-button/icon-button.svelte';
 	import Tooltip from '$lib/components/tooltip/tooltip.svelte';
@@ -56,6 +60,11 @@
 			<Tooltip content={member.content ?? ''}>
 				<Button label={member.label} variant={member.variant} />
 			</Tooltip>
+		{:else if member.kind === 'dropdown-menu'}
+			<DropdownMenu
+				button={{ label: member.label, variant: member.variant }}
+				items={(member.items ?? []).map((label) => ({ label }))}
+			/>
 		{:else if member.kind === 'hover-card-wrapped'}
 			{#snippet cardContent()}{member.content ?? ''}{/snippet}
 			<HoverCard content={cardContent}>

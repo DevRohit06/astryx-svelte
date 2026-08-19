@@ -11,6 +11,9 @@
  * every named radius token explicitly, so the only declaration the expander
  * actually contributes there is `--radius-chat`, which is exactly what the
  * theme oracle reported missing.
+ *
+ * SYNC: When modified, update:
+ * - /packages/cli/assets/theme.template.ts (the annotated field reference)
  */
 
 /** Radius scale configuration. */

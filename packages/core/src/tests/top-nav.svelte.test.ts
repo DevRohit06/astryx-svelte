@@ -14,6 +14,7 @@ import AnotherLink from './fixtures/another-link.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 import TopNavFixture from './fixtures/top-nav-fixture.svelte';
 import TopNavHeadingFixture from './fixtures/top-nav-heading-fixture.svelte';
+import { parkPointer } from './park-pointer.js';
 import TopNavItemFixture from './fixtures/top-nav-item-fixture.svelte';
 
 /**
@@ -599,6 +600,110 @@ describe('TopNavItem', () => {
 			const card = screen.getByTestId('featured-card');
 			await expect.element(card).toHaveAttribute('id', 'card-1');
 			await expect.element(card).toHaveAttribute('aria-label', 'Featured');
+		});
+	});
+});
+
+/**
+ * Upstream's `describe('TopNavHeading hover/click guard')`, all four cases, new
+ * at 0.4.2 with the #3121 `useMenuHover` consolidation — `TopNavHeading` gained
+ * the guard it never had.
+ *
+ * Timing translation is `menu-hover.svelte.test.ts`'s: upstream drives fake
+ * timers and `act()`, these wait out real ones. The hover is dispatched
+ * synthetically rather than through Playwright because the popup deliberately
+ * overlaps its own trigger, so a real pointer press hit-tests into the popup —
+ * the seam `side-nav.svelte.test.ts`'s `openMenu` records at length.
+ */
+describe('TopNavHeading hover/click guard', () => {
+	const menuItems = ['Alpha', 'Beta'];
+	/** The hook's `DEFAULT_CLICK_GUARD_MS`. */
+	const CLICK_GUARD_MS = 500;
+
+	async function renderHeading() {
+		const screen = await render(TopNavHeadingFixture, {
+			props: { props: { heading: 'My App' }, menuItems }
+		});
+		// The heading is a full-width row under Playwright's parked cursor, so a
+		// close springs straight back open without this. See `park-pointer.ts`.
+		await parkPointer();
+		return {
+			screen,
+			trigger: screen.getByRole('button', { name: 'Open menu' }).element() as HTMLElement
+		};
+	}
+
+	/** `mouseenter` does not bubble; walk the chain a real pointer would enter. */
+	function hover(el: HTMLElement, root: HTMLElement): void {
+		for (let node: HTMLElement | null = el; node; node = node.parentElement) {
+			node.dispatchEvent(new MouseEvent('mouseenter', { bubbles: false }));
+			if (node === root) {
+				break;
+			}
+		}
+	}
+
+	it('keeps the menu open when a hover-open is immediately clicked', async () => {
+		const { screen, trigger } = await renderHeading();
+
+		hover(trigger, screen.container);
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		});
+
+		trigger.click();
+		expect(trigger).toHaveAttribute('aria-expanded', 'true');
+	});
+
+	it('closes on a click that lands well after the hover-open', async () => {
+		const { screen, trigger } = await renderHeading();
+
+		hover(trigger, screen.container);
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		});
+		// Past the guard: a deliberate dismissal, not a follow-on.
+		await new Promise((resolve) => setTimeout(resolve, CLICK_GUARD_MS + 100));
+
+		trigger.click();
+		// Awaited where upstream asserts synchronously: `await user.click()` gave
+		// React a render, while a native `.click()` returns before Svelte flushes.
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'false');
+		});
+	});
+
+	it('leaves focus on the trigger for a hover-open, and moves it in on click', async () => {
+		const { screen, trigger } = await renderHeading();
+
+		hover(trigger, screen.container);
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		});
+		const firstItem = screen.container.querySelector<HTMLElement>('[role="menuitem"]');
+		expect(firstItem).not.toBeNull();
+		expect(document.activeElement).not.toBe(firstItem);
+
+		trigger.click();
+		await vi.waitFor(() => {
+			expect(document.activeElement).toBe(firstItem);
+		});
+	});
+
+	it('returns focus to the trigger on Escape', async () => {
+		const { screen, trigger } = await renderHeading();
+
+		trigger.click();
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'true');
+		});
+
+		const menu = screen.container.querySelector('[role="menu"]') as HTMLElement;
+		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+
+		await vi.waitFor(() => {
+			expect(trigger).toHaveAttribute('aria-expanded', 'false');
+			expect(document.activeElement).toBe(trigger);
 		});
 	});
 });

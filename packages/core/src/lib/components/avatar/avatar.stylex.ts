@@ -82,16 +82,17 @@ const styles = stylex.create({
 		position: 'relative',
 		display: 'inline-flex',
 		flexShrink: 0,
-		// The wrapper is not clipped (so the status dot can overflow), so it must be
-		// rounded itself: a themed fallback background lands on `.astryx-avatar` (the
-		// class-bearing wrapper) as well as the internal var, and an unrounded
-		// wrapper would show that fill as square corners behind the circular content.
+		// The wrapper carries the avatar's box as well as its radius, so a theme
+		// rule on the `.astryx-avatar` target reaches both: the size the `size`
+		// visual prop selects on is set here, and the content below fills it.
 		borderRadius: radiusVars['--radius-full']
 	},
 	content: {
 		display: 'flex',
 		alignItems: 'center',
 		justifyContent: 'center',
+		width: '100%',
+		height: '100%',
 		borderRadius: radiusVars['--radius-full'],
 		overflow: 'hidden',
 		userSelect: 'none'
@@ -194,6 +195,12 @@ const groupDynamicStyles = stylex.create({
 });
 
 export interface AvatarWrapperAttrsOptions {
+	/**
+	 * The resolved pixel size. It sits on the wrapper as of 0.4.2 so that a theme
+	 * rule on the documented `size` axis of `.astryx-avatar` resizes the whole
+	 * avatar, rather than growing a wrapper around a fixed-size circle (#5030).
+	 */
+	size: number;
 	/** The group's overlap in pixels, or null outside a group. */
 	groupOverlap: number | null;
 	/** Whether the root renders as an `<a>`/`<button>` rather than a `<div>`. */
@@ -217,11 +224,12 @@ export interface AvatarWrapperAttrsOptions {
  * reason the element swap is invisible to layout.
  */
 export function avatarWrapperAttrs(
-	{ groupOverlap, isInteractive }: AvatarWrapperAttrsOptions,
+	{ size, groupOverlap, isInteractive }: AvatarWrapperAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
 		styles.wrapper,
+		dynamicStyles.size(size),
 		isInteractive && styles.interactive,
 		groupOverlap != null && groupStyles.ring,
 		groupOverlap != null && groupStyles.overlap,
@@ -230,9 +238,13 @@ export function avatarWrapperAttrs(
 	);
 }
 
-/** The clipping circle the image, initials or icon sits inside. */
-export function avatarContentAttrs(size: number): SvelteStyleAttrs {
-	return sx(styles.content, dynamicStyles.size(size));
+/**
+ * The clipping circle the image, initials or icon sits inside. It fills the
+ * wrapper rather than sizing itself — as of 0.4.2 the box lives on the wrapper,
+ * which is the element carrying the `astryx-avatar` theme target (#5030).
+ */
+export function avatarContentAttrs(): SvelteStyleAttrs {
+	return sx(styles.content);
 }
 
 export function avatarImageAttrs(): SvelteStyleAttrs {

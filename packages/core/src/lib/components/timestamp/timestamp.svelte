@@ -102,7 +102,7 @@
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { cx } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
-	import { devWarn } from '../../utils/dev-warning.js';
+	import { useDevWarning } from '../../hooks/use-dev-warning.svelte.js';
 	import Text from '../text/text.svelte';
 	import { formatInstant } from './format-instant.js';
 	import {
@@ -235,22 +235,14 @@
 		return () => clearInterval(timer);
 	});
 
-	// Upstream's `useDevWarning('Timestamp', …)`: a ref latch inside an effect, so
-	// the warning fires at most once per mount and never during SSR. Expanded
-	// inline rather than calling our `useDevWarning`, because the message
-	// interpolates `value` and the hook takes `message` as a plain string —
-	// captured at init, it would report the mount-time value rather than the one
-	// that actually failed to parse.
-	let hasWarnedInvalidDate = false;
-	$effect(() => {
-		if (!isValidDate && !hasWarnedInvalidDate) {
-			hasWarnedInvalidDate = true;
-			devWarn(
-				'Timestamp',
-				`could not parse value ${JSON.stringify(value)} as a date. Rendering nothing.`
-			);
-		}
-	});
+	// Upstream's `useDevWarning('Timestamp', …)`, called rather than expanded: the
+	// hook's `message` takes a getter, so the interpolated value is read when the
+	// warning fires rather than captured at init. Latch and effect are the hook's.
+	useDevWarning(
+		'Timestamp',
+		() => `could not parse value ${JSON.stringify(value)} as a date. Rendering nothing.`,
+		() => !isValidDate
+	);
 
 	const attrs = timestampAttrs();
 	const theme = $derived(themeProps('timestamp', { format: effectiveFormat }));

@@ -12,12 +12,16 @@ The first npm release shipped as `0.3.1` (porting Astryx `0.3.0` — the port's 
 can't express a release of its own, so it took the next free patch number instead of `0.3.0`
 itself). Since then the goal has been continuous upstream tracking rather than a one-time port:
 pull each Astryx release, close the class-oracle and theme-oracle drift it introduces, and cut a
-matching release of this port. The pin is currently Astryx `0.4.1` — see
-[`status.md`](./status.md) for the live count of what that leaves open. Set 2026-08-15.
+matching release of this port. The pin is currently Astryx `0.4.2` — see
+[`status.md`](./status.md) for the live count of what that leaves open. Set 2026-08-16.
 
 ## Next
 
 - [ ] Push the release tag for the current pin once its gate is green (see Open work → Release)
+- [ ] Finish the 0.4.2 test delta — 39 SideNav cases and 12 Slider cases, plus smaller counts in
+      Avatar, TopNav, ChatMessageBubble, useContainerReveal, DropdownMenuSubMenu and useFocusTrap.
+      The release-blocking part is done (useLayer's hosting block, the whole useMenuHover suite,
+      Slider's inset blocks, HoverCard's portal pair); `debts.md` carries the per-suite list
 - [ ] Re-sweep the demo route against upstream now that later batches have landed
 - [ ] Build `ThemesPreview`/`TemplatesPreview`, the two landing-page bento tiles — both were
       blocked on page templates, which have since landed in full

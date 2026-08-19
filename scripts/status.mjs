@@ -122,7 +122,12 @@ const pin =
 
 // --- Debts by kind ---------------------------------------------------------
 
-const debtsText = existsSync('port/debts.md') ? readFileSync('port/debts.md', 'utf8') : '';
+const debtsFile = existsSync('port/debts.md') ? readFileSync('port/debts.md', 'utf8') : '';
+// Stop at `## Retired`: entries below it are closed and kept only as the record.
+// Counting them would report a debt that no longer exists, and the same heads are
+// what `astryx-parity` greps to ask whether drift is already known.
+const retiredAt = debtsFile.indexOf('\n## Retired');
+const debtsText = retiredAt === -1 ? debtsFile : debtsFile.slice(0, retiredAt);
 const debtKinds = {};
 for (const match of debtsText.matchAll(/^- \*\*kind:\*\* (.+)$/gm)) {
 	const kind = match[1].trim();

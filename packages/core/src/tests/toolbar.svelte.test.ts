@@ -73,9 +73,9 @@ describe('Toolbar', () => {
 		await expect.element(screen.getByTestId('end')).toBeInTheDocument();
 
 		// Three-slot layout produces 3 child divs (plus the aria-hidden
-		// keyboard-hint popover, which is excluded here as an implementation detail)
+		// keyboard-hint layer infrastructure, excluded as an implementation detail)
 		const toolbar = screen.getByRole('toolbar').element();
-		expect(toolbar.querySelectorAll(':scope > :not([popover])')).toHaveLength(3);
+		expect(toolbar.querySelectorAll(':scope > :not([popover]):not(template)')).toHaveLength(3);
 	});
 
 	it('renders two-slot layout without centerContent', async () => {
@@ -86,7 +86,7 @@ describe('Toolbar', () => {
 		await expect.element(screen.getByTestId('end')).toBeInTheDocument();
 
 		const toolbar = screen.getByRole('toolbar').element();
-		expect(toolbar.querySelectorAll(':scope > :not([popover])')).toHaveLength(2);
+		expect(toolbar.querySelectorAll(':scope > :not([popover]):not(template)')).toHaveLength(2);
 	});
 
 	it('renders start-only layout', async () => {
@@ -95,7 +95,7 @@ describe('Toolbar', () => {
 		});
 		await expect.element(screen.getByTestId('start')).toBeInTheDocument();
 		const toolbar = screen.getByRole('toolbar').element();
-		expect(toolbar.querySelectorAll(':scope > :not([popover])')).toHaveLength(1);
+		expect(toolbar.querySelectorAll(':scope > :not([popover]):not(template)')).toHaveLength(1);
 	});
 
 	it('renders end-only layout', async () => {
@@ -104,7 +104,7 @@ describe('Toolbar', () => {
 		});
 		await expect.element(screen.getByTestId('end')).toBeInTheDocument();
 		const toolbar = screen.getByRole('toolbar').element();
-		expect(toolbar.querySelectorAll(':scope > :not([popover])')).toHaveLength(1);
+		expect(toolbar.querySelectorAll(':scope > :not([popover]):not(template)')).toHaveLength(1);
 	});
 
 	it('sets aria-orientation to horizontal by default', async () => {

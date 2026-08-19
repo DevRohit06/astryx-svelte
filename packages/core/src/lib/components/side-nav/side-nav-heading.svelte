@@ -65,6 +65,7 @@
 		sideNavHeadingHeadingAttrs,
 		sideNavHeadingHeadingLinkAttrs,
 		sideNavHeadingIconAttrs,
+		sideNavHeadingIconLinkAttrs,
 		sideNavHeadingPopover,
 		sideNavHeadingPopoverChevronStyle,
 		sideNavHeadingPopoverContentAttrs,
@@ -178,6 +179,7 @@
 	const collapsedLinkAttrs = $derived(sideNavHeadingCollapsedLinkAttrs(xstyle));
 	const collapsedTriggerAttrs = $derived(sideNavHeadingCollapsedTriggerAttrs(xstyle));
 	const iconAttrs = sideNavHeadingIconAttrs();
+	const iconLinkAttrs = sideNavHeadingIconLinkAttrs();
 	const textContainerAttrs = sideNavHeadingTextContainerAttrs();
 	const superheadingAttrs = sideNavHeadingSuperheadingAttrs();
 	const headingAttrs = sideNavHeadingHeadingAttrs();
@@ -227,8 +229,8 @@
 		href: headingHref,
 		...(linkResolved.isNative ? {} : { to: headingHref }),
 		'aria-label': heading,
-		class: iconAttrs.class,
-		style: iconAttrs.style
+		class: iconLinkAttrs.class,
+		style: iconLinkAttrs.style
 	});
 </script>
 
@@ -281,7 +283,14 @@
 {/snippet}
 
 {#snippet chevronTriggerButton()}
+	<!--
+		The hover hook's trigger attachment belongs on this chevron button, not the
+		heading root: it is the focus-restore target, and the root is a `<div>`,
+		which cannot take focus. The popover's own trigger attachment stays on the
+		root because the panel anchors to the whole heading.
+	-->
 	<button
+		{@attach menuHover.attachTrigger}
 		type="button"
 		aria-label={t('@astryx.sideNav.heading.openMenu')}
 		onclick={openMenuFromChevron}
@@ -302,7 +311,7 @@
 		type="button"
 		class={popoverHeadingAttrs.class}
 		style={popoverHeadingAttrs.style}
-		onclick={menuHover.triggerProps.onclick}
+		onclick={menuHover.close}
 	>
 		{#if icon}
 			<span class={iconAttrs.class} style={iconAttrs.style}>{@render icon()}</span>
@@ -344,9 +353,17 @@
 			</span>
 		</LinkElement>
 	{:else if menu}
+		<!--
+			Collapsed, this button is the trigger for *both* hooks, so it takes both
+			attachments — upstream's `collapsedSetRef` combines the popover ref with
+			`menu ? setTriggerEl : undefined`, and this branch only renders when `menu`
+			is set. Without the hover hook's, its `triggerEl` stays null and
+			`hideAndRestoreFocus` restores focus to nothing after a hover-open.
+		-->
 		<button
 			bind:this={collapsedItemEl}
 			{@attach popover.attachTrigger}
+			{@attach menuHover.attachTrigger}
 			type="button"
 			aria-label={heading}
 			data-testid={testId}
@@ -375,7 +392,7 @@
 					type="button"
 					class={popoverHeadingAttrs.class}
 					style={popoverHeadingAttrs.style}
-					onclick={menuHover.triggerProps.onclick}
+					onclick={menuHover.close}
 				>
 					{#if icon}
 						<span class={iconAttrs.class} style={iconAttrs.style}>{@render icon()}</span>
@@ -406,7 +423,7 @@
 				-->
 				<div role="menu" aria-label={heading}>
 					{#if menu}
-						<NavHeadingCloseScope closeMenu={popover.hide}>
+						<NavHeadingCloseScope closeMenu={menuHover.close}>
 							{@render menu()}
 						</NavHeadingCloseScope>
 					{/if}

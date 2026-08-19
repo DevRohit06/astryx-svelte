@@ -1,9 +1,11 @@
 import type { DefinedTheme, TokenValue } from './define-theme.js';
 import { formatColor, parseColor } from '../utils/color.js';
 import {
+	borderDefaults,
 	colorDefaults,
 	durationDefaults,
 	easeDefaults,
+	focusDefaults,
 	fontWeightDefaults,
 	radiusDefaults,
 	shadowDefaults,
@@ -27,16 +29,22 @@ import {
  * import path. See the note at that file's head.
  *
  * Upstream also folds in its `domainTokens/` (data-viz) group, which this port
- * does not ship — and **omits `borderDefaults`**, which it does ship and does
- * publish a `BorderVarName` type for. That looks like an upstream bug, so it is
- * recorded in port/todo.md rather than corrected here: including the group would put
- * a `--border-width` key in `tokenVars` and in every `useTheme().tokens` that
- * upstream's does not have.
+ * does not ship.
+ *
+ * It **used to omit `borderDefaults`** — which it ships and publishes a
+ * `BorderVarName` type for — and this port recorded that as an upstream bug
+ * rather than correcting it, since including the group would have put a
+ * `--border-width` key in `tokenVars` and in every `useTheme().tokens` that
+ * upstream's did not have. Upstream 0.4.2 folded it in (#5026), so the group is
+ * here now and the debt retires with it. `focusDefaults` was simply missing on
+ * this side, and lands in the same pass.
  */
 export const tokenDefaults: Record<string, string> = {
 	...colorDefaults,
 	...spacingDefaults,
 	...sizeDefaults,
+	...borderDefaults,
+	...focusDefaults,
 	...radiusDefaults,
 	...shadowDefaults,
 	...durationDefaults,

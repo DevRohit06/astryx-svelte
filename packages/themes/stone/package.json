@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-stone",
-	"version": "0.4.1",
+	"version": "0.4.2",
 	"description": "Stone theme for astryx-svelte — warm stone and slate, earthy and understated.",
 	"license": "MIT",
 	"repository": {
@@ -52,7 +52,7 @@
 	},
 	"devDependencies": {
 		"@astryx-svelte/core": "workspace:*",
-		"@astryxdesign/theme-stone": "0.4.1",
+		"@astryxdesign/theme-stone": "0.4.2",
 		"prettier": "^3.8.3",
 		"prettier-plugin-svelte": "^4.1.0",
 		"svelte": "^5.56.1",

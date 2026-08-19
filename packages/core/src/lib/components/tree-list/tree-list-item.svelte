@@ -19,6 +19,12 @@
 		isDisabled?: boolean;
 		isSelected?: boolean;
 		hasChildren: boolean;
+		/**
+		 * Whether the tree has any expandable item at all. A leaf only reserves the
+		 * chevron column when some sibling can actually show a chevron — a wholly
+		 * flat tree sits flush against the edge.
+		 */
+		hasExpandableItems: boolean;
 		nestedLevel: number;
 		isLast: boolean;
 		ancestorsIsLast: ReadonlyArray<boolean>;
@@ -86,6 +92,7 @@
 		isDisabled = false,
 		isSelected = false,
 		hasChildren,
+		hasExpandableItems,
 		nestedLevel,
 		isLast,
 		ancestorsIsLast,
@@ -135,10 +142,11 @@
 	// with the lever. Published as the private `--_tree-indent` and consumed by
 	// `contentWrapper`'s stylesheet `margin-inline-start` (kept out of the inline
 	// style so the theme layer can override it — see upstream #4308).
+	const reservesChevronColumn = $derived(!hasChildren && hasExpandableItems);
 	const indentDistance = $derived(
-		hasChildren
-			? `calc(${nestedLevel} * var(--tree-list-indent))`
-			: `calc(${nestedLevel} * var(--tree-list-indent) + ${spacingVars['--spacing-4']} + ${spacingVars['--spacing-2']})`
+		reservesChevronColumn
+			? `calc(${nestedLevel} * var(--tree-list-indent) + ${spacingVars['--spacing-4']} + ${spacingVars['--spacing-2']})`
+			: `calc(${nestedLevel} * var(--tree-list-indent))`
 	);
 
 	const theme = $derived(

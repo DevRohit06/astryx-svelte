@@ -114,11 +114,17 @@
 	const contentAttrs = $derived(collapsibleContentAttrs(density, collapsible.isOpen));
 </script>
 
+<!--
+	`{...rest}` last, as upstream spreads `{...props}` last — a consumer's `data-*`
+	or `aria-*` overrides the component's own reflection rather than being
+	overridden by it. `class`/`style` are destructured out, so they cannot be
+	clobbered from here.
+-->
 <div
-	{...rest}
 	{...theme}
 	class={cx(theme.class, rootAttrs.class, className)}
 	style={mergeStyle(rootAttrs.style, styleProp as string | undefined)}
+	{...rest}
 >
 	<button
 		type="button"

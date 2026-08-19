@@ -142,12 +142,12 @@
 		Mobile bar mode — heading + endContent + toggle, nav items hidden.
 	-->
 	<nav
-		{...rest}
 		role="navigation"
 		aria-label={label}
 		{...mobileBarTheme}
 		class={cx(mobileBarTheme.class, mobileBarAttrs.class, className)}
 		style={mergeStyle(mobileBarAttrs.style, styleProp as string | undefined)}
+		{...rest}
 	>
 		{#if heading}
 			<div class={headingSlotAttrs.class} style={headingSlotAttrs.style}>{@render heading()}</div>
@@ -187,12 +187,12 @@
 {:else}
 	<!-- Default mode — the full top bar -->
 	<nav
-		{...rest}
 		role="navigation"
 		aria-label={label}
 		{...theme}
 		class={cx(theme.class, rootAttrs.class, className)}
 		style={mergeStyle(rootAttrs.style, styleProp as string | undefined)}
+		{...rest}
 	>
 		<div class={leftSectionAttrs.class} style={leftSectionAttrs.style}>
 			{#if heading}
