@@ -26,6 +26,12 @@ from a quiet `main` is easier than tagging mid-batch.
       Avatar, TopNav, ChatMessageBubble, useContainerReveal, DropdownMenuSubMenu and useFocusTrap.
       The release-blocking part is done (useLayer's hosting block, the whole useMenuHover suite,
       Slider's inset blocks, HoverCard's portal pair); `debts.md` carries the per-suite list
+- [ ] Hand-translate the deferred `.doc.mjs` examples. Upstream's are JSX, and this port's
+      `ComponentExampleDoc.code` is documented as Svelte source, so emitting them verbatim would
+      ship React as this CLI's answer to "show me an example" — the `Button.icon` mistake.
+      `UPSTREAM_EXAMPLES_NOT_PORTED` in `docs/scripts/emit-core-docs.mjs` is the exact list and
+      fails the run in both directions, so it cannot drift; `BottomSheet` and
+      `BottomSheetSwitcher` joined it at 0.4.5
 - [ ] Re-sweep the demo route against upstream now that later batches have landed
 - [ ] Build `ThemesPreview`/`TemplatesPreview`, the two landing-page bento tiles — both were
       blocked on page templates, which have since landed in full

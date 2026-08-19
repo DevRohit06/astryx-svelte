@@ -418,6 +418,8 @@ function findEmitted(dir, found = []) {
  */
 const UPSTREAM_EXAMPLES_NOT_PORTED = new Set([
 	'AvatarGroupOverflow',
+	'BottomSheet',
+	'BottomSheetSwitcher',
 	'CheckboxListItem',
 	'DialogHeader',
 	'Field',

@@ -84,7 +84,7 @@ export default {
 		},
 		{
 			name: 'size',
-			type: "'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 32 | 36 | 40 | 48 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
+			type: "48 | 'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 32 | 36 | 40 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
 			description: 'Size applied to all avatars via context.',
 			default: "'md'"
 		},
