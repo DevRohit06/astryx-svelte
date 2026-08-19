@@ -248,29 +248,54 @@
 	useScrollLock(() => isModal);
 
 	/**
-	 * One shared shell for the whole flow. A modal flow enters the native top
-	 * layer once and handoffs only swap panels inside it. The final panel owns the
-	 * exit timing, so `isFlowVisible` goes false only when it is safe to close the
-	 * dialog and restore focus.
+	 * Whatever opened the flow, captured before anything can move focus off it.
+	 *
+	 * Upstream captures this inside the layout effect that opens the dialog.
+	 * That works in jsdom, which never performs the focus trap's initial focus —
+	 * every element reads as unperceivable there. In a browser the trap activates
+	 * in the same flush and pulls focus to the first control *inside* the sheet,
+	 * so a capture from a post effect records that control as the trigger, and
+	 * closing the flow then "restores" focus into the sheet it just dismissed.
+	 * A pre effect runs before the DOM update and before every post effect, which
+	 * is the only point where the answer is still the page's.
 	 */
 	$effect.pre(() => {
 		const visible = isFlowVisible;
 		const scrim = hasScrim;
 		untrack(() => {
-			const dialog = dialogEl;
-			if (dialog == null) {
-				return;
+			if (visible && scrim && triggerEl == null) {
+				triggerEl = document.activeElement as HTMLElement | null;
 			}
+		});
+	});
 
+	/**
+	 * One shared shell for the whole flow. A modal flow enters the native top
+	 * layer once and handoffs only swap panels inside it. The final panel owns the
+	 * exit timing, so `isFlowVisible` goes false only when it is safe to close the
+	 * dialog and restore focus.
+	 *
+	 * `$effect`, not `$effect.pre`, and `dialogEl` is read *tracked*. Upstream's
+	 * `useLayoutEffect` runs after the commit, with `dialogRef.current` already
+	 * populated; Svelte's `bind:this` is an effect of its own, created after this
+	 * script's, so a pre effect would run first with no dialog to open and never
+	 * hear about the one that arrived. A flow that was active on mount would then
+	 * render a closed dialog and only open on the next unrelated change.
+	 */
+	$effect(() => {
+		const visible = isFlowVisible;
+		const scrim = hasScrim;
+		const dialog = dialogEl;
+		if (dialog == null) {
+			return;
+		}
+		untrack(() => {
 			if (visible) {
 				const nextMode = scrim ? 'modal' : 'non-modal';
 				if (dialog.open && dialogMode !== nextMode) {
 					dialog.close();
 				}
 				if (!dialog.open) {
-					if (scrim && triggerEl == null) {
-						triggerEl = document.activeElement as HTMLElement | null;
-					}
 					if (scrim) {
 						dialog.showModal();
 					} else {
@@ -455,8 +480,14 @@
 		setScrimOpacity(opacity);
 	}
 
-	$effect.pre(() => {
-		setScrimOpacity(activeSheet == null ? 0 : 1);
+	// Also waits for the element, for the reason above: on mount there is nothing
+	// to set the property on until `bind:this` has run.
+	$effect(() => {
+		const target = activeSheet == null ? 0 : 1;
+		if (dialogEl == null) {
+			return;
+		}
+		setScrimOpacity(target);
 	});
 
 	/**

@@ -208,8 +208,14 @@
 		sheet: () => element
 	});
 
+	// Reports `null` on teardown as well, which is the half of upstream's ref
+	// callback a bare effect drops: React calls `setElement(null)` when the panel
+	// unmounts, and a switcher learns that its sheet has gone only from that call.
+	// Without it a flow whose sheet unmounts on close — a sheet rendered behind an
+	// `{#if}` — leaves the shared dialog open with nothing in it.
 	$effect(() => {
 		onElementChange?.(element);
+		return () => onElementChange?.(null);
 	});
 
 	const motion = $derived(motionForState(panelState));
