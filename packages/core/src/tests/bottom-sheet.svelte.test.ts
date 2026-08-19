@@ -4,13 +4,33 @@ import { createAttachmentKey } from 'svelte/attachments';
 import { render } from 'vitest-browser-svelte';
 import BottomSheet from '$lib/components/bottom-sheet/bottom-sheet.svelte';
 import ExitHarness from './fixtures/bottom-sheet-exit-harness.svelte';
+import SwitcherHarness from './fixtures/bottom-sheet-switcher-harness.svelte';
+import FocusRestoreHarness from './fixtures/bottom-sheet-focus-restore-harness.svelte';
 import { stubMatchMedia } from './stub-match-media.js';
 
 /**
- * Ported from Astryx's `BottomSheet/BottomSheet.test.tsx` at v0.4.5.
+ * Ported from Astryx's `BottomSheet/BottomSheet.test.tsx` at v0.4.5 — **all 63
+ * `it` cases and both `it.each` tables, 70 running cases**, none dropped and
+ * none added.
  *
  * Runs in the **client** project, in real Chromium, where upstream's is jsdom.
- * That difference drives most of the restatements:
+ * That difference drives every restatement below, and each is a difference in
+ * how the case is *driven*, never in what it asserts:
+ *
+ * - **Geometry is measured at zero**, as jsdom measures it, so upstream's
+ *   numbers stay upstream's numbers rather than being rescaled to whatever
+ *   window the test browser happens to have. See `stubZeroRects`.
+ * - **The sheet is given a real transition rule.** The browser project loads no
+ *   stylesheet, so `transition-duration` would compute to its initial `0s` and
+ *   every two-phase snap would collapse into one render. jsdom reaches
+ *   upstream's behaviour from the other side: no stylesheet at all reads back
+ *   as *unresolved* timing, so the native event stays authoritative.
+ * - **Assertions on the DOM wait for a flush.** `fireEvent` re-renders React
+ *   synchronously; a Svelte `$state` write lands on the microtask queue.
+ *   Assertions on a mock, which a handler calls synchronously, do not wait.
+ * - **`scrollTop` is tracked by hand** where a case asserts on it: Chromium
+ *   ignores a write to a non-overflowing element, and it *has* `scrollBy`,
+ *   which sends the hook down a branch jsdom never reaches.
  *
  * - **`<dialog>` is stubbed anyway.** jsdom has no `showModal`/`show`/`close`,
  *   so upstream installs prototype stubs that toggle the `open` attribute. Real
@@ -369,6 +389,73 @@ function holdAnimationFrames(): FrameRequestCallback[] {
 async function runHeldFrames(frames: FrameRequestCallback[]): Promise<void> {
 	frames.splice(0).forEach((frame) => frame(0));
 	await flush();
+}
+
+function getPositioner(): HTMLElement {
+	const positioner = getSheet().parentElement;
+	if (!(positioner instanceof HTMLElement)) {
+		throw new Error('sheet positioner not found');
+	}
+	return positioner;
+}
+
+function field(name: string): HTMLInputElement {
+	const input = document.querySelector<HTMLInputElement>(`input[aria-label="${name}"]`);
+	if (!input) {
+		throw new Error(`field ${name} not found`);
+	}
+	return input;
+}
+
+/**
+ * Make a scroll the hook performs observable.
+ *
+ * Chromium ignores a `scrollTop` write on an element that does not overflow,
+ * and it *has* `scrollBy`, so the hook takes the smooth-scroll branch where
+ * jsdom sends it down the `scrollTop +=` fallback. Tracking both against one
+ * value keeps upstream's assertion — how far the field moved — meaningful in
+ * either browser.
+ */
+function trackScrollTop(element: HTMLElement): void {
+	let scrollTop = 0;
+	Object.defineProperty(element, 'scrollTop', {
+		configurable: true,
+		get: () => scrollTop,
+		set: (value: number) => {
+			scrollTop = value;
+		}
+	});
+}
+
+function trackBodyScroll(body: HTMLElement): void {
+	trackScrollTop(body);
+	Object.defineProperty(body, 'scrollBy', {
+		configurable: true,
+		value: (options: ScrollToOptions) => {
+			body.scrollTop += options.top ?? 0;
+		}
+	});
+}
+
+function mockIOSWebKit(): void {
+	const navigatorMock = Object.create(window.navigator);
+	Object.defineProperties(navigatorMock, {
+		userAgent: {
+			configurable: true,
+			value: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15'
+		},
+		maxTouchPoints: { configurable: true, value: 5 },
+		// jsdom has no `vibrate`, so upstream's haptic tick is simply skipped
+		// there. Chromium inherits a real one, and calling it on this stand-in
+		// throws `Illegal invocation` — the mock is not a Navigator.
+		vibrate: { configurable: true, value: () => true }
+	});
+	vi.stubGlobal('navigator', navigatorMock);
+}
+
+/** A blur naming where focus is going, which is how the hook sees a transition. */
+function blurTo(from: HTMLElement, relatedTarget: HTMLElement | null): void {
+	from.dispatchEvent(new FocusEvent('blur', { relatedTarget, bubbles: false }));
 }
 
 function closeButton(): HTMLButtonElement {
@@ -1101,6 +1188,1062 @@ describe('BottomSheet', () => {
 			await flush();
 			// The peek of an 800px window: 736 - 112 = 624px of travel.
 			expect(sheet.style.transform).toBe('translateY(624px)');
+		});
+	});
+
+	describe('mobile keyboard', () => {
+		it('claims a transition between fields and delivers it with preventScroll', async () => {
+			mockIOSWebKit();
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<div><input aria-label="Title" /><input aria-label="Comment" /></div>')
+				}
+			});
+			const title = field('Title');
+			const comment = field('Comment');
+			title.focus();
+			const focus = vi.spyOn(comment, 'focus');
+
+			// The keyboard's Next, Tab, and a programmatic focus() all arrive as this
+			// one transition, named by relatedTarget on the outgoing blur.
+			blurTo(title, comment);
+
+			// Delivered by us, with the browser's reveal refused.
+			expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+		});
+
+		it('does not park focus on a sheet that is closing', async () => {
+			mockIOSWebKit();
+			const props = (isOpen: boolean) => ({
+				isOpen,
+				onOpenChange: () => {},
+				label: 'Add a comment',
+				height: 'tall' as const,
+				children: html('<input aria-label="Comment" />')
+			});
+			const view = await render(BottomSheet, { props: props(true) });
+			const sheet = getSheet();
+			field('Comment').focus();
+			const sheetFocus = vi.spyOn(sheet, 'focus');
+
+			// Closing blurs the field as well, and that blur names no destination —
+			// the same shape as Done. There is no next tap to keep claimable here,
+			// and the host is about to hand focus back to whatever opened the sheet.
+			await view.rerender(props(false));
+			await flush();
+
+			expect(sheetFocus).not.toHaveBeenCalled();
+		});
+
+		it('autofocuses a field without letting the browser reveal it', async () => {
+			mockIOSWebKit();
+			const focus = vi.spyOn(HTMLInputElement.prototype, 'focus');
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" data-autofocus />')
+				}
+			});
+			// A prototype spy outlives this case unless it is put back by hand.
+			const calls = [...focus.mock.calls];
+			focus.mockRestore();
+
+			// Opening focuses the field itself, so there is no transition to claim —
+			// nothing was focused to blur. The presenting call has to refuse the
+			// reveal on its own, or the browser scrolls the page to show a field the
+			// sheet was about to show anyway.
+			expect(document.activeElement).toBe(field('Comment'));
+			expect(calls).toContainEqual([{ preventScroll: true }]);
+		});
+
+		it('parks focus on the sheet when the keyboard Done button takes it', async () => {
+			mockIOSWebKit();
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const sheet = getSheet();
+			const input = field('Comment');
+			input.focus();
+			const sheetFocus = vi.spyOn(sheet, 'focus');
+
+			// Done dismisses the keyboard and drops focus on the body. Left there,
+			// the field is still document.activeElement on the next tap, so no
+			// transition fires and the browser reveals it its own way. Parking focus
+			// on the sheet keeps the next tap a transition this hook can claim.
+			blurTo(input, null);
+
+			expect(sheetFocus).toHaveBeenCalledWith({ preventScroll: true });
+		});
+
+		it('does not alter ordinary desktop focus when the viewport is unobstructed', async () => {
+			mockVisualViewport(800);
+			mockWindowHeight(800);
+			const onFocus = vi.fn();
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const input = field('Comment');
+			// Upstream passes `onFocus` as a JSX prop on the child. The children here
+			// are a snippet of markup, so the listener is attached to the same node
+			// instead — the assertion is about what reaches the field either way.
+			input.addEventListener('focus', onFocus);
+			const focus = vi.spyOn(input, 'focus');
+
+			input.focus();
+			await flush();
+
+			expect(focus).not.toHaveBeenCalledWith({ preventScroll: true });
+			expect(onFocus).toHaveBeenCalledTimes(1);
+			expect(getBody().style.getPropertyValue('--_sheet-keyboard-inset')).toBe('0px');
+		});
+
+		it('keeps Tall geometry fixed while extending and cleaning up its internal scroll range', async () => {
+			const viewport = mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const sheet = getSheet();
+			const positioner = getPositioner();
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(sheet, 'getBoundingClientRect').mockReturnValue(rect({ top: 0, bottom: 800 }));
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+			);
+
+			const initialRect = sheet.getBoundingClientRect();
+
+			input.focus();
+			await flush();
+
+			expect(sheet.getBoundingClientRect()).toEqual(initialRect);
+			expect(sheet.style.height).toBe('');
+			expect(sheet.style.getPropertyValue('--_sheet-budget')).toBe('92dvh');
+			expect(positioner.style.getPropertyValue('--_sheet-keyboard-lift')).toBe('');
+			// 300px keyboard overlap + 48px room for Android suggestion UI.
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+			// Visible bottom is 500px; preserve the same 48px focus gap.
+			expect(body.scrollTop).toBe(248);
+
+			viewport.height = 800;
+			viewport.dispatchEvent(new Event('resize'));
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('0px');
+			expect(sheet.getBoundingClientRect()).toEqual(initialRect);
+			expect(sheet.style.height).toBe('');
+		});
+
+		it('smoothly scrolls a focused Tall control above the keyboard', async () => {
+			mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const body = getBody();
+			const input = field('Comment');
+			trackScrollTop(body);
+			const scrollBy = vi.fn((options: ScrollToOptions) => {
+				body.scrollTop += options.top ?? 0;
+			});
+			Object.defineProperty(body, 'scrollBy', { configurable: true, value: scrollBy });
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+			);
+
+			input.focus();
+			await flush();
+
+			expect(scrollBy).toHaveBeenCalledWith({ top: 248, behavior: 'smooth' });
+		});
+
+		it('does not accommodate the keyboard at a shorter Tall detent', async () => {
+			mockIOSWebKit();
+			const observers = mockResizeObserverInstances();
+			const viewport = mockVisualViewport(800);
+			mockWindowHeight(800);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					snapPoints: SNAP_POINTS,
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const sheet = getSheet();
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			await measureSheet(observers, 784);
+
+			fireTimedPointer(getHandle(), 'pointerdown', { time: 0, y: 0 });
+			fireTimedPointer(getHandle(), 'pointermove', { time: 1000, y: 240 });
+			fireTimedPointer(getHandle(), 'pointerup', { time: 2000, y: 240 });
+			await endTransform();
+			// Settled at the p50 detent: 400px of visible sheet plus the 48px
+			// border-box reserve held below the viewport.
+			expect(sheet.style.transform).toBe('');
+			expect(sheet.style.height).toBe('448px');
+
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 500, bottom: 1200 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(rect({ top: 700, bottom: 740 }));
+			viewport.height = 500;
+			const focus = vi.spyOn(input, 'focus');
+			// A transition the browser would drive: at a shorter detent the hook must
+			// not claim it, so nothing focuses the field but the caller.
+			blurTo(sheet, input);
+			expect(focus).not.toHaveBeenCalled();
+
+			focus.mockRestore();
+			input.focus();
+			viewport.dispatchEvent(new Event('resize'));
+			await flush();
+
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('0px');
+			expect(body.scrollTop).toBe(0);
+			// The keyboard moved nothing: the sheet still rests at that detent.
+			expect(sheet.style.transform).toBe('');
+			expect(sheet.style.height).toBe('448px');
+		});
+
+		it.each([
+			['Hug', 'hug'],
+			['Capped', 'capped'],
+			['numeric', 480],
+			['custom CSS', '70dvh']
+		] as const)('does not add keyboard behavior to a %s height', async (_label, height) => {
+			mockIOSWebKit();
+			const viewport = mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height,
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const sheet = getSheet();
+			const positioner = getPositioner();
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			const focus = vi.spyOn(input, 'focus');
+			const sheetFocus = vi.spyOn(sheet, 'focus');
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 400, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(rect({ top: 700, bottom: 740 }));
+			body.scrollTop = 20;
+
+			input.dispatchEvent(new TouchEvent('touchstart', { bubbles: true }));
+			// These heights opt out, so a browser-driven transition is left alone.
+			blurTo(sheet, input);
+			input.dispatchEvent(
+				new PointerEvent('pointerdown', { pointerId: 1, clientY: 200, bubbles: true })
+			);
+			body.scrollTop = 120;
+			input.dispatchEvent(new FocusEvent('focus', { relatedTarget: null }));
+			viewport.dispatchEvent(new Event('resize'));
+			await flush();
+
+			expect(body.scrollTop).toBe(120);
+			expect(focus).not.toHaveBeenCalled();
+			expect(sheetFocus).not.toHaveBeenCalled();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('');
+			expect(positioner.style.getPropertyValue('--_sheet-keyboard-lift')).toBe('');
+			expect(sheet.style.height).toBe('');
+		});
+
+		it.each([
+			['standalone no-scrim', 'standalone', false],
+			['modal switcher', 'switcher', true],
+			['no-scrim switcher', 'switcher', false]
+		] as const)(
+			'supports Tall internal keyboard scrolling in a %s presentation',
+			async (_label, host, hasScrim) => {
+				mockVisualViewport(500);
+				const view =
+					host === 'standalone'
+						? await render(BottomSheet, {
+								props: {
+									isOpen: true,
+									onOpenChange: () => {},
+									label: 'Add a comment',
+									height: 'tall',
+									hasScrim,
+									children: html('<input aria-label="Comment" />')
+								}
+							})
+						: await render(SwitcherHarness, {
+								props: {
+									activeSheet: 'comment',
+									hasScrim,
+									first: html('<input aria-label="Comment" />')
+								}
+							});
+				const body = getBody();
+				const input = field('Comment');
+				trackBodyScroll(body);
+				vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+				vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+					rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+				);
+
+				input.focus();
+				await flush();
+
+				expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+				expect(body.scrollTop).toBe(248);
+				view.unmount();
+			}
+		);
+
+		it('re-reveals a focused Tall control when content layout changes', async () => {
+			const observers = mockResizeObserverInstances();
+			mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			let layoutShift = 0;
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({
+					top: 660 + layoutShift - body.scrollTop,
+					bottom: 700 + layoutShift - body.scrollTop
+				})
+			);
+
+			input.focus();
+			await flush();
+			expect(body.scrollTop).toBe(248);
+
+			layoutShift = 200;
+			const observer = observers.find((instance) => instance.observed.has(input));
+			expect(observer).toBeDefined();
+			observer?.callback([], observer as unknown as ResizeObserver);
+			await flush();
+
+			expect(body.scrollTop).toBe(448);
+		});
+
+		it('retains Tall keyboard scroll space during travel until the viewport recovers', async () => {
+			const viewport = mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const sheet = getSheet();
+			const positioner = getPositioner();
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(sheet, 'getBoundingClientRect').mockReturnValue(rect({ top: 0, bottom: 800 }));
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+			);
+
+			input.focus();
+			await flush();
+			expect(body.scrollTop).toBe(248);
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+
+			const pointerDownAllowed = fireTimedPointer(getHandle(), 'pointerdown', { time: 0, y: 0 });
+			expect(pointerDownAllowed).toBe(false);
+			expect(document.activeElement).toBe(input);
+
+			fireTimedPointer(getHandle(), 'pointermove', { time: 1000, y: 40 });
+			await flush();
+
+			expect(document.activeElement).toBe(sheet);
+			expect(positioner.style.getPropertyValue('--_sheet-keyboard-lift')).toBe('');
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+			expect(body.scrollTop).toBe(248);
+
+			viewport.height = 800;
+			viewport.dispatchEvent(new Event('resize'));
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('0px');
+		});
+
+		it('retains Tall keyboard scroll space after blur until the viewport recovers', async () => {
+			const viewport = mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+			);
+			input.focus();
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+
+			input.blur();
+			await flush();
+
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+
+			viewport.height = 800;
+			viewport.dispatchEvent(new Event('resize'));
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('0px');
+		});
+
+		it('blurs the focused Tall field and retains its inset until the viewport recovers', async () => {
+			const viewport = mockVisualViewport(500);
+			const onOpenChange = vi.fn();
+			const props = (isOpen: boolean) => ({
+				isOpen,
+				onOpenChange,
+				label: 'Add a comment',
+				height: 'tall' as const,
+				children: html('<input aria-label="Comment" />')
+			});
+			const view = await render(BottomSheet, { props: props(true) });
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+			);
+			input.focus();
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+
+			await view.rerender(props(false));
+			await flush();
+
+			expect(document.activeElement).not.toBe(input);
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+
+			viewport.height = 800;
+			viewport.dispatchEvent(new Event('resize'));
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('0px');
+		});
+
+		it('retains Tall keyboard scroll space through a switcher handoff until the viewport recovers', async () => {
+			const viewport = mockVisualViewport(500);
+			const props = (activeSheet: string) => ({
+				activeSheet,
+				onActiveSheetChange: () => {},
+				first: html('<input aria-label="Comment" />'),
+				second: text('Confirmation')
+			});
+			const view = await render(SwitcherHarness, { props: props('comment') });
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+			);
+			input.focus();
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+
+			await view.rerender(props('confirmation'));
+			await flush();
+
+			expect(document.activeElement).not.toBe(input);
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+
+			viewport.height = 800;
+			viewport.dispatchEvent(new Event('resize'));
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('0px');
+		});
+
+		it('does not add clearance or scroll when the viewport is unobstructed', async () => {
+			mockVisualViewport(800);
+			mockWindowHeight(800);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(rect({ top: 760, bottom: 790 }));
+
+			input.focus();
+			await flush();
+
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('0px');
+			expect(body.scrollTop).toBe(0);
+		});
+
+		it('puts back a document scroll the browser makes to reveal a field', async () => {
+			mockVisualViewport(377);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 57, bottom: 714 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 600 - body.scrollTop, bottom: 640 - body.scrollTop })
+			);
+			input.focus();
+			await flush();
+			const scrollTo = vi.mocked(window.scrollTo);
+			scrollTo.mockClear();
+			const scrolledBy = body.scrollTop;
+
+			// The page numbers an iPhone 17 produces when the browser reveals a
+			// focused field in a scroll-locked, fixed sheet: it scrolls the DOCUMENT,
+			// and the sheet — fixed — travels with it.
+			Object.defineProperty(window, 'scrollY', { configurable: true, value: 337 });
+			window.dispatchEvent(new Event('scroll'));
+			await flush();
+
+			expect(scrollTo).toHaveBeenCalledWith(0, 0);
+			// …and the control is still inside the safe area afterwards: the sheet's
+			// own scroller holds it there, so putting the document back does not hide
+			// what the browser was trying to reveal.
+			expect(input.getBoundingClientRect().bottom).toBeLessThanOrEqual(377 - 48);
+			expect(body.scrollTop).toBe(scrolledBy);
+			Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
+		});
+
+		it('leaves the document alone when no keyboard is measured', async () => {
+			mockVisualViewport(800);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 57, bottom: 700 }));
+			vi.spyOn(input, 'getBoundingClientRect').mockReturnValue(rect({ top: 600, bottom: 640 }));
+			input.focus();
+			await flush();
+			const scrollTo = vi.mocked(window.scrollTo);
+			scrollTo.mockClear();
+
+			// An ordinary page scroll with no keyboard up is the user's, not the
+			// browser's, and a non-modal sheet leaves the page scrollable.
+			Object.defineProperty(window, 'scrollY', { configurable: true, value: 120 });
+			window.dispatchEvent(new Event('scroll'));
+			await flush();
+
+			expect(scrollTo).not.toHaveBeenCalled();
+			Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
+		});
+
+		it('delivers a browser-driven transition itself, then reveals the field', async () => {
+			mockIOSWebKit();
+			mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<div><input aria-label="Title" /><input aria-label="Comment" /></div>')
+				}
+			});
+			const body = getBody();
+			const title = field('Title');
+			const comment = field('Comment');
+			trackScrollTop(body);
+			const scrolls: { top: number; behavior?: ScrollBehavior; focusLanded: boolean }[] = [];
+			Object.defineProperty(body, 'scrollBy', {
+				configurable: true,
+				value: (options: ScrollToOptions) => {
+					body.scrollTop += options.top ?? 0;
+					scrolls.push({
+						top: options.top ?? 0,
+						behavior: options.behavior,
+						focusLanded: document.activeElement === comment
+					});
+				}
+			});
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(title, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 150 - body.scrollTop, bottom: 190 - body.scrollTop })
+			);
+			vi.spyOn(comment, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+			);
+
+			// The first field opens the keyboard and is already inside the safe area,
+			// so nothing has to move for it.
+			title.focus();
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe('348px');
+			expect(scrolls).toEqual([]);
+
+			// A keyboard accessory "Next" or a Tab arrives as a blur naming the
+			// destination. We deliver that focus with preventScroll — refusing the
+			// browser's reveal — and then reveal the field ourselves, inside the
+			// sheet.
+			blurTo(title, comment);
+			await flush();
+
+			expect(document.activeElement).toBe(comment);
+			expect(scrolls).toEqual([{ top: 248, behavior: 'smooth', focusLanded: true }]);
+			expect(body.scrollTop).toBe(248);
+		});
+
+		it('does not scroll a browser-driven transition when the viewport is unobstructed', async () => {
+			mockIOSWebKit();
+			mockVisualViewport(800);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<div><input aria-label="Title" /><input aria-label="Comment" /></div>')
+				}
+			});
+			const body = getBody();
+			const title = field('Title');
+			const comment = field('Comment');
+			trackScrollTop(body);
+			const scrolls: number[] = [];
+			Object.defineProperty(body, 'scrollBy', {
+				configurable: true,
+				// Apply the scroll, as the real scroller would: a reveal that has
+				// already happened must read as no distance left to travel, otherwise
+				// every later reveal looks like a fresh one.
+				value: (options: ScrollToOptions) => {
+					body.scrollTop += options.top ?? 0;
+					scrolls.push(options.top ?? 0);
+				}
+			});
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(rect({ top: 100, bottom: 800 }));
+			vi.spyOn(title, 'getBoundingClientRect').mockReturnValue(rect({ top: 150, bottom: 190 }));
+			// Below the body's visible area, so a reveal has somewhere to travel.
+			vi.spyOn(comment, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 860 - body.scrollTop, bottom: 900 - body.scrollTop })
+			);
+
+			title.focus();
+			await flush();
+			scrolls.length = 0;
+			const scrollTo = vi.mocked(window.scrollTo);
+			scrollTo.mockClear();
+			blurTo(title, comment);
+			await flush();
+
+			// With no keyboard there is no clearance to leave and nothing to race, but
+			// the control still has to end up visible — brought there once, by the
+			// sheet's own scroller, with the page left alone.
+			expect(scrolls).toEqual([100]);
+			expect(scrollTo).not.toHaveBeenCalled();
+		});
+
+		it('leaves the page alone behind a non-modal sheet', async () => {
+			const layoutBottom = window.innerHeight;
+			mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					hasScrim: false,
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(
+				rect({ top: 100, bottom: layoutBottom })
+			);
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 600 - body.scrollTop, bottom: 640 - body.scrollTop })
+			);
+			input.focus();
+			await flush();
+			const scrollTo = vi.mocked(window.scrollTo);
+			scrollTo.mockClear();
+
+			// Without a scrim the page behind stays scrollable, so a document scroll
+			// is the user's. Putting it back would fight them.
+			Object.defineProperty(window, 'scrollY', { configurable: true, value: 200 });
+			window.dispatchEvent(new Event('scroll'));
+			await flush();
+
+			expect(scrollTo).not.toHaveBeenCalled();
+			Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
+		});
+
+		it('holds the keyboard scroll range through a pan, on the blur path', async () => {
+			// A fully expanded Tall sheet — the only shape this hook runs in — is
+			// pinned to the layout viewport bottom, so the body's bottom IS
+			// innerHeight. Giving it a cushion below that would hide every bug in this
+			// file: the cushion, not the measurement, would keep the overlap positive
+			// under a pan.
+			const layoutBottom = window.innerHeight;
+			const viewport = mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<input aria-label="Comment" />')
+				}
+			});
+			const body = getBody();
+			const input = field('Comment');
+			trackBodyScroll(body);
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(
+				rect({ top: 100, bottom: layoutBottom })
+			);
+			vi.spyOn(input, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 660 - body.scrollTop, bottom: 700 - body.scrollTop })
+			);
+			input.focus();
+			await flush();
+			const inset = body.style.getPropertyValue('--_sheet-keyboard-inset');
+			expect(inset).toBe(`${layoutBottom - (500 - 48)}px`);
+
+			// The browser pans the page up to reveal a field: the same 500px of
+			// visible page, now offset so its bottom edge coincides with the layout
+			// viewport bottom — with the keyboard still on screen. Read the bottom and
+			// that is indistinguishable from the keyboard closing.
+			viewport.offsetTop = window.innerHeight - 500;
+			input.blur();
+			await flush();
+
+			// The keyboard did not change size, so neither does the scroll range.
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe(inset);
+		});
+
+		it('keeps defending a pinned sheet after the browser has panned it once', async () => {
+			// The regression that made the device symptom permanent: one pan read as
+			// "no keyboard" cleared the inset AND cleared hasKeyboardLayout, which
+			// disarms the head start below — so every subsequent reveal panned, and
+			// the sheet never recovered.
+			const layoutBottom = window.innerHeight;
+			mockIOSWebKit();
+			const viewport = mockVisualViewport(500);
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Add a comment',
+					height: 'tall',
+					children: html('<div><input aria-label="Title" /><input aria-label="Comment" /></div>')
+				}
+			});
+			const body = getBody();
+			const title = field('Title');
+			const comment = field('Comment');
+			trackScrollTop(body);
+			const scrolls: { top: number; focusLanded: boolean }[] = [];
+			Object.defineProperty(body, 'scrollBy', {
+				configurable: true,
+				value: (options: ScrollToOptions) => {
+					body.scrollTop += options.top ?? 0;
+					scrolls.push({
+						top: options.top ?? 0,
+						focusLanded: document.activeElement === comment
+					});
+				}
+			});
+			vi.spyOn(body, 'getBoundingClientRect').mockReturnValue(
+				rect({ top: 100, bottom: layoutBottom })
+			);
+			vi.spyOn(title, 'getBoundingClientRect').mockReturnValue(rect({ top: 150, bottom: 190 }));
+			vi.spyOn(comment, 'getBoundingClientRect').mockImplementation(() =>
+				rect({ top: 700 - body.scrollTop, bottom: 740 - body.scrollTop })
+			);
+
+			title.focus();
+			await flush();
+			const inset = body.style.getPropertyValue('--_sheet-keyboard-inset');
+			expect(inset).toBe(`${layoutBottom - (500 - 48)}px`);
+
+			viewport.offsetTop = layoutBottom - 500;
+			viewport.dispatchEvent(new Event('resize'));
+			await flush();
+			expect(body.style.getPropertyValue('--_sheet-keyboard-inset')).toBe(inset);
+
+			// And the next browser-driven transition is still claimed and revealed, by
+			// a distance measured against the unshifted keyboard boundary.
+			scrolls.length = 0;
+			blurTo(title, comment);
+			await flush();
+
+			expect(document.activeElement).toBe(comment);
+			expect(scrolls[0]).toEqual({ top: 740 - (500 - 48), focusLanded: true });
+		});
+	});
+
+	describe('snapPoints', () => {
+		// A Tall sheet in an 800px window: a 784px border box, 48px of which is the
+		// reserve below the fold, so 736px of it is visible.
+		async function renderTallSheet(
+			snapPoints?: ReadonlyArray<number | string>,
+			onOpenChange: (isOpen: boolean) => void = () => {}
+		) {
+			const observers = mockResizeObserverInstances();
+			mockVisualViewport(800);
+			mockWindowHeight(800);
+			const view = await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange,
+					label: 'Release notes',
+					snapPoints,
+					height: 'tall',
+					children: text('Content')
+				}
+			});
+			await measureSheet(observers, 784, 736);
+			return { sheet: getSheet(), view };
+		}
+
+		async function dragHandleTo(y: number) {
+			fireTimedPointer(getHandle(), 'pointerdown', { time: 0, y: 0 });
+			fireTimedPointer(getHandle(), 'pointermove', { time: 1000, y });
+			fireTimedPointer(getHandle(), 'pointerup', { time: 2000, y });
+			await endTransform();
+		}
+
+		it('has no stops of its own, so a released drag springs back', async () => {
+			const onOpenChange = vi.fn();
+			const { sheet } = await renderTallSheet(undefined, onOpenChange);
+
+			// 200px down is well short of the dismiss threshold, and there is no stop
+			// to catch it, so the sheet returns to fully open.
+			await dragHandleTo(200);
+
+			expect(sheet.style.transform).toBe('');
+			expect(sheet.style.height).toBe('');
+			expect(onOpenChange).not.toHaveBeenCalled();
+		});
+
+		it('rests at a stop given as a fraction of the viewport', async () => {
+			const { sheet } = await renderTallSheet([0.5]);
+
+			// Half of the 800px window is 400px of visible sheet: 736 - 400 = 336px
+			// of travel, taken as layout height once the snap lands.
+			await dragHandleTo(336);
+
+			expect(sheet.style.height).toBe('448px');
+			expect(sheet.style.transform).toBe('');
+		});
+
+		it('reads a percentage as the same stop as the fraction', async () => {
+			const { sheet } = await renderTallSheet(['50%']);
+			await dragHandleTo(336);
+			expect(sheet.style.height).toBe('448px');
+		});
+
+		it('rests at a stop given as an absolute px length', async () => {
+			const { sheet } = await renderTallSheet(['320px']);
+
+			// A 320px stop sits 736 - 320 = 416px down, whatever the window does.
+			await dragHandleTo(416);
+
+			expect(sheet.style.height).toBe('368px');
+			expect(sheet.style.transform).toBe('');
+		});
+
+		it('re-anchors to the same stop when the points change under a resting sheet', async () => {
+			const { sheet, view } = await renderTallSheet([0.5]);
+			await dragHandleTo(336);
+			expect(sheet.style.height).toBe('448px');
+
+			// Without an inline height the sheet renders its natural 92dvh budget.
+			vi.spyOn(sheet, 'getBoundingClientRect').mockImplementation(() =>
+				rect({
+					top: 0,
+					bottom: sheet.style.height ? Number.parseFloat(sheet.style.height) : 784
+				})
+			);
+
+			// The host moves its one stop from half the window to a quarter of it.
+			// The sheet is resting on that stop, so it follows — no gesture, and
+			// nothing to animate.
+			await view.rerender({
+				isOpen: true,
+				onOpenChange: () => {},
+				label: 'Release notes',
+				snapPoints: [0.25],
+				height: 'tall',
+				children: text('Content')
+			});
+			await flush();
+
+			// 200px of visible sheet is 736 - 200 = 536px of travel.
+			expect(sheet.style.height).toBe('248px');
+			expect(sheet.style.transform).toBe('');
+		});
+
+		it('ignores a stop it cannot resolve, and warns which one', async () => {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			// 200 is the px mistake: a bare number is a fraction, never a length.
+			const { sheet } = await renderTallSheet([0.5, 200]);
+
+			expect(warn.mock.calls.some((args) => String(args[0]).includes('200'))).toBe(true);
+
+			// The stop it could read still works.
+			await dragHandleTo(336);
+			expect(sheet.style.height).toBe('448px');
+			warn.mockRestore();
+		});
+	});
+
+	describe('focus restore', () => {
+		it('restores focus to the opener after close', async () => {
+			await render(FocusRestoreHarness, { props: {} });
+			const buttons = [...document.querySelectorAll('button')];
+			const opener = buttons.find((button) => button.textContent === 'Open sheet')!;
+			opener.focus();
+			click(opener);
+			await flush();
+			const done = [...document.querySelectorAll('button')].find(
+				(button) => button.textContent === 'Done'
+			)!;
+			click(done);
+			await endTransform();
+
+			expect(document.activeElement).toBe(opener);
+		});
+	});
+
+	describe('initial focus', () => {
+		it('focuses the sheet panel on open, not the first control', async () => {
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Filters',
+					children: html('<button type="button">First action</button>')
+				}
+			});
+			const panel = getSheet();
+			expect(document.activeElement).toBe(panel);
+			expect(document.activeElement).not.toBe(document.querySelector('button'));
+		});
+
+		it('honors a descendant with data-autofocus', async () => {
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Filters',
+					children: html('<input data-autofocus aria-label="Search" />')
+				}
+			});
+			expect(document.activeElement).toBe(field('Search'));
+		});
+	});
+
+	describe('accessible name', () => {
+		it('warns in development when label is empty', async () => {
+			const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: '',
+					children: text('Content')
+				}
+			});
+			await flush();
+			expect(warn.mock.calls.some((args) => String(args[0]).includes('BottomSheet'))).toBe(true);
+			warn.mockRestore();
+		});
+	});
+
+	describe('reduced motion', () => {
+		it('opens without throwing when prefers-reduced-motion is set', async () => {
+			stubMatchMedia({ reduceMotion: true, matches: true });
+			await render(BottomSheet, {
+				props: {
+					isOpen: true,
+					onOpenChange: () => {},
+					label: 'Filters',
+					children: text('Content')
+				}
+			});
+			expect(getDialog()).toBeInTheDocument();
 		});
 	});
 

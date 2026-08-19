@@ -161,7 +161,16 @@ export function useMobileKeyboard(options: UseMobileKeyboardOptions): void {
 		}
 	});
 
-	// Closing blurs the field, for the same reason.
+	/**
+	 * Closing blurs the field, for the same reason.
+	 *
+	 * Often the browser gets there first: closing also puts `inert` on the host,
+	 * a parent, whose attribute update lands before any effect of this hook's
+	 * runs — and Chromium blurs the focused element the moment `inert` appears.
+	 * That costs nothing, because `handleFocusOut` claims the retention on any
+	 * blur, whatever caused it. This still matters for the paths where focus is
+	 * inside the sheet and nothing else has taken it.
+	 */
 	$effect(() => {
 		const sheet = options.sheet();
 		if (!options.isEnabled() || !options.isPresented() || options.isOpen()) {
@@ -179,17 +188,40 @@ export function useMobileKeyboard(options: UseMobileKeyboardOptions): void {
 		}
 	});
 
+	/**
+	 * Upstream's dependency array, one `$derived` per entry.
+	 *
+	 * The effect below holds the measured keyboard geometry in its closure, so a
+	 * teardown loses it — and losing it is not recoverable, because the state it
+	 * would be re-measured from is the state that has already gone away. React
+	 * never tears it down for an unchanged value: a dependency array *compares*.
+	 * Svelte tracks signals, so a prop that merely re-notified with the same value
+	 * would rebuild the whole closure. Reading each dependency through a `$derived`
+	 * puts that comparison back, since a derived only propagates when its value
+	 * actually changes.
+	 *
+	 * The symptom without it: closing a sheet with the keyboard up cleared the
+	 * retained scroll range on the spot instead of unwinding it as the viewport
+	 * recovered, and the content jumped on the first frame of the exit.
+	 */
+	const isEnabledDep = $derived(options.isEnabled());
+	const isPresentedDep = $derived(options.isPresented());
+	const bottomClearanceDep = $derived(options.bottomClearance());
+	const isPageScrollLockedDep = $derived(options.isPageScrollLocked());
+	const bodyDep = $derived(options.body());
+	const sheetDep = $derived(options.sheet());
+
 	$effect(() => {
 		// These six reads ARE the dependency set — upstream's array, exactly.
 		// `isOpen` and `isFullyExpanded` are read only from listeners below, which
 		// run outside the effect body and so never subscribe it; that is what keeps
 		// a change to either from tearing down and re-attaching every listener.
-		const isEnabled = options.isEnabled();
-		const isPresented = options.isPresented();
-		const bottomClearance = options.bottomClearance();
-		const isPageScrollLocked = options.isPageScrollLocked();
-		const body = options.body();
-		const sheet = options.sheet();
+		const isEnabled = isEnabledDep;
+		const isPresented = isPresentedDep;
+		const bottomClearance = bottomClearanceDep;
+		const isPageScrollLocked = isPageScrollLockedDep;
+		const body = bodyDep;
+		const sheet = sheetDep;
 		if (!isEnabled || !isPresented || !body) {
 			return;
 		}
