@@ -277,6 +277,7 @@
 		normalizeOption
 	} from '../selector/utils.js';
 	import { useMultiCombobox } from './use-multi-combobox.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		multiSelectorCheckboxDecorativeAttrs,
 		multiSelectorChevronXstyle,
@@ -362,6 +363,14 @@
 		style: styleProp,
 		...rest
 	}: MultiSelectorProps<T> = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	const placeholder = $derived(
@@ -1095,7 +1104,7 @@
 				: undefined}
 			aria-describedby={aria.ariaDescribedBy}
 			aria-labelledby={aria.ariaLabelledBy}
-			aria-required={isRequired ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			disabled={isDisabled && !showsDisabledMessage}

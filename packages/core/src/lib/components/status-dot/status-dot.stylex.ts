@@ -8,13 +8,28 @@ const pulseKeyframes = stylex.keyframes({
 	'100%': { opacity: 1 }
 });
 
+/** Fixed dot size in px. A user-supplied icon is drawn into this same field. */
+const DOT_SIZE = 8;
+
 const styles = stylex.create({
 	base: {
-		display: 'inline-block',
+		display: 'inline-flex',
+		alignItems: 'center',
+		justifyContent: 'center',
 		borderRadius: '50%',
 		flexShrink: 0,
-		width: '8px',
-		height: '8px'
+		width: `${DOT_SIZE}px`,
+		height: `${DOT_SIZE}px`
+	},
+	// A user-supplied icon fills the whole 8px field and paints from
+	// `currentColor` (the variant's ink).
+	icon: {
+		display: 'flex',
+		alignItems: 'center',
+		justifyContent: 'center',
+		lineHeight: 0,
+		width: `${DOT_SIZE}px`,
+		height: `${DOT_SIZE}px`
 	},
 	pulsing: {
 		animationName: pulseKeyframes,
@@ -29,21 +44,37 @@ const styles = stylex.create({
 	}
 });
 
+/**
+ * Variant styles mapping to theme colour tokens.
+ *
+ * Each variant sets both the plate colour and an ink colour: a user-supplied
+ * `icon` paints from `currentColor`, so plate and ink can never drift out of
+ * contrast (same contract as `AvatarStatusDot`). The ink is each plate's
+ * dedicated `--color-on-*` pairing (the `Badge` precedent), not the surface
+ * colour: on-warning is a fixed dark ink, which keeps an icon legible on the
+ * yellow plate (~9.6:1) where a light surface ink lands near 2:1. Neutral has no
+ * `--color-on-*` token; its mid-grey plate takes the surface ink.
+ */
 const variants = stylex.create({
 	success: {
-		backgroundColor: colorVars['--color-success']
+		backgroundColor: colorVars['--color-success'],
+		color: colorVars['--color-on-success']
 	},
 	warning: {
-		backgroundColor: colorVars['--color-warning']
+		backgroundColor: colorVars['--color-warning'],
+		color: colorVars['--color-on-warning']
 	},
 	error: {
-		backgroundColor: colorVars['--color-error']
+		backgroundColor: colorVars['--color-error'],
+		color: colorVars['--color-on-error']
 	},
 	accent: {
-		backgroundColor: colorVars['--color-accent']
+		backgroundColor: colorVars['--color-accent'],
+		color: colorVars['--color-on-accent']
 	},
 	neutral: {
-		backgroundColor: colorVars['--color-icon-secondary']
+		backgroundColor: colorVars['--color-icon-secondary'],
+		color: colorVars['--color-background-surface']
 	}
 });
 
@@ -82,4 +113,9 @@ export function statusDotAttrs(
 		isPulsing && styles.reducedMotion,
 		xstyle
 	);
+}
+
+/** The centred icon wrapper, painted in the dot's `currentColor` ink. */
+export function statusDotIconAttrs(): SvelteStyleAttrs {
+	return sx(styles.icon);
 }

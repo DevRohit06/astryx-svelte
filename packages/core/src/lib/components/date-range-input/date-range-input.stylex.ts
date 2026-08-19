@@ -113,6 +113,11 @@ const styles = stylex.create({
 		cursor: 'pointer',
 		textAlign: 'start'
 	},
+	presetButtonDisabled: {
+		color: colorVars['--color-text-disabled'],
+		cursor: 'not-allowed',
+		backgroundColor: 'transparent'
+	},
 	presetButtonActive: {
 		backgroundColor: colorVars['--color-accent-muted'],
 		color: colorVars['--color-accent']
@@ -198,11 +203,18 @@ export function dateRangeInputPresetSidebarAttrs(): SvelteStyleAttrs {
 	return sx(styles.presetSidebar);
 }
 
-/** One preset row; the applied preset takes the accent treatment. */
-export function dateRangeInputPresetButtonAttrs(isActive: boolean): SvelteStyleAttrs {
+/**
+ * One preset row; the applied preset takes the accent treatment, and a preset
+ * whose range violates the span bounds is shown disabled rather than hidden.
+ */
+export function dateRangeInputPresetButtonAttrs(
+	isActive: boolean,
+	isDisabled: boolean
+): SvelteStyleAttrs {
 	return sx(
 		focusOutlineStyles.focusVisible,
 		styles.presetButton,
-		isActive && styles.presetButtonActive
+		isActive && styles.presetButtonActive,
+		isDisabled && styles.presetButtonDisabled
 	);
 }

@@ -56,22 +56,26 @@ const styles = stylex.create({
 	// An elevated `card` banner rounds its root so the shadow follows the card
 	// silhouette; the full-width `section` container stays square.
 	rootElevatedCard: {
-		borderRadius: radiusVars['--radius-container']
+		borderRadius: `var(--_banner-radius, ${radiusVars['--radius-container']})`
 	},
 	// Header area — colored status background with icon, title, description, actions
 	header: {
 		display: 'flex',
 		alignItems: 'flex-start',
-		gap: spacingVars['--spacing-2'],
+		flexWrap: 'wrap',
+		columnGap: spacingVars['--spacing-2'],
+		// The end area carries a -4px block margin (see endArea), so the wrapped
+		// row reads as one step of spacing rather than two.
+		rowGap: spacingVars['--spacing-3'],
 		paddingBlock: spacingVars['--spacing-3'],
 		paddingInline: spacingVars['--spacing-4']
 	},
 	headerCardStandalone: {
-		borderRadius: radiusVars['--radius-container']
+		borderRadius: `var(--_banner-radius, ${radiusVars['--radius-container']})`
 	},
 	headerCardWithContent: {
-		borderStartStartRadius: radiusVars['--radius-container'],
-		borderStartEndRadius: radiusVars['--radius-container'],
+		borderStartStartRadius: `var(--_banner-radius, ${radiusVars['--radius-container']})`,
+		borderStartEndRadius: `var(--_banner-radius, ${radiusVars['--radius-container']})`,
 		borderEndStartRadius: 0,
 		borderEndEndRadius: 0
 	},
@@ -86,13 +90,26 @@ const styles = stylex.create({
 		flex: 1,
 		minWidth: 0
 	},
+	// The wrap threshold, applied only when there is `endContent` to wrap. Flex
+	// breaks a line when the items no longer fit at their base size, so this
+	// basis is what moves the end area to its own row instead of letting it hold
+	// the header and squeeze the title down to one word per line. In rem so it
+	// tracks the user's font size. The dismiss and expand controls alone are
+	// narrow enough never to need it.
+	headerContentWithEndContent: {
+		flexBasis: '8rem'
+	},
 	title: {
 		margin: 0,
 		fontFamily: 'inherit',
 		fontSize: typeScaleVars['--text-label-size'],
 		fontWeight: fontWeightVars['--font-weight-semibold'],
 		lineHeight: typeScaleVars['--text-label-leading'],
-		color: colorVars['--color-text-primary']
+		color: colorVars['--color-text-primary'],
+		// A single unbroken token (a URL, an ID, a German compound) otherwise sets
+		// the flex item's min-content width and pushes the page into horizontal
+		// scrolling at 320px, which is a WCAG 1.4.10 reflow failure.
+		overflowWrap: 'anywhere'
 	},
 	description: {
 		margin: 0,
@@ -100,7 +117,8 @@ const styles = stylex.create({
 		fontSize: typeScaleVars['--text-supporting-size'],
 		fontWeight: fontWeightVars['--font-weight-normal'],
 		lineHeight: typeScaleVars['--text-supporting-leading'],
-		color: colorVars['--color-text-secondary']
+		color: colorVars['--color-text-secondary'],
+		overflowWrap: 'anywhere'
 	},
 	iconWrapper: {
 		display: 'flex',
@@ -110,8 +128,13 @@ const styles = stylex.create({
 	endArea: {
 		display: 'flex',
 		alignItems: 'center',
+		flexWrap: 'wrap',
+		justifyContent: 'flex-end',
 		gap: spacingVars['--spacing-2'],
 		flexShrink: 0,
+		// Bounded so a group of actions wider than the row wraps within itself
+		// rather than pushing the banner past the viewport (WCAG 1.4.10).
+		maxWidth: '100%',
 		marginInlineStart: 'auto',
 		marginBlock: `calc(-1 * (${spacingVars['--spacing-3']} - ${spacingVars['--spacing-2']}))`
 	},
@@ -121,17 +144,17 @@ const styles = stylex.create({
 		paddingInline: spacingVars['--spacing-4'],
 		borderInlineStartWidth: borderVars['--border-width'],
 		borderInlineEndWidth: borderVars['--border-width'],
-		borderBottomWidth: borderVars['--border-width'],
+		borderBlockEndWidth: borderVars['--border-width'],
 		borderInlineStartStyle: 'solid',
 		borderInlineEndStyle: 'solid',
-		borderBottomStyle: 'solid',
+		borderBlockEndStyle: 'solid',
 		borderInlineStartColor: colorVars['--color-border'],
 		borderInlineEndColor: colorVars['--color-border'],
-		borderBottomColor: colorVars['--color-border']
+		borderBlockEndColor: colorVars['--color-border']
 	},
 	contentAreaCard: {
-		borderEndStartRadius: radiusVars['--radius-container'],
-		borderEndEndRadius: radiusVars['--radius-container']
+		borderEndStartRadius: `var(--_banner-radius, ${radiusVars['--radius-container']})`,
+		borderEndEndRadius: `var(--_banner-radius, ${radiusVars['--radius-container']})`
 	},
 	// Applied to the chevron <Icon> itself (via `xstyle`) rather than a wrapper,
 	// so the element that rotates is the element a theme targets.
@@ -175,6 +198,17 @@ const statusStyles = stylex.create({
 	}
 });
 
+/**
+ * Narrows an augmented `BannerStatus` to one the style map actually carries, so
+ * an unknown status renders with no status fill rather than resolving to
+ * `undefined`. `BannerStatusMap` is declaration-merged by theme packages, so
+ * every status lookup in this component is partial by construction — a
+ * `stylex.create` map cannot be declared `Partial`, hence the guard.
+ */
+function hasStatusStyle(status: BannerStatus): status is BannerStatus & keyof typeof statusStyles {
+	return Object.prototype.hasOwnProperty.call(statusStyles, status);
+}
+
 /** The layout-only root. */
 export function bannerRootAttrs(
 	elevation: Elevation,
@@ -199,7 +233,7 @@ export function bannerHeaderAttrs(
 	return sx(
 		styles.header,
 		isSingleLine && styles.headerCentered,
-		statusStyles[status],
+		hasStatusStyle(status) && statusStyles[status],
 		isCard && (showContent ? styles.headerCardWithContent : styles.headerCardStandalone)
 	);
 }
@@ -208,8 +242,8 @@ export function bannerIconWrapperAttrs(): SvelteStyleAttrs {
 	return sx(styles.iconWrapper);
 }
 
-export function bannerHeaderContentAttrs(): SvelteStyleAttrs {
-	return sx(styles.headerContent);
+export function bannerHeaderContentAttrs(hasEndContent: boolean): SvelteStyleAttrs {
+	return sx(styles.headerContent, hasEndContent && styles.headerContentWithEndContent);
 }
 
 export function bannerTitleAttrs(): SvelteStyleAttrs {

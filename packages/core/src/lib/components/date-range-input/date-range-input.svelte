@@ -101,6 +101,28 @@
 		/** Preset date ranges shown as quick-select options beside the calendar. */
 		presets?: ReadonlyArray<DateRangePreset>;
 		/**
+		 * Maximum number of days the selected range may span, counting both
+		 * endpoints — `maxRangeSpan={7}` allows a 7-day window (start + 6 days).
+		 * Once a start date is picked, days beyond this distance from it are
+		 * disabled, so the user can't stretch the range past the cap. Use for
+		 * rolling windows like "at most a week from the chosen day"; for fixed
+		 * calendar bounds use `min`/`max`.
+		 *
+		 * This constrains selection only — it never rewrites a `value` that is
+		 * already wider than the cap. Surface such a value with `status` if you need
+		 * to flag it. A `preset` whose range violates the cap is disabled (shown but
+		 * not committable) rather than allowed to override it.
+		 */
+		maxRangeSpan?: number;
+		/**
+		 * Minimum number of days the selected range must span, counting both
+		 * endpoints — `minRangeSpan={2}` forbids a single-day range. Once a start
+		 * date is picked, days closer than this to it are disabled — except the
+		 * start itself, which stays selectable as the active anchor. Defaults to 1
+		 * (a same-day start and end is allowed).
+		 */
+		minRangeSpan?: number;
+		/**
 		 * Whether to show a clear button when a range is selected.
 		 * @default true
 		 */
@@ -187,6 +209,7 @@
 	import {
 		DATE_FORMAT_SHORT,
 		DATE_FORMAT_SHORT_WITH_YEAR,
+		plainDateDiffDays,
 		plainDateFormat,
 		plainDateFromISO,
 		plainDateToday
@@ -204,6 +227,7 @@
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		dateRangeInputIconButtonAttrs,
 		dateRangeInputPopoverLayoutAttrs,
@@ -247,6 +271,8 @@
 		max,
 		dateConstraints,
 		presets,
+		maxRangeSpan,
+		minRangeSpan,
 		hasClear = true,
 		placeholder: placeholderFromProps,
 		size: sizeProp,
@@ -263,6 +289,14 @@
 		style: styleProp,
 		...rest
 	}: DateRangeInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	const placeholder = $derived(placeholderFromProps ?? t('@astryx.dateRangeInput.placeholder'));
@@ -349,6 +383,25 @@
 	function handleRangeSelect(range: DateRange): void {
 		fireChange(range);
 		popover.hide();
+	}
+
+	// A preset that would land outside the span bounds is disabled rather than
+	// allowed to override them: the cap is authoritative, so an out-of-window
+	// preset stays visible (discoverable) but non-committable, mirroring how the
+	// calendar disables out-of-window days. Spans count both endpoints.
+	function isRangeWithinSpan(range: DateRange): boolean {
+		if (maxRangeSpan == null && minRangeSpan == null) {
+			return true;
+		}
+		const span =
+			Math.abs(plainDateDiffDays(plainDateFromISO(range.start), plainDateFromISO(range.end))) + 1;
+		if (maxRangeSpan != null && span > maxRangeSpan) {
+			return false;
+		}
+		if (minRangeSpan != null && span < minRangeSpan) {
+			return false;
+		}
+		return true;
 	}
 
 	function handlePresetClick(preset: DateRangePreset): void {
@@ -457,7 +510,7 @@
 			aria-disabled={showsDisabledMessage ? 'true' : undefined}
 			aria-label={triggerAriaLabel}
 			aria-describedby={ariaDescribedBy}
-			aria-required={isRequired === true ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			aria-expanded={popover.isOpen}
@@ -495,8 +548,10 @@
 					style={sidebarAttrs.style}
 				>
 					{#each presets as preset (preset.label)}
-						{@const isActive = isRangeEqual(value, preset.getRange())}
-						{@const presetAttrs = dateRangeInputPresetButtonAttrs(isActive)}
+						{@const presetRange = preset.getRange()}
+						{@const isActive = isRangeEqual(value, presetRange)}
+						{@const isPresetDisabled = !isRangeWithinSpan(presetRange)}
+						{@const presetAttrs = dateRangeInputPresetButtonAttrs(isActive, isPresetDisabled)}
 						<!--
 							These presets are independent action buttons navigated by Tab,
 							not a single-tab-stop listbox — so they are a labeled group of
@@ -507,6 +562,7 @@
 						<button
 							type="button"
 							aria-current={isActive ? 'true' : undefined}
+							disabled={isPresetDisabled}
 							onclick={() => handlePresetClick(preset)}
 							class={presetAttrs.class}
 							style={presetAttrs.style}
@@ -517,6 +573,8 @@
 				</div>
 			{/if}
 			<Calendar
+				{maxRangeSpan}
+				{minRangeSpan}
 				mode="range"
 				value={value ?? undefined}
 				onChange={handleRangeSelect}

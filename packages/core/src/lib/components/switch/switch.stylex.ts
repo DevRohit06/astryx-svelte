@@ -97,6 +97,12 @@ const styles = stylex.create({
 		alignItems: 'center',
 		gap: spacingVars['--spacing-2']
 	},
+	// A hidden label is sr-only, so its wrapper is a zero-width flex item — the
+	// row gap would still be painted beside the track, making the field box wider
+	// than the control it contains. Matches `CheckboxInput`.
+	containerLabelHidden: {
+		gap: 0
+	},
 	containerSpread: {
 		justifyContent: 'space-between',
 		width: '100%'
@@ -289,8 +295,17 @@ export function switchFieldAttrs(width: SizeValue | undefined, xstyle: StyleArg)
  * The switch *row*. Carries the `switchScope` marker (dropped while disabled)
  * that the track's hover/focus rules resolve against.
  */
-export function switchContainerAttrs(isSpread: boolean, isDisabled: boolean): SvelteStyleAttrs {
-	return sx(styles.container, isSpread && styles.containerSpread, !isDisabled && switchScope);
+export function switchContainerAttrs(
+	isSpread: boolean,
+	isDisabled: boolean,
+	isLabelHidden: boolean
+): SvelteStyleAttrs {
+	return sx(
+		styles.container,
+		isLabelHidden && styles.containerLabelHidden,
+		isSpread && styles.containerSpread,
+		!isDisabled && switchScope
+	);
 }
 
 /** The positioned wrapper around the native input, track and thumb. */

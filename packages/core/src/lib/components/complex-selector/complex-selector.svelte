@@ -7,7 +7,32 @@
 	// `ComplexSelectorSize` is published from `complex-selector.stylex.ts`, where
 	// the attrs function that indexes the size styles lives — the arrangement
 	// `SelectorSize`/`MultiSelectorSize` use. The barrel re-exports it from there.
-	import type { ComplexSelectorSize } from './complex-selector.stylex.js';
+	import type { ComplexSelectorSize, ComplexSelectorVariant } from './complex-selector.stylex.js';
+	import type { IconName } from '../icon/icon-registry.js';
+	import type { LayerAlignment, LayerPlacement } from '../layer/use-layer.svelte.js';
+
+	/**
+	 * Imperative control surface for `ComplexSelector`.
+	 *
+	 * Upstream reaches it through a `handleRef` prop filled by
+	 * `useImperativeHandle`; Svelte has no ref objects, so a component instance
+	 * bound with `bind:this` satisfies this interface structurally — the same
+	 * arrangement `SideNavImperativeCollapseHandle` uses. Every method drives the
+	 * same popover machinery as the built-in trigger, so they respect focus
+	 * restoration, light dismiss and Escape. Prefer these over mirroring open
+	 * state in the parent: the selector owns its visibility, and imperative calls
+	 * avoid the focus-management pitfalls of syncing an external `isOpen` prop.
+	 */
+	export interface ComplexSelectorHandle {
+		/** Open the selector surface. No-op when disabled or already open. */
+		open(): void;
+		/** Close the selector surface. Restores focus to the trigger. */
+		close(): void;
+		/** Toggle the selector surface open or closed. */
+		toggle(): void;
+		/** Whether the selector surface is currently open. Reads live state. */
+		isOpen(): boolean;
+	}
 
 	/**
 	 * What the content snippet is told about the shell around it. Upstream's
@@ -93,8 +118,14 @@
 		size?: ComplexSelectorSize;
 		/** Width of the field. */
 		width?: SizeValue;
+		/** Visual trigger style. Ghost matches toolbar buttons. */
+		variant?: ComplexSelectorVariant;
+		/** Icon displayed at the start of the trigger — a registry name or a snippet. */
+		startIcon?: Snippet | IconName;
 		/** Popup placement. */
-		placement?: 'above' | 'below' | 'start' | 'end';
+		placement?: LayerPlacement;
+		/** Popup alignment along the placement axis. */
+		alignment?: LayerAlignment;
 		/** StyleX styles for the popup content container. */
 		contentXstyle?: StyleArg;
 		/** Test ID for the trigger container. */
@@ -113,6 +144,7 @@
 	import PopoverLayer from '../popover/popover-layer.svelte';
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import Spinner from '../spinner/spinner.svelte';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		complexSelectorChevronXstyle,
 		complexSelectorContentAttrs,
@@ -178,7 +210,10 @@
 		labelTooltip,
 		size = 'md',
 		width,
+		variant = 'input',
+		startIcon,
 		placement = 'below',
+		alignment = 'start',
 		contentXstyle,
 		xstyle,
 		class: className,
@@ -188,6 +223,14 @@
 		onclick: onclickProp,
 		...rest
 	}: ComplexSelectorProps<Value> = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	const placeholder = $derived(placeholderFromProps ?? t('@astryx.selector.placeholder'));
@@ -232,9 +275,25 @@
 		// wrong box.
 		surfaceTarget: 'complex-selector-popup',
 		onHide: () => {
+			// Stamped so a click that *dismissed* the popover cannot immediately
+			// reopen it: light dismiss fires on pointerdown, the trigger's click
+			// lands after, and without this guard the pair reads as close-then-open
+			// and the surface never shuts.
+			lastHideTime = Date.now();
 			document.getElementById(triggerId)?.focus();
 		}
 	}));
+
+	/**
+	 * How long after a dismiss the trigger ignores a click. Light dismiss fires on
+	 * pointerdown and the trigger's click lands after it, so without a guard the
+	 * two read as close-then-open and the surface never shuts.
+	 */
+	const REOPEN_GUARD_MS = 50;
+
+	// Not `$state`: nothing renders from it, and a rune here would schedule an
+	// update on every dismiss.
+	let lastHideTime = 0;
 
 	function commitValue(nextValue: Value): void {
 		onChange?.(nextValue);
@@ -266,9 +325,39 @@
 		if (event.defaultPrevented) {
 			return;
 		}
+		if (isDisabled || Date.now() - lastHideTime < REOPEN_GUARD_MS) {
+			return;
+		}
+		popover.toggle();
+	}
+
+	/**
+	 * The imperative handle, as instance exports.
+	 *
+	 * Upstream takes a `handleRef` prop and fills it with `useImperativeHandle`;
+	 * Svelte has no ref objects, so — as `SideNav`'s `getCollapseState()` and
+	 * `Tokenizer`'s `focus()`/`blur()` already do — these are reached through
+	 * `bind:this`. Each drives the same popover machinery as the built-in trigger,
+	 * so they respect focus restoration, light dismiss and Escape.
+	 */
+	export function open(): void {
+		if (!isDisabled) {
+			popover.show();
+		}
+	}
+
+	export function close(): void {
+		popover.hide();
+	}
+
+	export function toggle(): void {
 		if (!isDisabled) {
 			popover.toggle();
 		}
+	}
+
+	export function isOpen(): boolean {
+		return popover.isOpen;
 	}
 
 	function handleTriggerKeyDown(event: KeyboardEvent): void {
@@ -278,9 +367,17 @@
 		}
 	}
 
-	const theme = $derived(themeProps('complex-selector', { size, status: status?.type ?? null }));
+	// A ghost trigger has no field border for an attached status bubble to hang
+	// off, so it falls back to the detached treatment.
+	const effectiveStatusVariant = $derived(
+		variant === 'ghost' && statusVariant === 'attached' ? 'detached' : statusVariant
+	);
+
+	const theme = $derived(
+		themeProps('complex-selector', { variant, size, status: status?.type ?? null })
+	);
 	const containerAttrs = $derived(
-		complexSelectorTriggerContainerAttrs(size, isDisabled, triggerLabel != null, xstyle)
+		complexSelectorTriggerContainerAttrs(size, isDisabled, triggerLabel != null, variant, xstyle)
 	);
 	const triggerAttrs = complexSelectorTriggerAttrs();
 	const triggerTextAttrs = complexSelectorTriggerTextAttrs();
@@ -308,6 +405,18 @@
 		style={mergeStyle(containerAttrs.style, styleProp as string | undefined)}
 	>
 		<!--
+			Upstream's `renderIconSlot(startIcon, {size: 'sm', color: 'secondary'})`
+			guarded by `isRenderable`. A registry name resolves through `<Icon>`; a
+			snippet renders as authored — the port's standing icon-slot shape.
+		-->
+		{#if startIcon != null}
+			{#if typeof startIcon === 'string'}
+				<Icon icon={startIcon} size="sm" color="secondary" />
+			{:else}
+				{@render startIcon()}
+			{/if}
+		{/if}
+		<!--
 			`aria-required` and `aria-invalid` are not in `role="button"`'s supported
 			set, and Svelte says so. They are upstream's own markup: this trigger
 			stands in for a form control, and upstream carries both so the field's
@@ -323,7 +432,7 @@
 			aria-controls={contentId}
 			aria-describedby={ariaDescribedBy}
 			aria-labelledby={labelId}
-			aria-required={isRequired ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			disabled={isDisabled}
@@ -364,7 +473,7 @@
 	<PopoverLayer
 		{popover}
 		{placement}
-		alignment="start"
+		{alignment}
 		offset={complexSelectorPopoverOffset}
 		xstyle={layerXstyle}
 	>
@@ -391,7 +500,7 @@
 				messageID: status.message ? statusMessageId : undefined
 			}
 		: undefined}
-	{statusVariant}
+	statusVariant={effectiveStatusVariant}
 	{labelTooltip}
 	{width}
 >

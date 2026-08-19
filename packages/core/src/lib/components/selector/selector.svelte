@@ -286,6 +286,7 @@
 	import SelectorOption from './selector-option.svelte';
 	import { useCombobox } from './use-combobox.svelte.js';
 	import { useSelectedItemOffset } from './use-selected-item-offset.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		getSelectableOptions,
 		isDivider,
@@ -377,6 +378,14 @@
 		hasClear: hasClearProp,
 		...rest
 	}: SelectorProps<T> = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	// The union's arms differ only in whether `value`/`onChange` admit `null`, and
 	// destructuring a union narrows a call to the *intersection* of the parameter
@@ -1008,7 +1017,7 @@
 				: undefined}
 			aria-describedby={aria.ariaDescribedBy}
 			aria-labelledby={aria.ariaLabelledBy}
-			aria-required={isRequired ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			disabled={isDisabled && !showsDisabledMessage}

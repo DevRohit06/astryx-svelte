@@ -394,6 +394,7 @@
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		numberInputAttrs,
 		numberInputIncrementIconStyle,
@@ -467,6 +468,14 @@
 		style: styleProp,
 		...rest
 	}: NumberInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	// The union's two arms differ only in whether `onChange` accepts `null`, and
 	// destructuring a union narrows a call to the *intersection* of the parameter
@@ -864,7 +873,7 @@
 			aria-valuenow={value ?? undefined}
 			aria-valuetext={value == null || !formatValue ? undefined : formattedValue}
 			aria-describedby={aria.ariaDescribedBy}
-			aria-required={isRequired === true ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' || !isInputValid ? 'true' : undefined}
 			aria-labelledby={aria.ariaLabelledBy}
 			class={controlAttrs.class}

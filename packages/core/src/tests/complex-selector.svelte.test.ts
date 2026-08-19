@@ -5,13 +5,18 @@ import { render } from 'vitest-browser-svelte';
 import ComplexSelector from '$lib/components/complex-selector/complex-selector.svelte';
 import CloseFixture from './fixtures/complex-selector-close.svelte';
 import FruitFixture, { type FruitValue } from './fixtures/complex-selector-fruit.svelte';
+import ShellFixture from './fixtures/complex-selector-shell.svelte';
 
 /**
  * Astryx's `ComplexSelector/ComplexSelector.test.tsx`, ported case for case —
- * **6 upstream cases** across its two describe blocks (`ComplexSelector`, four
- * cases; `ComplexSelector popup theme target`, two), 6 here, none dropped and
- * none added. There is no ref-callback and no `displayName` case in the file,
- * so nothing is React-only.
+ * **all 12 upstream cases at v0.4.5**, none dropped and none added. There is no
+ * ref-callback and no `displayName` case in the file, so nothing is React-only.
+ *
+ * (At v0.4.2 this was 6. The six added at 0.4.5 cover the `ghost` variant, the
+ * `startIcon` slot, `alignment`, and the imperative handle — including the
+ * re-open guard, which is the one with a real failure behind it: light dismiss
+ * fires on pointerdown and the trigger's click lands after, so without the guard
+ * the pair reads as close-then-open and the surface never shuts.)
  *
  * Runs in the **client (real Chromium)** project, for the reason
  * `selector.svelte.test.ts` and `popover.svelte.test.ts` do: the popup opens
@@ -39,6 +44,12 @@ import FruitFixture, { type FruitValue } from './fixtures/complex-selector-fruit
  * - `document.querySelector` becomes `screen.container.querySelector`. The
  *   popover layer renders inline in the component tree here rather than through
  *   a portal, so the container is the tighter scope for the same node.
+ *
+ * Upstream's `handleRef` + `React.createRef<ComplexSelectorHandle>()` becomes
+ * `bind:this`: the component instance *is* the handle here, exposed through
+ * `complex-selector-shell.svelte`'s `handle()` instance export. Same four
+ * methods, same contract — see `SideNav`'s `getCollapseState()` for the
+ * precedent.
  *
  * `act()` has no counterpart and is not needed here: upstream never reaches for
  * it in this file, a `$state` write flushes on its own, and `expect.element`
@@ -169,5 +180,109 @@ describe('ComplexSelector popup theme target', () => {
 		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend' }));
 
 		expect(screen.container.querySelector('.astryx-complex-selector-popup')).not.toBeNull();
+	});
+	describe('trigger shell', () => {
+		it('defaults to md and reflects explicit trigger sizes', async () => {
+			const sizeOf = async (size?: 'sm' | 'md' | 'lg') => {
+				const screen = await render(ShellFixture, {
+					props: { label: 'Fruit blend', value: 'Apple', size }
+				});
+				return screen.container
+					.querySelector('.astryx-complex-selector')
+					?.getAttribute('data-size');
+			};
+			expect(await sizeOf()).toBe('md');
+			expect(await sizeOf('sm')).toBe('sm');
+			expect(await sizeOf('lg')).toBe('lg');
+		});
+
+		it('renders a ghost toolbar trigger with a start icon', async () => {
+			const screen = await render(ShellFixture, {
+				props: {
+					label: 'View options',
+					value: ['name'],
+					variant: 'ghost',
+					startIcon: 'viewColumns',
+					status: { type: 'warning', message: 'Unsaved changes' },
+					'data-testid': 'view-options'
+				}
+			});
+			expect(
+				screen.container.querySelector('.astryx-complex-selector')?.getAttribute('data-variant')
+			).toBe('ghost');
+			// A ghost trigger has no field border to hang an attached bubble off.
+			expect(
+				screen.container.querySelector('.astryx-field-status')?.getAttribute('data-variant')
+			).toBe('detached');
+			// The start icon plus the chevron.
+			expect(
+				screen.container.querySelector('[data-testid="view-options"]')!.querySelectorAll('svg')
+			).toHaveLength(2);
+		});
+
+		it('supports end-aligned popup positioning', async () => {
+			const screen = await render(ShellFixture, { props: { alignment: 'end' } });
+			const popover = screen.container.querySelector('[popover]');
+			// Read back through `getAttribute`, so this is the browser's normalised
+			// form of the declaration, not the string the layer wrote.
+			expect(popover?.getAttribute('style')).toContain(
+				'position-area: self-block-end span-self-inline-start'
+			);
+		});
+	});
+
+	describe('imperative handle', () => {
+		it('exposes imperative open, close, toggle, and isOpen via bind:this', async () => {
+			const screen = await render(ShellFixture);
+			const handle = screen.component.handle()!;
+			const trigger = screen.getByRole('button', { name: 'View options' });
+
+			await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+			expect(handle.isOpen()).toBe(false);
+
+			handle.open();
+			await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
+			expect(handle.isOpen()).toBe(true);
+
+			handle.close();
+			await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+			expect(handle.isOpen()).toBe(false);
+
+			handle.toggle();
+			await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
+
+			handle.toggle();
+			await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+		});
+
+		it('does not open via the imperative handle when disabled', async () => {
+			const screen = await render(ShellFixture, { props: { isDisabled: true } });
+			const handle = screen.component.handle()!;
+			const trigger = screen.getByRole('button', { name: 'View options' });
+
+			handle.open();
+			handle.toggle();
+			await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+			expect(handle.isOpen()).toBe(false);
+		});
+
+		it('does not reopen from the trigger click that follows light dismiss', async () => {
+			const screen = await render(ShellFixture);
+			const handle = screen.component.handle()!;
+			const trigger = screen.getByRole('button', { name: 'View options' });
+
+			await userEvent.click(trigger);
+			await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
+
+			// Upstream synthesises the dismiss with `fireEvent` because jsdom has no
+			// Popover API. Chromium has one, so this drives the interaction that
+			// actually produces the bug: clicking the *trigger* of an open popover
+			// light-dismisses it on pointerdown, and the trigger's own click lands
+			// after. Without the guard that pair reads as close-then-open and the
+			// surface never shuts — which is the whole point of the case.
+			await userEvent.click(trigger);
+			await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+			expect(handle.isOpen()).toBe(false);
+		});
 	});
 });

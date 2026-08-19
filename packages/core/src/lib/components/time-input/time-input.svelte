@@ -174,6 +174,7 @@
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		timeInputAttrs,
 		timeInputIconAttrs,
@@ -227,6 +228,14 @@
 		style: styleProp,
 		...rest
 	}: TimeInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	const placeholder = $derived(placeholderFromProps ?? t('@astryx.timeInput.placeholder'));
@@ -537,7 +546,7 @@
 			autofocus={hasAutoFocus}
 			data-autofocus={hasAutoFocus || undefined}
 			aria-describedby={aria.ariaDescribedBy}
-			aria-required={isRequired === true ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' || !isInputValid ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			aria-labelledby={aria.ariaLabelledBy}

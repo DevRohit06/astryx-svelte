@@ -1540,6 +1540,13 @@ const CASES = [
 		inline: [
 			['styles.iconWrapper'],
 			['styles.headerContent'],
+			// **`headerContentWithEndContent` is new at upstream 0.4.4**, and it makes
+			// the header content a folding *pair* — the same shape `contentArea` has
+			// below. The `flex-basis: 8rem` it adds is the wrap threshold: it applies
+			// only when there is `endContent` to wrap, so the compiler folds the slot
+			// twice, with and without it. Listing only the bare combination leaves
+			// upstream's second string unclaimed and the run fails on it.
+			['styles.headerContent', 'styles.headerContentWithEndContent'],
 			['styles.title'],
 			['styles.description'],
 			['styles.contentArea'],
@@ -3113,7 +3120,14 @@ const CASES = [
 		file: 'src/lib/components/table/plugins/row-expansion/row-expansion.stylex.js',
 		upstreamFile: 'Table/plugins/rowExpansion/useTableRowExpansion.js',
 		inline: [
-			['expansionStyles.chevronButton'],
+			// **The bare button stopped folding alone at upstream 0.4.5.** It used to
+			// be `isExpanded && chevronExpanded`, so the collapsed state applied no
+			// transform and the button emitted on its own. The RTL mirror is now
+			// folded into each state's `transform` (one element, and the later
+			// `transform` value would win over a separate mirror style), which makes
+			// it a ternary — so every call site carries exactly one of the pair and
+			// there is no lone-button string left to claim.
+			['expansionStyles.chevronButton', 'expansionStyles.chevronCollapsed'],
 			['expansionStyles.chevronButton', 'expansionStyles.chevronExpanded'],
 			['expansionStyles.expandedRow'],
 			['expansionStyles.expandedCell']

@@ -50,8 +50,20 @@ const expansionStyles = stylex.create({
 			color: colorVars['--color-icon-primary']
 		}
 	},
+	// The RTL mirror is folded into each state's transform rather than living on a
+	// parent span, matching `TreeListItem`'s chevron (both are `transform`, so on
+	// one element the later value would win).
 	chevronExpanded: {
-		transform: 'rotate(90deg)'
+		transform: {
+			default: 'rotate(90deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(90deg)'
+		}
+	},
+	chevronCollapsed: {
+		transform: {
+			default: 'rotate(0deg)',
+			':is([dir="rtl"] *)': 'scaleX(-1) rotate(0deg)'
+		}
 	},
 	expandedRow: {
 		backgroundColor: colorVars['--color-background-muted']
@@ -64,7 +76,10 @@ const expansionStyles = stylex.create({
 
 /** The transparent, borderless chevron button, rotated a quarter turn while expanded. */
 export function expansionChevronButtonAttrs(isExpanded: boolean): SvelteStyleAttrs {
-	return sx(expansionStyles.chevronButton, isExpanded && expansionStyles.chevronExpanded);
+	return sx(
+		expansionStyles.chevronButton,
+		isExpanded ? expansionStyles.chevronExpanded : expansionStyles.chevronCollapsed
+	);
 }
 
 /** The detail panel's `<tr>`. */

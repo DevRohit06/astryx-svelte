@@ -536,16 +536,20 @@ export {
 	useCommandPaletteContext,
 	type CommandPaletteContextValue
 } from './components/command-palette/command-palette-context.svelte.js';
-// Upstream's `ComplexSelector/index.ts` publishes exactly these four types
-// beside the component. `ComplexSelectorSize` comes from the style module (where
-// the attrs function that indexes the size styles needs it), the same split
-// `SelectorSize` and `MultiSelectorSize` take.
+// Upstream's `ComplexSelector/index.ts` publishes exactly these six types beside
+// the component. `ComplexSelectorSize` and `ComplexSelectorVariant` come from the
+// style module (where the attrs function that indexes their styles needs them),
+// the same split `SelectorSize` and `MultiSelectorSize` take.
 export type {
+	ComplexSelectorHandle,
 	ComplexSelectorProps,
 	ComplexSelectorRenderState,
 	ComplexSelectorStatus
 } from './components/complex-selector/complex-selector.svelte';
-export type { ComplexSelectorSize } from './components/complex-selector/complex-selector.stylex.js';
+export type {
+	ComplexSelectorSize,
+	ComplexSelectorVariant
+} from './components/complex-selector/complex-selector.stylex.js';
 // The item types are upstream's aliases for `DropdownMenu`'s, re-exported under
 // the ContextMenu name exactly as its own `index.ts` does.
 export type { DropdownMenuItemProps as ContextMenuItemProps } from './components/dropdown-menu/dropdown-menu-item.svelte';
@@ -1248,7 +1252,9 @@ export {
 	FormLayoutContext,
 	setFormLayoutContext,
 	useFormLayout,
-	type FormLayoutDirection
+	type FormLayoutDirection,
+	type FormLayoutContextValue,
+	type FormOptionality
 } from './components/form-layout/form-layout-context.svelte.js';
 // Upstream's `InputGroup/index.ts` publishes `useInputGroup` and the value type,
 // but not the context object or its provider — `setInputGroupContext` is an

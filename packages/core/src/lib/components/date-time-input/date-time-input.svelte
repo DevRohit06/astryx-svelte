@@ -233,6 +233,7 @@
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		dateTimeInputAttrs,
 		dateTimeInputDateWrapperAttrs,
@@ -294,6 +295,14 @@
 		style: styleProp,
 		...rest
 	}: DateTimeInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	// Speaks arrow-key stepping results through the persistent live regions:
@@ -797,7 +806,7 @@
 				aria-disabled={showsDisabledMessage ? 'true' : undefined}
 				readonly={showsDisabledMessage || undefined}
 				aria-describedby={ariaDescribedBy}
-				aria-required={isRequired === true ? 'true' : undefined}
+				aria-required={isEffectivelyRequired() ? 'true' : undefined}
 				aria-invalid={status?.type === 'error' || !isDateInputValid ? 'true' : undefined}
 				aria-busy={isBusy || undefined}
 				aria-expanded={popover.isOpen}
@@ -850,7 +859,7 @@
 				readonly={showsDisabledMessage || undefined}
 				aria-label={timeLabel ?? t('@astryx.dateTimeInput.timeSuffix', { label })}
 				aria-describedby={ariaDescribedBy}
-				aria-required={isRequired === true ? 'true' : undefined}
+				aria-required={isEffectivelyRequired() ? 'true' : undefined}
 				aria-invalid={status?.type === 'error' || !isTimeInputValid ? 'true' : undefined}
 				aria-busy={isBusy || undefined}
 				class={timeControlAttrs.class}

@@ -5,6 +5,7 @@ import {
 	colorVars,
 	durationVars,
 	easeVars,
+	fontWeightVars,
 	radiusVars,
 	sizeVars,
 	spacingVars,
@@ -118,13 +119,48 @@ const styles = stylex.create({
 		padding: spacingVars['--spacing-3']
 	},
 	sm: {
-		minHeight: sizeVars['--size-element-sm']
+		height: sizeVars['--size-element-sm']
 	},
 	md: {
-		minHeight: sizeVars['--size-element-md']
+		height: sizeVars['--size-element-md']
 	},
 	lg: {
-		minHeight: sizeVars['--size-element-lg']
+		height: sizeVars['--size-element-lg']
+	},
+	// The ghost trigger drops the field chrome for a toolbar-button treatment:
+	// no border, no shadow, a hover/press wash painted as a background image so it
+	// composites over whatever surface it sits on.
+	triggerGhost: {
+		width: 'auto',
+		borderWidth: 0,
+		backgroundColor: 'transparent',
+		backgroundImage: {
+			default: null,
+			':hover': {
+				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
+			},
+			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
+		},
+		boxShadow: {
+			default: 'none',
+			':hover:not(:focus-within)': {
+				'@media (hover: hover)': 'none'
+			},
+			':focus-within': 'none'
+		},
+		fontWeight: fontWeightVars['--font-weight-medium'],
+		transitionProperty: 'background-image, background-color, color, opacity, transform',
+		transform: {
+			default: 'scale(1)',
+			':active': 'scale(0.98)'
+		}
+	},
+	triggerGhostDisabled: {
+		backgroundImage: 'none',
+		transform: {
+			default: 'none',
+			':active': 'none'
+		}
 	},
 	disabled: {
 		cursor: 'not-allowed'
@@ -143,6 +179,9 @@ const styles = stylex.create({
  */
 export type ComplexSelectorSize = 'sm' | 'md' | 'lg';
 
+/** Visual trigger style. Ghost matches toolbar buttons. */
+export type ComplexSelectorVariant = 'input' | 'ghost';
+
 /**
  * The bordered surface wrapping the trigger button, spinner and chevron.
  *
@@ -154,12 +193,15 @@ export function complexSelectorTriggerContainerAttrs(
 	size: ComplexSelectorSize,
 	isDisabled: boolean,
 	hasTriggerLabel: boolean,
+	variant: ComplexSelectorVariant,
 	xstyle: StyleArg
 ): SvelteStyleAttrs {
 	return sx(
 		inputWrapperStyles.base,
 		styles.triggerContainer,
 		styles[size],
+		variant === 'ghost' && styles.triggerGhost,
+		variant === 'ghost' && isDisabled && styles.triggerGhostDisabled,
 		// The ring belongs to the wrapper (the focusable `<button>` sits inside
 		// it), but it must still be a KEYBOARD ring: `:focus-within` matched a
 		// mouse click on the trigger and drew the outline for pointer users too.

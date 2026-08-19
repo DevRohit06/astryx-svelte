@@ -51,7 +51,19 @@ const styles = stylex.create({
 		outline: 'none',
 		// Native <dialog> uses display:none when closed.
 		// Open state applied via isOpen prop to avoid :where([open]) specificity issues.
-		display: 'none'
+		display: 'none',
+		// `display` participates in the transition with allow-discrete so it flips
+		// to none only after the slide-out finishes. That also keeps the dialog
+		// rendered until close() has actually run: an open modal dialog that isn't
+		// rendered still blocks the whole document, and a browser that fails to
+		// un-block it on close leaves the page inert with no error (#4290).
+		// Deliberately not shortened under reduced motion: `display` is discrete, so
+		// a long hold animates nothing — it is only the window the close has to land
+		// inside. The visible transitions (the drawer's transform and the backdrop's
+		// opacity) are the ones that respect the preference.
+		transitionProperty: 'display',
+		transitionDuration: durationVars['--duration-medium'],
+		transitionBehavior: 'allow-discrete'
 	},
 	open: {
 		display: 'flex'

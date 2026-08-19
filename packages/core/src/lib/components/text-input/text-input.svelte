@@ -153,6 +153,7 @@
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
 	import { textInputAttrs, textInputWrapperAttrs } from './text-input.stylex.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 
 	/**
 	 * A single-line text field with the whole `Field` shell around it — or, when
@@ -201,6 +202,14 @@
 		xstyle,
 		...rest
 	}: TextInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	const resolveSize = useSize();
@@ -360,7 +369,7 @@
 			data-autofocus={hasAutoFocus || undefined}
 			aria-describedby={aria.ariaDescribedBy}
 			aria-labelledby={aria.ariaLabelledBy}
-			aria-required={isRequired === true ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			class={controlAttrs.class}

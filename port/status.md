@@ -9,12 +9,12 @@
 |                           |                                                                          |
 | ------------------------- | ------------------------------------------------------------------------ |
 | Component dirs (ours)     | 98                                                                       |
-| Component dirs (upstream) | 102                                                                      |
-| Missing here              | none                                                                     |
+| Component dirs (upstream) | 103                                                                      |
+| Missing here              | BottomSheet                                                              |
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
-| Upstream pin              | `@astryxdesign/core` 0.4.2                                               |
-| Ledger entries            | 29                                                                       |
+| Upstream pin              | `@astryxdesign/core` 0.4.5                                               |
+| Ledger entries            | 30                                                                       |
 
 ## Debts
 

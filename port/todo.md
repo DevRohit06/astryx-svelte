@@ -12,8 +12,12 @@ The first npm release shipped as `0.3.1` (porting Astryx `0.3.0` — the port's 
 can't express a release of its own, so it took the next free patch number instead of `0.3.0`
 itself). Since then the goal has been continuous upstream tracking rather than a one-time port:
 pull each Astryx release, close the class-oracle and theme-oracle drift it introduces, and cut a
-matching release of this port. The pin is currently Astryx `0.4.2` — see
-[`status.md`](./status.md) for the live count of what that leaves open. Set 2026-08-16.
+matching release of this port. The pin is currently Astryx `0.4.4` — see
+[`status.md`](./status.md) for the live count of what that leaves open. Set 2026-08-16, re-pinned
+2026-08-19.
+
+`0.4.2` is merged to `main` but **not tagged**: the release step is still open below, and tagging
+from a quiet `main` is easier than tagging mid-batch.
 
 ## Next
 
@@ -155,10 +159,10 @@ hand-drawn content.
 
 Sizes measured from upstream source, not estimated.
 
-| Front      | Size                   |
-| ---------- | ---------------------- |
-| `lab`      | 17 components, ~995 KB |
-| `charts`   | 35 files               |
-| `vega`     | 5 files                |
-| `richtext` | 1 file                 |
-| `build`    | 7 files                |
+| Front      | Size              |
+| ---------- | ----------------- |
+| `lab`      | 19 dirs at v0.4.4 |
+| `charts`   | 35 files          |
+| `vega`     | 5 files           |
+| `richtext` | 1 file            |
+| `build`    | 7 files           |

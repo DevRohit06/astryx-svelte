@@ -75,6 +75,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { useInputContainer } from '../../hooks/use-input-container.svelte.js';
+	import { useFormLayout } from '../form-layout/form-layout-context.svelte.js';
 	import Icon from '../icon/icon.svelte';
 	import Tooltip from '../tooltip/tooltip.svelte';
 	import {
@@ -126,8 +127,21 @@
 	// entered the catalog with this release — which retires the "hard-coded
 	// English" entry this port carried under Known debts, upstream-first rather
 	// than by local invention.
+	// A form-level `defaultOptionality` means "only the exception is marked": a
+	// field that merely restates the form's default shows no indicator, and only
+	// a deviation from it does. This is the *visible indicator* only; the matching
+	// `aria-required` is resolved on each control (see `useResolvedRequired`) so
+	// the unmarked majority is still announced.
+	//
+	//   defaultOptionality  isRequired            isOptional
+	//   'optional'          → required indicator  → (matches default, hidden)
+	//   'required'          → (matches, hidden)   → optional indicator
+	//   unset               → required indicator  → optional indicator
+	const formLayout = useFormLayout();
+	const showRequired = $derived(isRequired && formLayout().defaultOptionality !== 'required');
+	const showOptional = $derived(isOptional && formLayout().defaultOptionality !== 'optional');
 	const statusText = $derived(
-		isOptional ? t('@astryx.field.optional') : isRequired ? t('@astryx.field.required') : null
+		showOptional ? t('@astryx.field.optional') : showRequired ? t('@astryx.field.required') : null
 	);
 
 	// Clicking the description forwards to the associated control, so the whole

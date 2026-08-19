@@ -173,6 +173,7 @@
 	import Spinner from '../spinner/spinner.svelte';
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		COUNTER_WARNING_THRESHOLD,
 		textAreaAttrs,
@@ -237,6 +238,14 @@
 		xstyle,
 		...rest
 	}: TextAreaProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const resolveSize = useSize();
 	const size = $derived(resolveSize(sizeProp, 'md'));
@@ -473,7 +482,7 @@
 			autofocus={hasAutoFocus}
 			data-autofocus={hasAutoFocus || undefined}
 			aria-describedby={ariaDescribedBy}
-			aria-required={isRequired && !isOptional ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' || isOverLimit ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			class={areaAttrs.class}

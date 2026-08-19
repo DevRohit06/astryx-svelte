@@ -162,8 +162,8 @@
 
 	// A getter read at call time, so a `FormLayout` that changes direction after
 	// mount moves its fields with it.
-	const direction = useFormLayout();
-	const isHorizontalLabels = $derived(direction() === 'horizontal-labels');
+	const formLayout = useFormLayout();
+	const isHorizontalLabels = $derived(formLayout().direction === 'horizontal-labels');
 
 	const resolvedDescriptionID = $derived(
 		descriptionID ?? (description ? `${inputID}-desc` : undefined)

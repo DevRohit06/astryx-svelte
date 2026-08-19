@@ -65,6 +65,7 @@
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import { setRadioListContext } from './radio-list-context.svelte.js';
 	import { radiogroupAttrs } from './radio-list.stylex.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 
 	/**
 	 * A radio group for single-value selection, wrapped in the `Field` shell.
@@ -102,6 +103,14 @@
 		xstyle,
 		'data-testid': dataTestId
 	}: RadioListProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	// One base id → the several `useId`s upstream mints, for the reason the
 	// neighbouring ports record.
@@ -228,7 +237,7 @@
 		aria-labelledby={labelID}
 		aria-describedby={ariaDescribedBy}
 		aria-invalid={status?.type === 'error' ? 'true' : undefined}
-		aria-required={isRequired || undefined}
+		aria-required={isEffectivelyRequired() || undefined}
 		onfocusin={handleFocus}
 		{...theme}
 		class={cx(theme.class, groupAttrs.class)}
