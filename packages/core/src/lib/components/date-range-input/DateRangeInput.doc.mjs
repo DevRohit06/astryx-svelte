@@ -197,6 +197,18 @@ export default {
 			description: 'Custom constraint functions to disable specific dates.'
 		},
 		{
+			name: 'maxRangeSpan',
+			type: 'number',
+			description:
+				'Maximum days a selected range may span, counting both endpoints (`7` = a 7-day window, start + 6). Once a start is picked, days beyond this distance are disabled so the range cannot stretch past the cap. Rolling window relative to the start — for fixed calendar bounds use `min`/`max`. Constrains selection only; it never rewrites a `value` already wider than the cap (flag that with `status`).'
+		},
+		{
+			name: 'minRangeSpan',
+			type: 'number',
+			description:
+				'Minimum days a selected range must span, counting both endpoints (`2` forbids a single-day range). Once a start is picked, days closer than this are disabled. Defaults to 1 (same-day start and end allowed).'
+		},
+		{
 			name: 'presets',
 			type: 'ReadonlyArray<DateRangePreset>',
 			description: 'Preset ranges shown as quick-select options beside the calendar.'

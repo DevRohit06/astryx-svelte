@@ -28,7 +28,7 @@
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	// From the module, not the barrel — upstream keeps `isImeKeyEvent` out of
 	// `hooks/index.ts` and its consumers import it directly.
-	import { isImeKeyEvent } from '../../hooks/use-focus-trap.svelte.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import NestedEditor from './nested-editor.svelte';
 	import {
 		editPopoverContainerAttrs,

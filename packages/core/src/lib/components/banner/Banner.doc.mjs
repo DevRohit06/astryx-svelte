@@ -41,7 +41,8 @@ export default {
 		vars: [
 			{
 				name: '--_banner-radius',
-				description: 'Border radius (card container only)',
+				description:
+					'Border radius of the card container (header, content area and the elevated root silhouette)',
 				default: 'var(--radius-container)',
 				private: true
 			}
@@ -86,6 +87,16 @@ export default {
 				guidance: false,
 				description:
 					'Stack multiple banners with the same status; combine related messages into one banner.'
+			},
+			{
+				guidance: true,
+				description:
+					'Error and warning banners render as role="alert"; info and success render as role="status". Mount an alert banner in response to an event rather than on first paint, so assistive tech has a change to report.'
+			},
+			{
+				guidance: false,
+				description:
+					'Rely on the status color or icon alone to carry meaning; say which status it is in the title text, because the icon is decorative to a screen reader.'
 			}
 		],
 		anatomy: [
@@ -96,13 +107,13 @@ export default {
 			},
 			{
 				name: 'Title',
-				required: false,
-				description: 'The main message. Required if no description is provided.'
+				required: true,
+				description: 'The main message. Always required.'
 			},
 			{
 				name: 'Description',
 				required: false,
-				description: 'Additional detail below the title. Required if no title is provided.'
+				description: 'Additional detail below the title.'
 			},
 			{
 				name: 'Action button',
@@ -167,7 +178,7 @@ export default {
 			name: 'endContent',
 			type: 'Snippet',
 			description:
-				'Action content rendered in the header area, end-aligned. Typically a button or link.'
+				'Action content rendered in the header area, end-aligned. Wraps to its own row below the text when the header is too narrow to hold both.'
 		},
 		{
 			name: 'container',

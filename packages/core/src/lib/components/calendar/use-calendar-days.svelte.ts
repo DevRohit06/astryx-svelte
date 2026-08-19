@@ -1,5 +1,10 @@
 import type { DayOfWeek, ISODateString, PlainDate } from '../../utils/date-types.js';
 import {
+	InternationalizationContext,
+	type InternationalizationContextValue
+} from '../../i18n/internationalization-context.svelte.js';
+import { getStandaloneShortWeekdayNames } from './get-standalone-short-weekday-names.js';
+import {
 	getDaysInMonth,
 	plainDateAddDays,
 	plainDateDayOfWeek,
@@ -78,6 +83,14 @@ export function useCalendarDays(options: () => UseCalendarDaysOptions): UseCalen
 	const year = $derived(options().year);
 	const month = $derived(options().month);
 	const weekStartsOn = $derived(options().weekStartsOn ?? 0);
+
+	// Read once at init, as every other context reader here does; the getter keeps
+	// it live if the provider's locale changes.
+	const intl = InternationalizationContext.getOr((): InternationalizationContextValue => ({
+		locale: 'en',
+		direction: 'ltr',
+		messages: {}
+	}));
 	const hasVariableRowCount = $derived(options().hasVariableRowCount ?? false);
 
 	// Grid structure.
@@ -97,13 +110,11 @@ export function useCalendarDays(options: () => UseCalendarDaysOptions): UseCalen
 		return { daysInMonth: totalDaysInMonth, startingDayOfWeek, totalCells };
 	});
 
+	// Generated strings avoid `Date` anchors, so weekday headers cannot shift with
+	// the runtime timezone. Keep numeric indices as the rotation source of truth.
 	const dayNames = $derived.by(() => {
-		const names = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-		const rotated: string[] = [];
-		for (let i = 0; i < 7; i++) {
-			rotated.push(names[(i + weekStartsOn) % 7]);
-		}
-		return rotated;
+		const names = getStandaloneShortWeekdayNames(intl().locale);
+		return Array.from({ length: 7 }, (_, index) => names[(index + weekStartsOn) % 7]);
 	});
 
 	const days = $derived.by(() => {

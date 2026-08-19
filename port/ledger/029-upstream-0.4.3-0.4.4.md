@@ -404,6 +404,62 @@ This port's `mobile-nav-reopen.svelte.test.ts` used exactly that shape. Helper p
 six cases — a test helper earns a suite when its failure mode is invisible) and that file switched
 over. It still passes, so nothing was being masked: the trap was set, not sprung.
 
+### The loose 0.4.5 modules
+
+Five arrived without a component of their own, and three of them were **already here, inline and
+duplicated** — 0.4.5 is largely an extraction release for these.
+
+| Module                                        | What it was here before                                                                   |
+| --------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `utils/ime`                                   | `isImeKeyEvent` in `use-focus-trap`, plus three inline copies of the same two-signal test |
+| `utils/characters`                            | `Avatar`'s own `Intl.Segmenter` + `firstGrapheme`, and three hand-rolled truncations      |
+| `theme/merge-components`                      | `deepMergeComponents` inside `define-theme.ts`                                            |
+| `Calendar/get-standalone-short-weekday-names` | a hardcoded `['Su','Mo',…]` array                                                         |
+| `theme/extensibleAxes`                        | nothing — see below                                                                       |
+
+`isImeKeyEvent` moves to `utils/` and the hooks barrel keeps upstream's **deprecated one-release
+re-export**, because it is a pure predicate rather than a hook. `characters` replaces `.length` /
+`.charAt(0)` / `.slice(0, n)` across `Avatar`, `TextArea`, `PowerSearch` and `Table` so an emoji
+counts as one character; `TextArea`'s counter is now guarded at the call site as well as inside
+`announceCounter`, so a textarea with no `maxLength` never segments its value on a keystroke.
+
+The weekday names become CLDR-generated and locale-resolved. The generated table is **copied
+verbatim** rather than regenerated: this port has no CLDR pipeline, and deriving the strings
+independently would risk drifting from what upstream's own comparison uses.
+
+### `expandColorScale` gains a per-scheme accent
+
+The one loose change that is a real feature: `accent` now accepts a `[light, dark]` tuple, so the
+light scheme's palettes derive from the light seed and the dark scheme's from the dark seed. Every
+palette reference splits — `P`, `N`, `NV` become `PL`/`PD`, `NL`/`ND`, `NVL`/`NVD` — across 27
+`ld()` calls, with the D palettes aliasing the L ones when a single seed is given. **That aliasing
+is the property that matters**: single-seed output has to stay identical to the pre-tuple
+implementation, and all 64 existing cases passing unchanged is what says it does.
+
+### An upstream test found a defect here before it was ported
+
+`theme/extensibleAxes.test.ts` is new at 0.4.5 and is a _repo-structural scanner_: it walks the
+source tree checking that every extensible `*Map` axis is kept in all three places it is promised —
+the augmentable interface, `themeProps` putting the axis on the DOM, and the doc's `visualProps`.
+Miss the middle one and the type says yes while the CSS says nothing.
+
+The scanner is tied to upstream's file layout (`Foo/index.ts`, PascalCase dirs), so porting it is a
+rewrite rather than a transcription and is **deliberately deferred** — named here rather than left
+implied. But the check it encodes was run by hand against this tree first, and it found the same
+defect upstream wrote it for: **`TreeList` declared `TreeListVariantMap` while
+`themeProps('tree-list', …)` passed only `density`**, so an augmented variant type-checked,
+rendered, and could not be themed. Upstream closed it at 0.4.5 in one line; so does this. The doc's
+`visualProps` third leg came along with the regenerated `.doc.mjs`.
+
+Getting the _finding_ without the _tooling_ is the right trade here: the defect is real today, the
+scanner protects against a future one.
+
+### The `.doc.mjs` regeneration
+
+`pnpm -r build && pnpm -F docs emit-core-docs` after the pin move — **17 files changed**, which is
+also where `TreeList`'s `visualProps: ['density', 'variant']` came from. They are generated and
+hand-editing them is a mistake; each says so at the top.
+
 ## Tests added
 
 | Suite                                              |                    Cases |
@@ -415,6 +471,9 @@ over. It still passes, so nothing was being masked: the trap was set, not sprung
 | `mobile-nav-close-visibility.svelte.test.ts` (new) |               **5 of 5** |
 | `mobile-nav-close-timing.test.ts` (new)            | **3 of 3** (14 expanded) |
 | `stub-match-media.test.ts` (new)                   |               **6 of 6** |
+| `characters.test.ts` (new)                         |             **22 of 22** |
+| `ime.test.ts` (new)                                |               **4 of 4** |
+| `get-standalone-short-weekday-names.test.ts` (new) |               **5 of 5** |
 
 Dropped, each named in its file with its reason: two `{false}`-as-snippet cases in `Banner`
 (a Svelte `Snippet` cannot be `false`) and `survives StrictMode double-invoked effects` (React has a

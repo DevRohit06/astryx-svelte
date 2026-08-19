@@ -1,6 +1,7 @@
 import type { TranslatorFn } from '../../i18n/index.js';
 import type { EnumItem, FilterValue, OperatorValue } from './types.js';
 import type { InternalConfig } from './use-internal-config.svelte.js';
+import { truncateCharacters } from '../../utils/characters.js';
 
 /**
  * Ported from Astryx's `PowerSearch/formatFilterValue.ts`, verbatim.
@@ -38,10 +39,7 @@ import type { InternalConfig } from './use-internal-config.svelte.js';
  * and never longer than `maxLength`.
  */
 function truncate(str: string, maxLength: number): string {
-	if (str.length <= maxLength) {
-		return str;
-	}
-	return str.slice(0, maxLength - 1) + '…';
+	return truncateCharacters(str, maxLength);
 }
 
 function formatEnumLabel(value: string, enumValues: ReadonlyArray<EnumItem>): string {

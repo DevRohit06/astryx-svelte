@@ -121,7 +121,7 @@
 	import { useAnnounce } from '../../hooks/use-announce.js';
 	// Imported from the module, not the barrel: upstream keeps `isImeKeyEvent`
 	// out of `hooks/index.ts` too, and its consumers reach it directly.
-	import { isImeKeyEvent } from '../../hooks/use-focus-trap.svelte.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import Icon from '../icon/icon.svelte';
 	import PopoverLayer from '../popover/popover-layer.svelte';

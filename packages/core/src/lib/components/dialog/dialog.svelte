@@ -83,7 +83,8 @@
 	import { themeProps } from '../../internal/theme-props.js';
 	import { devWarn } from '../../utils/dev-warning.js';
 	import { useScrollLock } from '../../hooks/use-scroll-lock.svelte.js';
-	import { hasActiveFocusTrapEscape, isImeKeyEvent } from '../../hooks/use-focus-trap.svelte.js';
+	import { hasActiveFocusTrapEscape } from '../../hooks/use-focus-trap.svelte.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { spacingStepToToken } from '../../internal/padding.stylex.js';
 	import type { SpacingToken } from '../../internal/container.stylex.js';
 	import { setDialogContext } from './dialog-context.svelte.js';

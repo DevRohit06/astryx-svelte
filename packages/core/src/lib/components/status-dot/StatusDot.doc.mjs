@@ -93,6 +93,12 @@ export default {
 			description: 'Tooltip text shown on hover to explain the status meaning.'
 		},
 		{
+			name: 'icon',
+			type: 'Snippet',
+			description:
+				"Optional icon rendered centered inside the dot, painted in currentColor (the variant's ink). Gives the status a non-color mark, so use a different icon per status. Booleans and empty strings are ignored, so `cond && <Icon />` is safe. Same contract as AvatarStatusDot."
+		},
+		{
 			name: 'xstyle',
 			type: 'StyleArg',
 			description:

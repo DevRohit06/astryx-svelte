@@ -25,7 +25,7 @@ export default {
 		targets: [
 			{
 				className: 'astryx-tree-list',
-				visualProps: ['density']
+				visualProps: ['density', 'variant']
 			},
 			{
 				className: 'astryx-tree-list-item',

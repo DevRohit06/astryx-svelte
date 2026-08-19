@@ -37,16 +37,21 @@ export { useDevWarning } from './use-dev-warning.svelte.js';
 
 export { useEntryAnimation, type EntryAnimationPreset } from './use-entry-animation.js';
 
-// `hasActiveFocusTrapEscape` and `isImeKeyEvent` joined upstream's barrel at
-// 0.4.2 (#5023): they coordinate nested traps and skip IME composition keys, so
-// an overlay outside this package needs them too.
+// `hasActiveFocusTrapEscape` joined upstream's barrel at 0.4.2 (#5023): it
+// coordinates nested traps, so an overlay outside this package needs it too.
 export {
 	hasActiveFocusTrapEscape,
-	isImeKeyEvent,
 	useFocusTrap,
 	type UseFocusTrapOptions,
 	type UseFocusTrapReturn
 } from './use-focus-trap.svelte.js';
+
+/**
+ * @deprecated Import from `@astryx-svelte/core/utils` instead — this is a pure
+ * predicate, not a hook. Re-exported here for one release so consumers can move;
+ * will be removed in an upcoming major.
+ */
+export { isImeKeyEvent } from '../utils/ime.js';
 
 export {
 	useGridFocus,

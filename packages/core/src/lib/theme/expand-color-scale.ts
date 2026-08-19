@@ -46,6 +46,9 @@ import { hctToHex, hexToHct, hexWithAlpha, tonalPalette } from './hct.js';
  * // Minimal — just a seed color
  * { accent: '#0064E0' }
  *
+ * // Per-scheme accents — light palette from the first seed, dark from the second
+ * { accent: ['#0064E0', '#48CAE4'] }
+ *
  * // With customization
  * { accent: '#B7410E', neutralStyle: 'warm', contrast: 'high' }
  *
@@ -55,14 +58,18 @@ import { hctToHex, hexToHct, hexWithAlpha, tonalPalette } from './hct.js';
  */
 export interface ColorScaleConfig {
 	/**
-	 * Seed accent color as hex (#RRGGBB). Everything derives from this.
+	 * Seed accent colour. Everything derives from this.
+	 *
+	 * Either a single hex (#RRGGBB) used for both colour schemes, or a
+	 * `[light, dark]` hex tuple: the light scheme's palettes derive from the
+	 * light seed and the dark scheme's palettes from the dark seed.
 	 *
 	 * Optional. When omitted, the neutral palettes are seeded from the default
 	 * accent's hue and the accent tokens (`--color-accent`,
 	 * `--color-accent-muted`, `--color-on-accent`) are not generated — they fall
 	 * through to the token defaults.
 	 */
-	accent?: string;
+	accent?: string | [light: string, dark: string];
 
 	/**
 	 * Neutral tone warmth. Controls how much of the seed's hue bleeds into
@@ -169,16 +176,27 @@ export function ensureContrastTone(
 export function expandColorScale(config: ColorScaleConfig): ColorScaleTokens {
 	const { accent, neutralStyle = 'cool', contrast = 'standard' } = config;
 
-	const seed = hexToHct(accent ?? DEFAULT_ACCENT_SEED);
-	const seedHue = seed.hue;
+	// Normalise to per-scheme seeds. A string accent (or an absent one) uses the
+	// same seed for both halves, which keeps single-seed output identical to the
+	// pre-tuple implementation.
+	const [lightAccent, darkAccent] = Array.isArray(accent) ? accent : [accent, accent];
 
-	const primaryChroma = Math.max(seed.chroma, 48);
+	const lightSeed = hexToHct(lightAccent ?? DEFAULT_ACCENT_SEED);
+	const sameSeed = darkAccent === lightAccent;
+	const darkSeed = sameSeed ? lightSeed : hexToHct(darkAccent ?? DEFAULT_ACCENT_SEED);
+
 	const neutralChroma = NEUTRAL_CHROMA[neutralStyle] ?? 5;
 	const neutralVariantChroma = NEUTRAL_VARIANT_CHROMA[neutralStyle] ?? 8;
 
-	const P = tonalPalette(seedHue, primaryChroma);
-	const N = tonalPalette(seedHue, neutralChroma);
-	const NV = tonalPalette(seedHue, neutralVariantChroma);
+	// Palette naming: *L palettes feed the light (first) half of each `ld()` pair
+	// below, *D palettes the dark (second) half. With a single seed the D palettes
+	// alias the L ones.
+	const PL = tonalPalette(lightSeed.hue, Math.max(lightSeed.chroma, 48));
+	const NL = tonalPalette(lightSeed.hue, neutralChroma);
+	const NVL = tonalPalette(lightSeed.hue, neutralVariantChroma);
+	const PD = sameSeed ? PL : tonalPalette(darkSeed.hue, Math.max(darkSeed.chroma, 48));
+	const ND = sameSeed ? NL : tonalPalette(darkSeed.hue, neutralChroma);
+	const NVD = sameSeed ? NVL : tonalPalette(darkSeed.hue, neutralVariantChroma);
 
 	const isHigh = contrast === 'high';
 
@@ -204,19 +222,19 @@ export function expandColorScale(config: ColorScaleConfig): ColorScaleTokens {
 	const borderEmphasizedStartDark = isHigh ? 50 : 30;
 	const borderEmphasized = ld(
 		ensureContrastTone(
-			seedHue,
+			lightSeed.hue,
 			neutralVariantChroma,
 			borderEmphasizedStartLight,
 			-1,
-			N[99],
+			NL[99],
 			NON_TEXT_MIN_CONTRAST
 		),
 		ensureContrastTone(
-			seedHue,
+			darkSeed.hue,
 			neutralVariantChroma,
 			borderEmphasizedStartDark,
 			1,
-			N[10],
+			ND[10],
 			NON_TEXT_MIN_CONTRAST
 		)
 	);
@@ -229,56 +247,56 @@ export function expandColorScale(config: ColorScaleConfig): ColorScaleTokens {
 		// seed above, so a supplied-but-malformed accent keeps its old behavior.
 		...(accent != null
 			? {
-					'--color-accent': ld(P[40], P[80]),
+					'--color-accent': ld(PL[40], PD[80]),
 					// Derived accent tokens reference `--color-accent` instead of
 					// baking its resolved hex, so a scoped override of the base token
 					// re-accents the whole subtree at runtime. `--color-on-accent`
 					// stays baked: it is a contrast computation against the accent,
 					// which CSS cannot express.
 					'--color-accent-muted': ld(accentWithAlpha(0.2), accentWithAlpha(0.25)),
-					'--color-on-accent': ld(P[100], P[20])
+					'--color-on-accent': ld(PL[100], PD[20])
 				}
 			: null),
-		'--color-neutral': ld(hexWithAlpha(N[10], 0.1), hexWithAlpha(N[90], 0.2)),
-		'--color-background-surface': ld(N[99], N[10]),
-		'--color-background-body': ld(N[95], N[5]),
-		'--color-overlay': ld(hexWithAlpha(N[10], 0.4), hexWithAlpha(N[10], 0.6)),
-		'--color-overlay-hover': ld(hexWithAlpha(N[10], 0.05), hexWithAlpha(N[100], 0.05)),
-		'--color-overlay-pressed': ld(hexWithAlpha(N[10], 0.1), hexWithAlpha(N[100], 0.1)),
-		'--color-background-muted': ld(hexWithAlpha(N[10], 0.05), hexWithAlpha(N[10], 0.5)),
+		'--color-neutral': ld(hexWithAlpha(NL[10], 0.1), hexWithAlpha(ND[90], 0.2)),
+		'--color-background-surface': ld(NL[99], ND[10]),
+		'--color-background-body': ld(NL[95], ND[5]),
+		'--color-overlay': ld(hexWithAlpha(NL[10], 0.4), hexWithAlpha(ND[10], 0.6)),
+		'--color-overlay-hover': ld(hexWithAlpha(NL[10], 0.05), hexWithAlpha(ND[100], 0.05)),
+		'--color-overlay-pressed': ld(hexWithAlpha(NL[10], 0.1), hexWithAlpha(ND[100], 0.1)),
+		'--color-background-muted': ld(hexWithAlpha(NL[10], 0.05), hexWithAlpha(ND[10], 0.5)),
 
 		// Text
-		'--color-text-primary': ld(N[textPrimaryLightTone], N[textPrimaryDarkTone]),
-		'--color-text-secondary': ld(NV[textSecondaryLightTone], NV[textSecondaryDarkTone]),
-		'--color-text-disabled': ld(NV[60], NV[40]),
+		'--color-text-primary': ld(NL[textPrimaryLightTone], ND[textPrimaryDarkTone]),
+		'--color-text-secondary': ld(NVL[textSecondaryLightTone], NVD[textSecondaryDarkTone]),
+		'--color-text-disabled': ld(NVL[60], NVD[40]),
 		'--color-text-accent': 'var(--color-accent)',
 
 		// Icon
 		'--color-icon-accent': 'var(--color-accent)',
-		'--color-icon-primary': ld(N[textPrimaryLightTone], N[textPrimaryDarkTone]),
-		'--color-icon-secondary': ld(NV[textSecondaryLightTone], NV[textSecondaryDarkTone]),
-		'--color-icon-disabled': ld(NV[60], NV[40]),
+		'--color-icon-primary': ld(NL[textPrimaryLightTone], ND[textPrimaryDarkTone]),
+		'--color-icon-secondary': ld(NVL[textSecondaryLightTone], NVD[textSecondaryDarkTone]),
+		'--color-icon-disabled': ld(NVL[60], NVD[40]),
 
 		// Surface variants
-		'--color-background-card': ld(N[99], N[10]),
-		'--color-background-popover': ld(N[99], N[20]),
-		'--color-background-inverted': ld(N[10], N[99]),
+		'--color-background-card': ld(NL[99], ND[10]),
+		'--color-background-popover': ld(NL[99], ND[20]),
+		'--color-background-inverted': ld(NL[10], ND[99]),
 
 		// Border
 		// Decorative hairline — not a WCAG 1.4.11 boundary. High contrast
 		// doubles the alpha so structural boundaries stay perceivable.
 		'--color-border': ld(
-			hexWithAlpha(N[10], borderSubtleAlpha),
-			hexWithAlpha(N[95], borderSubtleAlpha)
+			hexWithAlpha(NL[10], borderSubtleAlpha),
+			hexWithAlpha(ND[95], borderSubtleAlpha)
 		),
 		'--color-border-emphasized': borderEmphasized,
 
 		// Effects
-		'--color-skeleton': ld(NV[70], NV[30]),
+		'--color-skeleton': ld(NVL[70], NVD[30]),
 		// Channel-on-body surface (ProgressBar/Slider tracks, Switch off-state).
 		// Defaults to the same NV[70]/NV[30] ramp stop as `--color-skeleton`.
-		'--color-track': ld(NV[70], NV[30]),
-		'--color-shadow': ld(hexWithAlpha(N[0], 0.1), hexWithAlpha(N[0], 0.3)),
+		'--color-track': ld(NVL[70], NVD[30]),
+		'--color-shadow': ld(hexWithAlpha(NL[0], 0.1), hexWithAlpha(ND[0], 0.3)),
 		'--color-tint-hover': ld('black', 'white')
 	};
 }

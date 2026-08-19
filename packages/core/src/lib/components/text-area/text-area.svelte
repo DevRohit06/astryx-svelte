@@ -137,9 +137,12 @@
 		 */
 		oninput?: FormEventHandler<HTMLTextAreaElement>;
 		/**
-		 * Character limit for the counter. Deliberately **not** emitted as the
-		 * native `maxlength` attribute — the field accepts over-limit text and
+		 * Character limit for the counter, counted as user-perceived characters —
+		 * an emoji or flag sequence counts as one. Deliberately **not** emitted as
+		 * the native `maxlength` attribute — the field accepts over-limit text and
 		 * reports it, rather than silently truncating what was typed or pasted.
+		 * Validate with `characterCount` (exported from this package) rather than
+		 * `value.length`, so enforcement matches the displayed count.
 		 */
 		maxLength?: number;
 		/**
@@ -174,6 +177,7 @@
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
+	import { characterCount } from '../../utils/characters.js';
 	import {
 		COUNTER_WARNING_THRESHOLD,
 		textAreaAttrs,
@@ -324,7 +328,14 @@
 			.join(' ') || undefined
 	);
 
-	const isOverLimit = $derived(maxLength != null && optimistic.current.length > maxLength);
+	// Counter semantics count user-perceived characters, so an emoji or flag
+	// sequence counts as one character, not its code units. Only measured when a
+	// counter exists — segmentation is O(value length), and `$derived` caches it
+	// so a re-render that keeps the same value skips it entirely, which is what
+	// upstream's `useMemo` buys.
+	const valueLength = $derived(maxLength != null ? characterCount(optimistic.current) : 0);
+
+	const isOverLimit = $derived(maxLength != null && valueLength > maxLength);
 
 	/**
 	 * Announce the character-count status through the shared live region, but
@@ -370,7 +381,11 @@
 			return;
 		}
 		const newValue = (e.target as HTMLTextAreaElement).value;
-		announceCounter(newValue.length);
+		// Guarded here, not just inside `announceCounter`, so textareas without a
+		// `maxLength` never pay for segmenting the whole value on each keystroke.
+		if (maxLength != null) {
+			announceCounter(characterCount(newValue));
+		}
 		onChange?.(newValue, e);
 		oninput?.(e as Parameters<NonNullable<typeof oninput>>[0]);
 		if (changeAction && !e.defaultPrevented) {
@@ -501,7 +516,7 @@
 					     live-region announcement carry the meaning. -->
 					<Icon icon="warning" size="sm" />
 				{/if}
-				{optimistic.current.length}/{maxLength}
+				{valueLength}/{maxLength}
 			</div>
 		{/if}
 	</div>

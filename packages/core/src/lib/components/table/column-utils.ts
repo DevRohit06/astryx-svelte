@@ -1,4 +1,5 @@
 import type { TableColumn, ProportionalWidth, PixelWidth } from './table-types.js';
+import { firstCharacter } from '../../utils/characters.js';
 
 /**
  * Ported from Astryx's `Table/columnUtils.ts`.
@@ -160,7 +161,8 @@ export function capitalize(str: string): string {
 	if (str.length === 0) {
 		return str;
 	}
-	return str.charAt(0).toUpperCase() + str.slice(1);
+	const first = firstCharacter(str);
+	return first.toUpperCase() + str.slice(first.length);
 }
 
 /**
