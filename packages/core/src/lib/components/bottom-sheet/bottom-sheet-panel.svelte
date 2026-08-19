@@ -215,35 +215,32 @@
 	const motion = $derived(motionForState(panelState));
 
 	/**
-	 * Which motion the effect below has armed. It exists to keep upstream's
-	 * ordering, and both halves of that are Svelte-specific.
+	 * Both effects below are upstream's `useLayoutEffect`s, and both are `$effect`
+	 * here rather than `$effect.pre` — the mapping this port uses everywhere else.
 	 *
-	 * Upstream reads `elementRef.current` from a layout effect, which React has
-	 * already populated, and records the started motion from a passive effect
-	 * that runs after it. Here `bind:this` is an effect of its own, created after
-	 * the script's, so the arming effect's first pass has no element —
-	 * `waitForTransition(null)` completes immediately by contract, which would
-	 * report an entrance finished on the frame it started. Waiting for the
-	 * element fixes that but inverts the order: the element is assigned before
-	 * the *post* effect's first run, so the start effect would run first and the
-	 * arming re-run would then clear the motion it had just recorded.
+	 * The usual counterpart holds for a layout effect that *writes* before paint.
+	 * These two **read** the element they act on: `waitForTransition` measures its
+	 * computed transition and attaches a listener to it. `$effect.pre` runs before
+	 * the DOM update, so it would read the style of the render that is being
+	 * replaced — during a drag that style carries the hook's inline
+	 * `transition: none`, and the settle would resolve on the spot instead of
+	 * waiting for the snap it was supposed to follow. It would also run before
+	 * `bind:this` had assigned the element at all, and `waitForTransition(null)`
+	 * completes immediately by contract, reporting every entrance finished on the
+	 * frame it started.
 	 *
-	 * So the start effect keys off this instead of off `motion` directly. A pre
-	 * effect always flushes before a post effect in the same pass, so arming
-	 * still lands first — on mount as well as on every later motion change.
+	 * React's `useLayoutEffect` runs after the DOM is committed and before paint,
+	 * which is where Svelte's `$effect` runs. Declaration order then keeps
+	 * upstream's arming-before-recording sequence, since both are post effects.
 	 */
-	let armedMotion = $state<BottomSheetPanelMotion | null>(null);
-
-	$effect.pre(() => {
+	$effect(() => {
 		const current = motion;
 		const sheet = element;
 		if (current == null || sheet == null) {
-			armedMotion = null;
 			return;
 		}
 		startedMotion = null;
 		pendingMotionComplete = null;
-		armedMotion = current;
 		if (current === 'entering' && reactivatedEntrance) {
 			pendingMotionComplete = current;
 			return;
@@ -261,7 +258,7 @@
 	// `waitForTransition` — the same helper the motion states use — resolves that
 	// even when no `transitionend` is coming: inline or computed `transition:
 	// none`, a zero duration, and a timer backstop otherwise.
-	$effect.pre(() => {
+	$effect(() => {
 		const sheet = element;
 		if (gestures.settlingLayoutOffset == null || sheet == null) {
 			return;
@@ -270,8 +267,8 @@
 	});
 
 	$effect(() => {
-		const current = armedMotion;
-		if (current == null) {
+		const current = motion;
+		if (current == null || element == null) {
 			return;
 		}
 		onMotionStart?.(current);
@@ -299,6 +296,30 @@
 				: (height as string)
 	);
 
+	/**
+	 * The hook hands its style over as a declaration *string*, where upstream
+	 * hands over an object and the panel rebuilds it with `{...contentProps.style,
+	 * transform: gestureTransform}`. That spread does two things a concatenation
+	 * cannot: it replaces the hook's transform when the panel has one of its own,
+	 * and it **removes** the transform when the panel has none — which is exactly
+	 * the state a sheet settled on a detent is in, its travel having moved from
+	 * the transform into the layout height. Appending would leave the hook's
+	 * translate as the last writer and pin the settled sheet a detent too low.
+	 *
+	 * So the transform is split out of the string here, and the two halves are
+	 * reassembled below in the panel's own order.
+	 */
+	const hookTransform = $derived(
+		/transform:\s*([^;]+)/.exec(gestures.contentProps.style)?.[1]?.trim()
+	);
+	const hookStyleWithoutTransform = $derived(
+		gestures.contentProps.style
+			.split(';')
+			.map((declaration) => declaration.trim())
+			.filter((declaration) => declaration !== '' && !declaration.startsWith('transform:'))
+			.join('; ')
+	);
+
 	// The sheet's travel is split across two properties: `layoutOffset` is the
 	// part the scrolling area gives up as layout height, and the remainder is a
 	// compositor transform. Live gestures and snaps only ever move the transform —
@@ -308,8 +329,10 @@
 	//   - a peek settles with layout 0, so it slides rather than reflowing
 	const geometry = $derived.by(() => {
 		if (gestures.sheetHeight <= 0) {
+			// Unmeasured: the hook's own transform stands, as upstream's
+			// `gestureTransform = contentProps.style.transform` seed does.
 			return {
-				transform: undefined as string | undefined,
+				transform: hookTransform,
 				height: undefined as string | undefined
 			};
 		}
@@ -360,7 +383,7 @@
 	const stateStyle = $derived(
 		isInteractive
 			? [
-					gestures.contentProps.style,
+					hookStyleWithoutTransform,
 					geometry.transform && `transform: ${geometry.transform}`,
 					geometry.height && `height: ${geometry.height}`
 				]
