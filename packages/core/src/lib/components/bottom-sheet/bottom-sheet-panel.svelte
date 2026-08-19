@@ -44,7 +44,6 @@
 		onElementChange?: (element: HTMLDivElement | null) => void;
 		onMotionStart?: (motion: BottomSheetPanelMotion) => void;
 		onMotionComplete?: (motion: BottomSheetPanelMotion) => void;
-		tabindex?: number;
 		xstyle?: StyleArg;
 	}
 
@@ -215,18 +214,41 @@
 
 	const motion = $derived(motionForState(panelState));
 
+	/**
+	 * Which motion the effect below has armed. It exists to keep upstream's
+	 * ordering, and both halves of that are Svelte-specific.
+	 *
+	 * Upstream reads `elementRef.current` from a layout effect, which React has
+	 * already populated, and records the started motion from a passive effect
+	 * that runs after it. Here `bind:this` is an effect of its own, created after
+	 * the script's, so the arming effect's first pass has no element —
+	 * `waitForTransition(null)` completes immediately by contract, which would
+	 * report an entrance finished on the frame it started. Waiting for the
+	 * element fixes that but inverts the order: the element is assigned before
+	 * the *post* effect's first run, so the start effect would run first and the
+	 * arming re-run would then clear the motion it had just recorded.
+	 *
+	 * So the start effect keys off this instead of off `motion` directly. A pre
+	 * effect always flushes before a post effect in the same pass, so arming
+	 * still lands first — on mount as well as on every later motion change.
+	 */
+	let armedMotion = $state<BottomSheetPanelMotion | null>(null);
+
 	$effect.pre(() => {
 		const current = motion;
-		if (current == null) {
+		const sheet = element;
+		if (current == null || sheet == null) {
+			armedMotion = null;
 			return;
 		}
 		startedMotion = null;
 		pendingMotionComplete = null;
+		armedMotion = current;
 		if (current === 'entering' && reactivatedEntrance) {
 			pendingMotionComplete = current;
 			return;
 		}
-		return waitForTransition(element, current === 'fading' ? 'opacity' : 'transform', () => {
+		return waitForTransition(sheet, current === 'fading' ? 'opacity' : 'transform', () => {
 			if (startedMotion === current) {
 				onMotionComplete?.(current);
 			} else {
@@ -240,14 +262,15 @@
 	// even when no `transitionend` is coming: inline or computed `transition:
 	// none`, a zero duration, and a timer backstop otherwise.
 	$effect.pre(() => {
-		if (gestures.settlingLayoutOffset == null) {
+		const sheet = element;
+		if (gestures.settlingLayoutOffset == null || sheet == null) {
 			return;
 		}
-		return waitForTransition(element, 'transform', gestures.completeScrollAreaSettle);
+		return waitForTransition(sheet, 'transform', gestures.completeScrollAreaSettle);
 	});
 
 	$effect(() => {
-		const current = motion;
+		const current = armedMotion;
 		if (current == null) {
 			return;
 		}

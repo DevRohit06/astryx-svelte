@@ -37,6 +37,8 @@ export { default as AvatarGroupOverflow } from './components/avatar-group/avatar
 export { default as Badge } from './components/badge/badge.svelte';
 export { default as Banner } from './components/banner/banner.svelte';
 export { default as Blockquote } from './components/blockquote/blockquote.svelte';
+export { default as BottomSheet } from './components/bottom-sheet/bottom-sheet.svelte';
+export { default as BottomSheetSwitcher } from './components/bottom-sheet/bottom-sheet-switcher.svelte';
 export { default as BreadcrumbItem } from './components/breadcrumbs/breadcrumb-item.svelte';
 // The breadcrumb `menu` prop reuses the DropdownMenu item API, so the item
 // components are re-exported under `Breadcrumb*` aliases for family coherence,
@@ -361,6 +363,15 @@ export type {
 	BannerStatusMap
 } from './components/banner/banner.stylex.js';
 export type { BlockquoteProps } from './components/blockquote/blockquote.svelte';
+// `BottomSheetHeight` and `BottomSheetSnapPoint` are declared beside the panel
+// and the snap geometry, and re-exported from `bottom-sheet.svelte`, because
+// upstream's `BottomSheet/index.ts` publishes all three from `BottomSheet`.
+export type {
+	BottomSheetProps,
+	BottomSheetHeight,
+	BottomSheetSnapPoint
+} from './components/bottom-sheet/bottom-sheet.svelte';
+export type { BottomSheetSwitcherProps } from './components/bottom-sheet/bottom-sheet-switcher.svelte';
 export type { BreadcrumbsProps } from './components/breadcrumbs/breadcrumbs.svelte';
 export type { BreadcrumbItemProps } from './components/breadcrumbs/breadcrumb-item.svelte';
 // The `Breadcrumb*` menu aliases, as upstream's `Breadcrumbs/index.ts` publishes

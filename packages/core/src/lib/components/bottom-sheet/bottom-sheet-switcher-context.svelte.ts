@@ -53,11 +53,26 @@ export interface BottomSheetSwitcherContextValue {
 	onSheetScrimOpacityChange: (sheetId: string, opacity: number) => void;
 }
 
-export const BottomSheetSwitcherContext = new Context<() => BottomSheetSwitcherContextValue>(
+/**
+ * The getter may return `null`, exactly as upstream's context type is
+ * `BottomSheetSwitcherContextValue | null`: a switcher item resets it for its
+ * own content, so a `BottomSheet` nested inside one is standalone rather than
+ * a second item of the enclosing switcher.
+ *
+ * That reset works because **Svelte resolves context at the render site, not
+ * the declaration site** — verified, not assumed. A `BottomSheet` written
+ * inside a consumer's `children` snippet is created while the snippet renders
+ * *inside* the item's subtree, so it reads the item's null and not the
+ * switcher's value, which is what upstream's `<BottomSheetSwitcherContext
+ * value={null}>` wrapper buys there.
+ */
+export const BottomSheetSwitcherContext = new Context<() => BottomSheetSwitcherContextValue | null>(
 	'astryx.bottomSheetSwitcher'
 );
 
-export function setBottomSheetSwitcherContext(get: () => BottomSheetSwitcherContextValue): void {
+export function setBottomSheetSwitcherContext(
+	get: () => BottomSheetSwitcherContextValue | null
+): void {
 	BottomSheetSwitcherContext.set(get);
 }
 

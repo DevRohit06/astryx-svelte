@@ -1,5 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
-import { sx, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { colorVars, durationVars, easeVars } from '../../styles/tokens.stylex.js';
 
 /**
@@ -67,17 +67,29 @@ const styles = stylex.create({
 	}
 });
 
-/** The native `<dialog>` shell. */
+/**
+ * The native `<dialog>` shell. `hasScrim` is what makes the dialog modal, so it
+ * selects the scrim and the non-modal layering between them.
+ *
+ * Shared with `BottomSheetSwitcher`, which declares the same five style keys in
+ * its own file upstream — identical properties, identical token references, and
+ * so identical atomic classes. One module here rather than a byte-for-byte
+ * duplicate: the emitted CSS is the same either way, and the oracles check the
+ * output, not the file layout. `xstyle` is threaded because the switcher applies
+ * a consumer override to the dialog itself, where a standalone sheet applies it
+ * to the panel.
+ */
 export function bottomSheetDialogAttrs(
-	isOpen: boolean,
-	isModal: boolean,
-	hasScrim: boolean
+	isPresented: boolean,
+	hasScrim: boolean,
+	xstyle?: StyleArg
 ): SvelteStyleAttrs {
 	return sx(
 		styles.dialog,
-		isOpen && styles.dialogOpen,
-		!isModal && styles.dialogNonModal,
-		hasScrim && styles.scrim
+		isPresented && styles.dialogOpen,
+		hasScrim && styles.scrim,
+		!hasScrim && styles.dialogNonModal,
+		xstyle
 	);
 }
 
