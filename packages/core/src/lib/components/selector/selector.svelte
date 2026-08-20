@@ -572,7 +572,11 @@
 			return;
 		}
 		const count = filterOptionsByQuery(selectableItems, nextQuery).length;
-		announce(count === 0 ? 'No results found' : `${count} result${count === 1 ? '' : 's'}`);
+		announce(
+			count === 0
+				? t('@astryx.selector.emptySearchResults')
+				: t('@astryx.selector.resultCount', { count })
+		);
 	}
 
 	// Calculate offset to position selected item over trigger. Explicit

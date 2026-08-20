@@ -54,6 +54,30 @@ it; the candidate window's arrows were stepping the time instead of walking cand
 test; they call the shared predicate now, so there is one definition of "this keystroke belongs to
 the IME" rather than four.
 
+### Every locale upstream ships, and announcements that use them
+
+This port vendored three of upstream's locale catalogs — `en`, `fr-FR` and the `pseudo` build. The
+`exports` map has always declared `"./locales/*.json"`, so
+`@astryx-svelte/core/locales/de-DE.json` was a specifier a consumer could legitimately write from
+upstream's documentation and it threw `ERR_MODULE_NOT_FOUND`. All **30** catalogs are vendored now,
+byte-identical to upstream's, and `en`/`fr-FR` are refreshed — they were stale, not modified, and
+were missing keys added after `0.4.1`.
+
+Vendoring them exposed the reason the newest keys had no reader. Upstream moved its live-region
+announcements onto the catalog; this port still built them in English by hand, so `MultiSelector`,
+`Selector`, `Typeahead`, `Tokenizer` and `Lightbox` announced in English whatever locale was
+installed. Twelve keys are wired now — selection counts, empty and non-empty search results, token
+added/removed, and lightbox position.
+
+**English output is unchanged**: every catalog default renders the string these components already
+produced, down to the plural of "result". What changes is that every other locale now reaches
+them.
+
+One thing this deliberately does not fix: upstream's own translations lag its source strings —
+`de-DE` carries 241 of the 297 keys `en` has — so a non-English consumer gets translated text where
+a translation exists and English where it does not. The catalogs are copied verbatim; inventing the
+remainder is not a port's job.
+
 ### Forms can declare a default optionality
 
 `FormLayout` takes `defaultOptionality`, so a form states once whether its fields are optional or

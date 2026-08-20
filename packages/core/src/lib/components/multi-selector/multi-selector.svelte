@@ -479,11 +479,11 @@
 		const selectableSet = new Set(items.map((item) => item.value));
 		const selectedCount = nextValue.filter((v) => selectableSet.has(v)).length;
 		if (selectedCount === 0) {
-			announce('Selection cleared');
+			announce(t('@astryx.multiSelector.selectionCleared'));
 		} else if (total > 0 && selectedCount === total) {
-			announce('All selected');
+			announce(t('@astryx.multiSelector.allSelected'));
 		} else {
-			announce(`${selectedCount} of ${total} selected`);
+			announce(t('@astryx.multiSelector.selectionCount', { count: selectedCount, total }));
 		}
 	}
 
@@ -505,7 +505,11 @@
 			return;
 		}
 		const count = filterOptionsByQuery(selectableItems, nextQuery).length;
-		announce(count === 0 ? 'No results found' : `${count} result${count === 1 ? '' : 's'}`);
+		announce(
+			count === 0
+				? t('@astryx.multiSelector.emptySearchResults')
+				: t('@astryx.multiSelector.resultCount', { count })
+		);
 	}
 
 	// Single source of truth for item order. Both the hook (keyboard navigation)

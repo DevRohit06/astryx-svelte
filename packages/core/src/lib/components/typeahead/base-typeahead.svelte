@@ -297,7 +297,7 @@
 				announce(
 					shown.length === 0
 						? emptySearchResultsText
-						: `${shown.length} ${shown.length === 1 ? 'result' : 'results'}`
+						: t('@astryx.typeahead.resultCount', { count: shown.length })
 				);
 			}
 		} catch {
