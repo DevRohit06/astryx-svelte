@@ -73,9 +73,12 @@ and never tagged, which is why the `0.4.5` changelog entry opens by saying so.
 - [ ] Upstream publishes its CSS reset at its own subpath (`@astryxdesign/core/reset.css`,
       opt-in); ours is folded into the always-loaded `base.css` because the components genuinely
       require it. Revisit if the published surface should mirror upstream's split
-- [ ] The StyleX _compiler_ path (as opposed to the pre-built `dist/astryx.css`) still emits
-      `@layer priority1…9` rather than one named layer, because StyleX has no way to emit into a
-      named layer. Revisit only if that changes
+- [x] The StyleX _compiler_ path emits its priority buckets **under `astryx-base`**, which is
+      upstream's own arrangement. Their PostCSS plugin calls `processStylexRules(rules,
+    {useLayers: true})` and wraps the result in `@layer astryx-base { … }`; StyleX 0.19 added
+      `useLayers: {prefix}`, so `vite.ts` gets there directly. `base.css` used to name sixteen
+      buckets by hand — a workaround for passing `useLayers: true` without upstream's wrapper —
+      and now names four layers total
 - [ ] Upstream bug, not replicated: `astryx.css` bundles their ESLint test fixture
       (`Badge.test-violations.tsx` doesn't match their own `**/*.test.*` glob). Recorded as named
       skips in `compare-upstream-css.mjs`, which retire themselves when upstream fixes the glob
