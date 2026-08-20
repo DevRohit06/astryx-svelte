@@ -14,16 +14,16 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.4.5                                               |
-| Ledger entries            | 31                                                                       |
+| Ledger entries            | 32                                                                       |
 
 ## Test parity
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 256    | 6383           |
-| Ported here              | 217    | 5905           |
-| No counterpart by design | 3      | 32             |
-| **Unported**             | **36** | **446**        |
+| Ported here              | 250    | 6278           |
+| No counterpart by design | 5      | 69             |
+| **Unported**             | **1**  | **36**         |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -31,53 +31,29 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 
 <details><summary>Unported upstream suites</summary>
 
-| Suite                                         | Cases |
-| --------------------------------------------- | ----- |
-| `Grid/Grid.test.tsx`                          | 36    |
-| `theme/generateThemeRules.test.ts`            | 36    |
-| `FieldStatus/FieldStatus.test.tsx`            | 34    |
-| `Stack/Stack.test.tsx`                        | 30    |
-| `AspectRatio/AspectRatio.test.tsx`            | 26    |
-| `docPropLiterals.test.ts`                     | 21    |
-| `__tests__/babelPluginAddExtensions.test.ts`  | 20    |
-| `EmptyState/EmptyState.test.tsx`              | 20    |
-| `Indicator/Indicator.test.tsx`                | 20    |
-| `serverSafeComponents.test.ts`                | 17    |
-| `StatusDot/StatusDot.test.tsx`                | 17    |
-| `Kbd/Kbd.test.tsx`                            | 15    |
-| `HStack/HStack.test.tsx`                      | 12    |
-| `VStack/VStack.test.tsx`                      | 12    |
-| `Stack/StackItem.test.tsx`                    | 11    |
-| `IconButton/IconButton.test.tsx`              | 10    |
-| `utils/themeProps.test.ts`                    | 10    |
-| `Badge/Badge.test.tsx`                        | 8     |
-| `Blockquote/Blockquote.test.tsx`              | 8     |
-| `hooks/useClipboard.test.tsx`                 | 8     |
-| `VisuallyHidden/VisuallyHidden.test.tsx`      | 7     |
-| `Code/Code.test.tsx`                          | 6     |
-| `Indicator/indicatorRegistry.test.tsx`        | 6     |
-| `Layout/__tests__/contentWidth.test.tsx`      | 6     |
-| `utils/sharedResizeObserver.test.ts`          | 6     |
-| `Card/Card.test.tsx`                          | 5     |
-| `Chat/ChatComposer.test.tsx`                  | 5     |
-| `i18n/__tests__/e2e-pagination.test.tsx`      | 5     |
-| `i18n/__tests__/e2e-powersearch.test.tsx`     | 5     |
-| `naming.test.ts`                              | 5     |
-| `docPropReferences.test.ts`                   | 4     |
-| `Layout/__tests__/childrenAsContent.test.tsx` | 4     |
-| `Skeleton/Skeleton.test.tsx`                  | 4     |
-| `Chat/ChatComposerDrawer.test.tsx`            | 3     |
-| `MobileNav/MobileNavToggle.test.tsx`          | 3     |
-| `__tests__/inputWidthContract.test.tsx`       | 1     |
+| Suite                              | Cases |
+| ---------------------------------- | ----- |
+| `theme/generateThemeRules.test.ts` | 36    |
 
 </details>
 
+## Assertion strength
+
+|                                                               | Sites | Files |
+| ------------------------------------------------------------- | ----- | ----- |
+| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 861   | 74    |
+
+Testing Library matches an accessible name as a whole string; Playwright matches a string
+`name` as a case-insensitive **substring**. Every site above is therefore a ported assertion
+weaker than the one it ports, admitting names upstream’s would reject. A regex `name` is
+substring-matching on both sides by design and is not counted.
+
 ## Debts
 
-| Kind                  | Count  |
-| --------------------- | ------ |
-| api-divergence        | 29     |
-| deliberate-divergence | 44     |
-| unported              | 13     |
-| upstream-lag          | 12     |
-| **total**             | **98** |
+| Kind                  | Count   |
+| --------------------- | ------- |
+| api-divergence        | 32      |
+| deliberate-divergence | 44      |
+| unported              | 14      |
+| upstream-lag          | 12      |
+| **total**             | **102** |

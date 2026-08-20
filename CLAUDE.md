@@ -183,6 +183,15 @@ the file with its reason. **One file ports one upstream suite** — `theme.test.
 of six at once, so no count in it could be stated against any of them and the contract applied to
 not a single case; 22 already-ported cases read as unported until they were split out (batch 030).
 
+**`getByRole(role, {name: 'X'})` is not the same assertion here as upstream.** Testing Library
+matches an accessible name as a **whole string**; the browser project's locators are Playwright's,
+where a string `name` is a case-insensitive **substring**. A case ported verbatim is therefore
+_weaker_ than the one it ports, and passes where upstream's would fail — `VisuallyHidden`'s
+icon-only-control case still passed with the icon's `aria-hidden` removed and the name reading
+`'Trash Delete'`, until `exact: true` was added. Pass `exact: true` with every string `name`. A
+regex `name` is substring-matching on both sides by construction and needs nothing. `status.md`
+counts the sites that still lack it.
+
 **The count is a contract against upstream's file at the _current pin_, so a version bump
 invalidates every header that states one** — re-derive them in the same batch, and diff the test
 delta as scope rather than as follow-up (`track-upstream` step 5b). Four headers were false at

@@ -111,3 +111,18 @@ or **missing** (should exist and does not).
 
 Then, for any case that failed or needed restating, a short paragraph. If a failure looks
 like a real bug in the port, say so explicitly and stop rather than working around it.
+
+## `exact: true` on every string `name`
+
+`getByRole(role, {name: 'X'})` means different things in the two runners. Testing Library matches
+the accessible name as a **whole string**. The client project's locators are Playwright's, where a
+string `name` is a case-insensitive **substring**. So a case ported verbatim asserts less than
+upstream's does, and will pass in exactly the situations upstream's is there to catch.
+
+The demonstration, from `VisuallyHidden`: with the icon span's `aria-hidden` removed the control's
+accessible name became `'Trash Delete'`, and `getByRole('button', {name: 'Delete'})` still matched.
+The case only bites with `exact: true`.
+
+So: **every string `name` gets `exact: true`.** A regex `name` is substring-matching on both sides
+by construction and needs nothing added. When a case then fails, do not relax it back — a name that
+differs from upstream's is a parity defect the loose matcher was hiding.

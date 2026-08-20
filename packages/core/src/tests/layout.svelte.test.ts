@@ -3,41 +3,41 @@ import { render } from 'vitest-browser-svelte';
 import { createAttachmentKey } from 'svelte/attachments';
 import Banner from '$lib/components/banner/banner.svelte';
 import Button from '$lib/components/button/button.svelte';
-import LayoutContent from '$lib/components/layout/layout-content.svelte';
-import LayoutFooter from '$lib/components/layout/layout-footer.svelte';
-import LayoutHeader from '$lib/components/layout/layout-header.svelte';
-import LayoutPanel from '$lib/components/layout/layout-panel.svelte';
 import { EDGE_COMP_ATTR } from '$lib/internal/edge-compensation.stylex.js';
-import DividerProvider from './fixtures/layout-divider-provider.svelte';
 import LayoutFixture from './fixtures/layout-fixture.svelte';
 import LayoutShell from './fixtures/layout-shell.svelte';
-import ResizablePanel from './fixtures/resizable-panel.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 import TabListFixture from './fixtures/tab-list-fixture.svelte';
 import ToolbarEdgeComp from './fixtures/toolbar-edge-comp-fixture.svelte';
 
 /**
- * `Layout` and its four slot components, with all four upstream suites ported —
- * `Layout.test.tsx`, `LayoutSlots.test.tsx` and the `__tests__/` pair for
- * children-as-content and `contentWidth`.
+ * `Layout` itself, covering `Layout.test.tsx` and
+ * `Layout/__tests__/edgeCompensation.test.tsx`.
+ *
+ * `Layout.test.tsx` declares 24 `it`s at v0.4.5 and all 24 are here;
+ * `__tests__/edgeCompensation.test.tsx` declares 12 and all 12 are here. Seven
+ * of the latter (`Tab`, `TabList`, `Toolbar`, `Banner`, and the two
+ * tooltip-marker cases) were parked when this file was written, on the grounds
+ * that those components did not exist yet; all of them now do, so the deferral
+ * is retired rather than restated.
  *
  * Two shapes recur. A slot is a **snippet**, so the cases that pass markup into
  * one go through a fixture — `layout-fixture` for bare `<div>`s, `layout-shell`
  * for the real slot components. And `ref` forwarding becomes the attachment a
  * consumer passes through the rest props, as in every batch since `Thumbnail`.
  *
- * `__tests__/edgeCompensation.test.tsx` is here in full — **all twelve of its
- * cases**. Seven of them (`Tab`, `TabList`, `Toolbar`, `Banner`, and the two
- * tooltip-marker cases) were parked when this file was written, on the grounds
- * that those components did not exist yet; all five now do, so the deferral is
- * retired rather than restated.
+ * **Three upstream suites are not this file's, and one file ports one suite:**
+ * - `Layout/__tests__/contentWidth.test.tsx` → `layout-content-width.svelte.test.ts`
+ * - `Layout/__tests__/childrenAsContent.test.tsx` →
+ *   `layout-children-as-content.svelte.test.ts`
+ * - `Layout/LayoutSlots.test.tsx` → `layout-slots.svelte.test.ts`
  *
- * Not ported, for a stated reason:
- * - **`Layout`'s `contentWidth` "applies max-width constraint to the middle
- *   row"** asserts only `middleRow.className` is truthy, which is true of every
- *   element StyleX touches. The case is restated to walk the same three parents
- *   and assert the *width* is actually on that row, which is what its title
- *   claims — the class oracle already proves the class itself is upstream's.
+ * All three moved out of here whole, so no case was lost in any of the splits.
+ * The four slot primitives' own describes — `LayoutHeader`, `LayoutFooter`,
+ * `LayoutContent`, `LayoutPanel` — went with the third and are not duplicated
+ * here; what is left of them in this file is the handful of `Layout.test.tsx`
+ * cases that drive a slot component *through* a `Layout`, which is what those
+ * cases are about.
  */
 
 const root = (screen: { container: HTMLElement }): HTMLElement =>
@@ -253,354 +253,6 @@ describe('Layout', () => {
 			const { outlineWidth, outlineStyle, outlineColor } = root(screen).style;
 			expect([outlineWidth, outlineStyle, outlineColor]).toEqual(['1px', 'solid', 'red']);
 		});
-	});
-});
-
-describe('Layout children-as-content', () => {
-	it('renders nested children in the content slot', async () => {
-		const screen = await render(LayoutShell, { props: { content: 'Body' } });
-		await expect.element(screen.getByTestId('body')).toBeInTheDocument();
-	});
-
-	it('renders bare children (no LayoutContent wrapper) too', async () => {
-		const screen = await render(LayoutFixture, { props: { child: 'Bare' } });
-		await expect.element(screen.getByText('Bare')).toBeInTheDocument();
-	});
-
-	it('lets an explicit content prop win over children', async () => {
-		const screen = await render(LayoutFixture, { props: { content: 'Slot', child: 'Child' } });
-		await expect.element(screen.getByText('Slot')).toBeInTheDocument();
-		expect(screen.container.textContent).not.toContain('Child');
-	});
-
-	it('still supports the canonical slot-only API', async () => {
-		const screen = await render(LayoutShell, { props: { content: 'Canonical' } });
-		expect(screen.getByTestId('body').element().textContent).toBe('Canonical');
-	});
-});
-
-describe('Layout contentWidth', () => {
-	it('applies the width constraint to the middle row', async () => {
-		const screen = await render(LayoutShell, { props: { contentWidth: 640, content: 'Body' } });
-		// body span → LayoutContent → the stack item → the middle row.
-		const middleRow = screen.getByTestId('body').element().parentElement!.parentElement!
-			.parentElement!;
-		expect(getComputedStyle(middleRow).maxWidth).toBe('640px');
-	});
-
-	it('does not crash when contentWidth is not set', async () => {
-		const screen = await render(LayoutShell, { props: { content: 'Body' } });
-		await expect.element(screen.getByTestId('body')).toBeInTheDocument();
-	});
-
-	describe('LayoutHeader', () => {
-		it('always renders the contentWidth inner wrapper', async () => {
-			const screen = await render(LayoutShell, { props: { header: 'Header', content: 'Body' } });
-			const innerWrapper = screen.getByTestId('header-child').element().parentElement!;
-			const headerDiv = innerWrapper.parentElement!;
-			expect(headerDiv.className).toContain('astryx-layout-header');
-			expect(innerWrapper).not.toBe(headerDiv);
-		});
-
-		it('keeps the divider on the outer element', async () => {
-			const screen = await render(LayoutShell, {
-				props: { contentWidth: 640, defaultHasDividers: true, header: 'Header', content: 'Body' }
-			});
-			const innerWrapper = screen.getByTestId('header-child').element().parentElement!;
-			expect(innerWrapper.parentElement!).toHaveAttribute('data-divider');
-			expect(innerWrapper).not.toHaveAttribute('data-divider');
-		});
-	});
-
-	describe('LayoutFooter', () => {
-		it('always renders the contentWidth inner wrapper', async () => {
-			const screen = await render(LayoutShell, { props: { footer: 'Footer', content: 'Body' } });
-			const innerWrapper = screen.getByTestId('footer-child').element().parentElement!;
-			const footerDiv = innerWrapper.parentElement!;
-			expect(footerDiv.className).toContain('astryx-layout-footer');
-			expect(innerWrapper).not.toBe(footerDiv);
-		});
-
-		it('keeps the divider on the outer element', async () => {
-			const screen = await render(LayoutShell, {
-				props: { contentWidth: 640, defaultHasDividers: true, footer: 'Footer', content: 'Body' }
-			});
-			const innerWrapper = screen.getByTestId('footer-child').element().parentElement!;
-			expect(innerWrapper.parentElement!).toHaveAttribute('data-divider');
-			expect(innerWrapper).not.toHaveAttribute('data-divider');
-		});
-	});
-});
-
-describe('LayoutHeader', () => {
-	const slot = (text: string, rest: Record<string | symbol, unknown> = {}) => ({
-		props: { component: LayoutHeader, slot: 'children', text, rest }
-	});
-	const find = (screen: { container: HTMLElement }) =>
-		screen.container.querySelector('.astryx-layout-header') as HTMLElement;
-
-	it('renders its children', async () => {
-		const screen = await render(SlotProbe, slot('Page title'));
-		await expect.element(screen.getByText('Page title')).toBeInTheDocument();
-	});
-
-	it('carries the astryx-layout-header class', async () => {
-		const screen = await render(SlotProbe, slot('H'));
-		expect(find(screen)).not.toBeNull();
-	});
-
-	it('exposes a landmark role and accessible name', async () => {
-		const screen = await render(SlotProbe, slot('H', { role: 'banner', label: 'Site header' }));
-		await expect.element(screen.getByRole('banner', { name: 'Site header' })).toBeInTheDocument();
-	});
-
-	it('omits data-divider by default', async () => {
-		const screen = await render(SlotProbe, slot('H'));
-		expect(find(screen).hasAttribute('data-divider')).toBe(false);
-	});
-
-	it('reflects hasDivider as data-divider="true"', async () => {
-		const screen = await render(SlotProbe, slot('H', { hasDivider: true }));
-		expect(find(screen).getAttribute('data-divider')).toBe('true');
-	});
-
-	it('inherits the divider default from LayoutDividerContext', async () => {
-		const screen = await render(DividerProvider, {
-			props: { defaultHasDividers: true, component: LayoutHeader, text: 'H' }
-		});
-		expect(find(screen).getAttribute('data-divider')).toBe('true');
-	});
-
-	it('an explicit hasDivider={false} overrides an inherited true default', async () => {
-		const screen = await render(DividerProvider, {
-			props: {
-				defaultHasDividers: true,
-				component: LayoutHeader,
-				text: 'H',
-				rest: { hasDivider: false }
-			}
-		});
-		expect(find(screen).hasAttribute('data-divider')).toBe(false);
-	});
-
-	it('applies a numeric height to the element style', async () => {
-		const screen = await render(SlotProbe, slot('H', { height: 64 }));
-		expect(find(screen).getAttribute('style') ?? '').toContain('64px');
-	});
-
-	it('hands the outer element to an attachment passed through rest props', async () => {
-		const attached = vi.fn();
-		const screen = await render(SlotProbe, slot('H', { [createAttachmentKey()]: attached }));
-		expect(attached.mock.calls[0][0]).toBe(find(screen));
-	});
-
-	it('merges a caller class', async () => {
-		const screen = await render(SlotProbe, slot('H', { class: 'hdr-custom' }));
-		expect(find(screen).className).toContain('hdr-custom');
-	});
-
-	// Upstream asserts the text node's parent *is* the root; here the fixture
-	// wraps the text in a span of its own, so what is checked is the same fact
-	// one level down — the children live inside the padding-owning inner
-	// wrapper, which is not the divider-owning root.
-	it('renders children in an inner wrapper (the padding owner), not on the root', async () => {
-		const screen = await render(SlotProbe, slot('Inner'));
-		const root = find(screen);
-		const inner = root.firstElementChild as HTMLElement;
-		expect(inner).not.toBe(root);
-		expect(inner.textContent).toBe('Inner');
-		expect(root.children).toHaveLength(1);
-	});
-});
-
-describe('LayoutFooter', () => {
-	const slot = (text: string, rest: Record<string | symbol, unknown> = {}) => ({
-		props: { component: LayoutFooter, slot: 'children', text, rest }
-	});
-	const find = (screen: { container: HTMLElement }) =>
-		screen.container.querySelector('.astryx-layout-footer') as HTMLElement;
-
-	it('renders its children', async () => {
-		const screen = await render(SlotProbe, slot('Actions'));
-		await expect.element(screen.getByText('Actions')).toBeInTheDocument();
-	});
-
-	it('carries the astryx-layout-footer class', async () => {
-		const screen = await render(SlotProbe, slot('F'));
-		expect(find(screen)).not.toBeNull();
-	});
-
-	it('exposes a landmark role and accessible name', async () => {
-		const screen = await render(
-			SlotProbe,
-			slot('F', { role: 'contentinfo', label: 'Page footer' })
-		);
-		await expect
-			.element(screen.getByRole('contentinfo', { name: 'Page footer' }))
-			.toBeInTheDocument();
-	});
-
-	it('omits data-divider by default and reflects hasDivider when set', async () => {
-		const screen = await render(SlotProbe, slot('F'));
-		expect(find(screen).hasAttribute('data-divider')).toBe(false);
-		await screen.rerender({
-			component: LayoutFooter,
-			slot: 'children',
-			text: 'F',
-			rest: { hasDivider: true }
-		});
-		expect(find(screen).getAttribute('data-divider')).toBe('true');
-	});
-
-	it('inherits the divider default from context', async () => {
-		const screen = await render(DividerProvider, {
-			props: { defaultHasDividers: true, component: LayoutFooter, text: 'F' }
-		});
-		expect(find(screen).getAttribute('data-divider')).toBe('true');
-	});
-
-	it('hands the outer element to an attachment passed through rest props', async () => {
-		const attached = vi.fn();
-		const screen = await render(SlotProbe, slot('F', { [createAttachmentKey()]: attached }));
-		expect(attached.mock.calls[0][0]).toBe(find(screen));
-	});
-});
-
-describe('LayoutContent', () => {
-	const slot = (text: string, rest: Record<string | symbol, unknown> = {}) => ({
-		props: { component: LayoutContent, slot: 'children', text, rest }
-	});
-	const find = (screen: { container: HTMLElement }) =>
-		screen.container.querySelector('.astryx-layout-content') as HTMLElement;
-
-	it('renders its children', async () => {
-		const screen = await render(SlotProbe, slot('Body'));
-		await expect.element(screen.getByText('Body')).toBeInTheDocument();
-	});
-
-	it('carries the astryx-layout-content class', async () => {
-		const screen = await render(SlotProbe, slot('C'));
-		expect(find(screen)).not.toBeNull();
-	});
-
-	it('exposes the main landmark role with an accessible name', async () => {
-		const screen = await render(SlotProbe, slot('C', { role: 'main', label: 'Main content' }));
-		await expect.element(screen.getByRole('main', { name: 'Main content' })).toBeInTheDocument();
-	});
-
-	it('hands the element to an attachment passed through rest props', async () => {
-		const attached = vi.fn();
-		const screen = await render(SlotProbe, slot('C', { [createAttachmentKey()]: attached }));
-		expect(attached.mock.calls[0][0]).toBe(find(screen));
-	});
-
-	it('merges a caller class and inline style', async () => {
-		const screen = await render(
-			SlotProbe,
-			slot('C', { class: 'body-custom', style: 'color: rgb(1, 2, 3)' })
-		);
-		expect(find(screen).className).toContain('body-custom');
-		expect(find(screen).style.color).toBe('rgb(1, 2, 3)');
-	});
-
-	it('renders correctly as the content slot of a Layout (reads slot context)', async () => {
-		const screen = await render(LayoutShell, {
-			props: { header: 'H', content: 'Main', contentRole: 'main' }
-		});
-		await expect.element(screen.getByRole('main')).toHaveTextContent('Main');
-	});
-
-	it('accepts padding={0} (full bleed) and a numeric padding without crashing', async () => {
-		const screen = await render(SlotProbe, slot('C', { padding: 0 }));
-		expect(find(screen)).not.toBeNull();
-		await screen.rerender({
-			component: LayoutContent,
-			slot: 'children',
-			text: 'C',
-			rest: { padding: 6 }
-		});
-		expect(find(screen)).not.toBeNull();
-	});
-});
-
-describe('LayoutPanel', () => {
-	const slot = (text: string, rest: Record<string | symbol, unknown> = {}) => ({
-		props: { component: LayoutPanel, slot: 'children', text, rest }
-	});
-	const find = (screen: { container: HTMLElement }) =>
-		screen.container.querySelector('.astryx-layout-panel') as HTMLElement;
-
-	it('renders its children', async () => {
-		const screen = await render(SlotProbe, slot('Nav'));
-		await expect.element(screen.getByText('Nav')).toBeInTheDocument();
-	});
-
-	it('carries the astryx-layout-panel class', async () => {
-		const screen = await render(SlotProbe, slot('P'));
-		expect(find(screen)).not.toBeNull();
-	});
-
-	it('exposes a navigation landmark with an accessible name', async () => {
-		const screen = await render(SlotProbe, slot('P', { role: 'navigation', label: 'Primary' }));
-		await expect.element(screen.getByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
-	});
-
-	it('applies a numeric width to the element style', async () => {
-		const screen = await render(SlotProbe, slot('P', { width: 240 }));
-		expect(find(screen).getAttribute('style') ?? '').toContain('240px');
-	});
-
-	it('applies a string width to the element style', async () => {
-		const screen = await render(SlotProbe, slot('P', { width: '18rem' }));
-		expect(find(screen).getAttribute('style') ?? '').toContain('18rem');
-	});
-
-	it('resizable._size overrides the width prop', async () => {
-		const screen = await render(ResizablePanel, { props: { defaultSize: 300, width: 100 } });
-		const style = find(screen).getAttribute('style') ?? '';
-		expect(style).toContain('300px');
-		expect(style).not.toContain('100px');
-	});
-
-	it('hands the element to an attachment passed through rest props', async () => {
-		const attached = vi.fn();
-		const screen = await render(SlotProbe, slot('P', { [createAttachmentKey()]: attached }));
-		expect(attached.mock.calls[0][0]).toBe(find(screen));
-	});
-
-	it('renders as a start-slot panel inside a Layout without crashing', async () => {
-		const screen = await render(LayoutShell, {
-			props: {
-				start: 'Sidebar',
-				content: 'Main',
-				panelHasDivider: true,
-				panelRole: 'navigation',
-				panelLabel: 'Side'
-			}
-		});
-		await expect
-			.element(screen.getByRole('navigation', { name: 'Side' }))
-			.toHaveTextContent('Sidebar');
-	});
-
-	it('renders as an end-slot panel inside a Layout without crashing', async () => {
-		const screen = await render(LayoutShell, {
-			props: {
-				end: 'Details',
-				content: 'Main',
-				panelHasDivider: true,
-				panelRole: 'complementary',
-				panelLabel: 'Inspector'
-			}
-		});
-		await expect
-			.element(screen.getByRole('complementary', { name: 'Inspector' }))
-			.toHaveTextContent('Details');
-	});
-
-	it('merges a caller class', async () => {
-		const screen = await render(SlotProbe, slot('P', { class: 'panel-custom' }));
-		expect(find(screen).className).toContain('panel-custom');
 	});
 });
 

@@ -50,14 +50,22 @@
 	const container = $derived(aspectRatioContainerAttrs(shape, xstyle));
 	const child = $derived(aspectRatioChildAttrs(fit));
 	const theme = $derived(themeProps('aspect-ratio', { shape }));
+
+	/**
+	 * The ratio is the **last** declaration, after the consumer's own `style`.
+	 *
+	 * Upstream merges `{...style, aspectRatio: ratio}`, so the `ratio` prop
+	 * overrides a consumer `aspectRatio` rather than losing to it. Here `style` is
+	 * a string and an inline style resolves by declaration order, so that same
+	 * precedence is this ordering — with the consumer's string ahead of it, a
+	 * consumer `aspect-ratio` silently beat the prop the component exists for.
+	 */
+	const rootStyle = $derived(
+		mergeStyle(container.style, styleProp as string | undefined, `aspect-ratio:${ratio}`)
+	);
 </script>
 
-<div
-	{...rest}
-	{...theme}
-	class={cx(theme.class, container.class, className)}
-	style={mergeStyle(container.style, `aspect-ratio:${ratio}`, styleProp as string | undefined)}
->
+<div {...rest} {...theme} class={cx(theme.class, container.class, className)} style={rootStyle}>
 	<!-- The marker attribute carries the fit value so the base.css child sizing
 	     can use direct-child selectors on this wrapper — the child's actual
 	     parent — without depending on AspectRatio's internal structure. -->

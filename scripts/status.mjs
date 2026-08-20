@@ -133,7 +133,12 @@ function testFiles(dir) {
 const NO_TEST_COUNTERPART = {
 	'utils/mergeProps.test.ts': 'mergeProps is not ported — Svelte obviates it (see utils/index.ts)',
 	'utils/mergeRefs.test.ts': 'mergeRefs is not ported — Svelte has no ref object to merge',
-	'utils/composeEventHandlers.test.ts': 'composeEventHandlers is not ported — Svelte obviates it'
+	'utils/composeEventHandlers.test.ts': 'composeEventHandlers is not ported — Svelte obviates it',
+	// Both rest entirely on machinery this port does not and cannot have.
+	'serverSafeComponents.test.ts':
+		"guards the React Server Components boundary — no 'use client' directive in Svelte, no react-server condition, no per-component subpaths",
+	'__tests__/babelPluginAddExtensions.test.ts':
+		'guards a Babel plugin that adds file extensions during upstream\'s build; svelte-package does the inverse and this port has no such transform'
 };
 
 const upstreamTests = testFiles(upstreamRoot).map((f) => ({
@@ -151,6 +156,19 @@ const namedUpstream = new Set(
 	ourTestText.flatMap((f) => f.text.match(/[A-Za-z0-9_.-]+\.test\.tsx?/g) ?? [])
 );
 
+// A header that names an upstream suite in order to say it is NOT ported was
+// being read as coverage — `layout.svelte.test.ts` understated the gap by 34
+// cases with the very sentence written to be honest about it. `UNPORTED: <path>`
+// subtracts instead, and errs safe: a marker left behind after the suite is
+// genuinely ported overstates the work remaining rather than hiding it.
+const markedUnported = new Set(
+	ourTestText.flatMap((f) =>
+		[...f.text.matchAll(/UNPORTED:\s*([A-Za-z0-9_./-]+\.test\.tsx?)/g)].map((m) =>
+			m[1].split('/').pop()
+		)
+	)
+);
+
 const kebab = (s) =>
 	s
 		.replace(/(?<=[a-z0-9])(?=[A-Z])/g, '-')
@@ -159,6 +177,7 @@ const kebab = (s) =>
 
 const isCovered = ({ rel }) => {
 	const base = rel.split('/').pop();
+	if (markedUnported.has(base)) return false;
 	if (namedUpstream.has(base)) return true;
 	const stem = kebab(base.replace(/\.test\.tsx?$/, ''));
 	return ourStems.has(stem) || ourStems.has(stem.replace(/^use-/, ''));
@@ -188,6 +207,36 @@ if (upstreamPresent) {
 }
 
 const sumCases = (list) => list.reduce((a, t) => a + t.cases, 0);
+
+// --- Assertion strength ----------------------------------------------------
+//
+// `getByRole(role, {name: 'X'})` does not mean the same thing on both sides.
+// Testing Library matches the accessible name as a **whole string**; the
+// browser project's locators are Playwright's, where a string `name` is a
+// **substring**, case-insensitive. So a ported case that reads verbatim is
+// quietly weaker than upstream's, and passes in cases upstream's would fail —
+// demonstrated concretely on `VisuallyHidden`, where an icon that lost its
+// `aria-hidden` made the accessible name `'Trash Delete'` and the case still
+// passed until `exact: true` was added.
+//
+// A regex `name` is substring-matching on both sides by design, so it is not
+// counted. Only string literals are, and the number is the size of the sweep
+// that has not happened yet — every one of them is a place where our assertion
+// admits names upstream's would reject.
+const NAME_STRING = /getBy(?:Role|LabelText)\([^)]*name:\s*'/g;
+const NAME_EXACT = /getBy(?:Role|LabelText)\([^)]*name:\s*'[^']*'[^)]*exact:\s*true/g;
+
+let looseNameSites = 0;
+let looseNameFiles = 0;
+for (const file of testFiles(path.join(root, 'packages/core/src/tests'))) {
+	const text = readFileSync(file, 'utf8');
+	const total = (text.match(NAME_STRING) ?? []).length;
+	const exact = (text.match(NAME_EXACT) ?? []).length;
+	if (total - exact > 0) {
+		looseNameSites += total - exact;
+		looseNameFiles += 1;
+	}
+}
 
 // --- Themes ----------------------------------------------------------------
 
@@ -338,6 +387,26 @@ if (upstreamPresent) {
 		);
 	}
 }
+
+push('## Assertion strength', '');
+push(
+	...table([
+		['', 'Sites', 'Files'],
+		[
+			"`getByRole`/`getByLabelText` with a string `name`, no `exact`",
+			String(looseNameSites),
+			String(looseNameFiles)
+		]
+	]),
+	''
+);
+push(
+	'Testing Library matches an accessible name as a whole string; Playwright matches a string',
+	'`name` as a case-insensitive **substring**. Every site above is therefore a ported assertion',
+	'weaker than the one it ports, admitting names upstream’s would reject. A regex `name` is',
+	'substring-matching on both sides by design and is not counted.',
+	''
+);
 
 push('## Debts', '');
 const debtRows = [['Kind', 'Count']];
