@@ -8,9 +8,9 @@
 
 |                           |                                                                          |
 | ------------------------- | ------------------------------------------------------------------------ |
-| Component dirs (ours)     | 98                                                                       |
+| Component dirs (ours)     | 99                                                                       |
 | Component dirs (upstream) | 103                                                                      |
-| Missing here              | BottomSheet                                                              |
+| Missing here              | none                                                                     |
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.4.5                                               |

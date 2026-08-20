@@ -871,10 +871,12 @@ return markup
 
 Upstream's
 blocks import `@heroicons/react`; the built-in registry is the 26 icons the components
-themselves need, so blocks needing a tag, star, bookmark, scissors or person glyph use a
-built-in and say so in a header comment. `EmptyState` (`search`) and `Toolbar`
-(`chevronLeft`) are near-exact swaps; the rest are approximations. Retires with the
-`@lucide/svelte` icon registry (Phase 3)
+themselves need, so blocks needing a tag, star, bookmark, scissors, pin, u-turn, flag or
+person glyph use a built-in and say so in a header comment. `EmptyState` (`search`) and
+`Toolbar` (`chevronLeft`) are near-exact swaps; the rest are approximations, and
+`BottomSheetSnapPoints`' turn-by-turn list is the widest of them — six Heroicons over
+twelve steps collapse onto four built-ins. Retires with the `@lucide/svelte` icon registry
+(Phase 3)
 
 ### A handful of docs example blocks needed type-level adjustments upstream's TS config does not force
 
