@@ -480,7 +480,13 @@ Verified a bug in source _and_ `dist/`; intent is unambiguous (aimed at the popo
 - **kind:** api-divergence
 - **retires:** never
 
-Upstream publishes `./Button`, `./Card`, … (~110). We ship `.`, `./theme`, `./theme/syntax`, `./utils`, `./i18n`, `./hooks`, `./naming`, `./base.css`. Defensible while the barrel is small, but a real surface difference
+Upstream publishes one per component — `./Button`, `./Card`, and so on — where this port ships
+`.`, `./vite`, `./theme`, `./theme/define`, `./theme/syntax`, `./hooks`, `./naming`, `./utils`,
+`./i18n`, `./locales/*.json`, `./astryx.css` and `./base.css`. Defensible while the barrel is
+small, but a real surface difference. This entry twice carried a **count** of our own subpaths
+that drifted as they were added (corrected 7→9 in `ledger/016`, wrong again by four at 0.4.5);
+the list above is the record instead, and the number belongs in `status.md` if it is wanted at
+all
 
 ### Repo-wide surface drift — missing exports closed, over-exports sanctioned under a written rule
 
@@ -528,7 +534,10 @@ polish pass before a patch.
 - **kind:** api-divergence
 - **retires:** when `generateThemeCss`/`generateOnMediaCss` and `ThemeConfig`/`ComponentOverrides` are renamed to match upstream, and the remaining `theme/types.ts` + over-exports are swept
 
-~90 names upstream's `theme/index.ts` publishes that ours does not. **Batch 8 closed the `Theme`/`useTheme` family** (`Theme`, `ThemeContext`, `ThemeContextValue`, `useTheme`, `UseThemeReturn`, `ThemeMode`, `ResolvedThemeMode`, `resolveThemeToken(s)`, the two options types, `tokenVar`, `tokenVars`, `tokenDefaults`) and started `theme/types.ts`, which now holds `ThemeMode` alone — the prose-theming types in it land with the Prose-defaults item. What remains is chiefly the per-group token `*Vars`/`*Defaults` exports and the rest of `theme/types.ts` — plus 13 over-exports and two name drifts (`generateThemeCss`/`generateOnMediaCss` vs upstream's `…CSS`; `ThemeConfig`/`ComponentOverrides` vs `DefineThemeInput`/`ComponentStyleMap`)
+A substantial set of names upstream's `theme/index.ts` publishes that ours does not — deliberately
+unnumbered here, because every count this entry has carried went stale within a batch and a stale
+count makes a growing gap read as a settled one. Re-measure with the surface sweep rather than
+trusting a figure in this paragraph. **Batch 8 closed the `Theme`/`useTheme` family** (`Theme`, `ThemeContext`, `ThemeContextValue`, `useTheme`, `UseThemeReturn`, `ThemeMode`, `ResolvedThemeMode`, `resolveThemeToken(s)`, the two options types, `tokenVar`, `tokenVars`, `tokenDefaults`) and started `theme/types.ts`, which now holds `ThemeMode` alone — the prose-theming types in it land with the Prose-defaults item. What remains is chiefly the per-group token `*Vars`/`*Defaults` exports and the rest of `theme/types.ts` — plus a set of over-exports and two name drifts (`generateThemeCss`/`generateOnMediaCss` vs upstream's `…CSS`; `ThemeConfig`/`ComponentOverrides` vs `DefineThemeInput`/`ComponentStyleMap`). The 0.4.5 sweep also found the gap splits two ways that this entry did not distinguish: some names are absent from _every_ barrel here, others are reachable from the root but not from `./theme` — the second kind is a placement problem, not a missing port, and is the cheaper half to close
 
 ### Three `./theme` names have no upstream counterpart or the wrong one
 
@@ -1060,6 +1069,117 @@ passing either way.
 batch's own headline change — `THUMB_INSET` — shipped with zero coverage while the ledger described
 it as transcribed and routed, and `useLayer`'s unported `context hosting` block is precisely what
 would have caught the two Layer defects the idiom audit found instead.
+
+### The sheet family's effect phases are Svelte's, not upstream's, in three places
+
+- **units:** BottomSheet, BottomSheetPanel, BottomSheetSwitcher
+- **kind:** deliberate-divergence
+- **retires:** never
+
+Behaviour is identical; the _shape_ is not, and all three differences trace to one fact React
+does not have. `bind:this` is an effect created **after** the script's effects, and a child
+component's effects run **before** its parent's — so where React's `useLayoutEffect` runs after
+the commit with `ref.current` already populated, a Svelte effect has to be placed against that
+order deliberately.
+
+**The trigger capture runs in its own pre effect.** Upstream captures `triggerRef` _inside_ the
+dialog-opening effect, on the `!dialog.open` branch (`BottomSheetSwitcher.tsx:299-301`). Here that
+would be too late: the item's `focusPanel` is a child effect and has already pulled focus into the
+sheet, so `document.activeElement` would be a control _inside_ the sheet and closing the flow
+would "restore" focus into the sheet it just dismissed. A `$effect.pre` is the only point where
+the answer is still the page's. This shipped as a defect first and is the reason the effect is
+split out (`ledger/029`).
+
+**Three panel effects guard on the element.** Upstream's have no such guard, because
+`waitForTransition(null)` completes immediately by contract and a React ref is populated by the
+time a layout effect reads it (`BottomSheetPanel.tsx:446-467,472-481,482-500`). Here a `null`
+element means _not yet bound_ rather than _nothing to wait for_, so returning early and letting
+the effect re-run when `bind:this` lands is the translation. Without it the entrance completed on
+the frame it began — also a shipped defect.
+
+**`focusPanel` and `showModal()` are reordered in the switcher path.** Upstream runs the
+switcher's `showModal()` as a layout effect and the item's `focusPanel` as a passive one, so React
+guarantees showModal-then-focus; child-before-parent makes ours focus-then-showModal. Verified in
+Chromium rather than reasoned about: `showModal()` and `show()`, with and without a prior focus,
+against a `tabindex="-1"` panel holding a `[data-autofocus]` input — all four combinations end on
+the panel, because the dialog focusing steps pick it as the first focusable area regardless. No
+observable difference, and it is what makes the trigger capture above load-bearing
+
+### Only three of upstream's locale catalogs are ported
+
+- **units:** i18n (locales)
+- **kind:** unported
+- **retires:** when the remaining catalogs are vendored
+
+Both packages declare the same `"./locales/*.json"` subpath, so the specifier shape matches — but
+upstream's `locales/` ships a catalog per supported language and this port vendors `en.json`,
+`fr-FR.json` and `pseudo.json` only. Every other specifier a consumer can write against upstream's
+documentation (`de-DE.json`, `ja-JP.json`, and the rest) resolves upstream and throws
+`ERR_MODULE_NOT_FOUND` here. The catalogs are vendored verbatim — `.prettierignore` excludes
+`src/lib/locales/` precisely so the upstream bytes survive — so closing this is copying, not
+translating. Surfaced by the 0.4.5 surface sweep; it had never been recorded anywhere
+
+### `./theme/tokens` and `./theme/tokens.stylex` are not exported, though the build already ships them
+
+- **units:** theme (exports map)
+- **kind:** api-divergence
+- **retires:** when the two `exports` keys are added
+
+Upstream exports both, from `theme/tokens.ts` and `theme/tokens.stylex.ts`. This port's `exports`
+map has neither, while `dist/styles/tokens.stylex.js` **is already in the tarball** — so the file a
+consumer needs ships, and only the door is missing. Two keys. It was measured during the 0.4.1
+tracking pass and written down in `port/upstream-diff.md`, whose own header says it is
+point-in-time analysis rather than spec, and no agent greps it; that is how a two-line fix stayed
+open across four batches. Recorded here so it is findable
+
+### `tailwind-theme.css` has no counterpart
+
+- **units:** theme (tailwind-theme.css)
+- **kind:** unported
+- **retires:** when the Tailwind bridge is ported
+
+Upstream ships a `./tailwind-theme.css` subpath mapping its tokens into Tailwind's `@theme inline`
+layer, so a Tailwind consumer can use Astryx tokens as Tailwind utilities. Nothing here
+corresponds. Noted in `ledger/012` and in `port/upstream-diff.md` — both of them
+per-batch or frozen records that the parity agents do not read — so it has been effectively
+invisible since batch 11. Recorded here instead
+
+### `BottomSheet`'s `height` and `snapPoints` doc types name their alias where upstream writes the members
+
+- **units:** BottomSheet (docs props table)
+- **kind:** deliberate-divergence
+- **retires:** never
+
+Upstream's `.doc.mjs` shows `'hug' | 'capped' | 'tall' | number | string` and
+`ReadonlyArray<number | string>`; ours shows `BottomSheetHeight | number | string` and
+`ReadonlyArray<BottomSheetSnapPoint>`. Not a porting shortcut — upstream's strings are
+**hand-written prose**, and the members are unrecoverable here by construction: a union of string
+literals and `string` is collapsed to `string` by TypeScript before the docs generator sees the
+type, and prop types are read from `dist/**/*.d.ts` precisely so nothing about them is guessed
+(`docs/scripts/lib/props-types.mjs` says so at `renderType`). Upstream's own source declares the
+same `BottomSheetHeight | number | string`.
+
+What was a defect and is fixed: the two names used to be `BottomSheetHeightValue` and
+`BottomSheetSnapPointValue`, local import aliases that existed only to dodge a lint error, so the
+props table named types **no consumer could import**. Both now name the exported types the barrel
+publishes, which is the part that mattered
+
+### `BottomSheetPanel`'s `state` prop is `panelState`
+
+- **units:** BottomSheetPanel
+- **kind:** deliberate-divergence
+- **retires:** never
+
+Svelte's compiler asks for the rename. A local binding named `state` in a scope that also uses the
+`$state` rune emits `store_rune_conflict` — _"Referencing a local variable with a `$` prefix will
+create a store subscription. Please rename `state` to avoid the ambiguity"_ — on both the client
+and server generations. The component is module-private on both sides, so no published API moves.
+
+Recorded because it is otherwise **re-found every batch**: `astryx-parity` greps this file to
+answer "is this drift already known?", and at 0.4.5 it raised the rename as a finding, compiled a
+replica to test the justification, saw it compile, and reported the reason as not reproducing. It
+was half right — the in-file comment claimed Svelte _errors_, and it warns. The rename is correct;
+the overstatement was what made it look invented
 
 ## Retired
 

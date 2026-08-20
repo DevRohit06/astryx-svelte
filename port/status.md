@@ -20,8 +20,8 @@
 
 | Kind                  | Count  |
 | --------------------- | ------ |
-| api-divergence        | 27     |
-| deliberate-divergence | 42     |
-| unported              | 11     |
+| api-divergence        | 28     |
+| deliberate-divergence | 44     |
+| unported              | 13     |
 | upstream-lag          | 12     |
-| **total**             | **92** |
+| **total**             | **97** |

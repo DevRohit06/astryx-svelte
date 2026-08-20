@@ -27,8 +27,15 @@ from a quiet `main` is easier than tagging mid-batch.
       DropdownMenuSubMenu and useFocusTrap. The release-blocking part is done (useLayer's hosting
       block, the whole useMenuHover suite, Slider's inset blocks, HoverCard's portal pair);
       `debts.md` carries the per-suite list, re-derived against the current pin
-- [ ] Run batch 029's `close-batch` audits — `astryx-parity`, `astryx-idiom`, `astryx-test-parity`
-      and `astryx-surface` are all still owed for the BottomSheet family (`ledger/029`)
+- [ ] Settle the published-surface findings the 0.4.5 sweep raised, as **one** decision at a minor
+      rather than piecemeal before a patch. Every one is a _removal_ from a shipped surface or an
+      addition to it, so none belongs in a polish pass: `LayerContext`/`LayerContextValue`/
+      `useLayerContext` withheld while `layerAnimations`/`ToastViewport`/`ToastViewportProps` are
+      published, on a distinction upstream does not make; and `MetadataListContextValue`,
+      `UseIndicatorFocusRingReturn`, `getPositionTryFallbacks`, the five `onMediaTokens` symbols
+      and `parseStyleKey` over-exported against upstream's barrels. The comment at the head of
+      `src/lib/index.ts` needs rewriting whichever way the Layer half goes — it currently cites the
+      barrel-absent rule to justify withholding barrel-_present_ symbols
 - [ ] Hand-translate the deferred `.doc.mjs` examples. Upstream's are JSX, and this port's
       `ComponentExampleDoc.code` is documented as Svelte source, so emitting them verbatim would
       ship React as this CLI's answer to "show me an example" — the `Button.icon` mistake.

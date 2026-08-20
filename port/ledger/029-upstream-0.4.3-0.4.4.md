@@ -567,11 +567,134 @@ hands off through all three sheets with each step's state intact.
 
 ## What the audits caught
 
-**The audit agents were not run for this batch** — `astryx-parity`, `astryx-idiom`,
-`astryx-test-parity` and `astryx-surface` are all still owed, and `close-batch`'s gate is therefore
-not satisfied. What stands in their place is the ported suites themselves, which found the seven
-defects above. Recording the gap rather than leaving the section blank: a blank section reads as
-"nothing found", and nothing was looked for.
+All four ran, plus `astryx-oracle`. The short version: **the suites had not found everything**, and
+the one audit worth singling out is `astryx-idiom`, which was asked to sweep _every_ remaining
+`$effect.pre` in the family and classify each as write-before-paint or read-after-commit.
+
+### `astryx-idiom` — two more of the same defect
+
+The seven defects above were six instances of one mistake. The sweep found **two more the porting
+missed**, both invisible to the ported suites:
+
+- **`use-sheet-gestures.svelte.ts:502`, the reconciliation reflow.** Its entire job is to compute
+  style for the DOM that now carries `transition: none` _and_ the new transform, so that pair
+  becomes the "before" the next recalculation compares against. As a pre effect it ran before the
+  template wrote the `style` attribute, reflowing the render being **replaced** — so every snap
+  settle animated the swap that must be instantaneous, throwing the sheet the wrong way for
+  `--duration-medium` immediately after it appeared to land.
+- **`use-sheet-gestures.svelte.ts:708`, the snap-points re-anchor.** `reanchorToSettledDetent`
+  _measures_ — strips the inline height, reads `getBoundingClientRect()`, reads the body's scroll
+  metrics. A pre effect reads all of that before the DOM update, so a host changing `snapPoints` in
+  the same update as anything altering the sheet's box re-anchors against geometry that no longer
+  exists.
+
+**Neither is catchable by the ported suites, in either language.** Upstream's `reconciliationFrames`
+cases and our ports of them assert that `transition: none` is _present in the style string_ during
+the held frame, which is true whichever phase the reflow sat in. That makes this the strongest
+argument in the batch for running the idiom audit even when the suite is green: 146 passing cases
+did not see either one.
+
+A third finding — the sheet attachment subscribing to `isOpen` through an un-`untrack`ed
+`options.isOpen()` — is a rule violation with **no demonstrated symptom**; the agent traced every
+path and each is a no-op. Fixed anyway, because `recordSheetHeight` is also the `ResizeObserver`
+callback, so the next reactive read added to it would become an attachment dependency silently.
+
+### `astryx-parity` — 8 findings, none blocking
+
+Source and published `dist/` agree throughout this family, and the two things most likely to have
+gone wrong had not: the `BottomSheetProps` union reproduces upstream's arms field for field
+including `never` placement, only the union is published, and `{@attach}` reaches the sheet `<div>`
+on `BottomSheet` and the shared `<dialog>` on `BottomSheetSwitcher` — verified as behaviour, through
+three rest spreads, not as intent.
+
+What it did catch, and what happened to each:
+
+| Finding                                                                  | Outcome                                                 |
+| ------------------------------------------------------------------------ | ------------------------------------------------------- |
+| Neither `.stylex.ts` wired into the class oracle, no `skip` saying why    | Fixed — see below                                        |
+| `.doc.mjs` prop types named `BottomSheetHeightValue`, an unimportable alias | Fixed; the residue is a debt entry                      |
+| `heightBudgetFor()` exported with zero callers                            | Deleted                                                  |
+| `UseMobileKeyboardOptions` exported where upstream's is module-private    | Unexported                                               |
+| `wait-for-transition.ts` header claimed it had more than one caller       | Corrected — it has one importer, two call sites          |
+| Two effect-phase deferrals documented in-file only                        | Recorded in `debts.md`                                   |
+| `panelState` renamed from upstream's `state` on a rationale that does not reproduce | **Open** — see below                           |
+
+The `panelState` finding is the one left open, and deliberately. The agent compiled a replica of the
+panel's shape and showed that a prop named `state` does not make `$state` ambiguous, so the stated
+reason is false — but the claim is repeated verbatim in `bottom-sheet-panel.svelte.test.ts`, the
+component is module-private either way, and renaming a prop plus its harness during a release gate
+buys nothing. It is a comment to correct, not a divergence to close.
+
+### `astryx-oracle` — the family was unguarded
+
+The gap `astryx-parity` found was the serious one: a whole new component family with **no oracle
+coverage at all**, which is the port's central guarantee simply not applied. Both modules are wired
+in now. The run goes **1625 → 1635 style keys and 516 → 532 inline call sites, 0 skipped, 0
+mismatches** — nothing here was undiffable, so no skip was needed.
+
+Two details worth keeping. Upstream declares the dialog shell twice, byte-identical, and only the
+switcher's copy survives in `dist/` as an object — an `xstyle` argument defeats the fold there,
+while `BottomSheet.js` folds the same keys at a literal call site. So this port's *shared* module
+needs two cases, object and inline, to cover what upstream splits across two declarations. And the
+two property-key overrides (`dialogOpen` swapping `display`, `dialogNonModal` swapping `dvw`/`dvh`
+for `%`) are reproduced by the merge rather than skipped, mutation-checked by reversing the merge
+order and confirming the run fails.
+
+### `astryx-test-parity` — the count contract holds
+
+**146/146, and all four headers are true at 0.4.5** — re-derived by counting upstream's cases rather
+than by trusting our own prose, which is the failure mode that made four headers false at the last
+bump. Nothing silently missing, nothing added, no drop note anywhere to expire.
+
+Three cases had been weakened in translation, none of it forced, all now restored:
+
+- `keeps focus in a modal sheet that has no tabbable controls` had **lost its premise**. The fixture
+  rendered no background control outside the switcher, so there was nowhere for focus to go and the
+  case could not fail the way it is named — worse than a weak assertion. Upstream's fourth assertion
+  and its `Background action` button are back, gated on the fixture so the other eight cases keep
+  running without one.
+- `ignores Escape while an IME composition is active` ran on `hasScrim: false`, covering this port's
+  local `!isModal` guard, where upstream's runs modal and covers the focus-trap guard. Moved to the
+  modal branch, and **mutation-checked** rather than accepted on a green tick: stripping the IME
+  flags fails the case, so it evidences the trap's guard rather than a dead path. Upstream has the
+  identical `!isModal` guard and ships no case for it, so neither do we — recorded on the case so
+  the next reader does not "restore" the gap.
+- Four `toHaveAccessibleName` assertions had been downgraded to `getAttribute('aria-label')`. The
+  matcher is used in ten other suites here, so nothing about the browser runner required it, and at
+  the switcher re-labelling case an attribute read cannot see the `aria-labelledby` branch the
+  label derivation actually has.
+
+### `astryx-surface` — and a regression this batch introduced
+
+BottomSheet's published surface is exactly upstream's six names with nothing leaked, and the three
+0.4.5 utility extractions all land on upstream's subpaths. The sweep's own finding against this
+batch was the valuable one:
+
+**Deleting `src/app.html` turned every `check` and every `prepack` into a ten-line `load_template`
+stack trace.** Non-fatal — `svelte-package` reads `svelte.config.js`, not the Vite config — which is
+exactly why it was missed: the removal was verified by reading `0 ERRORS` off the end of a run whose
+head carried the stack. A build that prints a stack on every run is a build whose output stops being
+read. `app.html` is back as the two placeholders SvelteKit requires, saying in a comment why it
+exists when nothing renders it.
+
+Two of its neighbours went dead with the routes and were **shipping to consumers**: `src/app.d.ts`
+and `src/virtual-modules.d.ts`, both let through by a `.d.ts` exemption in rule 5 of
+`assert-core-ships-src.mjs` that existed for exactly those two files. Both deleted, exemption
+removed — a `.d.ts` outside `src/lib` is now a leak like any other, which is what the rule was for.
+
+The rest of the sweep is pre-existing and **deliberately not acted on**: three `Layer` context
+symbols withheld while three symbols in the identical upstream position are published, and nine
+over-exports against upstream's barrels. Every one is an add or a remove on a surface that has
+shipped. That is semver-visible and belongs at a minor as one decision, not in the polish before a
+patch — `todo.md` carries it, including that the comment at the head of `src/lib/index.ts` cites the
+barrel-*absent* rule to justify withholding barrel-*present* symbols and needs rewriting whichever
+way it goes.
+
+Three gaps it found that had **never been recorded anywhere** are now in `debts.md`: 28 of upstream's
+locale catalogs unported, `./theme/tokens` and `./theme/tokens.stylex` missing from the exports map
+though `dist/styles/tokens.stylex.js` already ships, and `tailwind-theme.css` with no counterpart.
+All three had been sitting in a ledger entry or in `upstream-diff.md` — per-batch and frozen records
+that the parity agents do not grep, which is how a two-key fix stayed open across four batches.
 
 ## Rules promoted
 
@@ -587,7 +710,19 @@ defects above. Recording the gap rather than leaving the section blank: a blank 
 - `.claude/agents/astryx-idiom.md` — two sharpenings, both paid for above: `$effect.pre` is for a
   layout effect that **writes** before paint, never one that reads the just-committed DOM
   (`bind:this` is a later effect); and an over-tracking effect with a **teardown** loses what that
-  teardown discards on every unchanged re-notification, not merely an extra run.
+  teardown discards on every unchanged re-notification, not merely an extra run. The same bullet
+  now carries the audit's own lesson: sweep every `$effect.pre`, and do not accept a green suite as
+  evidence the phase is right.
+- `CLAUDE.md` § Commands — run the client project alone. Two vitest processes on it at once fail at
+  *project init* with `EPERM ... rename` and report every chunk as failed, which reads as a
+  catastrophic regression rather than as contention. It cost a full gate run here.
+- `packages/cli/scripts/assert-core-ships-src.mjs` — rule 5 no longer exempts `.d.ts`, and the
+  comment records that the exemption was load-bearing for exactly the two files that had just gone
+  dead.
+- `docs/scripts/lib/props-types.mjs` — `renderType` expands a union that **mixes** literals with
+  primitives, and its docstring now records the hard limit past that: TypeScript collapses string
+  literals into `string`, so upstream's hand-written `'hug' | 'capped' | 'tall' | number | string`
+  is not recoverable from a `.d.ts` and is not going to be faked.
 
 ## Debts opened
 

@@ -789,7 +789,20 @@
 				class={toggleAttrs.class}
 				style={toggleAttrs.style}
 			>
-				<Icon icon="calendar" size="sm" color="secondary" />
+				<!--
+					Stable theme target on the calendar glyph, and on each open/closed
+					state, mirroring `date-input-toggle-icon`. Same-element rules in
+					`@layer astryx-theme` win over the icon's own base colour and size,
+					which a segment-level target could not reach.
+				-->
+				<Icon
+					icon="calendar"
+					size="sm"
+					color="secondary"
+					{...themeProps('date-time-input-toggle-icon', {
+						state: popover.isOpen ? 'expanded' : 'collapsed'
+					})}
+				/>
 			</button>
 			<input
 				bind:this={dateInput}
@@ -842,7 +855,16 @@
 			style={timeWrapperAttrs.style}
 		>
 			<div class={iconAttrs.class} style={iconAttrs.style}>
-				<Icon icon="clock" size="sm" color="secondary" />
+				<!--
+					The time segment has no toggle button — the clock is a static leading
+					affordance — so this target carries no interactive state.
+				-->
+				<Icon
+					icon="clock"
+					size="sm"
+					color="secondary"
+					{...themeProps('date-time-input-clock-icon')}
+				/>
 			</div>
 			<input
 				bind:this={timeInput}

@@ -61,8 +61,16 @@ pnpm verify        # the gate: every stage runs and every result reports, then p
                    #   regenerated and diffed against what's committed. Prefer this to chaining
                    #   build/check/lint/test with && — that reports "failed" identically whether
                    #   one stage failed or both ran, and once hid six real errors behind the first.
-pnpm verify --fast # skips the browser suite (real Chromium, thousands of cases); for gating a
-                   #   commit locally.
+pnpm verify --fast # skips the whole test stage — the browser suite (real Chromium, thousands of
+                   #   cases), the node suites, the CLI's own checks and the theme oracles. Use it
+                   #   for a quick read *between* commits, never as a batch's gate. Batch 029 was
+                   #   gated on it and the first full run found four defects it structurally could
+                   #   not see: six `FormLayout` cases printing `[object Object]` since the context
+                   #   became an object, the CLI's bundled copy of `neutral-theme.ts` left stale by
+                   #   a Banner change, three documented theming targets with no `themeProps`
+                   #   literal, and two `InputClearButton` cases the pin move added. Three of those
+                   #   came from one commit. **`pnpm verify` — full — before the batch is called
+                   #   done, and before any release.**
 pnpm -r build     # must run before check — theme-neutral typechecks against core's built dist/,
                   #   and the docs generator reads props types out of that same dist/
 pnpm -r check     # svelte-check + tsc
@@ -75,6 +83,12 @@ pnpm -F @astryx-svelte/core test:unit --run src/tests/foo.svelte.test.ts   # one
 #   full run in *watch mode* that never exits. It looks exactly like a hang.
 #   `--project=client` / `--project=server` narrows to one vitest project.
 pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see below
+#   Run it alone. Two vitest processes on this project at once fail at *project
+#   init* — `EPERM: operation not permitted, rename` on Windows, as both write
+#   `.svelte-kit` and the Vite cache — and every chunk then reports as failed.
+#   It reads as a catastrophic regression rather than as contention, and it cost
+#   a full 30-minute gate run to a background agent that was running the suite
+#   at the same time. Same rule for `pnpm verify`, which runs this.
 #   The client project cannot be run in one process: it dies partway through with
 #   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
 #   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a
