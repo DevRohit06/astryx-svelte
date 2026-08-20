@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-y2k",
-	"version": "0.4.2",
+	"version": "0.4.5",
 	"description": "Y2K theme for astryx-svelte — hot pinks, lime greens, and Poppins.",
 	"license": "MIT",
 	"repository": {

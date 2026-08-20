@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-butter",
-	"version": "0.4.2",
+	"version": "0.4.5",
 	"description": "Butter theme for astryx-svelte — warm, creamy yellows with a friendly blue accent.",
 	"license": "MIT",
 	"repository": {

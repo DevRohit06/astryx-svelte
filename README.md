@@ -70,8 +70,8 @@ bug the day it landed. [`CHANGELOG.md`](CHANGELOG.md) names every limitation in 
 | [`@astryx-svelte/theme-*`](packages/themes) | Eight theme packages, `neutral` being the default Astryx look              |
 | [`docs`](docs)                              | The documentation site, built out of the same docs the CLI serves          |
 
-Ten packages ship together at **`0.4.1`**. The number is the Astryx release they port, not a count
-of this port's own history — so `0.4.1` means "at parity with Astryx 0.4.1, plus changes upstream has
+Ten packages ship together at **`0.4.5`**. The number is the Astryx release they port, not a count
+of this port's own history — so `0.4.5` means "at parity with Astryx 0.4.5, plus changes upstream has
 no counterpart for" (see [`CHANGELOG.md`](CHANGELOG.md) for what a version collision does to that
 scheme). `docs` is the eleventh workspace package and is not published.
 
