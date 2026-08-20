@@ -462,18 +462,25 @@ hand-editing them is a mistake; each says so at the top.
 
 ## Tests added
 
-| Suite                                              |                    Cases |
-| -------------------------------------------------- | -----------------------: |
-| `form-layout.svelte.test.ts` (new)                 |      13 of upstream's 30 |
-| `banner.svelte.test.ts`                            |            38 → 45 of 47 |
-| `complex-selector.svelte.test.ts`                  |         6 → **12 of 12** |
-| `mobile-nav-close-edge-cases.svelte.test.ts` (new) |                 11 of 12 |
-| `mobile-nav-close-visibility.svelte.test.ts` (new) |               **5 of 5** |
-| `mobile-nav-close-timing.test.ts` (new)            | **3 of 3** (14 expanded) |
-| `stub-match-media.test.ts` (new)                   |               **6 of 6** |
-| `characters.test.ts` (new)                         |             **22 of 22** |
-| `ime.test.ts` (new)                                |               **4 of 4** |
-| `get-standalone-short-weekday-names.test.ts` (new) |               **5 of 5** |
+| Suite                                                 |                    Cases |
+| ----------------------------------------------------- | -----------------------: |
+| `bottom-sheet.svelte.test.ts` (new)                   |    **70 of 70** running¹ |
+| `sheet-gestures.svelte.test.ts` (new)                 |             **45 of 45** |
+| `bottom-sheet-switcher.svelte.test.ts` (new)          |             **24 of 24** |
+| `bottom-sheet-panel.svelte.test.ts` (new)             |               **7 of 7** |
+| `form-layout.svelte.test.ts` (new)                    |      13 of upstream's 30 |
+| `banner.svelte.test.ts`                               |            38 → 45 of 47 |
+| `complex-selector.svelte.test.ts`                     |         6 → **12 of 12** |
+| `mobile-nav-close-edge-cases.svelte.test.ts` (new)    |                 11 of 12 |
+| `mobile-nav-close-visibility.svelte.test.ts` (new)    |               **5 of 5** |
+| `mobile-nav-close-timing.test.ts` (new)               | **3 of 3** (14 expanded) |
+| `stub-match-media.test.ts` (new)                      |               **6 of 6** |
+| `characters.test.ts` (new)                            |             **22 of 22** |
+| `ime.test.ts` (new)                                   |               **4 of 4** |
+| `get-standalone-short-weekday-names.test.ts` (new)    |               **5 of 5** |
+
+¹ 63 `it` cases and two `it.each` tables. Nothing dropped across the four sheet suites: 146 cases,
+all of upstream's.
 
 Dropped, each named in its file with its reason: two `{false}`-as-snippet cases in `Banner`
 (a Svelte `Snippet` cannot be `false`) and `survives StrictMode double-invoked effects` (React has a
@@ -492,8 +499,106 @@ jsdom artefacts:
   normalises to `0.41s`. Stronger than upstream's: it would catch a literal that happened to equal
   the token today.
 
+## The sheet suites found seven defects, and every one was a phase error
+
+The four ported suites are the reason this batch is trustworthy, and what they caught is a single
+family: **`$effect.pre` used for a layout effect that reads the DOM.** React's `useLayoutEffect`
+runs after the commit with `ref.current` already populated — that is where a plain `$effect` runs,
+not where `$effect.pre` does. `bind:this` is itself an effect created after the script's, so a pre
+effect runs first with nothing bound.
+
+1. **The entrance completed on the frame it started.** `$effect.pre` ran before `bind:this`, so
+   `waitForTransition(null)` resolved immediately.
+2. **A settled sheet pinned a detent too low.** The panel _appended_ its transform to the hook's
+   declaration string, where upstream's `{...contentProps.style, transform}` spread replaces it. The
+   fix parses the hook's `transform` out and rebuilds the rest of the string without it.
+3. **Settle resolved instantly instead of following the snap.** The pre pass read the render being
+   _replaced_, which still carried the drag's inline `transition: none`. Both reading effects moved
+   to `$effect`.
+4. **The keyboard scroll range cleared on close.** Not a phase error but its neighbour: the main
+   effect tore down on an _unchanged_ re-notification and lost `keyboardGeometry`. Six `$derived`
+   dependency wrappers give it React's value-compare semantics.
+5. **A flow active on mount rendered a closed dialog.** `dialogEl` read `untrack`ed inside
+   `$effect.pre`, so the element that arrived was never heard about.
+6. **Focus "restored" into the sheet just dismissed.** The trigger was captured _after_ the focus
+   trap had already pulled focus inside; capture moved ahead of the trap.
+7. **A shared dialog left open with nothing in it.** The panel never reported `null` on teardown, so
+   the switcher believed a panel was still mounted.
+
+Two harness facts made upstream's jsdom numbers reproducible in real Chromium, and both are
+differences in how a case is _driven_, never in what it asserts: geometry stubbed to zero, and a
+real transition rule injected. `mockIOSWebKit` also needs its own `vibrate` no-op —
+`Object.create(navigator)` inherits Chromium's real one, and `hapticTick` then throws
+`Illegal invocation`.
+
+## The demo routes are retired
+
+`packages/core` carried a SvelteKit demo app beside its library — 35 route files, an `app.html`, a
+favicon and an adapter — that predated the docs site. Once `docs/` covered every component with its
+own example blocks it was two places to demonstrate the same thing, under a parity rule that applies
+to both, and the workbench was the one nobody looked at: 36 files against `docs/`'s 185 example
+directories.
+
+Verified before deleting rather than after: `svelte-kit sync`, `check`, `build`, `lint` and
+`assert-core-ships-src.mjs` all pass without `src/routes`, and the client project runs without
+`src/app.html`. `@sveltejs/adapter-auto` went with it — an adapter only runs at app-build time and
+this package is never built by `vite build`; the config now says so where the adapter used to sit.
+
+`assert-core-ships-src.mjs` keeps rule 5. `src/tests` is still under `src/`, so the next thing to
+land beside `src/lib` is caught the same way; only the comment naming the routes changed.
+
+## The example blocks
+
+Upstream ships six blocks for the family, and this batch is where they land: five under
+`BottomSheet` and the switcher's three-step notification flow. Two translations are worth naming.
+
+`BottomSheetSwitcherShowcase` is **one file where upstream has four components**. Svelte has one
+component per file, so the three steps inline and the state each of them held moves to the top.
+Nothing about lifetime changes — the switcher keeps all three sheets mounted either way, so
+upstream's per-step state survives a handoff exactly as this does.
+
+`BottomSheetSnapPoints` is the **widest icon substitution in the block corpus**: six Heroicons over
+twelve turn-by-turn steps collapse onto four built-ins, because the registry has no pin, u-turn or
+flag glyph. The existing debt entry now says so.
+
+Checked in a browser at a 420×900 viewport, not only by `check` and `lint`: all five
+`BottomSheet` blocks render, the showcase opens over its scrim, and the switcher's three-step flow
+hands off through all three sheets with each step's state intact.
+
 ## What the audits caught
+
+**The audit agents were not run for this batch** — `astryx-parity`, `astryx-idiom`,
+`astryx-test-parity` and `astryx-surface` are all still owed, and `close-batch`'s gate is therefore
+not satisfied. What stands in their place is the ported suites themselves, which found the seven
+defects above. Recording the gap rather than leaving the section blank: a blank section reads as
+"nothing found", and nothing was looked for.
 
 ## Rules promoted
 
+- `CLAUDE.md` § The parity rule — the rule now names the docs site's example blocks, not the demo
+  routes, as the surface it covers.
+- `CLAUDE.md` § The docs site — a new opening paragraph: it is the port's only demo surface, why
+  the route existed, and why it is gone.
+- `CLAUDE.md` § Commands — `pnpm dev` runs the docs site; `dev:docs` no longer exists.
+- `.claude/agents/astryx-parity.md` — the "our demo page" row of the where-things-live table is now
+  `docs/src/lib/examples/<Name>/`.
+- `.claude/skills/port-component/SKILL.md` — step 6 adds example blocks under `docs/`, and says
+  `packages/core` has no demo routes.
+- `.claude/agents/astryx-idiom.md` — two sharpenings, both paid for above: `$effect.pre` is for a
+  layout effect that **writes** before paint, never one that reads the just-committed DOM
+  (`bind:this` is a later effect); and an over-tracking effect with a **teardown** loses what that
+  teardown discards on every unchanged re-notification, not merely an extra run.
+
 ## Debts opened
+
+None new. Four existing entries were re-scoped by the routes retirement, since each described the
+demo route as the place a thing was or was not shown:
+
+- `Icon` demo hand-draws an SVG for component mode → **`Icon`'s component mode has no example
+  block**, since the hand-drawn `squiggle-icon.svelte` went with the route and `docs/` has no
+  counterpart.
+- The docs example blocks' Heroicons substitutions no longer describe themselves as matching the
+  demo routes', and now name the `BottomSheetSnapPoints` swaps.
+- `Thumbnail`'s hoisted image module is no longer "the same file as the demo routes'" — it is the
+  only copy.
+- The props-table entry no longer claims `PropsTablePattern` is ported on the demo route.

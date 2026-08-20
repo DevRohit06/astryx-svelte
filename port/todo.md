@@ -12,9 +12,9 @@ The first npm release shipped as `0.3.1` (porting Astryx `0.3.0` — the port's 
 can't express a release of its own, so it took the next free patch number instead of `0.3.0`
 itself). Since then the goal has been continuous upstream tracking rather than a one-time port:
 pull each Astryx release, close the class-oracle and theme-oracle drift it introduces, and cut a
-matching release of this port. The pin is currently Astryx `0.4.4` — see
+matching release of this port. The pin is currently Astryx `0.4.5` — see
 [`status.md`](./status.md) for the live count of what that leaves open. Set 2026-08-16, re-pinned
-2026-08-19.
+2026-08-20.
 
 `0.4.2` is merged to `main` but **not tagged**: the release step is still open below, and tagging
 from a quiet `main` is easier than tagging mid-batch.
@@ -22,10 +22,13 @@ from a quiet `main` is easier than tagging mid-batch.
 ## Next
 
 - [ ] Push the release tag for the current pin once its gate is green (see Open work → Release)
-- [ ] Finish the 0.4.2 test delta — 39 SideNav cases and 12 Slider cases, plus smaller counts in
-      Avatar, TopNav, ChatMessageBubble, useContainerReveal, DropdownMenuSubMenu and useFocusTrap.
-      The release-blocking part is done (useLayer's hosting block, the whole useMenuHover suite,
-      Slider's inset blocks, HoverCard's portal pair); `debts.md` carries the per-suite list
+- [ ] Finish the test delta carried in from the 0.4.2 batch — SideNav and Slider are the two
+      largest, with smaller shortfalls in Avatar, TopNav, ChatMessageBubble, useContainerReveal,
+      DropdownMenuSubMenu and useFocusTrap. The release-blocking part is done (useLayer's hosting
+      block, the whole useMenuHover suite, Slider's inset blocks, HoverCard's portal pair);
+      `debts.md` carries the per-suite list, re-derived against the current pin
+- [ ] Run batch 029's `close-batch` audits — `astryx-parity`, `astryx-idiom`, `astryx-test-parity`
+      and `astryx-surface` are all still owed for the BottomSheet family (`ledger/029`)
 - [ ] Hand-translate the deferred `.doc.mjs` examples. Upstream's are JSX, and this port's
       `ComponentExampleDoc.code` is documented as Svelte source, so emitting them verbatim would
       ship React as this CLI's answer to "show me an example" — the `Button.icon` mistake.

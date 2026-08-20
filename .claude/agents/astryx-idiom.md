@@ -64,6 +64,9 @@ Template expressions still track `$state`, so reactivity is not lost.
 inside an `$effect` tracks every source the getter touches, where upstream keyed the
 effect on two of them. Route those through `$derived` first — a derived notifies only
 when its _value_ changes, which is what a dependency array means (`useFocusTrap`).
+The damage is not always an extra run: an effect with a **teardown** loses whatever
+that teardown discards every time an unchanged dependency re-notifies, which is how
+`useMobileKeyboard` cleared the scroll range it had just measured when the sheet closed.
 
 **A ref callback translated to anything but an attachment.** Same attach/replace/detach
 lifecycle: the callback body becomes the attachment, its teardown becomes the return.
@@ -122,6 +125,17 @@ the template's; a child component's attachment flushes _before_ the parent's `$e
 `$effect.pre` runs before both. Any `$effect` that touches a DOM node, calls
 `layer.show()`, or reads something an attachment sets must be checked against that order
 — `useListFocus` had to move its sync _into_ the attachment for exactly this reason.
+
+**`$effect.pre` chosen for a layout effect that _reads_ the DOM.** React's
+`useLayoutEffect` runs after the commit, so `ref.current` is populated; that is where
+Svelte's plain `$effect` runs, not `$effect.pre`. `bind:this` is itself an effect created
+_after_ the script's, so a pre effect runs first with nothing bound — and if it reads the
+element `untrack`ed it never hears about the one that arrived. `BottomSheet` shipped three
+defects from this in one batch: an entrance that completed on the frame it began
+(`waitForTransition(null)` resolves immediately), a settle that resolved instantly because
+the pre pass read the render being _replaced_ and saw the drag's inline `transition: none`,
+and a flow active on mount that rendered a closed dialog. `$effect.pre` is for a layout
+effect that **writes** before paint.
 
 **`useId` faked.** `$props.id()` is the only correct counterpart, and the compiler
 permits it only at the top level of a component. A `.svelte.ts` must therefore take `id`
