@@ -144,6 +144,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { stableClassName } from '../../internal/naming.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import Field from '../field/field.svelte';
@@ -330,6 +331,15 @@
 
 	/** Escape during edit mode restores the token. */
 	function handleKeyDown(e: KeyboardEvent): void {
+		// BaseTypeahead invokes this external handler *before* its own IME guard,
+		// so we must guard here too: an IME candidate window uses Escape to cancel
+		// the pending composition, and that composing Escape fires before
+		// compositionend. Without this, a Korean/Japanese/Chinese user cancelling a
+		// candidate would instead exit edit mode and blur the field.
+		// See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		if (e.key === 'Escape' && editingValue) {
 			e.preventDefault();
 			isEditing = false;

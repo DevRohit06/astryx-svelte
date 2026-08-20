@@ -78,6 +78,7 @@
 	import { useTypeahead } from '../../hooks/use-typeahead.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import {
 		contextMenuAttrs,
@@ -212,7 +213,9 @@
 
 		const handleEscape = (e: KeyboardEvent) => {
 			if (e.key !== 'Escape') return;
-			if (e.isComposing || e.keyCode === 229) return;
+			// Ignore Escape that is committing/cancelling an IME composition;
+			// see utils/ime.ts for why.
+			if (isImeKeyEvent(e)) return;
 			e.preventDefault();
 			closeMenu();
 		};

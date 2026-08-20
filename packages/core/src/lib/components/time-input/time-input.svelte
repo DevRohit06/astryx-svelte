@@ -151,6 +151,7 @@
 	import { useSize } from '../../internal/contexts.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import {
@@ -443,6 +444,13 @@
 	}
 
 	function handleInputKeyDown(e: KeyboardEvent): void {
+		// ArrowUp/ArrowDown step the time and preventDefault; an IME candidate
+		// window uses those same arrows to navigate candidates, so guard the
+		// composing keydown (fires before compositionend) to avoid stealing them
+		// mid-composition. See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		// Arrow-key adjustment mutates the value; block it while showing a
 		// disabled reason (the input keeps focusability via aria-disabled).
 		if (isDisabled) {

@@ -199,6 +199,7 @@
 	import { useSize } from '../../internal/contexts.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { useInputContainer } from '../../hooks/use-input-container.svelte.js';
 	import { parseDateInput } from '../../utils/date-parser.js';
@@ -600,6 +601,13 @@
 	}
 
 	function handleDateKeyDown(e: KeyboardEvent): void {
+		// Guard the composing keydown (fires before compositionend): an IME uses
+		// Enter to commit the candidate and Escape to cancel it, so without this
+		// a CJK user committing a syllable with Enter would commit the pending
+		// date instead. See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		if (e.key === 'Escape' && popover.isOpen) {
 			e.preventDefault();
 			popover.hide();
@@ -673,6 +681,13 @@
 	}
 
 	function handleTimeKeyDown(e: KeyboardEvent): void {
+		// ArrowUp/ArrowDown step the time and preventDefault; an IME candidate
+		// window uses those same arrows to navigate candidates, so guard the
+		// composing keydown (fires before compositionend) to avoid stealing them
+		// mid-composition. See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
 			e.preventDefault();
 

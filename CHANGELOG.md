@@ -9,6 +9,106 @@ release the port makes on its own has no number of its own to take. 0.3.1 is the
 ports Astryx 0.3.0, exactly as 0.3.0 did, and changes only things upstream has no counterpart for.
 Each entry states its parity target for that reason.
 
+## 0.4.5
+
+Ports Astryx `0.4.5`.
+
+**This is the first release since `0.4.1`.** The `0.4.2` entry below was written, merged and never
+tagged, so it never reached npm — upgrading from `0.4.1` brings everything in _both_ entries, and
+nothing in `0.4.2` is superseded. It is kept below rather than folded in here, because it is an
+accurate account of its own upstream target and rewriting it would lose that.
+
+Across `0.4.3`, `0.4.4` and `0.4.5` upstream added exactly one component directory — `BottomSheet`,
+promoted out of `lab` — extracted four modules onto subpaths of their own, and drifted inside
+directories this port already shipped.
+
+### `BottomSheet`, promoted out of `lab`
+
+A mobile touch sheet that rises from the bottom edge, with drag-to-dismiss, drag-to-resize snap
+points, and mobile-keyboard accommodation. Upstream did not write it for this release; it moved from
+`packages/lab` into `core` at `0.4.4` and was rewritten on the way, so it arrives here as a fresh
+port rather than as drift.
+
+Two shapes. A standalone `BottomSheet` owns its own `<dialog>` — modal with a scrim by default,
+non-modal with `hasScrim={false}` so the page behind stays interactive. A `BottomSheetSwitcher`
+owns one shared dialog for a multi-step flow, and its children opt in with `sheetId`; handing off
+between steps keeps the native top layer, moves the sheet to the incoming step's height, and never
+closes and reopens the dialog underneath.
+
+`height` takes `'hug'`, `'capped'`, `'tall'`, or any CSS length. `snapPoints` adds resting heights
+the user can drag between; a stop of a quarter of the sheet or less is treated as a peek — it slides
+away rather than reflowing into itself, and thins the scrim as it goes. Only a fully expanded `tall`
+sheet accommodates the mobile keyboard, which is upstream's rule, and it stops doing so the moment
+the user drags it to a shorter detent.
+
+### An IME composition no longer reads as a command
+
+Seven components ran their keydown logic while an IME composition was still open. Because the
+composing keydown fires _before_ `compositionend`, a Korean, Japanese or Chinese user committing a
+candidate with Enter was committing the pending date, selecting the highlighted option or toggling
+it; the candidate window's arrows were stepping the time instead of walking candidates.
+
+`DateInput`, `DateTimeInput`, `TimeInput`, `NumberInput`, `Typeahead`, `Selector` and
+`MultiSelector` now guard on the shared `isImeKeyEvent` predicate, as upstream does. `ChatComposer`,
+`ContextMenu` and `useTooltip` already behaved correctly but carried their own inlined copy of the
+test; they call the shared predicate now, so there is one definition of "this keystroke belongs to
+the IME" rather than four.
+
+### Forms can declare a default optionality
+
+`FormLayout` takes `defaultOptionality`, so a form states once whether its fields are optional or
+required and only the exception carries a visible indicator. Fields resolve `isRequired` /
+`isOptional` against it; a field outside any layout is unaffected.
+
+### New
+
+- `characterCount`, `firstCharacter` and `truncateCharacters` on `@astryx-svelte/core/utils` —
+  grapheme-aware, so an emoji or a combining sequence counts as one character.
+- `isImeKeyEvent` moves to `@astryx-svelte/core/utils`. The `hooks` re-export stays for one release
+  and is marked deprecated, matching upstream.
+- `getStandaloneShortWeekdayNames` for calendar headers, from the CLDR standalone forms.
+- `deepMergeComponents`, split out of `defineTheme` so component style maps can be merged directly.
+- `expandColorScale` takes a per-scheme accent — `accent?: string | [light, dark]` — so one seed can
+  drive different accents in light and dark.
+- `TreeList` exposes `density` and `variant` as theming axes.
+- `StatusDot` takes an `icon` slot.
+
+### Fixed
+
+- Three documented theming targets rendered no class at all, so a theme could not reach them:
+  `input-clear-button`, `date-time-input-toggle-icon` and `date-time-input-clock-icon`.
+- `ComplexSelector`, `Banner`, `MobileNav` and `DateRangeInput` pick up upstream's fixes at these
+  tags; `MobileNav`'s close-timing rework (#4290) retires a divergence this port carried.
+
+### The demo routes are gone
+
+`packages/core` no longer ships `src/routes` — a SvelteKit demo app that predated the documentation
+site and duplicated it. Nothing published changes: the route was excluded from the tarball already.
+`pnpm dev` now runs the docs site, which is where every component's examples live, and
+`@sveltejs/adapter-auto` is no longer a dependency of `core`.
+
+### Verified
+
+Both fidelity oracles reach zero: **1,635 style keys and 532 inline call sites with no skips**, and
+`astryx.css` matching upstream. All seven theme oracles are clean.
+
+The closing audits are the reason to trust this release rather than the green suite. The ported
+`BottomSheet` suites found seven defects during the port, six of them one mistake — a Svelte effect
+reading the DOM a phase too early — and the idiom audit run _after_ those were fixed found two more
+that 146 passing cases could not see, because the assertions they would have to fail are true in
+either phase.
+
+The same pass re-derived **every suite header against the `0.4.5` pin**. A header stating a case
+count is a contract against upstream's file at a specific version, and 23 still named `0.4.1` or
+`0.4.2`; four were not merely stale but wrong in a way that made a real gap look accounted for. 17
+missing upstream cases landed as a result, including a five-case deferral whose stated reason had
+expired.
+
+172 client files at 4,828 cases, plus 44 server files at 939.
+
+Two suites remain short of upstream and say so in their own headers rather than leaving it implied:
+`SideNav` and `Slider`, both predating this release and tracked in `port/debts.md`.
+
 ## 0.4.2
 
 Ports Astryx `0.4.2`.

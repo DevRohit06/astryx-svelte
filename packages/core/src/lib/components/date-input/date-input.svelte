@@ -195,6 +195,7 @@
 	import { useSize } from '../../internal/contexts.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import { isFocusDetached } from '../../utils/focus-return.js';
@@ -535,6 +536,14 @@
 	}
 
 	function handleInputKeyDown(e: KeyboardEvent): void {
+		// An in-progress IME composition uses Enter to commit the candidate and
+		// Escape to cancel it; that composing keydown fires before
+		// compositionend, so without this guard a Korean/Japanese/Chinese user
+		// committing a syllable with Enter would instead commit the pending date
+		// (or Escape would close the calendar mid-composition). See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		if (e.key === 'Escape' && popover.isOpen) {
 			e.preventDefault();
 			popover.hide();

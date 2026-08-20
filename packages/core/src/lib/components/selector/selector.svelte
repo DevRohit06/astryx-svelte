@@ -265,6 +265,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
 	import { useTypeahead } from '../../hooks/use-typeahead.js';
@@ -1164,6 +1165,15 @@
 						}
 					}}
 					onkeydown={(e) => {
+						// An in-progress IME composition uses these same keys (Enter to
+						// commit the candidate, Escape/Arrows to navigate the candidate
+						// window); the composing keydown fires before compositionend, so
+						// without this guard a Korean/Japanese/Chinese user committing a
+						// syllable with Enter would instead select the highlighted option.
+						// See utils/ime.ts.
+						if (isImeKeyEvent(e)) {
+							return;
+						}
 						// Arrow keys navigate options; Enter selects; Escape closes.
 						// Home/End are left to the input for caret movement (APG editable
 						// combobox); PageUp/PageDown are the sanctioned substitute for
