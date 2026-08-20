@@ -12,6 +12,7 @@ import { registerTheme } from './theme-registry.js';
 import type { SyntaxThemeDefinition } from './syntax/define-syntax-theme.js';
 import type { IconRegistry } from '../components/icon/icon-registry.js';
 import type { IndicatorRegistry } from '../components/indicator/types.js';
+import { deepMergeComponents } from './merge-components.js';
 
 /**
  * Ported from Astryx's `src/theme/defineTheme.ts`, covering the surface the
@@ -221,43 +222,6 @@ function syntaxTokenMap(syntax: SyntaxThemeDefinition | undefined): Record<strin
 		tokens[`--color-syntax-${name}`] = value;
 	}
 	return tokens;
-}
-
-/**
- * Upstream's `deepMergeComponents`. Merges two component maps **three levels
- * deep** — component, then style key, then the declarations within it — so an
- * override that names one property of a generated style key keeps the rest.
- *
- * The depth is the whole point, and this port had it one level too shallow: a
- * theme writing `text: {'type:display-1': {fontFamily}}` (butter, gothic and
- * y2k all do, to put a display face on the largest three sizes) replaced the
- * generated entry outright and silently dropped the `fontSize` and `lineHeight`
- * bindings with it — six missing declarations per theme, and a display heading
- * that fell back to the component's compiled default size. Neutral never
- * exercised it: none of its `components` keys collide with a generated one.
- */
-function deepMergeComponents(
-	base: ComponentOverrides,
-	overrides: ComponentOverrides | undefined
-): ComponentOverrides {
-	if (!overrides) return base;
-
-	const result: ComponentOverrides = {};
-	for (const [component, styleKeys] of Object.entries(base)) {
-		result[component] = { ...styleKeys };
-	}
-
-	for (const [component, styleKeys] of Object.entries(overrides)) {
-		if (!result[component]) {
-			result[component] = { ...styleKeys };
-			continue;
-		}
-		for (const [styleKey, styles] of Object.entries(styleKeys)) {
-			result[component][styleKey] = { ...result[component][styleKey], ...styles };
-		}
-	}
-
-	return result;
 }
 
 /**

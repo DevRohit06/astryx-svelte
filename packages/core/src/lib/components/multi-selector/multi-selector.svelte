@@ -252,6 +252,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
@@ -277,6 +278,7 @@
 		normalizeOption
 	} from '../selector/utils.js';
 	import { useMultiCombobox } from './use-multi-combobox.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		multiSelectorCheckboxDecorativeAttrs,
 		multiSelectorChevronXstyle,
@@ -362,6 +364,14 @@
 		style: styleProp,
 		...rest
 	}: MultiSelectorProps<T> = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	const placeholder = $derived(
@@ -469,11 +479,11 @@
 		const selectableSet = new Set(items.map((item) => item.value));
 		const selectedCount = nextValue.filter((v) => selectableSet.has(v)).length;
 		if (selectedCount === 0) {
-			announce('Selection cleared');
+			announce(t('@astryx.multiSelector.selectionCleared'));
 		} else if (total > 0 && selectedCount === total) {
-			announce('All selected');
+			announce(t('@astryx.multiSelector.allSelected'));
 		} else {
-			announce(`${selectedCount} of ${total} selected`);
+			announce(t('@astryx.multiSelector.selectionCount', { count: selectedCount, total }));
 		}
 	}
 
@@ -495,7 +505,11 @@
 			return;
 		}
 		const count = filterOptionsByQuery(selectableItems, nextQuery).length;
-		announce(count === 0 ? 'No results found' : `${count} result${count === 1 ? '' : 's'}`);
+		announce(
+			count === 0
+				? t('@astryx.multiSelector.emptySearchResults')
+				: t('@astryx.multiSelector.resultCount', { count })
+		);
 	}
 
 	// Single source of truth for item order. Both the hook (keyboard navigation)
@@ -1095,7 +1109,7 @@
 				: undefined}
 			aria-describedby={aria.ariaDescribedBy}
 			aria-labelledby={aria.ariaLabelledBy}
-			aria-required={isRequired ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			disabled={isDisabled && !showsDisabledMessage}
@@ -1247,6 +1261,15 @@
 						}
 					}}
 					onkeydown={(e) => {
+						// An in-progress IME composition uses these same keys (Enter to
+						// commit the candidate, Escape/Arrows to navigate the candidate
+						// window); the composing keydown fires before compositionend, so
+						// without this guard a Korean/Japanese/Chinese user committing a
+						// syllable with Enter would instead toggle the highlighted option.
+						// See utils/ime.ts.
+						if (isImeKeyEvent(e)) {
+							return;
+						}
 						// Arrow keys navigate options; Enter toggles; Escape closes.
 						// Space and Home/End are left to the input (type a space / move
 						// the caret) per the APG editable combobox; PageUp/PageDown are

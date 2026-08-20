@@ -3,7 +3,7 @@ import { cleanup, render } from 'vitest-browser-svelte';
 import Probe from './fixtures/scroll-lock-probe.svelte';
 
 /**
- * Astryx's `hooks/useScrollLock.test.ts` at **v0.4.1**, all 3 cases, in
+ * Astryx's `hooks/useScrollLock.test.ts` at **v0.4.5**, all 3 cases, in
  * upstream's order and with its titles and assertions verbatim. None dropped:
  * the file has no `displayName` case, no non-JSX construction form and no
  * snapshot.

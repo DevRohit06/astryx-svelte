@@ -8,6 +8,7 @@ import {
 	type LayerPlacement
 } from '../layer/use-layer.svelte.js';
 import { tooltipSurfaceXstyle } from './use-tooltip.stylex.js';
+import { isImeKeyEvent } from '../../utils/ime.js';
 
 /**
  * Hover/focus-triggered tooltips, ported from Astryx's `Tooltip/useTooltip.tsx`.
@@ -441,7 +442,9 @@ export function useTooltip(options: () => TooltipOptions): TooltipReturn {
 			if (e.key !== 'Escape') {
 				return;
 			}
-			if (e.isComposing || e.keyCode === 229) {
+			// Ignore Escape that is committing/cancelling an IME composition;
+			// see utils/ime.ts for why.
+			if (isImeKeyEvent(e)) {
 				return;
 			}
 			clearTimeouts();

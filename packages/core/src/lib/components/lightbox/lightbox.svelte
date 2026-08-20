@@ -205,10 +205,15 @@
 			return;
 		}
 		const item = list[Math.min(currentIndex, list.length - 1)];
-		const position = `${currentIndex + 1} of ${list.length}`;
-		// Upstream hard-codes these two strings rather than routing them through
-		// `useTranslator`, unlike its four button labels. Replicated, not fixed.
-		announce(item?.alt ? `${item.alt}, ${position}` : `Image ${position}`);
+		// Upstream routed these two through `useTranslator` at 0.4.x; this port's
+		// comment here used to say it hard-coded them, which was true at an earlier
+		// pin and is why the strings stayed English after the catalogs moved on.
+		const position = { index: currentIndex + 1, total: list.length };
+		announce(
+			item?.alt
+				? t('@astryx.lightbox.mediaPosition', { alt: item.alt, ...position })
+				: t('@astryx.lightbox.imagePosition', position)
+		);
 	});
 
 	/**

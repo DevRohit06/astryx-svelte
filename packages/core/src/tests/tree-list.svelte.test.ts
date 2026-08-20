@@ -7,18 +7,16 @@ import TreeListFixture from './fixtures/tree-list-fixture.svelte';
 import type { TreeListFixtureItem } from './fixtures/tree-list-fixture.svelte';
 
 /**
- * Ported from Astryx's `TreeList/TreeList.test.tsx` — **71 of its 76 `it` cases**
- * at v0.4.1. Client (real Chromium) project: focus, roving tabindex and the APG
- * tree keyboard model are the bulk of what is here.
+ * Ported from Astryx's `TreeList/TreeList.test.tsx` — **all 76 of its `it`
+ * cases** at v0.4.5. Client (real Chromium) project: focus, roving tabindex and
+ * the APG tree keyboard model are the bulk of what is here.
  *
- * **The five that are absent are the whole `leaf chevron-column offset`
- * describe** — `a leaf in a mixed group reserves the chevron column`, `a leaf
- * under an expandable ancestor reserves the chevron column even when its own
- * group is all leaves`, `an expanded parent's all-leaf children reserve the
- * chevron column`, `every row in a flat (all-leaf) tree sits flush` and `leaves
- * flush in an all-leaf group have the same indent structure as a parent at that
- * level`. They belong to #4838, the chevron unit that moved the glyph onto
- * `<Icon xstyle>`, and land with it rather than with the row-gap lever below.
+ * The header read "**71 of its 76** at v0.4.1" and named the five that were
+ * absent: the whole `leaf chevron-column offset` describe, parked against
+ * #4838's chevron unit. **That parking has expired** — the chevron unit landed,
+ * `tree-list-item.svelte` computes `reservesChevronColumn` exactly as upstream
+ * does, and all five are ported here in upstream's position, between `variant`
+ * and `row gap lever`. All five passed on the first run.
  *
  * The **five `row gap lever` cases are new at 0.4.1 (#4540)** and are here.
  *
@@ -644,6 +642,83 @@ describe('TreeList', () => {
 			};
 			expect(indentOf('Mid')).toContain('var(--tree-list-indent)');
 			expect(indentOf('Leaf')).toContain('var(--tree-list-indent)');
+		});
+	});
+
+	// =========================================================================
+	// Leaf chevron-column offset (group-expandable-sibling awareness)
+	// =========================================================================
+
+	describe('leaf chevron-column offset', () => {
+		// A row publishes its indent as the inline `--_tree-indent` custom property.
+		// A leaf that reserves the chevron column adds a fixed offset
+		// (chevron width + gap) on top of its level indent; a flush leaf does not.
+		// The reserved column is expressed as the literal `+ <spacing-4> + <spacing-2>`
+		// suffix in the calc(), so its presence is what we assert (the token values
+		// are not resolved by reading the declared style, so we check the structure,
+		// not pixels).
+		const indentStyleOf = (container: HTMLElement, text: string): string => {
+			const li = rowOf(container, text);
+			const styled = li.querySelector('[style*="--_tree-indent"]');
+			return styled?.getAttribute('style') ?? '';
+		};
+		// A reserved chevron column adds two extra terms to the indent calc()
+		// beyond the single `level * var(--tree-list-indent)` term.
+		const reservesColumn = (container: HTMLElement, text: string): boolean => {
+			const style = indentStyleOf(container, text);
+			// count the `var(` occurrences inside --_tree-indent: a flush row has
+			// exactly one (the indent step); a reserving leaf adds the chevron
+			// width + gap tokens, so it has more.
+			const m = /--_tree-indent:\s*calc\(([^;]*)\)/.exec(style);
+			const body = m?.[1] ?? '';
+			return (body.match(/\bvar\(/g)?.length ?? 0) > 1 || body.includes('+');
+		};
+
+		it('a leaf in a mixed group reserves the chevron column (aligns under its expandable sibling)', async () => {
+			// Group: [Parent (has children), Sibling (leaf)] → Sibling must line up
+			// under Parent's caret, so it keeps the chevron-column offset.
+			const screen = await render(TreeListFixture, { props: { items: nestedItems } });
+			expect(reservesColumn(screen.container, 'Sibling')).toBe(true);
+		});
+
+		it('a leaf under an expandable ancestor reserves the chevron column even when its own group is all leaves', async () => {
+			// 'Root' → 'Mid' → 'Leaf'; 'Leaf' is the only item in its immediate
+			// group, but the tree has carets (Root, Mid), so Leaf must reserve the
+			// chevron column to stay indented past its parent's label. Flushing it
+			// here would push it left of Mid's label — the all-leaf-group bug.
+			const screen = await render(TreeListFixture, {
+				props: { items: deepItems, tree: { variant: 'noGuides' } }
+			});
+			expect(reservesColumn(screen.container, 'Leaf')).toBe(true);
+		});
+
+		it("an expanded parent's all-leaf children reserve the chevron column (do not flush left of the parent label)", async () => {
+			// Regression: Parent (caret) → [Child 1, Child 2] is an all-leaf group
+			// nested under an expandable parent. Per-group flushing wrongly dropped
+			// these children's chevron column, pushing them LEFT of Parent's own
+			// label. Because the tree has a caret, they must reserve the column and
+			// stay indented past Parent.
+			const screen = await render(TreeListFixture, { props: { items: nestedItemsExpanded } });
+			expect(reservesColumn(screen.container, 'Child 1')).toBe(true);
+			expect(reservesColumn(screen.container, 'Child 2')).toBe(true);
+		});
+
+		it('every row in a flat (all-leaf) tree sits flush — no chevron column reserved', async () => {
+			const screen = await render(TreeListFixture, { props: { items: flatItems } });
+			expect(reservesColumn(screen.container, 'Apple')).toBe(false);
+			expect(reservesColumn(screen.container, 'Banana')).toBe(false);
+			expect(reservesColumn(screen.container, 'Cherry')).toBe(false);
+		});
+
+		it('leaves flush in an all-leaf group have the same indent structure as a parent at that level', async () => {
+			// In a mixed group the reserving leaf indent has the extra terms; in an
+			// all-leaf group the leaf indent is the bare level step, exactly like a
+			// parent row's indent.
+			const screen = await render(TreeListFixture, { props: { items: flatItems } });
+			const flush = indentStyleOf(screen.container, 'Apple');
+			// bare level step: one var(--tree-list-indent), no additive chevron terms
+			expect(flush).toContain('var(--tree-list-indent)');
+			expect(/--_tree-indent:\s*calc\([^;]*\+[^;]*\)/.test(flush)).toBe(false);
 		});
 	});
 

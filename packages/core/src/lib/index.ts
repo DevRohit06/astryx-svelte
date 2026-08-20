@@ -37,6 +37,8 @@ export { default as AvatarGroupOverflow } from './components/avatar-group/avatar
 export { default as Badge } from './components/badge/badge.svelte';
 export { default as Banner } from './components/banner/banner.svelte';
 export { default as Blockquote } from './components/blockquote/blockquote.svelte';
+export { default as BottomSheet } from './components/bottom-sheet/bottom-sheet.svelte';
+export { default as BottomSheetSwitcher } from './components/bottom-sheet/bottom-sheet-switcher.svelte';
 export { default as BreadcrumbItem } from './components/breadcrumbs/breadcrumb-item.svelte';
 // The breadcrumb `menu` prop reuses the DropdownMenu item API, so the item
 // components are re-exported under `Breadcrumb*` aliases for family coherence,
@@ -361,6 +363,17 @@ export type {
 	BannerStatusMap
 } from './components/banner/banner.stylex.js';
 export type { BlockquoteProps } from './components/blockquote/blockquote.svelte';
+// Upstream's `BottomSheet/index.ts` publishes all three from `BottomSheet`, and
+// the published surface here is the same three names. The forwarding path is
+// not: `BottomSheetHeight` and `BottomSheetSnapPoint` are named from the modules
+// that declare them rather than through `bottom-sheet.svelte`, because a type
+// re-export inside a `<script module>` trips `no-import-assign` and the alias
+// that dodges it leaks an unimportable name into the generated props table. Same
+// arrangement as `Calendar`'s date types, and for the same reason.
+export type { BottomSheetProps } from './components/bottom-sheet/bottom-sheet.svelte';
+export type { BottomSheetHeight } from './components/bottom-sheet/bottom-sheet-panel.stylex.js';
+export type { BottomSheetSnapPoint } from './components/bottom-sheet/snap-offsets.js';
+export type { BottomSheetSwitcherProps } from './components/bottom-sheet/bottom-sheet-switcher.svelte';
 export type { BreadcrumbsProps } from './components/breadcrumbs/breadcrumbs.svelte';
 export type { BreadcrumbItemProps } from './components/breadcrumbs/breadcrumb-item.svelte';
 // The `Breadcrumb*` menu aliases, as upstream's `Breadcrumbs/index.ts` publishes
@@ -536,16 +549,20 @@ export {
 	useCommandPaletteContext,
 	type CommandPaletteContextValue
 } from './components/command-palette/command-palette-context.svelte.js';
-// Upstream's `ComplexSelector/index.ts` publishes exactly these four types
-// beside the component. `ComplexSelectorSize` comes from the style module (where
-// the attrs function that indexes the size styles needs it), the same split
-// `SelectorSize` and `MultiSelectorSize` take.
+// Upstream's `ComplexSelector/index.ts` publishes exactly these six types beside
+// the component. `ComplexSelectorSize` and `ComplexSelectorVariant` come from the
+// style module (where the attrs function that indexes their styles needs them),
+// the same split `SelectorSize` and `MultiSelectorSize` take.
 export type {
+	ComplexSelectorHandle,
 	ComplexSelectorProps,
 	ComplexSelectorRenderState,
 	ComplexSelectorStatus
 } from './components/complex-selector/complex-selector.svelte';
-export type { ComplexSelectorSize } from './components/complex-selector/complex-selector.stylex.js';
+export type {
+	ComplexSelectorSize,
+	ComplexSelectorVariant
+} from './components/complex-selector/complex-selector.stylex.js';
 // The item types are upstream's aliases for `DropdownMenu`'s, re-exported under
 // the ContextMenu name exactly as its own `index.ts` does.
 export type { DropdownMenuItemProps as ContextMenuItemProps } from './components/dropdown-menu/dropdown-menu-item.svelte';
@@ -1248,7 +1265,9 @@ export {
 	FormLayoutContext,
 	setFormLayoutContext,
 	useFormLayout,
-	type FormLayoutDirection
+	type FormLayoutDirection,
+	type FormLayoutContextValue,
+	type FormOptionality
 } from './components/form-layout/form-layout-context.svelte.js';
 // Upstream's `InputGroup/index.ts` publishes `useInputGroup` and the value type,
 // but not the context object or its provider — `setInputGroupContext` is an

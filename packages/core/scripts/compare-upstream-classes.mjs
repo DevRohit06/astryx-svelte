@@ -1540,6 +1540,13 @@ const CASES = [
 		inline: [
 			['styles.iconWrapper'],
 			['styles.headerContent'],
+			// **`headerContentWithEndContent` is new at upstream 0.4.4**, and it makes
+			// the header content a folding *pair* — the same shape `contentArea` has
+			// below. The `flex-basis: 8rem` it adds is the wrap threshold: it applies
+			// only when there is `endContent` to wrap, so the compiler folds the slot
+			// twice, with and without it. Listing only the bare combination leaves
+			// upstream's second string unclaimed and the run fails on it.
+			['styles.headerContent', 'styles.headerContentWithEndContent'],
 			['styles.title'],
 			['styles.description'],
 			['styles.contentArea'],
@@ -3113,7 +3120,14 @@ const CASES = [
 		file: 'src/lib/components/table/plugins/row-expansion/row-expansion.stylex.js',
 		upstreamFile: 'Table/plugins/rowExpansion/useTableRowExpansion.js',
 		inline: [
-			['expansionStyles.chevronButton'],
+			// **The bare button stopped folding alone at upstream 0.4.5.** It used to
+			// be `isExpanded && chevronExpanded`, so the collapsed state applied no
+			// transform and the button emitted on its own. The RTL mirror is now
+			// folded into each state's `transform` (one element, and the later
+			// `transform` value would win over a separate mirror style), which makes
+			// it a ternary — so every call site carries exactly one of the pair and
+			// there is no lone-button string left to claim.
+			['expansionStyles.chevronButton', 'expansionStyles.chevronCollapsed'],
 			['expansionStyles.chevronButton', 'expansionStyles.chevronExpanded'],
 			['expansionStyles.expandedRow'],
 			['expansionStyles.expandedCell']
@@ -3564,6 +3578,113 @@ const CASES = [
 			['styles.itemLabel'],
 			['styles.groupHeading'],
 			['styles.emptyState']
+		]
+	},
+	{
+		// **One module of ours, two upstream files — and the same five keys declared
+		// twice upstream.** `BottomSheet.tsx` and `BottomSheetSwitcher.tsx` each
+		// carry their own `stylex.create` for the dialog shell, with identical
+		// properties and identical token references, so both compile to the same
+		// atoms. This port shares one module between the two hosts rather than
+		// duplicating it byte for byte, which is why the file appears in two cases
+		// here — the `Stack` / `StackItem` precedent, arrived at from the opposite
+		// direction (there, one of ours split across two of theirs; here, one of
+		// ours standing in for two copies of theirs).
+		//
+		// Object mode, and the switcher is the copy that leaves objects behind: it
+		// assigns `stylex.props(styles.dialog, isFlowVisible && styles.dialogOpen,
+		// hasScrim && styles.scrim, !hasScrim && styles.dialogNonModal, xstyle)` to a
+		// `dialogStyleProps` const, and the `xstyle` beside the merge defeats the
+		// fold, so `dist/` keeps `dialog`, `dialogOpen`, `dialogNonModal` and `scrim`
+		// live. Upstream's group is named `styles` and so is ours, so no rename.
+		//
+		// The switcher declares no positioner — the block-end positioner belongs to
+		// `BottomSheet.js` and is claimed inline in the case below. Our module holds
+		// both because both hosts here draw from it; object mode only walks the
+		// groups *upstream* declares, so the extra keys are not a leftover.
+		file: 'src/lib/components/bottom-sheet/bottom-sheet.stylex.js',
+		upstreamFile: 'BottomSheet/BottomSheetSwitcher.js'
+	},
+	{
+		// The same module against the OTHER host, where nothing survives as an
+		// object at all: `BottomSheet.js` merges the identical keys at a literal call
+		// site with no `xstyle` and no dynamic index beside them, so the compiler
+		// folded every one into a class string and `dist/` declares no `styles`.
+		// Inline mode only — twelve claims, no object diff, and the two modes
+		// together are what cover the module's nine keys.
+		//
+		// The dialog is an eight-entry lookup table keyed
+		// `!!shouldPresent << 2 | !!hasScrim << 1 | !!!hasScrim << 0`. Bits 1 and 0
+		// are exact complements, so four of the eight can never be reached at
+		// runtime — but each is still a merge of our keys in upstream's order, so
+		// all eight are CLAIMED rather than waved through. The filler tolerance at
+		// the foot of the loop only applies to marker cases and this is not one, so
+		// an unclaimed permutation would read as "upstream applies classes we never
+		// produce"; claiming it is both cheaper and stricter.
+		//
+		// Two of the four keys OVERRIDE a property the base already set rather than
+		// adding one, which is exactly why the order of a combination is
+		// load-bearing:
+		//   • `dialogOpen` replaces `display: none` (x1s85apg) with `display: block`
+		//     (x1lliihq) — one property in, one property out, so the merged string
+		//     stays twelve classes rather than growing to thirteen.
+		//   • `dialogNonModal` replaces the base's `100dvw` / `100dvh`
+		//     (x1o6l61p / xtdtrs8) with `100%` / `100%` (xh8yej3 / x5yr21d) while
+		//     adding `pointer-events` and `z-index`, so the non-modal strings are
+		//     two classes shorter than "base plus four" would predict.
+		// Neither is a skip: both are the merge working, and reproducing them is the
+		// check. `styles.dialog`'s `border: 'none'` emits no class on either side —
+		// StyleX drops it — so it is simply absent from both, the same way
+		// `useKeyboardHint`'s `hint` is.
+		//
+		// The positioner is a second, four-entry table keyed
+		// `!!!isPresented << 1 | !!isTopSheet << 0`, all four reachable, where
+		// `positionerHidden` overrides `display: flex` the same way. Its index-0
+		// string is byte-identical to the one the standalone host's own positioner
+		// `<div>` folded to, and `extractInlineClassNames` collects into a Set, so
+		// one claim covers both call sites.
+		file: 'src/lib/components/bottom-sheet/bottom-sheet.stylex.js',
+		upstreamFile: 'BottomSheet/BottomSheet.js',
+		inline: [
+			['styles.dialog'],
+			['styles.dialog', 'styles.dialogOpen'],
+			['styles.dialog', 'styles.scrim'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.scrim'],
+			['styles.dialog', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.scrim', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.scrim', 'styles.dialogNonModal'],
+			['styles.positioner'],
+			['styles.positioner', 'styles.positionerTop'],
+			['styles.positioner', 'styles.positionerHidden'],
+			['styles.positioner', 'styles.positionerHidden', 'styles.positionerTop']
+		]
+	},
+	{
+		// Both modes. Object mode covers the six keys the panel's own `stylex.props`
+		// merges — `sheet`, the three motion states (`sheetClosing`, `sheetFading`,
+		// `sheetInactive`) and the two height budgets (`budget`, `hugHeight`) —
+		// because that call site carries an `xstyle`, a `height === 'hug'` ternary
+		// and a `mergeProps` wrapper, so the compiler could fold none of it.
+		// `sheet`'s `transform` is one hash with two classes (the `@starting-style`
+		// pair) and its `transitionDuration` likewise (the reduced-motion pair), so
+		// `parsePairs` is what keeps them from being under-counted.
+		//
+		// The handle bar, its pill and the scrolling body each reach exactly one call
+		// site with nothing beside them and were resolved into literal strings, so
+		// they have no object to diff and are claimed inline. The body is a two-entry
+		// table keyed `!!(height === 'tall') << 0`; `tallKeyboardBody` touches no
+		// property the base body sets (`scroll-padding-block-end` plus the four
+		// `::after` atoms), so it JOINS rather than replaces — the opposite of the
+		// dialog pair above, and worth stating because both shapes appear in the one
+		// component.
+		file: 'src/lib/components/bottom-sheet/bottom-sheet-panel.stylex.js',
+		upstreamFile: 'BottomSheet/BottomSheetPanel.js',
+		inline: [
+			['styles.handleBar'],
+			['styles.handlePill'],
+			['styles.body'],
+			['styles.body', 'styles.tallKeyboardBody']
 		]
 	}
 ];

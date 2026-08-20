@@ -5,9 +5,10 @@ import I18nHarness from './fixtures/table-row-expansion-i18n.svelte';
 
 /**
  * Ported from Astryx's
- * `Table/plugins/rowExpansion/useTableRowExpansion.test.tsx` at **v0.4.1** — all
+ * `Table/plugins/rowExpansion/useTableRowExpansion.test.tsx` at **v0.4.5** — all
  * **13** of its `it` cases, in upstream's order and under upstream's names.
- * Nothing dropped, nothing added.
+ * Nothing dropped, nothing added. (Re-derived at the 0.4.5 pin; upstream's file
+ * has not moved since v0.4.1, where this header last stated the count.)
  *
  * ## The count changed because the plugin did
  *

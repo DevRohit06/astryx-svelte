@@ -135,6 +135,7 @@
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		switchContainerAttrs,
 		switchFieldAttrs,
@@ -191,6 +192,14 @@
 		style: styleProp,
 		...rest
 	}: SwitchProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	// Upstream mints three ids with three `useId` calls plus a fourth inside
 	// `useTooltip`. `$props.id()` may be called once per component, so the
@@ -267,7 +276,9 @@
 		})
 	);
 	const fieldAttrs = $derived(switchFieldAttrs(width, xstyle));
-	const containerAttrs = $derived(switchContainerAttrs(labelSpacing === 'spread', isDisabled));
+	const containerAttrs = $derived(
+		switchContainerAttrs(labelSpacing === 'spread', isDisabled, isLabelHidden)
+	);
 	const wrapperAttrs = $derived(switchWrapperAttrs(size));
 	const inputAttrs = $derived(switchInputAttrs(size, isDisabled, isBusy));
 	const trackTheme = $derived(
@@ -317,6 +328,7 @@
 			aria-disabled={showsDisabledMessage ? 'true' : undefined}
 			form={showsDisabledMessage ? '' : undefined}
 			required={isRequired}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			onchange={handleChange}
 			{onfocus}
 			{onblur}

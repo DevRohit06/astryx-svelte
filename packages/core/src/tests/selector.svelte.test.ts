@@ -14,10 +14,33 @@ import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 import { spacingVars } from '$lib/styles/tokens.stylex.js';
 
 /**
- * Astryx's `Selector/Selector.test.tsx` at v0.4.1, ported case for case — 123
- * upstream blocks producing **124 cases** (the last is an `it.each` with two
- * rows), 124 here, none dropped. There is no ref-callback, no `displayName` and
- * no snapshot in the file, so nothing is React-only.
+ * Astryx's `Selector/Selector.test.tsx` at v0.4.5, ported case for case — 124
+ * upstream blocks producing **125 cases** (the last is an `it.each` with two
+ * rows), **124 here**. There is no ref-callback, no `displayName` and no
+ * snapshot in the file, so nothing is React-only.
+ *
+ * ## ONE CASE IS MISSING, and it is blocked on a port defect
+ *
+ * **`does not select the highlighted option on a composing Enter (IME)`**
+ * (upstream `:1004`, in `describe('hasSearch')`) is NOT here. It is not
+ * droppable, and it would fail if written: the search input's keydown handler in
+ * `selector.svelte` has **no `isImeKeyEvent` guard**, where upstream's has
+ * carried one since the case landed (`Selector.tsx:1066`). A CJK user committing
+ * an IME candidate with Enter therefore selects the highlighted option instead.
+ * `utils/ime.ts` is ported and exported here; it is simply not called from this
+ * component. Write the case the moment the guard lands — it transcribes from
+ * upstream unchanged. The same gap blocks two cases in `date-time-input` and one
+ * each in `time-input` and `date-input`.
+ *
+ * ## The count, re-derived at the v0.4.5 pin
+ *
+ * This header read "123 upstream blocks … **124 cases**, 124 here, none
+ * dropped" at v0.4.1 and stayed true only until the pin moved: 0.4.x added the
+ * IME case above, so the header was hiding a one-case gap. The one other title
+ * that differs is not a gap — upstream's `announces the empty-results message
+ * when nothing matches` is here as `announces "No results found" when nothing
+ * matches`, the same case reading this port's default English catalog where
+ * upstream reads an `fr` override.
  *
  * Runs in the **client (real Chromium)** project, for the reason
  * `popover.svelte.test.ts` and `dropdown-menu.svelte.test.ts` do: the popup opens

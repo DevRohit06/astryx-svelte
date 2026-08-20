@@ -10,7 +10,7 @@
  *
  * Upstream repeats the four literals in each block file that needs them. They
  * are hoisted here instead — three blocks share them, the bytes are identical,
- * and nothing about what renders changes. Same file as the demo routes'
+ * and nothing about what renders changes. Began as a copy of the demo route's
  * `thumbnail-images.ts`, kept separate because `docs/` does not import from
  * core's `src/`.
  */

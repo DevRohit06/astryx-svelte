@@ -12,15 +12,26 @@ import DateInputI18n from './fixtures/date-input-i18n.svelte';
 
 /**
  * Astryx's `DateInput/DateInput.test.tsx`, ported case for case — **84 of
- * upstream's 93 at v0.4.1** (49 directly in `describe('DateInput')`, 5 in
- * `describe('hasClear')`, 4 in `describe('incomplete typed input')`, 1 in
+ * upstream's 94 at v0.4.5** (49 of the 50 directly in `describe('DateInput')`,
+ * 5 in `describe('hasClear')`, 4 in `describe('incomplete typed input')`, 1 in
  * `describe('external value changes')`, 2 in `describe('InputGroup')`, 8 in
  * `describe('disabledMessage')`, 8 in `describe('format')`, 3 in
  * `describe('weekStartsOn')`, 2 of the 4 in the top-level `DateInput clear icon
  * theme target` and 2 in `DateInput disabled theme state`).
  *
- * The 9 absences are all pre-v0.3.0 work belonging to other workstreams, which
- * land with them rather than here:
+ * **The count is re-derived at the v0.4.5 pin.** It read "84 of upstream's 93 at
+ * v0.4.1" and named 9 absences; upstream has **94**, so a tenth had appeared and
+ * was going unnamed. It is `does not commit on a composing Enter (IME)`
+ * (upstream `:539`), and it is **blocked on a port defect**, not deferred to
+ * another workstream: `date-input.svelte`'s keydown handler has no
+ * `isImeKeyEvent` guard, where upstream's has carried one since the case landed,
+ * so a CJK user committing an IME candidate with Enter commits the pending date.
+ * `utils/ime.ts` is ported and exported here; it is simply not called from this
+ * component. The same gap blocks two cases in `date-time-input` and one each in
+ * `time-input` and `selector`.
+ *
+ * The other 9 absences are all pre-v0.3.0 work belonging to other workstreams,
+ * which land with them rather than here:
  * - `DateInput statusVariant forwarding` (2)
  * - `DateInput calendar-toggle icon theme target` (5)
  * - the two `DateInput clear icon theme target` cases that v0.4.1 did *not*

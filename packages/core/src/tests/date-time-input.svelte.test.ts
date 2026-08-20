@@ -5,21 +5,50 @@ import { tick } from 'svelte';
 import { createAttachmentKey } from 'svelte/attachments';
 import DateTimeInput from '$lib/components/date-time-input/date-time-input.svelte';
 import type { ISODateTimeString } from '$lib/components/date-time-input/date-time-input.svelte';
+import Icon from '$lib/components/icon/icon.svelte';
 import { defineTheme } from '$lib/theme/define-theme.js';
 import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import DateTimeInputI18n from './fixtures/date-time-input-i18n.svelte';
 
 /**
- * Astryx's `DateTimeInput/DateTimeInput.test.tsx`, ported case for case — **all
- * 83 of upstream's 83** at v0.4.1 (45 directly in `describe('DateTimeInput')`,
+ * Astryx's `DateTimeInput/DateTimeInput.test.tsx`, ported case for case — **87
+ * of upstream's 89** at v0.4.5 (47 directly in `describe('DateTimeInput')`,
  * 5 in `describe('hasClear')`, 1 in `describe('external value changes')`, 7 in
  * `describe('invalid typed input feedback (WCAG 3.3.1)')`, 9 in
  * `describe('disabledMessage')`, 4 in `describe('timeIncrement')`, 3 in
- * `describe('weekStartsOn')`, 7 in `describe('segment theme targets')` and 2 in
+ * `describe('weekStartsOn')`, 11 in `describe('segment theme targets')` and 2 in
  * the top-level `describe('DateTimeInput disabled theme state')`). The file has
  * no `displayName` case, no snapshot and no no-JSX construction form, so the
  * only React-only surface is `ref`, which gets a counterpart.
+ *
+ * ## TWO CASES ARE MISSING, and they are blocked on a port defect
+ *
+ * **`does not commit the date on a composing Enter (IME)`** and **`does not step
+ * the time on a composing ArrowUp (IME)`** (upstream `:100`, `:119`) are NOT
+ * here. They are not droppable — there is nothing React-only about them — and
+ * they would fail if written, because `date-time-input.svelte`'s
+ * `handleDateKeyDown`/`handleTimeKeyDown` have **no `isImeKeyEvent` guard**,
+ * where upstream's have carried one since the cases landed
+ * (`DateTimeInput.tsx:752`, `:852`). A CJK user committing an IME candidate with
+ * Enter therefore commits the pending date, and the candidate window's arrows
+ * step the time. `utils/ime.ts` is ported and exported here; it is simply not
+ * called from this component. Write these two the moment the guard lands — they
+ * transcribe from upstream unchanged. The same gap blocks one case each in
+ * `time-input`, `date-input` and `selector`.
+ *
+ * ## The count, re-derived at the v0.4.5 pin
+ *
+ * This header read "**all 83 of upstream's 83** at v0.4.1" and stayed true only
+ * until the pin moved: upstream has **89**, so it was hiding a six-case gap.
+ * Four of the six are ported here — the `segment theme targets` block's
+ * icon-target quartet (`renders the toggle-icon target on the calendar glyph
+ * with open/closed state`, `renders the clock-icon target on the leading time
+ * glyph`, `leaves both leading glyphs byte-identical to a plain secondary/sm
+ * icon by default`, `exposes the icon targets so a theme reaches their size and
+ * per-state color`), which pass unchanged because this port already emits
+ * `date-time-input-toggle-icon` and `date-time-input-clock-icon`. The other two
+ * are the IME pair above.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
@@ -1253,6 +1282,96 @@ describe('DateTimeInput', () => {
 			expect(css).toContain('.astryx-date-time-input-time-segment {');
 			expect(css).toContain('block-size: var(--size-element-lg)');
 			expect(css).toContain('padding-inline: var(--spacing-4)');
+		});
+
+		it('renders the toggle-icon target on the calendar glyph with open/closed state', async () => {
+			const screen = await render(DateTimeInput, {
+				props: { label: 'Meeting', onChange: noop }
+			});
+			// The stable target lands on the icon element itself (not the button),
+			// so a theme can restyle just this glyph — mirroring
+			// `date-input-toggle-icon`.
+			const icon = screen.container.querySelector('.astryx-date-time-input-toggle-icon');
+			expect(icon).not.toBeNull();
+			expect(icon).toHaveClass('astryx-icon');
+			expect(icon).toHaveAttribute('data-state', 'collapsed');
+
+			await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+			await vi.waitFor(() => {
+				expect(
+					screen.container.querySelector('.astryx-date-time-input-toggle-icon')
+				).toHaveAttribute('data-state', 'expanded');
+			});
+		});
+
+		it('renders the clock-icon target on the leading time glyph', async () => {
+			const screen = await render(DateTimeInput, {
+				props: { label: 'Meeting', onChange: noop }
+			});
+			const icon = screen.container.querySelector('.astryx-date-time-input-clock-icon');
+			expect(icon).not.toBeNull();
+			expect(icon).toHaveClass('astryx-icon');
+		});
+
+		it('leaves both leading glyphs byte-identical to a plain secondary/sm icon by default', async () => {
+			// The targets are purely additive: the stable target class and its
+			// reflected state add nothing to the render until a theme targets them.
+			// Guard that by diffing each glyph's StyleX classes against a standalone
+			// secondary/sm icon, excluding only the additive target/state classes.
+			const screen = await render(DateTimeInput, {
+				props: { label: 'Meeting', onChange: noop }
+			});
+			const calendarIcon = screen.container.querySelector(
+				'.astryx-date-time-input-toggle-icon'
+			) as HTMLElement;
+			const clockIcon = screen.container.querySelector(
+				'.astryx-date-time-input-clock-icon'
+			) as HTMLElement;
+
+			const refScreen = await render(Icon, {
+				props: { icon: 'calendar', size: 'sm', color: 'secondary' }
+			});
+			const refIcon = refScreen.container.querySelector('.astryx-icon') as HTMLElement;
+
+			const themeTargetClasses = new Set([
+				'astryx-date-time-input-toggle-icon',
+				'astryx-date-time-input-clock-icon',
+				'collapsed',
+				'expanded'
+			]);
+			const styleClasses = (el: HTMLElement): string[] =>
+				el.className
+					.split(' ')
+					.filter((c) => c && !themeTargetClasses.has(c))
+					.sort();
+
+			expect(styleClasses(calendarIcon)).toEqual(styleClasses(refIcon));
+			expect(styleClasses(clockIcon)).toEqual(styleClasses(refIcon));
+		});
+
+		it('exposes the icon targets so a theme reaches their size and per-state color', () => {
+			// The @layer cascade is not observable from JS, so the generated CSS is
+			// what proves a same-element theme rule can reach these glyphs and win
+			// over the icon's own base size/color.
+			const theme = defineTheme({
+				name: 'date-time-input-icon-targets-test',
+				components: {
+					'date-time-input-toggle-icon': {
+						base: { width: '14px', height: '14px', fontSize: '14px' },
+						'state:expanded': { color: 'var(--color-icon-primary)' }
+					},
+					'date-time-input-clock-icon': {
+						base: { width: '14px', height: '14px', fontSize: '14px' }
+					}
+				}
+			});
+			const css = generateThemeCss(theme);
+
+			expect(css).toContain('.astryx-date-time-input-toggle-icon {');
+			expect(css).toContain('.astryx-date-time-input-toggle-icon.expanded');
+			expect(css).toContain('.astryx-date-time-input-clock-icon {');
+			expect(css).toContain('width: 14px');
+			expect(css).toContain('color: var(--color-icon-primary)');
 		});
 	});
 });

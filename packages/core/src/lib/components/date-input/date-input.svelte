@@ -195,6 +195,7 @@
 	import { useSize } from '../../internal/contexts.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import { isFocusDetached } from '../../utils/focus-return.js';
@@ -217,6 +218,7 @@
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		dateInputAttrs,
 		dateInputIconButtonAttrs,
@@ -273,6 +275,14 @@
 		style: styleProp,
 		...rest
 	}: DateInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	const placeholder = $derived(placeholderFromProps ?? t('@astryx.dateInput.placeholder'));
@@ -526,6 +536,14 @@
 	}
 
 	function handleInputKeyDown(e: KeyboardEvent): void {
+		// An in-progress IME composition uses Enter to commit the candidate and
+		// Escape to cancel it; that composing keydown fires before
+		// compositionend, so without this guard a Korean/Japanese/Chinese user
+		// committing a syllable with Enter would instead commit the pending date
+		// (or Escape would close the calendar mid-composition). See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		if (e.key === 'Escape' && popover.isOpen) {
 			e.preventDefault();
 			popover.hide();
@@ -614,7 +632,7 @@
 			readonly={showsDisabledMessage || undefined}
 			aria-labelledby={aria.ariaLabelledBy}
 			aria-describedby={aria.ariaDescribedBy}
-			aria-required={isRequired === true ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' || !isInputValid ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			aria-expanded={popover.isOpen}

@@ -30,3 +30,22 @@ As of this compaction (2026-08-16), `lab` (17 components, ~995 KB), `charts` (35
 (5 files), `richtext` (1 file) and `build` (7 files) are all still unstarted — read the upstream
 source at `reference/astryx-upstream/packages/{lab,charts,vega,build}` directly when one of these
 becomes the next front, rather than trusting a July 2026 snapshot of it.
+
+> **Corrected 2026-08-19, opening batch 029.** Two things above were already wrong, and the
+> `start-batch` pre-flight is what caught them.
+>
+> **`lab` is not a fixed set — components graduate out of it.** `BottomSheet` moved from
+> `packages/lab/src/BottomSheet/` to `packages/core/src/BottomSheet/` at upstream 0.4.4, taking
+> `useSheetGestures`, `useMobileKeyboard` and `snapOffsets` with it and gaining a substantial
+> rewrite on the way (rename similarity as low as 50%). `lab`'s source directory count went 20 ->
+> 19 between v0.4.2 and v0.4.4. So "unstarted lab component" is not a stable category: one of them
+> is now a **core** unit this port owes, and the next tracking batch may inherit another the same
+> way.
+>
+> **The `lab` row never listed `BottomSheet`.** The component list in the table above is not the
+> whole package and never was, so a count derived from it — the "17 components" — was not a
+> measurement. Read `git ls-tree -d --name-only <tag> packages/lab/src/` for the real figure; it
+> reports 19 at v0.4.4.
+>
+> The rest of the row is unverified against 0.4.4 and should be re-measured, not trusted, whenever
+> `lab` genuinely becomes the next front.

@@ -199,6 +199,7 @@
 	import { useSize } from '../../internal/contexts.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { useInputContainer } from '../../hooks/use-input-container.svelte.js';
 	import { parseDateInput } from '../../utils/date-parser.js';
@@ -233,6 +234,7 @@
 	import TooltipLayer from '../tooltip/tooltip-layer.svelte';
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		dateTimeInputAttrs,
 		dateTimeInputDateWrapperAttrs,
@@ -294,6 +296,14 @@
 		style: styleProp,
 		...rest
 	}: DateTimeInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	// Speaks arrow-key stepping results through the persistent live regions:
@@ -591,6 +601,13 @@
 	}
 
 	function handleDateKeyDown(e: KeyboardEvent): void {
+		// Guard the composing keydown (fires before compositionend): an IME uses
+		// Enter to commit the candidate and Escape to cancel it, so without this
+		// a CJK user committing a syllable with Enter would commit the pending
+		// date instead. See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		if (e.key === 'Escape' && popover.isOpen) {
 			e.preventDefault();
 			popover.hide();
@@ -664,6 +681,13 @@
 	}
 
 	function handleTimeKeyDown(e: KeyboardEvent): void {
+		// ArrowUp/ArrowDown step the time and preventDefault; an IME candidate
+		// window uses those same arrows to navigate candidates, so guard the
+		// composing keydown (fires before compositionend) to avoid stealing them
+		// mid-composition. See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
 			e.preventDefault();
 
@@ -780,7 +804,20 @@
 				class={toggleAttrs.class}
 				style={toggleAttrs.style}
 			>
-				<Icon icon="calendar" size="sm" color="secondary" />
+				<!--
+					Stable theme target on the calendar glyph, and on each open/closed
+					state, mirroring `date-input-toggle-icon`. Same-element rules in
+					`@layer astryx-theme` win over the icon's own base colour and size,
+					which a segment-level target could not reach.
+				-->
+				<Icon
+					icon="calendar"
+					size="sm"
+					color="secondary"
+					{...themeProps('date-time-input-toggle-icon', {
+						state: popover.isOpen ? 'expanded' : 'collapsed'
+					})}
+				/>
 			</button>
 			<input
 				bind:this={dateInput}
@@ -797,7 +834,7 @@
 				aria-disabled={showsDisabledMessage ? 'true' : undefined}
 				readonly={showsDisabledMessage || undefined}
 				aria-describedby={ariaDescribedBy}
-				aria-required={isRequired === true ? 'true' : undefined}
+				aria-required={isEffectivelyRequired() ? 'true' : undefined}
 				aria-invalid={status?.type === 'error' || !isDateInputValid ? 'true' : undefined}
 				aria-busy={isBusy || undefined}
 				aria-expanded={popover.isOpen}
@@ -833,7 +870,16 @@
 			style={timeWrapperAttrs.style}
 		>
 			<div class={iconAttrs.class} style={iconAttrs.style}>
-				<Icon icon="clock" size="sm" color="secondary" />
+				<!--
+					The time segment has no toggle button — the clock is a static leading
+					affordance — so this target carries no interactive state.
+				-->
+				<Icon
+					icon="clock"
+					size="sm"
+					color="secondary"
+					{...themeProps('date-time-input-clock-icon')}
+				/>
 			</div>
 			<input
 				bind:this={timeInput}
@@ -850,7 +896,7 @@
 				readonly={showsDisabledMessage || undefined}
 				aria-label={timeLabel ?? t('@astryx.dateTimeInput.timeSuffix', { label })}
 				aria-describedby={ariaDescribedBy}
-				aria-required={isRequired === true ? 'true' : undefined}
+				aria-required={isEffectivelyRequired() ? 'true' : undefined}
 				aria-invalid={status?.type === 'error' || !isTimeInputValid ? 'true' : undefined}
 				aria-busy={isBusy || undefined}
 				class={timeControlAttrs.class}

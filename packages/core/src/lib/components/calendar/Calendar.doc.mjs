@@ -139,6 +139,18 @@ export default {
 			description: 'Custom constraint functions.'
 		},
 		{
+			name: 'maxRangeSpan',
+			type: 'number',
+			description:
+				'Range mode: max days a range may span, both endpoints counted (7 = a 7-day window). Caps the window from the picked start; before a start is picked every day stays selectable.'
+		},
+		{
+			name: 'minRangeSpan',
+			type: 'number',
+			description:
+				'Range mode: min days a range must span, both endpoints counted (2 forbids a single-day range). Default 1.'
+		},
+		{
 			name: 'focusDate',
 			type: 'ISODateString',
 			description: 'Controlled visible month.'

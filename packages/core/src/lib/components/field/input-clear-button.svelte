@@ -49,6 +49,11 @@
 	let { label, onclick, xstyle, iconClassName }: InputClearButtonProps = $props();
 
 	const iconTheme = themeProps('input-clear-icon');
+	// The button wrapper carries its own target, so a theme can reach the control's
+	// size and hover without also matching the glyph inside it. Upstream stamps
+	// both (`Field/InputClearButton.tsx`); this port shipped only the icon one, and
+	// the CLI's documented-target registry test is what caught the gap.
+	const buttonTheme = themeProps('input-clear-button');
 	const iconClass = $derived(
 		iconClassName != null ? `${iconTheme.class} ${iconClassName}` : iconTheme.class
 	);
@@ -65,5 +70,6 @@
 	icon={closeIcon}
 	onclick={onclick as ComponentProps<typeof Button>['onclick']}
 	isIconOnly
+	class={buttonTheme.class}
 	xstyle={[clearButtonStyle, xstyle]}
 />

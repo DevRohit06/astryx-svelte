@@ -20,7 +20,9 @@
 	 * debts.
 	 */
 	function truncateString(value: string, limit: number): string {
-		return value.length > limit + 3 ? value.slice(0, limit) + '...' : value;
+		// Same semantics as before — strings within `limit + 3` pass through, longer
+		// ones cut to `limit` plus '...' — but counted in characters, not code units.
+		return truncateCharacters(value, limit + 3, '...');
 	}
 
 	function getEnumLabel(values: ReadonlyArray<EnumItem>, value: string): string {
@@ -30,6 +32,7 @@
 
 <script lang="ts">
 	import { powerSearchTokenValueAttrs } from './power-search.stylex.js';
+	import { truncateCharacters } from '../../utils/characters.js';
 
 	/**
 	 * Ported from `PowerSearchTokenValue` in Astryx's `PowerSearch.tsx`.

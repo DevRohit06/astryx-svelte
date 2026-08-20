@@ -9,8 +9,10 @@ import { TIMER_BUDGET } from './timer-budget.js';
 import { whenWired } from './trigger-wiring.js';
 
 /**
- * Ported from Astryx's `HoverCard/HoverCard.test.tsx` at v0.4.2, which declares
- * twenty-eight cases. Twenty-four of them live here.
+ * Ported from Astryx's `HoverCard/HoverCard.test.tsx` at **v0.4.5**, which
+ * declares twenty-eight cases. Twenty-four of them live here. (The count is
+ * re-derived at the 0.4.5 pin, where this header last read v0.4.2; upstream's
+ * file has not moved since.)
  *
  * Three of the remaining four are server-side and live in `hover-card.test.ts`,
  * which runs in the node project against `svelte/server` — the repo rule that

@@ -6,8 +6,14 @@ import { defineTheme } from '$lib/theme/define-theme.js';
 import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 
 /**
- * Astryx's `Field/InputClearButton.test.tsx` (6 cases at v0.4.1), ported whole
- * — **6 of upstream's 6**, nothing dropped.
+ * Astryx's `Field/InputClearButton.test.tsx`, ported whole — **8 of upstream's
+ * 8 at v0.4.5**, nothing dropped.
+ *
+ * The header used to read "6 cases at v0.4.1" and stayed true only until the
+ * pin moved: 0.4.5 added the two `input-clear-button` cases below, and the port
+ * was missing the target they cover as well as the cases themselves. The CLI's
+ * documented-target registry test found the missing `themeProps` literal; the
+ * re-derivation this header now states is what found the missing cases.
  *
  * The suite is new at 0.4.x, and so is the reason for it: #4876 converged the
  * whole clearable-input family (`TextInput`, `NumberInput`, `TimeInput`, the
@@ -123,5 +129,32 @@ describe('InputClearButton', () => {
 		expect(css).toContain('width: 12px');
 		expect(css).toContain('.astryx-input-clear-icon:hover {');
 		expect(css).toContain('color: var(--color-icon-primary)');
+	});
+
+	it('renders the astryx-input-clear-button target on the button wrapper', async () => {
+		const screen = await render(InputClearButton, {
+			props: { label: 'Clear', onclick: () => {} }
+		});
+		const button = screen.container.querySelector('button')!;
+		expect(button).toHaveClass('astryx-input-clear-button');
+	});
+
+	it('exposes input-clear-button so a theme controls the button size and hover', () => {
+		const theme = defineTheme({
+			name: 'input-clear-button-test',
+			components: {
+				'input-clear-button': {
+					base: {
+						height: '28px',
+						':hover': { backgroundImage: 'none' }
+					}
+				}
+			}
+		});
+		const css = generateThemeCss(theme);
+		expect(css).toContain('.astryx-input-clear-button {');
+		expect(css).toContain('height: 28px');
+		expect(css).toContain('.astryx-input-clear-button:hover {');
+		expect(css).toContain('background-image: none');
 	});
 });

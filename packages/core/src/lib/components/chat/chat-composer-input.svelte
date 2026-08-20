@@ -214,6 +214,7 @@
 	import TriggerMenuLayer from './trigger-menu-layer.svelte';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { ensureCaretInside, insertTextAtCursor } from './chat-composer-selection.js';
 	import { useChatComposerContext } from './chat-context.svelte.js';
@@ -530,11 +531,9 @@
 		}
 
 		if (e.key === 'Enter' && !e.shiftKey) {
-			// Never submit mid-composition — an IME uses Enter to commit a candidate
-			// (e.g. Japanese/Chinese/Korean input), and browsers may also surface the
-			// legacy keyCode 229 for composing keystrokes. Upstream reads both off
-			// `e.nativeEvent`; here the handler already receives the native event.
-			if (e.isComposing || e.keyCode === 229) {
+			// Never submit mid-composition — an IME uses Enter to commit a
+			// candidate. See utils/ime.ts for the full rationale.
+			if (isImeKeyEvent(e)) {
 				return;
 			}
 

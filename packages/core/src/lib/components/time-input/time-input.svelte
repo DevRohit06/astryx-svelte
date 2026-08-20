@@ -151,6 +151,7 @@
 	import { useSize } from '../../internal/contexts.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import {
@@ -174,6 +175,7 @@
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		timeInputAttrs,
 		timeInputIconAttrs,
@@ -227,6 +229,14 @@
 		style: styleProp,
 		...rest
 	}: TimeInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	const t = useTranslator();
 	const placeholder = $derived(placeholderFromProps ?? t('@astryx.timeInput.placeholder'));
@@ -434,6 +444,13 @@
 	}
 
 	function handleInputKeyDown(e: KeyboardEvent): void {
+		// ArrowUp/ArrowDown step the time and preventDefault; an IME candidate
+		// window uses those same arrows to navigate candidates, so guard the
+		// composing keydown (fires before compositionend) to avoid stealing them
+		// mid-composition. See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		// Arrow-key adjustment mutates the value; block it while showing a
 		// disabled reason (the input keeps focusability via aria-disabled).
 		if (isDisabled) {
@@ -537,7 +554,7 @@
 			autofocus={hasAutoFocus}
 			data-autofocus={hasAutoFocus || undefined}
 			aria-describedby={aria.ariaDescribedBy}
-			aria-required={isRequired === true ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' || !isInputValid ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			aria-labelledby={aria.ariaLabelledBy}

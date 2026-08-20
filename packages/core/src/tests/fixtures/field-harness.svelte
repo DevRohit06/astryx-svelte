@@ -45,7 +45,7 @@
 	// an effect; the getter keeps it live if `direction` ever changes.
 	// svelte-ignore state_referenced_locally
 	if (direction) {
-		setFormLayoutContext(() => direction);
+		setFormLayoutContext(() => ({ direction }));
 	}
 </script>
 

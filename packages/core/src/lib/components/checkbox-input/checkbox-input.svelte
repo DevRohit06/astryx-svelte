@@ -139,6 +139,7 @@
 	} from './checkbox-input.stylex.js';
 	import { useIndicator } from '../indicator/use-indicator.svelte.js';
 	import { useIndicatorFocusRing } from '../../hooks/use-indicator-focus-ring.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 
 	/**
 	 * A checkbox input for toggling boolean (or mixed) values, ported from
@@ -181,6 +182,14 @@
 		style: styleProp,
 		...rest
 	}: CheckboxInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	// Upstream mints three ids with three `useId` calls plus a fourth inside
 	// `useTooltip`. `$props.id()` may be called once per component, so the
@@ -378,6 +387,7 @@
 				form={isFocusableDisabled ? '' : undefined}
 				readonly={isReadOnly}
 				required={isRequired}
+				aria-required={isEffectivelyRequired() ? 'true' : undefined}
 				onchange={handleChange}
 				{onfocus}
 				{onblur}

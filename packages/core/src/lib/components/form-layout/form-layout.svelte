@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import type { Snippet } from 'svelte';
 	import type { BaseProps } from '../../base-props.js';
-	import type { FormLayoutDirection } from './form-layout-context.svelte.js';
+	import type { FormLayoutDirection, FormOptionality } from './form-layout-context.svelte.js';
 
 	export interface FormLayoutProps extends BaseProps<HTMLDivElement> {
 		/**
@@ -17,6 +17,25 @@
 		 * @default 'vertical'
 		 */
 		direction?: FormLayoutDirection;
+		/**
+		 * Which state the form treats as its default, so only the *exception*
+		 * carries a visible optional/required indicator. It also resolves each
+		 * field's `aria-required` so the unmarked majority is still announced
+		 * correctly — but only `aria-required`, never the native `required`
+		 * attribute, so a layout default can't switch on browser validation.
+		 *
+		 * - `optional` — fields read as optional; only a field with `isRequired`
+		 *   shows an indicator (the "required" one).
+		 * - `required` — fields read as required; only a field with `isOptional`
+		 *   shows an indicator (the "optional" one). Fields without `isOptional`
+		 *   expose `aria-required` even though they show no indicator.
+		 * - unset — `isRequired` and `isOptional` each show their own indicator
+		 *   independently.
+		 *
+		 * A field that merely restates the default (e.g. `isOptional` under
+		 * `optional`) shows nothing. An inner `FormLayout` shadows an outer one.
+		 */
+		defaultOptionality?: FormOptionality;
 	}
 </script>
 
@@ -44,16 +63,18 @@
 	const {
 		children,
 		direction = 'vertical',
+		defaultOptionality,
 		class: className,
 		style: styleProp,
 		xstyle,
 		...rest
 	}: FormLayoutProps = $props();
 
-	// The getter is the whole of upstream's `useMemo(() => ({direction}), [direction])`:
-	// a memo exists to keep an object identity stable across renders, and there is
-	// no object here to keep stable.
-	setFormLayoutContext(() => direction);
+	// The getter is the whole of upstream's
+	// `useMemo(() => ({direction, defaultOptionality}), [...])`: a memo exists to
+	// keep an object identity stable across renders, and a getter read at call
+	// time never has a stale identity to keep.
+	setFormLayoutContext(() => ({ direction, defaultOptionality }));
 
 	const attrs = $derived(formLayoutAttrs(direction, xstyle));
 	const theme = $derived(themeProps('form-layout', { direction }));

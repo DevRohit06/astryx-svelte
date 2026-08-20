@@ -71,22 +71,11 @@
 		 */
 		onclick?: (event: MouseEvent) => void;
 	}
-
-	/**
-	 * Reuse a single segmenter when the runtime supports Intl.Segmenter.
-	 *
-	 * Module scope, not instance scope: constructing a segmenter is expensive
-	 * relative to reading two characters off it, and every avatar wants the same
-	 * one. `<script module>` is Svelte's counterpart to upstream's module body.
-	 */
-	const graphemeSegmenter =
-		typeof Intl.Segmenter === 'function'
-			? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
-			: null;
 </script>
 
 <script lang="ts">
 	import { cx, mergeStyle } from '../../internal/sx.js';
+	import { firstCharacter } from '../../utils/characters.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { useDevWarning } from '../../hooks/use-dev-warning.svelte.js';
@@ -304,22 +293,16 @@
 	 *
 	 * `charAt(0)` returns one UTF-16 **code unit**, which splits any character
 	 * outside the BMP down the middle — an emoji or a multi-codepoint grapheme
-	 * rendered as a lone surrogate. Segment by grapheme instead, falling back to
-	 * code points where `Intl.Segmenter` is unavailable.
+	 * rendered as a lone surrogate. `firstCharacter` segments by grapheme
+	 * instead, falling back to code points where `Intl.Segmenter` is
+	 * unavailable. It was local to this component until upstream 0.4.5 extracted
+	 * it to `utils/characters`, where three other consumers share it.
 	 */
-	function firstGrapheme(word: string): string {
-		if (graphemeSegmenter) {
-			return [...graphemeSegmenter.segment(word)][0]?.segment ?? '';
-		}
-
-		return [...word][0] ?? '';
-	}
-
 	function getInitials(value: string): string {
 		const words = value.trim().split(/\s+/);
 		if (words.length === 0) return '';
-		if (words.length === 1) return firstGrapheme(words[0]).toUpperCase();
-		return (firstGrapheme(words[0]) + firstGrapheme(words[words.length - 1])).toUpperCase();
+		if (words.length === 1) return firstCharacter(words[0]).toUpperCase();
+		return (firstCharacter(words[0]) + firstCharacter(words[words.length - 1])).toUpperCase();
 	}
 </script>
 

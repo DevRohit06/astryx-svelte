@@ -59,6 +59,7 @@
 	import Button from '../button/button.svelte';
 	import Heading from '../heading/heading.svelte';
 	import Icon from '../icon/icon.svelte';
+	import { resolveCloseDelay } from './close-timing.js';
 	import {
 		mobileNavContentAttrs,
 		mobileNavDialogAttrs,
@@ -135,44 +136,49 @@
 	let resolvedSide = $state<'start' | 'end'>(side === 'auto' ? 'end' : side);
 
 	/**
-	 * Open/close the dialog via `showModal()`/`close()`.
+	 * Resolve which edge the drawer slides from. Deliberately its own effect,
+	 * declared before the open/close effect below so the trigger is still the
+	 * active element when `side='auto'` reads it. Keeping it out of that effect is
+	 * what stops a `side` change during a close from re-arming the delay: the CSS
+	 * hold runs from the commit that started the slide-out and does not restart, so
+	 * a fresh full delay could land after the drawer had already stopped being
+	 * rendered — #4290 again.
+	 */
+	$effect(() => {
+		if (!isOpen) {
+			return;
+		}
+
+		if (side === 'auto') {
+			const trigger = document.activeElement as HTMLElement | null;
+			if (trigger && trigger !== document.body) {
+				const rect = trigger.getBoundingClientRect();
+				const triggerCenter = rect.left + rect.width / 2;
+				resolvedSide = triggerCenter < window.innerWidth / 2 ? 'start' : 'end';
+			}
+		} else {
+			resolvedSide = side;
+		}
+	});
+
+	/**
+	 * Open/close the dialog via `showModal()`/`close()`. `close()` is delayed so
+	 * the slide-out transition can play.
 	 *
-	 * Transcribed from upstream's `useEffect([isOpen, side])`, cleanup included —
-	 * and the cleanup is why the delayed `close()` in the else-branch is **dead
-	 * code on both sides**. A Svelte effect, like a React one, runs its teardown
-	 * before re-running, so by the time the `isOpen: false` pass reaches
-	 * `else if (dialog.open)` the teardown has already closed the dialog. The
-	 * drawer therefore disappears rather than sliding out. Replicated rather than
-	 * fixed: `display` is driven by the `isOpen` prop, so the panel is
-	 * `display: none` before either path runs and no transform transition could
-	 * play regardless — see port/debts.md → Known debts.
+	 * **The delayed close stopped being dead code at upstream 0.4.5**, and this
+	 * port's matching debt retires with it. It used to be unreachable on both
+	 * sides: the teardown closed the dialog before the delay could fire, because
+	 * the unmount close lived in this same effect. Upstream split it into the
+	 * unmount-only effect below precisely so an `isOpen` flip no longer cuts the
+	 * slide-out off.
 	 */
 	$effect(() => {
 		const dialog = dialogEl;
 		if (!dialog) {
 			return;
 		}
-		// Tracked so a `side` change re-runs, as upstream's dependency list does.
-		const sideOption = side;
-
-		if (closeTimeout) {
-			clearTimeout(closeTimeout);
-			closeTimeout = null;
-		}
 
 		if (isOpen) {
-			// Determine drawer side from trigger position when auto
-			if (sideOption === 'auto') {
-				const trigger = document.activeElement as HTMLElement | null;
-				if (trigger && trigger !== document.body) {
-					const rect = trigger.getBoundingClientRect();
-					const triggerCenter = rect.left + rect.width / 2;
-					resolvedSide = triggerCenter < window.innerWidth / 2 ? 'start' : 'end';
-				}
-			} else {
-				resolvedSide = sideOption;
-			}
-
 			if (!dialog.open) {
 				dialog.showModal();
 			}
@@ -183,10 +189,9 @@
 		} else if (dialog.open) {
 			document.documentElement.style.overflow = '';
 
-			const duration = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 10 : 250;
 			closeTimeout = setTimeout(() => {
 				dialog.close();
-			}, duration);
+			}, resolveCloseDelay(dialog));
 		}
 
 		return () => {
@@ -195,19 +200,26 @@
 				closeTimeout = null;
 			}
 			document.documentElement.style.overflow = '';
-			// Close the native dialog on teardown if it's still open, so the next
-			// open cleanly calls showModal() again. Upstream needs this because
-			// AppShell mounts the drawer in a `<React.Activity>` that flips to
-			// mode="hidden" on close, tearing the effect down with a stale
-			// `isOpen` instead of re-running it; leaving the dialog `open` there
-			// makes showModal() a no-op forever after, which is the regression
-			// upstream's `MobileNavReopen.test.tsx` exists to pin. Svelte has no
-			// Activity counterpart, so this port always takes the plain
-			// always-mounted shape — which is upstream's own fallback branch on
-			// React 19.0/19.1, not an invention. The teardown is kept regardless:
-			// it is also what stops a drawer unmounted mid-open from leaving the
-			// browser's top layer occupied.
-			if (dialog.open) {
+		};
+	});
+
+	/**
+	 * Close the native dialog on unmount if it is still open, so the next open
+	 * cleanly calls `showModal()` again — leaving it `open` makes `showModal()` a
+	 * no-op forever after, which is the regression upstream's
+	 * `MobileNavReopen.test.tsx` exists to pin. It is also what stops a drawer
+	 * unmounted mid-open from leaving the browser's top layer occupied.
+	 *
+	 * **A separate unmount-only effect, not part of the open/close effect above**:
+	 * folded in there it would close the dialog on every `isOpen` flip and cut off
+	 * the delayed slide-out close. Reading `dialogEl` tracks it, so this re-runs
+	 * once when `bind:this` lands — the teardown it replaces captured `undefined`
+	 * and does nothing, which is the intended no-op.
+	 */
+	$effect(() => {
+		const dialog = dialogEl;
+		return () => {
+			if (dialog?.open) {
 				dialog.close();
 			}
 		};

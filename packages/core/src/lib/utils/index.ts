@@ -143,3 +143,10 @@ export {
 	type ThemeDataAttributes
 } from '../internal/theme-props.js';
 export { observeResize, unobserveResize } from '../internal/shared-resize-observer.js';
+
+// Both new at upstream 0.4.5, and both published from this barrel there.
+// `characters` replaces `.length` / `.charAt(0)` / `.slice(0, n)` on
+// user-visible strings; `isImeKeyEvent` moved here from the focus-trap module,
+// because it is a pure predicate rather than a hook.
+export { characterCount, firstCharacter, truncateCharacters } from './characters.js';
+export { isImeKeyEvent } from './ime.js';

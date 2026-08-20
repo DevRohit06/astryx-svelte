@@ -79,6 +79,11 @@ export default {
 					'Use inlinePlugins for custom shorthand patterns like issue refs, diff refs, and mentions instead of preprocessing the markdown string.'
 			},
 			{
+				guidance: true,
+				description:
+					'Pair with Outline and useOutlineFromMarkdown for section navigation: headings render generated id attributes that match the outline item ids, so hash links scroll to their target.'
+			},
+			{
 				guidance: false,
 				description:
 					'Use Markdown for hand-authored layouts; use Text and Heading directly when you control the content.'

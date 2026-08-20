@@ -323,6 +323,10 @@
     "defaultMessage": "Selected range: {start} to {end}.",
     "description": "Screen-reader announcement after the second pick completes a Calendar range selection. `{start}` and `{end}` are localized full dates in chronological order."
   },
+  "@astryx.calendar.rangeClearedAnnounce": {
+    "defaultMessage": "Cleared start date {date}. Select a start date.",
+    "description": "Screen-reader announcement when the user clicks the in-progress range start again, which clears it instead of completing a zero-length range. `{date}` is the localized full date."
+  },
   "@astryx.carousel.label": {
     "defaultMessage": "Carousel",
     "description": "Screen-reader-only fallback name for a horizontally-scrolling row of items. If \"carousel\" is unfamiliar in your locale, prefer the standard term (e.g. \"slider\")."
@@ -1134,5 +1138,53 @@
   "@astryx.commandPalette.footer.close": {
     "defaultMessage": "Close",
     "description": "Keyboard hint in the CommandPalette footer, paired with the Escape key icon. Tells users Escape dismisses the palette."
+  },
+  "@astryx.multiSelector.selectionCleared": {
+    "defaultMessage": "Selection cleared",
+    "description": "Polite screen-reader announcement after the last selected option in a MultiSelector is deselected. Live-region text, never shown on screen; past participle (\"has been cleared\")."
+  },
+  "@astryx.multiSelector.allSelected": {
+    "defaultMessage": "All selected",
+    "description": "Polite screen-reader announcement after every option in a MultiSelector becomes selected. Live-region text, never shown on screen; \"all\" is a determiner (as in \"all the options\")."
+  },
+  "@astryx.multiSelector.selectionCount": {
+    "defaultMessage": "{count, number} of {total, number} selected",
+    "description": "Polite screen-reader announcement of how many MultiSelector options are selected out of the total, spoken after each toggle. Live-region text, never shown on screen; example: `3 of 12 selected`."
+  },
+  "@astryx.multiSelector.emptySearchResults": {
+    "defaultMessage": "No results found",
+    "description": "Polite screen-reader announcement when a MultiSelector search query matches no options. Live-region text, never shown on screen; neutral tone (not error-y)."
+  },
+  "@astryx.multiSelector.resultCount": {
+    "defaultMessage": "{count, number} {count, plural, one {result} other {results}}",
+    "description": "Polite screen-reader announcement of how many MultiSelector options match the search query, spoken as the user types. Live-region text, never shown on screen; example: `1 result`, `12 results`."
+  },
+  "@astryx.selector.emptySearchResults": {
+    "defaultMessage": "No results found",
+    "description": "Polite screen-reader announcement when a Selector search query matches no options. Live-region text, never shown on screen; neutral tone (not error-y)."
+  },
+  "@astryx.selector.resultCount": {
+    "defaultMessage": "{count, number} {count, plural, one {result} other {results}}",
+    "description": "Polite screen-reader announcement of how many Selector options match the search query, spoken as the user types. Live-region text, never shown on screen; example: `1 result`, `12 results`."
+  },
+  "@astryx.typeahead.resultCount": {
+    "defaultMessage": "{count, number} {count, plural, one {result} other {results}}",
+    "description": "Polite screen-reader announcement of how many suggestions a Typeahead search returned. Live-region text, never shown on screen; example: `1 result`, `12 results`."
+  },
+  "@astryx.tokenizer.tokenAdded": {
+    "defaultMessage": "Added {label}",
+    "description": "Polite screen-reader announcement after a token is added to a Tokenizer, either picked from the suggestions or newly created. Live-region text, never shown on screen; `{label}` is the token's visible text."
+  },
+  "@astryx.tokenizer.tokenRemoved": {
+    "defaultMessage": "Removed {label}",
+    "description": "Polite screen-reader announcement after a token is removed from a Tokenizer, by its × button or by Backspace. Live-region text, never shown on screen; `{label}` is the token's visible text."
+  },
+  "@astryx.lightbox.imagePosition": {
+    "defaultMessage": "Image {index, number} of {total, number}",
+    "description": "Polite screen-reader announcement when a Lightbox moves to a media item that has no alt text. Live-region text, never shown on screen; `{index}` is 1-based, example: `Image 3 of 12`."
+  },
+  "@astryx.lightbox.mediaPosition": {
+    "defaultMessage": "{alt}, {index, number} of {total, number}",
+    "description": "Polite screen-reader announcement when a Lightbox moves to a media item that has alt text, composing that alt with the item's position. Live-region text, never shown on screen; example: `Sunset over the bay, 3 of 12`."
   }
 }

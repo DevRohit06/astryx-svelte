@@ -208,7 +208,7 @@ export default {
 		},
 		{
 			name: 'mode',
-			type: "'dropzone' | 'input'",
+			type: "'input' | 'dropzone'",
 			description:
 				"Visual mode. 'input' is a compact inline style; 'dropzone' is a larger area with drag-and-drop support.",
 			default: "'input'"

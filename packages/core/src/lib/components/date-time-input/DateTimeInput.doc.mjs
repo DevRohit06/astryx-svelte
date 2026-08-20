@@ -35,6 +35,13 @@ export default {
 			{
 				className: 'astryx-date-time-input-time-segment',
 				visualProps: ['size', 'status']
+			},
+			{
+				className: 'astryx-date-time-input-toggle-icon',
+				states: ['state']
+			},
+			{
+				className: 'astryx-date-time-input-clock-icon'
 			}
 		]
 	},

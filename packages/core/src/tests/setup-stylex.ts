@@ -6,10 +6,10 @@ import '$lib/index.js';
 /**
  * Load the compiled StyleX CSS into every browser-project test page.
  *
- * Nothing else does. The demo's `+layout.svelte` links `/virtual:stylex.css` in
- * dev, but a test page has no layout — so what reaches it is whatever the
- * StyleX plugin happened to have collected when Vite served its virtual sheet,
- * which is a different subset on every run. Suites asserting computed styles
+ * Nothing else does. A test page has no layout to link `/virtual:stylex.css`
+ * from — the demo route that used to do so is retired — so what reaches it is
+ * whatever the StyleX plugin happened to have collected when Vite served its
+ * virtual sheet, which is a different subset on every run. Suites asserting computed styles
  * therefore failed and passed alternately against identical code.
  *
  * The barrel import at the top is the load-bearing half, and it is why this

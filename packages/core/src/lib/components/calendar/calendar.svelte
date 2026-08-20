@@ -57,6 +57,24 @@
 		 */
 		dateConstraints?: ReadonlyArray<(date: Date) => boolean>;
 		/**
+		 * Range mode only. Maximum number of days a selected range may span,
+		 * counting both endpoints — `maxRangeSpan={7}` allows a 7-day window
+		 * (start + 6 days). Once a start date is picked, days beyond this distance
+		 * from it are disabled in either direction; before a start is picked every
+		 * otherwise-valid day stays selectable. Use for rolling windows like "at
+		 * most a week from the chosen day". For fixed calendar bounds use
+		 * `min`/`max`.
+		 */
+		maxRangeSpan?: number;
+		/**
+		 * Range mode only. Minimum number of days a selected range must span,
+		 * counting both endpoints — `minRangeSpan={2}` forbids a single-day range.
+		 * Once a start date is picked, days closer than this to it are disabled —
+		 * except the start itself, which stays selectable as the active anchor.
+		 * Defaults to 1 (a same-day start and end is allowed).
+		 */
+		minRangeSpan?: number;
+		/**
 		 * Controlled focus date (which month is visible).
 		 * If not provided, defaults to selected date or today.
 		 */
@@ -137,6 +155,7 @@
 		plainDateFormat,
 		plainDateFromISO,
 		plainDateIsBefore,
+		plainDateIsEqual,
 		plainDateSetFirstOfMonth,
 		plainDateToDate,
 		plainDateToISO,
@@ -170,6 +189,8 @@
 		min,
 		max,
 		dateConstraints,
+		maxRangeSpan,
+		minRangeSpan,
 		focusDate: focusDateProp,
 		onFocusDateChange,
 		hasOutsideDays = true,
@@ -450,6 +471,23 @@
 			} else {
 				// Second click — complete the range.
 				const startPd = plainDateFromISO(rangeSelectionStart);
+
+				// Clicking the anchor again clears the in-progress start rather than
+				// committing a zero-length range. This is also the escape hatch when
+				// `minRangeSpan` disables the days around the anchor: without it the
+				// anchor would be the only clickable day left and the start could never
+				// be moved. `minRangeSpan` leaves the anchor itself enabled precisely so
+				// this toggle stays reachable.
+				if (plainDateIsEqual(date, startPd)) {
+					rangeSelectionStart = null;
+					announce(
+						t('@astryx.calendar.rangeClearedAnnounce', {
+							date: plainDateFormat(date, DATE_FORMAT_WITH_WEEKDAY)
+						})
+					);
+					return;
+				}
+
 				let start: ISODateString;
 				let end: ISODateString;
 
@@ -549,6 +587,8 @@
 				{min}
 				{max}
 				{dateConstraints}
+				{maxRangeSpan}
+				{minRangeSpan}
 				{hasOutsideDays}
 				{hasWeekNumbers}
 				{hasVariableRowCount}

@@ -4,6 +4,7 @@
 	import ExpansionChevron from './expansion-chevron.svelte';
 	import { unwrapSlotArg } from '../../../../internal/bind-snippet.js';
 	import { expansionExpandedCellAttrs, expansionExpandedRowAttrs } from './row-expansion.stylex.js';
+	import { rtlStyles } from '../../../../utils/rtl.stylex.js';
 
 	/**
 	 * The row-expansion plugin's markup slots, as **module-exported snippets**.
@@ -87,5 +88,9 @@
 {/snippet}
 
 {#snippet chevronRightIcon()}
-	<Icon icon="chevronRight" size="xsm" aria-hidden="true" />
+	<!--
+		`chevronDown` needs no mirroring; `chevronRight` — the collapsed state,
+		pointing toward the reveal direction — does.
+	-->
+	<Icon icon="chevronRight" size="xsm" aria-hidden="true" xstyle={rtlStyles.mirror} />
 {/snippet}

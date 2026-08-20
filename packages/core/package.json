@@ -1,7 +1,7 @@
 {
 	"name": "@astryx-svelte/core",
 	"displayName": "Astryx Core",
-	"version": "0.4.2",
+	"version": "0.4.5",
 	"license": "MIT",
 	"repository": {
 		"type": "git",
@@ -17,10 +17,7 @@
 	},
 	"description": "Svelte 5 components for Astryx, Meta's open source design system.",
 	"scripts": {
-		"dev": "vite dev",
 		"build": "npm run prepack",
-		"build:demo": "vite build",
-		"preview": "npm run build:demo && vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"prepack": "svelte-kit sync && svelte-package && node scripts/build-css.mjs && node scripts/compile-dist-stylex.mjs && publint",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
@@ -43,7 +40,6 @@
 		"!src/**/*.test.*",
 		"!src/**/*.spec.*",
 		"!src/tests",
-		"!src/routes",
 		"!src/app.html"
 	],
 	"sideEffects": [
@@ -120,14 +116,13 @@
 		"vite": "^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0"
 	},
 	"devDependencies": {
-		"@astryxdesign/core": "0.4.2",
+		"@astryxdesign/core": "0.4.5",
 		"@babel/core": "^7.29.7",
 		"@babel/plugin-syntax-typescript": "^7.29.7",
 		"@eslint/js": "^10.0.1",
 		"@stylexjs/babel-plugin": "^0.19.0",
 		"@stylexjs/stylex": "^0.19.0",
 		"@stylexjs/unplugin": "^0.19.0",
-		"@sveltejs/adapter-auto": "^7.0.1",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/package": "^2.5.8",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",

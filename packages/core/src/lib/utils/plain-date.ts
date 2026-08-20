@@ -200,6 +200,18 @@ export function plainDateSetEndOfWeekExclusive(pd: PlainDate, weekStartsOn: numb
 	return plainDateAddDays(plainDateSetStartOfWeek(pd, weekStartsOn), 7);
 }
 
+/**
+ * Whole calendar days from `a` to `b`, ignoring time of day. Positive when `b`
+ * is after `a`, negative when before. Uses UTC midnight so DST shifts never add
+ * or drop a day.
+ */
+export function plainDateDiffDays(a: PlainDate, b: PlainDate): number {
+	const msPerDay = 24 * 60 * 60 * 1000;
+	const aUTC = Date.UTC(a.year, a.month - 1, a.day);
+	const bUTC = Date.UTC(b.year, b.month - 1, b.day);
+	return Math.round((bUTC - aUTC) / msPerDay);
+}
+
 export function plainDateGetWeekNumber(pd: PlainDate): number {
 	const d = plainDateToDate(pd);
 	const dayNum = d.getDay() || 7;

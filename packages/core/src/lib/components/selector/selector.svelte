@@ -265,6 +265,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { createOptimistic } from '../../internal/optimistic.svelte.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
 	import { useTypeahead } from '../../hooks/use-typeahead.js';
@@ -286,6 +287,7 @@
 	import SelectorOption from './selector-option.svelte';
 	import { useCombobox } from './use-combobox.svelte.js';
 	import { useSelectedItemOffset } from './use-selected-item-offset.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		getSelectableOptions,
 		isDivider,
@@ -377,6 +379,14 @@
 		hasClear: hasClearProp,
 		...rest
 	}: SelectorProps<T> = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	// The union's arms differ only in whether `value`/`onChange` admit `null`, and
 	// destructuring a union narrows a call to the *intersection* of the parameter
@@ -562,7 +572,11 @@
 			return;
 		}
 		const count = filterOptionsByQuery(selectableItems, nextQuery).length;
-		announce(count === 0 ? 'No results found' : `${count} result${count === 1 ? '' : 's'}`);
+		announce(
+			count === 0
+				? t('@astryx.selector.emptySearchResults')
+				: t('@astryx.selector.resultCount', { count })
+		);
 	}
 
 	// Calculate offset to position selected item over trigger. Explicit
@@ -1008,7 +1022,7 @@
 				: undefined}
 			aria-describedby={aria.ariaDescribedBy}
 			aria-labelledby={aria.ariaLabelledBy}
-			aria-required={isRequired ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
 			disabled={isDisabled && !showsDisabledMessage}
@@ -1155,6 +1169,15 @@
 						}
 					}}
 					onkeydown={(e) => {
+						// An in-progress IME composition uses these same keys (Enter to
+						// commit the candidate, Escape/Arrows to navigate the candidate
+						// window); the composing keydown fires before compositionend, so
+						// without this guard a Korean/Japanese/Chinese user committing a
+						// syllable with Enter would instead select the highlighted option.
+						// See utils/ime.ts.
+						if (isImeKeyEvent(e)) {
+							return;
+						}
 						// Arrow keys navigate options; Enter selects; Escape closes.
 						// Home/End are left to the input for caret movement (APG editable
 						// combobox); PageUp/PageDown are the sanctioned substitute for

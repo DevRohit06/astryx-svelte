@@ -8,9 +8,9 @@ monorepo: `packages/core` (components), `packages/cli`, `packages/themes/*`, `do
 ## The parity rule
 
 **If it's not in Astryx, it's not here.** Invented props, extra variants, nicer defaults and
-hand-drawn demo content are _defects_, not improvements — that includes the demo routes, which must
-show upstream's documented API. Upstream bugs are documented in `port/debts.md` rather than
-replicated.
+hand-drawn demo content are _defects_, not improvements — that includes the docs site's example
+blocks, which must show upstream's documented API. Upstream bugs are documented in `port/debts.md`
+rather than replicated.
 
 Upstream's source is cloned at **`reference/astryx-upstream/`** — gitignored, present locally, and
 the thing to read. Read it _before_ porting, not after: source, `.doc.mjs`, tests, storybook, and
@@ -61,8 +61,16 @@ pnpm verify        # the gate: every stage runs and every result reports, then p
                    #   regenerated and diffed against what's committed. Prefer this to chaining
                    #   build/check/lint/test with && — that reports "failed" identically whether
                    #   one stage failed or both ran, and once hid six real errors behind the first.
-pnpm verify --fast # skips the browser suite (real Chromium, thousands of cases); for gating a
-                   #   commit locally.
+pnpm verify --fast # skips the whole test stage — the browser suite (real Chromium, thousands of
+                   #   cases), the node suites, the CLI's own checks and the theme oracles. Use it
+                   #   for a quick read *between* commits, never as a batch's gate. Batch 029 was
+                   #   gated on it and the first full run found four defects it structurally could
+                   #   not see: six `FormLayout` cases printing `[object Object]` since the context
+                   #   became an object, the CLI's bundled copy of `neutral-theme.ts` left stale by
+                   #   a Banner change, three documented theming targets with no `themeProps`
+                   #   literal, and two `InputClearButton` cases the pin move added. Three of those
+                   #   came from one commit. **`pnpm verify` — full — before the batch is called
+                   #   done, and before any release.**
 pnpm -r build     # must run before check — theme-neutral typechecks against core's built dist/,
                   #   and the docs generator reads props types out of that same dist/
 pnpm -r check     # svelte-check + tsc
@@ -75,6 +83,12 @@ pnpm -F @astryx-svelte/core test:unit --run src/tests/foo.svelte.test.ts   # one
 #   full run in *watch mode* that never exits. It looks exactly like a hang.
 #   `--project=client` / `--project=server` narrows to one vitest project.
 pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see below
+#   Run it alone. Two vitest processes on this project at once fail at *project
+#   init* — `EPERM: operation not permitted, rename` on Windows, as both write
+#   `.svelte-kit` and the Vite cache — and every chunk then reports as failed.
+#   It reads as a catastrophic regression rather than as contention, and it cost
+#   a full 30-minute gate run to a background agent that was running the suite
+#   at the same time. Same rule for `pnpm verify`, which runs this.
 #   The client project cannot be run in one process: it dies partway through with
 #   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
 #   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a
@@ -83,7 +97,7 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   a chunk that collected nothing fails the run instead of shrinking the total. This
 #   is what `core`'s `test` script and CI both use; a bare `--project=client` over every
 #   client test file is not a measurement.
-pnpm dev          # core's demo routes;  pnpm dev:docs for the docs site
+pnpm dev          # the docs site — the only demo surface (see below)
 pnpm -F docs generate   # regenerate the docs content registries (runs automatically on dev/build)
 ```
 
@@ -91,6 +105,12 @@ Never install with `--prod` or prune devDependencies: all three oracles **and th
 pipeline** read the upstream `@astryxdesign/*` packages, which are devDependencies.
 
 ## The docs site
+
+**It is the port's only demo surface.** `packages/core` used to carry a SvelteKit demo route beside
+its library — 36 files that predated the docs site and were kept because nothing else showed a
+component running. Once `docs/` covered every component with its own example blocks, the route was
+two places to demonstrate the same thing, and the parity rule applied to both. It is gone; `pnpm
+dev` runs the docs site, and a component's examples live in `docs/src/lib/examples/<Name>/`.
 
 See `port/todo.md`'s `## Current goal` for what's active. Two things about `docs/` are easy to get
 wrong:

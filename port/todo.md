@@ -12,17 +12,37 @@ The first npm release shipped as `0.3.1` (porting Astryx `0.3.0` — the port's 
 can't express a release of its own, so it took the next free patch number instead of `0.3.0`
 itself). Since then the goal has been continuous upstream tracking rather than a one-time port:
 pull each Astryx release, close the class-oracle and theme-oracle drift it introduces, and cut a
-matching release of this port. The pin is currently Astryx `0.4.2` — see
-[`status.md`](./status.md) for the live count of what that leaves open. Set 2026-08-16.
+matching release of this port. The pin is currently Astryx `0.4.5` — see
+[`status.md`](./status.md) for the live count of what that leaves open. Set 2026-08-16, re-pinned
+2026-08-20.
+
+`0.4.2` is merged to `main` but **not tagged**: the release step is still open below, and tagging
+from a quiet `main` is easier than tagging mid-batch.
 
 ## Next
 
 - [ ] Push the release tag for the current pin once its gate is green (see Open work → Release)
-- [ ] Finish the 0.4.2 test delta — 39 SideNav cases and 12 Slider cases, plus smaller counts in
-      Avatar, TopNav, ChatMessageBubble, useContainerReveal, DropdownMenuSubMenu and useFocusTrap.
-      The release-blocking part is done (useLayer's hosting block, the whole useMenuHover suite,
-      Slider's inset blocks, HoverCard's portal pair); `debts.md` carries the per-suite list
-- [ ] Re-sweep the demo route against upstream now that later batches have landed
+- [ ] Finish the test delta carried in from the 0.4.2 batch — SideNav and Slider are the two
+      largest, with smaller shortfalls in Avatar, TopNav, ChatMessageBubble, useContainerReveal,
+      DropdownMenuSubMenu and useFocusTrap. The release-blocking part is done (useLayer's hosting
+      block, the whole useMenuHover suite, Slider's inset blocks, HoverCard's portal pair);
+      `debts.md` carries the per-suite list, re-derived against the current pin
+- [ ] Settle the published-surface findings the 0.4.5 sweep raised, as **one** decision at a minor
+      rather than piecemeal before a patch. Every one is a _removal_ from a shipped surface or an
+      addition to it, so none belongs in a polish pass: `LayerContext`/`LayerContextValue`/
+      `useLayerContext` withheld while `layerAnimations`/`ToastViewport`/`ToastViewportProps` are
+      published, on a distinction upstream does not make; and `MetadataListContextValue`,
+      `UseIndicatorFocusRingReturn`, `getPositionTryFallbacks`, the five `onMediaTokens` symbols
+      and `parseStyleKey` over-exported against upstream's barrels. The comment at the head of
+      `src/lib/index.ts` needs rewriting whichever way the Layer half goes — it currently cites the
+      barrel-absent rule to justify withholding barrel-_present_ symbols
+- [ ] Hand-translate the deferred `.doc.mjs` examples. Upstream's are JSX, and this port's
+      `ComponentExampleDoc.code` is documented as Svelte source, so emitting them verbatim would
+      ship React as this CLI's answer to "show me an example" — the `Button.icon` mistake.
+      `UPSTREAM_EXAMPLES_NOT_PORTED` in `docs/scripts/emit-core-docs.mjs` is the exact list and
+      fails the run in both directions, so it cannot drift; `BottomSheet` and
+      `BottomSheetSwitcher` joined it at 0.4.5
+- [ ] Re-sweep the docs example blocks against upstream now that later batches have landed
 - [ ] Build `ThemesPreview`/`TemplatesPreview`, the two landing-page bento tiles — both were
       blocked on page templates, which have since landed in full
 - [ ] Work down the CLI backlog (see Open work → CLI); the codemod runner and the lockfile
@@ -126,8 +146,9 @@ hand-drawn content.
       upstream ships no story using `handleRef` either. Worth a port-own block if the prop ever
       needs showing
 - [ ] Multiple `AppShell` instances on one page means multiple `role="main"` landmarks sharing one
-      id constant — a demo-page artifact of showing every story at once, not a component defect
-- [ ] Re-sweep the demo route against upstream now that later batches have landed
+      id constant — an artifact of a component page showing every example at once, not a component
+      defect
+- [ ] Re-sweep the docs example blocks against upstream now that later batches have landed
 
 ### Release
 
@@ -155,10 +176,10 @@ hand-drawn content.
 
 Sizes measured from upstream source, not estimated.
 
-| Front      | Size                   |
-| ---------- | ---------------------- |
-| `lab`      | 17 components, ~995 KB |
-| `charts`   | 35 files               |
-| `vega`     | 5 files                |
-| `richtext` | 1 file                 |
-| `build`    | 7 files                |
+| Front      | Size              |
+| ---------- | ----------------- |
+| `lab`      | 19 dirs at v0.4.4 |
+| `charts`   | 35 files          |
+| `vega`     | 5 files           |
+| `richtext` | 1 file            |
+| `build`    | 7 files           |

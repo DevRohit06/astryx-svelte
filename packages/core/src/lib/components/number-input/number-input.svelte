@@ -382,6 +382,7 @@
 	import { useSize } from '../../internal/contexts.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { useInputContainer } from '../../hooks/use-input-container.svelte.js';
@@ -394,6 +395,7 @@
 	import { useTooltip } from '../tooltip/use-tooltip.svelte.js';
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
+	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
 	import {
 		numberInputAttrs,
 		numberInputIncrementIconStyle,
@@ -467,6 +469,14 @@
 		style: styleProp,
 		...rest
 	}: NumberInputProps = $props();
+
+	// Announce the effective required state (form default included) while the
+	// native `required` stays bound to the explicit `isRequired`, so a layout
+	// default never switches on browser validation.
+	const isEffectivelyRequired = useResolvedRequired({
+		isRequired: () => isRequired,
+		isOptional: () => isOptional
+	});
 
 	// The union's two arms differ only in whether `onChange` accepts `null`, and
 	// destructuring a union narrows a call to the *intersection* of the parameter
@@ -713,6 +723,14 @@
 	const canDecrement = $derived(getNextValue(-1) !== valueForStepping);
 
 	function handleKeyDown(e: KeyboardEvent): void {
+		// The field is type="text" for formatted display, so an IME can compose
+		// into it: Enter commits the candidate and the arrows walk the candidate
+		// window. The composing keydown fires before compositionend, so without
+		// this guard those keystrokes would commit or step the value instead.
+		// See utils/ime.ts.
+		if (isImeKeyEvent(e)) {
+			return;
+		}
 		const hasModifier = e.altKey || e.ctrlKey || e.metaKey || e.shiftKey;
 		if (!hasModifier && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
 			// `onkeydown` runs *first* in this branch so a consumer can take the
@@ -864,7 +882,7 @@
 			aria-valuenow={value ?? undefined}
 			aria-valuetext={value == null || !formatValue ? undefined : formattedValue}
 			aria-describedby={aria.ariaDescribedBy}
-			aria-required={isRequired === true ? 'true' : undefined}
+			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' || !isInputValid ? 'true' : undefined}
 			aria-labelledby={aria.ariaLabelledBy}
 			class={controlAttrs.class}

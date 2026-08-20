@@ -4,8 +4,9 @@ import Tree, { type TreeNode } from './fixtures/tree-focus-fixture.svelte';
 
 /**
  * Ported from Astryx's `hooks/useTreeFocus.test.tsx` — **16 upstream cases at
- * v0.4.1 (4 linear, 3 Arrow Left/Right, 3 RTL, 6 activation + typeahead), 16
- * here, none dropped**. (The header has been wrong twice: it once said "all nine
+ * v0.4.5 (4 linear, 3 Arrow Left/Right, 3 RTL, 6 activation + typeahead), 16
+ * here, none dropped**. (Re-derived at the 0.4.5 pin; upstream's file has not
+ * moved since v0.4.1.) (The header has been wrong twice: it once said "all nine
  * cases" when upstream had ten, then "13 at v0.3.0" — correct at the time.
  * v0.4.1 adds the three typeahead cases that pin the two #4844 fixes the hook's
  * private typeahead just took: a repeated letter *cycles* instead of extending

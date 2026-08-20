@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
+import { stubMatchMedia } from './stub-match-media.js';
 import AppShellFixture from './fixtures/app-shell-fixture.svelte';
 
 /**
@@ -55,21 +56,12 @@ import AppShellFixture from './fixtures/app-shell-fixture.svelte';
 const originalShowModal = HTMLDialogElement.prototype.showModal;
 const originalClose = HTMLDialogElement.prototype.close;
 
-function createMockMatchMedia(matches: boolean) {
-	return {
-		matches,
-		media: '',
-		onchange: null,
-		addEventListener: vi.fn(),
-		removeEventListener: vi.fn(),
-		addListener: vi.fn(),
-		removeListener: vi.fn(),
-		dispatchEvent: vi.fn()
-	};
-}
-
 beforeEach(() => {
-	vi.stubGlobal('matchMedia', vi.fn().mockReturnValue(createMockMatchMedia(true)));
+	// Query-aware, not a blanket `matches: true`. The blanket shape also answers
+	// `prefers-reduced-motion`, which caps `MobileNav`'s close delay at 0 — so a
+	// suite using it runs against an immediate close while its names claim
+	// otherwise, and every test still passes. See `stub-match-media.ts`.
+	stubMatchMedia({ matches: true, reduceMotion: false });
 	HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
 		this.setAttribute('open', '');
 	});

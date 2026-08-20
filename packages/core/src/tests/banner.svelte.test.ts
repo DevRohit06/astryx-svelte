@@ -5,19 +5,37 @@ import { createAttachmentKey } from 'svelte/attachments';
 import Banner from '$lib/components/banner/banner.svelte';
 import { registerIcons, resetIcons } from '$lib/components/icon/icon-registry.js';
 import BannerFixture from './fixtures/banner-fixture.svelte';
+import BannerFocusHandoff from './fixtures/banner-focus-handoff.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 import { customChevron, customInfo } from './fixtures/banner-registry-icons.svelte';
 
 /**
- * Ported from Astryx's `Banner/Banner.test.tsx`, all **38** cases at v0.4.1.
- * Nothing is dropped.
+ * Ported from Astryx's `Banner/Banner.test.tsx`, **45 of upstream's 47** cases at
+ * v0.4.5.
  *
- * (At v0.3.0 this was 35. The three added here are #4166's "Status icon color
- * theming" block, which pins the `banner-icon` theme target to the element that
- * paints — the status `<Icon>` — and keeps it on the wrapper only when a custom
- * `icon` is passed. An earlier header said "all 33 cases": upstream had 35, and
- * the nested `describe('elevation')` pair that arrived with 0.1.9's `elevation`
- * prop had never been carried across.)
+ * **Two cases have no Svelte analogue and are dropped**, both for the same
+ * reason: they pass `{false}` as a snippet-typed slot to exercise upstream's
+ * `isRenderable`, and a Svelte `Snippet` cannot be `false`. The type forbids it
+ * and `{@render}` would throw on it, so there is no state to assert.
+ *   - `empty slots` → "does not show the expand affordance for children that
+ *     render nothing" (`children={false}`)
+ *   - `narrow-viewport wrapping` → "leaves it free for an endContent that
+ *     renders nothing" (`endContent={false}`)
+ *
+ * The third `isRenderable` case *does* port and is kept, because `description`
+ * is `string | Snippet` and `description=""` is expressible here — it caught a
+ * real defect: the guard was `!= null`, so an empty string rendered an empty
+ * description row.
+ *
+ * (At v0.4.1 this was 38, and at v0.3.0 35. The nine added at 0.4.4 are the
+ * dismiss focus handoff, the empty slots and the narrow-viewport wrapping
+ * blocks. An earlier header said "all 33 cases": upstream had 35, and the nested
+ * `describe('elevation')` pair that arrived with 0.1.9's `elevation` prop had
+ * never been carried across.)
+ *
+ * #4166's "Status icon color theming" block pins the `banner-icon` theme target
+ * to the element that paints — the status `<Icon>` — and keeps it on the wrapper
+ * only when a custom `icon` is passed.
  *
  * Cases with `children` or `endContent` go through `banner-fixture.svelte`, and
  * the custom-icon case through the shared `slot-probe` — both slots are snippets
@@ -471,5 +489,91 @@ describe('Banner', () => {
 				none.container.firstElementChild!.className
 			);
 		});
+	});
+	describe('dismiss focus handoff', () => {
+		it('returns focus to where it came from instead of dropping it to body', async () => {
+			const screen = await render(BannerFocusHandoff);
+			const before = screen.getByRole('button', { name: 'Before' }).element() as HTMLElement;
+			before.focus();
+
+			await userEvent.tab();
+			await expect.element(screen.getByRole('button', { name: 'Dismiss' })).toHaveFocus();
+
+			await userEvent.keyboard('{Enter}');
+
+			await expect.element(screen.getByRole('status')).not.toBeInTheDocument();
+			expect(document.activeElement).toBe(before);
+			expect(document.activeElement).not.toBe(document.body);
+		});
+
+		it('leaves focus alone when it never entered the banner', async () => {
+			const screen = await render(BannerFocusHandoff, { props: { beforeLabel: 'Elsewhere' } });
+			await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+			await expect.element(screen.getByRole('status')).not.toBeInTheDocument();
+		});
+	});
+
+	describe('empty slots', () => {
+		// Upstream's `children={false}` case is dropped — see the file header.
+
+		it('still shows the expand affordance for real children', async () => {
+			const screen = await render(BannerFixture, {
+				props: { props: { status: 'info', title: 'Heads up' }, hasChildren: true }
+			});
+			await expect.element(screen.getByRole('button', { name: 'Expand' })).toBeInTheDocument();
+		});
+
+		it('renders no description node for a description that renders nothing', async () => {
+			const screen = await render(Banner, {
+				props: { status: 'info', title: 'Heads up', description: '' }
+			});
+			const header = screen.container.firstElementChild!.firstElementChild!;
+			// icon wrapper + text column, and the text column holds the title alone
+			expect(header.children[1].children).toHaveLength(1);
+		});
+	});
+
+	describe('narrow-viewport wrapping', () => {
+		const renderBanner = async (withEndContent: boolean) =>
+			await render(BannerFixture, {
+				props: {
+					props: { status: 'warning', title: 'A compute node is required' },
+					endButtonTestid: withEndContent ? 'retry' : undefined
+				}
+			});
+
+		/** The header is the banner root's first child; the text column its second. */
+		const partsOf = (screen: Awaited<ReturnType<typeof renderBanner>>) => {
+			const header = screen.container.firstElementChild!.firstElementChild!;
+			return { header, textColumn: header.children[1] };
+		};
+
+		/**
+		 * Upstream asserts the literal `'8rem'` because jsdom hands back the
+		 * declared value; a real browser resolves it, so these cases compare
+		 * against the *computed* length instead. Derived from the root font size
+		 * rather than hardcoded as `128px`, so the assertion survives a page that
+		 * is not at the 16px default — which is the whole point of the threshold
+		 * being authored in `rem`.
+		 */
+		const wrapThreshold = () =>
+			`${8 * parseFloat(getComputedStyle(document.documentElement).fontSize)}px`;
+
+		it('lets the header wrap so the end area can take its own row', async () => {
+			const { header } = partsOf(await renderBanner(true));
+			expect(getComputedStyle(header).flexWrap).toBe('wrap');
+		});
+
+		it('gives the text column a wrap threshold when endContent is present', async () => {
+			const { textColumn } = partsOf(await renderBanner(true));
+			expect(getComputedStyle(textColumn).flexBasis).toBe(wrapThreshold());
+		});
+
+		it('leaves the text column free to shrink when there is no endContent', async () => {
+			const { textColumn } = partsOf(await renderBanner(false));
+			expect(getComputedStyle(textColumn).flexBasis).not.toBe(wrapThreshold());
+		});
+
+		// Upstream's `endContent={false}` case is dropped — see the file header.
 	});
 });

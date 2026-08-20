@@ -40,6 +40,9 @@ export default {
 				visualProps: ['size', 'status']
 			},
 			{
+				className: 'astryx-input-clear-button'
+			},
+			{
 				className: 'astryx-input-clear-icon'
 			}
 		],

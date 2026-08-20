@@ -46,14 +46,17 @@ import MobileNavProbe from './fixtures/mobile-nav-probe.svelte';
  *   substring-and-case-insensitive by default where testing-library's is exact,
  *   so the option restores upstream's semantics rather than departing from them.
  *
- * ## Not tested here, deliberately
+ * ## The delayed close is covered elsewhere
  *
- * `MobileNav`'s delayed `close()` (the slide-out transition) is **dead code on
- * both sides**: a Svelte effect, like a React one, runs its teardown before
- * re-running, so the teardown's unconditional `dialog.close()` has already fired
- * by the time the `isOpen: false` pass reaches the delayed branch. Upstream has
- * no case for it either, and inventing one would pin behaviour neither library
- * has. Recorded in port/debts.md → Known debts.
+ * It used to be **dead code on both sides** — a Svelte effect, like a React one,
+ * runs its teardown before re-running, so the teardown's unconditional
+ * `dialog.close()` had already fired by the time the `isOpen: false` pass
+ * reached the delayed branch. **Upstream 0.4.5 fixed that** (#4290): the unmount
+ * close moved into its own effect precisely so an `isOpen` flip stops cutting
+ * the slide-out off. It now has real coverage, in the three suites that arrived
+ * with the fix — `mobile-nav-close-timing.test.ts`,
+ * `mobile-nav-close-visibility.svelte.test.ts` and
+ * `mobile-nav-close-edge-cases.svelte.test.ts` — so it is not retested here.
  */
 
 const originalShowModal = HTMLDialogElement.prototype.showModal;

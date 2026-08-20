@@ -192,7 +192,11 @@
 		hasRovingTabIndex: true
 	}));
 
-	const theme = $derived(themeProps('tree-list', { density }));
+	// `variant` belongs here as well as `density`: `TreeListVariantMap` is
+	// declaration-mergeable, so an augmented variant type-checks and renders —
+	// and without the axis on the element there is no selector for a theme to
+	// style it with. Upstream shipped that gap too and closed it at 0.4.5.
+	const theme = $derived(themeProps('tree-list', { density, variant }));
 	const rootAttrs = $derived(treeListRootAttrs(xstyle));
 	const listAttrs = treeListListAttrs();
 	const headerAttrs = treeListHeaderAttrs();

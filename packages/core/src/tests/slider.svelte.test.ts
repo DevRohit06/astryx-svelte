@@ -5,19 +5,24 @@ import Slider from '$lib/components/slider/slider.svelte';
 import SliderForm from './fixtures/slider-form.svelte';
 
 /**
- * Astryx's `Slider/Slider.test.tsx` at v0.4.2, which declares **47 blocks**
- * (44 `it` + 3 `it.each`). **35 are here** — 32 plain plus the three `it.each`
- * blocks that pin #5051's thumb inset.
+ * Astryx's `Slider/Slider.test.tsx` at **v0.4.5**, which declares **47 blocks
+ * producing 51 cases** (44 `it` + 3 `it.each` whose tables expand to 7 rows).
+ * **35 blocks / 39 cases are here** — 32 plain plus all three `it.each` blocks,
+ * which pin #5051's thumb inset.
  *
  * This header previously claimed "32 upstream cases … nothing dropped", which
- * was never true of any upstream tag — upstream has had ≥45 since v0.2.0. The
- * count is a contract against *upstream's* file, so the twelve that are still
- * missing are named here rather than left implied:
+ * was never true of any upstream tag — upstream has had ≥45 since v0.2.0. It
+ * then read "47 blocks … 35 are here" at v0.4.2 and mis-attributed its own last
+ * absence to "upstream's third `it.each` arm"; all three `it.each` blocks are in
+ * fact here in full. The count is a contract against *upstream's* file at the
+ * current pin, so it is re-derived at v0.4.5 (upstream has not moved this file
+ * since v0.4.2) and the twelve that are missing — all plain `it`, one case
+ * each — are named in full:
  *
- * - `single mode renders the label as a group label naming the thumb`
- * - `range mode labels the slider group via aria-labelledby`
  * - `range thumb bounds update after moving a thumb`
  * - `range thumb bounds include the minStepsBetweenThumbs gap`
+ * - `single mode renders the label as a group label naming the thumb`
+ * - `range mode labels the slider group via aria-labelledby`
  * - `conveys required state through the accessible description`
  * - `conveys required state on both thumbs of a range slider`
  * - `combines required with other describedby parts in the description`
@@ -25,12 +30,14 @@ import SliderForm from './fixtures/slider-form.svelte';
  * - `emits exact decimal values for fractional steps on keyboard`
  * - `emits exact decimal values for fractional steps in range mode`
  * - `maps a track click to the LTR value in the default direction`
- * - (plus upstream's third `it.each` arm counted above)
+ * - `mirrors a track click to the RTL value when the track is rtl`
  *
- * They cover `isRequired`, `minStepsBetweenThumbs` and RTL pointer mirroring —
- * behaviours this suite does not exercise at all. Recorded in `port/debts.md`;
- * the gap predates the 0.4.2 tracking batch. Upstream has no `displayName` case
- * and no `ref` case, so nothing here is structurally unportable.
+ * They cover `isRequired`, `minStepsBetweenThumbs`, fractional-step precision
+ * and RTL pointer mirroring — behaviours this suite does not exercise at all.
+ * Recorded in `port/debts.md`; the gap predates the 0.4.2 tracking batch, and
+ * closing it is a batch of its own rather than a header sweep. Upstream has no
+ * `displayName` case and no `ref` case, so nothing here is structurally
+ * unportable.
  *
  * Three environment differences, each noted again at the case that meets it:
  *

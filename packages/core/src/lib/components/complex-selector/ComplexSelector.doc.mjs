@@ -15,7 +15,7 @@ export default {
 		targets: [
 			{
 				className: 'astryx-complex-selector',
-				visualProps: ['size', 'status']
+				visualProps: ['variant', 'size', 'status']
 			},
 			{
 				className: 'astryx-complex-selector-indicator-icon',
@@ -30,6 +30,16 @@ export default {
 		description:
 			'Use ComplexSelector when a selection needs richer custom content than a Selector option row. It is intentionally one component: ComplexSelector owns the field, trigger, popover, focus restore, and changeAction flow, while the content render prop owns the selector-specific accessible structure.',
 		bestPractices: [
+			{
+				guidance: true,
+				description:
+					'Use variant="ghost" with a startIcon when the selector is triggered from a toolbar. Use alignment="end" when a wide surface should align its end edge to the trigger.'
+			},
+			{
+				guidance: true,
+				description:
+					'For staged editors, keep draft state in the composed content and call the provided onChange helper only from Apply. Cancel or dismiss without committing.'
+			},
 			{
 				guidance: true,
 				description:
@@ -127,8 +137,20 @@ export default {
 		{
 			name: 'size',
 			type: "'sm' | 'md' | 'lg'",
-			description: 'Trigger and field size.',
+			description: 'Exact trigger height: sm 28px, md 32px, or lg 36px.',
 			default: "'md'"
+		},
+		{
+			name: 'variant',
+			type: "'ghost' | 'input'",
+			description:
+				'Visual trigger style. Input is the bordered form treatment; ghost matches toolbar buttons.',
+			default: "'input'"
+		},
+		{
+			name: 'startIcon',
+			type: 'Snippet | IconName',
+			description: 'Icon displayed at the start of the trigger.'
 		},
 		{
 			name: 'width',
@@ -140,6 +162,18 @@ export default {
 			type: "'below' | 'above' | 'end' | 'start'",
 			description: 'Popup placement.',
 			default: "'below'"
+		},
+		{
+			name: 'alignment',
+			type: "'end' | 'start' | 'center'",
+			description: 'Popup alignment along the placement axis.',
+			default: "'start'"
+		},
+		{
+			name: 'handleRef',
+			type: 'ComplexSelectorHandle | null',
+			description:
+				'Imperative handle for programmatic control. Exposes open(), close(), toggle(), and isOpen().'
 		},
 		{
 			name: 'contentXstyle',

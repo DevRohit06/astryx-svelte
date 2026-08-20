@@ -8,20 +8,20 @@
 
 |                           |                                                                          |
 | ------------------------- | ------------------------------------------------------------------------ |
-| Component dirs (ours)     | 98                                                                       |
-| Component dirs (upstream) | 102                                                                      |
+| Component dirs (ours)     | 99                                                                       |
+| Component dirs (upstream) | 103                                                                      |
 | Missing here              | none                                                                     |
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
-| Upstream pin              | `@astryxdesign/core` 0.4.2                                               |
-| Ledger entries            | 29                                                                       |
+| Upstream pin              | `@astryxdesign/core` 0.4.5                                               |
+| Ledger entries            | 30                                                                       |
 
 ## Debts
 
 | Kind                  | Count  |
 | --------------------- | ------ |
-| api-divergence        | 27     |
-| deliberate-divergence | 42     |
-| unported              | 11     |
+| api-divergence        | 28     |
+| deliberate-divergence | 44     |
+| unported              | 13     |
 | upstream-lag          | 12     |
-| **total**             | **92** |
+| **total**             | **97** |

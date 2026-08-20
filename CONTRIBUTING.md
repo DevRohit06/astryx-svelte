@@ -12,8 +12,8 @@ That constraint is the whole point, and it is what this guide is mostly about.
 **If it's not in Astryx, it's not here.**
 
 Invented props, extra variants, nicer defaults and hand-drawn demo content are _defects_, not
-improvements. That includes demo routes and template content, which must show upstream's
-documented API rather than a tidied-up version of it.
+improvements. That includes the docs site's example blocks and template content, which must show
+upstream's documented API rather than a tidied-up version of it.
 
 Where upstream has a bug, we reproduce the bug and record it in `port/debts.md` under "Known debts". A
 fix that upstream has not made is a divergence, and divergences are how a port stops being a port.
@@ -70,8 +70,7 @@ pnpm -r test      # vitest + all three fidelity oracles
 Day-to-day:
 
 ```sh
-pnpm dev                                            # core's demo routes
-pnpm dev:docs                                       # the docs site
+pnpm dev                                            # the docs site
 pnpm -F @astryx-svelte/core test:unit --run         # unit tests only
 pnpm -F @astryx-svelte/core test:unit --run src/tests/foo.svelte.test.ts   # one file
 ```

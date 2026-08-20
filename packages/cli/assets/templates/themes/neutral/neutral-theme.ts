@@ -404,15 +404,17 @@ export const neutralTheme = defineTheme({
 		},
 
 		// ================================================================
-		// Banner — a hue-tinted surface with coloured text and icon. The inner
-		// header's *-muted token is forced transparent so the outer tinted
-		// background shows through cleanly. Status overrides reference
-		// --color-text-{hue} so text stays in sync with the palette anchors.
+		// Banner — a hue-tinted surface with coloured text and icon. `info`
+		// retints by *redirecting* --color-accent-muted, which is what the
+		// header already paints with; the older shape painted the background
+		// directly and then forced the token transparent so the two would not
+		// stack, which is two declarations doing one declaration's work.
+		// Status overrides reference --color-text-{hue} so text stays in sync
+		// with the palette anchors.
 		// ================================================================
 		banner: {
 			'status:info': {
-				backgroundColor: 'var(--color-background-blue)',
-				'--color-accent-muted': 'transparent',
+				'--color-accent-muted': 'var(--color-background-blue)',
 				'--color-text-primary': 'var(--color-text-blue)',
 				'--color-text-secondary': 'var(--color-text-blue)',
 				'--color-accent': 'var(--color-text-blue)'

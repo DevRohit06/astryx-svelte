@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import { createAttachmentKey } from 'svelte/attachments';
@@ -15,12 +15,13 @@ import type { DateRange } from '$lib/utils/date-types.js';
 
 /**
  * Astryx's `DateRangeInput/DateRangeInput.test.tsx`, ported case for case —
- * **45** upstream cases at v0.4.1 (19 directly in `describe('DateRangeInput')`,
+ * **47** upstream cases at v0.4.5 (19 directly in `describe('DateRangeInput')`,
  * 5 in `describe('hasClear')`, 2 in `describe('presets')`, 8 in
  * `describe('disabledMessage')`, 2 + a nested 3-case `describe('weekStartsOn')`
  * in `describe('DateRangeInput statusVariant forwarding')`, 4 in
- * `describe('DateRangeInput icon theme targets')` and 2 in
- * `describe('DateRangeInput disabled theme state')`), **all 45 here**. There is
+ * `describe('DateRangeInput icon theme targets')`, 2 in
+ * `describe('DateRangeInput disabled theme state')` and 2 in
+ * `describe('DateRangeInput range-span forwarding')`), **all 47 here**. There is
  * no `displayName` case, no snapshot and no no-JSX construction form in the
  * file, so nothing is React-only except the ref case, which gets a counterpart.
  *
@@ -48,6 +49,15 @@ import type { DateRange } from '$lib/utils/date-types.js';
  *   icons (secondary color, sm size) byte-identically` was renamed to `routes
  *   the clear glyph through the shared clear button (default look unchanged)`
  *   with its filter list updated. Both are upstream's amended text, verbatim.
+ *
+ * ## v0.4.5 (the count, re-derived at the current pin)
+ *
+ * This header read "**45** … at v0.4.1" and stayed true only until the pin
+ * moved. 0.4.x added the two-case `describe('DateRangeInput range-span
+ * forwarding')` block, and both are ported at the foot of this file. They pass
+ * against this port unchanged — `maxRangeSpan` already reaches `Calendar` and
+ * already gates the presets — with two deliveries restated where a real browser
+ * cannot do what jsdom does; see the comments at the block and at the case.
  *
  * Upstream's `openAndReadWeekdays` carries a comment about jsdom role queries
  * skipping the top layer. That constraint does not exist here — Chromium's
@@ -745,5 +755,89 @@ describe('DateRangeInput disabled theme state', () => {
 		});
 		const root = screen.container.querySelector('.astryx-date-range-input');
 		expect(root).not.toHaveAttribute('data-disabled');
+	});
+});
+
+describe('DateRangeInput range-span forwarding', () => {
+	// Pin "today" so the popover opens on a known month and the day buttons we
+	// query are guaranteed to render.
+	//
+	// Only `Date` is faked. Vitest's default `toFake` set includes
+	// `queueMicrotask`, which is what Svelte schedules its flushes on — faking it
+	// stalls mount and unmount, so a suite fakes exactly what the case is about
+	// (`long-press` records the same rule).
+	beforeEach(() => {
+		vi.useFakeTimers({ toFake: ['Date'] });
+		vi.setSystemTime(new Date('2026-01-05T12:00:00Z'));
+	});
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	// Upstream reaches day buttons by their machine-readable `data-date` (ISO)
+	// attribute rather than by role, because jsdom keeps them in the DOM but role
+	// queries skip a stubbed popover. The attribute query carries over unchanged;
+	// it is scoped to the render container, since the popover layer renders inline
+	// in the component tree here rather than through a portal.
+	const dayButton = (container: HTMLElement, iso: string): HTMLButtonElement | null =>
+		container.querySelector<HTMLButtonElement>(`button[data-date="${iso}"]`);
+
+	it('forwards maxRangeSpan so the window caps after a start is picked', async () => {
+		const screen = await render(DateRangeInput, {
+			props: { label: 'Reporting period', value: null, onChange: noop, maxRangeSpan: 7 }
+		});
+
+		await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+
+		// Before a start is picked, a far-off day is selectable.
+		expect(dayButton(screen.container, '2026-01-20')).not.toBeDisabled();
+
+		await userEvent.click(dayButton(screen.container, '2026-01-10') as HTMLButtonElement);
+
+		// A 7-day window spans start ± 6 days: Jan 16 is the edge, Jan 17 is out.
+		expect(dayButton(screen.container, '2026-01-16')).not.toBeDisabled();
+		expect(dayButton(screen.container, '2026-01-17')).toBeDisabled();
+	});
+
+	it('disables a preset whose range violates the span cap', async () => {
+		const presets: ReadonlyArray<DateRangePreset> = [
+			{
+				label: 'Last 3 days',
+				getRange: (): DateRange => ({ start: '2026-01-08', end: '2026-01-10' })
+			},
+			{
+				label: 'Last 30 days',
+				getRange: (): DateRange => ({ start: '2025-12-12', end: '2026-01-10' })
+			}
+		];
+		const handleChange = vi.fn();
+		const screen = await render(DateRangeInput, {
+			props: {
+				label: 'Reporting period',
+				value: null,
+				onChange: handleChange,
+				maxRangeSpan: 7,
+				presets
+			}
+		});
+
+		await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+
+		// The 3-day preset fits the 7-day cap; the 30-day preset can't be committed.
+		const withinCap = screen.getByRole('button', { name: 'Last 3 days' }).element();
+		const overCap = screen.getByRole('button', { name: 'Last 30 days' }).element() as HTMLElement;
+		expect(withinCap).not.toBeDisabled();
+		expect(overCap).toBeDisabled();
+
+		// Restated delivery only; the assertion is upstream's unchanged. Upstream's
+		// `fireEvent.click` FORCE-dispatches a synthetic event that a browser would
+		// never deliver, and React's own `shouldPreventMouseEvent` is what swallows
+		// it. Doing that here would assert Svelte's delegation internals instead of
+		// the component, so the click goes through `HTMLElement.click()` — the UA's
+		// own activation path, which per spec does not fire on an actually-disabled
+		// control. Playwright's `userEvent.click` is not an option either: it
+		// refuses a disabled element and would assert its actionability heuristic.
+		overCap.click();
+		expect(handleChange).not.toHaveBeenCalled();
 	});
 });

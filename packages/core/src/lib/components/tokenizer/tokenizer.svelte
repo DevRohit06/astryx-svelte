@@ -499,7 +499,7 @@
 			const realItem = { id: createdValue, label: createdValue } as T;
 			const newItems = [...value, realItem];
 			onChange(newItems, { item: realItem, type: 'create' });
-			announce(`Added ${createdValue}`);
+			announce(t('@astryx.tokenizer.tokenAdded', { label: createdValue }));
 			return;
 		}
 
@@ -508,7 +508,7 @@
 		}
 		const newItems = [...value, item];
 		onChange(newItems, { item, type: 'add' });
-		announce(`Added ${item.label}`);
+		announce(t('@astryx.tokenizer.tokenAdded', { label: item.label }));
 	}
 
 	/**
@@ -519,7 +519,7 @@
 	function handleRemove(item: T): void {
 		const newItems = value.filter((v) => v.id !== item.id);
 		onChange(newItems, { item, type: 'remove' });
-		announce(`Removed ${item.label}`);
+		announce(t('@astryx.tokenizer.tokenRemoved', { label: item.label }));
 		inputEl?.focus();
 	}
 

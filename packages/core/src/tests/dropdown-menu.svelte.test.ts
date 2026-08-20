@@ -9,8 +9,10 @@ import IconButton from './fixtures/dropdown-menu-icon-button.svelte';
 import Rtl from './fixtures/dropdown-menu-rtl.svelte';
 
 /**
- * Ported from Astryx's `DropdownMenu/DropdownMenu.test.tsx` — 67 of its 77 cases
- * (v0.4.1), across fourteen of its fifteen describe blocks (the top-level
+ * Ported from Astryx's `DropdownMenu/DropdownMenu.test.tsx` — 67 of its 77 cases,
+ * re-derived at **v0.4.5** (the file is unchanged since v0.4.1, which is where
+ * this header's count last came from), across fourteen of its fifteen describe
+ * blocks (the top-level
  * `DropdownMenu`, `light-dismiss race`, `controlled mode`, `items`, `sections`,
  * `dividers`, `theming slots`, `DropdownMenuItem destructive variant`,
  * `button customization`, `icon-only mode`, `hasChevron`, `compound mode`,

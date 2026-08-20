@@ -3,7 +3,7 @@ import { snapToGraphemeBoundary } from '$lib/hooks/use-streaming-text.svelte.js'
 
 /**
  * The `snapToGraphemeBoundary` half of Astryx's `hooks/useStreamingText.test.ts`
- * at **v0.4.1** — its second `describe`, all 3 cases, titles and assertions
+ * at **v0.4.5** — its second `describe`, all 3 cases, titles and assertions
  * unchanged. The 11 cases of the `useStreamingText` describe live next door in
  * `use-streaming-text.svelte.test.ts`; between the two files upstream's 14 are
  * all present.

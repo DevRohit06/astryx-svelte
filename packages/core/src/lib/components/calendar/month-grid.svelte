@@ -18,6 +18,8 @@
 		min?: ISODateString;
 		max?: ISODateString;
 		dateConstraints?: ReadonlyArray<(date: Date) => boolean>;
+		maxRangeSpan?: number;
+		minRangeSpan?: number;
 		hasOutsideDays: boolean;
 		hasWeekNumbers: boolean;
 		hasVariableRowCount: boolean;
@@ -63,6 +65,8 @@
 		min,
 		max,
 		dateConstraints,
+		maxRangeSpan,
+		minRangeSpan,
 		hasOutsideDays,
 		hasWeekNumbers,
 		hasVariableRowCount,
@@ -83,7 +87,21 @@
 		hasVariableRowCount
 	}));
 
-	const constraints = useCalendarConstraints(() => ({ min, max, dateConstraints }));
+	// The in-progress range start, in `PlainDate` form for the span comparison.
+	// Null outside range mode and before the first pick, which is what leaves every
+	// otherwise-valid day selectable until an anchor exists.
+	const rangeAnchor = $derived(
+		mode === 'range' && rangeSelectionStart ? plainDateFromISO(rangeSelectionStart) : null
+	);
+
+	const constraints = useCalendarConstraints(() => ({
+		min,
+		max,
+		dateConstraints,
+		maxRangeSpan,
+		minRangeSpan,
+		rangeAnchor
+	}));
 
 	// Parse the selected date for roving-tabindex priority.
 	const selectedDateForTabindex = $derived.by((): PlainDate | null => {

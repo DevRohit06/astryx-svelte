@@ -1,6 +1,5 @@
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
-import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
 import type { PluginOption } from 'vite';
 import stylexPlugin from '@stylexjs/unplugin/vite';
@@ -39,17 +38,17 @@ export default defineConfig({
 			},
 			unstable_moduleResolution: { type: 'commonJS', rootDir: process.cwd() }
 		}),
+		// SvelteKit is here for `svelte-package` and for the two vitest projects,
+		// not for an app: this package has no routes and is never built by `vite
+		// build`. That is why no adapter is configured — an adapter only runs at
+		// app-build time, and the one that used to sit here served the demo
+		// workbench the docs site replaced.
 		sveltekit({
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.
 				runes: ({ filename }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
-			},
-
-			// adapter-auto only supports some environments, see https://svelte.dev/docs/kit/adapter-auto for a list.
-			// If your environment is not supported, or you settled on a specific environment, switch out the adapter.
-			// See https://svelte.dev/docs/kit/adapters for more information about adapters.
-			adapter: adapter()
+			}
 		})
 	],
 	test: {
