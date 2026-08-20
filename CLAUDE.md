@@ -179,7 +179,9 @@ via instance `export const`, reachable through `render(...).component`). `act()`
 a `$state` write flushes on its own and `expect.element` retries.
 
 Upstream suites are ported **case for case**; the count is the contract. Any dropped case is named in
-the file with its reason.
+the file with its reason. **One file ports one upstream suite** — `theme.test.ts` covered fragments
+of six at once, so no count in it could be stated against any of them and the contract applied to
+not a single case; 22 already-ported cases read as unported until they were split out (batch 030).
 
 **The count is a contract against upstream's file at the _current pin_, so a version bump
 invalidates every header that states one** — re-derive them in the same batch, and diff the test

@@ -543,16 +543,20 @@ trusting a figure in this paragraph. **Batch 8 closed the `Theme`/`useTheme` fam
 
 - **units:** -
 - **kind:** api-divergence
-- **retires:** when `TypeRole`/`TypeWeight` are renamed, `TokenMap` is made module-private and `TypeScaleConfig`'s shape matches upstream's
+- **retires:** when `TokenMap` is made module-private
 
 (batch-7 sweep).
-`TypeRole` and `TypeWeight` are name drift for upstream's `TypographyRole`/`FontWeight` (and
-ours drops `TypographyRole`'s `weight` field); `TokenMap` has **zero** occurrences anywhere in
-upstream's `src/`, so it is API this port invented and should be made module-private. Worse,
-`TypeScaleConfig` is _shape_ drift under a shared name — upstream's is
-`{base, ratio, weights?: {heading?, text?}}` and ours is `{base, ratio}`, so a consumer typing
-against it gets a narrower object than the published name promises. That last one wants an
-`astryx-parity` pass on `theme/expand-type-scale.ts`, not just a rename
+`TokenMap` has **zero** occurrences anywhere in upstream's `src/`, so it is API this port
+invented and should be made module-private.
+
+> **Three of the four closed in batch 030.** `TypeRole` and `TypeWeight` were name drift for
+> upstream's `TypographyRole`/`FontWeight`, and `TypeScaleConfig` was _shape_ drift under a
+> shared name — upstream's `{base, ratio, weights?}` against this port's `{base, ratio}`, so a
+> consumer typing against the published name got an object `expandTypeScale` would not accept.
+> This entry said that last one wanted an `astryx-parity` pass rather than a rename, and it did:
+> the expander had absorbed the font-family and named-weight derivation that upstream keeps in
+> `defineTheme`. Both moved, the three names are upstream's, and the move surfaced a real defect
+> — `heading` did not inherit `body`'s family. `TokenMap` alone remains
 
 ### `./authoring` (21 names), `./config`, `./docs.mjs`, `./groups.doc.mjs` and the 14 `docs-types` root types are absent
 
@@ -1180,6 +1184,29 @@ answer "is this drift already known?", and at 0.4.5 it raised the rename as a fi
 replica to test the justification, saw it compile, and reported the reason as not reproducing. It
 was half right — the in-file comment claimed Svelte _errors_, and it warns. The rename is correct;
 the overstatement was what made it look invented
+
+### `generateThemeCss` returns a flat stylesheet where upstream returns two blocks
+
+- **units:** theme/generate-theme-rules.ts
+- **kind:** api-divergence
+- **retires:** when `generateThemeCss` returns `ThemeCSSOutput`, its `@layer` wrappers move to its callers, and `generateThemeRules` is exported
+
+Upstream's `generateThemeCSS(theme)` returns `{prose, component}` — two `@scope`
+blocks and no layer wrappers — and leaves it to each caller to put them in the right
+layer. This port's `generateThemeCss(theme)` returns one string with the
+`@layer reset` / `@layer astryx-theme` wrappers and a generated-file header already
+applied, which is the shape `<Theme>`, the theme build scripts and the docs build all
+consume. Upstream also exports `generateThemeRules(theme): string[]`, the rule list
+behind the split; this port has only `generateThemeRulesSplit`.
+
+Found while porting `theme/generateThemeRules.test.ts` in batch 030, whose 36 cases
+call both `generateThemeRules` and the two-block `generateThemeCSS` and so cannot be
+ported case for case until the shapes match. **The suite is deliberately left
+unported rather than partially ported**, and `port/status.md` keeps counting it: the
+fix is a wide change — around twenty test files call `generateThemeCss(theme)` and
+assert on the string, plus `<Theme>`, both theme build scripts and the docs build —
+and belongs in a batch of its own rather than inside one restructuring `defineTheme`
+at the same time
 
 ## Retired
 

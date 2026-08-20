@@ -21,9 +21,9 @@
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 256    | 6383           |
-| Ported here              | 215    | 5885           |
+| Ported here              | 217    | 5905           |
 | No counterpart by design | 3      | 32             |
-| **Unported**             | **38** | **466**        |
+| **Unported**             | **36** | **446**        |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -44,7 +44,6 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 | `Indicator/Indicator.test.tsx`                | 20    |
 | `serverSafeComponents.test.ts`                | 17    |
 | `StatusDot/StatusDot.test.tsx`                | 17    |
-| `theme/themingTargets.test.ts`                | 16    |
 | `Kbd/Kbd.test.tsx`                            | 15    |
 | `HStack/HStack.test.tsx`                      | 12    |
 | `VStack/VStack.test.tsx`                      | 12    |
@@ -67,7 +66,6 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 | `docPropReferences.test.ts`                   | 4     |
 | `Layout/__tests__/childrenAsContent.test.tsx` | 4     |
 | `Skeleton/Skeleton.test.tsx`                  | 4     |
-| `theme/extensibleAxes.test.ts`                | 4     |
 | `Chat/ChatComposerDrawer.test.tsx`            | 3     |
 | `MobileNav/MobileNavToggle.test.tsx`          | 3     |
 | `__tests__/inputWidthContract.test.tsx`       | 1     |
@@ -78,8 +76,8 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 
 | Kind                  | Count  |
 | --------------------- | ------ |
-| api-divergence        | 28     |
+| api-divergence        | 29     |
 | deliberate-divergence | 44     |
 | unported              | 13     |
 | upstream-lag          | 12     |
-| **total**             | **97** |
+| **total**             | **98** |
