@@ -3,7 +3,7 @@ import { render } from 'vitest-browser-svelte';
 import Probe from './fixtures/streaming-text-probe.svelte';
 
 /**
- * Ported from Astryx's `hooks/useStreamingText.test.ts` at **v0.4.1** — its
+ * Ported from Astryx's `hooks/useStreamingText.test.ts` at **v0.4.5** — its
  * `useStreamingText` describe, **all eleven cases**, in upstream's order and
  * with its assertions unchanged. Nothing is dropped. The file's *second*
  * describe, `snapToGraphemeBoundary`, is a pure function of a string and an

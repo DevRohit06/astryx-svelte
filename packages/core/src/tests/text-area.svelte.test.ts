@@ -11,9 +11,20 @@ import BindHarness from './fixtures/text-area-bind.svelte';
 import { TIMER_BUDGET } from './timer-budget.js';
 
 /**
- * Astryx's `TextArea/TextArea.test.tsx`, ported case for case — **78** upstream
- * cases at v0.4.1, 78 here, plus one beyond upstream (`supports two-way
- * bind:value`) that pins the `$bindable` decision. **79 `it` in the file.**
+ * Astryx's `TextArea/TextArea.test.tsx`, ported case for case — **82** upstream
+ * cases at v0.4.5, 82 here, plus one beyond upstream (`supports two-way
+ * bind:value`) that pins the `$bindable` decision. **83 `it` in the file.**
+ *
+ * ## The count, re-derived at the 0.4.5 pin
+ *
+ * This header read "**78** … at v0.4.1" and stayed true only until the pin
+ * moved. 0.4.x added four `maxLength prop` cases with #4759 — the grapheme-count
+ * fix — and all four are ported here, in upstream's positions: `counts
+ * user-perceived characters, not code units`, `measures the over-limit state in
+ * characters`, `announces zone transitions using character counts`, and `does
+ * not flag over-limit while characters fit, even when code units exceed`. They
+ * pass against this port unchanged: `text-area.svelte` already counts through
+ * `utils/characters.ts`'s `characterCount`, as upstream does.
  *
  * (An earlier header said "62 upstream cases, 62 here". Upstream had 64 at
  * v0.3.0: the top-level `TextArea statusVariant forwarding` block was unported
@@ -570,6 +581,33 @@ describe('TextArea', () => {
 			await expect.element(screen.getByRole('textbox')).not.toHaveAttribute('maxlength');
 		});
 
+		it('counts user-perceived characters, not code units (#4759)', async () => {
+			// Two surrogate-pair emoji: 4 code units, but 2 user-perceived characters.
+			const screen = await render(TextArea, {
+				props: {
+					label: 'Description',
+					value: '\u{1F600}\u{1F600}',
+					onChange: noop,
+					maxLength: 5
+				}
+			});
+			await expect.element(screen.getByText('2/5')).toBeInTheDocument();
+		});
+
+		it('measures the over-limit state in characters (#4759)', async () => {
+			// Three ZWJ family emoji: 33 code units, 3 user-perceived characters.
+			const family = '\u{1F468}‍\u{1F469}‍\u{1F467}‍\u{1F466}';
+			const screen = await render(TextArea, {
+				props: {
+					label: 'Description',
+					value: family.repeat(3),
+					onChange: noop,
+					maxLength: 2
+				}
+			});
+			await expect.element(screen.getByText('3/2')).toBeInTheDocument();
+		});
+
 		it('counter updates as user types (controlled)', async () => {
 			const screen = await render(TextAreaHarness, {
 				props: { label: 'Description', initialValue: '', maxLength: 50 }
@@ -598,6 +636,48 @@ describe('TextArea', () => {
 			await vi.waitFor(() => {
 				expect(assertiveRegion()).toHaveTextContent('1 character over the limit');
 			});
+		});
+
+		it('announces zone transitions using character counts (#4759)', async () => {
+			const screen = await render(TextAreaHarness, {
+				props: { label: 'Description', initialValue: 'x'.repeat(7), maxLength: 10 }
+			});
+			// Appending two emoji makes 9 characters (11 code units): near the limit
+			// with 1 remaining. Code-unit counting would call this over the limit
+			// and announce assertively instead.
+			//
+			// Upstream's `fireEvent.change(textarea, {target: {value}})`; this port
+			// binds the native `input` event, which is what React's `onChange` on a
+			// textarea *is*, so the assignment plus a bubbling `input` is the same
+			// event upstream fires (the `changeValue` pattern `time-input` set).
+			const textarea = textareaIn(screen.container);
+			textarea.value = 'x'.repeat(7) + '\u{1F600}\u{1F600}';
+			textarea.dispatchEvent(new Event('input', { bubbles: true }));
+
+			await vi.waitFor(() => {
+				expect(politeRegion()).toHaveTextContent('1 character remaining');
+			});
+			expect(assertiveRegion()).not.toHaveTextContent('over the limit');
+		});
+
+		it('does not flag over-limit while characters fit, even when code units exceed (#4759)', async () => {
+			// Three emoji: 6 code units but 3 user-perceived characters — within a
+			// maxLength of 4, so no error state anywhere.
+			const screen = await render(TextArea, {
+				props: {
+					label: 'Description',
+					value: '\u{1F600}'.repeat(3),
+					onChange: noop,
+					maxLength: 4
+				}
+			});
+			// Upstream reads `counter.querySelector('svg')` off the text node's own
+			// element; this port's counter text and its icon are siblings inside the
+			// counter wrapper, which is what the two indicator-icon cases below
+			// already query.
+			const counter = screen.getByText('3/4').element().closest('div');
+			expect(counter?.querySelector('svg')).toBeNull();
+			await expect.element(screen.getByRole('textbox')).not.toHaveAttribute('aria-invalid');
 		});
 
 		it('shows a non-color over-limit indicator icon when exceeded', async () => {

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useTypeahead } from '$lib/hooks/use-typeahead.js';
 
 /**
- * Astryx's `hooks/useTypeahead.test.tsx` at **v0.4.1**, all 16 cases, in
+ * Astryx's `hooks/useTypeahead.test.tsx` at **v0.4.5**, all 16 cases, in
  * upstream's order and with its titles and assertions. None dropped: the file
  * has no `displayName` case, no non-JSX construction form and no snapshot, so
  * nothing in it is React-only.

@@ -9,15 +9,33 @@ import TimeInputGroupProbe from './fixtures/time-input-group-probe.svelte';
 import TimeInputI18n from './fixtures/time-input-i18n.svelte';
 
 /**
- * Astryx's `TimeInput/TimeInput.test.tsx`, ported case for case — **44** upstream
- * cases at v0.4.1 (25 directly in `describe('TimeInput')`, 6 in the nested
- * `describe('InputGroup integration')` — the last two of which are the
+ * Astryx's `TimeInput/TimeInput.test.tsx`, ported case for case — **44 of
+ * upstream's 45** at v0.4.5 (26 directly in `describe('TimeInput')`, 6 in the
+ * nested `describe('InputGroup integration')` — the last two of which are the
  * grouped-status/live-region pair — 9 in `describe('disabledMessage')`, 2 in the
  * top-level `describe('TimeInput statusVariant forwarding')` and 2 in
- * `describe('TimeInput disabled theme state')`), **44 here, none dropped**.
- * There is no `displayName` case, no snapshot and no no-JSX construction form in
- * the file, so nothing is React-only except the ref case, which gets a
- * counterpart.
+ * `describe('TimeInput disabled theme state')`). There is no `displayName` case,
+ * no snapshot and no no-JSX construction form in the file, so nothing is
+ * React-only except the ref case, which gets a counterpart.
+ *
+ * ## ONE CASE IS MISSING, and it is blocked on a port defect
+ *
+ * **`does not step the time on a composing ArrowUp/ArrowDown (IME)`**
+ * (upstream `:45`) is NOT here. It is not droppable — nothing about it is
+ * React-only — and it would fail if written, because `time-input.svelte`'s
+ * `handleInputKeyDown` (`:445`) has **no `isImeKeyEvent` guard**, where
+ * upstream's has carried one since the case landed (`TimeInput.tsx`). An IME
+ * candidate window navigates with the arrows, so a CJK user picking a candidate
+ * silently steps the time. `utils/ime.ts` is ported and exported here; it is
+ * simply not called from this component. Write the case the moment the guard
+ * lands — it transcribes from upstream unchanged. The same gap blocks two cases
+ * in `date-time-input` and one each in `date-input` and `selector`.
+ *
+ * ## The count, re-derived at the v0.4.5 pin
+ *
+ * This header read "**44** … at v0.4.1, **44 here, none dropped**" and stayed
+ * true only until the pin moved: 0.4.x added the IME case above, so the header
+ * was hiding a one-case gap.
  *
  * ## v0.3.0 → v0.4.1
  *

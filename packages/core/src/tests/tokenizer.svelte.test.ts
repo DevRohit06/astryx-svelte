@@ -9,7 +9,7 @@ import type { SearchSource, SearchableItem } from '$lib/components/typeahead/typ
 
 /**
  * Astryx's `Tokenizer/Tokenizer.test.tsx`, ported case for case — 61 upstream
- * cases at v0.4.1 across its ten describe blocks (the top-level `Tokenizer`,
+ * cases at v0.4.5 across its ten describe blocks (the top-level `Tokenizer`,
  * `tokenOverflowBehavior`, `hasCreate`, `popover after selection`, `paste
  * behavior`, `startIcon`, `disabledMessage`, `announcements` and `form
  * participation`, plus the separate top-level `Tokenizer statusVariant

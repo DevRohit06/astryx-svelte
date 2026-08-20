@@ -8,7 +8,8 @@ import AppShellMobileProbe from './fixtures/app-shell-mobile-probe.svelte';
 
 /**
  * Ported from Astryx's `AppShell/AppShell.test.tsx`, all **48** cases at
- * v0.4.1. Nothing is dropped.
+ * v0.4.5. Nothing is dropped. (Re-derived at the 0.4.5 pin, where this header
+ * last read v0.4.1: upstream's file has not moved since, so 48 still holds.)
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *

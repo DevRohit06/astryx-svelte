@@ -11,15 +11,22 @@ import HostingHarness from './fixtures/layer-hosting-harness.svelte';
 import RelocatingHarness from './fixtures/layer-relocating-harness.svelte';
 
 /**
- * Ported from Astryx's `Layer/useLayer.test.tsx` at v0.4.2 — **all thirty-two of
- * its cases**, plus one beyond-upstream case documented at its own site.
+ * Ported from Astryx's `Layer/useLayer.test.tsx` at **v0.4.5** — **all 32 of its
+ * `it` blocks / 43 cases** (two `it.each` tables expand to 11 rows between
+ * them), plus one beyond-upstream case documented at its own site. **33 `it` in
+ * the file, 44 cases.**
  *
- * The header twice stated a count that was true of no upstream tag: first "all
- * twenty-nine cases", which was 0.4.1-minus-`describe('offset')` and named none
- * of the five it was short, then a corrected twenty-seven while those five were
- * still missing. They are ported now — `offset` had been implemented since
- * before 0.4.0 with nothing asserting it — as is the nine-case
- * `describe('context hosting')` block 0.4.2 added.
+ * The header has now stated a wrong count three times: "all twenty-nine cases"
+ * (0.4.1 minus `describe('offset')`, naming none of the five it was short), a
+ * corrected twenty-seven while those five were still missing, then "all
+ * thirty-two" — which counted our own file's blocks, one of which is the
+ * beyond-upstream case, so it silently covered for a MISSING upstream case:
+ * `declares body type instead of inheriting the host context`. That case is
+ * ported now, restated for a real browser (see the comment at it), and upstream
+ * has not moved this file since v0.4.2.
+ *
+ * `offset` had been implemented since before 0.4.0 with nothing asserting it, as
+ * had the nine-case `describe('context hosting')` block 0.4.2 added.
  *
  * `getPositionTryFallbacks` is pure and its five cases transcribe. The rendered
  * ones needed two mechanical changes:
@@ -225,6 +232,30 @@ describe('useLayer', () => {
 	});
 
 	describe('when the Popover API is supported', () => {
+		it('declares body type instead of inheriting the host context', async () => {
+			const screen = await render(FixedHarness);
+			// Upstream nests the harness in `<div style={{fontSize:'30px',
+			// lineHeight:'3'}}>` and asserts `toHaveStyle`, which under jsdom is a
+			// comparison of DECLARED text — it would report `var(--text-body-size)`
+			// back unresolved and pass whether or not the cascade reached the layer.
+			// Chromium resolves for real, so the host context is applied to the
+			// render container (the layer renders inline in the tree here, so it is
+			// a descendant) and the assertion is that the layer did NOT inherit it.
+			// That is the behaviour the case is named for, and it is stricter:
+			// jsdom could not have caught a declaration the engine rejected.
+			screen.container.style.fontSize = '30px';
+			screen.container.style.lineHeight = '3';
+
+			const layerEl = popoverIn(screen.container);
+			const probe = document.createElement('span');
+			screen.container.appendChild(probe);
+			expect(getComputedStyle(probe).fontSize).toBe('30px');
+
+			expect(getComputedStyle(layerEl).fontSize).not.toBe('30px');
+			expect(getComputedStyle(layerEl).lineHeight).not.toBe('90px');
+			probe.remove();
+		});
+
 		it('calls showPopover/hidePopover on show/hide', async () => {
 			const showSpy = vi.fn();
 			const hideSpy = vi.fn();

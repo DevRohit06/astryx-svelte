@@ -5,7 +5,9 @@ import ManyProbe from './fixtures/container-reveal-many-probe.svelte';
 
 /**
  * Upstream's `hooks/useContainerReveal.test.tsx`, ported case for case — all 11
- * at v0.4.2. The last five arrived with #5084's hover-intent delay and forced
+ * at v0.4.5, re-derived at that pin (upstream's file has not moved since
+ * v0.4.2, where this header last stated the count). The last five arrived with
+ * #5084's hover-intent delay and forced
  * states, which is this port's 0.4.2 tracking batch; they are grouped at the
  * bottom under their own banner.
  *

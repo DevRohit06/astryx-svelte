@@ -4,9 +4,11 @@ import { render } from 'vitest-browser-svelte';
 import ProgressBar from '$lib/components/progress-bar/progress-bar.svelte';
 
 /**
- * Ported from Astryx's `ProgressBar/ProgressBar.test.tsx` at v0.4.1.
+ * Ported from Astryx's `ProgressBar/ProgressBar.test.tsx` at v0.4.5.
  *
  * **Upstream 54 cases, 54 here.** No case is dropped; the count is the contract.
+ * Re-derived at the 0.4.5 pin (the header last stated it at v0.4.1); upstream's
+ * file has not moved since, so 54 is still what it declares.
  * The suite is a late addition — `ProgressBar` landed before the case-for-case
  * discipline, and `marks` is what finally brought it. Nine cases arrived with
  * 0.4.1's mark work (#4970/#4741): eight for the on-fill/on-track colour split

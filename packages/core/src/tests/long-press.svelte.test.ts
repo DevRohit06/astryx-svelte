@@ -3,8 +3,9 @@ import { render } from 'vitest-browser-svelte';
 import Probe from './fixtures/long-press-probe.svelte';
 
 /**
- * Ported from Astryx's `hooks/useLongPress.test.tsx` at **v0.4.1**, all nine
+ * Ported from Astryx's `hooks/useLongPress.test.tsx` at **v0.4.5**, all nine
  * cases, in upstream's order and with its titles and assertions. None dropped.
+ * (Re-derived at the 0.4.5 pin; upstream's file has not moved since v0.4.1.)
  * (The header previously said eight; v0.4.1 added "cancels when a second finger
  * touches down mid-press" alongside the fix that made `ontouchstart` clear on
  * multi-touch instead of returning with the timer still armed.)

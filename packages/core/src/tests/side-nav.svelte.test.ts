@@ -15,7 +15,10 @@ import CollapseButtonScope from './fixtures/side-nav-collapse-button-scope.svelt
 
 /**
  * Ported from Astryx's `SideNav/SideNav.test.tsx`. Upstream declares **144**
- * cases at v0.4.2 (it had 99 at v0.3.0 and 101 at v0.4.1); **116 are here**.
+ * cases at **v0.4.5** (it had 99 at v0.3.0, 101 at v0.4.1 and the same 144 at
+ * v0.4.2, where this header last stated it — upstream has not moved the file
+ * since); **116 are here**, so the suite is **28 short**. Every one of the 28 is
+ * named in `port/debts.md`, and the block-level summary below says which.
  *
  * ## The 0.4.2 delta, stated rather than implied
  *

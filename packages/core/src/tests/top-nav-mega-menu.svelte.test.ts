@@ -7,11 +7,11 @@ import { TIMER_BUDGET } from './timer-budget.js';
 import { expectSharedFocusRing } from './shared-focus-ring.js';
 
 /**
- * Ported from Astryx's `TopNav/TopNavMegaMenu.test.tsx` — **all 37 of its `it`
- * cases** at v0.4.1, across all eight of its describes (`default mode`, `popup
+ * Ported from Astryx's `TopNav/TopNavMegaMenu.test.tsx` — **all 39 of its `it`
+ * cases** at v0.4.5, across all nine of its describes (`default mode`, `popup
  * semantics`, `hover/click guard`, `dismissal`, `keyboard`, `mobile-bar mode`,
- * `drawer mode`, `TopNavMegaMenuItem`). Nothing dropped. Client (real Chromium)
- * project.
+ * `drawer mode`, `TopNavMegaMenuItem`, `drawer focus ring`). Nothing dropped.
+ * Client (real Chromium) project.
  *
  * ## The count, re-derived from the tag at every bump
  *

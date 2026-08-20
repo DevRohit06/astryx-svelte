@@ -9,10 +9,15 @@ import SwitchBind from './fixtures/switch-bind.svelte';
 import { cssIn, forcedColorsCssIn } from './forced-colors.js';
 
 /**
- * Astryx's `Switch/Switch.test.tsx`, ported case for case — **49** upstream
- * cases at v0.4.1, **49** of them here, plus one beyond upstream (`supports
+ * Astryx's `Switch/Switch.test.tsx`, ported case for case — **50** upstream
+ * cases at v0.4.5, **50** of them here, plus one beyond upstream (`supports
  * two-way bind:value`) that pins the `$bindable` decision (justified below, and
- * recorded in port/todo.md). **50 `it` in the file.** Nothing is dropped.
+ * recorded in port/todo.md). **51 `it` in the file.** Nothing is dropped.
+ *
+ * The count is re-derived at the 0.4.5 pin. It read "**49** … at v0.4.1" and
+ * stayed true only until the pin moved: 0.4.x added `drops the label gap when
+ * isLabelHidden so the row is only as wide as the track`, which is ported here
+ * (restated only in how the second render is driven — see the case).
  *
  * v0.3.0 → v0.4.1 added the two `form participation` cases about a required
  * control that is disabled *with a reason* (`form=""` detaches it from
@@ -335,6 +340,26 @@ describe('Switch', () => {
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
 		await expect.element(screen.getByLabelText('Toggle row')).toBeInTheDocument();
+	});
+
+	it('drops the label gap when isLabelHidden so the row is only as wide as the track', async () => {
+		const screen = await render(Switch, {
+			props: { label: 'Toggle row', isLabelHidden: true, value: false, onChange: noop }
+		});
+		const row = inputIn(screen.container).parentElement!.parentElement!;
+		expect(getComputedStyle(row).gap).toMatch(/^0(px)?$/);
+
+		// Upstream's `rerender` re-renders a whole new element, so dropping
+		// `isLabelHidden` from the JSX resets it to its default. `rerender` here
+		// MERGES props onto the live instance, so an omitted prop keeps its last
+		// value — `isLabelHidden: false` is what upstream's omission means.
+		await screen.rerender({
+			label: 'Toggle row',
+			isLabelHidden: false,
+			value: false,
+			onChange: noop
+		});
+		expect(getComputedStyle(row).gap).not.toMatch(/^0(px)?$/);
 	});
 
 	it('keeps description linked via aria-describedby when isLabelHidden', async () => {
