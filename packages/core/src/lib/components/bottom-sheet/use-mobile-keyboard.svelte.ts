@@ -64,7 +64,7 @@ const NON_TEXT_INPUT_TYPES = new Set([
  * it composes — including the two that must not be tracked. Splitting the fields
  * is what makes the dependency set selectable at all.
  */
-export interface UseMobileKeyboardOptions {
+interface UseMobileKeyboardOptions {
 	/** The sheet's scrolling body. */
 	body: () => HTMLElement | null;
 	bottomClearance: () => number;

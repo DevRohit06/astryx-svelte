@@ -34,27 +34,6 @@ hamburger were 16px while the mode toggle and GitHub mark were 20px, so two glyp
 larger than the two beside them. Equalising was the fix; 16 rather than 20 is the divergence.
 `shell/top-nav.svelte` names it at the snippet
 
-### Core's demo workbench imports a downstream package's build output, and that edge is real
-
-- **units:** core (routes/+layout.svelte, routes/+page.svelte)
-- **kind:** deliberate-divergence
-- **retires:** never
-
-`src/routes/+layout.svelte` and `+page.svelte` import `../../../themes/neutral/dist/` — the
-relative path was chosen so pnpm's dependency graph would not see a cycle, and it works, but
-**the bundler's graph is not pnpm's**. Core's `build` used to run `vite build` (the workbench)
-before `prepack` (the library), so on any clean checkout core's build demanded an artifact from
-a package that builds _after_ core, and rolldown failed with `UNRESOLVED_IMPORT` on both lines.
-It passed on every developer machine because a previous run had left `themes/neutral/dist/` on
-disk; it failed on the first CI run and the first Vercel deploy that ever built core.
-**Fixed by making `build` a library build only** (`npm run prepack`), with the workbench moved
-to `build:demo` and run by CI _after_ `pnpm -r build`. That matches upstream, whose core
-`build` is `babel + tsc + css + umd` and produces no app at all, and whose `theme-neutral`
-takes core as a **peer** dependency. The debt is that the import still points at a build
-artifact: `pnpm -F @astryx-svelte/core dev` on a fresh clone needs a prior `pnpm -r build`, and
-reading the theme's _source_ instead is not an escape — `neutral-theme.ts` imports
-`@astryx-svelte/core/theme/define`, which is core's own `dist/`
-
 ### Page templates carry three unported dependencies, handled two different ways
 
 - **units:** table-page-chart, table-page-heatmap-status, table-page-shoe-store-heatmap, dashboard, dashboard-portfolio, theme-showcase
@@ -823,7 +802,7 @@ Not even the `<dialog>` — matching upstream's `return null`. Its `hasAutoPlay`
 
 The built-in registry is the 26
 icons the components themselves need; upstream's toggle uses Heroicons' sun/moon. Retires with
-the `@lucide/svelte` icon registry (Phase 3), like the demo route's substitutions
+the `@lucide/svelte` icon registry (Phase 3), like the example blocks' substitutions
 
 ### `svelte/no-navigation-without-resolve` is off in `docs/`
 
@@ -1190,3 +1169,28 @@ consumer-visible effect — that half of the "two homes for one upstream dir" it
 `port/todo.md` as the internal-imports problem it always was. And the root re-exports stay,
 because they have shipped since 0.3.1 and removing one to tidy a barrel would break a consumer
 for no gain. This was placement, and adding the missing placement is the whole fix.
+
+### Core's demo workbench imported a downstream package's build output — retired
+
+- **units:** -
+- **kind:** deliberate-divergence
+- **retires:** retired with the demo routes
+
+**Closed by deletion.** The two files this named — `src/routes/+layout.svelte` and
+`+page.svelte` — imported `../../../themes/neutral/dist/`, a relative path chosen so pnpm's
+dependency graph would not see a cycle. It worked, because **the bundler's graph is not
+pnpm's**: core's `build` ran `vite build` (the workbench) before `prepack` (the library), so on
+a clean checkout core's build demanded an artifact from a package that builds _after_ core, and
+rolldown failed with `UNRESOLVED_IMPORT` on both lines. It passed on every developer machine
+because a previous run had left `themes/neutral/dist/` on disk; it failed on the first CI run
+and the first Vercel deploy that ever built core. The interim fix made `build` a library build
+only (`npm run prepack`) and moved the workbench to `build:demo`, run by CI after
+`pnpm -r build` — which is what left the residue this entry recorded: the import still pointed
+at a build artifact, so `pnpm -F @astryx-svelte/core dev` on a fresh clone needed a prior
+`pnpm -r build`.
+
+The whole workbench is gone (`ledger/029`), and with it the two imports, `build:demo`, core's
+`dev` script and the CI step. Core's `build` stays a library build only, which is what upstream
+does — its core `build` is `babel + tsc + css + umd` and produces no app at all, and its
+`theme-neutral` takes core as a **peer** dependency. Nothing in this repo now reaches from core
+into a package that builds after it.

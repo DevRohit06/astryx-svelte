@@ -500,7 +500,7 @@ describe('BottomSheet', () => {
 		});
 		const dialog = getDialog();
 		expect(dialog).toBeInTheDocument();
-		expect(dialog.getAttribute('aria-label')).toBe('Filters');
+		expect(dialog).toHaveAccessibleName('Filters');
 		expect(dialog.textContent).toContain('Sheet content');
 	});
 

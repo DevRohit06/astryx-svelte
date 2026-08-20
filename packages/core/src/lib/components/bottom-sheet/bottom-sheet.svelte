@@ -3,15 +3,20 @@
 	import type { BaseProps } from '../../base-props.js';
 	import type { StyleArg } from '../../internal/sx.js';
 	import type { DialogPurpose } from '../dialog/dialog.svelte';
-	// Aliased locally only so the imports and the re-exports below do not name
-	// the same bindings twice in one module.
-	import type { BottomSheetHeight as BottomSheetHeightValue } from './bottom-sheet-panel.stylex.js';
-	import type { BottomSheetSnapPoint as BottomSheetSnapPointValue } from './snap-offsets.js';
-
-	// Upstream's `BottomSheet.tsx` re-exports both from `BottomSheetPanel`, and
-	// its `index.ts` publishes them from here; so does this port's barrel.
-	export type { BottomSheetHeight } from './bottom-sheet-panel.stylex.js';
-	export type { BottomSheetSnapPoint } from './snap-offsets.js';
+	// Imported under their real names and **not re-exported**. Upstream's
+	// `BottomSheet.tsx` forwards both from `BottomSheetPanel` and its `index.ts`
+	// republishes them from here, but a type re-export inside a `<script module>`
+	// trips eslint's `no-import-assign` — the false positive `calendar.svelte`
+	// documents, in both its forms. The repo's other answer is to alias the
+	// import, and that is what this file used to do; it put
+	// `BottomSheetHeightValue` and `BottomSheetSnapPointValue` into the generated
+	// props table, names no consumer can import, because prop types are read out
+	// of `dist/**/*.d.ts`. So the barrel names both directly from the modules that
+	// declare them, exactly as it does for `Calendar`'s date types: same
+	// declarations, published exactly once, and the props table names the type a
+	// reader can actually import.
+	import type { BottomSheetHeight } from './bottom-sheet-panel.stylex.js';
+	import type { BottomSheetSnapPoint } from './snap-offsets.js';
 
 	interface BottomSheetSharedProps extends BaseProps<HTMLDivElement> {
 		/** Accessible label for the sheet. */
@@ -25,7 +30,7 @@
 		 * keyboard-aware.
 		 * @default 'capped'
 		 */
-		height?: BottomSheetHeightValue | number | string;
+		height?: BottomSheetHeight | number | string;
 
 		/**
 		 * Extra heights the sheet can rest at when dragged; its own height is
@@ -35,7 +40,7 @@
 		 * `'320px'` an absolute length. A stop of a quarter of the sheet or less is
 		 * a peek — it slides away instead of reflowing, and thins the scrim.
 		 */
-		snapPoints?: ReadonlyArray<BottomSheetSnapPointValue>;
+		snapPoints?: ReadonlyArray<BottomSheetSnapPoint>;
 
 		/**
 		 * Configures implicit dismissal behavior, matching Dialog.

@@ -39,7 +39,8 @@
 		"!dist/**/*.spec.*",
 		"!src/**/*.test.*",
 		"!src/**/*.spec.*",
-		"!src/tests"
+		"!src/tests",
+		"!src/app.html"
 	],
 	"sideEffects": [
 		"**/*.stylex.ts",

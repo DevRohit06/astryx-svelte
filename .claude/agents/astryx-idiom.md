@@ -135,7 +135,10 @@ defects from this in one batch: an entrance that completed on the frame it began
 (`waitForTransition(null)` resolves immediately), a settle that resolved instantly because
 the pre pass read the render being _replaced_ and saw the drag's inline `transition: none`,
 and a flow active on mount that rendered a closed dialog. `$effect.pre` is for a layout
-effect that **writes** before paint.
+effect that **writes** before paint. **Sweep every one of them, and do not accept a
+green suite as evidence** — the audit that ran after those six were fixed found two
+more, and both were invisible to 146 passing cases because the assertions check that
+`transition: none` is *present*, which is true whichever phase the reflow sat in.
 
 **`useId` faked.** `$props.id()` is the only correct counterpart, and the compiler
 permits it only at the top level of a component. A `.svelte.ts` must therefore take `id`

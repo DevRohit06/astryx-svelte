@@ -250,6 +250,21 @@ export function createPropsTypeIndex(coreDistDir) {
 	 * case already answered, and it hid the members from the Properties tab's
 	 * control derivation as well — a select can only list what the type names.
 	 *
+	 * **A union that mixes literals with primitives expands too**, as long as one
+	 * member is a literal: `MetadataListColumns` printed as its own name where
+	 * upstream prints `'multi' | 'single' | number`, because the old rule required
+	 * *every* member to be a literal and a bare `number` beside them failed it.
+	 *
+	 * There is a hard limit past this, and it is TypeScript's rather than ours.
+	 * A union of string literals **and** `string` is collapsed by the checker to
+	 * `string`, so the literals are gone before this function ever sees the type:
+	 * `BottomSheet.height` is `BottomSheetHeight | number | string`, and upstream's
+	 * doc showing `'hug' | 'capped' | 'tall' | number | string` is hand-written
+	 * prose, not something a checker can recover. Expanding it would mean
+	 * authoring the members here, which is the guessing this whole module exists
+	 * to avoid — so the authored annotation stands, and the alias it names is one
+	 * a consumer can import (`port/debts.md`).
+	 *
 	 * @param {import('typescript').Symbol} symbol
 	 */
 	function renderType(symbol) {
@@ -296,12 +311,21 @@ export function createPropsTypeIndex(coreDistDir) {
 			const parts = type.types.filter((member) => !(member.flags & ts.TypeFlags.Undefined));
 			const isLiteral = (/** @type {import('typescript').Type} */ member) =>
 				member.isStringLiteral() || member.isNumberLiteral();
-			if (parts.length > 1 && parts.every(isLiteral)) {
+			const PRIMITIVE = ts.TypeFlags.String | ts.TypeFlags.Number | ts.TypeFlags.Boolean;
+			const isPrimitive = (/** @type {import('typescript').Type} */ member) =>
+				Boolean(member.flags & PRIMITIVE);
+			if (
+				parts.length > 1 &&
+				parts.some(isLiteral) &&
+				parts.every((m) => isLiteral(m) || isPrimitive(m))
+			) {
 				return parts
 					.map((member) =>
 						member.isStringLiteral()
 							? `'${member.value}'`
-							: String(/** @type {import('typescript').NumberLiteralType} */ (member).value)
+							: member.isNumberLiteral()
+								? String(/** @type {import('typescript').NumberLiteralType} */ (member).value)
+								: checker.typeToString(member)
 					)
 					.join(' | ');
 			}

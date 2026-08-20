@@ -139,8 +139,9 @@ hand-drawn content.
       upstream ships no story using `handleRef` either. Worth a port-own block if the prop ever
       needs showing
 - [ ] Multiple `AppShell` instances on one page means multiple `role="main"` landmarks sharing one
-      id constant — a demo-page artifact of showing every story at once, not a component defect
-- [ ] Re-sweep the demo route against upstream now that later batches have landed
+      id constant — an artifact of a component page showing every example at once, not a component
+      defect
+- [ ] Re-sweep the docs example blocks against upstream now that later batches have landed
 
 ### Release
 

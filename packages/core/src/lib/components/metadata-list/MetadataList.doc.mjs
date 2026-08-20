@@ -85,7 +85,7 @@ export default {
 		},
 		{
 			name: 'columns',
-			type: 'MetadataListColumns',
+			type: "number | 'single' | 'multi'",
 			description: 'Column layout mode.',
 			default: "'single'"
 		},

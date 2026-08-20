@@ -2,10 +2,10 @@
  * Ported from the `waitForTransition` helper in Astryx's
  * `BottomSheet/BottomSheetPanel.tsx`.
  *
- * Its own module here rather than a file-local, because Svelte cannot export
- * from a component's instance script and `bottom-sheet-panel.svelte` is not the
- * only caller — the transform-only snap reconciles through it too. Not exported
- * from the barrel; upstream publishes nothing of it.
+ * Its own module here rather than a file-local, because Svelte cannot export a
+ * helper from a component's instance script. `bottom-sheet-panel.svelte` is its
+ * only importer, and calls it from two sites. Not exported from the barrel;
+ * upstream publishes nothing of it.
  *
  * Resolving a transition cannot rely on `transitionend` alone: with transitions
  * disabled — an inline `transition: none`, a `0s` duration token, a harness

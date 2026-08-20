@@ -546,7 +546,10 @@ describe('useSheetGestures', () => {
 		}
 		function touch(el: HTMLElement, type: string, y: number, id = 1) {
 			const ev = new Event(type, { bubbles: true, cancelable: true });
-			// jsdom lacks TouchEvent; attach the fields the handler reads.
+			// A plain `Event` with the touch lists defined on it, as upstream builds
+			// it: upstream's reason is that jsdom has no `TouchEvent`, and it stays
+			// that way here because it keeps the identifiers and coordinates the
+			// handler reads under the case's control.
 			Object.defineProperty(ev, 'changedTouches', {
 				value: [{ identifier: id, clientY: y }]
 			});

@@ -1,0 +1,24 @@
+<!--
+	Nothing renders this. It exists because `svelte-kit sync` demands it, and
+	`svelte-kit sync` is what writes `.svelte-kit/tsconfig.json`, which this
+	package's own `tsconfig.json` extends — so `check` and `prepack` both need
+	the sync to run cleanly.
+
+	It used to be a real app shell for the demo workbench in `src/routes/`. That
+	is retired (`port/ledger/029`), and deleting this file with it turned every
+	`check` and every `prepack` into a ten-line `load_template` stack trace over
+	a non-fatal failure — a build that prints a stack on every run is a build
+	whose output stops being read. Reduced to the two placeholders SvelteKit
+	requires rather than restored: no favicon link (`static/` is gone too), no
+	preload hint, no viewport meta, because there is no page for any of them to
+	affect. The `files` denylist keeps it out of the tarball.
+-->
+<!doctype html>
+<html lang="en">
+	<head>
+		%sveltekit.head%
+	</head>
+	<body>
+		%sveltekit.body%
+	</body>
+</html>

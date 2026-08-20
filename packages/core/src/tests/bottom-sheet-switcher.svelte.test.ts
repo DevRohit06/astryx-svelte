@@ -216,7 +216,7 @@ describe('BottomSheetSwitcher', () => {
 		expect(dialogPrototype.showModal).toHaveBeenCalledTimes(1);
 		expect(dialogPrototype.show).not.toHaveBeenCalled();
 		expect(getSharedDialog()).toHaveAttribute('aria-modal', 'true');
-		expect(getSharedDialog().getAttribute('aria-label')).toBe('Details');
+		expect(getSharedDialog()).toHaveAccessibleName('Details');
 	});
 
 	it('forwards sheet DOM props and refs to its panel in the shared dialog', async () => {
@@ -261,7 +261,7 @@ describe('BottomSheetSwitcher', () => {
 
 		const dialog = getSharedDialog();
 		expect(attached).toEqual([dialog]);
-		expect(dialog.getAttribute('aria-label')).toBe('Notification setup');
+		expect(dialog).toHaveAccessibleName('Notification setup');
 		expect(dialog).toHaveAttribute('data-flow-owner', 'settings');
 		expect(dialog.classList.contains('consumer-switcher')).toBe(true);
 		expect(dialog.style.insetInlineStart).toBe('12px');
@@ -307,7 +307,7 @@ describe('BottomSheetSwitcher', () => {
 		expect(confirmSheet).not.toHaveAttribute('inert');
 		expect(document.querySelectorAll('dialog[open]')).toHaveLength(1);
 		expect(getSharedDialog()).toBe(sharedDialog);
-		expect(sharedDialog.getAttribute('aria-label')).toBe('Confirm');
+		expect(sharedDialog).toHaveAccessibleName('Confirm');
 
 		// The previous sheet is covered, not exiting: neither transform nor opacity
 		// completion may release it before the new entrance completes.
@@ -501,6 +501,10 @@ describe('BottomSheetSwitcher', () => {
 			props: {
 				activeSheet: 'details',
 				label: 'Read-only details',
+				// The tabbable control outside the switcher is the case's premise:
+				// without somewhere for focus to escape to, "keeps focus in" cannot
+				// fail. Upstream renders it as a sibling of the switcher.
+				backgroundAction: true,
 				children: text('Read-only content')
 			}
 		});
@@ -510,6 +514,7 @@ describe('BottomSheetSwitcher', () => {
 		expect(document.activeElement).toBe(panel);
 		expect(await press(panel, 'Tab')).toBe(false);
 		expect(document.activeElement).toBe(panel);
+		expect(button('Background action')).not.toHaveFocus();
 	});
 
 	it('can coordinate a non-modal flow without rendering a scrim', async () => {
@@ -619,8 +624,12 @@ describe('BottomSheetSwitcher', () => {
 
 	it('ignores Escape while an IME composition is active', async () => {
 		const onActiveSheetChange = vi.fn();
+		// Modal, as upstream renders it: a modal switcher hands Escape to the focus
+		// trap, so this exercises the trap's IME guard rather than the switcher's
+		// own `!isModal` branch. Upstream carries that same local guard and ships no
+		// case for it, so neither do we.
 		await render(SingleSwitcher, {
-			props: { activeSheet: 'details', onActiveSheetChange, hasScrim: false }
+			props: { activeSheet: 'details', onActiveSheetChange }
 		});
 
 		const dialog = dialogNamed('Details');

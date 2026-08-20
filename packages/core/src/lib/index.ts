@@ -363,14 +363,16 @@ export type {
 	BannerStatusMap
 } from './components/banner/banner.stylex.js';
 export type { BlockquoteProps } from './components/blockquote/blockquote.svelte';
-// `BottomSheetHeight` and `BottomSheetSnapPoint` are declared beside the panel
-// and the snap geometry, and re-exported from `bottom-sheet.svelte`, because
-// upstream's `BottomSheet/index.ts` publishes all three from `BottomSheet`.
-export type {
-	BottomSheetProps,
-	BottomSheetHeight,
-	BottomSheetSnapPoint
-} from './components/bottom-sheet/bottom-sheet.svelte';
+// Upstream's `BottomSheet/index.ts` publishes all three from `BottomSheet`, and
+// the published surface here is the same three names. The forwarding path is
+// not: `BottomSheetHeight` and `BottomSheetSnapPoint` are named from the modules
+// that declare them rather than through `bottom-sheet.svelte`, because a type
+// re-export inside a `<script module>` trips `no-import-assign` and the alias
+// that dodges it leaks an unimportable name into the generated props table. Same
+// arrangement as `Calendar`'s date types, and for the same reason.
+export type { BottomSheetProps } from './components/bottom-sheet/bottom-sheet.svelte';
+export type { BottomSheetHeight } from './components/bottom-sheet/bottom-sheet-panel.stylex.js';
+export type { BottomSheetSnapPoint } from './components/bottom-sheet/snap-offsets.js';
 export type { BottomSheetSwitcherProps } from './components/bottom-sheet/bottom-sheet-switcher.svelte';
 export type { BreadcrumbsProps } from './components/breadcrumbs/breadcrumbs.svelte';
 export type { BreadcrumbItemProps } from './components/breadcrumbs/breadcrumb-item.svelte';

@@ -200,8 +200,16 @@ if (leakedTests.length > 0) {
 //    inside this monorepo and points outside the tarball anywhere else. Those
 //    routes have since been retired; the rule stays, because `src/tests` is
 //    still there and the next thing to land under `src/` is caught the same way.
+//
+//    The rule used to exempt `.d.ts`, and that exemption was load-bearing for
+//    exactly two files — `src/app.d.ts` (SvelteKit's `App` namespace stub, every
+//    member commented out) and `src/virtual-modules.d.ts` (ambient declarations
+//    for two StyleX dev modules the retired root layout imported). Both went
+//    dead with the routes and both were shipping to consumers. They are deleted,
+//    so the exemption is gone with them: a `.d.ts` outside `src/lib` is now a
+//    leak like any other, which is the whole point of the rule.
 const NON_LIB_SRC = /^src\/(?!lib\/)/;
-const leakedNonLib = [...files].filter((p) => NON_LIB_SRC.test(p) && !p.endsWith('.d.ts'));
+const leakedNonLib = [...files].filter((p) => NON_LIB_SRC.test(p));
 if (leakedNonLib.length > 0) {
 	problems.push(
 		`${leakedNonLib.length} file(s) under src/ but outside src/lib leaked into the tarball:\n` +

@@ -27,10 +27,20 @@
 
 	export interface BottomSheetPanelProps extends BaseProps<HTMLDivElement> {
 		/**
-		 * Upstream calls this prop `state`. Renamed here because a local binding
-		 * named `state` makes every `$state` rune in the same scope ambiguous with a
-		 * store subscription — Svelte errors on it. This component is internal and
-		 * unexported, so no published API changes.
+		 * Upstream calls this prop `state`. Renamed because Svelte's compiler asks
+		 * for it: a local binding named `state` in a scope that also uses the
+		 * `$state` rune emits `store_rune_conflict`, whose message is *"Referencing
+		 * a local variable with a `$` prefix will create a store subscription.
+		 * Please rename `state` to avoid the ambiguity"*. This component is
+		 * internal and unexported, so no published API changes.
+		 *
+		 * **This comment used to say Svelte "errors on it", and that was wrong.**
+		 * `store_rune_conflict` is a *warning*; the component compiles either way,
+		 * on both the client and server generations. A parity audit challenged the
+		 * rename on exactly that overstatement, compiled a replica of this file's
+		 * shape, saw it compile, and concluded the justification did not reproduce
+		 * — which is the right conclusion from a wrong premise, and cost a round
+		 * trip to settle. The rename stands on the warning, not on an error.
 		 */
 		panelState: BottomSheetPanelState;
 		height: BottomSheetHeightValue | number | string;

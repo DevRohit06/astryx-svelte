@@ -16,17 +16,21 @@ import { stubMatchMedia } from './stub-match-media.js';
  * Three restatements, all forced by this project running the suite in a real
  * Chromium rather than jsdom:
  *
- * - **`state` is `panelState`.** The prop is renamed in this port because a
- *   local binding named `state` makes every `$state` rune in the same scope
- *   ambiguous with a store subscription. The component is internal, so no
- *   published API moves; see `bottom-sheet-panel.svelte`.
+ * - **`state` is `panelState`.** Renamed because Svelte's compiler asks for it:
+ *   a local binding named `state` beside the `$state` rune emits
+ *   `store_rune_conflict`, which ends *"Please rename `state` to avoid the
+ *   ambiguity"*. It is a warning rather than an error — this file's earlier
+ *   wording implied otherwise — and the component is internal, so no published
+ *   API moves. See `bottom-sheet-panel.svelte` for the full note.
  * - **"the rendered transition is disabled" is rendered, not stubbed.**
  *   Upstream makes `matchMedia` answer `prefers-reduced-motion: reduce` and
  *   relies on jsdom computing no transition at all. In a real browser the
  *   compiled StyleX rule still applies and a stubbed media query cannot reach
  *   it, so the case disables the transition the way a consumer would — an
  *   inline `transition: none`, which is the branch `waitForTransition` guards.
- *   The stub is kept alongside it, so both paths are exercised.
+ *   The reduce-motion stub stays alongside it to match upstream's setup, but the
+ *   inline rule is what the assertion rests on: the case would pass on that
+ *   branch alone, so it does not evidence the media-query path.
  * - **The public `ref` case is an attachment.** This port's standing
  *   ref-callback translation: an `{@attach}` on the component reaches the sheet
  *   `<div>` through the rest spread. Attach-once-and-clean-up-on-unmount is the

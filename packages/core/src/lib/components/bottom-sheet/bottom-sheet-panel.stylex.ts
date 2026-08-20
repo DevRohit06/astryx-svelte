@@ -111,14 +111,6 @@ const styles = stylex.create({
 	}
 });
 
-/** The height budget a named height resolves to, or `null` for a custom one. */
-export function heightBudgetFor(height: BottomSheetHeight | number | string): string | null {
-	if (typeof height === 'string' && height in HEIGHT_BUDGETS) {
-		return HEIGHT_BUDGETS[height as BottomSheetHeight];
-	}
-	return null;
-}
-
 export { OVERSCROLL_PADDING, MOBILE_KEYBOARD_BOTTOM_CLEARANCE, HEIGHT_BUDGETS };
 
 /** The sliding surface. */

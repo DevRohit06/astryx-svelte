@@ -12,7 +12,9 @@
 	 * Upstream writes each of these inline as JSX; a Svelte snippet cannot declare
 	 * a component tree inside a test case, so the shape lives here. `clip` wraps
 	 * the switcher in an overflow-hidden, transformed ancestor — the inline-modal
-	 * case — and `nestedTrap` puts a focus trap inside the sheet.
+	 * case — `nestedTrap` puts a focus trap inside the sheet, and
+	 * `backgroundAction` renders a tabbable control *outside* the switcher, which
+	 * is what gives the focus-trap case somewhere for focus to escape to.
 	 */
 	let {
 		activeSheet = 'details',
@@ -24,6 +26,7 @@
 		sheetAttach,
 		sheetOwner,
 		clip = false,
+		backgroundAction = false,
 		nestedTrap,
 		onNestedEscape = () => {},
 		second,
@@ -41,6 +44,8 @@
 		/** `data-sheet-owner` on the sheet, to prove rest props reach the panel. */
 		sheetOwner?: string;
 		clip?: boolean;
+		/** A tabbable control outside the switcher, as upstream's focus-trap case has. */
+		backgroundAction?: boolean;
 		nestedTrap?: boolean;
 		onNestedEscape?: () => void;
 		second?: Snippet;
@@ -74,6 +79,10 @@
 		{/if}
 	</BottomSheetSwitcher>
 {/snippet}
+
+{#if backgroundAction}
+	<button type="button">Background action</button>
+{/if}
 
 {#if clip}
 	<div data-testid="clipping-ancestor" style="overflow: hidden; transform: translateY(100px)">

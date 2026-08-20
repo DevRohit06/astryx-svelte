@@ -499,7 +499,17 @@ export function useSheetGestures(options: UseSheetGesturesOptions): UseSheetGest
 	// Force the transition-free transform reset to resolve before transitions are
 	// restored. Otherwise both DOM updates can be coalesced and the reset becomes
 	// an unintended fly-in animation from the bottom.
-	$effect.pre(() => {
+	//
+	// `$effect`, not `$effect.pre`: the whole point is to compute style for the
+	// DOM that *now* carries `transition: none` and the new transform, so that
+	// pair becomes the "before" the next recalculation compares against. A pre
+	// effect is created inside the hook during the panel's `<script>`, so it runs
+	// before the template writes the `style` attribute and would reflow the render
+	// being replaced — leaving the pair that actually needs committing never
+	// computed alone, and every snap settle animating the swap that must be
+	// instantaneous. Upstream's `useLayoutEffect` runs after the commit, which is
+	// where a plain `$effect` runs.
+	$effect(() => {
 		if (!isScrollAreaReconciling) {
 			return;
 		}
@@ -517,7 +527,16 @@ export function useSheetGestures(options: UseSheetGesturesOptions): UseSheetGest
 		// A resized or closing panel's observer reports intermediate heights
 		// throughout its animation. Keep the last fully-expanded measurement instead
 		// of feeding those transient values back into the rendered height.
-		if (!options.isOpen() || activeOffsetNow() > 0) {
+		//
+		// `untrack`, because this runs synchronously from the sheet attachment as
+		// well as from the observer. Upstream's `sheetRef` is a `useCallback` and
+		// reads `isOpenRef.current`, which cannot subscribe to anything; a tracked
+		// read here makes the attachment depend on `isOpen`, so Svelte tears it
+		// down and rebuilds the `ResizeObserver` on every open and close. No
+		// current path breaks — every one of them is a no-op — but this function is
+		// also the observer callback, so any reactive read added to it later would
+		// become an attachment dependency silently.
+		if (!untrack(options.isOpen) || activeOffsetNow() > 0) {
 			return;
 		}
 		sheetHeightBox = renderedHeight;
@@ -704,8 +723,16 @@ export function useSheetGestures(options: UseSheetGesturesOptions): UseSheetGest
 	// that swaps them while the sheet rests has moved the stops out from under it,
 	// exactly as a rotation does, so re-anchor the same way. Skipped on the first
 	// run — the sheet is already anchored to the detents it opened with.
+	//
+	// `$effect`, not `$effect.pre`, because `reanchorToSettledDetent` *measures*:
+	// it strips the inline height, reads `getBoundingClientRect()`, and reads the
+	// body's scroll metrics. A pre effect reads all of that before the DOM update,
+	// so a host changing `snapPoints` in the same update as anything that alters
+	// the sheet's box — `height`, or the children of a `hug` sheet — would
+	// re-anchor against geometry that no longer exists, and the sheet would rest
+	// visibly off its detent until the next resize.
 	let hasAnchoredSnapHeights = false;
-	$effect.pre(() => {
+	$effect(() => {
 		// Tracked deliberately: this effect exists to notice the resolver changing.
 		options.snapHeights?.();
 		if (!hasAnchoredSnapHeights) {

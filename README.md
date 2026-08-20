@@ -100,7 +100,7 @@ To run it locally:
 ```sh
 pnpm install
 pnpm -r build     # the docs generator reads props types out of core's built dist/
-pnpm dev:docs
+pnpm dev
 ```
 
 Or read the same content in the terminal:
@@ -117,7 +117,7 @@ pnpm -r build     # must run before check
 pnpm -r check     # svelte-check + tsc
 pnpm -r lint      # prettier --check && eslint
 pnpm -r test      # vitest + all three fidelity oracles
-pnpm dev          # core's demo routes
+pnpm dev          # the docs site — the port's only demo surface
 ```
 
 Never install with `--prod` or prune devDependencies: both fidelity oracles and the docs content
