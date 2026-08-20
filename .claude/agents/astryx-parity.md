@@ -23,7 +23,7 @@ the specification.
 | Upstream storybook usage                                 | `reference/astryx-upstream/apps/storybook/stories/<Name>.stories.tsx` |
 | Upstream i18n catalog                                    | `reference/astryx-upstream/packages/core/locales/en.json`             |
 | Our port                                                 | `packages/core/src/lib/components/<kebab-name>/`                      |
-| Our demo page                                            | `packages/core/src/routes/+page.svelte`                               |
+| Our example blocks                                       | `docs/src/lib/examples/<Name>/`                                       |
 | Class-parity oracle                                      | `packages/core/scripts/compare-upstream-classes.mjs`                  |
 
 Note the two upstream copies can disagree: the published `dist/` is a _build_ and can

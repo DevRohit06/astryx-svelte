@@ -50,8 +50,8 @@ dimension when it had several.
       published `dist/`, source-only. Follow the source and record a self-retiring skip; do not port
       a slice the dist cannot verify.
 - [ ] **Decide the responsive and SSR story up front.** Both have been retrofitted and both cost a
-      rework: the demo route grew to 66 stacked sections with no navigation before it was rebuilt as a
-      two-column shell with scroll-spy, and `Timestamp`'s SSR warning still sits in the wrong shape
+      rework: core's demo route grew to 66 stacked sections with no navigation before it was
+      rebuilt as a two-column shell with scroll-spy, and `Timestamp`'s SSR warning still sits in the wrong shape
       (an `$effect`, so client-only) where `Field` got it right at init time.
 - [ ] **Name the consumers, and remember the docs site is one.** A component that stops exporting its
       props interface loses its documented types silently — the docs generator reads the props table

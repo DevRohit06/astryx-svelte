@@ -10,8 +10,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "pnpm --filter @astryx-svelte/core dev",
-    "dev:docs": "pnpm --filter docs dev",
+    "dev": "pnpm --filter docs dev",
     "build": "pnpm -r build",
     "check": "pnpm -r check",
     "test": "pnpm -r test",

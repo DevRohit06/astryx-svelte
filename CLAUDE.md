@@ -8,9 +8,9 @@ monorepo: `packages/core` (components), `packages/cli`, `packages/themes/*`, `do
 ## The parity rule
 
 **If it's not in Astryx, it's not here.** Invented props, extra variants, nicer defaults and
-hand-drawn demo content are _defects_, not improvements — that includes the demo routes, which must
-show upstream's documented API. Upstream bugs are documented in `port/debts.md` rather than
-replicated.
+hand-drawn demo content are _defects_, not improvements — that includes the docs site's example
+blocks, which must show upstream's documented API. Upstream bugs are documented in `port/debts.md`
+rather than replicated.
 
 Upstream's source is cloned at **`reference/astryx-upstream/`** — gitignored, present locally, and
 the thing to read. Read it _before_ porting, not after: source, `.doc.mjs`, tests, storybook, and
@@ -83,7 +83,7 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   a chunk that collected nothing fails the run instead of shrinking the total. This
 #   is what `core`'s `test` script and CI both use; a bare `--project=client` over every
 #   client test file is not a measurement.
-pnpm dev          # core's demo routes;  pnpm dev:docs for the docs site
+pnpm dev          # the docs site — the only demo surface (see below)
 pnpm -F docs generate   # regenerate the docs content registries (runs automatically on dev/build)
 ```
 
@@ -91,6 +91,12 @@ Never install with `--prod` or prune devDependencies: all three oracles **and th
 pipeline** read the upstream `@astryxdesign/*` packages, which are devDependencies.
 
 ## The docs site
+
+**It is the port's only demo surface.** `packages/core` used to carry a SvelteKit demo route beside
+its library — 36 files that predated the docs site and were kept because nothing else showed a
+component running. Once `docs/` covered every component with its own example blocks, the route was
+two places to demonstrate the same thing, and the parity rule applied to both. It is gone; `pnpm
+dev` runs the docs site, and a component's examples live in `docs/src/lib/examples/<Name>/`.
 
 See `port/todo.md`'s `## Current goal` for what's active. Two things about `docs/` are easy to get
 wrong:

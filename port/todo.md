@@ -32,7 +32,7 @@ from a quiet `main` is easier than tagging mid-batch.
       `UPSTREAM_EXAMPLES_NOT_PORTED` in `docs/scripts/emit-core-docs.mjs` is the exact list and
       fails the run in both directions, so it cannot drift; `BottomSheet` and
       `BottomSheetSwitcher` joined it at 0.4.5
-- [ ] Re-sweep the demo route against upstream now that later batches have landed
+- [ ] Re-sweep the docs example blocks against upstream now that later batches have landed
 - [ ] Build `ThemesPreview`/`TemplatesPreview`, the two landing-page bento tiles — both were
       blocked on page templates, which have since landed in full
 - [ ] Work down the CLI backlog (see Open work → CLI); the codemod runner and the lockfile

@@ -600,13 +600,15 @@ So `HoverCard`'s `server markup matches first client render` case is dropped (a 
 
 The lazy-`Tooltip` code split (`Text`/`Heading`/`Timestamp`); SvelteKit's Vite plugin can't wrap a dynamic import under the vitest browser provider. Non-fatal, but the split path isn't exercised as in a real build
 
-### `Icon` demo hand-draws an SVG for component mode
+### `Icon`'s component mode has no example block
 
-- **units:** Icon (demo route)
+- **units:** Icon (docs examples)
 - **kind:** unported
 - **retires:** with `@lucide/svelte`
 
-(`routes/squiggle-icon.svelte`) — retires with `@lucide/svelte`
+The demo route hand-drew an SVG for it (`routes/squiggle-icon.svelte`); that route is gone and
+`docs/src/lib/examples/Icon/` has no counterpart, so component mode is currently shown by its
+props table alone. Retires with `@lucide/svelte`, which supplies a real component-mode icon
 
 ### `DropdownMenuItem`'s `icon` is `IconName | Snippet`, not upstream's `ReactNode | IconType`
 
@@ -861,7 +863,7 @@ Its other two translations are this port's standing shapes: options arrive as a 
 upstream's `renderTooltip()` is a `<TooltipLayer>` component, because a Svelte hook cannot
 return markup
 
-### The docs example blocks make the same Heroicons substitutions the demo routes do
+### The docs example blocks substitute built-in icons for upstream's Heroicons
 
 - **units:** docs (examples)
 - **kind:** deliberate-divergence
@@ -910,9 +912,9 @@ filtered array to a `$state` binding instead
 
 Upstream repeats the four
 data-URI scenes verbatim in each block file. They are hoisted to a sibling module here —
-identical bytes, three importers — mirroring the demo routes' own `thumbnail-images.ts`.
-Kept as a second copy rather than imported from core's `src/`, which `docs/` does not reach
-into
+identical bytes, three importers. It began as a mirror of the demo route's own
+`thumbnail-images.ts`, kept as a second copy rather than imported from core's `src/`, which
+`docs/` does not reach into; the route has since been retired and this is the only copy
 
 ### `AspectRatioCircleImage`'s alt text is upstream's, warning and all
 
@@ -986,8 +988,8 @@ build rather than degrading it
 Table blocks in reference docs still render a plain `<table>`, and so do the component
 props tables — but the reason has changed. `Table` is no longer unported: its core landed with
 batch 11, so this is now a _docs-site migration_ rather than a blocked feature, and it is the
-obvious first dogfooding job of the next docs pass. Upstream's own `PropsTablePattern` story is
-ported on the demo route and shows the shape the props table should take
+obvious first dogfooding job of the next docs pass. Upstream's own `PropsTablePattern` story shows
+the shape the props table should take
 
 > **Re-verified 2026-08-15 while routing this file.** The reference-doc table blocks and the
 > component props tables have since diverged: `docs/src/lib/shell/content-block.svelte`'s own

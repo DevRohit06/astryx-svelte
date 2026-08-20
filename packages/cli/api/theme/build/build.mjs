@@ -289,8 +289,8 @@ async function getThemeTargetIndex() {
 
 	const coreRoot = resolveCoreRoot();
 	// `<core>/src/lib` rather than upstream's `<core>/src`: this port's package
-	// root also holds `src/routes`, the SvelteKit demo app, which has no docs in
-	// it and would double the walk.
+	// root also holds `src/tests`, which has no docs in it and would widen the
+	// walk for nothing.
 	const coreSrc = coreRoot ? path.join(coreRoot, 'src', 'lib') : null;
 	if (!coreSrc || !fs.existsSync(coreSrc)) {
 		_themeTargetIndex = null;
