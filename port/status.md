@@ -21,9 +21,9 @@
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 256    | 6383           |
-| Ported here              | 211    | 5816           |
+| Ported here              | 215    | 5885           |
 | No counterpart by design | 3      | 32             |
-| **Unported**             | **42** | **535**        |
+| **Unported**             | **38** | **466**        |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -38,8 +38,6 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 | `FieldStatus/FieldStatus.test.tsx`            | 34    |
 | `Stack/Stack.test.tsx`                        | 30    |
 | `AspectRatio/AspectRatio.test.tsx`            | 26    |
-| `theme/tokens.test.ts`                        | 26    |
-| `theme/onMediaTokens.test.ts`                 | 22    |
 | `docPropLiterals.test.ts`                     | 21    |
 | `__tests__/babelPluginAddExtensions.test.ts`  | 20    |
 | `EmptyState/EmptyState.test.tsx`              | 20    |
@@ -51,9 +49,7 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 | `HStack/HStack.test.tsx`                      | 12    |
 | `VStack/VStack.test.tsx`                      | 12    |
 | `Stack/StackItem.test.tsx`                    | 11    |
-| `theme/derivedVarRegistry.test.ts`            | 11    |
 | `IconButton/IconButton.test.tsx`              | 10    |
-| `utils/parseStyleKey.test.ts`                 | 10    |
 | `utils/themeProps.test.ts`                    | 10    |
 | `Badge/Badge.test.tsx`                        | 8     |
 | `Blockquote/Blockquote.test.tsx`              | 8     |
