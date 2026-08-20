@@ -111,10 +111,81 @@ site and duplicated it. Nothing published changes: the route was excluded from t
 `pnpm dev` now runs the docs site, which is where every component's examples live, and
 `@sveltejs/adapter-auto` is no longer a dependency of `core`.
 
+### Breaking: `expandTypeScale` takes upstream's config
+
+`expandTypeScale` is published from `@astryx-svelte/core/theme`, and its signature was not
+upstream's. It took the whole `typography` block — `{scale, body, heading, code}` — and did two
+jobs upstream gives to `defineTheme`: building `--font-family-*` from the role declarations, and
+mapping named weights (`'bold'`) onto `var(--font-weight-bold)`.
+
+So the published `TypeScaleConfig` was shape drift under a shared name: a consumer typing against
+it got `{base, ratio}` and handed the function an object it would not accept.
+
+```ts
+// before
+expandTypeScale({ scale: { base: 14, ratio: 1.2 }, heading: { weights: { 1: 'bold' } } });
+
+// now — upstream's shape; weights arrive already resolved to CSS values
+expandTypeScale({ base: 14, ratio: 1.2, weights: { heading: { 1: 'var(--font-weight-bold)' } } });
+```
+
+`generateTypeScaleComponents` likewise takes that config. **`defineTheme` is unaffected** — it still
+takes `typography: {scale, body, heading, code}`, and it is where the two moved jobs now live, so a
+theme definition needs no change.
+
+Two renames come with it, to the names upstream publishes: `TypeRole` → `TypographyRole` and
+`TypeWeight` → `FontWeight`, both now exported from `./theme` via `theme/types` rather than from the
+expander. `TypographyConfig` is unchanged in shape and still exported.
+
+One behaviour is removed: a `typography` with weights but **no `scale`** used to emit
+`--text-*-weight` tokens. Upstream emits nothing without a scale, and neither does this now.
+
+### Breaking: StyleX priority layers move under `astryx-base`
+
+Only if you **compile this package from source** — a consumer of the pre-built
+`@astryx-svelte/core/astryx.css` is unaffected, and that is the default.
+
+Upstream's own build wraps its compiled output in `@layer astryx-base { … }`, so the
+`priority1…N` buckets StyleX emits are nested inside it. This port turned layers on without that
+wrapper, so the buckets landed at the top level in order of first appearance — after `astryx-theme`
+and `product` — inverting the cascade. `base.css` mitigated it by naming sixteen buckets by hand.
+
+The Vite preset now passes StyleX 0.19's `useLayers: {prefix: 'astryx-base'}`, so the buckets are
+emitted as `astryx-base.priority1…N` — sub-layers, which sort inside their parent. `base.css`
+declares four layers instead of twenty. **If you ordered layers around `priority1…16` yourself,
+order around `astryx-base` instead.**
+
+### New: a Tailwind bridge
+
+`@astryx-svelte/core/tailwind-theme.css` maps the design tokens onto Tailwind v4 `@theme inline`
+variables, so a Tailwind consumer writes `class="text-primary bg-surface"` rather than
+`class="text-[var(--color-text-primary)]"`. Ported from upstream's, token for token. Because it
+registers variables rather than emitting declarations, theme switching keeps working — the utilities
+resolve through the same custom properties the theme sets.
+
+### Fixed, in the components
+
+- **A consumer's `style` no longer beats the prop the component exists for.** `AspectRatio`, `Stack`
+  and `Grid` merged their own sizing _before_ the consumer's `style`, and inline styles resolve by
+  declaration order — so `<Stack width={400} style="width:100%">` rendered 100% here and 400px
+  upstream, and `style="aspect-ratio: 3 / 1"` silently beat `ratio={16/9}`. Upstream merges
+  `{...style, ...sizing}`, sizing last.
+- **`typography.heading` inherits `body`'s font family** when it declares none of its own, as
+  upstream does. A theme naming only `body.family` kept the base theme's heading face.
+- **The pseudo locale had rotted 34 keys behind English**, missing every live-region announcement
+  added in this release — so the locale that exists to make untranslated strings visible was itself
+  missing them. It is generated from `en.json` now, and the build fails if the two drift.
+
 ### Verified
 
 Both fidelity oracles reach zero: **1,635 style keys and 532 inline call sites with no skips**, and
 `astryx.css` matching upstream. All seven theme oracles are clean.
+
+The ported test suites are what found most of the component fixes above, and the gap between this
+port's suites and upstream's is now one suite — `theme/generateThemeRules.test.ts`, deferred with
+its reason in `port/debts.md`. `port/status.md` generates that count rather than this file stating
+it. Three of the four defects listed under _Fixed, in the components_ were found by porting a suite
+that upstream has and this port did not.
 
 The closing audits are the reason to trust this release rather than the green suite. The ported
 `BottomSheet` suites found seven defects during the port, six of them one mistake — a Svelte effect

@@ -18,7 +18,7 @@ import { atomicClasses } from './fixtures/citation-probe.stylex.js';
  *   holds the four `stylex.create` styles upstream declares inline; StyleX may
  *   only be imported from a `.ts`/`.stylex.ts` module here, so they moved to a
  *   fixture rather than changing shape. Cases 1–7 previously lived in
- *   `leaves.svelte.test.ts` in a *restated* form that read computed colours out
+ *   `nav-icon.svelte.test.ts` in a *restated* form that read computed colours out
  *   of the browser instead; they move here and go back to upstream's assertion,
  *   because upstream's assertion is the specification and the port's job is to
  *   answer it.

@@ -264,7 +264,7 @@ describe('HoverCard', () => {
 	 * Restated. Upstream asserts the computed `fontFamily` is the literal string
 	 * `'var(--font-family-body)'`, which only holds in jsdom — it does not resolve
 	 * custom properties, so the declaration comes back verbatim. A real browser
-	 * resolves it, so the same fact has to be asked the way `leaves.svelte.test.ts`
+	 * resolves it, so the same fact has to be asked the way `nav-icon.svelte.test.ts`
 	 * asks it: compare the layer's computed font against the value
 	 * `--font-family-body` resolves to on the page, through a probe so both sides
 	 * are serialised identically. That is the fact upstream's assertion is a proxy

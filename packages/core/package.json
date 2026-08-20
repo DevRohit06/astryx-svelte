@@ -29,7 +29,9 @@
 		"test:parity": "node scripts/compare-upstream-classes.mjs",
 		"test:css": "node scripts/compare-upstream-css.mjs",
 		"build:css": "node scripts/build-css.mjs",
-		"test:node": "npm run test:unit -- --run --project=server && npm run test:parity && npm run test:css",
+		"build:pseudo": "node scripts/build-pseudo-locale.mjs",
+		"test:pseudo": "node scripts/build-pseudo-locale.mjs --check",
+		"test:node": "npm run test:unit -- --run --project=server && npm run test:parity && npm run test:css && npm run test:pseudo",
 		"test": "npm run test:node && npm run test:client"
 	},
 	"files": [
@@ -107,7 +109,8 @@
 		},
 		"./locales/*.json": "./dist/locales/*.json",
 		"./astryx.css": "./dist/astryx.css",
-		"./base.css": "./dist/styles/base.css"
+		"./base.css": "./dist/styles/base.css",
+		"./tailwind-theme.css": "./dist/styles/tailwind-theme.css"
 	},
 	"peerDependencies": {
 		"@stylexjs/stylex": "^0.19.0",

@@ -8,8 +8,12 @@ Meta's open source design system. Unofficial, and not affiliated with Meta.
 ## Install
 
 ```bash
-npm install @astryx-svelte/core @astryx-svelte/theme-liquid-glass @stylexjs/stylex
+npm install @astryx-svelte/core @astryx-svelte/theme-liquid-glass
 ```
+
+`@stylexjs/stylex` is a peer dependency and npm and pnpm install it for you. It is required at
+runtime — the components reach `stylex.props()` through `sx()` — so add it explicitly if your
+package manager does not resolve peers automatically.
 
 `@astryx-svelte/core` is a peer dependency. A theme is data plus one stylesheet; it renders
 nothing on its own.

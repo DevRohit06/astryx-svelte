@@ -8,45 +8,63 @@ History lives in [`ledger/`](./ledger). Deviations from upstream live in [`debts
 
 ## Current goal
 
-The first npm release shipped as `0.3.1` (porting Astryx `0.3.0` — the port's own version scheme
-can't express a release of its own, so it took the next free patch number instead of `0.3.0`
-itself). Since then the goal has been continuous upstream tracking rather than a one-time port:
-pull each Astryx release, close the class-oracle and theme-oracle drift it introduces, and cut a
-matching release of this port. The pin is currently Astryx `0.4.5` — see
-[`status.md`](./status.md) for the live count of what that leaves open. Set 2026-08-16, re-pinned
-2026-08-20.
+**Full parity with Astryx `0.4.5`**, across every package except three. Set 2026-08-20, replacing
+"track each upstream release and cut a matching version" — that goal was about staying level with
+upstream's _movement_; this one is about closing the distance that predates it.
 
-`0.4.2` is merged to `main` but **not tagged**: the release step is still open below, and tagging
-from a quiet `main` is easier than tagging mid-batch.
+Out of scope, by decision: **`lab`, `charts` and `vega`**. Four of `lab`'s components
+(`CodeEditor`, `RichTextEditor`, `ThreeD`, `Sankey`) wrap React-only libraries with no drop-in
+Svelte equivalent, and the parity rule cannot arbitrate a substitute that has no upstream answer
+to copy; `charts` and `vega` are d3 and Vega-Lite renderers built on that same React surface.
+Everything else is in: `core`, `cli`, `themes/*`, `build`, `richtext`, and the docs site.
 
-## Next
+In scope means _upstream's_ surface, not a superset. Where a symbol genuinely has no Svelte
+counterpart it lands in [`debts.md`](./debts.md) with the reason — an absence that is recorded is
+parity; an absence that is unremarked is a gap.
 
-- [ ] Push the release tag for the current pin once its gate is green (see Open work → Release)
-- [ ] Finish the test delta carried in from the 0.4.2 batch — SideNav and Slider are the two
-      largest, with smaller shortfalls in Avatar, TopNav, ChatMessageBubble, useContainerReveal,
-      DropdownMenuSubMenu and useFocusTrap. The release-blocking part is done (useLayer's hosting
-      block, the whole useMenuHover suite, Slider's inset blocks, HoverCard's portal pair);
-      `debts.md` carries the per-suite list, re-derived against the current pin
-- [ ] Settle the published-surface findings the 0.4.5 sweep raised, as **one** decision at a minor
-      rather than piecemeal before a patch. Every one is a _removal_ from a shipped surface or an
-      addition to it, so none belongs in a polish pass: `LayerContext`/`LayerContextValue`/
-      `useLayerContext` withheld while `layerAnimations`/`ToastViewport`/`ToastViewportProps` are
-      published, on a distinction upstream does not make; and `MetadataListContextValue`,
-      `UseIndicatorFocusRingReturn`, `getPositionTryFallbacks`, the five `onMediaTokens` symbols
-      and `parseStyleKey` over-exported against upstream's barrels. The comment at the head of
-      `src/lib/index.ts` needs rewriting whichever way the Layer half goes — it currently cites the
-      barrel-absent rule to justify withholding barrel-_present_ symbols
-- [ ] Hand-translate the deferred `.doc.mjs` examples. Upstream's are JSX, and this port's
-      `ComponentExampleDoc.code` is documented as Svelte source, so emitting them verbatim would
-      ship React as this CLI's answer to "show me an example" — the `Button.icon` mistake.
-      `UPSTREAM_EXAMPLES_NOT_PORTED` in `docs/scripts/emit-core-docs.mjs` is the exact list and
-      fails the run in both directions, so it cannot drift; `BottomSheet` and
-      `BottomSheetSwitcher` joined it at 0.4.5
-- [ ] Re-sweep the docs example blocks against upstream now that later batches have landed
-- [ ] Build `ThemesPreview`/`TemplatesPreview`, the two landing-page bento tiles — both were
-      blocked on page templates, which have since landed in full
-- [ ] Work down the CLI backlog (see Open work → CLI); the codemod runner and the lockfile
-      hashing are the two pieces nothing else depends on
+Measure it, do not describe it. [`status.md`](./status.md) now generates the test delta as well as
+the surface delta, so "how far from parity" has a number that cannot rot into prose. Progress is
+that table going to zero.
+
+### The fronts, in order
+
+Each front is sequenced so the thing that _catches_ mistakes lands before the thing that makes
+them.
+
+1. **The test delta.** The largest and most mechanical front, and the one that protects every
+   other. `status.md` counts the suites with no counterpart at all; suites that exist but fall
+   short state it in their own header (`SideNav`, `Text`, `Center`, `DateInput`, `DropdownMenu`,
+   `Carousel`, `Slider`, `HoverCard` are the largest). Take the whole-suite gaps first — they are
+   contiguous work — starting with `theme/`, then the primitives that never got a suite at all
+   (`Grid`, the `Stack` family, `AspectRatio`, `FieldStatus`, `EmptyState`, `Indicator`,
+   `StatusDot`, `Kbd`, `Badge`, `Blockquote`, `Code`, `Card`, `Skeleton`, `VisuallyHidden`,
+   `IconButton`).
+2. **The published surface.** Settle the Layer/over-export decision as one call at a minor, then
+   the `./theme` barrel renames, the `./theme/tokens` subpath keys, `reset.css` at its own subpath,
+   and the Tailwind bridge. Every one is an addition to or removal from a shipped API, so they
+   belong together rather than dribbled across patches.
+3. **`@astryx-svelte/build`.** Upstream's `build` package is seven files of framework-agnostic
+   JavaScript — a PostCSS plugin, a Babel config and a Vite plugin — and it ships on the stable
+   release train at `0.4.5`, unlike the canary packages. The only piece needing translation rather
+   than transcription is `next.js`, whose counterpart is SvelteKit.
+4. **`@astryx-svelte/richtext`.** Lexical's core is framework-agnostic; only `@lexical/react` is
+   not, and its plugins are thin wrappers over `editor.registerCommand` and node transforms. Ten of
+   them need Svelte counterparts. Upstream ships this `private` and canary-only, so it is parity
+   work with no release pressure behind it.
+5. **The CLI backlog.** `blog`, `components.lock.json` with per-file hashes, the codemod runner and
+   the template assets — see Open work → CLI.
+6. **The docs site.** The remaining routes (`/docs/core`, `/docs/cli`, `/changelog`, `/blog`,
+   `/themes`, `/playground`, `/mcp`), the two landing bento tiles, and the deferred `.doc.mjs`
+   examples. The **icon registry expansion** is the cross-cutting piece here: seven demo debts name
+   it as their retirement condition, because upstream's stories use Heroicons the registry has no
+   match for.
+
+### The release, held
+
+`0.4.5` is merged to `main` and **not tagged**. The gate is green and the manifests are at `0.4.5`,
+so the tag is one command away whenever it is wanted — but full parity is now the goal ahead of it,
+and a release is a checkpoint on the way rather than the destination. `0.4.2` was likewise merged
+and never tagged, which is why the `0.4.5` changelog entry opens by saying so.
 
 ## Open work
 
@@ -55,9 +73,12 @@ from a quiet `main` is easier than tagging mid-batch.
 - [ ] Upstream publishes its CSS reset at its own subpath (`@astryxdesign/core/reset.css`,
       opt-in); ours is folded into the always-loaded `base.css` because the components genuinely
       require it. Revisit if the published surface should mirror upstream's split
-- [ ] The StyleX _compiler_ path (as opposed to the pre-built `dist/astryx.css`) still emits
-      `@layer priority1…9` rather than one named layer, because StyleX has no way to emit into a
-      named layer. Revisit only if that changes
+- [x] The StyleX _compiler_ path emits its priority buckets **under `astryx-base`**, which is
+      upstream's own arrangement — their PostCSS plugin turns layers on and then wraps the result
+      in `@layer astryx-base { … }`, and nesting `priorityN` inside that is `astryx-base.priorityN`.
+      StyleX 0.19 added `useLayers: {prefix}`, so `vite.ts` gets there directly. `base.css` used to
+      name sixteen buckets by hand — a workaround for turning layers on without upstream's wrapper
+      — and now names four layers total
 - [ ] Upstream bug, not replicated: `astryx.css` bundles their ESLint test fixture
       (`Badge.test-violations.tsx` doesn't match their own `**/*.test.*` glob). Recorded as named
       skips in `compare-upstream-css.mjs`, which retire themselves when upstream fixes the glob
@@ -176,10 +197,10 @@ hand-drawn content.
 
 Sizes measured from upstream source, not estimated.
 
-| Front      | Size              |
-| ---------- | ----------------- |
-| `lab`      | 19 dirs at v0.4.4 |
-| `charts`   | 35 files          |
-| `vega`     | 5 files           |
-| `richtext` | 1 file            |
-| `build`    | 7 files           |
+| Front      | Size              | In scope                                    |
+| ---------- | ----------------- | ------------------------------------------- |
+| `build`    | 7 files           | yes — front 3                               |
+| `richtext` | 11 files          | yes — front 4                               |
+| `lab`      | 19 dirs at v0.4.4 | no — React-only libraries, see Current goal |
+| `charts`   | 35 files          | no — built on that same surface             |
+| `vega`     | 5 files           | no — built on that same surface             |

@@ -89,17 +89,27 @@
 			justify
 		})
 	);
+	/**
+	 * The sizing props go **after** the consumer's `style`, because upstream
+	 * merges `{...style, ...sizingStyle}` — the props this component exists for
+	 * win over a consumer declaration of the same property. Inline styles
+	 * resolve by declaration order, so the order here *is* the precedence, and
+	 * it was the other way round: `<Stack width={400} style="width:100%">` gave
+	 * 100% here and 400px upstream.
+	 *
+	 * No upstream case covers it — none passes both `width` and `style` — so the
+	 * ported suite is green either way. `AspectRatio` had the identical bug and
+	 * upstream *does* have a case for it there, which is how the pair was found.
+	 */
+	const rootStyle = $derived(
+		mergeStyle(
+			attrs.style,
+			styleProp as string | undefined,
+			sizingStyle({ width, height, maxWidth, minHeight })
+		)
+	);
 </script>
 
-<div
-	{...rest}
-	{...theme}
-	class={cx(theme.class, attrs.class, className)}
-	style={mergeStyle(
-		attrs.style,
-		sizingStyle({ width, height, maxWidth, minHeight }),
-		styleProp as string | undefined
-	)}
->
+<div {...rest} {...theme} class={cx(theme.class, attrs.class, className)} style={rootStyle}>
 	{@render children?.()}
 </div>

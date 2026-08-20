@@ -55,7 +55,7 @@ import TopNavItemFixture from './fixtures/top-nav-item-fixture.svelte';
  *
  * NOTE ON OVERLAP: upstream's `NavIcon` describe here duplicates its own
  * `NavIcon/NavIcon.test.tsx`, which this port already carries in
- * `leaves.svelte.test.ts`. Both are kept, because the count of *this* suite is the
+ * `nav-icon.svelte.test.ts`. Both are kept, because the count of *this* suite is the
  * contract and dropping them would silently shrink it.
  *
  * The rest-forwarding divergence the port introduces (`TopNavMenu` /

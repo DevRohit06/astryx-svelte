@@ -543,16 +543,20 @@ trusting a figure in this paragraph. **Batch 8 closed the `Theme`/`useTheme` fam
 
 - **units:** -
 - **kind:** api-divergence
-- **retires:** when `TypeRole`/`TypeWeight` are renamed, `TokenMap` is made module-private and `TypeScaleConfig`'s shape matches upstream's
+- **retires:** when `TokenMap` is made module-private
 
 (batch-7 sweep).
-`TypeRole` and `TypeWeight` are name drift for upstream's `TypographyRole`/`FontWeight` (and
-ours drops `TypographyRole`'s `weight` field); `TokenMap` has **zero** occurrences anywhere in
-upstream's `src/`, so it is API this port invented and should be made module-private. Worse,
-`TypeScaleConfig` is _shape_ drift under a shared name — upstream's is
-`{base, ratio, weights?: {heading?, text?}}` and ours is `{base, ratio}`, so a consumer typing
-against it gets a narrower object than the published name promises. That last one wants an
-`astryx-parity` pass on `theme/expand-type-scale.ts`, not just a rename
+`TokenMap` has **zero** occurrences anywhere in upstream's `src/`, so it is API this port
+invented and should be made module-private.
+
+> **Three of the four closed in batch 030.** `TypeRole` and `TypeWeight` were name drift for
+> upstream's `TypographyRole`/`FontWeight`, and `TypeScaleConfig` was _shape_ drift under a
+> shared name — upstream's `{base, ratio, weights?}` against this port's `{base, ratio}`, so a
+> consumer typing against the published name got an object `expandTypeScale` would not accept.
+> This entry said that last one wanted an `astryx-parity` pass rather than a rename, and it did:
+> the expander had absorbed the font-family and named-weight derivation that upstream keeps in
+> `defineTheme`. Both moved, the three names are upstream's, and the move surfaced a real defect
+> — `heading` did not inherit `body`'s family. `TokenMap` alone remains
 
 ### `./authoring` (21 names), `./config`, `./docs.mjs`, `./groups.doc.mjs` and the 14 `docs-types` root types are absent
 
@@ -1180,6 +1184,131 @@ answer "is this drift already known?", and at 0.4.5 it raised the rename as a fi
 replica to test the justification, saw it compile, and reported the reason as not reproducing. It
 was half right — the in-file comment claimed Svelte _errors_, and it warns. The rename is correct;
 the overstatement was what made it look invented
+
+### `generateThemeCss` returns a flat stylesheet where upstream returns two blocks
+
+- **units:** theme/generate-theme-rules.ts
+- **kind:** api-divergence
+- **retires:** when `generateThemeCss` returns `ThemeCSSOutput`, its `@layer` wrappers move to its callers, and `generateThemeRules` is exported
+
+Upstream's `generateThemeCSS(theme)` returns `{prose, component}` — two `@scope`
+blocks and no layer wrappers — and leaves it to each caller to put them in the right
+layer. This port's `generateThemeCss(theme)` returns one string with the
+`@layer reset` / `@layer astryx-theme` wrappers and a generated-file header already
+applied, which is the shape `<Theme>`, the theme build scripts and the docs build all
+consume. Upstream also exports `generateThemeRules(theme): string[]`, the rule list
+behind the split; this port has only `generateThemeRulesSplit`.
+
+Found while porting `theme/generateThemeRules.test.ts` in batch 030, whose 36 cases
+call both `generateThemeRules` and the two-block `generateThemeCSS` and so cannot be
+ported case for case until the shapes match. **The suite is deliberately left
+unported rather than partially ported**, and `port/status.md` keeps counting it: the
+fix is a wide change — around twenty test files call `generateThemeCss(theme)` and
+assert on the string, plus `<Theme>`, both theme build scripts and the docs build —
+and belongs in a batch of its own rather than inside one restructuring `defineTheme`
+at the same time
+
+### Ported `getByRole` name assertions are substring matches, where upstream's are whole-string
+
+- **units:** src/tests (client project)
+- **kind:** api-divergence
+- **retires:** when every string `name` in the client suites carries `exact: true` and `status.md`'s assertion-strength count reaches zero
+
+Testing Library matches an accessible name as a **whole string**; Playwright, which supplies the
+browser project's locators, matches a string `name` as a case-insensitive **substring**. Every
+ported case that reads `getByRole('button', {name: 'Delete'})` verbatim therefore asserts strictly
+less than the upstream case it ports, and passes in situations upstream's exists to catch.
+
+Found while porting `VisuallyHidden`: removing the icon span's `aria-hidden` made the control's
+accessible name `'Trash Delete'`, and the case still passed. It fails, correctly, with
+`exact: true`.
+
+The count is generated into `port/status.md` rather than stated here, because it is the size of a
+sweep that has not happened and will move. The sweep is its own batch: adding `exact: true` will
+surface every place this port's accessible name differs from upstream's, and each of those is a
+parity defect to triage rather than a test to relax. A regex `name` is substring-matching on both
+sides by construction and is excluded
+
+### Rest-prop and inline-style precedence disagrees with upstream in four components
+
+- **units:** Blockquote, Badge, ChatComposer, VisuallyHidden
+- **kind:** api-divergence
+- **retires:** when each component's spread order matches upstream's and `VisuallyHiddenProps` matches upstream's `Omit`
+
+Upstream settles precedence by where a spread sits in `mergeProps(...)`; this port settles it by
+where an attribute sits in the element's attribute list, since the last one written wins. The two
+have drifted apart in four places, each found while porting that component's suite in batch 031 and
+each **invisible to every upstream case**, which is why none of them is a test failure:
+
+- **`Blockquote`** spreads `{...rest}` _before_ its class and style attributes; upstream spreads
+  `{...props}` _after_ `mergeProps(...)`. Nothing collides today — `class`, `style` and `xstyle` are
+  destructured out of rest on both sides — but the order is upstream's inverted, and it is the exact
+  shape of the `ComplexSelector` `onclick` bug in `ledger/026-selector-family.md`. `Code` and `Kbd`
+  match upstream.
+- **`Badge`** spreads `{...rest}` first, so `themeProps`' output wins where upstream lets a
+  consumer's rest props override it. Only `data-variant` collides in practice. Its sibling
+  `StatusDot` spreads last and matches upstream.
+- **`ChatComposer`** spreads `{...rest}` first against upstream's last, so the
+  `themeProps('chat-composer', {density})` data attributes are consumer-overridable upstream and not
+  here. Its sibling `ChatComposerDrawer` spreads last and carries a comment saying so — the two
+  components in one family disagree.
+- **`VisuallyHiddenProps`** omits `'class' | 'style' | 'xstyle'` from `BaseProps`; upstream's omits
+  only `'className' | 'style'`, leaving `xstyle` in the published type even though its own docstring
+  says it intends to omit it and its implementation never passes it to `stylex.props`. This port's
+  type matches upstream's stated intent rather than upstream's type.
+
+Three further instances of the same family **were** behavioural and are fixed rather than recorded:
+`AspectRatio`, `Stack` and `Grid` each let a consumer's `style` override the very prop the component
+exists for — `<Stack width={400} style="width:100%">` gave 100% here and 400px upstream. Upstream
+merges `{...style, ...sizingStyle}`, sizing last. `AspectRatio`'s was caught by an upstream case;
+the other two have none and were found by reading the pair after it
+
+### The docs emitter names value-carrying type aliases where upstream spells the values out
+
+- **units:** docs (scripts/lib/props-types.mjs)
+- **kind:** api-divergence
+- **retires:** when `renderType` expands a named literal union inside a composite type and prints small object aliases structurally, and `PORT_DOC_TYPE_DEBT` in `doc-prop-literals.test.ts` is empty
+
+Upstream's `.doc.mjs` files are hand-authored, so a prop's documented `type` says
+`(reason: "auto" | "manual") => void`. This port generates them from its own compiled
+`.d.ts`, and `renderType` prints `(reason: ToastDismissReason) => void` — the name, not the
+values. A reader without an IDE cannot see what is legal, which is exactly what upstream's
+`docPropLiterals.test.ts` exists to prevent, and porting that suite in batch 031 is what
+surfaced it.
+
+Three classes, wanting different fixes. **A composite alias whose values reach neither
+surface** (`InputStatus`, `TextType`, `TableSortState`, `SelectorStatus`) — upstream prints the
+object structurally. **A literal union named inside a larger expression** (`boolean |
+LayerPlacement`, `SectionDivider[]`) — the least arguable, since `renderType` inlines a union
+only when the prop's whole type is literals plus primitives. **The `IconName` prose exemption
+inherited thirteen times** — upstream types its icon slots `ReactNode | IconType`, which
+carries no literals, so its `ENUMERATED_IN_PROSE` registry needed one entry; this port's slot
+is `IconName | Snippet`, so thirteen props inherit a bargain upstream never had to pay.
+
+The affected props are listed in `PORT_DOC_TYPE_DEBT` in
+`packages/core/src/tests/doc-prop-literals.test.ts` rather than counted here, and that list
+carries the class oracle's hygiene in both directions: an entry that stops violating fails the
+run, and a violation that is not listed fails the run. It can only shrink. Upstream's own
+`ENUMERATED_IN_PROSE` is left at its single entry — widening it would be divergence rather
+than porting
+
+### Nothing enforces the fully-specified relative import convention
+
+- **units:** core (eslint config)
+- **kind:** unported
+- **retires:** when an `import/extensions` rule (or equivalent) fails a relative specifier with no extension
+
+CLAUDE.md § Conventions requires relative imports to carry the `.js` extension even for `.ts`
+sources. It is an authoring rule and nothing checks it. `svelte-package` rewrites an existing
+`.ts` ending to `.js` but never _adds_ a missing one; eslint has no `import/extensions` rule
+configured; and `publint` checks that `exports`/`main`/`bin` resolve to published files, not
+that specifiers inside those files are fully specified.
+
+So an extensionless relative import would pass build, lint, publint and every Vite-resolved
+consumer, and break only a strict-ESM consumer of the tarball. Upstream reaches that failure
+through a gap in its `babel-plugin-add-extensions` — the subject of a suite recorded as
+no-counterpart here — and this port would reach the same failure by omission. Surfaced while
+assessing that suite in batch 031
 
 ## Retired
 

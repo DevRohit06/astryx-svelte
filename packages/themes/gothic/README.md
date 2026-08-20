@@ -8,8 +8,12 @@ Meta's open source design system. Unofficial, and not affiliated with Meta.
 ## Install
 
 ```bash
-npm install @astryx-svelte/core @astryx-svelte/theme-gothic @stylexjs/stylex
+npm install @astryx-svelte/core @astryx-svelte/theme-gothic
 ```
+
+`@stylexjs/stylex` is a peer dependency and npm and pnpm install it for you. It is required at
+runtime — the components reach `stylex.props()` through `sx()` — so add it explicitly if your
+package manager does not resolve peers automatically.
 
 `@astryx-svelte/core` is a peer dependency. A theme is data plus one stylesheet; it renders
 nothing on its own.
@@ -58,9 +62,13 @@ error — the components render, unstyled. See
 The theme oracle (`scripts/compare-upstream.mjs`) diffs this package's generated CSS
 declaration by declaration against the published `@astryxdesign/theme-gothic` tarball, in
 **both** directions — a missing declaration, a wrong value and an invented one all fail the
-run. It reports **345 of upstream's 345 declarations matching, 0 mismatches**.
-The counts are equal because a dark-only theme declares no `[light, dark]` pairs, so
-upstream emits no `html[data-theme=…]` block for it and there is nothing left over.
+run. Every declaration matches, at **0 mismatches**.
+
+The run prints the totals; this paragraph deliberately does not, because a count written into
+prose goes stale quietly and these ones had. Where the two totals differ, the remainder is the
+`color-scheme` rules that `@astryx-svelte/core`'s `base.css` owns rather than the theme. A
+dark-only theme declares no `[light, dark]` pairs, so upstream emits no `html[data-theme=…]`
+block for it and the totals are equal.
 
 ## Resources
 

@@ -242,6 +242,9 @@
   "@astryx.calendar.rangeCompleteAnnounce": {
     "defaultMessage": "⟦Šéłéçţéð řàñĝé: {start} ţó {end}.⟧"
   },
+  "@astryx.calendar.rangeClearedAnnounce": {
+    "defaultMessage": "⟦Çłéàřéð šţàřţ ðàţé {date}. Šéłéçţ à šţàřţ ðàţé.⟧"
+  },
   "@astryx.carousel.label": {
     "defaultMessage": "⟦Çàřóúšéł⟧"
   },
@@ -313,6 +316,51 @@
   },
   "@astryx.lightbox.next": {
     "defaultMessage": "⟦Ñéẋţ⟧"
+  },
+  "@astryx.listInput.emptyTitle": {
+    "defaultMessage": "⟦Ñó {itemName}š ýéţ⟧"
+  },
+  "@astryx.listInput.emptyDescription": {
+    "defaultMessage": "⟦Àðð à {itemName} ţó ĝéţ šţàřţéð.⟧"
+  },
+  "@astryx.listInput.addItem": {
+    "defaultMessage": "⟦Àðð {itemName}⟧"
+  },
+  "@astryx.listInput.removeItem": {
+    "defaultMessage": "⟦Řéɱóṽé {itemName} {position, number}⟧"
+  },
+  "@astryx.listInput.reorderItem": {
+    "defaultMessage": "⟦Řéóřðéř {itemName} {position, number}⟧"
+  },
+  "@astryx.listInput.fieldLabelWithPosition": {
+    "defaultMessage": "⟦{header}, {itemName} {position, number} óƒ {total, number}⟧"
+  },
+  "@astryx.listInput.reorderInstructions": {
+    "defaultMessage": "⟦Úšé Àřřóŵ Úþ óř Àřřóŵ Ðóŵñ ţó ɱóṽé ţĥíš íţéɱ óñé þóšíţíóñ. Þřéšš Šþàçé óř Éñţéř ţó þíçķ íţ úþ ƒóř éẋţéñðéð ķéýƀóàřð řéóřðéříñĝ.⟧"
+  },
+  "@astryx.listInput.announceAdded": {
+    "defaultMessage": "⟦Àððéð {itemName} {position, number}.⟧"
+  },
+  "@astryx.listInput.announceRemoved": {
+    "defaultMessage": "⟦Řéɱóṽéð {itemName} {position, number}.⟧"
+  },
+  "@astryx.listInput.announceGrabbed": {
+    "defaultMessage": "⟦{itemName} {position, number} ĝřàƀƀéð. Úšé àřřóŵ ķéýš ţó ɱóṽé, Šþàçé óř Éñţéř ţó ðřóþ, àñð Éšçàþé ţó çàñçéł.⟧"
+  },
+  "@astryx.listInput.announceMovedToPosition": {
+    "defaultMessage": "⟦{itemName} ɱóṽéð ţó þóšíţíóñ {position, number} óƒ {total, number}.⟧"
+  },
+  "@astryx.listInput.announceReorderCancelled": {
+    "defaultMessage": "⟦Řéóřðéříñĝ çàñçéłłéð.⟧"
+  },
+  "@astryx.listInput.announceReturnedToPosition": {
+    "defaultMessage": "⟦{itemName} řéţúřñéð ţó þóšíţíóñ {position, number}.⟧"
+  },
+  "@astryx.listInput.announceDropped": {
+    "defaultMessage": "⟦{itemName} ðřóþþéð àţ þóšíţíóñ {position, number} óƒ {total, number}.⟧"
+  },
+  "@astryx.listInput.announceAlreadyAtBoundary": {
+    "defaultMessage": "⟦Ţĥíš {itemName} íš àłřéàðý {boundary, select, first {first} last {last} other {}}.⟧"
   },
   "@astryx.markdown.taskList": {
     "defaultMessage": "⟦Ţàšķ łíšţ⟧"
@@ -481,6 +529,12 @@
   },
   "@astryx.dateInput.invalidDate": {
     "defaultMessage": "⟦Íñṽàłíð ðàţé⟧"
+  },
+  "@astryx.dateTimeInput.timeHint12h": {
+    "defaultMessage": "⟦é.ĝ., 2:30 ÞṀ⟧"
+  },
+  "@astryx.dateTimeInput.timeHint24h": {
+    "defaultMessage": "⟦é.ĝ., 14:30⟧"
   },
   "@astryx.dateTimeInput.timeSuffix": {
     "defaultMessage": "⟦{label} ţíɱé⟧"
@@ -701,6 +755,9 @@
   "@astryx.sideNavItem.collapse": {
     "defaultMessage": "⟦Çółłàþšé {label}⟧"
   },
+  "@astryx.sideNavItem.submenuLabel": {
+    "defaultMessage": "⟦{label} šúƀɱéñú⟧"
+  },
   "@astryx.tableFiltering.filterByColumn": {
     "defaultMessage": "⟦Ƒíłţéř {header}⟧"
   },
@@ -787,5 +844,50 @@
   },
   "@astryx.token.remove": {
     "defaultMessage": "⟦Řéɱóṽé {label}⟧"
+  },
+  "@astryx.commandPalette.footer.navigate": {
+    "defaultMessage": "⟦Ñàṽíĝàţé⟧"
+  },
+  "@astryx.commandPalette.footer.select": {
+    "defaultMessage": "⟦Šéłéçţ⟧"
+  },
+  "@astryx.commandPalette.footer.close": {
+    "defaultMessage": "⟦Çłóšé⟧"
+  },
+  "@astryx.multiSelector.selectionCleared": {
+    "defaultMessage": "⟦Šéłéçţíóñ çłéàřéð⟧"
+  },
+  "@astryx.multiSelector.allSelected": {
+    "defaultMessage": "⟦Àłł šéłéçţéð⟧"
+  },
+  "@astryx.multiSelector.selectionCount": {
+    "defaultMessage": "⟦{count, number} óƒ {total, number} šéłéçţéð⟧"
+  },
+  "@astryx.multiSelector.emptySearchResults": {
+    "defaultMessage": "⟦Ñó řéšúłţš ƒóúñð⟧"
+  },
+  "@astryx.multiSelector.resultCount": {
+    "defaultMessage": "⟦{count, number} {count, plural, one {result} other {results}}⟧"
+  },
+  "@astryx.selector.emptySearchResults": {
+    "defaultMessage": "⟦Ñó řéšúłţš ƒóúñð⟧"
+  },
+  "@astryx.selector.resultCount": {
+    "defaultMessage": "⟦{count, number} {count, plural, one {result} other {results}}⟧"
+  },
+  "@astryx.typeahead.resultCount": {
+    "defaultMessage": "⟦{count, number} {count, plural, one {result} other {results}}⟧"
+  },
+  "@astryx.tokenizer.tokenAdded": {
+    "defaultMessage": "⟦Àððéð {label}⟧"
+  },
+  "@astryx.tokenizer.tokenRemoved": {
+    "defaultMessage": "⟦Řéɱóṽéð {label}⟧"
+  },
+  "@astryx.lightbox.imagePosition": {
+    "defaultMessage": "⟦Íɱàĝé {index, number} óƒ {total, number}⟧"
+  },
+  "@astryx.lightbox.mediaPosition": {
+    "defaultMessage": "⟦{alt}, {index, number} óƒ {total, number}⟧"
   }
 }

@@ -12,7 +12,7 @@
  * StyleX cannot author `@layer` from `stylex.create` (it compiles but emits
  * invalid CSS), which is exactly why this file exists.
  *
- * ## Why the priority layers are named here
+ * ## Why four layer names are enough
  *
  * There are two ways to get this package's CSS, and the layer order has to be
  * right for both.
@@ -21,24 +21,23 @@
  * theirs: one `@layer astryx-base`, priority expressed as `:not(#\#)`
  * specificity padding. That one needs `astryx-base` and nothing more.
  *
- * Compiling this package yourself does not behave like that. `useCSSLayers`
- * splits the output into `@layer priority1 … priority9`, and layer order is
- * order of *first appearance* — so nine layers nobody named land after
- * `astryx-theme` and `product`, inverting the cascade. Every consequence is
- * silent: a theme's overrides stop applying, and app CSS loses to component
- * CSS it should beat. Naming them here, before either stylesheet loads, is what
- * makes the two routes agree.
+ * Compiling this package yourself used to need much more. `useCSSLayers: true`
+ * splits the output into `@layer priority1 … priorityN`, and layer order is
+ * order of *first appearance* — so buckets nobody named landed after
+ * `astryx-theme` and `product`, inverting the cascade. Every consequence was
+ * silent: a theme's overrides stopped applying, and app CSS lost to component
+ * CSS it should beat. This file used to name sixteen of them by hand, guessing
+ * at headroom, with a note to re-check the count after every StyleX upgrade.
  *
- * **Nine are emitted today; sixteen are named for headroom.** The count is
- * `Math.floor(priority / 1000)` bucket occupancy, so a new bucket would add
- * `priority10`. Naming a layer that is never used costs nothing; failing to name
- * one that gets used costs the cascade. After a StyleX upgrade, check with
- * `grep -o '@layer priority[0-9]*' <built css> | sort -u`.
+ * StyleX 0.19 takes `useLayers: {prefix}`, and `vite.ts` passes
+ * `{prefix: 'astryx-base'}`. The buckets are emitted as
+ * `astryx-base.priority1 … .priorityN` — **sub-layers**, which sort inside
+ * their parent wherever the parent sits. So the bucket count stops mattering:
+ * naming `astryx-base` is what keeps the cascade right, and both routes now put
+ * this package's CSS under the same name.
  */
 
-@layer reset, astryx-base, priority1, priority2, priority3, priority4, priority5, priority6,
-	priority7, priority8, priority9, priority10, priority11, priority12, priority13, priority14,
-	priority15, priority16, astryx-theme, product;
+@layer reset, astryx-base, astryx-theme, product;
 
 :root {
 	/* Declares support for both modes so `light-dark()` resolves. */

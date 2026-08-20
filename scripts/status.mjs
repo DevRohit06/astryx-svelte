@@ -95,6 +95,149 @@ const isFolded = (name) => {
 const missing = theirs.filter((t) => !oursCanon.has(canon(t)) && !isFolded(t));
 const invented = ours.filter((o) => !theirsCanon.has(canon(o)));
 
+// --- Test parity -----------------------------------------------------------
+//
+// The largest parity axis this file did not measure. CLAUDE.md makes a suite's
+// case count a contract against upstream's file at the current pin, but nothing
+// counted the suites that have no counterpart at all — so "which upstream
+// suites are unported?" lived in prose, in the one repo whose central rule is
+// that a count belongs here and nowhere else.
+//
+// Attribution, deliberately generous in one direction and strict in the other:
+// an upstream suite counts as covered when some file under
+// `packages/core/src/tests/` names it (`Foo.test.tsx` appearing anywhere in the
+// text — headers name every upstream suite they fold together) or carries its
+// kebab-cased basename. Generous, because a false "covered" is visible the
+// moment someone opens the file, whereas a false "unported" sends work at a
+// suite that already exists. What it never does is guess at case-level
+// coverage: a suite that is present but short states that in its own header,
+// which is the mechanism that already exists for it.
+const testCase = /(?<![\w.])(?:it|test)(?:\.(?:each|skip|only|todo|fails|concurrent|for))?\s*[(`]/g;
+const countCases = (file) => (readFileSync(file, 'utf8').match(testCase) ?? []).length;
+
+/** Every `*.test.ts`/`*.test.tsx` under `dir`, recursively, as absolute paths. */
+function testFiles(dir) {
+	if (!existsSync(dir)) return [];
+	const out = [];
+	for (const e of readdirSync(dir, { withFileTypes: true, recursive: true })) {
+		if (!e.isFile() || !/\.test\.tsx?$/.test(e.name)) continue;
+		out.push(path.join(e.parentPath ?? e.path, e.name));
+	}
+	return out.sort();
+}
+
+// Upstream suites this port will never have a counterpart for, each with the
+// reason and the same hygiene rule the class oracle's skips carry: an entry
+// that stops matching an upstream file fails the run, and so does one whose
+// suite turns out to be covered after all. The list cannot rot into an alibi.
+const NO_TEST_COUNTERPART = {
+	'utils/mergeProps.test.ts': 'mergeProps is not ported — Svelte obviates it (see utils/index.ts)',
+	'utils/mergeRefs.test.ts': 'mergeRefs is not ported — Svelte has no ref object to merge',
+	'utils/composeEventHandlers.test.ts': 'composeEventHandlers is not ported — Svelte obviates it',
+	// Both rest entirely on machinery this port does not and cannot have.
+	'serverSafeComponents.test.ts':
+		"guards the React Server Components boundary — no 'use client' directive in Svelte, no react-server condition, no per-component subpaths",
+	'__tests__/babelPluginAddExtensions.test.ts':
+		'guards a Babel plugin that adds file extensions during upstream\'s build; svelte-package does the inverse and this port has no such transform'
+};
+
+const upstreamTests = testFiles(upstreamRoot).map((f) => ({
+	rel: path.relative(upstreamRoot, f).split(path.sep).join('/'),
+	cases: countCases(f)
+}));
+
+const ourTestText = testFiles(path.join(root, 'packages/core/src/tests'))
+	.map((f) => ({ base: path.basename(f), text: readFileSync(f, 'utf8') }))
+	.filter((f) => !/\.d\.ts$/.test(f.base));
+const ourStems = new Set(
+	ourTestText.map((f) => f.base.replace(/\.svelte\.test\.ts$/, '').replace(/\.test\.ts$/, ''))
+);
+const namedUpstream = new Set(
+	ourTestText.flatMap((f) => f.text.match(/[A-Za-z0-9_.-]+\.test\.tsx?/g) ?? [])
+);
+
+// A header that names an upstream suite in order to say it is NOT ported was
+// being read as coverage — `layout.svelte.test.ts` understated the gap by 34
+// cases with the very sentence written to be honest about it. `UNPORTED: <path>`
+// subtracts instead, and errs safe: a marker left behind after the suite is
+// genuinely ported overstates the work remaining rather than hiding it.
+const markedUnported = new Set(
+	ourTestText.flatMap((f) =>
+		[...f.text.matchAll(/UNPORTED:\s*([A-Za-z0-9_./-]+\.test\.tsx?)/g)].map((m) =>
+			m[1].split('/').pop()
+		)
+	)
+);
+
+const kebab = (s) =>
+	s
+		.replace(/(?<=[a-z0-9])(?=[A-Z])/g, '-')
+		.replace(/(?<=[A-Z])(?=[A-Z][a-z])/g, '-')
+		.toLowerCase();
+
+const isCovered = ({ rel }) => {
+	const base = rel.split('/').pop();
+	if (markedUnported.has(base)) return false;
+	if (namedUpstream.has(base)) return true;
+	const stem = kebab(base.replace(/\.test\.tsx?$/, ''));
+	return ourStems.has(stem) || ourStems.has(stem.replace(/^use-/, ''));
+};
+
+const upstreamSuites = upstreamTests.filter((t) => t.cases > 0);
+const covered = upstreamSuites.filter(isCovered);
+const uncovered = upstreamSuites.filter((t) => !isCovered(t));
+const excusedRels = new Set(Object.keys(NO_TEST_COUNTERPART));
+const excused = uncovered.filter((t) => excusedRels.has(t.rel));
+const unported = uncovered.filter((t) => !excusedRels.has(t.rel));
+
+// Skip hygiene, both directions — see NO_TEST_COUNTERPART above.
+if (upstreamPresent) {
+	const known = new Set(upstreamSuites.map((t) => t.rel));
+	const stale = [...excusedRels].filter((rel) => !known.has(rel));
+	const redundant = covered.filter((t) => excusedRels.has(t.rel)).map((t) => t.rel);
+	if (stale.length > 0 || redundant.length > 0) {
+		for (const rel of stale) {
+			console.error(`NO_TEST_COUNTERPART: '${rel}' matches no upstream suite — entry is stale`);
+		}
+		for (const rel of redundant) {
+			console.error(`NO_TEST_COUNTERPART: '${rel}' is covered here — entry is redundant`);
+		}
+		process.exit(1);
+	}
+}
+
+const sumCases = (list) => list.reduce((a, t) => a + t.cases, 0);
+
+// --- Assertion strength ----------------------------------------------------
+//
+// `getByRole(role, {name: 'X'})` does not mean the same thing on both sides.
+// Testing Library matches the accessible name as a **whole string**; the
+// browser project's locators are Playwright's, where a string `name` is a
+// **substring**, case-insensitive. So a ported case that reads verbatim is
+// quietly weaker than upstream's, and passes in cases upstream's would fail —
+// demonstrated concretely on `VisuallyHidden`, where an icon that lost its
+// `aria-hidden` made the accessible name `'Trash Delete'` and the case still
+// passed until `exact: true` was added.
+//
+// A regex `name` is substring-matching on both sides by design, so it is not
+// counted. Only string literals are, and the number is the size of the sweep
+// that has not happened yet — every one of them is a place where our assertion
+// admits names upstream's would reject.
+const NAME_STRING = /getBy(?:Role|LabelText)\([^)]*name:\s*'/g;
+const NAME_EXACT = /getBy(?:Role|LabelText)\([^)]*name:\s*'[^']*'[^)]*exact:\s*true/g;
+
+let looseNameSites = 0;
+let looseNameFiles = 0;
+for (const file of testFiles(path.join(root, 'packages/core/src/tests'))) {
+	const text = readFileSync(file, 'utf8');
+	const total = (text.match(NAME_STRING) ?? []).length;
+	const exact = (text.match(NAME_EXACT) ?? []).length;
+	if (total - exact > 0) {
+		looseNameSites += total - exact;
+		looseNameFiles += 1;
+	}
+}
+
 // --- Themes ----------------------------------------------------------------
 
 // A directory under packages/themes counts as a theme package only if it has
@@ -209,6 +352,61 @@ surfaceRows.push(
 	['Ledger entries', String(ledger.length)]
 );
 push(...table(surfaceRows), '');
+
+if (upstreamPresent) {
+	push('## Test parity', '');
+	push(
+		...table([
+			['', 'Suites', 'Declared cases'],
+			['Upstream', String(upstreamSuites.length), String(sumCases(upstreamSuites))],
+			['Ported here', String(covered.length), String(sumCases(covered))],
+			['No counterpart by design', String(excused.length), String(sumCases(excused))],
+			['**Unported**', `**${unported.length}**`, `**${sumCases(unported)}**`]
+		]),
+		''
+	);
+	push(
+		'A ported suite may still be short of upstream; that shortfall is stated in the suite’s own',
+		'header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an',
+		'`it.each` counts once rather than per row.',
+		''
+	);
+	if (unported.length > 0) {
+		push('<details><summary>Unported upstream suites</summary>', '');
+		push(
+			...table([
+				['Suite', 'Cases'],
+				...unported
+					.slice()
+					.sort((a, b) => b.cases - a.cases || a.rel.localeCompare(b.rel))
+					.map((t) => [`\`${t.rel}\``, String(t.cases)])
+			]),
+			'',
+			'</details>',
+			''
+		);
+	}
+}
+
+push('## Assertion strength', '');
+push(
+	...table([
+		['', 'Sites', 'Files'],
+		[
+			"`getByRole`/`getByLabelText` with a string `name`, no `exact`",
+			String(looseNameSites),
+			String(looseNameFiles)
+		]
+	]),
+	''
+);
+push(
+	'Testing Library matches an accessible name as a whole string; Playwright matches a string',
+	'`name` as a case-insensitive **substring**. Every site above is therefore a ported assertion',
+	'weaker than the one it ports, admitting names upstream’s would reject. A regex `name` is',
+	'substring-matching on both sides by design and is not counted.',
+	''
+);
 
 push('## Debts', '');
 const debtRows = [['Kind', 'Count']];

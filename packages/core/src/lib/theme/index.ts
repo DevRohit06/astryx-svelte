@@ -48,7 +48,12 @@ export { tokenDefaults } from './tokens.js';
 // reaches this subpath's JavaScript.
 export type { BuiltinTextColor, TextColorMap } from '../components/text/text.stylex.js';
 
-export type { ThemeMode } from './types.js';
+// `TypographyConfig`, `TypographyRole` and `FontWeight` are `defineTheme`'s input
+// vocabulary, and upstream publishes all three from `theme/types.ts` — not from
+// the expander, which takes a config whose weights are already resolved to CSS
+// values. This port had them on `expand-type-scale.ts` under the names `TypeRole`
+// and `TypeWeight`, so `TypeScaleConfig` was shape drift under a shared name.
+export type { FontWeight, ThemeMode, TypographyConfig, TypographyRole } from './types.js';
 
 export { defineTheme, resolveTokenValue } from './define-theme.js';
 export type {
@@ -110,13 +115,7 @@ export { expandColorScale } from './expand-color-scale.js';
 export type { ColorScaleConfig, ColorScaleTokens } from './expand-color-scale.js';
 
 export { expandTypeScale, generateTypeScaleComponents } from './expand-type-scale.js';
-export type {
-	TypeRole,
-	TypeScaleConfig,
-	TypeScaleTokens,
-	TypographyConfig,
-	TypeWeight
-} from './expand-type-scale.js';
+export type { TypeScaleConfig, TypeScaleTokens } from './expand-type-scale.js';
 
 // Token defaults and vars for use in custom components and themes, as upstream's
 // `theme/index.ts` publishes them — 12 `*Defaults`, 12 `*Vars`, 12 `*VarName`.

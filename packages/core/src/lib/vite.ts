@@ -94,7 +94,16 @@ export function astryx(options: AstryxViteOptions = {}): PluginOption {
 			dev,
 			runtimeInjection: false,
 			treeshakeCompensation: true,
-			useCSSLayers: true,
+			// `{prefix}` rather than `true`: StyleX splits its output into
+			// `priority1…priorityN`, and layer order is order of *first appearance*,
+			// so unprefixed they land wherever they happen to appear and invert the
+			// cascade against `astryx-theme`. Prefixed, they are **sub-layers of
+			// `astryx-base`** — the same layer the pre-built `astryx.css` wraps
+			// everything in — so both ways of getting this package's CSS put it in
+			// the same place, and `base.css` no longer has to name each bucket.
+			// `useLayers: {prefix}` landed in StyleX 0.19; before it, naming the
+			// buckets by hand was the only option.
+			useCSSLayers: { prefix: 'astryx-base' },
 			// Without explicit targets, lightningcss lowers `light-dark()` into
 			// `var(--lightningcss-light, …) var(--lightningcss-dark, …)`, which
 			// resolves to nothing and silently empties every colour token. These

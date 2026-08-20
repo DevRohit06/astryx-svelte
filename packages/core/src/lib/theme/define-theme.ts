@@ -5,7 +5,7 @@ import {
 	expandTypeScale,
 	generateTextColorComponents,
 	generateTypeScaleComponents,
-	type TypographyConfig
+	type TypeScaleConfig
 } from './expand-type-scale.js';
 import { resolveOnMedia, type OnMediaOverrides, type ResolvedOnMedia } from './on-media-tokens.js';
 import { registerTheme } from './theme-registry.js';
@@ -13,6 +13,7 @@ import type { SyntaxThemeDefinition } from './syntax/define-syntax-theme.js';
 import type { IconRegistry } from '../components/icon/icon-registry.js';
 import type { IndicatorRegistry } from '../components/indicator/types.js';
 import { deepMergeComponents } from './merge-components.js';
+import type { FontWeight, TypographyConfig } from './types.js';
 
 /**
  * Ported from Astryx's `src/theme/defineTheme.ts`, covering the surface the
@@ -237,6 +238,105 @@ function syntaxTokenMap(syntax: SyntaxThemeDefinition | undefined): Record<strin
  * and it also left `resolvedTokens` — a public readonly field — missing entries
  * upstream's equivalent map contains.
  */
+/**
+ * Upstream's `resolveFontWeight`: a named weight becomes a token reference so a
+ * theme that also retunes `--font-weight-*` stays coherent; anything else is a
+ * raw CSS value and passes through untouched.
+ */
+function resolveFontWeight(weight: FontWeight): string {
+	const named: Record<string, string> = {
+		normal: 'var(--font-weight-normal)',
+		medium: 'var(--font-weight-medium)',
+		semibold: 'var(--font-weight-semibold)',
+		bold: 'var(--font-weight-bold)'
+	};
+	return named[weight] ?? weight;
+}
+
+/**
+ * Upstream's `buildFontFamily`. A family name containing a space is quoted —
+ * `DM Sans` is two identifiers to a CSS parser and only `"DM Sans"` names the
+ * font. The fallback stack is passed through as written, since a theme author
+ * quotes inside it themselves.
+ *
+ * Missed until the matcha/butter/gothic/y2k themes landed: `neutral` names
+ * `Figtree`, `ui-monospace` and nothing else, so every family it declares is a
+ * single identifier and the bug could not show. The theme oracle caught all
+ * three of matcha's on its first run.
+ */
+function buildFontFamily(family?: string, fallbacks?: string): string | undefined {
+	if (!family) return undefined;
+	const quoted = family.includes(' ') ? `"${family}"` : family;
+	return fallbacks ? `${quoted}, ${fallbacks}` : quoted;
+}
+
+/**
+ * Upstream's `typeScaleConfig` build: the role-level weights a theme author
+ * writes on `typography.heading`/`body`/`code` are resolved to CSS values here
+ * and handed to `expandTypeScale` as a flat `weights` map. The expander itself
+ * knows nothing about role names or named weights.
+ *
+ * Returns `undefined` when there is no `scale`, which is upstream's rule and not
+ * an omission: without sizes there are no leadings to derive, so a weights-only
+ * config emits no type tokens at all. This port used to emit the weight tokens
+ * anyway, from a branch upstream has no counterpart for.
+ */
+function typeScaleConfigFrom(typo: TypographyConfig | undefined): TypeScaleConfig | undefined {
+	if (!typo?.scale) return undefined;
+
+	const headingWeights: Record<number, string> = {};
+	const headingRole = typo.heading;
+	for (const [level, weight] of Object.entries(headingRole?.weights ?? {})) {
+		if (weight) headingWeights[Number(level)] = resolveFontWeight(weight);
+	}
+	// The role-level default fills every level `weights` did not name; `weights`
+	// wins where both are set.
+	const defaultHeadingWeight = headingRole?.weight
+		? resolveFontWeight(headingRole.weight)
+		: undefined;
+	if (defaultHeadingWeight) {
+		for (let level = 1; level <= 6; level++) {
+			if (!(level in headingWeights)) headingWeights[level] = defaultHeadingWeight;
+		}
+	}
+
+	// `body` and `code` set their own text role's weight; there is no `large`,
+	// `label` or `supporting` role to carry one, exactly as upstream has none.
+	const textWeights: Record<string, string> = {};
+	if (typo.body?.weight) textWeights.body = resolveFontWeight(typo.body.weight);
+	if (typo.code?.weight) textWeights.code = resolveFontWeight(typo.code.weight);
+
+	return {
+		base: typo.scale.base,
+		ratio: typo.scale.ratio,
+		weights: {
+			...(Object.keys(headingWeights).length > 0 ? { heading: headingWeights } : {}),
+			...(Object.keys(textWeights).length > 0 ? { text: textWeights } : {})
+		}
+	};
+}
+
+/**
+ * Upstream's step 1d. Applied whether or not there is a `scale` — a theme can
+ * name its faces without retuning the sizes — and `heading` inherits `body`'s
+ * stack when it declares no family of its own. That inheritance was missing
+ * here: a theme naming only `body.family` left `--font-family-heading` at the
+ * base theme's value, so its headings kept the wrong face.
+ */
+function fontFamilyTokens(typo: TypographyConfig | undefined): Record<string, string> {
+	if (!typo) return {};
+	const bodyFamily = buildFontFamily(typo.body?.family, typo.body?.fallbacks);
+	const headingFamily =
+		buildFontFamily(typo.heading?.family, typo.heading?.fallbacks) ?? bodyFamily;
+	const codeFamily = buildFontFamily(typo.code?.family, typo.code?.fallbacks);
+
+	const tokens: Record<string, string> = {};
+	if (bodyFamily) tokens['--font-family-body'] = bodyFamily;
+	if (headingFamily) tokens['--font-family-heading'] = headingFamily;
+	if (codeFamily) tokens['--font-family-code'] = codeFamily;
+	return tokens;
+}
+
 export function defineTheme(config: ThemeConfig): DefinedTheme {
 	// Step 0, as upstream numbers it: pre-seed from the base theme so everything
 	// below overwrites it. `base.resolvedTokens` and not `base.tokens` — upstream
@@ -245,6 +345,7 @@ export function defineTheme(config: ThemeConfig): DefinedTheme {
 	// inherit only what the base's author typed by hand and silently drop every
 	// token its expanders generated.
 	const base = config.extends;
+	const typeScaleConfig = typeScaleConfigFrom(config.typography);
 
 	const resolvedTokens: Record<string, string> = {
 		...base?.resolvedTokens,
@@ -254,12 +355,14 @@ export function defineTheme(config: ThemeConfig): DefinedTheme {
 		// today the position is parity rather than behaviour; it stops being inert
 		// the moment an expander grows into another's namespace.
 		...(config.color ? expandColorScale(config.color) : {}),
-		...(config.typography ? expandTypeScale(config.typography) : {}),
+		...(typeScaleConfig ? expandTypeScale(typeScaleConfig) : {}),
 		// Radius sits between the type scale and motion, as upstream's step order
 		// has it — all three are expanders, so the order only matters against
 		// `config.tokens`, which wins over every one of them.
 		...(config.radius ? expandRadiusScale(config.radius) : {}),
 		...(config.motion ? expandMotionScale(config.motion) : {}),
+		// Upstream's step 1d, after the expanders and before the syntax fold.
+		...fontFamilyTokens(config.typography),
 		...syntaxTokenMap(config.syntax),
 		...resolveTokenMap(config.tokens)
 	};
@@ -271,8 +374,8 @@ export function defineTheme(config: ThemeConfig): DefinedTheme {
 		string,
 		Record<string, Record<string, string>>
 	> = generateTextColorComponents();
-	if (config.typography?.scale) {
-		for (const [name, styles] of Object.entries(generateTypeScaleComponents())) {
+	if (typeScaleConfig) {
+		for (const [name, styles] of Object.entries(generateTypeScaleComponents(typeScaleConfig))) {
 			generated[name] = { ...generated[name], ...styles };
 		}
 	}

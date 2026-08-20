@@ -17,6 +17,15 @@
 	 */
 	interface Props {
 		contentWidth?: SizeValue;
+		/**
+		 * Renders the `LayoutContent` between the layout's tags instead of in its
+		 * `content` prop — upstream's `<Layout><LayoutContent>…</LayoutContent>
+		 * </Layout>`. It goes through the `children` *prop* rather than markup
+		 * between the tags so that leaving it off passes `children: undefined`;
+		 * `Layout` resolves `content ?? children`, and an always-present (if
+		 * empty) children snippet would make the "no slots" shell non-empty.
+		 */
+		contentAsChildren?: boolean;
 		defaultHasDividers?: boolean;
 		header?: string;
 		headerHasDivider?: boolean;
@@ -33,6 +42,7 @@
 
 	const {
 		contentWidth,
+		contentAsChildren = false,
 		defaultHasDividers,
 		header,
 		headerHasDivider,
@@ -85,5 +95,6 @@
 	footer={footer != null ? footerSlot : undefined}
 	start={start != null ? startSlot : undefined}
 	end={end != null ? endSlot : undefined}
-	content={content != null ? contentSlot : undefined}
+	content={content != null && !contentAsChildren ? contentSlot : undefined}
+	children={content != null && contentAsChildren ? contentSlot : undefined}
 />

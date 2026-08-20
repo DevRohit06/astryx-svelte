@@ -220,14 +220,18 @@ describe('ChatComposerInput', () => {
 	});
 
 	describe('composer focus control', () => {
-		// Passes, but through the *other* branch: upstream registers a control
-		// object on `composerCtx.inputControlRef` (`ChatComposerInput.tsx:387-399`)
-		// and `ChatComposer` prefers it over sniffing the DOM. This port has no
-		// such registration, so `chat-composer.svelte:174` falls through to the
-		// `querySelector('[contenteditable="true"], textarea')` fallback, which
-		// upstream keeps for the same shape of input. Upstream's assertion — the
-		// editable ends up focused — holds either way, so it is left as written;
-		// the missing registration is a parity gap no case in this file can see.
+		// Goes through the registered-control branch, as upstream's does.
+		//
+		// This comment used to say the opposite — that the port had no
+		// `composerCtx.inputControlRef` registration and fell through to
+		// `ChatComposer`'s DOM-sniffing fallback, calling that "a parity gap no
+		// case in this file can see". That stopped being true:
+		// `chat-composer-input.svelte:401` registers a control and
+		// `chat-composer.svelte:206` provides `registerInputControl`, so the
+		// preferred branch is the one taken. The stale reason survived because
+		// upstream's assertion — the editable ends up focused — holds either way,
+		// which is exactly how an expired reason hides (CLAUDE.md § Testing).
+		// `chat-composer.svelte.test.ts` now covers both branches directly.
 		it('registers a focus control so a body click focuses the input', async () => {
 			const screen = await render(ChatComposerProbe, { props: { onSubmit: () => {} } });
 			const editable = editableOf(screen.container);
