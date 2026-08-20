@@ -115,6 +115,30 @@ the shapes match is a wide change — around twenty test files assert on that st
 both theme build scripts and the docs build — and does not belong in the same batch as a
 `defineTheme` restructure. Recorded in `debts.md`; `status.md` keeps counting the suite.
 
+## The gate, and a flake worth naming
+
+The first full gate failed one stage of seven: client chunk 4 of 15, with **15 failed cases**
+across `command-palette-item`, `complex-selector`, `date-input`, `date-range-input` and
+`date-time-input`. The second full gate failed the same chunk again. Neither is a regression from
+this batch, and the evidence is threefold:
+
+- **Nothing in scope touches them.** `git diff` over the batch is four files, all under
+  `lib/theme/`; `themeProps` does not route through `defineTheme`.
+- **The same 12 files pass alone** — 336 cases, twice.
+- **The same 15 chunks pass as a full concurrent suite** — 172/172 files, 4,828 cases.
+
+The signature is worth writing down, because it reads like a regression and is not. `chunk` runs
+up to four vitest processes at once, each with its own Chromium. Under that load the failures split
+two ways: three suites time out at ~14.9 s on `toHaveFocus()` or `locator.click`, and — the
+informative half — several assertions fail in **under 150 ms** with `Number of calls: 0`. A click
+that resolves in 61 ms having called nothing is not starvation; it is the handler not yet attached
+when the synthetic click arrives, which is what CPU contention does to effect ordering.
+
+`isInfrastructureFailure` does not catch this class: it retries a chunk that lost its browser, and
+deliberately stops immediately on a chunk that failed a *case*. **That conservatism is correct and
+was left alone** — auto-retrying case failures would hide exactly the regressions the gate exists
+to find. The cost is that this flake burns a full gate run, which it did twice.
+
 ## Oracle bookkeeping
 
 No oracle changes. Both class oracles and all seven theme oracles were run after the
