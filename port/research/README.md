@@ -44,5 +44,3 @@ original text if you need it.
   still-open `@scope` floor decision in `port/todo.md`. The dependency-adoption verdicts this file
   used to carry are now just `package.json` facts — and at least one of them (`runed` as a
   `core` dependency) turned out not to be what shipped.
-- **`11-launch-posts.md`** — unedited. Draft copy for the three launch posts, not description of
-  the port itself; still pending as of this compaction.
