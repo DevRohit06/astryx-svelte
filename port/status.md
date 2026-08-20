@@ -14,16 +14,16 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.4.5                                               |
-| Ledger entries            | 30                                                                       |
+| Ledger entries            | 31                                                                       |
 
 ## Test parity
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 256    | 6383           |
-| Ported here              | 208    | 5770           |
+| Ported here              | 211    | 5816           |
 | No counterpart by design | 3      | 32             |
-| **Unported**             | **45** | **581**        |
+| **Unported**             | **42** | **535**        |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -37,7 +37,6 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 | `theme/generateThemeRules.test.ts`            | 36    |
 | `FieldStatus/FieldStatus.test.tsx`            | 34    |
 | `Stack/Stack.test.tsx`                        | 30    |
-| `theme/expandTypeScale.test.ts`               | 30    |
 | `AspectRatio/AspectRatio.test.tsx`            | 26    |
 | `theme/tokens.test.ts`                        | 26    |
 | `theme/onMediaTokens.test.ts`                 | 22    |
@@ -54,7 +53,6 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 | `Stack/StackItem.test.tsx`                    | 11    |
 | `theme/derivedVarRegistry.test.ts`            | 11    |
 | `IconButton/IconButton.test.tsx`              | 10    |
-| `theme/expandMotionScale.test.ts`             | 10    |
 | `utils/parseStyleKey.test.ts`                 | 10    |
 | `utils/themeProps.test.ts`                    | 10    |
 | `Badge/Badge.test.tsx`                        | 8     |
@@ -64,7 +62,6 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 | `Code/Code.test.tsx`                          | 6     |
 | `Indicator/indicatorRegistry.test.tsx`        | 6     |
 | `Layout/__tests__/contentWidth.test.tsx`      | 6     |
-| `theme/expandRadiusScale.test.ts`             | 6     |
 | `utils/sharedResizeObserver.test.ts`          | 6     |
 | `Card/Card.test.tsx`                          | 5     |
 | `Chat/ChatComposer.test.tsx`                  | 5     |

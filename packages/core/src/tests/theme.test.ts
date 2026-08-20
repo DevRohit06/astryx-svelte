@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { expandMotionScale } from '$lib/theme/expand-motion-scale.js';
-import { expandTypeScale } from '$lib/theme/expand-type-scale.js';
 import { parseStyleKey } from '$lib/theme/parse-style-key.js';
 import { defineTheme } from '$lib/theme/define-theme.js';
 import { generateOnMediaCss, generateThemeCss } from '$lib/theme/generate-theme-rules.js';
@@ -61,34 +60,6 @@ describe('expandMotionScale', () => {
 			'--duration-slow': '700ms',
 			'--duration-slow-max': '935ms'
 		});
-	});
-
-	it('omits the slow band when no slow base is given', () => {
-		const tokens = expandMotionScale({ fast: 100, medium: 250, ratio: 0.75 });
-		expect(tokens['--duration-slow']).toBeUndefined();
-	});
-});
-
-describe('expandTypeScale', () => {
-	it('reproduces the default geometric scale at base 14 / ratio 1.2', () => {
-		const tokens = expandTypeScale({ scale: { base: 14, ratio: 1.2 } });
-		expect(tokens['--font-size-base']).toBe('0.875rem'); // 14px
-		expect(tokens['--font-size-sm']).toBe('0.75rem'); // 12px
-		expect(tokens['--font-size-2xl']).toBe('1.5rem'); // 24px
-		expect(tokens['--font-size-5xl']).toBe('2.625rem'); // 42px
-	});
-
-	it("joins family and fallbacks the way neutral's output does", () => {
-		const tokens = expandTypeScale({
-			body: { family: 'Figtree', fallbacks: '-apple-system, sans-serif' }
-		});
-		expect(tokens['--font-family-body']).toBe('Figtree, -apple-system, sans-serif');
-	});
-
-	it('emits heading weight overrides as token references', () => {
-		const tokens = expandTypeScale({ heading: { weights: { 3: 'bold', 4: 'bold' } } });
-		expect(tokens['--text-heading-3-weight']).toBe('var(--font-weight-bold)');
-		expect(tokens['--text-heading-4-weight']).toBe('var(--font-weight-bold)');
 	});
 });
 

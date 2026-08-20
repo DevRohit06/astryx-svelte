@@ -23,56 +23,56 @@
  * - /packages/cli/assets/theme.template.ts (the annotated field reference)
  */
 
-/**
- * Named font weight — maps to `var(--font-weight-*)` at the token layer. Raw CSS
- * values (e.g. `'800'`) are accepted as an escape hatch, matching upstream's
- * `FontWeight`; `(string & {})` keeps the four names in editor completion while
- * still admitting any string.
- */
-export type TypeWeight = 'normal' | 'medium' | 'semibold' | 'bold' | (string & {});
+/** Font weight value — either a CSS string or a `var()` reference. */
+export type FontWeightValue = string;
 
 /**
- * Upstream's `resolveFontWeight`: a named weight becomes a token reference so a
- * theme that also retunes `--font-weight-*` stays coherent; anything else is a
- * raw CSS value and passes through untouched.
+ * Weight overrides for heading levels. Keys are heading levels 1–6, values are
+ * CSS font-weight values (e.g. `'600'`, `'var(--font-weight-bold)'`).
  */
-function resolveWeight(weight: TypeWeight): string {
-	const named: Record<string, string> = {
-		normal: 'var(--font-weight-normal)',
-		medium: 'var(--font-weight-medium)',
-		semibold: 'var(--font-weight-semibold)',
-		bold: 'var(--font-weight-bold)'
-	};
-	return named[weight] ?? weight;
-}
+export type HeadingWeightOverrides = Partial<Record<1 | 2 | 3 | 4 | 5 | 6, FontWeightValue>>;
 
-export interface TypeRole {
-	/** Primary family name, e.g. 'Figtree'. */
-	family?: string;
-	/** Comma-separated fallback stack appended after `family`. */
-	fallbacks?: string;
-	/**
-	 * Default weight for the whole role. On `heading` it fills every level
-	 * `weights` does not name; on `body` and `code` it sets that text role's
-	 * weight directly. Upstream's `FontRole.weight`.
-	 */
-	weight?: TypeWeight;
-	/** Per-level weight overrides, keyed by heading level. Beats `weight`. */
-	weights?: Record<number, TypeWeight>;
-}
+/**
+ * Weight overrides for text types. Accepts additional string keys for custom
+ * theme-defined text types.
+ */
+export type TextWeightOverrides = Partial<
+	Record<
+		| 'body'
+		| 'large'
+		| 'label'
+		| 'code'
+		| 'supporting'
+		| 'display-1'
+		| 'display-2'
+		| 'display-3'
+		| (string & {}),
+		FontWeightValue
+	>
+>;
 
+/**
+ * Type scale configuration.
+ *
+ * Named weights are **already resolved** by the time they reach here — this
+ * takes CSS values, not `FontWeight` names. `defineTheme` owns that mapping,
+ * which is where upstream puts it too.
+ */
 export interface TypeScaleConfig {
+	/** Base font size in px. Anchored to h4 and body text. */
 	base: number;
+	/** Scaling ratio for the geometric progression. */
 	ratio: number;
+	/** Optional weight overrides for headings and text types. */
+	weights?: {
+		/** Per-level heading weight overrides. Unset levels use the defaults. */
+		heading?: HeadingWeightOverrides;
+		/** Per-type text weight overrides. Unset types use the defaults. */
+		text?: TextWeightOverrides;
+	};
 }
 
-export interface TypographyConfig {
-	scale?: TypeScaleConfig;
-	body?: TypeRole;
-	heading?: TypeRole;
-	code?: TypeRole;
-}
-
+/** Generated typography token overrides, keyed by custom property name. */
 export type TypeScaleTokens = Record<string, string>;
 
 /** Raw size token names in ascending step order, from -5 to +6. */
@@ -98,23 +98,6 @@ const SIZE_STEPS: ReadonlyArray<[name: string, step: number]> = [
 function rem(px: number): string {
 	const value = px / 16;
 	return `${parseFloat(value.toFixed(4))}rem`;
-}
-
-/**
- * Upstream's `buildFontFamily`. A family name containing a space is quoted —
- * `DM Sans` is two identifiers to a CSS parser and only `"DM Sans"` names the
- * font. The fallback stack is passed through as written, since a theme author
- * quotes inside it themselves.
- *
- * Missed until the matcha/butter/gothic/y2k themes landed: `neutral` names
- * `Figtree`, `ui-monospace` and nothing else, so every family it declares is a
- * single identifier and the bug could not show. The theme oracle caught all
- * three of matcha's on its first run.
- */
-function familyStack(role: TypeRole | undefined): string | undefined {
-	if (!role?.family) return undefined;
-	const quoted = role.family.includes(' ') ? `"${role.family}"` : role.family;
-	return role.fallbacks ? `${quoted}, ${role.fallbacks}` : quoted;
 }
 
 /** Step token name by step, for `var()` references from the semantic layer. */
@@ -145,7 +128,14 @@ const TEXT_STEPS: ReadonlyArray<[type: string, step: number]> = [
 	['display-3', 4]
 ];
 
-const DEFAULT_HEADING_WEIGHT = 'var(--font-weight-semibold)';
+const DEFAULT_HEADING_WEIGHTS: Record<number, string> = {
+	1: 'var(--font-weight-semibold)',
+	2: 'var(--font-weight-semibold)',
+	3: 'var(--font-weight-semibold)',
+	4: 'var(--font-weight-semibold)',
+	5: 'var(--font-weight-semibold)',
+	6: 'var(--font-weight-semibold)'
+};
 
 const DEFAULT_TEXT_WEIGHTS: Record<string, string> = {
 	body: 'var(--font-weight-normal)',
@@ -180,58 +170,21 @@ function computeLeading(fontSize: number): number {
 	return Math.round((snapped / fontSize) * 10000) / 10000;
 }
 
-export function expandTypeScale(config: TypographyConfig): TypeScaleTokens {
+export function expandTypeScale(config: TypeScaleConfig): TypeScaleTokens {
+	const { base, ratio, weights } = config;
 	const tokens: TypeScaleTokens = {};
 
-	const body = familyStack(config.body);
-	const heading = familyStack(config.heading);
-	const code = familyStack(config.code);
+	// Overrides arrive already resolved to CSS values, so this is a plain merge
+	// over the defaults — no name mapping happens here.
+	const headingWeights: Record<number, string> = {
+		...DEFAULT_HEADING_WEIGHTS,
+		...(weights?.heading as Record<number, string> | undefined)
+	};
+	const textWeights: Record<string, string> = {
+		...DEFAULT_TEXT_WEIGHTS,
+		...(weights?.text as Record<string, string> | undefined)
+	};
 
-	if (body) tokens['--font-family-body'] = body;
-	if (heading) tokens['--font-family-heading'] = heading;
-	if (code) tokens['--font-family-code'] = code;
-
-	// Heading weight overrides reference the weight tokens rather than literals,
-	// so a theme that also retunes --font-weight-* stays coherent.
-	const headingWeights = new Map<number, string>();
-	for (const [level, weight] of Object.entries(config.heading?.weights ?? {})) {
-		headingWeights.set(Number(level), resolveWeight(weight));
-	}
-
-	// The role-level default fills every level `weights` did not name, which is
-	// upstream's `defaultHeadingWeight` loop. `weights` wins where both are set.
-	const defaultHeadingWeight = config.heading?.weight
-		? resolveWeight(config.heading.weight)
-		: undefined;
-
-	// `body` and `code` set their own text role's weight; there is no `large`,
-	// `label` or `supporting` role to carry one, exactly as upstream has none.
-	const textWeights = new Map<string, string>();
-	if (config.body?.weight) {
-		textWeights.set('body', resolveWeight(config.body.weight));
-	}
-	if (config.code?.weight) {
-		textWeights.set('code', resolveWeight(config.code.weight));
-	}
-
-	if (!config.scale) {
-		// Without a scale there are no sizes to derive leadings from, so only the
-		// explicit weight overrides are expressible.
-		if (defaultHeadingWeight) {
-			for (const [level] of HEADING_STEPS) {
-				tokens[`--text-heading-${level}-weight`] = defaultHeadingWeight;
-			}
-		}
-		for (const [level, weight] of headingWeights) {
-			tokens[`--text-heading-${level}-weight`] = weight;
-		}
-		for (const [type, weight] of textWeights) {
-			tokens[`--text-${type}-weight`] = weight;
-		}
-		return tokens;
-	}
-
-	const { base, ratio } = config.scale;
 	const sizeAt = (step: number) => Math.round(base * ratio ** step);
 
 	// Layer 1 — the raw geometric size scale.
@@ -244,14 +197,13 @@ export function expandTypeScale(config: TypographyConfig): TypeScaleTokens {
 	// scale moves both together; leadings are the computed constants above.
 	for (const [level, step] of HEADING_STEPS) {
 		tokens[`--text-heading-${level}-size`] = `var(${SIZE_TOKEN_BY_STEP.get(step)})`;
-		tokens[`--text-heading-${level}-weight`] =
-			headingWeights.get(level) ?? defaultHeadingWeight ?? DEFAULT_HEADING_WEIGHT;
+		tokens[`--text-heading-${level}-weight`] = headingWeights[level];
 		tokens[`--text-heading-${level}-leading`] = String(computeLeading(sizeAt(step)));
 	}
 
 	for (const [type, step] of TEXT_STEPS) {
 		tokens[`--text-${type}-size`] = `var(${SIZE_TOKEN_BY_STEP.get(step)})`;
-		tokens[`--text-${type}-weight`] = textWeights.get(type) ?? DEFAULT_TEXT_WEIGHTS[type];
+		tokens[`--text-${type}-weight`] = textWeights[type];
 		tokens[`--text-${type}-leading`] = String(computeLeading(sizeAt(step)));
 	}
 
@@ -280,10 +232,9 @@ const TEXT_FONT_FAMILIES: Record<string, string> = {
  * `scale` and `Text`/`Heading` will ignore it, which is why this is generated
  * rather than left to each theme's `components` map.
  */
-export function generateTypeScaleComponents(): Record<
-	string,
-	Record<string, Record<string, string>>
-> {
+export function generateTypeScaleComponents(
+	_config: TypeScaleConfig
+): Record<string, Record<string, Record<string, string>>> {
 	const heading: Record<string, Record<string, string>> = {};
 	for (const [level] of HEADING_STEPS) {
 		heading[`level:${level}`] = {
