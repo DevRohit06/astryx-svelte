@@ -16,6 +16,71 @@
 | Upstream pin              | `@astryxdesign/core` 0.4.5                                               |
 | Ledger entries            | 30                                                                       |
 
+## Test parity
+
+|                          | Suites | Declared cases |
+| ------------------------ | ------ | -------------- |
+| Upstream                 | 256    | 6383           |
+| Ported here              | 208    | 5770           |
+| No counterpart by design | 3      | 32             |
+| **Unported**             | **45** | **581**        |
+
+A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
+header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
+`it.each` counts once rather than per row.
+
+<details><summary>Unported upstream suites</summary>
+
+| Suite                                         | Cases |
+| --------------------------------------------- | ----- |
+| `Grid/Grid.test.tsx`                          | 36    |
+| `theme/generateThemeRules.test.ts`            | 36    |
+| `FieldStatus/FieldStatus.test.tsx`            | 34    |
+| `Stack/Stack.test.tsx`                        | 30    |
+| `theme/expandTypeScale.test.ts`               | 30    |
+| `AspectRatio/AspectRatio.test.tsx`            | 26    |
+| `theme/tokens.test.ts`                        | 26    |
+| `theme/onMediaTokens.test.ts`                 | 22    |
+| `docPropLiterals.test.ts`                     | 21    |
+| `__tests__/babelPluginAddExtensions.test.ts`  | 20    |
+| `EmptyState/EmptyState.test.tsx`              | 20    |
+| `Indicator/Indicator.test.tsx`                | 20    |
+| `serverSafeComponents.test.ts`                | 17    |
+| `StatusDot/StatusDot.test.tsx`                | 17    |
+| `theme/themingTargets.test.ts`                | 16    |
+| `Kbd/Kbd.test.tsx`                            | 15    |
+| `HStack/HStack.test.tsx`                      | 12    |
+| `VStack/VStack.test.tsx`                      | 12    |
+| `Stack/StackItem.test.tsx`                    | 11    |
+| `theme/derivedVarRegistry.test.ts`            | 11    |
+| `IconButton/IconButton.test.tsx`              | 10    |
+| `theme/expandMotionScale.test.ts`             | 10    |
+| `utils/parseStyleKey.test.ts`                 | 10    |
+| `utils/themeProps.test.ts`                    | 10    |
+| `Badge/Badge.test.tsx`                        | 8     |
+| `Blockquote/Blockquote.test.tsx`              | 8     |
+| `hooks/useClipboard.test.tsx`                 | 8     |
+| `VisuallyHidden/VisuallyHidden.test.tsx`      | 7     |
+| `Code/Code.test.tsx`                          | 6     |
+| `Indicator/indicatorRegistry.test.tsx`        | 6     |
+| `Layout/__tests__/contentWidth.test.tsx`      | 6     |
+| `theme/expandRadiusScale.test.ts`             | 6     |
+| `utils/sharedResizeObserver.test.ts`          | 6     |
+| `Card/Card.test.tsx`                          | 5     |
+| `Chat/ChatComposer.test.tsx`                  | 5     |
+| `i18n/__tests__/e2e-pagination.test.tsx`      | 5     |
+| `i18n/__tests__/e2e-powersearch.test.tsx`     | 5     |
+| `naming.test.ts`                              | 5     |
+| `docPropReferences.test.ts`                   | 4     |
+| `Layout/__tests__/childrenAsContent.test.tsx` | 4     |
+| `Skeleton/Skeleton.test.tsx`                  | 4     |
+| `theme/extensibleAxes.test.ts`                | 4     |
+| `Chat/ChatComposerDrawer.test.tsx`            | 3     |
+| `MobileNav/MobileNavToggle.test.tsx`          | 3     |
+| `__tests__/inputWidthContract.test.tsx`       | 1     |
+
+</details>
+
 ## Debts
 
 | Kind                  | Count  |
