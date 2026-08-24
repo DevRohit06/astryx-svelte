@@ -51,14 +51,21 @@ const styles = stylex.create({
 	imageWrapperZoomable: {
 		cursor: {
 			default: 'zoom-in',
-			'@media (hover: hover)': 'zoom-in'
+			'@media (hover: hover)': 'zoom-in',
+			':is(:disabled,[aria-disabled="true"])': 'default'
 		}
 	},
 	imageWrapperZoomed: {
-		cursor: 'grab'
+		cursor: {
+			default: 'grab',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	imageWrapperDragging: {
-		cursor: 'grabbing'
+		cursor: {
+			default: 'grabbing',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	image: {
 		maxWidth: '100%',

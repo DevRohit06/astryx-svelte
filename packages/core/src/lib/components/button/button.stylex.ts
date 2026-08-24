@@ -72,7 +72,10 @@ const styles = stylex.create({
 		lineHeight: typeScaleVars['--text-label-leading'],
 		fontWeight: fontWeightVars['--font-weight-medium'],
 		whiteSpace: 'nowrap',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		transitionProperty: 'background-image, background-color, color, opacity, transform',
 		transitionDuration: {
 			default: durationVars['--duration-fast'],
@@ -87,7 +90,7 @@ const styles = stylex.create({
 		}
 	},
 	disabled: {
-		cursor: 'not-allowed',
+		cursor: 'default',
 		opacity: 0.5,
 		backgroundImage: 'none',
 		transform: {
@@ -98,7 +101,7 @@ const styles = stylex.create({
 	ariaDisabled: {
 		backgroundImage: {
 			default: 'none',
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': 'none'
 			},
 			':active': 'none'
@@ -173,7 +176,7 @@ const iconSizeStyles = stylex.create({
  */
 const hoverOverlay = {
 	default: null,
-	':hover': {
+	':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 		'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 	},
 	':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`

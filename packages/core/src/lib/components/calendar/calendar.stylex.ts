@@ -215,7 +215,10 @@ export const dayCellStyles = stylex.create({
 		borderRadius: '50%',
 		borderWidth: 0,
 		borderStyle: 'none',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		fontFamily: 'inherit',
 		fontSize: typeScaleVars['--text-body-size'],
 		padding: 0,
@@ -254,7 +257,7 @@ export const dayCellStyles = stylex.create({
 	dayTodayInRange: {},
 	daySelected: {},
 	dayDisabled: {
-		cursor: 'not-allowed'
+		cursor: 'default'
 	}
 });
 
@@ -279,7 +282,7 @@ export const dayCellTheme = stylex.create({
 		backgroundColor: 'transparent',
 		backgroundImage: {
 			default: null,
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			}
 		}
@@ -306,7 +309,7 @@ export const dayCellTheme = stylex.create({
 		color: colorVars['--color-on-accent'],
 		backgroundImage: {
 			default: null,
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			}
 		}
@@ -317,7 +320,7 @@ export const dayCellTheme = stylex.create({
 		opacity: 0.3,
 		backgroundImage: {
 			default: 'none',
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': 'none'
 			}
 		}

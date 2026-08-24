@@ -8,9 +8,13 @@ History lives in [`ledger/`](./ledger). Deviations from upstream live in [`debts
 
 ## Current goal
 
-**Full parity with Astryx `0.4.5`**, across every package except three. Set 2026-08-20, replacing
-"track each upstream release and cut a matching version" — that goal was about staying level with
-upstream's _movement_; this one is about closing the distance that predates it.
+**Full parity with Astryx `0.5.0`**, across every package except three. Set 2026-08-20 against
+`0.4.5`, replacing "track each upstream release and cut a matching version" — that goal was about
+staying level with upstream's _movement_; this one is about closing the distance that predates it.
+Re-targeted 2026-08-25 when the pin moved to `0.5.0` (batch 032), which widened the distance rather
+than closing it: that release brought a new component (`Stepper`), two breaking changes, and the
+largest single-release test delta this port has tracked. The size of it is in
+[`status.md`](./status.md), not here.
 
 Out of scope, by decision: **`lab`, `charts` and `vega`**. Four of `lab`'s components
 (`CodeEditor`, `RichTextEditor`, `ThreeD`, `Sankey`) wrap React-only libraries with no drop-in

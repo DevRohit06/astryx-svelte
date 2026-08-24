@@ -91,6 +91,11 @@ export default {
 			{
 				guidance: true,
 				description:
+					'Set collapsible={false} when the user needs the content to act on the message, like the list of fields that failed validation. Keep the default toggle when the detail is long enough to bury the banner’s own message.'
+			},
+			{
+				guidance: true,
+				description:
 					'Error and warning banners render as role="alert"; info and success render as role="status". Mount an alert banner in response to an event rather than on first paint, so assistive tech has a change to report.'
 			},
 			{
@@ -126,9 +131,10 @@ export default {
 				description: 'Lets the user close the banner. Enabled by setting isDismissable.'
 			},
 			{
-				name: 'Collapsible content',
+				name: 'Content',
 				required: false,
-				description: 'Extra detail that expands below the banner header, like a list of errors.'
+				description:
+					'Extra detail below the banner header, like a list of errors. Sits behind an expand/collapse toggle by default; set collapsible={false} to keep it visible.'
 			}
 		]
 	},
@@ -197,14 +203,15 @@ export default {
 		{
 			name: 'children',
 			type: 'Snippet',
-			description: 'Content rendered in the card-background area below the colored header.'
+			description:
+				'Content rendered in the card-background area below the colored header. Sits behind an expand/collapse toggle unless `collapsible={false}`.'
 		},
 		{
-			name: 'defaultIsExpanded',
-			type: 'boolean',
+			name: 'collapsible',
+			type: 'boolean | CollapsibleConfig',
 			description:
-				'Whether the content area (children) starts expanded. Only relevant when children are provided.',
-			default: 'false'
+				'Whether the content area (children) sits behind an expand/collapse toggle in the header. On by default, starting collapsed. `false` opts out: children are always visible with no toggle. `{defaultIsOpen: true}` starts open; `{isOpen, onOpenChange}` is controlled. Takes the same CollapsibleConfig as Collapsible.',
+			default: 'true'
 		},
 		{
 			name: 'xstyle',

@@ -153,7 +153,8 @@ export default {
 		{
 			name: 'focusDate',
 			type: 'ISODateString',
-			description: 'Controlled visible month.'
+			description:
+				'Controlled visible month. Unset, the calendar opens on the selected date, else on today clamped into the min/max window.'
 		},
 		{
 			name: 'onFocusDateChange',

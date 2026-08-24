@@ -340,7 +340,10 @@ describe('generateThemeCss', () => {
 		});
 		const out = generateThemeCss(withHover);
 		expect(out).toContain('.astryx-button {');
-		expect(out).toContain('.astryx-button:hover {');
+		// A themed `:hover` carries the disabled guard from 0.5.0 (#5247): browsers
+		// suppress a disabled control's events, not its hover styling. `:where()`
+		// adds no specificity, so the rule weighs what it always weighed.
+		expect(out).toContain('.astryx-button:hover:where(:not(:disabled,[aria-disabled="true"])) {');
 		expect(out).toContain('color: rgba(255,255,255,0.8);');
 	});
 });

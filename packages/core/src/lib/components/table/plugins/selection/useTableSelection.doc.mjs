@@ -75,6 +75,13 @@ export default {
 			type: '(item: T) => string',
 			description:
 				'Derives a human-readable identity for a row; the row checkbox\'s hidden label becomes `Select ${getRowLabel(item)}` so screen readers announce which row each checkbox selects. Falls back to "Select row" when omitted.'
+		},
+		{
+			name: 'hasRowHighlight',
+			type: 'boolean',
+			description:
+				'Paints checked rows with the accent wash. Set false when the surrounding UI already uses row background to mean something else (a row open in a detail panel, say) — the wash is an inline style, so it cannot be overridden from userland. Only the background is dropped: aria-selected is still set on checked rows either way.',
+			default: 'true'
 		}
 	]
 };

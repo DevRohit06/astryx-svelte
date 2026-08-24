@@ -1,6 +1,13 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
-import { colorVars, radiusVars, spacingVars, typeScaleVars } from '../../styles/tokens.stylex.js';
+import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import {
+	colorVars,
+	fontWeightVars,
+	radiusVars,
+	spacingVars,
+	typeScaleVars
+} from '../../styles/tokens.stylex.js';
 
 /**
  * Ported from Astryx's `Breadcrumbs/BreadcrumbItem.tsx` styles.
@@ -47,17 +54,23 @@ const itemStyles = stylex.create({
 		paddingBlock: spacingVars['--spacing-1'],
 		textDecoration: {
 			default: 'none',
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': 'underline'
 			}
 		},
-		cursor: 'pointer'
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
-	// Reset native button styles so onclick-only items match link appearance
+	// Reset native button styles so onclick-only items match link appearance.
+	// paddingInline rather than padding: a blanket `padding` also overrides the
+	// paddingBlock `link` sets above, which shrank the button crumbs to 20px
+	// against their sibling links' 28px.
 	buttonReset: {
 		background: 'none',
 		border: 'none',
-		padding: 0,
+		paddingInline: 0,
 		margin: 0,
 		font: 'inherit'
 	},
@@ -67,8 +80,12 @@ const itemStyles = stylex.create({
 	supportingLink: {
 		color: colorVars['--color-text-secondary']
 	},
+	// Weight, not colour alone. The current crumb used to be told from its
+	// siblings only by `--color-text-primary` against `--color-text-secondary`,
+	// which fails WCAG 1.4.1 (use of colour) and leaves the current position
+	// invisible to anyone who cannot separate the two tones.
 	current: {
-		fontWeight: 'inherit'
+		fontWeight: fontWeightVars['--font-weight-semibold']
 	},
 	defaultCurrent: {
 		color: colorVars['--color-text-primary']
@@ -124,14 +141,17 @@ export function breadcrumbCurrentAttrs(isSupporting: boolean): SvelteStyleAttrs 
 	);
 }
 
-/** The `<a>` branch. */
+/** The `<a>` branch, carrying the shared keyboard focus ring. */
 export function breadcrumbLinkAttrs(isSupporting: boolean): SvelteStyleAttrs {
-	return sx(itemStyles.link, isSupporting ? itemStyles.supportingLink : itemStyles.defaultLink);
+	return focusOutlineProps.focusVisible(
+		itemStyles.link,
+		isSupporting ? itemStyles.supportingLink : itemStyles.defaultLink
+	);
 }
 
 /** The `<button>` branch — the link styles plus a native-button reset. */
 export function breadcrumbButtonAttrs(isSupporting: boolean): SvelteStyleAttrs {
-	return sx(
+	return focusOutlineProps.focusVisible(
 		itemStyles.link,
 		itemStyles.buttonReset,
 		isSupporting ? itemStyles.supportingLink : itemStyles.defaultLink

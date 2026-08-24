@@ -244,6 +244,27 @@ export default {
 			name: 'clickAction',
 			type: '(event: MouseEvent) => unknown',
 			description: 'Async click handler. Shows loading state while the returned promise is pending.'
+		},
+		{
+			name: 'href',
+			type: 'string',
+			description:
+				'When provided, renders the button as a link element (<a> or custom link component).'
+		},
+		{
+			name: 'as',
+			type: 'LinkComponentType',
+			description: 'Custom link component to use when href is provided (e.g. Next.js Link).'
+		},
+		{
+			name: 'target',
+			type: 'HTMLAttributeAnchorTarget | null',
+			description: 'HTML target attribute when rendered as a link (e.g. "_blank").'
+		},
+		{
+			name: 'rel',
+			type: 'string | null',
+			description: 'HTML rel attribute when rendered as a link (e.g. "noopener noreferrer").'
 		}
 	]
 };

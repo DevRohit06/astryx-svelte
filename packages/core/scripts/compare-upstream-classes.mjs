@@ -237,10 +237,16 @@ const CASES = [
 		upstreamFile: 'ButtonGroup/ButtonGroup.js'
 	},
 	{
-		// Object mode covers `styles.wrapper` and `styles.spinner` — both ride runtime
-		// `stylex.props` calls with an `xstyle` spread beside them.
+		// Object mode covers `styles.wrapper`, `styles.spinner`, `styles.circle` and
+		// the whole of `arcStyles` / `trackStyles`. The first two ride runtime
+		// `stylex.props` calls with an `xstyle` spread beside them; the last three
+		// are **new at upstream 0.5.0**, where the canvas ring became two SVG
+		// `<circle>`s whose paint comes off the cascade. Each circle merges
+		// `styles.circle` with a `shade`-indexed key from one of the two ramps, and
+		// a dynamic index defeats the fold, so `dist/` keeps all three objects.
 		//
-		// `styles.canvas` folds to a literal upstream, and claiming it is what
+		// `styles.ring` (upstream's `styles.canvas` through 0.4.5) folds to a
+		// literal upstream, and claiming it is what
 		// **found a real style defect that had been live since the case was
 		// written**. The case was object-mode only, so the key was checked by
 		// nothing; the first run that claimed it failed on one property:
@@ -258,7 +264,7 @@ const CASES = [
 		// writes `'0%'`/`'100%'` and the key is checked.
 		file: 'src/lib/components/spinner/spinner.stylex.js',
 		upstreamFile: 'Spinner/Spinner.js',
-		inline: [['styles.canvas']]
+		inline: [['styles.ring']]
 	},
 	{
 		file: 'src/lib/components/visually-hidden/visually-hidden.stylex.js',
@@ -1561,17 +1567,20 @@ const CASES = [
 		inline: [['listStyles.root']]
 	},
 	{
-		// Both modes at once. Only `root` and the two size variants survive as
-		// objects (a variant ternary plus an `xstyle` spread reach `stylex.props`
-		// together); every other key is a single call site.
+		// Both modes at once. Object mode covers `root`, the two size variants (a
+		// variant ternary plus an `xstyle` spread reach `stylex.props` together) and
+		// — **new at upstream 0.5.0** — `link`, `buttonReset`, `defaultLink` and
+		// `supportingLink`. Those four moved *out* of the inline list rather than
+		// changing: #4605 routes the `<a>` and `<button>` branches through
+		// `focusOutlineProps.focusVisible(...)` instead of a bare `stylex.props(...)`,
+		// and the compiler cannot fold a call it does not own, so `dist/` now keeps
+		// the objects and emits no literal for either branch. Their two inline
+		// claims are deleted rather than repaired; leaving them in fails with
+		// "upstream has no matching call site".
 		//
-		// `defaultLink` and `supportingLink` are **the same declaration** —
-		// `--color-text-secondary` both — so the link and button branches each emit
-		// one string for both variants, not two. Listing the supporting pair as well
-		// would ask the oracle for a second copy of a string upstream only has once
-		// (it compares distinct call sites), so the two link combos below cover all
-		// four branches. The current-wrapper pair *does* differ (primary vs
-		// secondary) and both are listed.
+		// The current-wrapper pair *does* still fold, differs between the variants
+		// (primary vs secondary text) and stays claimed below — which is what
+		// checks `current`'s semibold weight, the accessibility half of #4605.
 		//
 		// **`itemStyles.chevron` is object mode as of upstream 0.4.1 (#4838), and
 		// its inline claim is deleted rather than repaired.** It was right for
@@ -1589,8 +1598,6 @@ const CASES = [
 			['itemStyles.separator'],
 			['itemStyles.contentWrapper', 'itemStyles.current', 'itemStyles.defaultCurrent'],
 			['itemStyles.contentWrapper', 'itemStyles.current', 'itemStyles.supportingCurrent'],
-			['itemStyles.link', 'itemStyles.defaultLink'],
-			['itemStyles.link', 'itemStyles.buttonReset', 'itemStyles.defaultLink'],
 			// The menu surface. `menuStyles.popover` is *not* here: it is handed to
 			// the layer as an `xstyle` value, never resolved at a static call site,
 			// so it stays an object on both sides and object mode covers it.
@@ -3610,20 +3617,22 @@ const CASES = [
 		// object at all: `BottomSheet.js` merges the identical keys at a literal call
 		// site with no `xstyle` and no dynamic index beside them, so the compiler
 		// folded every one into a class string and `dist/` declares no `styles`.
-		// Inline mode only — twelve claims, no object diff, and the two modes
-		// together are what cover the module's nine keys.
+		// Inline mode only — twenty claims, no object diff, and the two modes
+		// together are what cover the module's ten keys.
 		//
-		// The dialog is an eight-entry lookup table keyed
-		// `!!shouldPresent << 2 | !!hasScrim << 1 | !!!hasScrim << 0`. Bits 1 and 0
-		// are exact complements, so four of the eight can never be reached at
-		// runtime — but each is still a merge of our keys in upstream's order, so
-		// all eight are CLAIMED rather than waved through. The filler tolerance at
-		// the foot of the loop only applies to marker cases and this is not one, so
-		// an unclaimed permutation would read as "upstream applies classes we never
-		// produce"; claiming it is both cheaper and stricter.
+		// The dialog is a SIXTEEN-entry lookup table keyed
+		// `!!shouldPresent << 3 | !!hasScrim << 2 | !!(hasScrim && !isOpen &&
+		// isPresented) << 1 | !!!hasScrim << 0`. It was eight before 0.5.0 added
+		// `scrimClosing` as bit 1. Bits 2 and 0 are exact complements, so half of
+		// the sixteen can never be reached at runtime — but each is still a merge
+		// of our keys in upstream's order, so all sixteen are CLAIMED rather than
+		// waved through. The filler tolerance at the foot of the loop only applies
+		// to marker cases and this is not one, so an unclaimed permutation would
+		// read as "upstream applies classes we never produce"; claiming it is both
+		// cheaper and stricter.
 		//
-		// Two of the four keys OVERRIDE a property the base already set rather than
-		// adding one, which is exactly why the order of a combination is
+		// Three of the five keys OVERRIDE a property the base already set rather
+		// than adding one, which is exactly why the order of a combination is
 		// load-bearing:
 		//   • `dialogOpen` replaces `display: none` (x1s85apg) with `display: block`
 		//     (x1lliihq) — one property in, one property out, so the merged string
@@ -3632,9 +3641,14 @@ const CASES = [
 		//     (x1o6l61p / xtdtrs8) with `100%` / `100%` (xh8yej3 / x5yr21d) while
 		//     adding `pointer-events` and `z-index`, so the non-modal strings are
 		//     two classes shorter than "base plus four" would predict.
-		// Neither is a skip: both are the merge working, and reproducing them is the
-		// check. `styles.dialog`'s `border: 'none'` emits no class on either side —
-		// StyleX drops it — so it is simply absent from both, the same way
+		//   • `scrimClosing` replaces the scrim's `::backdrop` timing function
+		//     (x15h3t91, `--ease-standard`) with `linear` (x1cz9k3x), so a
+		//     scrim-plus-closing string is the same length as the scrim's own.
+		//     Against the base alone — the four unreachable no-scrim permutations —
+		//     it has nothing to replace and simply adds x1cz9k3x.
+		// None is a skip: all three are the merge working, and reproducing them is
+		// the check. `styles.dialog`'s `border: 'none'` emits no class on either
+		// side — StyleX drops it — so it is simply absent from both, the same way
 		// `useKeyboardHint`'s `hint` is.
 		//
 		// The positioner is a second, four-entry table keyed
@@ -3650,10 +3664,24 @@ const CASES = [
 			['styles.dialog', 'styles.dialogOpen'],
 			['styles.dialog', 'styles.scrim'],
 			['styles.dialog', 'styles.dialogOpen', 'styles.scrim'],
+			['styles.dialog', 'styles.scrimClosing'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.scrimClosing'],
+			['styles.dialog', 'styles.scrim', 'styles.scrimClosing'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.scrim', 'styles.scrimClosing'],
 			['styles.dialog', 'styles.dialogNonModal'],
 			['styles.dialog', 'styles.dialogOpen', 'styles.dialogNonModal'],
 			['styles.dialog', 'styles.scrim', 'styles.dialogNonModal'],
 			['styles.dialog', 'styles.dialogOpen', 'styles.scrim', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.scrimClosing', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.scrimClosing', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.scrim', 'styles.scrimClosing', 'styles.dialogNonModal'],
+			[
+				'styles.dialog',
+				'styles.dialogOpen',
+				'styles.scrim',
+				'styles.scrimClosing',
+				'styles.dialogNonModal'
+			],
 			['styles.positioner'],
 			['styles.positioner', 'styles.positionerTop'],
 			['styles.positioner', 'styles.positionerHidden'],
@@ -3686,6 +3714,19 @@ const CASES = [
 			['styles.body'],
 			['styles.body', 'styles.tallKeyboardBody']
 		]
+	},
+	{
+		// Inline mode only, and the smallest case in the file: the edge tint is one
+		// style on one element with nothing beside it, so upstream folded it to a
+		// literal class string and `dist/` declares no `styles` object at all.
+		//
+		// The two mask declarations are one property to CSS and two to StyleX —
+		// `maskImage` and `WebkitMaskImage` hash separately — so the string carries
+		// both, and authoring only the unprefixed one would come up a class short
+		// rather than merely unprefixed.
+		file: 'src/lib/components/bottom-sheet/bottom-sheet-edge-tint.stylex.js',
+		upstreamFile: 'BottomSheet/BottomSheetEdgeTint.js',
+		inline: [['styles.tint']]
 	}
 ];
 

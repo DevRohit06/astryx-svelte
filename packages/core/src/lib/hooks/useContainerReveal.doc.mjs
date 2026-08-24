@@ -39,7 +39,7 @@ export default {
 			name: 'getContainerProps',
 			type: '(options?: ContainerRevealOptions) => { class?: string; style?: string; }',
 			description:
-				'Spread onto the container whose hover/focus-within drives the reveal. Accepts hoverDelay (ms the pointer must dwell before the reveal starts — a hover-intent gate like Tooltip\'s and HoverCard\'s delay, so a cursor sweeping across a list leaves nothing painted behind it) and forceState ("active" | "inactive") to pin the trigger state when a caller owns it — a motion gate, a scroll, a row whose menu is open. "inactive" still yields to keyboard focus and coarse pointers.'
+				'Spread onto the container whose hover/focus-within drives the reveal. Accepts hoverDelay (ms the pointer must dwell before the reveal starts: a hover-intent gate like Tooltip\'s and HoverCard\'s delay, so a cursor sweeping across a list leaves nothing painted behind it) and forceState ("active" | "inactive") to pin the trigger state when a caller owns it: a motion gate, a scroll, or a row whose menu is open. "inactive" still yields to keyboard focus and coarse pointers.'
 		},
 		{
 			name: 'getContentRevealProps',

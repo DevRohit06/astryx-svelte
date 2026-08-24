@@ -17,7 +17,7 @@ const styles = stylex.create({
 		backgroundColor: 'transparent'
 	},
 	disabled: {
-		cursor: 'not-allowed',
+		cursor: 'default',
 		opacity: 0.5
 	}
 });

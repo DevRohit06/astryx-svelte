@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import type { Snippet } from 'svelte';
 	import type { BaseProps } from '../../base-props.js';
-	import type { ItemAlign, ItemDensity } from './item.stylex.js';
+	import type { ItemAlign, ItemDensity, ItemLayout } from './item.stylex.js';
 
 	/**
 	 * `onclick` is omitted from `BaseProps` so the narrowed redeclaration below
@@ -38,6 +38,14 @@
 		labelLines?: number;
 		/** Max lines for the description before truncating. */
 		descriptionLines?: number;
+		/**
+		 * How the label and description sit together. `stacked` puts the description
+		 * on its own line below the label; `inline` keeps both on one line, with the
+		 * description ellipsizing first, so the row fits a fixed-height host.
+		 *
+		 * @default 'stacked'
+		 */
+		layout?: ItemLayout;
 		/** Click handler. Makes the item interactive (a `<button>` when no `href`). */
 		onclick?: (event: MouseEvent) => void;
 		/**
@@ -144,6 +152,7 @@
 		density = 'balanced',
 		labelLines,
 		descriptionLines,
+		layout = 'stacked',
 		onclick,
 		interactiveRef,
 		href,
@@ -221,11 +230,15 @@
 			xstyle
 		)
 	);
-	const labelAttrs = $derived(itemLabelAttrs(labelLines, isStringLabel));
-	const descAttrs = $derived(itemDescriptionAttrs(descriptionLines, isStringDescription));
-	const contentAttrs = $derived(itemContentAttrs(isDisabled));
-	const buttonAttrs = $derived(itemInvisibleButtonAttrs(isDisabled));
-	const anchorAttrs = $derived(itemInvisibleAnchorAttrs(isDisabled));
+	// Inline rows are one line by definition, so the description always ellipsizes
+	// there — a snippet description cannot wrap the row open. With no description
+	// there is nothing to inline, so the layout falls back to stacked.
+	const isInline = $derived(layout === 'inline' && description != null);
+	const labelAttrs = $derived(itemLabelAttrs(labelLines, isStringLabel, isInline));
+	const descAttrs = $derived(itemDescriptionAttrs(descriptionLines, isStringDescription, isInline));
+	const contentAttrs = $derived(itemContentAttrs(isDisabled, isInline));
+	const buttonAttrs = $derived(itemInvisibleButtonAttrs(isDisabled, isInline));
+	const anchorAttrs = $derived(itemInvisibleAnchorAttrs(isDisabled, isInline));
 	const startAttrs = itemStartContentAttrs();
 	const endAttrs = $derived(itemEndContentAttrs(isDisabled));
 

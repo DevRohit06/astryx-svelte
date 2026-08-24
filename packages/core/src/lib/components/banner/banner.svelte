@@ -2,6 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import type { BaseProps } from '../../base-props.js';
 	import type { Elevation } from '../../internal/types.js';
+	import type { CollapsibleConfig } from '../collapsible/use-collapsible.svelte.js';
 	import type { BannerContainer, BannerStatus } from './banner.stylex.js';
 
 	export interface BannerProps extends BaseProps<HTMLDivElement> {
@@ -39,13 +40,29 @@
 		 */
 		elevation?: Elevation;
 		/**
-		 * Whether the content area starts expanded. Only relevant with `children`.
-		 * @default false
+		 * Whether the content area (`children`) sits behind an expand/collapse
+		 * toggle in the header. On by default, so a banner with children behaves as
+		 * it always has.
+		 *
+		 * - omitted / `true` — collapsible, starts collapsed
+		 * - `{defaultIsOpen: true}` — collapsible, starts open
+		 * - `{isOpen, onOpenChange}` — controlled by the consumer
+		 * - `false` — not collapsible: children are always visible, with no toggle,
+		 *   no `aria-expanded`, and a content region that stays mounted
+		 *
+		 * Takes the shared `CollapsibleConfig` so a banner's disclosure is
+		 * configured exactly like `Collapsible`'s, rather than through a
+		 * Banner-only vocabulary. Banner's default differs from the hook's on one
+		 * point — it starts closed, not open — because a banner's message lives in
+		 * its header and the content is supplementary.
+		 *
+		 * @default true
 		 */
-		defaultIsExpanded?: boolean;
+		collapsible?: boolean | CollapsibleConfig;
 		/**
-		 * Extra content below the header, in a collapsible card-background area.
-		 * When provided, a collapse/expand toggle appears in the header.
+		 * Extra content rendered below the header in a card-background area.
+		 * Use for rich content like lists, links, or detailed information.
+		 * Collapsed behind a toggle unless `collapsible={false}`.
 		 */
 		children?: Snippet;
 	}
@@ -59,6 +76,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useCollapsible } from '../collapsible/use-collapsible.svelte.js';
 	import {
 		bannerChevronExpandedStyle,
 		bannerChevronStyle,
@@ -107,8 +125,10 @@
 	 * messages.
 	 *
 	 * Two-part structure: a coloured status header with icon, title, description
-	 * and actions, and — when `children` are given — a collapsible content area
-	 * below it, reached through a chevron toggle in the header.
+	 * and actions, and — when `children` are given — a content area below it.
+	 * That content sits behind a chevron toggle in the header and starts
+	 * collapsed; pass `collapsible={false}` for content that is always visible,
+	 * or a config object to change the initial state or control it.
 	 *
 	 * Manages its own dismissed state, so the banner hides on dismiss even without
 	 * an `onDismiss`. Uses `role="alert"` for error/warning and `role="status"`
@@ -129,7 +149,7 @@
 		endContent,
 		container = 'card',
 		elevation = 'none',
-		defaultIsExpanded = false,
+		collapsible = true,
 		children,
 		onfocusincapture,
 		onpointerdowncapture,
@@ -141,22 +161,44 @@
 
 	const t = useTranslator();
 	let isDismissed = $state(false);
-	// Read once at init, as upstream's `useState(defaultIsExpanded)` is: a later
-	// change to the prop does not reopen a banner the user collapsed.
-	// svelte-ignore state_referenced_locally
-	let isExpanded = $state(defaultIsExpanded);
+	// The disclosure state machine is the shared one — Banner owns no collapse
+	// state of its own. `collapsible={false}` disables it, and that is what makes
+	// the content permanently visible.
+	//
+	// The one place Banner departs from the hook's defaults: `useCollapsible`
+	// opens by default, a banner starts closed. Its header already carries the
+	// message, so the content is supplementary — and this is the behaviour Banner
+	// has always had.
+	const disclosure = useCollapsible(() => {
+		// `null` is outside the prop's type, but a JS caller or a value widened to
+		// `| null` still reaches here, and upstream reads it as the default.
+		const config: CollapsibleConfig =
+			collapsible != null && typeof collapsible === 'object' ? collapsible : {};
+		return {
+			isCollapsible: collapsible !== false && {
+				...config,
+				defaultIsOpen: config.defaultIsOpen ?? false
+			}
+		};
+	});
+	const isCollapsible = $derived(disclosure.isEnabled);
+	const isExpanded = $derived(disclosure.isOpen);
 
 	// Links the expand/collapse toggle to the content region it shows and hides,
 	// so assistive tech can move from the button to its controlled content. The
 	// region is conditionally rendered, so `aria-controls` is set only while it is
-	// mounted, avoiding a dangling reference.
+	// mounted, avoiding a dangling reference. A non-collapsible banner has no
+	// toggle, so neither end of the link is used.
 	const contentId = $props.id();
 
 	const role = $derived(statusRole[status] ?? FALLBACK_ROLE);
 	const hasChildren = $derived(children != null);
 
+	// The toggle exists only for a collapsible banner that actually has content to
+	// disclose.
+	const hasToggle = $derived(isCollapsible && hasChildren);
 	// Show the end area if there are actions, dismiss, or a collapsible toggle
-	const showEndArea = $derived(endContent != null || isDismissable || hasChildren);
+	const showEndArea = $derived(endContent != null || isDismissable || hasToggle);
 	// Centre items vertically when there is only a title (no description) and the
 	// banner has action buttons
 	const hasActions = $derived(endContent != null || isDismissable);
@@ -167,7 +209,9 @@
 	const hasDescription = $derived(description != null && description !== '');
 	const isSingleLine = $derived(!hasDescription && hasActions);
 
-	const showContent = $derived(hasChildren && isExpanded);
+	// Non-collapsible children are always shown; collapsible ones follow the
+	// hook's open state.
+	const showContent = $derived(hasChildren && (!isCollapsible || isExpanded));
 	const isCard = $derived(container === 'card');
 
 	const rootAttrs = $derived(bannerRootAttrs(elevation, container === 'card', xstyle));
@@ -230,7 +274,7 @@
 	}
 
 	function handleToggleExpand(): void {
-		isExpanded = !isExpanded;
+		disclosure.toggle();
 	}
 </script>
 
@@ -308,7 +352,7 @@
 			{#if showEndArea}
 				<div class={endAreaAttrs.class} style={endAreaAttrs.style}>
 					{#if endContent != null}{@render endContent()}{/if}
-					{#if hasChildren}
+					{#if hasToggle}
 						<Button
 							variant="ghost"
 							size="sm"
@@ -335,10 +379,10 @@
 				</div>
 			{/if}
 		</div>
-		<!-- Content area: collapsible card background — theme target ('banner-content') -->
+		<!-- Content area: card background — theme target ('banner-content') -->
 		{#if showContent}
 			<div
-				id={contentId}
+				id={hasToggle ? contentId : undefined}
 				{...contentTheme}
 				class={cx(contentTheme.class, contentAreaAttrs.class)}
 				style={contentAreaAttrs.style}

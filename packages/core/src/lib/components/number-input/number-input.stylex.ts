@@ -70,7 +70,7 @@ const styles = stylex.create({
 		}
 	},
 	inputDisabled: {
-		cursor: 'not-allowed'
+		cursor: 'default'
 	},
 	inputInvalid: {
 		color: colorVars['--color-text-secondary']
@@ -111,19 +111,22 @@ const styles = stylex.create({
 		backgroundColor: colorVars['--color-background-surface'],
 		backgroundImage: {
 			default: null,
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
 		},
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		// The steppers are `tabIndex={-1}` and hand focus to the input, so they
 		// take no focus ring of their own — deliberately *not* `focusOutlineProps`.
 		outline: 'none'
 	},
 	numberStepperButtonDisabled: {
 		color: colorVars['--color-icon-disabled'],
-		cursor: 'not-allowed',
+		cursor: 'default',
 		backgroundImage: 'none'
 	},
 	decrementButton: {

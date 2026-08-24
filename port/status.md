@@ -9,21 +9,21 @@
 |                           |                                                                          |
 | ------------------------- | ------------------------------------------------------------------------ |
 | Component dirs (ours)     | 99                                                                       |
-| Component dirs (upstream) | 103                                                                      |
-| Missing here              | none                                                                     |
+| Component dirs (upstream) | 104                                                                      |
+| Missing here              | Stepper                                                                  |
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
-| Upstream pin              | `@astryxdesign/core` 0.4.5                                               |
-| Ledger entries            | 32                                                                       |
+| Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
+| Ledger entries            | 33                                                                       |
 
 ## Test parity
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
-| Upstream                 | 256    | 6383           |
-| Ported here              | 250    | 6278           |
+| Upstream                 | 275    | 7041           |
+| Ported here              | 249    | 6605           |
 | No counterpart by design | 5      | 69             |
-| **Unported**             | **1**  | **36**         |
+| **Unported**             | **21** | **367**        |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -31,9 +31,29 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 
 <details><summary>Unported upstream suites</summary>
 
-| Suite                              | Cases |
-| ---------------------------------- | ----- |
-| `theme/generateThemeRules.test.ts` | 36    |
+| Suite                                                         | Cases |
+| ------------------------------------------------------------- | ----- |
+| `DateInput/DateInputTouch.test.tsx`                           | 134   |
+| `Stepper/Stepper.test.tsx`                                    | 48    |
+| `theme/generateThemeRules.test.ts`                            | 44    |
+| `Layer/useLayerDismissal.test.tsx`                            | 21    |
+| `Layer/layerDismissalInvariants.test.tsx`                     | 15    |
+| `Calendar/getInitialFocusDate.test.ts`                        | 13    |
+| `hooks/useFocusTrapEscapeShim.test.tsx`                       | 11    |
+| `Layer/layerDismissalFamilies.test.tsx`                       | 11    |
+| `BottomSheet/BottomSheetEdgeTint.test.tsx`                    | 10    |
+| `hooks/useAutoMediaMode.test.ts`                              | 10    |
+| `hooks/scrollbarGutter.test.ts`                               | 8     |
+| `theme/MediaTheme.dom.test.tsx`                               | 8     |
+| `i18n/__tests__/useCollator.test.tsx`                         | 7     |
+| `Layer/useTouchTrigger.test.ts`                               | 5     |
+| `MobileNav/MobileNavEntryAnimation.test.tsx`                  | 5     |
+| `Layout/overlayPaddingReset.test.tsx`                         | 4     |
+| `hooks/useMergedRefs.test.tsx`                                | 3     |
+| `i18n/__tests__/useLocale.test.tsx`                           | 3     |
+| `MobileNav/MobileNavScrollbarGutter.test.tsx`                 | 3     |
+| `Table/plugins/groupedRows/useTableGroupedRows-perf.test.tsx` | 2     |
+| `theme/syntax/serverSafeSyntax.test.ts`                       | 2     |
 
 </details>
 
@@ -41,7 +61,7 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 
 |                                                               | Sites | Files |
 | ------------------------------------------------------------- | ----- | ----- |
-| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 861   | 74    |
+| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 854   | 74    |
 
 Testing Library matches an accessible name as a whole string; Playwright matches a string
 `name` as a case-insensitive **substring**. Every site above is therefore a ported assertion
@@ -52,8 +72,8 @@ substring-matching on both sides by design and is not counted.
 
 | Kind                  | Count   |
 | --------------------- | ------- |
-| api-divergence        | 32      |
-| deliberate-divergence | 44      |
-| unported              | 14      |
-| upstream-lag          | 12      |
-| **total**             | **102** |
+| api-divergence        | 33      |
+| deliberate-divergence | 45      |
+| unported              | 15      |
+| upstream-lag          | 10      |
+| **total**             | **103** |

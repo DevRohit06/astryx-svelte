@@ -5,8 +5,14 @@ import TabListFixture from './fixtures/tab-list-fixture.svelte';
 import CustomLink from './fixtures/custom-link.svelte';
 
 /**
- * Ported from Astryx's `TabList/TabList.test.tsx` — all 45 of its `it` cases,
- * nothing dropped. Client (real Chromium) project.
+ * Ported from Astryx's `TabList/TabList.test.tsx`. **46 of its 74 cases at the
+ * 0.5.0 pin.** This suite ported all 45 at 0.4.5; 0.5.0 rewrote two `aria-current`
+ * cases (`"page"` -> `"true"`), added a link-tab counterpart — the three that are
+ * here — and added 28 more across three new describes that are **not yet ported**:
+ * `TabList overflow (scroll)` (17), `ARIA pattern - role="tablist"` (9), `- no
+ * role` (2) and `- any other role` (1). Those cover #5348 and #5349, whose source
+ * half landed in batch 032; the suite is the half still owed.
+ * Client (real Chromium) project.
  *
  * Standing translations:
  *
@@ -115,16 +121,35 @@ describe('TabList', () => {
 		expect(navIn(screen.container)).not.toHaveAttribute('aria-orientation');
 	});
 
-	it('marks selected tab with aria-current', async () => {
+	it('marks selected tab with a generic aria-current, not "page"', async () => {
 		const screen = await render(TabListFixture, {
 			props: { tabList: { value: 'home', onChange: () => {} }, tabs: homeAndSettings }
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Home' }))
-			.toHaveAttribute('aria-current', 'page');
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
+			.toHaveAttribute('aria-current', 'true');
 		await expect
-			.element(screen.getByRole('button', { name: 'Settings' }))
+			.element(screen.getByRole('button', { name: 'Settings', exact: true }))
+			.not.toHaveAttribute('aria-current');
+	});
+
+	it('marks a selected link tab with the same generic aria-current', async () => {
+		const screen = await render(TabListFixture, {
+			props: {
+				tabList: { value: 'home', onChange: () => {} },
+				tabs: [
+					{ props: { value: 'home', label: 'Home', href: '/home' } },
+					{ props: { value: 'settings', label: 'Settings', href: '/settings' } }
+				]
+			}
+		});
+
+		await expect
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
+			.toHaveAttribute('aria-current', 'true');
+		await expect
+			.element(screen.getByRole('link', { name: 'Settings', exact: true }))
 			.not.toHaveAttribute('aria-current');
 	});
 
@@ -144,8 +169,8 @@ describe('TabList', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Home' }))
-			.toHaveAttribute('aria-current', 'page');
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
+			.toHaveAttribute('aria-current', 'true');
 
 		await screen.rerender({
 			tabList: { value: 'settings', onChange: () => {} },
@@ -153,11 +178,11 @@ describe('TabList', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Home' }))
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
 			.not.toHaveAttribute('aria-current');
 		await expect
-			.element(screen.getByRole('button', { name: 'Settings' }))
-			.toHaveAttribute('aria-current', 'page');
+			.element(screen.getByRole('button', { name: 'Settings', exact: true }))
+			.toHaveAttribute('aria-current', 'true');
 	});
 
 	it('renders with different sizes', async () => {

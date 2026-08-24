@@ -44,14 +44,17 @@ const styles = stylex.create({
 		backgroundImage: `linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
 	},
 	button: {
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		// Reset the UA button's block padding only; the inline padding from `base`
 		// provides the pill's breathing room and must be preserved.
 		paddingBlock: 0,
 		// Interactive overlay states layered on top via backgroundImage
 		backgroundImage: {
 			default: `linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`,
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`

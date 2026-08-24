@@ -43,7 +43,10 @@ const styles = stylex.create({
 		lineHeight: typeScaleVars['--text-label-leading'],
 		fontWeight: fontWeightVars['--font-weight-normal'],
 		color: colorVars['--color-text-secondary'],
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		textDecoration: 'none',
 		whiteSpace: 'nowrap',
 		transitionProperty: 'color',

@@ -47,11 +47,14 @@ const styles = stylex.create({
 		borderWidth: 0,
 		borderStyle: 'none',
 		backgroundColor: 'transparent',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		borderRadius: radiusVars['--radius-element']
 	},
 	iconButtonDisabled: {
-		cursor: 'not-allowed'
+		cursor: 'default'
 	},
 	icon: {
 		display: 'flex',
@@ -82,7 +85,7 @@ const styles = stylex.create({
 		}
 	},
 	inputDisabled: {
-		cursor: 'not-allowed'
+		cursor: 'default'
 	},
 	inputInvalid: {
 		color: colorVars['--color-text-secondary']

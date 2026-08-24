@@ -31,6 +31,11 @@ export default {
 				description: 'Add a tooltip to icon-only buttons and controls that lack a visible label.'
 			},
 			{
+				guidance: true,
+				description:
+					'Set touchTrigger to tap when the trigger is a button whose only job is revealing the tooltip, such as an info icon: touch has no hover, and auto keeps the tap for triggers that perform an action.'
+			},
+			{
 				guidance: false,
 				description:
 					'Place interactive elements like links or buttons inside a tooltip; use HoverCard or Popover instead.'
@@ -96,6 +101,13 @@ export default {
 			default: "'auto'"
 		},
 		{
+			name: 'touchTrigger',
+			type: "'auto' | 'tap' | 'none'",
+			description:
+				'What a tap does where there is no hover. auto opens on tap unless the trigger performs an action of its own (a button, link, or form control), whose tap belongs to the control. tap always opens; use it for an info icon rendered as a button, whose only job is to reveal the tooltip. none never opens on touch.',
+			default: "'auto'"
+		},
+		{
 			name: 'isEnabled',
 			type: 'boolean',
 			description: 'Enables or disables the tooltip triggers.',
@@ -117,6 +129,11 @@ export default {
 			name: 'isDefaultOpen',
 			type: 'boolean',
 			description: 'Whether the tooltip should be shown on mount. Still dismissible.'
+		},
+		{
+			name: 'isOpen',
+			type: 'boolean',
+			description: 'Controlled open state for the tooltip.'
 		}
 	]
 };

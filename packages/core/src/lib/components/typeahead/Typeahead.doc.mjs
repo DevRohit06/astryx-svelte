@@ -232,6 +232,11 @@ export default {
 				'Width of the field (number = pixels, string used as-is, e.g. "100%"). Sizes the whole field (label, control, and status) so they stay aligned.'
 		},
 		{
+			name: 'startIcon',
+			type: 'IconName | Snippet',
+			description: 'SVG icon component displayed at the start of the input.'
+		},
+		{
 			name: 'xstyle',
 			type: 'StyleArg',
 			description:

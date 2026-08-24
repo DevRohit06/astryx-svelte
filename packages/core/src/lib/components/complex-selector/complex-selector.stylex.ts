@@ -54,7 +54,10 @@ const styles = stylex.create({
 		},
 		lineHeight: typeScaleVars['--text-label-leading'],
 		color: colorVars['--color-text-primary'],
-		cursor: 'pointer'
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	trigger: {
 		display: 'flex',
@@ -74,7 +77,10 @@ const styles = stylex.create({
 		fontSize: 'inherit',
 		lineHeight: 'inherit',
 		color: 'inherit',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		outline: 'none',
 		borderRadius: radiusVars['--radius-element']
 	},
@@ -136,14 +142,14 @@ const styles = stylex.create({
 		backgroundColor: 'transparent',
 		backgroundImage: {
 			default: null,
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
 		},
 		boxShadow: {
 			default: 'none',
-			':hover:not(:focus-within)': {
+			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': 'none'
 			},
 			':focus-within': 'none'
@@ -163,7 +169,7 @@ const styles = stylex.create({
 		}
 	},
 	disabled: {
-		cursor: 'not-allowed'
+		cursor: 'default'
 	}
 });
 

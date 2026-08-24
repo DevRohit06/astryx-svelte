@@ -102,10 +102,40 @@ export default {
 			default: '4'
 		},
 		{
+			name: 'paddingInline',
+			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			description:
+				'Inline (horizontal) padding override. Overrides only the inline-axis padding while preserving block padding from `padding` or the container theme default. Accepts the spacing scale (0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10).'
+		},
+		{
+			name: 'paddingInlineStart',
+			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			description:
+				'Inline-start padding override (left in LTR, right in RTL). Overrides paddingInline and padding on that edge only.'
+		},
+		{
+			name: 'paddingInlineEnd',
+			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			description:
+				'Inline-end padding override (right in LTR, left in RTL). Overrides paddingInline and padding on that edge only.'
+		},
+		{
 			name: 'paddingBlock',
 			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
 			description:
 				'Block (vertical) padding override. Overrides only the block-axis padding while preserving inline padding from `padding` or the container theme default. Accepts the spacing scale (0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10).'
+		},
+		{
+			name: 'paddingBlockStart',
+			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			description:
+				'Block-start (top) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.'
+		},
+		{
+			name: 'paddingBlockEnd',
+			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			description:
+				'Block-end (bottom) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.'
 		},
 		{
 			name: 'xstyle',

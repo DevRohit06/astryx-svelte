@@ -51,6 +51,24 @@ const styles = stylex.create({
 			}
 		}
 	},
+	/**
+	 * The dim leaves with the sheet, on a curve that matches.
+	 *
+	 * A fade covers no distance, so the decelerate token front-loads its progress
+	 * and simply ends it early: `--ease-standard` puts the scrim at 90% faded in
+	 * 163ms of a 410ms close, leaving an undimmed page under a sheet that is still
+	 * sliding across it. `linear` spends the duration it is given. Same reasoning
+	 * the touch date picker's surface swap already carries.
+	 *
+	 * Shared with `BottomSheetSwitcher`, where the flow's dim leaves with its last
+	 * panel — a handoff between two sheets is not a close, and keeps the entrance
+	 * curve.
+	 */
+	scrimClosing: {
+		'::backdrop': {
+			transitionTimingFunction: 'linear'
+		}
+	},
 	positioner: {
 		position: 'absolute',
 		insetInline: 0,
@@ -69,9 +87,12 @@ const styles = stylex.create({
 
 /**
  * The native `<dialog>` shell. `hasScrim` is what makes the dialog modal, so it
- * selects the scrim and the non-modal layering between them.
+ * selects the scrim and the non-modal layering between them. `isScrimClosing`
+ * is the host's own reading of "the dim is on its way out": the standalone
+ * sheet's is `!isOpen && isPresented`, the switcher's is `isFlowVisible &&
+ * activeSheet == null`.
  *
- * Shared with `BottomSheetSwitcher`, which declares the same five style keys in
+ * Shared with `BottomSheetSwitcher`, which declares the same six style keys in
  * its own file upstream — identical properties, identical token references, and
  * so identical atomic classes. One module here rather than a byte-for-byte
  * duplicate: the emitted CSS is the same either way, and the oracles check the
@@ -82,12 +103,14 @@ const styles = stylex.create({
 export function bottomSheetDialogAttrs(
 	isPresented: boolean,
 	hasScrim: boolean,
+	isScrimClosing: boolean,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
 	return sx(
 		styles.dialog,
 		isPresented && styles.dialogOpen,
 		hasScrim && styles.scrim,
+		hasScrim && isScrimClosing && styles.scrimClosing,
 		!hasScrim && styles.dialogNonModal,
 		xstyle
 	);

@@ -127,7 +127,7 @@ describe('InputClearButton', () => {
 		const css = generateThemeCss(theme);
 		expect(css).toContain('.astryx-input-clear-icon {');
 		expect(css).toContain('width: 12px');
-		expect(css).toContain('.astryx-input-clear-icon:hover {');
+		expect(css).toContain('.astryx-input-clear-icon:hover');
 		expect(css).toContain('color: var(--color-icon-primary)');
 	});
 
@@ -154,7 +154,7 @@ describe('InputClearButton', () => {
 		const css = generateThemeCss(theme);
 		expect(css).toContain('.astryx-input-clear-button {');
 		expect(css).toContain('height: 28px');
-		expect(css).toContain('.astryx-input-clear-button:hover {');
+		expect(css).toContain('.astryx-input-clear-button:hover');
 		expect(css).toContain('background-image: none');
 	});
 });

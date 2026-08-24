@@ -105,6 +105,18 @@ export default {
 			default: 'false'
 		},
 		{
+			name: 'defaultIndex',
+			type: 'number',
+			description: 'Initial image index in gallery mode for uncontrolled usage.',
+			default: '0'
+		},
+		{
+			name: 'hasAutoPlay',
+			type: 'boolean',
+			description: 'Automatically start video playback when a video media item is shown.',
+			default: 'false'
+		},
+		{
 			name: 'xstyle',
 			type: 'StyleArg',
 			description: 'StyleX styles for layout customization. Must be stylex.create() value.'

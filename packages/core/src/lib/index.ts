@@ -868,16 +868,17 @@ export type {
 	SwitchLabelSpacing
 } from './components/switch/switch.svelte';
 export type { TabProps } from './components/tab-list/tab.svelte';
-export type { TabListProps } from './components/tab-list/tab-list.svelte';
+export type { TabListProps, TabListOverflow } from './components/tab-list/tab-list.svelte';
 export type { TabMenuProps, TabMenuOption } from './components/tab-list/tab-menu.svelte';
-// Upstream's `TabList/index.ts` publishes `useTabListContext` plus the size and
-// layout types. `TabListContext` itself has no Svelte value counterpart (only the
-// reader is public, as `DropdownMenu`'s is). There is no orientation type to
-// publish: 0.2.0 removed the `orientation` prop as a misleading no-op, and the
-// type with it.
+// Upstream's `TabList/index.ts` publishes `useTabListContext` plus the size,
+// layout and pattern types. `TabListContext` itself has no Svelte value
+// counterpart (only the reader is public, as `DropdownMenu`'s is). There is no
+// orientation type to publish: 0.2.0 removed the `orientation` prop as a
+// misleading no-op, and the type with it.
 export {
 	useTabListContext,
 	type TabListLayout,
+	type TabListPattern,
 	type TabListSize
 } from './components/tab-list/tab-list-context.svelte.js';
 // Table. `TableContext` is published and `useTableContext` is not, which is

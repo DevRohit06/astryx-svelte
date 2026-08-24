@@ -34,6 +34,11 @@ export default {
 			{
 				guidance: true,
 				description:
+					'Prefer mode="auto" when the surface color comes from a theme token. A token named "inverted" is not guaranteed to be inverted, and auto measures what was actually painted instead of trusting the name. It can even decide that a surface needs no media context at all.'
+			},
+			{
+				guidance: true,
+				description:
 					'Pair with a background color: MediaTheme flips the token context but does not add a background. Set backgroundColor on the parent element.'
 			},
 			{
@@ -50,7 +55,7 @@ export default {
 	},
 	playground: {
 		defaults: {
-			mode: 'dark'
+			mode: 'auto'
 		}
 	},
 	props: [
@@ -58,8 +63,15 @@ export default {
 			name: 'mode',
 			type: "'dark' | 'light'",
 			description:
-				'Surface luminance context: dark for content over dark backgrounds (light text, white-tinted interactions), light for content over light backgrounds (dark text, black-tinted interactions).',
+				'Surface luminance context: dark for content over dark backgrounds (light text, white-tinted interactions), light for content over light backgrounds (dark text, black-tinted interactions), auto to decide from the painted surface (no media context when the ambient text already reads on the surface at 3:1, otherwise the side that reads better), and off to turn it off explicitly. The element renders either way, so a surface can switch contexts without remounting children.',
 			required: true
+		},
+		{
+			name: 'fallback',
+			type: "'dark' | 'light'",
+			description:
+				'Which side auto uses when the surface cannot be measured: during SSR, on the first client frame, and whenever the backdrop is not knowable from CSS, most often a background-image, whose pixels need sampling (useImageMode) rather than a computed style. Ignored unless mode is auto.',
+			default: "'dark'"
 		},
 		{
 			name: 'children',

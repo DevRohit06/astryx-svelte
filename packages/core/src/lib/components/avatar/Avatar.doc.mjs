@@ -75,6 +75,16 @@ export default {
 					'When wrapping an Avatar in your own Tooltip or HoverCard, set tooltip={false} so the built-in name tooltip does not overlap yours.'
 			},
 			{
+				guidance: true,
+				description:
+					"Give every interactive avatar (href or onClick) a name or alt. It is the control's accessible name, and it warns in development when it is missing."
+			},
+			{
+				guidance: false,
+				description:
+					'Rely on a status label to name an interactive avatar. "Online" says nothing about where the link goes.'
+			},
+			{
 				guidance: false,
 				description:
 					"Use Avatar for logos, product images, or anything that isn't a person or team. Use an image or icon instead."
@@ -141,7 +151,7 @@ export default {
 			name: 'status',
 			type: 'Snippet',
 			description:
-				'Corner content for status indicators. A string `label` on the element (as on AvatarStatusDot) is composed into the avatar\'s accessible name (e.g. "Jane Doe, Online") so screen readers announce the status.'
+				'Corner content for status indicators. AvatarStatusDot reports its `label` to the avatar, which composes it into the accessible name (e.g. "Jane Doe, Online") so screen readers announce the status. Reporting goes through context, so it still works when the dot sits inside a wrapper component of your own.'
 		},
 		{
 			name: 'tooltip',
@@ -154,7 +164,7 @@ export default {
 			name: 'href',
 			type: 'string',
 			description:
-				'When set, the avatar renders as an interactive link (`<a>` or a custom link component) pointing here. This follows the same element-swap rule as Button. Requires a meaningful accessible name via `alt` or `name`. Inside an AvatarGroup, interactive avatars share a single Tab stop and are reached with arrow keys.'
+				'When set, the avatar renders as an interactive link (`<a>` or a custom link component) pointing here. This follows the same element-swap rule as Button. Requires a meaningful accessible name via `alt` or `name`: an interactive avatar without one warns in development. Inside an AvatarGroup, interactive avatars share a single Tab stop and are reached with arrow keys.'
 		},
 		{
 			name: 'as',
@@ -176,7 +186,7 @@ export default {
 			name: 'onclick',
 			type: '(event: MouseEvent) => void',
 			description:
-				'Click handler. When set without `href`, the avatar renders as a focusable `<button type="button">`. Requires a meaningful accessible name via `alt` or `name`.'
+				'Click handler. When set without `href`, the avatar renders as a focusable `<button type="button">`. Requires a meaningful accessible name via `alt` or `name`: an interactive avatar without one warns in development.'
 		}
 	]
 };

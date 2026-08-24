@@ -61,6 +61,11 @@ export default {
 					'Use the hook API (useHoverCard) when you need more control over timing or placement.'
 			},
 			{
+				guidance: true,
+				description:
+					'Leave touchTrigger on auto so a tap opens the card on triggers that do nothing else, and stays out of the way on triggers that perform an action.'
+			},
+			{
 				guidance: false,
 				description:
 					'Place critical actions or required information inside a hover card; users may miss content that only appears on hover.'
@@ -150,6 +155,13 @@ export default {
 			default: "'auto'"
 		},
 		{
+			name: 'touchTrigger',
+			type: "'auto' | 'tap' | 'none'",
+			description:
+				'What a tap does where there is no hover. auto opens on tap unless the trigger performs an action of its own (a button, link, or form control), whose tap belongs to the control. tap always opens. none never opens on touch. A tap-opened card is dismissed by a tap outside it.',
+			default: "'auto'"
+		},
+		{
 			name: 'isEnabled',
 			type: 'boolean',
 			description: 'Enables or disables the hover and focus triggers.',
@@ -177,6 +189,11 @@ export default {
 			name: 'isDefaultOpen',
 			type: 'boolean',
 			description: 'Whether the hover card should be shown on mount. Still dismissible.'
+		},
+		{
+			name: 'isOpen',
+			type: 'boolean',
+			description: 'Controlled open state for the hover card.'
 		}
 	]
 };

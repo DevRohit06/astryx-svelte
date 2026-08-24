@@ -10,7 +10,7 @@ export default {
 	displayName: 'Chat Message List',
 	subComponentOf: 'Chat',
 	description:
-		'Presentational message container with density context and infinite scroll support. Provides role="log" with aria-live="polite" for accessibility. A flex spacer pushes messages to the bottom when the list isn\'t full.',
+		'Presentational message container with density context and infinite scroll support. Provides role="log" with aria-live="polite" for accessibility. A flex spacer pushes messages to the bottom when the list isn\'t full; set align="top" to start messages at the top instead.',
 	keywords: [
 		'chat',
 		'message',
@@ -60,6 +60,13 @@ export default {
 			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
 			description:
 				'Gap between top-level message rows. Defaults to the selected density; override for LLM event streams or independent rows that need different spacing from density.'
+		},
+		{
+			name: 'align',
+			type: "'top' | 'bottom'",
+			description:
+				"Vertical alignment when the list is shorter than its container. 'bottom' fills free space with a spacer so short conversations sit above the composer; 'top' omits the spacer so messages start at the top. Only affects a non-full list; overflowing lists scroll identically, preserving auto-scroll-to-bottom.",
+			default: "'bottom'"
 		},
 		{
 			name: 'isStreaming',

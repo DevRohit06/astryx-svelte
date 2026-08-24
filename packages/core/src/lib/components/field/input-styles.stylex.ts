@@ -58,7 +58,7 @@ export const inputWrapperStyles = stylex.create({
 		transitionTimingFunction: easeVars['--ease-standard'],
 		boxShadow: {
 			default: 'none',
-			':hover:not(:focus-within)': {
+			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `inset 0px 0px 0px 2px color-mix(in srgb, ${colorVars['--color-border-emphasized']} 30%, transparent)`
 			},
 			':focus-within': `inset 0px 0px 0px 2px ${colorVars['--color-accent-muted']}`
@@ -66,7 +66,7 @@ export const inputWrapperStyles = stylex.create({
 		outline: 'none'
 	},
 	disabled: {
-		cursor: 'not-allowed',
+		cursor: 'default',
 		opacity: 0.5,
 		borderColor: colorVars['--color-border-emphasized'],
 		// Suppress the base hover ring — a disabled control must not react to hover.
@@ -92,7 +92,7 @@ export const inputStatusHoverShadowStyles = stylex.create({
 	warning: {
 		boxShadow: {
 			default: 'none',
-			':hover:not(:focus-within)': {
+			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': shadowVars['--shadow-inset-warning']
 			}
 		}
@@ -100,7 +100,7 @@ export const inputStatusHoverShadowStyles = stylex.create({
 	error: {
 		boxShadow: {
 			default: 'none',
-			':hover:not(:focus-within)': {
+			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': shadowVars['--shadow-inset-error']
 			}
 		}
@@ -108,7 +108,7 @@ export const inputStatusHoverShadowStyles = stylex.create({
 	success: {
 		boxShadow: {
 			default: 'none',
-			':hover:not(:focus-within)': {
+			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': shadowVars['--shadow-inset-success']
 			}
 		}

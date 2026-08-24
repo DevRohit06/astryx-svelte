@@ -61,6 +61,34 @@ const PADDING_PROPS = new Set([
 	'paddingInlineEnd'
 ]);
 
+/**
+ * Physical block-axis longhands, and the logical longhand each one *is* in every
+ * horizontal writing mode. Normalising them costs no direction assumption, which
+ * is why they can join the container expansion.
+ *
+ * `paddingLeft`/`paddingRight` are deliberately absent. They are
+ * direction-relative — left is inline-start in LTR and inline-end in RTL — and
+ * the expansion's tokens are consumed by logical properties, so mapping them
+ * would put the padding on the opposite edge in RTL. They keep their physical
+ * meaning and land on the element as `padding-left`/`padding-right`; the cost is
+ * that a component's internals cannot see them.
+ */
+const PHYSICAL_BLOCK_PADDING_PROPS: Record<string, string> = {
+	paddingTop: 'paddingBlockStart',
+	paddingBottom: 'paddingBlockEnd'
+};
+
+/**
+ * Every padding spelling the container expansion consumes. Kept separate from
+ * `PADDING_PROPS`, which also routes longhands to `vars`-style derived entries —
+ * those carry one value for the whole box, so a single physical edge must not
+ * reach them.
+ */
+const CONTAINER_PADDING_PROPS = new Set([
+	...PADDING_PROPS,
+	...Object.keys(PHYSICAL_BLOCK_PADDING_PROPS)
+]);
+
 interface ParsedPadding {
 	blockStart?: string;
 	blockEnd?: string;
@@ -71,12 +99,14 @@ interface ParsedPadding {
 
 /**
  * Parses CSS padding shorthand/longhand into block/inline values. Supports the
- * 1–3 value shorthands and the logical longhands, as upstream's does.
+ * 1–3 value shorthands, the logical longhands, and the physical block longhands
+ * normalised by `PHYSICAL_BLOCK_PADDING_PROPS`, as upstream's does.
  */
 function parsePadding(props: [string, string][]): ParsedPadding {
 	const result: ParsedPadding = {};
 
-	for (const [prop, value] of props) {
+	for (const [rawProp, value] of props) {
+		const prop = PHYSICAL_BLOCK_PADDING_PROPS[rawProp] ?? rawProp;
 		switch (prop) {
 			case 'padding': {
 				const parts = value.trim().split(/\s+/);
@@ -221,13 +251,23 @@ function applyDerivedVars(component: string, props: [string, string][]): [string
 				derivedProps.push([varName, value]);
 			}
 		}
+
+		// A physical block longhand reaches the container expansion only. It names
+		// one edge, so it must not feed a `vars` entry above, which carries the
+		// padding for the whole box.
+		if (
+			prop in PHYSICAL_BLOCK_PADDING_PROPS &&
+			getDerivedVars(component, 'padding').some((e) => e.expand === 'container')
+		) {
+			containerExpanded = true;
+		}
 	}
 
 	let finalProps = props;
 	if (containerExpanded) {
-		const parsed = parsePadding(props.filter(([p]) => PADDING_PROPS.has(p)));
+		const parsed = parsePadding(props.filter(([p]) => CONTAINER_PADDING_PROPS.has(p)));
 		finalProps = [
-			...props.filter(([p]) => !PADDING_PROPS.has(p)),
+			...props.filter(([p]) => !CONTAINER_PADDING_PROPS.has(p)),
 			...expandContainerPadding(component, parsed)
 		];
 	}
@@ -237,6 +277,32 @@ function applyDerivedVars(component: string, props: [string, string][]): [string
 	}
 
 	return [...finalProps, ...derivedProps];
+}
+
+/**
+ * Guard appended to a themed `:hover` rule so it cannot match a disabled
+ * element.
+ *
+ * A theme authoring `':hover': {backgroundColor: …}` is describing the enabled
+ * control; `:hover` on its own would paint that background on a disabled one
+ * too, because browsers suppress a disabled control's events, not its hover
+ * styling. `:where()` contributes no specificity, so a themed hover rule still
+ * weighs exactly what it weighed before.
+ *
+ * Mirrors upstream's `@astryx/no-hover-on-disabled` lint rule, which enforces
+ * the same guard on the components' own StyleX styles.
+ */
+const HOVER_DISABLED_GUARD = ':where(:not(:disabled,[aria-disabled="true"]))';
+
+/** Insert the disabled guard into a `:hover` pseudo, keeping any pseudo-element last. */
+function guardHoverPseudo(pseudo: string): string {
+	if (!/^:hover(?![-\w])/.test(pseudo) || pseudo.includes('[aria-disabled')) {
+		return pseudo;
+	}
+	const pseudoElement = pseudo.indexOf('::');
+	return pseudoElement === -1
+		? pseudo + HOVER_DISABLED_GUARD
+		: pseudo.slice(0, pseudoElement) + HOVER_DISABLED_GUARD + pseudo.slice(pseudoElement);
 }
 
 /**
@@ -300,7 +366,8 @@ function pseudoDeclarations(tokens: TokenMap): Record<string, string> {
  * A pseudo-class block becomes a second rule on the same selector. Upstream
  * distributes the pseudo across a comma-separated selector list; neither
  * `stableClassName` nor `parseStyleKey` can produce one, so appending it is the
- * same thing here.
+ * same thing here. A `:hover` pseudo picks up the disabled guard on the way —
+ * see `guardHoverPseudo`.
  */
 function componentRules(theme: DefinedTheme): string[] {
 	const rules: string[] = [];
@@ -320,7 +387,7 @@ function componentRules(theme: DefinedTheme): string[] {
 			for (const [pseudo, styleBlock] of pseudos) {
 				const block = pseudoDeclarations(styleBlock);
 				if (Object.keys(block).length === 0) continue;
-				rules.push(`${selector}${pseudo} {\n${indent(declarations(block))}\n}`);
+				rules.push(`${selector}${guardHoverPseudo(pseudo)} {\n${indent(declarations(block))}\n}`);
 			}
 		}
 	}
@@ -416,7 +483,7 @@ function onMediaRules(theme: DefinedTheme): string[] {
 				for (const [pseudo, styleBlock] of pseudos) {
 					const block = pseudoDeclarations(styleBlock);
 					if (Object.keys(block).length === 0) continue;
-					rules.push(`${selector}${pseudo} {\n${indent(declarations(block))}\n}`);
+					rules.push(`${selector}${guardHoverPseudo(pseudo)} {\n${indent(declarations(block))}\n}`);
 				}
 			}
 		}

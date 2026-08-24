@@ -287,6 +287,13 @@ const VARS_WITHOUT_DERIVED_MAPPING = new Set([
 	// Hit-area outset on a ::after overlay — `inset` on a pseudo-element is not
 	// a property a theme author sets on the component.
 	'--_thumbnail-hit-inset',
+	// The same shape, arriving with the clear button's coarse-pointer hit target
+	// at 0.5.0: one is the ::after overlay's `inset`, the other whether the
+	// overlay is generated at all (`content: none` vs `""`). Neither is a
+	// standard property on the `field` target, and a theme that wanted the larger
+	// touch area would set the var rather than reach the pseudo-element.
+	'--_input-clear-hit-inset',
+	'--_input-clear-hit-content',
 	// Indentation and row-spacing metrics: --tree-list-indent is the authorable
 	// step, --_tree-indent the per-row distance TreeListItem computes from it.
 	// --tree-list-row-gap is applied as half a padding-block on each row wrapper,

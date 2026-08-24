@@ -10,15 +10,17 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 import { customChevron, customInfo } from './fixtures/banner-registry-icons.svelte';
 
 /**
- * Ported from Astryx's `Banner/Banner.test.tsx`, **45 of upstream's 47** cases at
- * v0.4.5.
+ * Ported from Astryx's `Banner/Banner.test.tsx`, **49 of upstream's 52** cases at
+ * v0.5.0.
  *
- * **Two cases have no Svelte analogue and are dropped**, both for the same
+ * **Three cases have no Svelte analogue and are dropped**, all for the same
  * reason: they pass `{false}` as a snippet-typed slot to exercise upstream's
  * `isRenderable`, and a Svelte `Snippet` cannot be `false`. The type forbids it
  * and `{@render}` would throw on it, so there is no state to assert.
  *   - `empty slots` → "does not show the expand affordance for children that
  *     render nothing" (`children={false}`)
+ *   - `empty slots` → "renders no content area for children that render
+ *     nothing" (`children={false}` beside `collapsible={false}`)
  *   - `narrow-viewport wrapping` → "leaves it free for an endContent that
  *     renders nothing" (`endContent={false}`)
  *
@@ -27,11 +29,13 @@ import { customChevron, customInfo } from './fixtures/banner-registry-icons.svel
  * real defect: the guard was `!= null`, so an empty string rendered an empty
  * description row.
  *
- * (At v0.4.1 this was 38, and at v0.3.0 35. The nine added at 0.4.4 are the
- * dismiss focus handoff, the empty slots and the narrow-viewport wrapping
- * blocks. An earlier header said "all 33 cases": upstream had 35, and the nested
- * `describe('elevation')` pair that arrived with 0.1.9's `elevation` prop had
- * never been carried across.)
+ * (At v0.4.5 this was 45 of 47, at v0.4.1 38, and at v0.3.0 35. The nine added at
+ * 0.4.4 are the dismiss focus handoff, the empty slots and the narrow-viewport
+ * wrapping blocks. An earlier header said "all 33 cases": upstream had 35, and
+ * the nested `describe('elevation')` pair that arrived with 0.1.9's `elevation`
+ * prop had never been carried across. 0.5.0's collapse-axis rewrite — PR #5255,
+ * `defaultIsExpanded` replaced by `collapsible: boolean | CollapsibleConfig` —
+ * retired three cases upstream and added eight.)
  *
  * #4166's "Status icon color theming" block pins the `banner-icon` theme target
  * to the element that paints — the status `<Icon>` — and keeps it on the wrapper
@@ -204,10 +208,10 @@ describe('Banner', () => {
 	});
 
 	// =========================================================================
-	// Collapsible content area
+	// Content area — collapsible by default, `collapsible={false}` opts out
 	// =========================================================================
 
-	it('hides children by default (collapsed)', async () => {
+	it('hides children behind a toggle by default', async () => {
 		const screen = await render(BannerFixture, {
 			props: {
 				props: { status: 'info', title: 'Collapsible' },
@@ -215,29 +219,94 @@ describe('Banner', () => {
 				childTestid: 'child-content'
 			}
 		});
+		// The historical default, unchanged: chevron present, content collapsed.
 		expect(screen.container.querySelector('[data-testid="child-content"]')).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Expand', exact: true }))
+			.toBeInTheDocument();
 	});
 
-	it('shows children when defaultIsExpanded is true', async () => {
+	it('treats an explicit collapsible={true} as the default', async () => {
 		const screen = await render(BannerFixture, {
 			props: {
-				props: { status: 'info', title: 'Expanded', defaultIsExpanded: true },
+				props: { status: 'info', title: 'Explicit', collapsible: true },
+				hasChildren: true,
+				childTestid: 'child-content'
+			}
+		});
+		expect(screen.container.querySelector('[data-testid="child-content"]')).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Expand', exact: true }))
+			.toBeInTheDocument();
+	});
+
+	it('shows children with no toggle for collapsible={false}', async () => {
+		const screen = await render(BannerFixture, {
+			props: {
+				props: { status: 'info', title: 'Opted out', collapsible: false },
 				hasChildren: true,
 				childTestid: 'child-content'
 			}
 		});
 		await expect.element(screen.getByTestId('child-content')).toBeInTheDocument();
+		expect(screen.container.querySelector('[aria-label="Expand"]')).not.toBeInTheDocument();
+		expect(screen.container.querySelector('[aria-label="Collapse"]')).not.toBeInTheDocument();
 	});
 
-	it('shows expand button when children are provided', async () => {
+	it('leaves non-collapsible content out of the disclosure wiring', async () => {
 		const screen = await render(BannerFixture, {
 			props: {
-				props: { status: 'info', title: 'With Toggle' },
+				props: {
+					status: 'info',
+					title: 'Plain content',
+					isDismissable: true,
+					collapsible: false
+				},
 				hasChildren: true,
+				childTestid: 'child-content'
+			}
+		});
+		// No toggle exists, so nothing should carry disclosure state, and the
+		// region needs no id for a button to point at.
+		const dismiss = screen.getByRole('button', { name: 'Dismiss', exact: true }).element();
+		expect(dismiss).not.toHaveAttribute('aria-expanded');
+		expect(dismiss).not.toHaveAttribute('aria-controls');
+		const child = screen.getByTestId('child-content').element();
+		expect(child.parentElement).not.toHaveAttribute('id');
+	});
+
+	it('starts open for collapsible={{defaultIsOpen: true}}', async () => {
+		const screen = await render(BannerFixture, {
+			props: {
+				props: { status: 'info', title: 'Open', collapsible: { defaultIsOpen: true } },
+				hasChildren: true,
+				childTestid: 'child-content',
 				childText: 'Content'
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Expand' })).toBeInTheDocument();
+		await expect.element(screen.getByTestId('child-content')).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Collapse', exact: true }))
+			.toBeInTheDocument();
+	});
+
+	it('treats a null collapsible as the default', async () => {
+		const screen = await render(BannerFixture, {
+			props: {
+				// `null` is outside the prop's type, but JS callers and a value widened
+				// to `| null` still reach this. The fixture's `props` bag is
+				// `Record<string, unknown>`, which is this port's counterpart to
+				// upstream's `@ts-expect-error`.
+				props: { status: 'info', title: 'Nullish', collapsible: null },
+				hasChildren: true,
+				childTestid: 'child-content',
+				childText: 'Content'
+			}
+		});
+		expect(screen.container.querySelector('[data-testid="child-content"]')).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Expand', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('does not show expand/collapse button when no children', async () => {
@@ -270,15 +339,41 @@ describe('Banner', () => {
 		await expect.element(screen.getByRole('button', { name: 'Expand' })).toBeInTheDocument();
 	});
 
-	it('shows collapse button when defaultIsExpanded', async () => {
+	it('reports open-state changes through onOpenChange', async () => {
+		const onOpenChange = vi.fn();
 		const screen = await render(BannerFixture, {
 			props: {
-				props: { status: 'info', title: 'Expanded', defaultIsExpanded: true },
+				props: { status: 'info', title: 'Notify', collapsible: { onOpenChange } },
 				hasChildren: true,
-				childText: 'Content'
+				childTestid: 'child-content'
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Collapse' })).toBeInTheDocument();
+
+		await userEvent.click(screen.getByRole('button', { name: 'Expand', exact: true }));
+		expect(onOpenChange).toHaveBeenCalledWith(true);
+		await userEvent.click(screen.getByRole('button', { name: 'Collapse', exact: true }));
+		expect(onOpenChange).toHaveBeenLastCalledWith(false);
+	});
+
+	it('defers to the consumer when collapsible is controlled', async () => {
+		const onOpenChange = vi.fn();
+		const screen = await render(BannerFixture, {
+			props: {
+				props: {
+					status: 'info',
+					title: 'Controlled',
+					collapsible: { isOpen: false, onOpenChange }
+				},
+				hasChildren: true,
+				childTestid: 'child-content'
+			}
+		});
+
+		// A controlled banner must not move on its own: the click reports, the
+		// content stays hidden until the consumer passes a new isOpen.
+		await userEvent.click(screen.getByRole('button', { name: 'Expand', exact: true }));
+		expect(onOpenChange).toHaveBeenCalledWith(true);
+		expect(screen.container.querySelector('[data-testid="child-content"]')).not.toBeInTheDocument();
 	});
 
 	it('renders expand button to the left of dismiss button', async () => {
@@ -301,7 +396,11 @@ describe('Banner', () => {
 	it('links the expand toggle to its content region via aria-controls', async () => {
 		const screen = await render(BannerFixture, {
 			props: {
-				props: { status: 'info', title: 'Controls Test', defaultIsExpanded: true },
+				props: {
+					status: 'info',
+					title: 'Controls Test',
+					collapsible: { defaultIsOpen: true }
+				},
 				hasChildren: true,
 				childTestid: 'region-content',
 				childText: 'Region content'
@@ -514,7 +613,7 @@ describe('Banner', () => {
 	});
 
 	describe('empty slots', () => {
-		// Upstream's `children={false}` case is dropped — see the file header.
+		// Upstream's two `children={false}` cases are dropped — see the file header.
 
 		it('still shows the expand affordance for real children', async () => {
 			const screen = await render(BannerFixture, {

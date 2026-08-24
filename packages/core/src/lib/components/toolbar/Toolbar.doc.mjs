@@ -123,6 +123,11 @@ export default {
 			default: "'transparent'"
 		},
 		{
+			name: 'dividers',
+			type: 'SectionDivider[]',
+			description: 'Borders/dividers rendered around the toolbar.'
+		},
+		{
 			name: 'xstyle',
 			type: 'StyleArg',
 			description: 'StyleX styles for layout customization. Must be a stylex.create() value.'

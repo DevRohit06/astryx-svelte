@@ -52,6 +52,20 @@ export default {
 				description: 'Border radius of input fields',
 				default: 'var(--radius-element)',
 				private: true
+			},
+			{
+				name: '--_input-clear-hit-inset',
+				description:
+					"Outset of the clear (✕) button's invisible hit area, applied to a ::after overlay. 0 on a fine pointer; negative on a coarse one, which grows the 20px button to the 24px touch target without changing what is drawn.",
+				default: '0px',
+				private: true
+			},
+			{
+				name: '--_input-clear-hit-content',
+				description:
+					'Whether the clear (✕) button\'s invisible hit overlay exists. `none` on a fine pointer, so no ::after is generated and hover still reaches the glyph; `""` on a coarse one, where the overlay provides the 24px touch target.',
+				default: 'none',
+				private: true
 			}
 		],
 		derived: [
@@ -155,6 +169,17 @@ export default {
 			type: 'string',
 			description: 'ID for the input element (used for the label htmlFor attribute).',
 			required: true
+		},
+		{
+			name: 'labelID',
+			type: 'string',
+			description: 'ID applied to the label element itself for group accessibility.'
+		},
+		{
+			name: 'isGroupLabel',
+			type: 'boolean',
+			description: 'Renders the label as a span for control groups (radiogroup, checkbox list).',
+			default: 'false'
 		},
 		{
 			name: 'children',

@@ -42,6 +42,12 @@ export default {
 			},
 			{
 				className: 'astryx-date-time-input-clock-icon'
+			},
+			{
+				className: 'astryx-date-time-input-time-listbox'
+			},
+			{
+				className: 'astryx-date-time-input-time-option'
 			}
 		]
 	},
@@ -112,6 +118,12 @@ export default {
 				name: 'Time input',
 				required: true,
 				description: 'A text input for entering the time, displayed beside the date input.'
+			},
+			{
+				name: 'Time options popover',
+				required: false,
+				description:
+					'A list of preset times at the timeOptionInterval cadence, shown when that prop is set and the time input is clicked or opened with Alt+ArrowDown.'
 			},
 			{
 				name: 'Clear button',
@@ -223,6 +235,12 @@ export default {
 			type: '1 | 5 | 10 | 15 | 30',
 			description: 'Minutes to add or subtract when using arrow keys in the time input.',
 			default: '1'
+		},
+		{
+			name: 'timeOptionInterval',
+			type: '5 | 10 | 15 | 30 | 60',
+			description:
+				'Minute cadence for a dropdown of preset times on the time portion. Set it to turn the time field into a combobox listing every valid time at that cadence (60 gives a 12 AM to 11 PM list). Omitted, the time field stays a plain text input and gains no combobox semantics. Typed entry keeps working either way, so a time between two options is still reachable. Independent of timeIncrement, which governs arrow-key stepping.'
 		},
 		{
 			name: 'hasClear',

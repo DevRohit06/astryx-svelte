@@ -92,6 +92,13 @@ export default {
 			type: "'end' | 'start' | 'center'",
 			description: 'Horizontal alignment of the pagination controls.',
 			default: "'center'"
+		},
+		{
+			name: 'label',
+			type: 'string',
+			description:
+				"Accessible name for the pagination nav landmark. With position='both' the two navs get distinct names — the label suffixed as '(top)' and '(bottom)' — so same-type landmarks stay unique (axe landmark-unique).",
+			default: "'Table pagination'"
 		}
 	]
 };

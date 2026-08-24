@@ -6,7 +6,7 @@ import BreadcrumbsFixture from './fixtures/breadcrumbs-fixture.svelte';
 import CustomLink from './fixtures/custom-link.svelte';
 
 /**
- * Ported from Astryx's `Breadcrumbs/Breadcrumbs.test.tsx`, all 37 cases across
+ * Ported from Astryx's `Breadcrumbs/Breadcrumbs.test.tsx`, all 39 cases across
  * its three describe blocks. Nothing is dropped.
  *
  * Every case renders a trail, so all of them go through
@@ -682,6 +682,45 @@ describe('BreadcrumbItem menu', () => {
 			expect.stringContaining('`menu` and `href` are mutually exclusive')
 		);
 		warn.mockRestore();
+	});
+
+	it('reflects the variant on the item and menu-trigger theme targets', async () => {
+		const screen = await render(BreadcrumbsFixture, {
+			props: {
+				list: { variant: 'supporting' },
+				items: [
+					{ label: 'Home', props: { href: '/' } },
+					{ label: 'Teams', props: { menu: items } },
+					{ label: 'Overview', props: { isCurrent: true } }
+				]
+			}
+		});
+		// The variant selects between style objects on both elements, so a theme
+		// needs it as a data attribute on both targets to reach them.
+		const crumbs = [...screen.container.querySelectorAll('.astryx-breadcrumb-item')];
+		expect(crumbs).toHaveLength(3);
+		for (const item of crumbs) {
+			expect(item).toHaveAttribute('data-variant', 'supporting');
+		}
+		expect(screen.container.querySelector('.astryx-breadcrumb-item-menu-trigger')).toHaveAttribute(
+			'data-variant',
+			'supporting'
+		);
+	});
+
+	it('defaults the item theme target to the default variant', async () => {
+		const screen = await render(BreadcrumbsFixture, {
+			props: {
+				items: [
+					{ label: 'Home', props: { href: '/' } },
+					{ label: 'Overview', props: { isCurrent: true } }
+				]
+			}
+		});
+		expect(screen.container.querySelector('.astryx-breadcrumb-item')).toHaveAttribute(
+			'data-variant',
+			'default'
+		);
 	});
 
 	it('keeps mid-trail separators intact around a menu crumb', async () => {

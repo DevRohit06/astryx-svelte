@@ -161,6 +161,12 @@ record a self-retiring skip.
   JSX. `internal/sx.ts` is the adapter from `stylex.props()` to Svelte's `class`/`style`.
 - Adding a **new** `.stylex.ts` file requires a dev-server restart — StyleX's dev cache doesn't pick
   it up.
+- **A `stylex.create` key that nothing in the module references is compiled away**, so adding a
+  style group is invisible until a component actually uses it — the class oracle reports it as
+  `ours: (absent)` and its "style keys checked" total does not move, which reads exactly like the
+  oracle failing to re-read the file. It is not: `treeshakeCompensation` drops the key. Wire the key
+  through its `*Attrs` helper and its `.svelte` call site in the same change, then re-run the
+  oracle. (Batch 032, `Item`'s `layout="inline"` trio.)
 
 ## Testing
 

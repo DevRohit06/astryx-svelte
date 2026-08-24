@@ -12,6 +12,7 @@
 
 <script lang="ts">
 	import HStack from '../stack/hstack.svelte';
+	import { editPopoverChipRowStyle } from './power-search-edit-popover.stylex.js';
 	import Selector from '../selector/selector.svelte';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import {
@@ -86,7 +87,7 @@
 	}
 </script>
 
-<HStack gap={2} vAlign="center">
+<HStack gap={2} vAlign="center" xstyle={editPopoverChipRowStyle}>
 	<div {...editPopoverNestedFieldSelectorAttrs()}>
 		<Selector
 			label={t('@astryx.powersearch.editor.field')}

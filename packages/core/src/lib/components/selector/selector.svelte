@@ -873,14 +873,29 @@
 	{@const isSelected = item.value === normalizedValue}
 	{@const attrs = selectorItemAttrs(size, isHighlighted, isSelected, item.disabled === true)}
 	{@const contentAttrs = selectorItemContentAttrs()}
+	{@const optionRowTheme = themeProps('selector-option-row', {
+		size,
+		selected: isSelected ? 'selected' : null,
+		disabled: item.disabled ? 'disabled' : null
+	})}
 	<!--
 		A `role="option"` div with click + hover handlers, as upstream renders. The
 		keyboard model is the combobox's — the trigger (or the search input) keeps
 		DOM focus and drives selection through `aria-activedescendant` — so the row
 		itself is deliberately not a tab stop and has no key handler of its own.
+
+		The stable theme target on the row itself mirrors `multi-selector-option`: it
+		carries the row's size and runtime state so a theme can express "selected
+		option at large" or restyle a given row density without structural selectors.
+		The row's padding is split across a base and a per-size override (the default
+		`md` trims the block axis), so `size` is what a theme needs to reach it. Named
+		`-option-row` because `selector-option` is the public `SelectorOption` content
+		primitive, not this row.
+
+		The `{...optionRowTheme}` spread makes the element's attributes opaque to the
+		a11y analysis, so it emits no warning to ignore and lint rejects a dead
+		directive. Restore the two `svelte-ignore`s if the spread ever goes.
 	-->
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_interactive_supports_focus -->
 	<div
 		id={combobox.getItemId(flatIndex)}
 		role="option"
@@ -888,7 +903,8 @@
 		aria-disabled={item.disabled}
 		onclick={() => combobox.onItemSelect(item)}
 		onmouseenter={() => combobox.onItemMouseEnter(item, flatIndex)}
-		class={attrs.class}
+		{...optionRowTheme}
+		class={cx(optionRowTheme.class, attrs.class)}
 		style={attrs.style}
 	>
 		{#snippet mark()}

@@ -49,9 +49,15 @@ const styles = stylex.create({
 			default: typeScaleVars['--text-label-size'],
 			'@media (pointer: coarse)': `max(1rem, ${typeScaleVars['--text-label-size']})`
 		},
-		lineHeight: typeScaleVars['--text-label-leading'],
+		// One text line, pinned: the trigger is sized by padding rather than by a
+		// fixed height, so the line box has to be a known quantity. `Item`'s own
+		// rows set their line heights and are unaffected.
+		lineHeight: spacingVars['--spacing-5'],
 		color: colorVars['--color-text-primary'],
-		cursor: 'pointer'
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	// Trigger button — the actual combobox button, visually integrated with the container
 	trigger: {
@@ -72,7 +78,10 @@ const styles = stylex.create({
 		fontSize: 'inherit',
 		lineHeight: 'inherit',
 		color: 'inherit',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		// The wrapper (inputWrapperStyles.base) renders the focus ring via
 		// :focus-within when this button is focused, matching TextInput/NumberInput.
 		// The button must not draw its own :focus-visible outline or the two stack
@@ -117,14 +126,14 @@ const styles = stylex.create({
 		backgroundColor: 'transparent',
 		backgroundImage: {
 			default: null,
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
 		},
 		boxShadow: {
 			default: 'none',
-			':hover:not(:focus-within)': {
+			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': 'none'
 			},
 			':focus-within': 'none'
@@ -155,7 +164,10 @@ const styles = stylex.create({
 		borderStyle: 'none',
 		backgroundColor: 'transparent',
 		color: 'inherit',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		borderRadius: radiusVars['--radius-element']
 	},
 
@@ -233,7 +245,10 @@ const styles = stylex.create({
 		color: colorVars['--color-text-primary'],
 		backgroundColor: 'transparent',
 		border: 'none',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		textAlign: 'start',
 		outline: 'none'
 	},
@@ -271,19 +286,45 @@ const styles = stylex.create({
 	},
 	itemDisabled: {
 		opacity: 0.5,
-		cursor: 'not-allowed'
+		cursor: 'default'
+	},
+	// Inside an `InputGroup` the group's own height is the row, and the trigger
+	// takes it: `height: 100%` from `groupStyles.inGroup` can only govern if the
+	// trigger stops asserting a floor of its own — otherwise a control sized above
+	// its group (`<InputGroup size="md"><Selector size="lg">`) grows the row it was
+	// supposed to sit in. The padding goes with it: the row is already the size
+	// token, and the value box is centred in it.
+	triggerInGroup: {
+		minHeight: 0,
+		paddingBlock: 0
 	}
 });
 
+// The trigger is sized by PADDING, not by a fixed height, so it is the size
+// token plus one text line for each extra line the value uses: 28/32/36 for one
+// line, 48/52/56 for two. The token and a text line are both multiples of 4, so
+// every trigger lands on the 4px rhythm and lines up with the Buttons and inputs
+// beside it. No prop picks the height — the content does, and it can only land
+// on the grid.
+//
+// `--spacing-5` is one line here because `triggerContainer` pins its line-height
+// to exactly that; the two must stay in step, which is why both read the same
+// token rather than one hardcoding 20px.
+const linePad = (token: string) =>
+	`calc((${token} - ${spacingVars['--spacing-5']} - 2 * ${borderVars['--border-width']}) / 2)`;
+
 const sizeStyles = stylex.create({
 	sm: {
-		height: sizeVars['--size-element-sm']
+		minHeight: sizeVars['--size-element-sm'],
+		paddingBlock: linePad(sizeVars['--size-element-sm'])
 	},
 	md: {
-		height: sizeVars['--size-element-md']
+		minHeight: sizeVars['--size-element-md'],
+		paddingBlock: linePad(sizeVars['--size-element-md'])
 	},
 	lg: {
-		height: sizeVars['--size-element-lg']
+		minHeight: sizeVars['--size-element-lg'],
+		paddingBlock: linePad(sizeVars['--size-element-lg'])
 	}
 });
 
@@ -345,6 +386,7 @@ export function selectorTriggerContainerAttrs(
 		variant !== 'ghost' && statusType && inputStatusBorderStyles[statusType],
 		variant !== 'ghost' && statusType && !isDisabled && inputStatusHoverShadowStyles[statusType],
 		variant !== 'ghost' && inGroup && groupStyles.inGroup,
+		inGroup && styles.triggerInGroup,
 		xstyle
 	);
 }

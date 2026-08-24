@@ -101,6 +101,11 @@ export default {
 			default: '10'
 		},
 		{
+			name: 'menuWidth',
+			type: 'number',
+			description: 'Fixed dropdown width in pixels. The menu never shrinks below its anchor width.'
+		},
+		{
 			name: 'emptySearchResultsText',
 			type: 'string',
 			description: 'Text shown when search returns no results.',

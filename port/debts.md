@@ -650,14 +650,6 @@ Only `role`/`aria-label`/`data-testid` + the stylex/theme classes reach the `<di
 
 `Spinner` `size="xl"` (source + `SpinnerSizes` use it; `.doc.mjs` omits); `Kbd` `plus` special key; `Code` `color`/`size` props
 
-### Batch 5's doc omissions — two of the four closed at 0.4.1
-
-- **units:** NumberInput, CodeBlock
-- **kind:** upstream-lag
-- **retires:** when upstream documents `onKeyDown` and `highlightMode` in their `.doc.mjs`
-
-`NumberInput`'s `onKeyDown` and `CodeBlock`'s `highlightMode` are still real source props absent from both locales of their `.doc.mjs` props tables; ported from source, as the `Lightbox` `defaultIndex`/`hasAutoPlay` gap below already is. `NumberInput`'s `width` and `FileInput`'s `width` were the other two, and **0.4.1's props tables document both**, so those halves are retired.
-
 ### `Badge.label` is `string | Snippet`, not `ReactNode`
 
 - **units:** Badge
@@ -791,13 +783,6 @@ Created and attached but never read upstream. There is no `bind:this` to justify
 
 The two announcement strings (`"<alt>, N of M"` / `"Image N of M"`) are hard-coded English, unlike the four button/dialog labels which do go through `useTranslator`
 
-### Upstream doc gap: `defaultIndex` and `hasAutoPlay` are absent from `Lightbox.doc.mjs`
-
-- **units:** Lightbox
-- **kind:** upstream-lag
-- **retires:** when upstream documents `defaultIndex`/`hasAutoPlay`
-
-Real props (present in `LightboxProps` and the shipped `.d.ts`) but are absent from `Lightbox.doc.mjs`'s props table in both locales. Ported from source, per the Icon px→rem precedent
 
 ### `Lightbox` renders nothing at all when `media` is empty; pan is unclamped and zoom is a toggle
 
@@ -1310,12 +1295,76 @@ through a gap in its `babel-plugin-add-extensions` — the subject of a suite re
 no-counterpart here — and this port would reach the same failure by omission. Surfaced while
 assessing that suite in batch 031
 
+### `TabList`'s stranger-in-the-strip warning cannot see a `role` attribute flip
+
+- **units:** TabList
+- **kind:** api-divergence
+- **retires:** when Svelte gains an after-every-render hook
+
+Upstream's warning is a **dependency-less** `useEffect` — "after every commit" — because React cannot
+know which render put a non-tab into a `role="tablist"` strip. Svelte has no after-every-render hook,
+and the strip's children belong to the consumer's snippet, so this port uses a `MutationObserver` on
+`childList` (the same substitution `useListFocus` makes for its roving-tab-stop repair), checked once
+on mount and latched after the first warning. It catches a stranger mounting or unmounting; it does
+**not** catch an existing child's `role` attribute flipping away from `tab`, which upstream's next
+commit would. Upstream's own new test only covers the initial-render case, so the gap is unexercised
+on both sides
+
+### `useMergedRefs` (#5267) has no Svelte counterpart
+
+- **units:** hooks/useMergedRefs
+- **kind:** unported
+- **retires:** never
+
+0.5.0 adds `useMergedRefs` as a published hook and migrates `Avatar`, `Button`, `Item`, `SideNav`,
+`TabList`, `TopNav`, `Text` and `Heading` onto it, so a merged ref keeps its identity across
+rerenders (#5266, #5267, #5429). The whole hook exists to stabilise a callback ref React would
+otherwise recreate every render. Svelte binds the element once via `bind:this` and a focus trap
+arrives as an attachment, so there is no ref-merging to stabilise and nothing for the hook to do.
+The absence is recorded rather than filled: an empty image, not a behaviour difference
+
+### `BottomSheet`'s scrim-closing condition is a parameter, not a call-site expression
+
+- **units:** BottomSheet
+- **kind:** deliberate-divergence
+- **retires:** never
+
+Upstream evaluates `hasScrim && !isOpen && isPresented` (standalone) and
+`hasScrim && isFlowVisible && activeSheet == null` (switcher) inline at each `stylex.props`. One
+module serves both hosts here, so `bottomSheetDialogAttrs` takes the host-specific half as an
+`isScrimClosing` parameter and keeps the `hasScrim &&` conjunct inside. Logically identical, and the
+class oracle proves the emitted classes are; recorded only because the two hosts' conditions now sit
+apart from the key they select
+
 ## Retired
 
 Closed, kept as the record. **Nothing below counts as an open debt** — `scripts/status.mjs` stops
 tallying at this heading, and `astryx-parity` must not find a retired entry when it greps for
 "is this drift already known?", or it would skip live drift.
 
+
+### Batch 5's doc omissions — two of the four closed at 0.4.1
+
+- **units:** NumberInput, CodeBlock
+- **kind:** upstream-lag
+- **retires:** retired at 0.5.0
+
+`NumberInput`'s `onKeyDown` and `CodeBlock`'s `highlightMode` are still real source props absent from both locales of their `.doc.mjs` props tables; ported from source, as the `Lightbox` `defaultIndex`/`hasAutoPlay` gap below already is. `NumberInput`'s `width` and `FileInput`'s `width` were the other two, and **0.4.1's props tables document both**, so those halves are retired.
+
+**Closed at 0.5.0.** Upstream's documentation PRs (#4315-#4320) document
+`NumberInput.onKeyDown` and `CodeBlock.highlightMode`. Our re-emitted `.doc.mjs` carry both — the
+handler under Svelte's lowercase `onkeydown`, with upstream's description.
+
+### Upstream doc gap: `defaultIndex` and `hasAutoPlay` are absent from `Lightbox.doc.mjs`
+
+- **units:** Lightbox
+- **kind:** upstream-lag
+- **retires:** retired at 0.5.0
+
+Real props (present in `LightboxProps` and the shipped `.d.ts`) but are absent from `Lightbox.doc.mjs`'s props table in both locales. Ported from source, per the Icon px→rem precedent
+
+**Closed at 0.5.0.** Both are documented in upstream's `Lightbox.doc.mjs`, and our re-emitted
+copy carries them.
 ### `{...rest}` position now matches upstream everywhere it is observable
 
 - **units:** Breadcrumbs, Heading, Lightbox, SideNav, TopNav, Collapsible, MobileNav, ChatComposerDrawer, CodeBlock, Text

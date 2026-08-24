@@ -31,6 +31,7 @@
 	import { isImeKeyEvent } from '../../utils/ime.js';
 	import NestedEditor from './nested-editor.svelte';
 	import {
+		editPopoverChipRowStyle,
 		editPopoverContainerAttrs,
 		editPopoverContentAttrs,
 		editPopoverFieldSelectorAttrs,
@@ -349,7 +350,7 @@
 {:else}
 	<div {...editPopoverContainerAttrs()} onkeydown={handleKeyDown}>
 		<div {...editPopoverContentAttrs()}>
-			<HStack gap={2}>
+			<HStack gap={2} xstyle={editPopoverChipRowStyle}>
 				{@render fieldSelector()}
 				{#if showOperatorSelector && operatorOptions.length > 0}
 					<div {...editPopoverOperatorSelectorAttrs()}>

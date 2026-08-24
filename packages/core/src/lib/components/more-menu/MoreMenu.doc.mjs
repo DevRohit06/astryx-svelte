@@ -117,6 +117,11 @@ export default {
 			default: "'start'"
 		},
 		{
+			name: 'onOpenChange',
+			type: '(isOpen: boolean) => void',
+			description: 'Callback fired when the menu opens or closes.'
+		},
+		{
 			name: 'xstyle',
 			type: 'StyleArg',
 			description:

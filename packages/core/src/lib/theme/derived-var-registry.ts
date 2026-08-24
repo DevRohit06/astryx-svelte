@@ -74,6 +74,10 @@ export const derivedVarRegistry: Record<string, DerivedVarEntry[]> = {
 	],
 	field: [{ property: 'borderRadius', vars: ['--_field-radius'] }],
 	hovercard: [{ property: 'borderRadius', vars: ['--_hovercard-radius'] }],
+	'number-input': [
+		{ property: 'padding', expand: 'container' },
+		{ property: 'borderRadius', vars: ['--_field-radius'] }
+	],
 	popover: [{ property: 'borderRadius', vars: ['--_popover-radius'] }],
 	// `replaces`, because the mark's own `width`/`height` must not compete with
 	// the var. They were plain StyleX declarations through 0.3.0, so a

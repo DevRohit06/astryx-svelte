@@ -124,6 +124,12 @@ export default {
 			name: 'onHide',
 			type: '(reason: ToastDismissReason) => void',
 			description: 'Callback fired when the toast is removed.'
+		},
+		{
+			name: 'onDismiss',
+			type: '(reason: ToastDismissReason) => void',
+			description: 'Callback fired when the toast is dismissed.',
+			required: true
 		}
 	]
 };

@@ -146,6 +146,26 @@ export default {
 			default: '40'
 		},
 		{
+			name: 'maxOperatorMenuItems',
+			type: 'number',
+			description:
+				'Maximum suggestions shown in string and entity value typeaheads. Does not affect the main field search menu or enum value menus.',
+			default: '10'
+		},
+		{
+			name: 'maxSearchResults',
+			type: 'number',
+			description:
+				'Max ranked results for a non-empty query. Does not affect a field value editor. Browsing with an empty query shows up to 1,000 fields.',
+			default: '10'
+		},
+		{
+			name: 'menuWidth',
+			type: 'number',
+			description:
+				'Width in pixels for the main field/search menu. Does not affect field value editors.'
+		},
+		{
 			name: 'popoverSaveButtonLabel',
 			type: 'string',
 			description: 'Label for the save button in the edit popover.',
@@ -178,6 +198,33 @@ export default {
 			type: "'sm' | 'md' | 'lg'",
 			description: 'Size of the search input and tokens.',
 			default: "'md'"
+		},
+		{
+			name: 'menuWidth',
+			type: 'number',
+			description: 'Maximum width for the operator/value dropdown menu in pixels.'
+		},
+		{
+			name: 'maxOperatorMenuItems',
+			type: 'number',
+			description: 'Maximum number of items displayed in the operator dropdown.'
+		},
+		{
+			name: 'tokenOverflowBehavior',
+			type: "'none' | 'unfocusedInline' | 'unfocusedLayer'",
+			description:
+				'Controls how tokens overflow when the container is too narrow. Forwarded to Tokenizer.',
+			default: "'none'"
+		},
+		{
+			name: 'onFocus',
+			type: '(e: FocusEvent) => void',
+			description: 'Fires when focus enters the search input.'
+		},
+		{
+			name: 'onBlur',
+			type: '(e: FocusEvent) => void',
+			description: 'Fires when focus leaves the search input.'
 		},
 		{
 			name: 'xstyle',

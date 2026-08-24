@@ -61,7 +61,14 @@ export default {
 		{
 			name: 'href',
 			type: 'string',
-			description: 'URL to navigate to; when provided, the tab renders as an anchor element.'
+			description:
+				'URL to navigate to; when provided, the tab renders as an anchor element. Ignored in a TabList given an explicit role="tablist".'
+		},
+		{
+			name: 'panelId',
+			type: 'string',
+			description:
+				'Id of the panel this tab controls, wired up as aria-controls where the TabList speaks the tabs pattern. Put the same id on the panel element. No effect under the navigation pattern, and a development warning says so.'
 		},
 		{
 			name: 'as',

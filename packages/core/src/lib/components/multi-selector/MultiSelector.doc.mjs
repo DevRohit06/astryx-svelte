@@ -159,6 +159,12 @@ export default {
 			default: "'count'"
 		},
 		{
+			name: 'formatValue',
+			type: '(items: {value: string; label: string}[]) => string',
+			description:
+				'Formats the trigger text when triggerDisplay="count" or "labels". Receives the selected items (value plus resolved label); the count is items.length. Not used by triggerDisplay="badges".'
+		},
+		{
 			name: 'maxBadges',
 			type: 'number',
 			description: 'Maximum badges to show before "+N". Only for triggerDisplay="badges".',
@@ -259,6 +265,23 @@ export default {
 			type: 'SizeValue',
 			description:
 				'Width of the field (number = pixels, string used as-is, e.g. "100%"). Sizes the whole field (label, control, and status) so they stay aligned.'
+		},
+		{
+			name: 'startIcon',
+			type: 'IconName | Snippet',
+			description: 'Icon displayed at the start of the selector trigger.'
+		},
+		{
+			name: 'hasClear',
+			type: 'boolean',
+			description: 'Shows a clear button when values are selected.',
+			default: 'false'
+		},
+		{
+			name: 'isDefaultOpen',
+			type: 'boolean',
+			description: 'Whether the dropdown starts open on mount.',
+			default: 'false'
 		},
 		{
 			name: 'xstyle',
