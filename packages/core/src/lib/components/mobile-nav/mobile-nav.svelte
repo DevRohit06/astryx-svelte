@@ -60,6 +60,8 @@
 	import Heading from '../heading/heading.svelte';
 	import Icon from '../icon/icon.svelte';
 	import { holdScrollbarGutter, type ScrollbarGutterHold } from '../../hooks/scrollbar-gutter.js';
+	import LayerDepthProvider from '../layer/layer-depth-provider.svelte';
+	import { useLayerDismissal } from '../layer/use-layer-dismissal.svelte.js';
 	import { resolveCloseDelay } from './close-timing.js';
 	import {
 		mobileNavContentAttrs,
@@ -76,7 +78,12 @@
 	 * Like `Dialog` and `Lightbox`, and unlike every popover in this library, it
 	 * is a **native `<dialog>` opened with `showModal()`**: the browser gives it
 	 * the top layer (so no `z-index` is needed anywhere), `::backdrop`, body
-	 * scroll lock, focus containment and Escape via the `cancel` event.
+	 * scroll lock and focus containment.
+	 *
+	 * Escape is owned by the shared dismissal stack (`useLayerDismissal`), so a
+	 * drawer opened over another layer takes the press and nothing behind it
+	 * closes. The native `cancel` event still handles the dismissals the browser
+	 * starts itself, such as the Android back gesture.
 	 *
 	 * Inside an `AppShell`, `isOpen`/`onOpenChange` come from context. Standalone,
 	 * pass them yourself.
@@ -247,8 +254,33 @@
 		};
 	});
 
+	/**
+	 * Join the shared dismissal stack for as long as the drawer is open. No
+	 * `escapeBehavior` (it closes, which is the default), no `getContainer` (the
+	 * `LayerDepthProvider` below is what tells the stack about nesting) and no
+	 * `isPresent` — `isOpen` is the prop that drives `showModal()` in the same
+	 * flush, so registration and the DOM cannot disagree.
+	 */
+	const { shouldDismissOnCloseRequest } = useLayerDismissal(() => ({
+		isActive: isOpen,
+		onDismiss: () => onOpenChange(false)
+	}));
+
+	/**
+	 * The native `cancel` event is the browser's own close-watcher firing: an
+	 * Android back gesture, or a close request the stack never saw a press for.
+	 * Escape presses the stack owns never arrive here — it `preventDefault()`s
+	 * those, which suppresses the close watcher.
+	 *
+	 * Always `preventDefault` so the browser cannot close a controlled `<dialog>`
+	 * behind the component's back, then answer with the stack's own rules:
+	 * top-most only, and never while an IME composition is in progress.
+	 */
 	function handleCancel(event: Event): void {
 		event.preventDefault();
+		if (!shouldDismissOnCloseRequest()) {
+			return;
+		}
 		onOpenChange(false);
 	}
 
@@ -304,33 +336,40 @@
 	onclick={handleDialogClick}
 	oncancel={handleCancel}
 >
-	<!-- Drawer panel — tabindex so showModal() focuses the drawer, not the close button -->
-	<div tabindex="-1" class={drawerAttrs.class} style={drawerAttrs.style}>
-		<!-- Header — content + close button -->
-		<div class={headerAttrs.class} style={headerAttrs.style}>
-			{#if hasStringHeader}
-				<!--
-					The inset rides the `Heading`'s own `xstyle`, as upstream's
-					`<Heading level={2} xstyle={styles.headerText}>` does (#4775). It used
-					to be a wrapper `<span>` here, which put an element in the drawer
-					header that upstream's DOM does not have.
-				-->
-				<Heading level={2} xstyle={mobileNavHeaderTextStyle}>{header as string}</Heading>
-			{:else if header != null}
-				{@render (header as Snippet)()}
-			{/if}
-			<Button
-				variant="ghost"
-				label={t('@astryx.mobileNav.closeNavigation')}
-				icon={closeIcon}
-				onclick={() => onOpenChange(false)}
-				isIconOnly
-			/>
-		</div>
+	<!--
+		`LayerDepthProvider` renders no element — it publishes this drawer's depth
+		so anything opened from inside it registers on the dismissal stack as
+		nested, and takes an Escape press ahead of the drawer.
+	-->
+	<LayerDepthProvider>
+		<!-- Drawer panel — tabindex so showModal() focuses the drawer, not the close button -->
+		<div tabindex="-1" class={drawerAttrs.class} style={drawerAttrs.style}>
+			<!-- Header — content + close button -->
+			<div class={headerAttrs.class} style={headerAttrs.style}>
+				{#if hasStringHeader}
+					<!--
+						The inset rides the `Heading`'s own `xstyle`, as upstream's
+						`<Heading level={2} xstyle={styles.headerText}>` does (#4775). It used
+						to be a wrapper `<span>` here, which put an element in the drawer
+						header that upstream's DOM does not have.
+					-->
+					<Heading level={2} xstyle={mobileNavHeaderTextStyle}>{header as string}</Heading>
+				{:else if header != null}
+					{@render (header as Snippet)()}
+				{/if}
+				<Button
+					variant="ghost"
+					label={t('@astryx.mobileNav.closeNavigation')}
+					icon={closeIcon}
+					onclick={() => onOpenChange(false)}
+					isIconOnly
+				/>
+			</div>
 
-		<!-- Scrollable content -->
-		<div class={contentAttrs.class} style={contentAttrs.style}>
-			{@render children()}
+			<!-- Scrollable content -->
+			<div class={contentAttrs.class} style={contentAttrs.style}>
+				{@render children()}
+			</div>
 		</div>
-	</div>
+	</LayerDepthProvider>
 </dialog>

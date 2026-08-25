@@ -1,27 +1,31 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import HoverCard from './fixtures/hover-card-fixture.svelte';
+import HoverCardTouch from './fixtures/hover-card-touch-fixture.svelte';
 import HoverCardParagraph from './fixtures/hover-card-paragraph.svelte';
 import HoverCardInLink from './fixtures/hover-card-in-link.svelte';
 import HoverCardSafeHost from './fixtures/hover-card-safe-host.svelte';
 import HoverCardNestedTheme from './fixtures/hover-card-nested-theme.svelte';
 import { TIMER_BUDGET } from './timer-budget.js';
 import { whenWired } from './trigger-wiring.js';
+import { __resetInteractionModalityForTest } from '$lib/utils/interaction-modality.js';
 
 /**
  * Ported from Astryx's `HoverCard/HoverCard.test.tsx` at the **0.5.0** pin,
- * which declares **35** cases. **Twenty-four of them live here.**
+ * which declares **35** cases. **Thirty-one of them live here.**
  *
  * Three more are server-side and live in `hover-card.test.ts`, which runs in the
  * node project against `svelte/server` — the repo rule that decides the project
- * by filename — so 27 of upstream's 35 are ported between the two files. One of
- * the remaining eight is dropped with its reason: the `SSR / hydration`
- * mismatch case, accounted for in the note at the bottom of this file.
+ * by filename — so 34 of upstream's 35 are ported between the two files. The
+ * one that is left is dropped with its reason: the `SSR / hydration` mismatch
+ * case, accounted for in the note further down this file.
  *
- * The other **seven are upstream's whole `touch` describe**, new at 0.5.0 with
- * #5248 (tap to open where there is no hover). Nothing here covers
- * `touchTrigger`, tap-to-open, tap-to-dismiss or the focus a tap leaves behind.
- * (This header read "declares twenty-eight cases … upstream's file has not moved
+ * The seven-case `touch` describe at the bottom is new at 0.5.0 with #5248 (tap
+ * to open where there is no hover) and is ported in full. It was unported until
+ * `touchTrigger` existed here at all: the prop was documented in
+ * `HoverCard.doc.mjs` and declared nowhere, so `grep touchTrigger src/lib`
+ * returned only prose. (This header read "Twenty-four of them live here", and
+ * before that "declares twenty-eight cases … upstream's file has not moved
  * since" at the v0.4.5 pin; #5248 moved it.)
  *
  * Upstream's `beforeAll`/`afterAll` block is gone, exactly as it is in
@@ -563,4 +567,201 @@ describe('HoverCard', () => {
 	 *   cases pin the server markup as inline-safe phrasing content with no
 	 *   `<div>`, which is the shape the mismatch came from.
 	 */
+
+	describe('touch', () => {
+		// The modality is document-global; a tap in one case must not decide the
+		// next one's answer.
+		beforeEach(() => {
+			__resetInteractionModalityForTest();
+		});
+
+		/**
+		 * A tap: the pointer sequence a finger produces before hover is faked.
+		 *
+		 * Upstream's `fireEvent.pointerEnter`/`pointerDown`/`pointerUp`/
+		 * `mouseEnter`, dispatched the same way. A finger's arrival fires
+		 * `pointerenter` too, and that is the path a pen must not take — covered
+		 * here rather than starting at `pointerdown`.
+		 *
+		 * The press bubbles, which testing-library's does by default and which
+		 * matters here: `trackInteractionModality` listens at the document, and a
+		 * press that never reaches it leaves `getInteractionModality()` reading
+		 * `'keyboard'` — the one value that makes the touch-focus guard inert.
+		 */
+		function tap(element: HTMLElement): void {
+			element.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
+			element.dispatchEvent(
+				new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })
+			);
+			element.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch', bubbles: true }));
+			// Touch synthesizes hover after the press; the card must not act on it.
+			mouse(element, 'mouseenter');
+		}
+
+		/**
+		 * Upstream's `fireEvent.focusIn(trigger)`: a `focusin` with no focus move.
+		 *
+		 * The rest of this file translates `fireEvent.focus` to a real
+		 * `trigger.focus()`, and that cannot serve here — the last case needs two
+		 * focus arrivals on the *same* element, and refocusing an already-focused
+		 * element emits nothing. `handleFocusIn` is what is under test and it
+		 * listens for `focusin`, so the event is dispatched directly, exactly as
+		 * upstream dispatches it. That the dispatch really reaches the handler is
+		 * not assumed: the second half of that same case opens the card through
+		 * this function, which is what keeps the cases asserting an *absence*
+		 * falsifiable.
+		 */
+		function focusIn(element: HTMLElement): void {
+			element.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+		}
+
+		/** The inert `<span tabindex=0>` a text-only hover card renders. */
+		const TEXT_TRIGGER = 'span[tabindex]';
+
+		it('opens on a tap when the trigger performs no action', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(HoverCardTouch, {
+				props: { onOpenChange, delay: 300 }
+			});
+
+			tap(await triggerIn(screen.container, TEXT_TRIGGER));
+
+			// Immediately: a tap is a decision, not hover intent, so no delay applies.
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+		});
+
+		it('stays shut on a tap when the trigger performs an action', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(HoverCardTouch, {
+				props: { onOpenChange, delay: 0, trigger: 'button', triggerText: 'Save' }
+			});
+
+			const trigger = await triggerIn(screen.container, 'button');
+			tap(trigger);
+			// A tap focuses what it activates; that focus must not reopen the card.
+			focusIn(trigger);
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(onOpenChange).not.toHaveBeenCalledWith(true);
+		});
+
+		it('opens on a tap of an action trigger when touchTrigger is "tap"', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(HoverCardTouch, {
+				props: {
+					onOpenChange,
+					touchTrigger: 'tap',
+					delay: 0,
+					trigger: 'button',
+					triggerText: 'Details'
+				}
+			});
+
+			tap(await triggerIn(screen.container, 'button'));
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+		});
+
+		it('survives a tap on its own content', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(HoverCardTouch, {
+				props: {
+					onOpenChange,
+					delay: 0,
+					hideDelay: 0,
+					contentAs: 'button',
+					contentText: 'Follow'
+				}
+			});
+
+			tap(await triggerIn(screen.container, TEXT_TRIGGER));
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+			onOpenChange.mockClear();
+
+			// Upstream's `findByRole('button', {name: 'Follow', hidden: true})` — a
+			// container query here, as everywhere else in this file, because the
+			// card is `lazyMount`ed and only appears once it opens.
+			const action = await vi.waitFor(() => {
+				const el = maybeLayerIn(screen.container)?.querySelector('button');
+				expect(el).toBeInstanceOf(HTMLElement);
+				return el as HTMLElement;
+			});
+			action.dispatchEvent(
+				new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })
+			);
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(onOpenChange).not.toHaveBeenCalledWith(false);
+		});
+
+		it('closes on a tap outside', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(HoverCardTouch, {
+				props: { onOpenChange, delay: 0, hideDelay: 0, hasOutsideButton: true }
+			});
+
+			tap(await triggerIn(screen.container, TEXT_TRIGGER));
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+
+			const elsewhere = screen.getByRole('button', { name: 'Elsewhere', exact: true }).element();
+			elsewhere.dispatchEvent(
+				new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })
+			);
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(false);
+			});
+		});
+
+		it('closes on a second tap of the trigger', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(HoverCardTouch, {
+				props: { onOpenChange, delay: 0, hideDelay: 0 }
+			});
+
+			const trigger = await triggerIn(screen.container, TEXT_TRIGGER);
+			tap(trigger);
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+
+			tap(trigger);
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(false);
+			});
+		});
+
+		it('ignores the focus a tap leaves behind, but not keyboard focus', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(HoverCardTouch, {
+				props: { onOpenChange, delay: 0, trigger: 'button', triggerText: 'Save' }
+			});
+
+			const trigger = await triggerIn(screen.container, 'button');
+			// The tap goes to the button, as `auto` decides for an action trigger —
+			// and the focus it leaves behind must not put the card over the control
+			// the user just pressed.
+			tap(trigger);
+			focusIn(trigger);
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(onOpenChange).not.toHaveBeenCalledWith(true);
+
+			// Reaching for the keyboard ends the touch interaction: the same trigger,
+			// focused by Tab, still opens.
+			document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+			focusIn(trigger);
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+		});
+	});
 });

@@ -47,6 +47,8 @@
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
 	import { useScrollLock } from '../../hooks/use-scroll-lock.svelte.js';
+	import LayerDepthProvider from '../layer/layer-depth-provider.svelte';
+	import { useLayerDismissal } from '../layer/use-layer-dismissal.svelte.js';
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { rtlMirrorAttrs } from '../../utils/rtl.stylex.js';
 	import { themeProps } from '../../internal/theme-props.js';
@@ -258,6 +260,34 @@
 		onOpenChange(false);
 	}
 
+	/**
+	 * Join the shared layer dismissal stack, which owns the single Escape
+	 * listener and routes each press to the top-most layer — so a lightbox opened
+	 * from inside a dialog closes only itself.
+	 *
+	 * Upstream passes `isActive` and `onDismiss` and nothing else, and so does
+	 * this: the lightbox wraps its own content in `LayerDepthProvider`, so it
+	 * needs no `getContainer` to have its nesting recovered from the DOM, and
+	 * `isOpen` is the same prop `showModal()`/`close()` are driven from, so
+	 * registration cannot lag what is on screen and there is nothing for
+	 * `isPresent` to correct. It is always dismissible, so `escapeBehavior` stays
+	 * at its `'close'` default.
+	 */
+	const { shouldDismissOnCloseRequest } = useLayerDismissal(() => ({
+		isActive: isOpen,
+		onDismiss: handleClose
+	}));
+
+	/**
+	 * The native `cancel` event is the browser's own close-watcher firing: an
+	 * Android back gesture, or a close request the stack never saw a press for.
+	 * Escape presses the stack owns never arrive here — it `preventDefault()`s
+	 * those, which suppresses the close watcher.
+	 *
+	 * Always `preventDefault` so the browser cannot close a controlled `<dialog>`
+	 * behind our back, then answer with the stack's own rules: top-most only, and
+	 * never while an IME composition is in progress.
+	 */
 	function handleCancel(e: Event): void {
 		// Composed, not replaced. Upstream spreads `{...props}` last, so a consumer's
 		// `onCancel` *replaces* this one and Escape silently stops calling
@@ -272,6 +302,9 @@
 			return;
 		}
 		e.preventDefault();
+		if (!shouldDismissOnCloseRequest()) {
+			return;
+		}
 		handleClose();
 	}
 
@@ -468,107 +501,109 @@
 		style={mergeStyle(dialogAttrs.style, styleProp as string | undefined)}
 		{...rest}
 	>
-		<div bind:this={containerEl} class={container.class} style={container.style}>
-			<IconButton
-				icon={closeIcon}
-				label={t('@astryx.lightbox.close')}
-				variant="ghost"
-				onclick={handleClose}
-				xstyle={[lightboxCloseButtonStyle, lightboxControlButtonStyle]}
-			/>
-
-			<!--
-				Gallery nav: prev — stays mounted and is disabled at the start of the
-				range so pressing/arrowing to the boundary doesn't unmount the focused
-				control and drop focus to <body>.
-			-->
-			{#if isGallery}
+		<LayerDepthProvider>
+			<div bind:this={containerEl} class={container.class} style={container.style}>
 				<IconButton
-					icon={prevIcon}
-					label={t('@astryx.lightbox.previous')}
+					icon={closeIcon}
+					label={t('@astryx.lightbox.close')}
 					variant="ghost"
-					isDisabled={!canPrev}
-					onclick={goToPrev}
-					xstyle={[lightboxNavButtonStyle, lightboxNavPrevStyle, lightboxControlButtonStyle]}
+					onclick={handleClose}
+					xstyle={[lightboxCloseButtonStyle, lightboxControlButtonStyle]}
 				/>
-			{/if}
 
-			<!-- Media + caption group (centered together) -->
-			<div class={mediaGroup.class} style={mediaGroup.style}>
 				<!--
-					The wrapper is a keyboard-operable zoom toggle when zoom is enabled:
-					Enter/Space toggles, aria-pressed reflects state.
+					Gallery nav: prev — stays mounted and is disabled at the start of the
+					range so pressing/arrowing to the boundary doesn't unmount the focused
+					control and drop focus to <body>.
 				-->
-				<!--
-					`role` is conditional, so the compiler cannot see that the element
-					carrying `tabindex` is the one carrying `role="button"` — the two are
-					set by the same flag and never appear apart.
-				-->
-				<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
-				<div
-					role={isZoomTarget ? 'button' : undefined}
-					tabindex={isZoomTarget ? 0 : undefined}
-					aria-pressed={isZoomTarget ? isZoomed : undefined}
-					aria-label={isZoomTarget ? t('@astryx.lightbox.zoom') : undefined}
-					class={imageWrapper.class}
-					style={imageWrapper.style}
-					ondblclick={isVideo ? undefined : handleDoubleClick}
-					onkeydown={isZoomTarget ? handleImageKeyDown : undefined}
-					onpointerdown={isVideo ? undefined : handlePointerDown}
-				>
-					{#if isVideo}
-						<!-- svelte-ignore a11y_media_has_caption -->
-						<video
-							src={currentItem.src}
-							aria-label={currentItem.alt}
-							controls
-							autoplay={hasAutoPlay}
-							class={video.class}
-							style={video.style}
-						></video>
-					{:else}
-						<img
-							src={currentItem.src}
-							alt={currentItem.alt}
-							draggable={false}
-							class={image.class}
-							style={image.style}
-						/>
+				{#if isGallery}
+					<IconButton
+						icon={prevIcon}
+						label={t('@astryx.lightbox.previous')}
+						variant="ghost"
+						isDisabled={!canPrev}
+						onclick={goToPrev}
+						xstyle={[lightboxNavButtonStyle, lightboxNavPrevStyle, lightboxControlButtonStyle]}
+					/>
+				{/if}
+
+				<!-- Media + caption group (centered together) -->
+				<div class={mediaGroup.class} style={mediaGroup.style}>
+					<!--
+						The wrapper is a keyboard-operable zoom toggle when zoom is enabled:
+						Enter/Space toggles, aria-pressed reflects state.
+					-->
+					<!--
+						`role` is conditional, so the compiler cannot see that the element
+						carrying `tabindex` is the one carrying `role="button"` — the two are
+						set by the same flag and never appear apart.
+					-->
+					<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+					<div
+						role={isZoomTarget ? 'button' : undefined}
+						tabindex={isZoomTarget ? 0 : undefined}
+						aria-pressed={isZoomTarget ? isZoomed : undefined}
+						aria-label={isZoomTarget ? t('@astryx.lightbox.zoom') : undefined}
+						class={imageWrapper.class}
+						style={imageWrapper.style}
+						ondblclick={isVideo ? undefined : handleDoubleClick}
+						onkeydown={isZoomTarget ? handleImageKeyDown : undefined}
+						onpointerdown={isVideo ? undefined : handlePointerDown}
+					>
+						{#if isVideo}
+							<!-- svelte-ignore a11y_media_has_caption -->
+							<video
+								src={currentItem.src}
+								aria-label={currentItem.alt}
+								controls
+								autoplay={hasAutoPlay}
+								class={video.class}
+								style={video.style}
+							></video>
+						{:else}
+							<img
+								src={currentItem.src}
+								alt={currentItem.alt}
+								draggable={false}
+								class={image.class}
+								style={image.style}
+							/>
+						{/if}
+					</div>
+
+					{#if currentItem.caption}
+						<div class={captionAttrs.class} style={captionAttrs.style}>
+							{#if typeof currentItem.caption === 'function'}
+								{@render currentItem.caption()}
+							{:else}
+								{currentItem.caption}
+							{/if}
+						</div>
 					{/if}
 				</div>
 
-				{#if currentItem.caption}
-					<div class={captionAttrs.class} style={captionAttrs.style}>
-						{#if typeof currentItem.caption === 'function'}
-							{@render currentItem.caption()}
-						{:else}
-							{currentItem.caption}
-						{/if}
+				<!--
+					Gallery nav: next — see "prev" above; stays mounted and disabled at the
+					end of the range instead of unmounting.
+				-->
+				{#if isGallery}
+					<IconButton
+						icon={nextIcon}
+						label={t('@astryx.lightbox.next')}
+						variant="ghost"
+						isDisabled={!canNext}
+						onclick={goToNext}
+						xstyle={[lightboxNavButtonStyle, lightboxNavNextStyle, lightboxControlButtonStyle]}
+					/>
+				{/if}
+
+				<!-- Gallery counter -->
+				{#if isGallery && mediaArray.length > 1}
+					<div class={counter.class} style={counter.style}>
+						{index + 1} / {mediaArray.length}
 					</div>
 				{/if}
 			</div>
-
-			<!--
-				Gallery nav: next — see "prev" above; stays mounted and disabled at the
-				end of the range instead of unmounting.
-			-->
-			{#if isGallery}
-				<IconButton
-					icon={nextIcon}
-					label={t('@astryx.lightbox.next')}
-					variant="ghost"
-					isDisabled={!canNext}
-					onclick={goToNext}
-					xstyle={[lightboxNavButtonStyle, lightboxNavNextStyle, lightboxControlButtonStyle]}
-				/>
-			{/if}
-
-			<!-- Gallery counter -->
-			{#if isGallery && mediaArray.length > 1}
-				<div class={counter.class} style={counter.style}>
-					{index + 1} / {mediaArray.length}
-				</div>
-			{/if}
-		</div>
+		</LayerDepthProvider>
 	</dialog>
 {/if}

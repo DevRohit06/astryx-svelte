@@ -24,19 +24,20 @@ import Trap from './fixtures/escape-shim-trap.svelte';
  * stop closing. `bottom-sheet-switcher.svelte` gates its dismissal on the same
  * call here, so the hazard is this port's too.
  *
- * **This port has no shared dismissal stack yet** (upstream's
- * `Layer/useLayerDismissal` + `Layer/layerStack`, four suites, not started —
- * see `port/ledger/032-upstream-0.5.0.md`). It does not block a single case,
- * and the reason is worth stating because it is the thing that could change:
- * the state behind the shim is the same state on both sides. Upstream 0.5.0
- * counts traps in a dedicated `activeEscapeTrapCount` deliberately kept
- * separate from the stack; here the shim reads `useFocusTrap`'s own Escape
- * stack, which nothing but a focus trap ever pushes onto. Dialog, Lightbox,
- * MobileNav and Tooltip register no focus trap in this port either, so all four
- * "is false" cases below assert against a real port behaviour and not against a
- * gap. When the shared stack lands, the shim has to be re-based onto a
- * trap-only count or these four cases will start failing — which is exactly
- * what they are here to do.
+ * **The shared stack landed in batch 035, and the shim was re-based onto a
+ * trap-only count in the same change** — which is what these four "is false"
+ * cases existed to force. `useFocusTrap` now registers on
+ * `Layer/useLayerDismissal` like every other family and its sixty lines of
+ * private registry are gone; what remains beside it is `activeEscapeTrapCount`,
+ * driven by the same `isActive && onEscape != null` expression that does the
+ * registering, so the count and the registration cannot disagree. Reading the
+ * shared stack instead would break exactly the four cases below, because that
+ * stack carries families which never trap focus.
+ *
+ * This header previously said the four cases "will start failing" when the
+ * stack landed. They did not, and the claim was imprecise rather than wrong:
+ * adding a separate registry changes nothing on its own. The failure is real
+ * but conditional on pointing the shim at the shared stack.
  *
  * Upstream's `afterEach(resetLayerStackForTests)` has no counterpart for the
  * same reason: there is no second stack for these components to leave entries

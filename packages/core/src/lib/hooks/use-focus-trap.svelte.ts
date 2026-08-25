@@ -1,6 +1,6 @@
 import type { Attachment } from 'svelte/attachments';
 import { FOCUSABLE_SELECTOR } from '../internal/focusable-selector.js';
-import { isImeKeyEvent } from '../utils/ime.js';
+import { useLayerDismissal } from '../components/layer/use-layer-dismissal.svelte.js';
 
 /**
  * Focus trapping, ported from Astryx's `hooks/useFocusTrap.ts`.
@@ -27,70 +27,22 @@ import { isImeKeyEvent } from '../utils/ime.js';
  */
 
 /**
- * Module-level stack of active focus-trap Escape handlers.
+ * How many Escape-dismissible focus traps are currently active.
  *
- * Every active `useFocusTrap` used to attach its own document-level `keydown`
- * listener with no coordination, so a single Escape press closed *every* open
- * layer at once (e.g. a popover nested inside a Dialog closed both). Tracking
- * traps in a shared stack lets only the top-most trap respond to Escape.
+ * This used to be a whole parallel registry: a module-level stack of trap
+ * handlers, with its own document-level `keydown` listener and its own
+ * DOM-containment rule for resolving the top-most trap. Upstream 0.5.0 deleted
+ * that — the trap now registers on the shared layer dismissal stack like every
+ * other family, and one press dismisses exactly one layer whether the layers
+ * above and below it trap focus or not.
  *
- * "Top-most" is resolved by DOM containment first, push order second. Push
- * order alone is not reliable: effects run child-before-parent, so when an
- * outer and an inner (DOM-nested) trap activate in the SAME flush, the inner
- * trap pushes first and the outer trap would wrongly win a pure last-pushed
- * comparison. Upstream's reason is React's commit order; Svelte's effect
- * ordering produces the same hazard, so the containment rule is what makes the
- * result independent of the schedule rather than a coincidence of it.
+ * What survives is this count, and upstream keeps it deliberately. It is driven
+ * by the *same expression* that registers the trap on the stack, so the two can
+ * never disagree about whether a trap is active, and it answers about focus
+ * traps alone — which is the whole contract of `hasActiveFocusTrapEscape`
+ * below.
  */
-interface EscapeStackEntry {
-	handler: () => void;
-	getContainer: () => HTMLElement | null;
-}
-
-const escapeStack: EscapeStackEntry[] = [];
-
-function pushEscapeHandler(entry: EscapeStackEntry): void {
-	escapeStack.push(entry);
-}
-
-function removeEscapeHandler(handler: () => void): void {
-	for (let i = escapeStack.length - 1; i >= 0; i--) {
-		if (escapeStack[i].handler === handler) {
-			escapeStack.splice(i, 1);
-			return;
-		}
-	}
-}
-
-/**
- * Resolve the top-most trap: walk the stack in push order, keeping the deepest
- * container by DOM containment. When a later entry's container contains the
- * current candidate's container, the candidate is nested inside it and stays on
- * top; otherwise the later push wins (containment for nested traps, push order
- * as the tiebreaker for unrelated ones).
- */
-function isTopEscapeHandler(handler: () => void): boolean {
-	if (escapeStack.length === 0) {
-		return false;
-	}
-	let top = escapeStack[0];
-	for (let i = 1; i < escapeStack.length; i++) {
-		const entry = escapeStack[i];
-		const topContainer = top.getContainer();
-		const entryContainer = entry.getContainer();
-		if (
-			topContainer != null &&
-			entryContainer != null &&
-			entryContainer !== topContainer &&
-			entryContainer.contains(topContainer)
-		) {
-			// The current top is nested inside this entry — it stays on top.
-			continue;
-		}
-		top = entry;
-	}
-	return top.handler === handler;
-}
+let activeEscapeTrapCount = 0;
 
 /**
  * Whether an Escape-dismissible focus trap is currently active — a Popover,
@@ -100,25 +52,27 @@ function isTopEscapeHandler(handler: () => void): boolean {
  * stay about focus traps *alone*: `BottomSheetSwitcher` gates its own dismissal
  * on it, so a shim that also counted tooltips, hover cards and dialogs would
  * tell the sheet a trap is above it when none is, and the sheet would stop
- * closing. `Dialog` consults it for the same reason, to defer to a popover
- * layered on top of it. `tests/focus-trap-escape-shim.svelte.test.ts` is the
- * guard on that meaning.
+ * closing. The sheet is now the **only** consumer, here and upstream —
+ * `Dialog` used to consult it to defer to a popover layered on top of it, and
+ * 0.5.0 deleted that: the ordering it approximated comes from the stack's depth
+ * key now, and the approximation was strictly wrong for a dialog over a dialog,
+ * since it can only see layers that trap focus.
+ * `tests/focus-trap-escape-shim.svelte.test.ts` is the guard on that meaning.
  *
- * What it reads is the trap stack below, which nothing but a focus trap ever
- * pushes onto — the same guarantee upstream 0.5.0 buys by keeping a separate
- * `activeEscapeTrapCount` beside its shared stack. Re-base this on a trap-only
- * count when `useLayerDismissal` lands, or the shim starts answering for every
- * family that joins.
+ * What it reads is `activeEscapeTrapCount` above, incremented from the same
+ * expression that registers this trap on the shared dismissal stack. Reading
+ * the stack itself would be wrong now that it is shared: it carries tooltips,
+ * hover cards and dialogs, none of which trap focus, and the sheet would stop
+ * closing the moment one of them was open above it.
  *
  * @deprecated Upstream 0.5.0 moved Escape coordination off the focus trap and
  *   onto one shared stack (`useLayerDismissal`), which routes each press to the
  *   top-most layer; a layer that wants that ordering should join the stack
- *   rather than ask whether a trap exists. That stack is not ported yet, so the
- *   trap still owns Escape here — the tag carries upstream's published
- *   deprecation, not a redirect that works today.
+ *   rather than ask whether a trap exists. The trap itself now does exactly
+ *   that, so the redirect is live here and not merely transcribed.
  */
 export function hasActiveFocusTrapEscape(): boolean {
-	return escapeStack.length > 0;
+	return activeEscapeTrapCount > 0;
 }
 
 /**
@@ -248,6 +202,36 @@ export function useFocusTrap(options: () => UseFocusTrapOptions): UseFocusTrapRe
 		container = element;
 	};
 
+	/**
+	 * One expression drives both the stack registration and the deprecated
+	 * `hasActiveFocusTrapEscape` count, exactly as upstream does, so the two can
+	 * never disagree about whether this trap is active. A trap with no `onEscape`
+	 * is not dismissible: it stays off the stack entirely and a press flows past
+	 * it to whatever is underneath.
+	 */
+	const isEscapeTrap = $derived(isActive && onEscape != null);
+
+	useLayerDismissal(() => ({
+		isActive: isEscapeTrap,
+		onDismiss: () => {
+			onEscape?.();
+		},
+		// The trap renders nothing, so it cannot push a depth provider around its
+		// content; hand the stack the container instead, so two DOM-nested traps
+		// still resolve in the right order.
+		getContainer: () => container
+	}));
+
+	$effect(() => {
+		if (!isEscapeTrap) {
+			return;
+		}
+		activeEscapeTrapCount += 1;
+		return () => {
+			activeEscapeTrapCount -= 1;
+		};
+	});
+
 	/** Focus the first focusable element. */
 	function focusFirst(): void {
 		if (container) {
@@ -353,46 +337,19 @@ export function useFocusTrap(options: () => UseFocusTrapOptions): UseFocusTrapRe
 	});
 
 	/**
-	 * Handle Tab key to wrap focus at boundaries, and Escape to close.
-	 * Also tracks that keyboard navigation is occurring.
+	 * Handle Tab to wrap focus at the trap's boundaries, and track that keyboard
+	 * navigation is occurring. Escape belongs to the shared dismissal stack.
 	 */
 	$effect(() => {
 		if (!isActive) {
 			return;
 		}
 
-		// Register this trap on the shared Escape stack so only the top-most
-		// active trap responds to Escape. A stable identity per active period is
-		// enough — we push on activate and remove on cleanup. The container is
-		// read lazily: the attachment may not have run yet at effect time, and the
-		// stack resolves top-most by DOM containment at keydown time.
-		const currentOnEscape = onEscape;
-		const escapeHandler = () => {
-			currentOnEscape?.();
-		};
-		if (currentOnEscape) {
-			pushEscapeHandler({
-				handler: escapeHandler,
-				getContainer: () => container
-			});
-		}
-
+		// Escape is not handled here any more: the trap registers on the shared
+		// dismissal stack above, which owns the single document-level listener and
+		// routes each press to the top-most layer. What is left is Tab wrapping.
 		const handleKeyDown = (event: KeyboardEvent) => {
 			if (!container) {
-				return;
-			}
-
-			if (event.key === 'Escape' && currentOnEscape) {
-				// Ignore Escape that is cancelling an IME composition, already handled
-				// by a nested handler, or not targeting the top-most trap.
-				if (event.defaultPrevented || isImeKeyEvent(event) || !isTopEscapeHandler(escapeHandler)) {
-					return;
-				}
-				// Mark handled and stop propagation so an outer layer (e.g. a Dialog
-				// hosting this popover) does not also dismiss on the same press.
-				event.preventDefault();
-				event.stopPropagation();
-				currentOnEscape();
 				return;
 			}
 
@@ -437,9 +394,6 @@ export function useFocusTrap(options: () => UseFocusTrapOptions): UseFocusTrapRe
 
 		return () => {
 			document.removeEventListener('keydown', handleKeyDown);
-			if (currentOnEscape) {
-				removeEscapeHandler(escapeHandler);
-			}
 		};
 	});
 

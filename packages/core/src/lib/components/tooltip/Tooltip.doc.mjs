@@ -102,7 +102,7 @@ export default {
 		},
 		{
 			name: 'touchTrigger',
-			type: "'auto' | 'tap' | 'none'",
+			type: "'none' | 'auto' | 'tap'",
 			description:
 				'What a tap does where there is no hover. auto opens on tap unless the trigger performs an action of its own (a button, link, or form control), whose tap belongs to the control. tap always opens; use it for an info icon rendered as a button, whose only job is to reveal the tooltip. none never opens on touch.',
 			default: "'auto'"

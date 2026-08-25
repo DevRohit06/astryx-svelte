@@ -2,13 +2,14 @@
 	import type { Snippet } from 'svelte';
 	import type { BaseProps } from '../../base-props.js';
 	import type { LayerAlignment, LayerPlacement } from '../layer/use-layer.svelte.js';
-	import type { HoverCardFocusTrigger } from './use-hover-card.svelte.js';
+	import type { HoverCardFocusTrigger, HoverCardTouchTrigger } from './use-hover-card.svelte.js';
 
-	// Upstream's `HoverCard.tsx:26` re-exports `HoverCardFocusTrigger` so the type
-	// is reachable from either module of the `./HoverCard` subpath. We publish no
-	// per-component subpaths (see "Known debts"), so that second path would lead
-	// nowhere, and `tooltip.svelte` already omits the equivalent re-export. The
-	// type is public from the barrel, via `use-hover-card.svelte.js`.
+	// Upstream's `HoverCard.tsx:26` re-exports `HoverCardFocusTrigger` and
+	// `HoverCardTouchTrigger` so the types are reachable from either module of the
+	// `./HoverCard` subpath. We publish no per-component subpaths (see "Known
+	// debts"), so that second path would lead nowhere, and `tooltip.svelte`
+	// already omits the equivalent re-export. Both types are public from the
+	// barrel, via `use-hover-card.svelte.js`.
 
 	/**
 	 * Upstream's `Pick<BaseProps, 'xstyle' | 'className' | 'style'>` minus the
@@ -67,6 +68,17 @@
 		focusTrigger?: HoverCardFocusTrigger;
 
 		/**
+		 * What a tap does on a touch pointer, where there is no hover:
+		 * - `auto`: tap opens the card, unless the trigger performs an action of its
+		 *   own (a button, a link, a form control) — that tap belongs to the control
+		 * - `tap`: tap always opens the card, even on a trigger that acts
+		 * - `none`: touch never opens the card
+		 *
+		 * @default 'auto'
+		 */
+		touchTrigger?: HoverCardTouchTrigger;
+
+		/**
 		 * Whether the hover card is enabled.
 		 * When false, hover/focus triggers are disabled.
 		 *
@@ -104,6 +116,12 @@
 		 * - `true`: force-show the hover card (hover/focus hide is suppressed)
 		 * - `false`: force-hide the hover card
 		 * - `undefined`: uncontrolled — hover/focus triggers manage visibility
+		 *
+		 * A controlled hover card still takes Escape when it is the top-most
+		 * layer, and answers by calling `onOpenChange(false)` without hiding
+		 * itself — closing is your update's decision, exactly as for a controlled
+		 * Dialog. Ignore the call and the card stays, and so does the press:
+		 * nothing underneath dismisses.
 		 */
 		isOpen?: boolean;
 
@@ -171,6 +189,7 @@
 		delay = 300,
 		hideDelay = 200,
 		focusTrigger = 'auto',
+		touchTrigger = 'auto',
 		isEnabled = true,
 		label,
 		onOpenChange,
@@ -201,6 +220,7 @@
 		delay,
 		hideDelay,
 		focusTrigger,
+		touchTrigger,
 		isEnabled,
 		label,
 		isOpen,

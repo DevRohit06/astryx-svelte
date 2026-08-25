@@ -1,19 +1,30 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Tooltip from './fixtures/tooltip-fixture.svelte';
+import TooltipTouch from './fixtures/tooltip-touch-fixture.svelte';
 import { TIMER_BUDGET } from './timer-budget.js';
 import { whenWired } from './trigger-wiring.js';
+import { __resetInteractionModalityForTest } from '$lib/utils/interaction-modality.js';
 
 /**
- * Ported from Astryx's `Tooltip/Tooltip.test.tsx` — **12 of its 24 cases at the
- * 0.5.0 pin**.
+ * Ported from Astryx's `Tooltip/Tooltip.test.tsx` — **all 24 of its cases at the
+ * 0.5.0 pin**. Nothing is dropped.
  *
- * The 12 not here are two whole describes: `controlled` (1 — `echoes the close
- * through onOpenChange when the consumer flips isOpen`) and `touch` (11), the
- * tap-to-open/tap-to-dismiss, pen-hover and touch-then-focus behaviour behind
- * `touchTrigger` that 0.5.0 added with #5248. Nothing in this file covers
- * `touchTrigger`. (The header read "all twelve cases at v0.3.0 … nothing is
- * dropped"; 12 was the whole suite at that tag, and the version bumps
+ * The last gap closed with the shared-dismissal-stack migration: upstream's
+ * `controlled` describe — `echoes the close through onOpenChange when the
+ * consumer flips isOpen` — is new at 0.5.0 and exists because a controlled
+ * tooltip now stays on the stack and answers Escape by calling `onHide` instead
+ * of hiding itself. Upstream's own comment on the case says so: the consumer
+ * sees the request, and then this echo when they comply. (The header read
+ * "23 of its 24 cases".)
+ *
+ * Upstream's 11-case `touch` describe — tap-to-open, tap-to-dismiss, pen hover
+ * and the focus a tap leaves behind, all of it new at 0.5.0 with #5248 — is
+ * ported in full at the bottom. It was unported until `touchTrigger` existed
+ * here at all: the prop was documented in `Tooltip.doc.mjs` and declared
+ * nowhere, so `grep touchTrigger src/lib` returned only prose. (The header read
+ * "12 of its 24 cases"; before that, "all twelve cases at v0.3.0 … nothing is
+ * dropped" — 12 was the whole suite at that tag, and the version bumps
  * invalidated it.)
  *
  * (The previous header said "all ten cases". Upstream has 12: its nested
@@ -58,8 +69,12 @@ function tooltipLayerIn(container: HTMLElement): HTMLElement {
  * see `trigger-wiring.ts`. Every interaction below goes through here so the
  * precondition cannot be forgotten at a call site.
  */
-async function triggerIn(container: HTMLElement): Promise<HTMLElement> {
-	const el = container.querySelector('button');
+async function triggerIn(container: HTMLElement, selector = 'button'): Promise<HTMLElement> {
+	// `selector` names the trigger for the trees the `touch` describe renders:
+	// the inert `<span tabindex=0>` of a text-only tooltip, the `<input>` of the
+	// focus cases, and — where a sibling button sits outside the tooltip — the
+	// one that is actually the trigger.
+	const el = container.querySelector(selector);
 	if (!(el instanceof HTMLElement)) {
 		throw new Error('expected a trigger button');
 	}
@@ -269,6 +284,277 @@ describe('Tooltip', () => {
 			// Give any (incorrect) async hide a chance to run.
 			await new Promise((r) => setTimeout(r, 20));
 			expect(onOpenChange).not.toHaveBeenCalledWith(false);
+		});
+	});
+
+	describe('controlled', () => {
+		// Escape asks a controlled tooltip to close by calling this same handler,
+		// so a consumer who complies sees the request and then this echo. Pinning
+		// the echo here keeps the two straight.
+		it('echoes the close through onOpenChange when the consumer flips isOpen', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(Tooltip, {
+				props: { content: 'Pinned', isOpen: true, onOpenChange, delay: 0 }
+			});
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+			onOpenChange.mockClear();
+
+			await screen.rerender({ content: 'Pinned', isOpen: false, onOpenChange, delay: 0 });
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(false);
+			});
+		});
+	});
+
+	describe('touch', () => {
+		// The modality is document-global; a tap in one case must not decide the
+		// next one's answer.
+		beforeEach(() => {
+			__resetInteractionModalityForTest();
+		});
+
+		/**
+		 * A tap: the pointer sequence a finger produces before hover is faked.
+		 *
+		 * Upstream's `fireEvent.pointerEnter`/`pointerDown`/`pointerUp`/
+		 * `mouseEnter`, dispatched the same way. A finger's arrival fires
+		 * `pointerenter` too, and that is the path a pen must not take — covered
+		 * here rather than starting at `pointerdown`.
+		 *
+		 * The press bubbles, which testing-library's does by default and which
+		 * matters here: `trackInteractionModality` listens at the document, and a
+		 * press that never reaches it leaves `getInteractionModality()` reading
+		 * `'keyboard'` — the one value that makes the touch-focus guard inert.
+		 */
+		function tap(element: HTMLElement): void {
+			element.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'touch' }));
+			element.dispatchEvent(
+				new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })
+			);
+			element.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'touch', bubbles: true }));
+			// Touch synthesizes hover after the press; the tooltip must not act on it.
+			mouse(element, 'mouseenter');
+		}
+
+		/** The inert `<span tabindex=0>` a text-only tooltip renders. */
+		const TEXT_TRIGGER = 'span[tabindex]';
+
+		it('opens on a tap when the trigger performs no action', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: { content: 'Tooltip text', onOpenChange, delay: 200 }
+			});
+
+			tap(await triggerIn(screen.container, TEXT_TRIGGER));
+
+			// Immediately: a tap is a decision, not hover intent, so no delay applies.
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+		});
+
+		it('stays shut on a tap when the trigger performs an action', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: {
+					content: 'Tooltip text',
+					onOpenChange,
+					delay: 0,
+					trigger: 'button',
+					triggerText: 'Save'
+				}
+			});
+
+			tap(await triggerIn(screen.container));
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(onOpenChange).not.toHaveBeenCalledWith(true);
+		});
+
+		it('opens on a tap of an action trigger when touchTrigger is "tap"', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: {
+					content: 'What this metric means',
+					onOpenChange,
+					touchTrigger: 'tap',
+					delay: 0,
+					trigger: 'button',
+					triggerText: 'Info'
+				}
+			});
+
+			tap(await triggerIn(screen.container));
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+		});
+
+		it('never opens on a tap when touchTrigger is "none"', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: { content: 'Tooltip text', onOpenChange, touchTrigger: 'none', delay: 0 }
+			});
+
+			tap(await triggerIn(screen.container, TEXT_TRIGGER));
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(onOpenChange).not.toHaveBeenCalledWith(true);
+		});
+
+		it('closes on a second tap of the trigger', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: { content: 'Tooltip text', onOpenChange, delay: 0 }
+			});
+
+			const trigger = await triggerIn(screen.container, TEXT_TRIGGER);
+			tap(trigger);
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+
+			tap(trigger);
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(false);
+			});
+		});
+
+		it('closes on a tap outside — the dismissal a tap-open owes the user', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: { content: 'Tooltip text', onOpenChange, delay: 0, hasOutsideButton: true }
+			});
+
+			tap(await triggerIn(screen.container, TEXT_TRIGGER));
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+
+			const elsewhere = screen.getByRole('button', { name: 'Elsewhere', exact: true }).element();
+			elsewhere.dispatchEvent(
+				new PointerEvent('pointerdown', { pointerType: 'touch', bubbles: true })
+			);
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(false);
+			});
+		});
+
+		it('still opens on a real mouse hover after a tap', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: {
+					content: 'Tooltip text',
+					onOpenChange,
+					delay: 0,
+					trigger: 'button',
+					triggerText: 'Save'
+				}
+			});
+
+			const trigger = await triggerIn(screen.container);
+			tap(trigger);
+			await new Promise((resolve) => setTimeout(resolve, 20));
+			expect(onOpenChange).not.toHaveBeenCalledWith(true);
+
+			// A hybrid device: the same trigger, now under a mouse.
+			trigger.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'mouse' }));
+			mouse(trigger, 'mouseenter');
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+		});
+
+		it('opens on a hovering pen, which is a hover and not a tap', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: {
+					content: 'Tooltip text',
+					onOpenChange,
+					delay: 0,
+					trigger: 'button',
+					triggerText: 'Save'
+				}
+			});
+
+			const trigger = await triggerIn(screen.container);
+			// A stylus in detection range: pointerenter with nothing in contact, on
+			// a device where `(hover: hover)` matches. Reading that as touch would
+			// bail out of the hover path and leave the user no tooltip at all.
+			trigger.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'pen', buttons: 0 }));
+			mouse(trigger, 'mouseenter');
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+		});
+
+		it('tap-opens when a pen lands on an inert trigger', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: { content: 'Tooltip text', onOpenChange, delay: 200 }
+			});
+
+			const trigger = await triggerIn(screen.container, TEXT_TRIGGER);
+			// Hovering first, as a real pen does — then contact, which is a tap.
+			trigger.dispatchEvent(new PointerEvent('pointerenter', { pointerType: 'pen', buttons: 0 }));
+			trigger.dispatchEvent(new PointerEvent('pointerdown', { pointerType: 'pen', bubbles: true }));
+			trigger.dispatchEvent(new PointerEvent('pointerup', { pointerType: 'pen', bubbles: true }));
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
+		});
+
+		it('does not reopen from the focus a tapped text field takes', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: { content: 'Tooltip text', onOpenChange, delay: 0, trigger: 'input' }
+			});
+
+			const trigger = await triggerIn(screen.container, 'input');
+
+			// An `<input>` is an action trigger, so `auto` gives it the tap — and
+			// the focus it takes must not put the tooltip back over the field the
+			// user is about to type into.
+			tap(trigger);
+			trigger.focus();
+
+			// A tapped text field matches `:focus-visible` — deliberately, per
+			// Selectors 4, so typing has a visible home. Upstream stands that up
+			// with a spy on `matches`, because jsdom does not model it and without
+			// it the case cannot fail whatever the focus path does. A real Chromium
+			// implements the rule, so the precondition is *asserted* instead: this
+			// is the gate the touch guard has to beat.
+			expect(trigger.matches(':focus-visible')).toBe(true);
+
+			await new Promise((resolve) => setTimeout(resolve, 50));
+			expect(onOpenChange).not.toHaveBeenCalledWith(true);
+		});
+
+		it('still opens on keyboard focus of a trigger a finger touched', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await render(TooltipTouch, {
+				props: { content: 'Tooltip text', onOpenChange, delay: 0, trigger: 'input' }
+			});
+
+			const trigger = await triggerIn(screen.container, 'input');
+			tap(trigger);
+			// Reaching for the keyboard ends the touch interaction; the guard is on
+			// the gesture in flight, not on the device the trigger last saw.
+			document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab', bubbles: true }));
+			trigger.focus();
+			expect(trigger.matches(':focus-visible')).toBe(true);
+
+			await vi.waitFor(() => {
+				expect(onOpenChange).toHaveBeenCalledWith(true);
+			});
 		});
 	});
 });

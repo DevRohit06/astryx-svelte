@@ -12,10 +12,10 @@ import HoverCardParagraph from './fixtures/hover-card-paragraph.svelte';
  * The count is the contract, and it is stated against the block rather than the
  * suite: upstream's `SSR / hydration` block declares **4** cases at this pin,
  * and **3** are here. The fourth is dropped with its reason below. Upstream's
- * whole file declares **35** at this pin; the other 24 that are ported live in
+ * whole file declares **35** at this pin; the other 31 that are ported live in
  * `hover-card.svelte.test.ts`, which carries the suite-wide accounting —
- * including the seven-case `touch` describe that arrived at 0.5.0 with #5248
- * and is unported.
+ * including the seven-case `touch` describe that arrived at 0.5.0 with #5248,
+ * now ported there in full.
  *
  * The first two here are ported verbatim. The third is a restatement of
  * upstream's `hydrates a default-open hover card without a mismatch`: only its

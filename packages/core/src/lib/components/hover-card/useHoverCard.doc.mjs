@@ -46,7 +46,7 @@ export default {
 		},
 		{
 			name: 'touchTrigger',
-			type: "'auto' | 'tap' | 'none'",
+			type: "'none' | 'auto' | 'tap'",
 			description:
 				'What a tap does where there is no hover. auto opens on tap unless the trigger performs an action of its own; tap always opens; none never opens on touch.',
 			default: "'auto'"

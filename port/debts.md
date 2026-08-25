@@ -1352,6 +1352,29 @@ every call site that predates 0.5.0. Upstream shipped the feature with no test f
 0.5.0 suite delta is two `Tab`-dismissal cases and nothing about groups — so nothing upstream
 catches this either
 
+### `useTouchTrigger`'s two ref members have no Svelte spelling
+
+- **units:** components/layer/use-touch-trigger
+- **kind:** api-divergence
+- **retires:** never — Svelte has no ref objects
+
+`useTouchTrigger` is public API upstream, exported from the `./Layer` subpath, and two members of
+its signature are React ref objects. `UseTouchTriggerOptions.triggerRef: RefObject<HTMLElement |
+null>` is `trigger: HTMLElement | null` here, read through the options getter at event time — the
+same shape `Popover`'s anchor already takes. `UseTouchTriggerReturn.isTouchPointerRef:
+RefObject<boolean>` is an `isTouchPointer` getter.
+
+Both are this port's standing ref-object-to-value mapping rather than anything specific to touch,
+and everything a consumer can observe is unchanged: the `LayerTouchTrigger` union, the `'auto'`
+default, and the behaviour on every pointer type are byte-identical. Recorded because the published
+_signature_ differs, which is the thing `astryx-surface` compares
+
+## Retired
+
+Closed, kept as the record. **Nothing below counts as an open debt** — `scripts/status.mjs` stops
+tallying at this heading, and `astryx-parity` must not find a retired entry when it greps for
+"is this drift already known?", or it would skip live drift.
+
 ### `hasActiveFocusTrapEscape` is built on the trap's own Escape stack, not a separate trap-only count
 
 - **units:** hooks/use-focus-trap.svelte.ts
@@ -1377,11 +1400,18 @@ The `@deprecated` tag is carried with the same qualification. Upstream's redirec
 stack rather than ask whether a trap exists" — names a stack this port does not have, so the tag
 says so rather than pointing consumers at nothing
 
-## Retired
+**Closed at 0.5.0, in batch 035.** `layerStack` and `useLayerDismissal` are ported, and
+`useFocusTrap` is migrated onto the shared stack exactly as upstream's is — its sixty lines of
+private registry, document listener and DOM-containment ordering are gone. `hasActiveFocusTrapEscape`
+now reads `activeEscapeTrapCount`, a trap-only counter driven by the same
+`isActive && onEscape != null` expression that registers the trap, so the two cannot disagree.
 
-Closed, kept as the record. **Nothing below counts as an open debt** — `scripts/status.mjs` stops
-tallying at this heading, and `astryx-parity` must not find a retired entry when it greps for
-"is this drift already known?", or it would skip live drift.
+This entry predicted that the four families answering `false` would fail when the stack landed. They
+did not, and the prediction was imprecise rather than wrong: adding the stack changes nothing on its
+own, because it is a separate registry. The failure it describes is real but conditional on pointing
+the shim _at_ the shared stack, which is what the migration must not do and does not. The mechanism
+was right; the trigger was not. Recorded because a prediction that names a symptom instead of a
+mechanism sends the next reader hunting a failure that never appears
 
 ### `generateThemeCss` returns a flat stylesheet where upstream returns two blocks
 

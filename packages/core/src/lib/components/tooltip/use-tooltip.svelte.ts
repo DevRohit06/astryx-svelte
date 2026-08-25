@@ -7,8 +7,9 @@ import {
 	type LayerAlignment,
 	type LayerPlacement
 } from '../layer/use-layer.svelte.js';
+import { useTouchTrigger, type LayerTouchTrigger } from '../layer/use-touch-trigger.svelte.js';
+import { useLayerDismissal } from '../layer/use-layer-dismissal.svelte.js';
 import { tooltipSurfaceXstyle } from './use-tooltip.stylex.js';
-import { isImeKeyEvent } from '../../utils/ime.js';
 
 /**
  * Hover/focus-triggered tooltips, ported from Astryx's `Tooltip/useTooltip.tsx`.
@@ -16,8 +17,11 @@ import { isImeKeyEvent } from '../../utils/ime.js';
  * It is a thin layer of timing over `useLayer`, so everything the layer already
  * solved — the native Popover API, CSS anchor positioning, RTL mirroring — comes
  * along unchanged. What is left is delay bookkeeping, the focus-trigger rules,
- * and the two WCAG 1.4.13 obligations (dismissible on Escape, hoverable across
- * the gap), all of which are plain DOM and transcribe.
+ * and the two WCAG 1.4.13 obligations — hoverable across the gap, which is plain
+ * DOM and transcribes, and dismissible on Escape, which is no longer this hook's
+ * to own: upstream 0.5.0 deleted the private `keydown` listener and joined the
+ * shared dismissal stack (`useLayerDismissal`), so one press dismisses exactly
+ * one layer.
  *
  * Four things did translate:
  *
@@ -32,11 +36,14 @@ import { isImeKeyEvent } from '../../utils/ime.js';
  * **The three refs become three attachments.** `ref`/`positionRef`/
  * `interactionRef` map onto `attachTrigger`/`attachPosition`/`attachInteraction`
  * — an attachment has a ref callback's exact attach/replace/detach lifecycle.
- * That deletes `triggerRef` and the "remove the listeners I put on the element I
- * am leaving" block whose only job was to stand in for a cleanup phase a ref
- * callback does not have. `focusTrigger` is read *inside* the attachment, so
- * changing it re-runs attach/detach — which is exactly what its presence in
- * upstream's `useCallback` dependency list buys.
+ * That deletes the "remove the listeners I put on the element I am leaving"
+ * block whose only job was to stand in for a cleanup phase a ref callback does
+ * not have. `triggerRef` itself survives as a plain `let`, because
+ * `useTouchTrigger` reads the element rather than merely holding it — it asks
+ * whether the trigger performs an action of its own, and its outside-tap
+ * listener asks whether a tap landed inside it. `focusTrigger` is read *inside*
+ * the attachment, so changing it re-runs attach/detach — which is exactly what
+ * its presence in upstream's `useCallback` dependency list buys.
  *
  * **The id is passed in**, as `useLayer` requires; see that module for why.
  *
@@ -56,6 +63,11 @@ const HOVER_BRIDGE_DELAY = 100;
  * Focus trigger behavior for tooltips
  */
 export type TooltipFocusTrigger = 'auto' | 'always' | 'never';
+
+/**
+ * Touch trigger behavior for tooltips
+ */
+export type TooltipTouchTrigger = LayerTouchTrigger;
 
 export interface TooltipOptions {
 	/**
@@ -100,6 +112,20 @@ export interface TooltipOptions {
 	focusTrigger?: TooltipFocusTrigger;
 
 	/**
+	 * What a tap does on a touch pointer, where there is no hover:
+	 * - `auto`: tap opens the tooltip, unless the trigger performs an action of
+	 *   its own (a button, a link, a form control) — that tap belongs to the
+	 *   control, and a hint about a control the user just operated is noise
+	 * - `tap`: tap always opens the tooltip. This is what an info icon rendered
+	 *   as a button wants: it looks like an action to the DOM, but revealing the
+	 *   tooltip is the only thing it does
+	 * - `none`: touch never opens the tooltip
+	 *
+	 * @default 'auto'
+	 */
+	touchTrigger?: TooltipTouchTrigger;
+
+	/**
 	 * Whether the tooltip is enabled.
 	 * When false, hover/focus triggers are disabled.
 	 *
@@ -112,6 +138,11 @@ export interface TooltipOptions {
 	 * - `true`: force-show the tooltip (hover/focus hide is suppressed)
 	 * - `false`: force-hide the tooltip
 	 * - `undefined`: uncontrolled — hover/focus triggers manage visibility
+	 *
+	 * A controlled tooltip still takes Escape when it is the top-most layer, and
+	 * answers by calling `onHide` without hiding itself — closing is your
+	 * update's decision, exactly as for a controlled Dialog. Ignore the call and
+	 * the tip stays, and so does the press: nothing underneath dismisses.
 	 */
 	isOpen?: boolean;
 
@@ -249,6 +280,15 @@ export function useTooltip(options: () => TooltipOptions): TooltipReturn {
 
 	let showTimeout: ReturnType<typeof setTimeout> | null = null;
 	let hideTimeout: ReturnType<typeof setTimeout> | null = null;
+	/**
+	 * The trigger element. Upstream's `triggerRef`, which the attachment
+	 * lifetime made redundant for listener bookkeeping — but `useTouchTrigger`
+	 * asks the element itself whether it performs an action, and its outside-tap
+	 * listener asks whether a tap landed inside it, so the reference is back for
+	 * the two reads that are not bookkeeping. `HoverCard`'s hook keeps one for
+	 * the same kind of reason.
+	 */
+	let trigger: HTMLElement | null = null;
 
 	// Clear all timeouts
 	function clearTimeouts(): void {
@@ -261,6 +301,29 @@ export function useTooltip(options: () => TooltipOptions): TooltipReturn {
 			hideTimeout = null;
 		}
 	}
+
+	// Touch resolves immediately: the hover delays exist to filter out a pointer
+	// passing across the trigger, and a tap is never that.
+	function showNow(): void {
+		clearTimeouts();
+		layer.show();
+	}
+
+	function hideNow(): void {
+		clearTimeouts();
+		layer.hide();
+	}
+
+	const touch = useTouchTrigger(() => ({
+		touchTrigger: options().touchTrigger ?? 'auto',
+		isEnabled: options().isEnabled ?? true,
+		isControlled: options().isOpen !== undefined,
+		isOpen: layer.isOpen,
+		layerId: layer.id,
+		trigger,
+		show: showNow,
+		hide: hideNow
+	}));
 
 	// Schedule show with delay (suppressed when isOpen is false)
 	function scheduleShow(): void {
@@ -300,23 +363,35 @@ export function useTooltip(options: () => TooltipOptions): TooltipReturn {
 
 	// Event handlers
 	function handleMouseEnter(): void {
-		// Suppress tooltips on touch devices — hover is simulated and eats a tap
-		if (
-			typeof window !== 'undefined' &&
-			typeof window.matchMedia === 'function' &&
-			window.matchMedia('(hover: none)').matches
-		) {
+		// A tap synthesizes mouseenter. On touch the tap path owns the decision,
+		// so hover must not also fire — including the tap that just opened the
+		// tooltip, which would otherwise be double-handled.
+		if (touch.isTouchPointer) {
 			return;
 		}
 		scheduleShow();
 	}
 
 	function handleMouseLeave(): void {
+		// On touch the synthesized mouseleave arrives with the next tap elsewhere,
+		// which the outside-tap dismissal already handles — and handling it here
+		// too would close the tooltip behind the tap-open bookkeeping's back.
+		if (touch.isTouchPointer) {
+			return;
+		}
 		scheduleHide();
 	}
 
 	function handleFocusIn(e: Event): void {
 		if (!(options().isEnabled ?? true)) {
+			return;
+		}
+		// A tap focuses the trigger it activates, and `:focus-visible` does not
+		// filter that out on every element: a tapped `<input>` or contenteditable
+		// matches it. Those are exactly the action triggers `auto` just decided
+		// to keep shut, so without this the focus reopens what the tap
+		// suppressed, over the field the user is trying to type into.
+		if (touch.isTouchInteraction()) {
 			return;
 		}
 		// Only show tooltip for keyboard focus (:focus-visible),
@@ -340,8 +415,14 @@ export function useTooltip(options: () => TooltipOptions): TooltipReturn {
 	 * click). Fires on `pointerdown` so it feels immediate. Uncontrolled tooltips
 	 * only — a controlled tooltip's visibility is owned by the consumer.
 	 * `layer.hide()` self-guards when already closed.
+	 *
+	 * A touch press is a different gesture (it may be the only way to open the
+	 * tooltip at all), so the touch path answers it first.
 	 */
-	function handlePointerDown(): void {
+	function handlePointerDown(event: PointerEvent): void {
+		if (touch.handlePointerDown(event)) {
+			return;
+		}
 		if (options().isOpen !== undefined) {
 			return;
 		}
@@ -356,9 +437,13 @@ export function useTooltip(options: () => TooltipOptions): TooltipReturn {
 	 * same value does.
 	 */
 	const attachInteraction: Attachment<HTMLElement> = (element) => {
+		// Attach hover listeners. `pointerenter` runs before the synthesized
+		// `mouseenter` a tap produces, which is what lets the hover path know it
+		// is looking at a finger.
+		element.addEventListener('pointerenter', touch.handlePointerEnter);
 		element.addEventListener('mouseenter', handleMouseEnter);
 		element.addEventListener('mouseleave', handleMouseLeave);
-		// Press-to-dismiss: activating the trigger hides its own tooltip.
+		// Press-to-dismiss on a mouse; tap-to-open on a touch pointer.
 		element.addEventListener('pointerdown', handlePointerDown);
 
 		// Attach focus listeners based on focusTrigger option
@@ -371,12 +456,18 @@ export function useTooltip(options: () => TooltipOptions): TooltipReturn {
 			element.addEventListener('focusout', handleFocusOut);
 		}
 
+		trigger = element;
+
 		return () => {
+			element.removeEventListener('pointerenter', touch.handlePointerEnter);
 			element.removeEventListener('mouseenter', handleMouseEnter);
 			element.removeEventListener('mouseleave', handleMouseLeave);
 			element.removeEventListener('pointerdown', handlePointerDown);
 			element.removeEventListener('focusin', handleFocusIn);
 			element.removeEventListener('focusout', handleFocusOut);
+			if (trigger === element) {
+				trigger = null;
+			}
 		};
 	};
 
@@ -429,32 +520,55 @@ export function useTooltip(options: () => TooltipOptions): TooltipReturn {
 		});
 	});
 
-	// Dismiss on Escape (WCAG 1.4.13 — dismissible). Uncontrolled tooltips only;
-	// a controlled tooltip's visibility is owned by the consumer. The listener is
-	// mounted for the lifetime of an uncontrolled tooltip rather than gated on
-	// `layer.isOpen` — `layer.hide()` self-guards and no-ops when the layer is
-	// already closed. Guarded against IME composition-cancel.
-	$effect(() => {
-		if (options().isOpen !== undefined) {
-			return;
-		}
-		const handleKeyDown = (e: KeyboardEvent): void => {
-			if (e.key !== 'Escape') {
-				return;
+	// Dismiss on Escape (WCAG 1.4.13 — dismissible) through the shared layer
+	// stack. A visible tip is the top-most layer, so it takes the press and
+	// consumes it: Escape hides the tip and leaves the dialog underneath open.
+	// The user presses Escape again to close that. Consuming (rather than also
+	// dismissing what is beneath) keeps one rule with no per-component
+	// exceptions, and the failure mode is one extra keystroke instead of a
+	// dialog closing under someone who only wanted the tip gone.
+	//
+	// The private `document` keydown listener this replaces is gone, and with it
+	// the IME guard it carried — the stack owns both now, and claims a
+	// composition-cancelling Escape rather than merely ignoring it.
+	//
+	// A controlled tooltip stays on the stack and takes the press like any other
+	// layer, but answers it by reporting instead of hiding: `isOpen` is the
+	// consumer's value, so only their update may change it. Same contract as a
+	// controlled Dialog.
+	useLayerDismissal(() => ({
+		// Registered for the hook's lifetime rather than gated on `layer.isOpen`:
+		// that state can lag a frame behind the DOM, so a press arriving right
+		// after the layer appears would find nothing registered. Because this
+		// layer CONSUMES the press, a stale registration would be worse than a
+		// missed one — it would silently eat Escapes meant for the dialog
+		// underneath — so presence is answered from the DOM at press time instead
+		// of from state.
+		isActive: true,
+		isPresent: () => {
+			const el = typeof document === 'undefined' ? null : document.getElementById(layer.id);
+			if (el == null) {
+				return false;
 			}
-			// Ignore Escape that is committing/cancelling an IME composition;
-			// see utils/ime.ts for why.
-			if (isImeKeyEvent(e)) {
-				return;
+			try {
+				return el.matches(':popover-open');
+			} catch {
+				// Browsers without the Popover API (and some test environments)
+				// cannot answer the selector; fall back to the hook's own state.
+				return layer.isOpen;
 			}
+		},
+		onDismiss: () => {
 			clearTimeouts();
+			// A tap-open closed by Escape leaves no tap-open to dismiss.
+			touch.clearTapOpen();
+			if (options().isOpen !== undefined) {
+				options().onHide?.();
+				return;
+			}
 			layer.hide();
-		};
-		document.addEventListener('keydown', handleKeyDown);
-		return () => {
-			document.removeEventListener('keydown', handleKeyDown);
-		};
-	});
+		}
+	}));
 
 	return {
 		attachTrigger,

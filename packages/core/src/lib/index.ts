@@ -1363,6 +1363,13 @@ export {
 	writeAnchorNames
 } from './components/layer/anchor-name.js';
 export { layerAnimations } from './components/layer/layer-animations.stylex.js';
+export {
+	isActionTrigger,
+	useTouchTrigger,
+	type LayerTouchTrigger,
+	type UseTouchTriggerOptions,
+	type UseTouchTriggerReturn
+} from './components/layer/use-touch-trigger.svelte.js';
 // The two `Layout` contexts upstream publishes from `Layout/index.ts`. The
 // slots context is not among them there, and is not here either.
 export {
@@ -1534,13 +1541,15 @@ export {
 	useHoverCard,
 	type HoverCardFocusTrigger,
 	type HoverCardOptions,
-	type HoverCardReturn
+	type HoverCardReturn,
+	type HoverCardTouchTrigger
 } from './components/hover-card/use-hover-card.svelte.js';
 export {
 	useTooltip,
 	type TooltipFocusTrigger,
 	type TooltipOptions,
-	type TooltipReturn
+	type TooltipReturn,
+	type TooltipTouchTrigger
 } from './components/tooltip/use-tooltip.svelte.js';
 
 // Style utilities, so a component can take stack or container layout without

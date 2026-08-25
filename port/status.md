@@ -14,31 +14,20 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
-| Ledger entries            | 35                                                                       |
+| Ledger entries            | 36                                                                       |
 
 ## Test parity
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 275    | 7039           |
-| Ported here              | 264    | 6913           |
+| Ported here              | 268    | 6965           |
 | No counterpart by design | 7      | 74             |
-| **Unported**             | **4**  | **52**         |
+| **Unported**             | **0**  | **0**          |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
 `it.each` counts once rather than per row.
-
-<details><summary>Unported upstream suites</summary>
-
-| Suite                                     | Cases |
-| ----------------------------------------- | ----- |
-| `Layer/useLayerDismissal.test.tsx`        | 21    |
-| `Layer/layerDismissalInvariants.test.tsx` | 15    |
-| `Layer/layerDismissalFamilies.test.tsx`   | 11    |
-| `Layer/useTouchTrigger.test.ts`           | 5     |
-
-</details>
 
 ## Assertion strength
 
@@ -55,8 +44,8 @@ substring-matching on both sides by design and is not counted.
 
 | Kind                  | Count   |
 | --------------------- | ------- |
-| api-divergence        | 32      |
-| deliberate-divergence | 47      |
+| api-divergence        | 33      |
+| deliberate-divergence | 46      |
 | unported              | 15      |
 | upstream-lag          | 11      |
 | **total**             | **105** |
