@@ -53,7 +53,7 @@ function renderCard(
 describe('ClickableCard', () => {
 	it('renders children', async () => {
 		const screen = await renderCard({ label: 'Test card', onclick: () => {} }, 'Card content');
-		await expect.element(screen.getByText('Card content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Card content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders a hidden button for onClick cards', async () => {
@@ -75,7 +75,7 @@ describe('ClickableCard', () => {
 		const screen = await renderCard({ label: 'Test card', onclick: handleClick });
 		// Restated in delivery: a bubbling `click` dispatched on the surface `<span>`
 		// so `event.target` is the surface — upstream's `fireEvent.click(getByText())`.
-		const surface = screen.getByText('Content').element() as HTMLElement;
+		const surface = screen.getByText('Content', { exact: true }).element() as HTMLElement;
 		surface.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
@@ -89,7 +89,7 @@ describe('ClickableCard', () => {
 		// Click the nested `<button>` (a real interactive descendant). Its own
 		// handler fires; the bubbled click reaches the card's delegate but bails on
 		// the interactive-ancestor walk, so the card's onclick never fires.
-		const nested = screen.getByText('Nested').element() as HTMLElement;
+		const nested = screen.getByText('Nested', { exact: true }).element() as HTMLElement;
 		nested.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		expect(handleButtonClick).toHaveBeenCalledTimes(1);
 		// Card's onClick should NOT fire because click was on a nested interactive.

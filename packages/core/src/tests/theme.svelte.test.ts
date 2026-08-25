@@ -50,7 +50,7 @@ describe('Theme', () => {
 
 	it('renders children', async () => {
 		const screen = await render(ThemeProbe, { theme: testTheme });
-		await expect.element(screen.getByText('hello')).toBeInTheDocument();
+		await expect.element(screen.getByText('hello', { exact: true })).toBeInTheDocument();
 	});
 
 	it('sets data-astryx-theme on wrapper div', async () => {

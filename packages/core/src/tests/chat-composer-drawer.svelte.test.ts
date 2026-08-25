@@ -51,7 +51,9 @@ describe('ChatComposerDrawer', () => {
 		expect(controlsId).toBeTruthy();
 		const region = document.getElementById(controlsId as string);
 		expect(region).not.toBeNull();
-		expect(region).toContainElement(screen.getByText('Drawer content').element() as HTMLElement);
+		expect(region).toContainElement(
+			screen.getByText('Drawer content', { exact: true }).element() as HTMLElement
+		);
 	});
 
 	it('keeps aria-controls resolvable while collapsed (content stays mounted)', async () => {
@@ -69,7 +71,9 @@ describe('ChatComposerDrawer', () => {
 		expect(controlsId).toBeTruthy();
 		const region = document.getElementById(controlsId as string);
 		expect(region).not.toBeNull();
-		expect(region).toContainElement(screen.getByText('Drawer content').element() as HTMLElement);
+		expect(region).toContainElement(
+			screen.getByText('Drawer content', { exact: true }).element() as HTMLElement
+		);
 	});
 
 	it('toggles aria-expanded when the toggle is activated', async () => {

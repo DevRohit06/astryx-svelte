@@ -85,8 +85,8 @@ describe('Stack', () => {
 
 	it('renders children correctly', async () => {
 		const screen = await renderStack({ direction: 'vertical' }, { items: ['Item 1', 'Item 2'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as div by default', async () => {
@@ -137,7 +137,7 @@ describe('Stack', () => {
 			{ direction: 'vertical', gap: 4 },
 			{ items: ['Item 1', 'Item 2'] }
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with hAlign prop', async () => {
@@ -147,7 +147,7 @@ describe('Stack', () => {
 				items: ['Item 1']
 			}
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with vAlign prop', async () => {
@@ -157,7 +157,7 @@ describe('Stack', () => {
 				items: ['Item 1']
 			}
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with wrap prop', async () => {
@@ -165,7 +165,7 @@ describe('Stack', () => {
 			{ direction: 'vertical', wrap: 'wrap' },
 			{ items: ['Item 1', 'Item 2'] }
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders horizontal with hAlign and vAlign', async () => {
@@ -173,8 +173,8 @@ describe('Stack', () => {
 			{ direction: 'horizontal', hAlign: 'between', vAlign: 'center' },
 			{ items: ['Item 1', 'Item 2'] }
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders vertical with hAlign and vAlign', async () => {
@@ -182,8 +182,8 @@ describe('Stack', () => {
 			{ direction: 'vertical', hAlign: 'center', vAlign: 'between' },
 			{ items: ['Item 1', 'Item 2'] }
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('forwards ref correctly', async () => {

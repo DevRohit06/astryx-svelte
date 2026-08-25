@@ -1691,7 +1691,7 @@ describe('Selector', () => {
 			expect(labelledByIDs[0]).toBe(groupLabelID);
 			expect(document.getElementById(labelledByIDs[1])).toHaveTextContent('Channel');
 			expect(trigger).toHaveAttribute('aria-describedby', group.getAttribute('aria-describedby'));
-			await expect.element(screen.getByText('#')).toBeInTheDocument();
+			await expect.element(screen.getByText('#', { exact: true })).toBeInTheDocument();
 		});
 
 		it('keeps disabled reasons described when grouped', async () => {

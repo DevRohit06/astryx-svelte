@@ -345,7 +345,7 @@ describe('HoverCard', () => {
 		// text branch. Recorded with `Tooltip`'s identical constraint.
 		const screen = await render(HoverCard, { props: { children: 'Just text, no element' } });
 		// Text should be rendered
-		const wrapper = screen.getByText('Just text, no element').element();
+		const wrapper = screen.getByText('Just text, no element', { exact: true }).element();
 		expect(wrapper).toBeInTheDocument();
 		// Should have aria-describedby on the wrapper span
 		expect(wrapper.tagName).toBe('SPAN');

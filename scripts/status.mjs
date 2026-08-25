@@ -269,7 +269,13 @@ const withoutCommentLines = (text) =>
 
 const NAME_STRING = /getBy(?:Role|LabelText)\([^)]*name:\s*'/g;
 const TEXT_STRING = /getByText\(\s*'/g;
-const TEXT_EXACT = /getByText\(\s*'[^']*'\s*,\s*\{[^}]*exact:\s*true/g;
+// A site is strengthened either by an inline `{exact: true}` or by the hoisted
+// `const exact = {exact: true}` several suites share and pass by reference. The
+// second form is the third way a counter in this file has miscounted correct
+// code: after a backtick-quoted `it` and after prose in comments, an options
+// object behind an identifier. All three share a shape — the metric read the
+// source more literally than the source meant it.
+const TEXT_EXACT = /getByText\(\s*'[^']*'\s*,\s*(?:\{[^}]*exact:\s*true|exact)/g;
 const NAME_EXACT = /getBy(?:Role|LabelText)\([^)]*name:\s*'[^']*'[^)]*exact:\s*true/g;
 
 let looseNameSites = 0;

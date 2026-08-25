@@ -250,7 +250,7 @@ describe('TextArea', () => {
 		const screen = await render(TextArea, {
 			props: { label: 'Comments', isLabelHidden: true, value: '', onChange: noop }
 		});
-		const label = screen.getByText('Comments');
+		const label = screen.getByText('Comments', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
 		await expect.element(screen.getByLabelText('Comments')).toBeInTheDocument();
@@ -260,7 +260,7 @@ describe('TextArea', () => {
 		const screen = await render(TextArea, {
 			props: { label: 'Notes', value: '', onChange: noop }
 		});
-		const label = screen.getByText('Notes');
+		const label = screen.getByText('Notes', { exact: true });
 		await expect.element(label).toBeVisible();
 	});
 
@@ -387,7 +387,9 @@ describe('TextArea', () => {
 					status: { type: 'error', message: 'Description is required' }
 				}
 			});
-			await expect.element(screen.getByText('Description is required')).toBeInTheDocument();
+			await expect
+				.element(screen.getByText('Description is required', { exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('does not render status message when not provided', async () => {
@@ -431,7 +433,7 @@ describe('TextArea', () => {
 			const describedBy = textarea.getAttribute('aria-describedby');
 			expect(describedBy).toBeTruthy();
 			// The status message should be reachable via the described-by ID
-			const messageElement = screen.getByText('Too short').element();
+			const messageElement = screen.getByText('Too short', { exact: true }).element();
 			expect(messageElement).toHaveAttribute('id');
 			expect(describedBy).toContain(messageElement.id);
 		});
@@ -541,7 +543,7 @@ describe('TextArea', () => {
 			const screen = await render(TextArea, {
 				props: { label: 'Description', value: 'Hello', onChange: noop, maxLength: 20 }
 			});
-			await expect.element(screen.getByText('5/20')).toBeInTheDocument();
+			await expect.element(screen.getByText('5/20', { exact: true })).toBeInTheDocument();
 		});
 
 		it('does not display counter when maxLength is not provided', async () => {
@@ -555,7 +557,7 @@ describe('TextArea', () => {
 			const screen = await render(TextArea, {
 				props: { label: 'Description', value: '', onChange: noop, maxLength: 100 }
 			});
-			await expect.element(screen.getByText('0/100')).toBeInTheDocument();
+			await expect.element(screen.getByText('0/100', { exact: true })).toBeInTheDocument();
 
 			// Upstream's `rerender(<TextArea … value="Hello World" />)`.
 			await screen.rerender({
@@ -564,7 +566,7 @@ describe('TextArea', () => {
 				onChange: noop,
 				maxLength: 100
 			});
-			await expect.element(screen.getByText('11/100')).toBeInTheDocument();
+			await expect.element(screen.getByText('11/100', { exact: true })).toBeInTheDocument();
 		});
 
 		it('does not set native maxLength attribute (counter is visual-only)', async () => {
@@ -572,7 +574,7 @@ describe('TextArea', () => {
 				props: { label: 'Description', value: '', onChange: noop, maxLength: 50 }
 			});
 			await expect.element(screen.getByRole('textbox')).not.toHaveAttribute('maxlength');
-			await expect.element(screen.getByText('0/50')).toBeInTheDocument();
+			await expect.element(screen.getByText('0/50', { exact: true })).toBeInTheDocument();
 		});
 
 		it('does not set maxLength attribute when not provided', async () => {
@@ -592,7 +594,7 @@ describe('TextArea', () => {
 					maxLength: 5
 				}
 			});
-			await expect.element(screen.getByText('2/5')).toBeInTheDocument();
+			await expect.element(screen.getByText('2/5', { exact: true })).toBeInTheDocument();
 		});
 
 		it('measures the over-limit state in characters (#4759)', async () => {
@@ -606,7 +608,7 @@ describe('TextArea', () => {
 					maxLength: 2
 				}
 			});
-			await expect.element(screen.getByText('3/2')).toBeInTheDocument();
+			await expect.element(screen.getByText('3/2', { exact: true })).toBeInTheDocument();
 		});
 
 		it('counter updates as user types (controlled)', async () => {
@@ -615,7 +617,7 @@ describe('TextArea', () => {
 			});
 			const textarea = screen.getByRole('textbox');
 			await userEvent.type(textarea, 'Hello');
-			await expect.element(screen.getByText('5/50')).toBeInTheDocument();
+			await expect.element(screen.getByText('5/50', { exact: true })).toBeInTheDocument();
 		});
 
 		it('announces remaining characters politely as the value nears the limit', async () => {
@@ -676,7 +678,7 @@ describe('TextArea', () => {
 			// element; this port's counter text and its icon are siblings inside the
 			// counter wrapper, which is what the two indicator-icon cases below
 			// already query.
-			const counter = screen.getByText('3/4').element().closest('div');
+			const counter = screen.getByText('3/4', { exact: true }).element().closest('div');
 			expect(counter?.querySelector('svg')).toBeNull();
 			await expect.element(screen.getByRole('textbox')).not.toHaveAttribute('aria-invalid');
 		});
@@ -687,7 +689,7 @@ describe('TextArea', () => {
 			});
 			// The counter renders a warning icon (a shape cue) alongside the red
 			// count, so the over-limit state is not conveyed by color alone.
-			const counter = screen.getByText('55/50').element().closest('div');
+			const counter = screen.getByText('55/50', { exact: true }).element().closest('div');
 			expect(counter?.querySelector('svg')).toBeInTheDocument();
 		});
 
@@ -695,7 +697,7 @@ describe('TextArea', () => {
 			const screen = await render(TextArea, {
 				props: { label: 'Description', value: 'x'.repeat(45), onChange: noop, maxLength: 50 }
 			});
-			const counter = screen.getByText('45/50').element().closest('div');
+			const counter = screen.getByText('45/50', { exact: true }).element().closest('div');
 			expect(counter?.querySelector('svg')).not.toBeInTheDocument();
 		});
 
@@ -705,7 +707,7 @@ describe('TextArea', () => {
 			});
 			const textarea = textareaIn(screen.container);
 			const describedBy = textarea.getAttribute('aria-describedby');
-			const counter = screen.getByText('5/50').element();
+			const counter = screen.getByText('5/50', { exact: true }).element();
 			expect(counter).toHaveAttribute('id');
 			expect(describedBy).toContain(counter.id);
 		});
@@ -715,7 +717,7 @@ describe('TextArea', () => {
 				props: { label: 'Description', value: 'Hello', onChange: noop, maxLength: 50 }
 			});
 			const textarea = textareaIn(screen.container);
-			const counter = screen.getByText('5/50').element();
+			const counter = screen.getByText('5/50', { exact: true }).element();
 			// The counter now lives inside the bordered input container as a sibling
 			// overlay of the textarea, not below it as an out-of-container element.
 			expect(textarea.parentElement).toBe(counter.parentElement);

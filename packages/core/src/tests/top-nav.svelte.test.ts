@@ -53,11 +53,15 @@ import TopNavItemFixture from './fixtures/top-nav-item-fixture.svelte';
  * in rest props. Asserting on the element received checks more than upstream's
  * "the callback ran with some HTMLElement" does. Each is marked at the case.
  *
- * RESTATED — one assertion, in `names the logo link in the independent-links
- * config`; see the comment at the case. `sets tabIndex to -1 when disabled` reads
- * `tabindex` rather than React's `tabIndex` prop name: it is the same attribute on
- * the same node (HTML attribute lookups are case-insensitive), spelled as the DOM
- * spells it.
+ * RESTATED — two assertions. One in `names the logo link in the independent-links
+ * config`; see the comment at the case. The other is `renders icon with label`'s
+ * `getByText('Settings')`, which goes through `ownText` below: the two
+ * `getByText` implementations read different text off an element with mixed
+ * children, and only `ownText` states what upstream's states.
+ *
+ * `sets tabIndex to -1 when disabled` reads `tabindex` rather than React's
+ * `tabIndex` prop name: it is the same attribute on the same node (HTML attribute
+ * lookups are case-insensitive), spelled as the DOM spells it.
  *
  * NOTE ON OVERLAP: upstream's `NavIcon` describe here duplicates its own
  * `NavIcon/NavIcon.test.tsx`, which this port already carries in
@@ -80,6 +84,28 @@ function linksIn(container: HTMLElement): HTMLElement[] {
 	return Array.from(container.querySelectorAll<HTMLElement>('a[href]')).filter((link) =>
 		link.checkVisibility()
 	);
+}
+
+/**
+ * An element's **own** text — its direct text-node children, whitespace-
+ * normalised — which is what Testing Library's `getByText` matches against
+ * (`getNodeText`), and is not what a Playwright-style locator matches.
+ *
+ * `renders icon with label` needs it: `TopNavItem` renders `{icon}{label}` into
+ * one element, so upstream's `getByText('Settings')` matches the item, whose own
+ * text is exactly `Settings` beside the icon element. This project's locators
+ * match the full `textContent` — `Icon Settings` — so `getByText('Settings')`
+ * would pass only on the substring and `getByText('Settings', {exact: true})`
+ * matches nothing. This is upstream's rule written out.
+ */
+function ownText(element: Element | null): string | undefined {
+	if (!element) return undefined;
+	return Array.from(element.childNodes)
+		.filter((node) => node.nodeType === Node.TEXT_NODE)
+		.map((node) => node.textContent ?? '')
+		.join('')
+		.replace(/\s+/g, ' ')
+		.trim();
 }
 
 describe('TopNav', () => {
@@ -273,7 +299,7 @@ describe('TopNav', () => {
 describe('TopNavHeading', () => {
 	it('renders heading text', async () => {
 		const screen = await render(TopNavHeading, { props: { heading: 'My App' } });
-		await expect.element(screen.getByText('My App')).toBeInTheDocument();
+		await expect.element(screen.getByText('My App', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders logo element', async () => {
@@ -287,7 +313,7 @@ describe('TopNavHeading', () => {
 		const screen = await render(TopNavHeadingFixture, {
 			props: { props: { heading: 'Dashboard' }, logo: { text: 'Logo', testid: 'logo' } }
 		});
-		await expect.element(screen.getByText('Dashboard')).toBeInTheDocument();
+		await expect.element(screen.getByText('Dashboard', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByTestId('logo')).toBeInTheDocument();
 	});
 
@@ -408,7 +434,7 @@ describe('NavIcon', () => {
 describe('TopNavItem', () => {
 	it('renders label as visible text', async () => {
 		const screen = await render(TopNavItem, { props: { label: 'Home' } });
-		await expect.element(screen.getByText('Home')).toBeInTheDocument();
+		await expect.element(screen.getByText('Home', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as anchor element', async () => {
@@ -422,7 +448,7 @@ describe('TopNavItem', () => {
 		const screen = await render(TopNavItemFixture, {
 			props: { props: { label: 'Accessible name' }, body: 'Custom content' }
 		});
-		await expect.element(screen.getByText('Custom content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Custom content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('applies aria-current when isSelected', async () => {
@@ -535,7 +561,8 @@ describe('TopNavItem', () => {
 			props: { props: { label: 'Settings' }, icon: { text: 'Icon', testid: 'icon' } }
 		});
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
-		await expect.element(screen.getByText('Settings')).toBeInTheDocument();
+		// COUNTERPART for upstream's `getByText('Settings')` — see `ownText`.
+		expect(ownText(screen.container.querySelector('a'))).toBe('Settings');
 	});
 
 	it('hides label and sets aria-label when isIconOnly', async () => {
@@ -546,7 +573,7 @@ describe('TopNavItem', () => {
 			}
 		});
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
-		await expect.element(screen.getByText('Settings')).not.toBeInTheDocument();
+		await expect.element(screen.getByText('Settings', { exact: true })).not.toBeInTheDocument();
 		await expect.element(screen.getByRole('link')).toHaveAttribute('aria-label', 'Settings');
 	});
 

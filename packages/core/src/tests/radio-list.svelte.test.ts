@@ -85,7 +85,7 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Preference')).toBeInTheDocument();
+		await expect.element(screen.getByText('Preference', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders radio items', async () => {
@@ -168,7 +168,7 @@ describe('RadioList', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByText('Option B'));
+		await userEvent.click(screen.getByText('Option B', { exact: true }));
 		expect(handleChange).toHaveBeenCalledWith('b');
 	});
 
@@ -285,7 +285,9 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Please select an option')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Please select an option', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders warning status message', async () => {
@@ -298,7 +300,9 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('This may change later')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('This may change later', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders success status message', async () => {
@@ -311,7 +315,7 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Great choice!')).toBeInTheDocument();
+		await expect.element(screen.getByText('Great choice!', { exact: true })).toBeInTheDocument();
 	});
 
 	it('sets aria-invalid on radiogroup when status is error', async () => {
@@ -386,7 +390,7 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		const label = screen.getByText('Hidden label');
+		const label = screen.getByText('Hidden label', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// The radiogroup is named by the label element via aria-labelledby (not a
 		// duplicated aria-label), so its accessible name is still "Hidden label".
@@ -413,7 +417,7 @@ describe('RadioList', () => {
 		// element — a `<label>` names a single control and can't be associated with a
 		// group. It is rendered as a `<span>` and referenced via aria-labelledby (with
 		// no orphaned htmlFor).
-		const labelEl = screen.getByText('Plan').element();
+		const labelEl = screen.getByText('Plan', { exact: true }).element();
 		expect(labelEl.tagName).toBe('SPAN');
 		expect(labelEl.closest('label')).toBeNull();
 		expect(labelEl).not.toHaveAttribute('for');
@@ -430,7 +434,7 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a', description: 'This is option A' }]
 			}
 		});
-		await expect.element(screen.getByText('This is option A')).toBeInTheDocument();
+		await expect.element(screen.getByText('This is option A', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description on the radio list group', async () => {
@@ -443,7 +447,9 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Choose your preference')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Choose your preference', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('applies horizontal orientation', async () => {
@@ -515,7 +521,7 @@ describe('RadioList', () => {
 				}
 			});
 			const radios = radiosIn(screen.container);
-			const outside = screen.getByText('before').element() as HTMLButtonElement;
+			const outside = screen.getByText('before', { exact: true }).element() as HTMLButtonElement;
 			outside.focus();
 			// Forward entry: the browser lands on a leading radio; the group keeps the
 			// first radio as the deterministic tab stop.
@@ -543,7 +549,7 @@ describe('RadioList', () => {
 				}
 			});
 			const radios = radiosIn(screen.container);
-			const outside = screen.getByText('after').element() as HTMLButtonElement;
+			const outside = screen.getByText('after', { exact: true }).element() as HTMLButtonElement;
 			outside.focus();
 			// Backward (Shift+Tab) entry: the browser focuses the last radio; the group
 			// keeps it as the deterministic tab stop rather than jumping away.
@@ -589,7 +595,7 @@ describe('RadioList', () => {
 					]
 				}
 			});
-			const outside = screen.getByText('before').element() as HTMLButtonElement;
+			const outside = screen.getByText('before', { exact: true }).element() as HTMLButtonElement;
 			const optionB = screen
 				.getByLabelText('Option B', { exact: true })
 				.element() as HTMLInputElement;

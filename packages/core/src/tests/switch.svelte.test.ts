@@ -210,7 +210,7 @@ describe('Switch', () => {
 			props: { label: 'Enable notifications', value: false, onChange: handleChange }
 		});
 
-		await userEvent.click(screen.getByText('Enable notifications'));
+		await userEvent.click(screen.getByText('Enable notifications', { exact: true }));
 		expect(handleChange).toHaveBeenCalledWith(true, expect.any(Object));
 	});
 
@@ -223,7 +223,9 @@ describe('Switch', () => {
 				onChange: noop
 			}
 		});
-		await expect.element(screen.getByText('Switch to a darker color scheme')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Switch to a darker color scheme', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('associates description with switch via aria-describedby', async () => {
@@ -236,7 +238,9 @@ describe('Switch', () => {
 			}
 		});
 		const control = inputIn(screen.container);
-		const description = screen.getByText('Switch to a darker color scheme').element();
+		const description = screen
+			.getByText('Switch to a darker color scheme', { exact: true })
+			.element();
 		expect(control).toHaveAttribute('aria-describedby', description.id);
 	});
 
@@ -251,7 +255,7 @@ describe('Switch', () => {
 			}
 		});
 
-		const description = screen.getByText('Switch to a darker color scheme');
+		const description = screen.getByText('Switch to a darker color scheme', { exact: true });
 		await userEvent.click(description);
 		expect(handleChange).toHaveBeenCalledWith(true, expect.any(Object));
 
@@ -337,7 +341,7 @@ describe('Switch', () => {
 		const screen = await render(Switch, {
 			props: { label: 'Toggle row', isLabelHidden: true, value: false, onChange: noop }
 		});
-		const label = screen.getByText('Toggle row');
+		const label = screen.getByText('Toggle row', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
 		await expect.element(screen.getByLabelText('Toggle row')).toBeInTheDocument();
@@ -374,7 +378,7 @@ describe('Switch', () => {
 			}
 		});
 		const control = inputIn(screen.container);
-		const description = screen.getByText('Enables sync for this row').element();
+		const description = screen.getByText('Enables sync for this row', { exact: true }).element();
 		expect(description.id).not.toBe('');
 		expect(control.getAttribute('aria-describedby')).toContain(description.id);
 	});
@@ -383,7 +387,7 @@ describe('Switch', () => {
 		const screen = await render(Switch, {
 			props: { label: 'Enable notifications', value: false, onChange: noop }
 		});
-		await expect.element(screen.getByText('Enable notifications')).toBeVisible();
+		await expect.element(screen.getByText('Enable notifications', { exact: true })).toBeVisible();
 	});
 
 	it('renders with labelPosition start (label before switch)', async () => {
@@ -438,7 +442,9 @@ describe('Switch', () => {
 				status: { type: 'error', message: 'Failed to save setting' }
 			}
 		});
-		await expect.element(screen.getByText('Failed to save setting')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Failed to save setting', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('sets aria-invalid when status type is error', async () => {

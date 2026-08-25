@@ -78,13 +78,13 @@ describe('Text / Heading — truncation tooltip', () => {
 		const screen = await render(TruncatedText, {
 			props: { maxLines: 1, hasTruncateTooltip: false, content: 'No tooltip' }
 		});
-		await expect.element(screen.getByText('No tooltip')).toBeInTheDocument();
+		await expect.element(screen.getByText('No tooltip', { exact: true })).toBeInTheDocument();
 	});
 
 	it('accepts hasTruncateTooltip=false to disable tooltip (Heading)', async () => {
 		const screen = await render(TruncatedText, {
 			props: { as: 'heading', maxLines: 1, hasTruncateTooltip: false, content: 'No tooltip' }
 		});
-		await expect.element(screen.getByText('No tooltip')).toBeInTheDocument();
+		await expect.element(screen.getByText('No tooltip', { exact: true })).toBeInTheDocument();
 	});
 });

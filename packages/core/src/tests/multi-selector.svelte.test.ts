@@ -192,7 +192,7 @@ describe('MultiSelector', () => {
 				placeholder: 'Pick fruits...'
 			}
 		});
-		await expect.element(screen.getByText('Pick fruits...')).toBeInTheDocument();
+		await expect.element(screen.getByText('Pick fruits...', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows count display by default', async () => {
@@ -204,7 +204,7 @@ describe('MultiSelector', () => {
 				onChange: () => {}
 			}
 		});
-		await expect.element(screen.getByText('2 selected')).toBeInTheDocument();
+		await expect.element(screen.getByText('2 selected', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows labels display', async () => {
@@ -217,7 +217,7 @@ describe('MultiSelector', () => {
 				triggerDisplay: 'labels'
 			}
 		});
-		await expect.element(screen.getByText('Apple, Banana')).toBeInTheDocument();
+		await expect.element(screen.getByText('Apple, Banana', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows labels display with overflow', async () => {
@@ -230,7 +230,9 @@ describe('MultiSelector', () => {
 				triggerDisplay: 'labels'
 			}
 		});
-		await expect.element(screen.getByText('Apple, Banana, Orange, +2')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Apple, Banana, Orange, +2', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('opens dropdown on click', async () => {
@@ -351,7 +353,7 @@ describe('MultiSelector', () => {
 			}
 		});
 		await expect.element(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
-		await expect.element(screen.getByText('Required')).toBeInTheDocument();
+		await expect.element(screen.getByText('Required', { exact: true })).toBeInTheDocument();
 	});
 
 	it('closes on Escape', async () => {
@@ -452,7 +454,7 @@ describe('MultiSelector', () => {
 		});
 
 		await userEvent.click(screen.getByRole('combobox'));
-		await expect.element(screen.getByText('Select all')).toBeInTheDocument();
+		await expect.element(screen.getByText('Select all', { exact: true })).toBeInTheDocument();
 	});
 
 	it('select-all selects all enabled items', async () => {
@@ -854,7 +856,9 @@ describe('MultiSelector', () => {
 				onChange: () => {}
 			}
 		});
-		await expect.element(screen.getByText('Choose your fruits')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Choose your fruits', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('supports data-testid', async () => {
@@ -922,7 +926,7 @@ describe('MultiSelector', () => {
 		});
 
 		await userEvent.click(screen.getByRole('combobox'));
-		await expect.element(screen.getByText('Check all')).toBeInTheDocument();
+		await expect.element(screen.getByText('Check all', { exact: true })).toBeInTheDocument();
 	});
 
 	it('sorts selected items to top', async () => {

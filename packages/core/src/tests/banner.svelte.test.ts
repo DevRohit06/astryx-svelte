@@ -65,7 +65,7 @@ describe('Banner', () => {
 
 	it('renders with title and status', async () => {
 		const screen = await render(Banner, { props: { status: 'info', title: 'Test Banner' } });
-		await expect.element(screen.getByText('Test Banner')).toBeInTheDocument();
+		await expect.element(screen.getByText('Test Banner', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders info status with role="status"', async () => {
@@ -113,7 +113,9 @@ describe('Banner', () => {
 		const screen = await render(Banner, {
 			props: { status: 'info', title: 'Title', description: 'This is a description' }
 		});
-		await expect.element(screen.getByText('This is a description')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('This is a description', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders title and description as <div> (never <p>) for composition safety', async () => {
@@ -130,7 +132,7 @@ describe('Banner', () => {
 	it('does not render description when not provided', async () => {
 		const screen = await render(Banner, { props: { status: 'info', title: 'Title Only' } });
 		// Title renders; no description text is present.
-		await expect.element(screen.getByText('Title Only')).toBeInTheDocument();
+		await expect.element(screen.getByText('Title Only', { exact: true })).toBeInTheDocument();
 		expect(screen.container.textContent).not.toContain('This is a description');
 	});
 
@@ -471,7 +473,9 @@ describe('Banner', () => {
 			const screen = await render(Banner, {
 				props: { status, title: `${status} banner` }
 			});
-			await expect.element(screen.getByText(`${status} banner`)).toBeInTheDocument();
+			await expect
+				.element(screen.getByText(`${status} banner`, { exact: true }))
+				.toBeInTheDocument();
 			screen.unmount();
 		}
 	});

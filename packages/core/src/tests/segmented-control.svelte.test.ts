@@ -301,7 +301,7 @@ describe('SegmentedControl keyboard navigation', () => {
 					]
 				}
 			});
-			const before = screen.getByText('before').element() as HTMLElement;
+			const before = screen.getByText('before', { exact: true }).element() as HTMLElement;
 			// Restated delivery (see file header): the tab stop is the promoted first
 			// enabled radio; moving focus onto it from the outside button gives `focusin`
 			// the outside `relatedTarget` a Tab entry would, exercising the pure-focus-move
@@ -325,7 +325,7 @@ describe('SegmentedControl keyboard navigation', () => {
 					]
 				}
 			});
-			const before = screen.getByText('before').element() as HTMLElement;
+			const before = screen.getByText('before', { exact: true }).element() as HTMLElement;
 			// The selected 'list' is disabled, so the tab stop is the first enabled radio
 			// (Grid); entering it from outside stays a pure focus move.
 			before.focus();

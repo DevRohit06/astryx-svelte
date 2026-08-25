@@ -40,12 +40,12 @@ describe('Layout children-as-content', () => {
 
 	it('renders bare children (no LayoutContent wrapper) too', async () => {
 		const screen = await render(LayoutFixture, { props: { child: 'Bare' } });
-		await expect.element(screen.getByText('Bare')).toBeInTheDocument();
+		await expect.element(screen.getByText('Bare', { exact: true })).toBeInTheDocument();
 	});
 
 	it('lets an explicit content prop win over children', async () => {
 		const screen = await render(LayoutFixture, { props: { content: 'Slot', child: 'Child' } });
-		await expect.element(screen.getByText('Slot')).toBeInTheDocument();
+		await expect.element(screen.getByText('Slot', { exact: true })).toBeInTheDocument();
 		expect(screen.container.textContent).not.toContain('Child');
 	});
 

@@ -403,7 +403,9 @@ describe('Typeahead', () => {
 				onChange: () => {}
 			}
 		});
-		await expect.element(screen.getByText('Pick your favorite fruit')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Pick your favorite fruit', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('shows required indicator', async () => {
@@ -429,14 +431,16 @@ describe('Typeahead', () => {
 				status: { type: 'error' as const, message: 'Selection required' }
 			}
 		});
-		await expect.element(screen.getByText('Selection required')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Selection required', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('shows selected value as a token', async () => {
 		const screen = await render(Typeahead, {
 			props: { label: 'Fruit', searchSource: fruitSource, value: fruits[0], onChange: () => {} }
 		});
-		await expect.element(screen.getByText(fruits[0].label)).toBeInTheDocument();
+		await expect.element(screen.getByText(fruits[0].label, { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows clear button when hasClear and value is selected', async () => {

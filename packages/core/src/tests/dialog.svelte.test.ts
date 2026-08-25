@@ -111,7 +111,7 @@ describe('Dialog', () => {
 			props: { props: { isOpen: true, onOpenChange: noop }, text: 'Dialog content' }
 		});
 		await expect.element(screen.getByRole('dialog')).toBeInTheDocument();
-		await expect.element(screen.getByText('Dialog content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Dialog content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('calls showModal when opened', async () => {
@@ -586,7 +586,7 @@ describe('Dialog', () => {
 					text: 'Inline content'
 				}
 			});
-			await expect.element(screen.getByText('Inline content')).toBeInTheDocument();
+			await expect.element(screen.getByText('Inline content', { exact: true })).toBeInTheDocument();
 			expect(screen.container.querySelector('dialog')).toBeNull();
 		});
 

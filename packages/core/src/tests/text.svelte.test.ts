@@ -49,7 +49,8 @@ describe('Text custom colors', () => {
 		// (astryx-text.<color>) so `.astryx-text.brand { color: ... }` from the
 		// theme applies — mirroring how custom `type`s work.
 		const screen = await renderText({ color: 'brand' }, 'Branded');
-		const className = screen.getByText('Branded').element().parentElement?.className ?? '';
+		const className =
+			screen.getByText('Branded', { exact: true }).element().parentElement?.className ?? '';
 		expect(className).toContain('astryx-text');
 		expect(className).toContain('brand');
 	});
@@ -59,9 +60,11 @@ describe('Text custom colors', () => {
 		// built-in baseline instead of indexing undefined. Built-in `primary` is
 		// the baseline, so both share its StyleX color class.
 		const builtinScreen = await renderText({ color: 'primary' }, 'Builtin');
-		const builtin = builtinScreen.getByText('Builtin').element().parentElement?.className ?? '';
+		const builtin =
+			builtinScreen.getByText('Builtin', { exact: true }).element().parentElement?.className ?? '';
 		const customScreen = await renderText({ color: 'brand' }, 'Custom');
-		const custom = customScreen.getByText('Custom').element().parentElement?.className ?? '';
+		const custom =
+			customScreen.getByText('Custom', { exact: true }).element().parentElement?.className ?? '';
 
 		// Neither throws, and the custom color reuses primary's baseline StyleX
 		// class (the real color comes from theme CSS via the `brand` class).
@@ -74,6 +77,8 @@ describe('Text custom colors', () => {
 
 	it('still applies built-in colors directly', async () => {
 		const screen = await renderText({ color: 'accent' }, 'Accent');
-		expect(screen.getByText('Accent').element().parentElement?.className).toContain('accent');
+		expect(
+			screen.getByText('Accent', { exact: true }).element().parentElement?.className
+		).toContain('accent');
 	});
 });

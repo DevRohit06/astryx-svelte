@@ -133,7 +133,7 @@ describe('Spinner', () => {
 		const screen = await render(Spinner, {
 			props: { label: 'Loading...', 'data-testid': 'spinner' }
 		});
-		await expect.element(screen.getByText('Loading...')).toBeInTheDocument();
+		await expect.element(screen.getByText('Loading...', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders a snippet label', async () => {

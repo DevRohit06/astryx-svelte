@@ -207,7 +207,7 @@ describe('TextInput', () => {
 		const screen = await render(TextInput, {
 			props: { label: 'Search', isLabelHidden: true, value: '', onChange: noop }
 		});
-		const label = screen.getByText('Search');
+		const label = screen.getByText('Search', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
 		await expect.element(screen.getByLabelText('Search', { exact: true })).toBeInTheDocument();
@@ -217,7 +217,7 @@ describe('TextInput', () => {
 		const screen = await render(TextInput, {
 			props: { label: 'Email', value: '', onChange: noop }
 		});
-		const label = screen.getByText('Email');
+		const label = screen.getByText('Email', { exact: true });
 		await expect.element(label).toBeVisible();
 	});
 
@@ -321,7 +321,9 @@ describe('TextInput', () => {
 					status: { type: 'error', message: 'Invalid email address' }
 				}
 			});
-			await expect.element(screen.getByText('Invalid email address')).toBeInTheDocument();
+			await expect
+				.element(screen.getByText('Invalid email address', { exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('has no dangling aria-describedby ids inside InputGroup (WCAG 1.3.1)', async () => {
@@ -387,7 +389,7 @@ describe('TextInput', () => {
 			const describedBy = input.getAttribute('aria-describedby');
 			expect(describedBy).toBeTruthy();
 			// The status message should be reachable via the described-by ID
-			const messageElement = screen.getByText('Invalid email').element();
+			const messageElement = screen.getByText('Invalid email', { exact: true }).element();
 			expect(messageElement).toHaveAttribute('id');
 			expect(describedBy).toContain(messageElement.id);
 		});

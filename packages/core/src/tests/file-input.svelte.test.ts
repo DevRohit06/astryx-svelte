@@ -126,28 +126,28 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Resume', value: null, onChange: noop }
 		});
-		await expect.element(screen.getByText('Resume')).toBeInTheDocument();
+		await expect.element(screen.getByText('Resume', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders default placeholder for single file', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'File', value: null, onChange: noop }
 		});
-		await expect.element(screen.getByText('Choose file')).toBeInTheDocument();
+		await expect.element(screen.getByText('Choose file', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders default placeholder for multiple files', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Files', value: null, onChange: noop, isMultiple: true }
 		});
-		await expect.element(screen.getByText('Choose files')).toBeInTheDocument();
+		await expect.element(screen.getByText('Choose files', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders custom placeholder', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Upload', value: null, onChange: noop, placeholder: 'Drop here' }
 		});
-		await expect.element(screen.getByText('Drop here')).toBeInTheDocument();
+		await expect.element(screen.getByText('Drop here', { exact: true })).toBeInTheDocument();
 	});
 
 	it('displays selected file name', async () => {
@@ -155,7 +155,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Document', value: file, onChange: noop }
 		});
-		await expect.element(screen.getByText('report.pdf')).toBeInTheDocument();
+		await expect.element(screen.getByText('report.pdf', { exact: true })).toBeInTheDocument();
 	});
 
 	it('displays multiple file names', async () => {
@@ -163,7 +163,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Files', value: files, onChange: noop, isMultiple: true }
 		});
-		await expect.element(screen.getByText('a.txt, b.txt')).toBeInTheDocument();
+		await expect.element(screen.getByText('a.txt, b.txt', { exact: true })).toBeInTheDocument();
 	});
 
 	// Counterpart to upstream's `forwards ref to the native input` (`:130`); see
@@ -188,7 +188,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Upload', isLabelHidden: true, value: null, onChange: noop }
 		});
-		await expect.element(screen.getByText('Upload')).toBeInTheDocument();
+		await expect.element(screen.getByText('Upload', { exact: true })).toBeInTheDocument();
 	});
 
 	it('conveys required state through the accessible description', async () => {
@@ -290,14 +290,14 @@ describe('FileInput', () => {
 				status: { type: 'error', message: 'File too large' }
 			}
 		});
-		await expect.element(screen.getByText('File too large')).toBeInTheDocument();
+		await expect.element(screen.getByText('File too large', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description text', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Upload', value: null, onChange: noop, description: 'Max 5MB' }
 		});
-		await expect.element(screen.getByText('Max 5MB')).toBeInTheDocument();
+		await expect.element(screen.getByText('Max 5MB', { exact: true })).toBeInTheDocument();
 	});
 
 	describe('file selection via native input', () => {
@@ -592,7 +592,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop, mode: 'dropzone' }
 			});
-			await expect.element(screen.getByText('Choose file')).toBeInTheDocument();
+			await expect.element(screen.getByText('Choose file', { exact: true })).toBeInTheDocument();
 		});
 
 		it('keeps the drag-over state while dragging over the dropzone children', async () => {
@@ -611,19 +611,19 @@ describe('FileInput', () => {
 			// are.
 			dropzone.dispatchEvent(new DragEvent('dragenter', { bubbles: true, cancelable: true }));
 			await tick();
-			expect(screen.getByText('Drop files here').query()).toBeInTheDocument();
+			expect(screen.getByText('Drop files here', { exact: true }).query()).toBeInTheDocument();
 
 			// Moving from the container onto one of its own children fires a
 			// dragleave on the container with the child as relatedTarget — the
 			// highlight must not flicker off while still inside the dropzone.
 			// (Upstream sets `relatedTarget` after construction because jsdom's
 			// DragEvent init drops it; Chromium honours the init dict.)
-			const child = screen.getByText('Drop files here').element();
+			const child = screen.getByText('Drop files here', { exact: true }).element();
 			dropzone.dispatchEvent(
 				new DragEvent('dragleave', { bubbles: true, cancelable: true, relatedTarget: child })
 			);
 			await tick();
-			expect(screen.getByText('Drop files here').query()).toBeInTheDocument();
+			expect(screen.getByText('Drop files here', { exact: true }).query()).toBeInTheDocument();
 
 			// Actually leaving the dropzone ends the drag-over state.
 			dropzone.dispatchEvent(
@@ -634,8 +634,8 @@ describe('FileInput', () => {
 				})
 			);
 			await tick();
-			expect(screen.getByText('Drop files here').query()).not.toBeInTheDocument();
-			expect(screen.getByText('Choose file').query()).toBeInTheDocument();
+			expect(screen.getByText('Drop files here', { exact: true }).query()).not.toBeInTheDocument();
+			expect(screen.getByText('Choose file', { exact: true }).query()).toBeInTheDocument();
 		});
 
 		it('displays file name in dropzone mode', async () => {
@@ -643,7 +643,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: file, onChange: noop, mode: 'dropzone' }
 			});
-			await expect.element(screen.getByText('doc.pdf')).toBeInTheDocument();
+			await expect.element(screen.getByText('doc.pdf', { exact: true })).toBeInTheDocument();
 		});
 	});
 

@@ -41,7 +41,7 @@ const code = (text: string, rest: Record<string | symbol, unknown> = {}) => ({
 describe('Code', () => {
 	it('renders children inside a <code> element', async () => {
 		const screen = await render(TextChildProbe, { props: code('const x = 1') });
-		const el = screen.getByText('const x = 1');
+		const el = screen.getByText('const x = 1', { exact: true });
 		expect(el.element().tagName).toBe('CODE');
 	});
 
@@ -57,27 +57,36 @@ describe('Code', () => {
 
 	it('defaults color to primary', async () => {
 		const screen = await render(TextChildProbe, { props: code('code') });
-		expect(screen.getByText('code').element()).toHaveClass('astryx-code', 'primary');
+		expect(screen.getByText('code', { exact: true }).element()).toHaveClass(
+			'astryx-code',
+			'primary'
+		);
 	});
 
 	it('applies the secondary color', async () => {
 		const screen = await render(TextChildProbe, {
 			props: code('code', { color: 'secondary' })
 		});
-		expect(screen.getByText('code').element()).toHaveClass('astryx-code', 'secondary');
+		expect(screen.getByText('code', { exact: true }).element()).toHaveClass(
+			'astryx-code',
+			'secondary'
+		);
 	});
 
 	it('applies the inherit color', async () => {
 		const screen = await render(TextChildProbe, { props: code('code', { color: 'inherit' }) });
-		expect(screen.getByText('code').element()).toHaveClass('astryx-code', 'inherit');
+		expect(screen.getByText('code', { exact: true }).element()).toHaveClass(
+			'astryx-code',
+			'inherit'
+		);
 	});
 
 	it('adds a size class when size="inherit" (font-size + line-height inherit)', async () => {
 		const screen = await render(TextChildProbe, { props: code('code') });
-		const defaultClass = screen.getByText('code').element().getAttribute('class');
+		const defaultClass = screen.getByText('code', { exact: true }).element().getAttribute('class');
 
 		await screen.rerender({ rest: { size: 'inherit' } });
-		const inheritClass = screen.getByText('code').element().getAttribute('class');
+		const inheritClass = screen.getByText('code', { exact: true }).element().getAttribute('class');
 
 		// size="inherit" adds an extra StyleX class beyond the default rendering.
 		expect(inheritClass).not.toEqual(defaultClass);

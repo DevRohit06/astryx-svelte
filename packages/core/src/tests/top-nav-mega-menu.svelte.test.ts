@@ -322,6 +322,35 @@ function mouse(element: Element, type: 'mouseenter' | 'mouseleave'): void {
 	element.dispatchEvent(new MouseEvent(type));
 }
 
+/**
+ * Upstream's `screen.getByText(text)` where the text is a bare text node beside
+ * a sibling element.
+ *
+ * Testing Library's default text matcher reads an element's **own** text nodes
+ * (`getNodeText`), not its subtree. A Playwright locator compares the whole
+ * subtree text, so neither of its modes is upstream's assertion here: without
+ * `{exact: true}` it substring-matches and is *weaker*, and with it the compared
+ * string is `'Analytics Track behavior'` and it is simply a *different* question.
+ * Drawer mode renders `{title}` directly inside the content `<div>`, with the
+ * description as a `<span>` next to it — identical to upstream's markup — so the
+ * own-text equality is asserted against the nodes, as `tree-list` and `side-nav`
+ * already do for the same reason.
+ */
+function withOwnText(container: HTMLElement, text: string): HTMLElement {
+	const found = Array.from(container.querySelectorAll<HTMLElement>('*')).filter(
+		(el) =>
+			Array.from(el.childNodes)
+				.filter((n) => n.nodeType === Node.TEXT_NODE)
+				.map((n) => n.textContent ?? '')
+				.join('')
+				.trim() === text
+	);
+	if (found.length !== 1) {
+		throw new Error(`expected one element whose own text is "${text}", found ${found.length}`);
+	}
+	return found[0];
+}
+
 /** Upstream's `act(() => vi.advanceTimersByTime(ms))`, on the real clock. */
 function wait(ms: number): Promise<void> {
 	return new Promise((resolve) => {
@@ -719,8 +748,8 @@ describe('TopNavMegaMenu — drawer mode', () => {
 		await userEvent.click(trigger);
 
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
-		await expect.element(screen.getByText('Analytics')).toBeInTheDocument();
-		await expect.element(screen.getByText('Reports')).toBeInTheDocument();
+		await expect.element(screen.getByText('Analytics', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Reports', { exact: true })).toBeInTheDocument();
 	});
 
 	it('collapses when trigger is clicked again', async () => {
@@ -750,8 +779,9 @@ describe('TopNavMegaMenu — drawer mode', () => {
 
 		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
-		await expect.element(screen.getByText('Analytics')).toBeInTheDocument();
-		await expect.element(screen.getByText('Track behavior')).toBeInTheDocument();
+		// `withOwnText` is upstream's matcher, not a locator — see its docstring.
+		expect(withOwnText(screen.container, 'Analytics')).toBeInTheDocument();
+		await expect.element(screen.getByText('Track behavior', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders items as links when href is provided', async () => {
@@ -798,7 +828,9 @@ describe('TopNavMegaMenu — drawer mode', () => {
 
 		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
-		await expect.element(screen.getByText('Featured: New AI Tools')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Featured: New AI Tools', { exact: true }))
+			.toBeInTheDocument();
 	});
 });
 
@@ -818,8 +850,8 @@ describe('TopNavMegaMenuItem', () => {
 		const screen = await render(TopNavMegaMenuItem, {
 			props: { title: 'Analytics', description: 'Track behavior', href: '/analytics' }
 		});
-		await expect.element(screen.getByText('Analytics')).toBeInTheDocument();
-		await expect.element(screen.getByText('Track behavior')).toBeInTheDocument();
+		await expect.element(screen.getByText('Analytics', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Track behavior', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as a drawer item in drawer context', async () => {

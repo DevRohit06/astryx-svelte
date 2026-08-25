@@ -160,7 +160,9 @@ describe('Lightbox', () => {
 				}
 			}
 		});
-		await expect.element(screen.getByText('Sunset over the ocean')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Sunset over the ocean', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('does not render caption when not provided', async () => {
@@ -258,7 +260,7 @@ describe('Lightbox', () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, index: 0 }
 			});
-			await expect.element(screen.getByText('1 / 3')).toBeInTheDocument();
+			await expect.element(screen.getByText('1 / 3', { exact: true })).toBeInTheDocument();
 		});
 
 		it('shows prev/next buttons for middle item', async () => {

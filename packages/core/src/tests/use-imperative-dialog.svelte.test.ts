@@ -92,7 +92,7 @@ describe('useImperativeDialog', () => {
 		const screen = await render(ImperativeDialogProbe, {
 			props: { defaultOptions: { width: 400 } }
 		});
-		await screen.getByText('Open').click();
+		await screen.getByText('Open', { exact: true }).click();
 		await expect.element(screen.getByTestId('status')).toHaveTextContent('open');
 	});
 
@@ -100,17 +100,17 @@ describe('useImperativeDialog', () => {
 		const screen = await render(ImperativeDialogProbe, {
 			props: { defaultOptions: { width: 400 } }
 		});
-		await screen.getByText('Open').click();
-		await expect.element(screen.getByText('Dialog content')).toBeInTheDocument();
+		await screen.getByText('Open', { exact: true }).click();
+		await expect.element(screen.getByText('Dialog content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('closes on hide()', async () => {
 		const screen = await render(ImperativeDialogProbe, {
 			props: { defaultOptions: { width: 400 } }
 		});
-		await screen.getByText('Open').click();
+		await screen.getByText('Open', { exact: true }).click();
 		await expect.element(screen.getByTestId('status')).toHaveTextContent('open');
-		await screen.getByText('Close').click();
+		await screen.getByText('Close', { exact: true }).click();
 		await expect.element(screen.getByTestId('status')).toHaveTextContent('closed');
 	});
 
@@ -120,8 +120,8 @@ describe('useImperativeDialog', () => {
 		const screen = await render(ImperativeDialogProbe, {
 			props: { showOptions: { width: 720 }, openLabel: 'Open Wide', text: 'Wide content' }
 		});
-		await screen.getByText('Open Wide').click();
+		await screen.getByText('Open Wide', { exact: true }).click();
 		await expect.element(screen.getByTestId('status')).toHaveTextContent('open');
-		await expect.element(screen.getByText('Wide content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Wide content', { exact: true })).toBeInTheDocument();
 	});
 });

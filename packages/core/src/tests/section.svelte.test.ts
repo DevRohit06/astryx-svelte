@@ -40,7 +40,7 @@ describe('Section', () => {
 	it('renders with default props', async () => {
 		const screen = await render(SectionProbe, { props: { text: 'Default section' } });
 		expect(outerOf(screen)).toBeInTheDocument();
-		await expect.element(screen.getByText('Default section')).toBeInTheDocument();
+		await expect.element(screen.getByText('Default section', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders children', async () => {
@@ -48,7 +48,7 @@ describe('Section', () => {
 			props: { childTestid: 'child', text: 'Hello' }
 		});
 		await expect.element(screen.getByTestId('child')).toBeInTheDocument();
-		await expect.element(screen.getByText('Hello')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with variant="section" (default)', async () => {
@@ -82,7 +82,7 @@ describe('Section', () => {
 		});
 		// The component should render without error
 		expect(outerOf(screen)).toBeInTheDocument();
-		await expect.element(screen.getByText('Content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with padding prop', async () => {
@@ -90,7 +90,7 @@ describe('Section', () => {
 			props: { props: { padding: 2 }, text: 'Content' }
 		});
 		expect(outerOf(screen)).toBeInTheDocument();
-		await expect.element(screen.getByText('Content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with width and height without error', async () => {
@@ -100,7 +100,7 @@ describe('Section', () => {
 		expect(outerOf(screen)).toBeInTheDocument();
 		// Sizing is applied via stylex dynamic styles (CSS custom properties)
 		// which aren't reflected in element.style in test environments
-		await expect.element(screen.getByText('Content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with maxWidth and minHeight without error', async () => {
@@ -108,7 +108,7 @@ describe('Section', () => {
 			props: { props: { maxWidth: 600, minHeight: 200 }, text: 'Content' }
 		});
 		expect(outerOf(screen)).toBeInTheDocument();
-		await expect.element(screen.getByText('Content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with string size values without error', async () => {
@@ -116,7 +116,7 @@ describe('Section', () => {
 			props: { props: { width: '50%', height: 'auto' }, text: 'Content' }
 		});
 		expect(outerOf(screen)).toBeInTheDocument();
-		await expect.element(screen.getByText('Content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('forwards ref', async () => {
@@ -204,7 +204,7 @@ describe('Section', () => {
 		expect(outerInner.className).toBeDefined();
 		// Inner section should render without error
 		await expect.element(screen.getByTestId('inner')).toBeInTheDocument();
-		await expect.element(screen.getByText('Inner')).toBeInTheDocument();
+		await expect.element(screen.getByText('Inner', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders nested sections with explicit inner padding override', async () => {
@@ -216,6 +216,6 @@ describe('Section', () => {
 			}
 		});
 		await expect.element(screen.getByTestId('inner')).toBeInTheDocument();
-		await expect.element(screen.getByText('Inner')).toBeInTheDocument();
+		await expect.element(screen.getByText('Inner', { exact: true })).toBeInTheDocument();
 	});
 });

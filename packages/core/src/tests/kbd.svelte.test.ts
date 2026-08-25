@@ -76,27 +76,27 @@ describe('Kbd', () => {
 
 	it('renders a single key', async () => {
 		const screen = await render(Kbd, { props: { keys: 'k' } });
-		const kbd = screen.getByText('K');
+		const kbd = screen.getByText('K', { exact: true });
 		expect(kbd.element().tagName).toBe('KBD');
 	});
 
 	it('renders multiple keys separated by +', async () => {
 		const screen = await render(Kbd, { props: { keys: 'mod+k' } });
 		// On a non-Mac platform, mod renders as "Ctrl"
-		await expect.element(screen.getByText('Ctrl')).toBeInTheDocument();
-		await expect.element(screen.getByText('K')).toBeInTheDocument();
+		await expect.element(screen.getByText('Ctrl', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('K', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders mod as Ctrl on non-Mac platforms', async () => {
 		const screen = await render(Kbd, { props: { keys: 'mod' } });
-		await expect.element(screen.getByText('Ctrl')).toBeInTheDocument();
+		await expect.element(screen.getByText('Ctrl', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders mod as ⌘ on Mac platforms', async () => {
 		spoofPlatform('MacIntel');
 
 		const screen = await render(Kbd, { props: { keys: 'mod' } });
-		await expect.element(screen.getByText('⌘')).toBeInTheDocument(); // ⌘
+		await expect.element(screen.getByText('⌘', { exact: true })).toBeInTheDocument(); // ⌘
 	});
 
 	it('reads a blank userAgentData.platform as unknown, not as non-Mac', async () => {
@@ -114,25 +114,25 @@ describe('Kbd', () => {
 		});
 
 		const screen = await render(Kbd, { props: { keys: 'mod' } });
-		await expect.element(screen.getByText('⌘')).toBeInTheDocument();
+		await expect.element(screen.getByText('⌘', { exact: true })).toBeInTheDocument();
 	});
 
 	it('maps modifier keys to symbols', async () => {
 		const screen = await render(Kbd, { props: { keys: 'ctrl+alt+shift+k' } });
-		await expect.element(screen.getByText('⌃')).toBeInTheDocument(); // ⌃
-		await expect.element(screen.getByText('⌥')).toBeInTheDocument(); // ⌥
-		await expect.element(screen.getByText('⇧')).toBeInTheDocument(); // ⇧
-		await expect.element(screen.getByText('K')).toBeInTheDocument();
+		await expect.element(screen.getByText('⌃', { exact: true })).toBeInTheDocument(); // ⌃
+		await expect.element(screen.getByText('⌥', { exact: true })).toBeInTheDocument(); // ⌥
+		await expect.element(screen.getByText('⇧', { exact: true })).toBeInTheDocument(); // ⇧
+		await expect.element(screen.getByText('K', { exact: true })).toBeInTheDocument();
 	});
 
 	it('maps special keys', async () => {
 		const screen = await render(Kbd, { props: { keys: 'enter' } });
-		await expect.element(screen.getByText('↵')).toBeInTheDocument(); // ↵
+		await expect.element(screen.getByText('↵', { exact: true })).toBeInTheDocument(); // ↵
 	});
 
 	it('renders escape as text', async () => {
 		const screen = await render(Kbd, { props: { keys: 'escape' } });
-		await expect.element(screen.getByText('Esc')).toBeInTheDocument();
+		await expect.element(screen.getByText('Esc', { exact: true })).toBeInTheDocument();
 	});
 
 	it('exposes a spoken accessible name and hides the glyphs (obs-1)', async () => {
@@ -155,14 +155,14 @@ describe('Kbd', () => {
 
 	it('uppercases unknown keys', async () => {
 		const screen = await render(Kbd, { props: { keys: 'f1' } });
-		await expect.element(screen.getByText('F1')).toBeInTheDocument();
+		await expect.element(screen.getByText('F1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('handles whitespace around keys', async () => {
 		const screen = await render(Kbd, { props: { keys: 'mod + k' } });
 		// On a non-Mac platform, mod renders as "Ctrl"
-		await expect.element(screen.getByText('Ctrl')).toBeInTheDocument();
-		await expect.element(screen.getByText('K')).toBeInTheDocument();
+		await expect.element(screen.getByText('Ctrl', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('K', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders astryx-* class names for theme targeting', async () => {
@@ -173,8 +173,8 @@ describe('Kbd', () => {
 
 	it('renders "plus" as a literal + key', async () => {
 		const screen = await render(Kbd, { props: { keys: 'shift+plus' } });
-		await expect.element(screen.getByText('⇧')).toBeInTheDocument();
-		await expect.element(screen.getByText('+')).toBeInTheDocument();
+		await expect.element(screen.getByText('⇧', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('+', { exact: true })).toBeInTheDocument();
 	});
 
 	it('keeps the computed role and aria-label when unrelated rest props are spread', async () => {

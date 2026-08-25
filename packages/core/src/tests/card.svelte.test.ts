@@ -35,7 +35,7 @@ const cardWith = (text: string, rest: Record<string, unknown> = {}) => ({
 describe('Card', () => {
 	it('renders children', async () => {
 		const screen = await render(SlotProbe, { props: cardWith('Hello') });
-		await expect.element(screen.getByText('Hello')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders astryx-* class names for theme targeting', async () => {

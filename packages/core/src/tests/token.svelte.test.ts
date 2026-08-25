@@ -47,7 +47,7 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 describe('Token', () => {
 	it('renders with label', async () => {
 		const screen = await render(Token, { props: { label: 'Tag' } });
-		await expect.element(screen.getByText('Tag')).toBeInTheDocument();
+		await expect.element(screen.getByText('Tag', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as a span by default', async () => {
@@ -77,7 +77,7 @@ describe('Token', () => {
 				props: { label: color, color, 'data-testid': `token-${color}` }
 			});
 			await expect.element(screen.getByTestId(`token-${color}`)).toBeInTheDocument();
-			await expect.element(screen.getByText(color)).toBeInTheDocument();
+			await expect.element(screen.getByText(color, { exact: true })).toBeInTheDocument();
 			screen.unmount();
 		}
 	});
@@ -174,9 +174,9 @@ describe('Token', () => {
 	it('hides label visually when isLabelHidden is true', async () => {
 		const screen = await render(Token, { props: { label: 'Hidden', isLabelHidden: true } });
 		// Label text is still in the DOM for screen readers
-		await expect.element(screen.getByText('Hidden')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hidden', { exact: true })).toBeInTheDocument();
 		// Root element should have aria-label
-		const root = screen.getByText('Hidden').element().closest('span[aria-label]');
+		const root = screen.getByText('Hidden', { exact: true }).element().closest('span[aria-label]');
 		expect(root).toHaveAttribute('aria-label', 'Hidden');
 	});
 
@@ -191,7 +191,7 @@ describe('Token', () => {
 			}
 		});
 		await expect.element(screen.getByTestId('end')).toBeInTheDocument();
-		await expect.element(screen.getByText('End')).toBeInTheDocument();
+		await expect.element(screen.getByText('End', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders icon', async () => {
@@ -553,7 +553,7 @@ describe('Token size', () => {
 			props: { label: 'Tag', size: 'lg', 'data-testid': 'lg-token' }
 		});
 		await expect.element(screen.getByTestId('lg-token')).toBeInTheDocument();
-		await expect.element(screen.getByText('Tag')).toBeInTheDocument();
+		await expect.element(screen.getByText('Tag', { exact: true })).toBeInTheDocument();
 	});
 });
 

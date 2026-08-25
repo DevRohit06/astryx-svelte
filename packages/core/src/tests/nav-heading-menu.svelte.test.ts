@@ -139,7 +139,7 @@ describe('NavHeadingMenuItem', () => {
 		const screen = await render(NavHeadingMenuFixture, {
 			props: { items: [{ label: 'Dashboard', description: 'View metrics' }] }
 		});
-		await expect.element(screen.getByText('View metrics')).toBeInTheDocument();
+		await expect.element(screen.getByText('View metrics', { exact: true })).toBeInTheDocument();
 	});
 
 	it('applies data-testid', async () => {

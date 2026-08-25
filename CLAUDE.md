@@ -108,6 +108,15 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   a chunk that collected nothing fails the run instead of shrinking the total. This
 #   is what `core`'s `test` script and CI both use; a bare `--project=client` over every
 #   client test file is not a measurement.
+#   **Audit a generated script for control characters before trusting its output.**
+#   A `\b` written through a shell heredoc can reach the file as the character it
+#   names rather than the escape - U+0008, not a word boundary. Inside a regex
+#   literal that still compiles, still lints, still typechecks, and simply never
+#   matches. In batch 037 that made `status.mjs` report 38 weak assertions where
+#   one was, and it was found only by piping the line through `cat -A` and seeing
+#   `^H`. It failed *safe* - overstating the work - which is why nobody audits it.
+#   `node -e "const s=require('fs').readFileSync(F,'utf8');"` plus a scan for
+#   codepoints under 32 settles it in one command.
 pnpm dev          # the docs site — the only demo surface (see below)
 pnpm -F docs generate   # regenerate the docs content registries (runs automatically on dev/build)
 ```

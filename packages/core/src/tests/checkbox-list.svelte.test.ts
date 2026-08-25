@@ -102,7 +102,7 @@ describe('CheckboxList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Preferences')).toBeInTheDocument();
+		await expect.element(screen.getByText('Preferences', { exact: true })).toBeInTheDocument();
 	});
 
 	it('wraps items in a group named by the label (forms audit: group role)', async () => {
@@ -120,7 +120,7 @@ describe('CheckboxList', () => {
 		// orphaned htmlFor.
 		const group = screen.getByRole('group', { name: 'Preferences', exact: true });
 		await expect.element(group).toBeInTheDocument();
-		const label = screen.getByText('Preferences').element();
+		const label = screen.getByText('Preferences', { exact: true }).element();
 		expect(label.tagName).toBe('SPAN');
 		expect(label.closest('label')).toBeNull();
 		expect(label).not.toHaveAttribute('for');
@@ -414,7 +414,9 @@ describe('CheckboxList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Select at least one')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Select at least one', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders description on items', async () => {
@@ -426,7 +428,7 @@ describe('CheckboxList', () => {
 				items: [{ label: 'Option A', value: 'a', description: 'This is option A' }]
 			}
 		});
-		await expect.element(screen.getByText('This is option A')).toBeInTheDocument();
+		await expect.element(screen.getByText('This is option A', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description on the checkbox list group', async () => {
@@ -439,7 +441,9 @@ describe('CheckboxList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Choose your preferences')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Choose your preferences', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('supports data-testid on CheckboxList', async () => {

@@ -265,9 +265,9 @@ describe('Grid', () => {
 				items: ['Item 1', 'Item 2', 'Item 3']
 			}
 		});
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 3')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 3', { exact: true })).toBeInTheDocument();
 	});
 
 	// --- columns object API ---

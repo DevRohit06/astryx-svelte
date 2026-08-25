@@ -66,7 +66,9 @@ describe('FieldStatus', () => {
 		const screen = await render(FieldStatus, {
 			props: { type: 'error', message: 'This field is required' }
 		});
-		await expect.element(screen.getByText('This field is required')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('This field is required', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders the message inside a <div>', async () => {
@@ -342,7 +344,7 @@ describe('FieldStatus', () => {
 			});
 			const el = screen.getByTestId('fs').element();
 			const icon = el.querySelector('[aria-hidden="true"]');
-			const text = screen.getByText('Something went wrong').element();
+			const text = screen.getByText('Something went wrong', { exact: true }).element();
 			expect(icon).toBeInTheDocument();
 			// Icon comes before the message text in document order.
 			expect(icon!.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

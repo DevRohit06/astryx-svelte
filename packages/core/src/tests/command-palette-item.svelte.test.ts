@@ -40,7 +40,7 @@ afterEach(() => {
 describe('CommandPaletteItem', () => {
 	it('renders children', async () => {
 		const screen = await render(Slots, { props: { render: 'item', items: ['Test Item'] } });
-		await expect.element(screen.getByText('Test Item')).toBeInTheDocument();
+		await expect.element(screen.getByText('Test Item', { exact: true })).toBeInTheDocument();
 	});
 
 	it('has option role', async () => {

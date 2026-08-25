@@ -92,7 +92,7 @@ describe('PowerSearch × i18n — end to end', () => {
 
 	test('resultCount uses ICU plural (2 results → "results")', async () => {
 		const screen = await render(Harness, { props: { fieldDefs: [nameField], filters: [] } });
-		await expect.element(screen.getByText('2 results')).toBeInTheDocument();
+		await expect.element(screen.getByText('2 results', { exact: true })).toBeInTheDocument();
 	});
 
 	test('pseudo locale wraps default operator labels', async () => {
@@ -150,6 +150,6 @@ describe('PowerSearch × i18n — end to end', () => {
 				filters: []
 			}
 		});
-		await expect.element(screen.getByText('2 résultats')).toBeInTheDocument();
+		await expect.element(screen.getByText('2 résultats', { exact: true })).toBeInTheDocument();
 	});
 });

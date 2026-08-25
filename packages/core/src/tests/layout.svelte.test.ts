@@ -47,19 +47,19 @@ describe('Layout', () => {
 	describe('content / children resolution', () => {
 		it('renders the content prop', async () => {
 			const screen = await render(LayoutFixture, { props: { content: 'main body' } });
-			await expect.element(screen.getByText('main body')).toBeInTheDocument();
+			await expect.element(screen.getByText('main body', { exact: true })).toBeInTheDocument();
 		});
 
 		it('renders children as a shorthand for the content slot', async () => {
 			const screen = await render(LayoutFixture, { props: { child: 'child body' } });
-			await expect.element(screen.getByText('child body')).toBeInTheDocument();
+			await expect.element(screen.getByText('child body', { exact: true })).toBeInTheDocument();
 		});
 
 		it('content wins when both content and children are provided', async () => {
 			const screen = await render(LayoutFixture, {
 				props: { content: 'from-content', child: 'from-children' }
 			});
-			await expect.element(screen.getByText('from-content')).toBeInTheDocument();
+			await expect.element(screen.getByText('from-content', { exact: true })).toBeInTheDocument();
 			expect(screen.container.textContent).not.toContain('from-children');
 		});
 
@@ -81,7 +81,7 @@ describe('Layout', () => {
 				}
 			});
 			for (const text of ['the-header', 'the-start', 'the-end', 'the-footer', 'the-content']) {
-				await expect.element(screen.getByText(text)).toBeInTheDocument();
+				await expect.element(screen.getByText(text, { exact: true })).toBeInTheDocument();
 			}
 		});
 

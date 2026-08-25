@@ -67,7 +67,9 @@ describe('DialogHeader', () => {
 		const screen = await render(DialogHeader, {
 			props: { title: 'Title', subtitle: 'This is a subtitle' }
 		});
-		await expect.element(screen.getByText('This is a subtitle')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('This is a subtitle', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('does not render subtitle when not provided', async () => {

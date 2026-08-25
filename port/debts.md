@@ -1348,6 +1348,38 @@ and everything a consumer can observe is unchanged: the `LayerTouchTrigger` unio
 default, and the behaviour on every pointer type are byte-identical. Recorded because the published
 _signature_ differs, which is the thing `astryx-surface` compares
 
+### Svelte keeps the whitespace between adjacent expressions where JSX drops it
+
+- **units:** core (markup convention)
+- **kind:** deliberate-divergence
+- **retires:** never — it is a language difference, not a porting choice
+
+JSX discards whitespace between two expressions when it contains a newline, so upstream's
+
+```jsx
+{
+	icon;
+}
+{
+	!isIconOnly && (children ?? label);
+}
+```
+
+renders `<span>Icon</span>Settings`. Svelte keeps the newline-and-indent between the two blocks as a
+text node, so the counterpart renders `<span>Icon</span> Settings`. The difference is one space in
+`textContent`, and it will appear anywhere a component emits adjacent expressions on separate lines.
+
+It is inert where it has been seen. `TopNavItem`'s root is `inline-flex`, and a whitespace-only text
+run between flex items generates no anonymous flex item at all, so nothing renders. The accessible
+name matches on both sides regardless, because name computation joins each child's result with a
+space either way — which is why no ported case has ever caught it.
+
+Recorded rather than fixed, because the fix is to run the blocks together on one line and that costs
+more readability than the space costs correctness. **Where it would stop being inert is a non-flex
+container**, and there the space is real and visible; a component in that shape should close the tags
+up. Surfaced by the `getByText` sweep in batch 037, which reads `textContent` and is the first thing
+in this port able to see it at all
+
 ## Retired
 
 Closed, kept as the record. **Nothing below counts as an open debt** — `scripts/status.mjs` stops

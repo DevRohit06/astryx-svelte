@@ -11,14 +11,14 @@ import ChatTokenizedText from '$lib/components/chat/chat-tokenized-text.svelte';
 describe('ChatTokenizedText', () => {
 	it('renders plain text when no tokens provided', async () => {
 		const screen = await render(ChatTokenizedText, { props: { children: 'Hello world' } });
-		await expect.element(screen.getByText('Hello world')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello world', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders plain text when tokens array is empty', async () => {
 		const screen = await render(ChatTokenizedText, {
 			props: { children: 'Hello world', tokens: [] }
 		});
-		await expect.element(screen.getByText('Hello world')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello world', { exact: true })).toBeInTheDocument();
 	});
 
 	it('replaces a single token with a badge', async () => {
@@ -28,7 +28,7 @@ describe('ChatTokenizedText', () => {
 				tokens: [{ value: '@cindy', label: '@Cindy Zhang', variant: 'blue' }]
 			}
 		});
-		await expect.element(screen.getByText('@Cindy Zhang')).toBeInTheDocument();
+		await expect.element(screen.getByText('@Cindy Zhang', { exact: true })).toBeInTheDocument();
 		// Upstream asserts the raw token value is gone via `queryByText('@cindy')`;
 		// the label differs from it only in case, so a substring check is exact.
 		expect(screen.container.textContent).not.toContain('@cindy');
@@ -44,8 +44,8 @@ describe('ChatTokenizedText', () => {
 				]
 			}
 		});
-		await expect.element(screen.getByText('@Cindy Zhang')).toBeInTheDocument();
-		await expect.element(screen.getByText('@Navi')).toBeInTheDocument();
+		await expect.element(screen.getByText('@Cindy Zhang', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('@Navi', { exact: true })).toBeInTheDocument();
 	});
 
 	it('handles repeated occurrences of the same token', async () => {
@@ -55,14 +55,14 @@ describe('ChatTokenizedText', () => {
 				tokens: [{ value: '@cindy', label: '@Cindy Zhang' }]
 			}
 		});
-		expect(screen.getByText('@Cindy Zhang').elements()).toHaveLength(2);
+		expect(screen.getByText('@Cindy Zhang', { exact: true }).elements()).toHaveLength(2);
 	});
 
 	it('renders text with no matching tokens as plain text', async () => {
 		const screen = await render(ChatTokenizedText, {
 			props: { children: 'Hello world', tokens: [{ value: '@cindy', label: '@Cindy Zhang' }] }
 		});
-		await expect.element(screen.getByText('Hello world')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello world', { exact: true })).toBeInTheDocument();
 	});
 
 	it('handles tokens with special regex characters in pattern', async () => {
@@ -70,7 +70,7 @@ describe('ChatTokenizedText', () => {
 			props: { children: 'Run /search now', tokens: [{ value: '/search', label: '/search' }] }
 		});
 		// The badge should render with the label
-		await expect.element(screen.getByText('/search')).toBeInTheDocument();
+		await expect.element(screen.getByText('/search', { exact: true })).toBeInTheDocument();
 	});
 
 	it('preserves surrounding text', async () => {

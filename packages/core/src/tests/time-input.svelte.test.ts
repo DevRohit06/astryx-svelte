@@ -214,7 +214,7 @@ describe('TimeInput', () => {
 		const screen = await render(TimeInput, {
 			props: { label: 'Time', isLabelHidden: true, onChange: noop }
 		});
-		const label = screen.getByText('Time');
+		const label = screen.getByText('Time', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		await expect.element(screen.getByLabelText('Time', { exact: true })).toBeInTheDocument();
 	});
@@ -330,7 +330,7 @@ describe('TimeInput', () => {
 		changeValue(inputIn(screen.container), '3:45 pm');
 
 		await expect.element(screen.getByRole('alert')).toHaveTextContent('');
-		expect(screen.getByText('Invalid time').query()).toBeNull();
+		expect(screen.getByText('Invalid time', { exact: true }).query()).toBeNull();
 	});
 
 	// New at v0.4.1: the live region's copy is `t('@astryx.timeInput.invalidTime')`
@@ -531,9 +531,9 @@ describe('TimeInput', () => {
 				}
 			});
 
-			await expect.element(screen.getByText('Schedule')).toBeInTheDocument();
-			await expect.element(screen.getByText('Start time')).toBeInTheDocument();
-			expect(screen.getByText('Start time').element().tagName).toBe('SPAN');
+			await expect.element(screen.getByText('Schedule', { exact: true })).toBeInTheDocument();
+			await expect.element(screen.getByText('Start time', { exact: true })).toBeInTheDocument();
+			expect(screen.getByText('Start time', { exact: true }).element().tagName).toBe('SPAN');
 			// Restated: scoped to the render container, which is what RTL's
 			// freshly-cleaned `document` amounts to.
 			expect(screen.container.querySelector('label')).toBeNull();

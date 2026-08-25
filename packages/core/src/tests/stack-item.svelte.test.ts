@@ -35,7 +35,7 @@ function renderStackItem(
 describe('StackItem', () => {
 	it('renders children correctly', async () => {
 		const screen = await renderStackItem({}, { text: 'Test content' });
-		await expect.element(screen.getByText('Test content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Test content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as div by default', async () => {
@@ -55,17 +55,17 @@ describe('StackItem', () => {
 
 	it('renders with size prop', async () => {
 		const screen = await renderStackItem({ size: 'fill' }, { text: 'Content' });
-		await expect.element(screen.getByText('Content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with static size', async () => {
 		const screen = await renderStackItem({ size: 'static' }, { text: 'Content' });
-		await expect.element(screen.getByText('Content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with crossAlignSelf prop', async () => {
 		const screen = await renderStackItem({ crossAlignSelf: 'center' }, { text: 'Content' });
-		await expect.element(screen.getByText('Content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('forwards ref correctly', async () => {

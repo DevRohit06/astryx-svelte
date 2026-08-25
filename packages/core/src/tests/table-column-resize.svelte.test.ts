@@ -481,7 +481,7 @@ describe('useTableColumnResize', () => {
 			expect(headers[1].style.width).toBe('150px');
 
 			// Reorder columns
-			(screen.getByText('Reorder').element() as HTMLElement).click();
+			(screen.getByText('Reorder', { exact: true }).element() as HTMLElement).click();
 
 			await expect
 				.poll(() => getHeaders(screen)[0].style.width)

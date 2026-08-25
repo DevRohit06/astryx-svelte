@@ -170,7 +170,7 @@ describe('Avatar', () => {
 		const screen = await render(Avatar, {
 			props: { name: 'Ada Lovelace', size: 'sm', 'data-testid': 'a' }
 		});
-		const initials = screen.getByText('AL').element();
+		const initials = screen.getByText('AL', { exact: true }).element();
 		// The default proportional size (sm = 24 × 0.4 = 9.6px) is fed to StyleX as
 		// a dynamic value: StyleX applies `font-size` through a class and sets only
 		// the computed value inline (as a custom property). Because the property

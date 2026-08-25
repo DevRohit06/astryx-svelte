@@ -949,6 +949,8 @@ describe('Outline scroll scoping', () => {
 describe('useOutlineFromDOM', () => {
 	it('collects headings from DOM container', async () => {
 		const screen = await render(OutlineFromDomProbe);
-		await expect.element(screen.getByText('2:intro:Intro|3:details:Details')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('2:intro:Intro|3:details:Details', { exact: true }))
+			.toBeInTheDocument();
 	});
 });

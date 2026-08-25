@@ -41,7 +41,7 @@ describe('InputGroup', () => {
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		expect(group).not.toHaveAttribute('aria-label');
-		const label = screen.getByText('Price').element();
+		const label = screen.getByText('Price', { exact: true }).element();
 		expect(label.tagName).toBe('SPAN');
 		expect(label.closest('label')).toBeNull();
 		expect(label).not.toHaveAttribute('for');
@@ -64,8 +64,12 @@ describe('InputGroup', () => {
 		const describedBy = group.getAttribute('aria-describedby');
 		expect(describedBy).toBeTruthy();
 		expect(describedBy!.split(' ')).toHaveLength(2);
-		expect(describedBy).toContain(screen.getByText('Enter the amount in USD').element().id);
-		expect(describedBy).toContain(screen.getByText('Price is required').element().id);
+		expect(describedBy).toContain(
+			screen.getByText('Enter the amount in USD', { exact: true }).element().id
+		);
+		expect(describedBy).toContain(
+			screen.getByText('Price is required', { exact: true }).element().id
+		);
 	});
 
 	it('labels grouped TextInput from the group and inner input labels', async () => {
@@ -242,14 +246,14 @@ describe('InputGroup', () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'plain', label: 'Price' }
 		});
-		await expect.element(screen.getByText('Price')).toBeInTheDocument();
+		await expect.element(screen.getByText('Price', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders addon text', async () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'currency', label: 'Price' }
 		});
-		await expect.element(screen.getByText('$')).toBeInTheDocument();
+		await expect.element(screen.getByText('$', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders the input', async () => {
@@ -263,8 +267,8 @@ describe('InputGroup', () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'url', label: 'Website' }
 		});
-		await expect.element(screen.getByText('https://')).toBeInTheDocument();
-		await expect.element(screen.getByText('.com')).toBeInTheDocument();
+		await expect.element(screen.getByText('https://', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('.com', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByRole('textbox')).toBeInTheDocument();
 	});
 
@@ -279,7 +283,9 @@ describe('InputGroup', () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'plain', label: 'Price', description: 'Enter the price in USD' }
 		});
-		await expect.element(screen.getByText('Enter the price in USD')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Enter the price in USD', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders status message', async () => {
@@ -290,14 +296,16 @@ describe('InputGroup', () => {
 				status: { type: 'error', message: 'Price is required' }
 			}
 		});
-		await expect.element(screen.getByText('Price is required')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Price is required', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders with hidden label', async () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'plain', label: 'Price', isLabelHidden: true }
 		});
-		await expect.element(screen.getByText('Price')).toBeInTheDocument();
+		await expect.element(screen.getByText('Price', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByRole('group')).toBeInTheDocument();
 	});
 

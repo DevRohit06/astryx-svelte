@@ -113,7 +113,7 @@ describe('useToast fallback viewport theme mode', () => {
 		const screen = await render(Fixture, {
 			props: { theme: testTheme, mode: 'light', options: NO_AUTO_HIDE }
 		});
-		(screen.getByText('Trigger').element() as HTMLElement).click();
+		(screen.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
 
 		await expect
 			.poll(() => fallbackContainer()?.querySelector('[data-astryx-media]'))
@@ -142,7 +142,7 @@ describe('useToast fallback viewport theme mode', () => {
 				triggerLabel: 'Trigger System'
 			}
 		});
-		(screen.getByText('Trigger System').element() as HTMLElement).click();
+		(screen.getByText('Trigger System', { exact: true }).element() as HTMLElement).click();
 
 		await expect
 			.poll(() => fallbackContainer()?.querySelectorAll('[data-astryx-media]').length ?? 0)
@@ -165,7 +165,7 @@ describe('useToast fallback viewport theme mode', () => {
 				triggerLabel: 'Trigger Mirror'
 			}
 		});
-		(screen.getByText('Trigger Mirror').element() as HTMLElement).click();
+		(screen.getByText('Trigger Mirror', { exact: true }).element() as HTMLElement).click();
 
 		await expect.poll(() => fallbackContainer()?.getAttribute('data-theme')).toBe('dark');
 		expect(fallbackContainer()!.getAttribute('data-astryx-theme')).toBe('test');
@@ -208,7 +208,7 @@ describe('useToast LayerProvider path', () => {
 				hasViewport: true
 			}
 		});
-		(screen.getByText('Trigger Provider').element() as HTMLElement).click();
+		(screen.getByText('Trigger Provider', { exact: true }).element() as HTMLElement).click();
 
 		await expect.poll(() => newestMediaAttr(screen.container)).toBe('dark');
 	});

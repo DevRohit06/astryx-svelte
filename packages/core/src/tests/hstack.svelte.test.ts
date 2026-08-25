@@ -40,8 +40,8 @@ function renderHStack(
 describe('HStack', () => {
 	it('renders children correctly', async () => {
 		const screen = await renderHStack({}, { items: ['Item 1', 'Item 2'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as div by default', async () => {
@@ -58,17 +58,17 @@ describe('HStack', () => {
 
 	it('renders with gap prop', async () => {
 		const screen = await renderHStack({ gap: 4 }, { items: ['Item 1', 'Item 2'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with vAlign prop', async () => {
 		const screen = await renderHStack({ vAlign: 'center' }, { items: ['Item 1'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with wrap prop', async () => {
 		const screen = await renderHStack({ wrap: 'wrap' }, { items: ['Item 1', 'Item 2'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('forwards ref correctly', async () => {

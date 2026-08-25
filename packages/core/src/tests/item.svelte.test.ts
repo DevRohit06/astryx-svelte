@@ -49,15 +49,17 @@ describe('Item', () => {
 
 	it('renders label text', async () => {
 		const screen = await render(Item, { props: { label: 'Contact Name' } });
-		await expect.element(screen.getByText('Contact Name')).toBeInTheDocument();
+		await expect.element(screen.getByText('Contact Name', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders label and description', async () => {
 		const screen = await render(Item, {
 			props: { label: 'Settings', description: 'Manage your preferences' }
 		});
-		await expect.element(screen.getByText('Settings')).toBeInTheDocument();
-		await expect.element(screen.getByText('Manage your preferences')).toBeInTheDocument();
+		await expect.element(screen.getByText('Settings', { exact: true })).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Manage your preferences', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders marker', async () => {
@@ -110,8 +112,8 @@ describe('Item', () => {
 		});
 		await expect.element(screen.getByTestId('marker')).toBeInTheDocument();
 		await expect.element(screen.getByTestId('start')).toBeInTheDocument();
-		await expect.element(screen.getByText('Label')).toBeInTheDocument();
-		await expect.element(screen.getByText('Description')).toBeInTheDocument();
+		await expect.element(screen.getByText('Label', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Description', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByTestId('end')).toBeInTheDocument();
 	});
 
@@ -188,7 +190,7 @@ describe('Item', () => {
 				rest: { label: 'Item', onclick: itemClick }
 			}
 		});
-		await userEvent.click(screen.getByText('Action'));
+		await userEvent.click(screen.getByText('Action', { exact: true }));
 		expect(buttonClick).toHaveBeenCalledTimes(1);
 		expect(itemClick).not.toHaveBeenCalled();
 	});
@@ -202,7 +204,7 @@ describe('Item', () => {
 				rest: { label: 'Item', onclick: itemClick }
 			}
 		});
-		await userEvent.click(screen.getByText('Open'));
+		await userEvent.click(screen.getByText('Open', { exact: true }));
 		expect(buttonClick).toHaveBeenCalledTimes(1);
 		expect(itemClick).not.toHaveBeenCalled();
 	});
@@ -252,7 +254,7 @@ describe('Item', () => {
 		const onToggle = vi.fn();
 		const screen = await render(ItemDelegating, { props: { onToggle } });
 		// Clicking the label (row surface) is forwarded to the checkbox.
-		await userEvent.click(screen.getByText('Row'));
+		await userEvent.click(screen.getByText('Row', { exact: true }));
 		expect(onToggle).toHaveBeenCalledTimes(1);
 	});
 
@@ -481,21 +483,21 @@ describe('Item', () => {
 
 	it('does not render description when not provided', async () => {
 		const screen = await render(Item, { props: { label: 'Label Only' } });
-		await expect.element(screen.getByText('Label Only')).toBeInTheDocument();
-		expect(screen.getByText('undefined').query()).toBeNull();
+		await expect.element(screen.getByText('Label Only', { exact: true })).toBeInTheDocument();
+		expect(screen.getByText('undefined', { exact: true }).query()).toBeNull();
 	});
 
 	it('accepts ReactNode as description', async () => {
 		const screen = await render(ItemProbe, {
 			props: { richDescription: true, rest: { label: 'Item' } }
 		});
-		await expect.element(screen.getByText('Rich')).toBeInTheDocument();
-		await expect.element(screen.getByText('description')).toBeInTheDocument();
+		await expect.element(screen.getByText('Rich', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('description', { exact: true })).toBeInTheDocument();
 	});
 
 	it('accepts ReactNode as label', async () => {
 		const screen = await render(ItemProbe, { props: { richLabel: true } });
-		await expect.element(screen.getByText('Alice')).toBeInTheDocument();
+		await expect.element(screen.getByText('Alice', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByText(/commented/)).toBeInTheDocument();
 	});
 });

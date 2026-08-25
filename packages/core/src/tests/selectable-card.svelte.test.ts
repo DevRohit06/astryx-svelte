@@ -61,7 +61,7 @@ describe('SelectableCard', () => {
 			{ label: 'Test', isSelected: false, onChange: () => {} },
 			'Card content'
 		);
-		await expect.element(screen.getByText('Card content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Card content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders a hidden checkbox', async () => {
@@ -90,7 +90,7 @@ describe('SelectableCard', () => {
 		const screen = await renderCard({ label: 'Test', isSelected: false, onChange: handleChange });
 		// Restated in delivery: a bubbling `click` dispatched on the surface `<span>`
 		// so `event.target` is the surface — upstream's `fireEvent.click(getByText())`.
-		const surface = screen.getByText('Content').element();
+		const surface = screen.getByText('Content', { exact: true }).element();
 		surface.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		expect(handleChange).toHaveBeenCalledWith(true);
 	});
@@ -98,7 +98,7 @@ describe('SelectableCard', () => {
 	it('calls onChange with false when card surface is clicked (selected)', async () => {
 		const handleChange = vi.fn();
 		const screen = await renderCard({ label: 'Test', isSelected: true, onChange: handleChange });
-		const surface = screen.getByText('Content').element();
+		const surface = screen.getByText('Content', { exact: true }).element();
 		surface.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		expect(handleChange).toHaveBeenCalledWith(false);
 	});
@@ -139,7 +139,7 @@ describe('SelectableCard', () => {
 		});
 		// The card wires no `onclick` when disabled; the surface's native `.click()`
 		// bubbles but finds no handler, so the guard holds and nothing calls back.
-		(screen.getByText('Content').element() as HTMLElement).click();
+		(screen.getByText('Content', { exact: true }).element() as HTMLElement).click();
 		expect(handleChange).not.toHaveBeenCalled();
 	});
 

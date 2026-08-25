@@ -193,7 +193,7 @@ describe('Tokenizer', () => {
 			props: { label: 'Members', searchSource: userSource, value: [], onChange: () => {} }
 		});
 		// Label is rendered by Field
-		await expect.element(screen.getByText('Members')).toBeInTheDocument();
+		await expect.element(screen.getByText('Members', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders combobox input', async () => {
@@ -225,8 +225,8 @@ describe('Tokenizer', () => {
 				onChange: () => {}
 			}
 		});
-		await expect.element(screen.getByText('Alice')).toBeInTheDocument();
-		await expect.element(screen.getByText('Bob')).toBeInTheDocument();
+		await expect.element(screen.getByText('Alice', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Bob', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders remove buttons on tokens', async () => {
@@ -320,7 +320,9 @@ describe('Tokenizer', () => {
 				onChange: () => {}
 			}
 		});
-		await expect.element(screen.getByText('Select team members')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Select team members', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders error status', async () => {
@@ -333,7 +335,9 @@ describe('Tokenizer', () => {
 				status: { type: 'error', message: 'At least one member required' }
 			}
 		});
-		await expect.element(screen.getByText('At least one member required')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('At least one member required', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('disables tokens and input when isDisabled', async () => {
@@ -425,7 +429,7 @@ describe('Tokenizer', () => {
 				size: 'lg'
 			}
 		});
-		await expect.element(screen.getByText('Members')).toBeInTheDocument();
+		await expect.element(screen.getByText('Members', { exact: true })).toBeInTheDocument();
 		expect(comboboxIn(screen.container)).toBeInTheDocument();
 	});
 
@@ -441,8 +445,8 @@ describe('Tokenizer', () => {
 					'data-testid': 'tokenizer'
 				}
 			});
-			await expect.element(screen.getByText('Alice')).toBeInTheDocument();
-			await expect.element(screen.getByText('Bob')).toBeInTheDocument();
+			await expect.element(screen.getByText('Alice', { exact: true })).toBeInTheDocument();
+			await expect.element(screen.getByText('Bob', { exact: true })).toBeInTheDocument();
 			// RESTATED: upstream probes `[data-overflow-list]`; this port marks the
 			// list with `themeProps`' stable `astryx-overflow-list` class instead.
 			expect(screen.container.querySelector('.astryx-overflow-list')).not.toBeInTheDocument();
@@ -623,7 +627,9 @@ describe('Tokenizer', () => {
 			setQuery(comboboxIn(screen.container), 'new-tag');
 			await settle();
 
-			await expect.element(screen.getByText('Create "new-tag"')).toBeInTheDocument();
+			await expect
+				.element(screen.getByText('Create "new-tag"', { exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('fires onChange with type "create" when the Create item is clicked', async () => {
@@ -704,8 +710,8 @@ describe('Tokenizer', () => {
 			await settle();
 
 			// Both the real result and the Create option should appear
-			await expect.element(screen.getByText('Alice')).toBeInTheDocument();
-			await expect.element(screen.getByText('Create "Ali"')).toBeInTheDocument();
+			await expect.element(screen.getByText('Alice', { exact: true })).toBeInTheDocument();
+			await expect.element(screen.getByText('Create "Ali"', { exact: true })).toBeInTheDocument();
 		});
 
 		it('does not show Create when typed text exactly matches a result label', async () => {
@@ -724,7 +730,7 @@ describe('Tokenizer', () => {
 			await settle();
 
 			// "Alice" exactly matches a result — no Create option
-			await expect.element(screen.getByText('Alice')).toBeInTheDocument();
+			await expect.element(screen.getByText('Alice', { exact: true })).toBeInTheDocument();
 			expect(textIn(screen.container, 'Create "Alice"')).toHaveLength(0);
 		});
 	});
@@ -784,7 +790,7 @@ describe('Tokenizer', () => {
 			await userEvent.fill(input, 'Ali');
 			await settle();
 
-			await expect.element(screen.getByText('Alice')).toBeInTheDocument();
+			await expect.element(screen.getByText('Alice', { exact: true })).toBeInTheDocument();
 		});
 
 		it('pasting text shows Create option with hasCreate', async () => {
@@ -804,7 +810,9 @@ describe('Tokenizer', () => {
 			await userEvent.fill(input, 'NewTag');
 			await settle();
 
-			await expect.element(screen.getByText('Create "NewTag"')).toBeInTheDocument();
+			await expect
+				.element(screen.getByText('Create "NewTag"', { exact: true }))
+				.toBeInTheDocument();
 		});
 	});
 
@@ -836,7 +844,7 @@ describe('Tokenizer', () => {
 				}
 			});
 			const icon = screen.getByTestId('start-icon').element() as HTMLElement;
-			const token = screen.getByText('Alice').element() as HTMLElement;
+			const token = screen.getByText('Alice', { exact: true }).element() as HTMLElement;
 			expect(icon).toBeInTheDocument();
 			expect(icon.compareDocumentPosition(token) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 		});

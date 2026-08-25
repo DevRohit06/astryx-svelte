@@ -95,7 +95,7 @@ describe('ContextMenu', () => {
 		const screen = await render(ContextMenuFixture, {
 			props: { props: { items: [{ label: 'Item 1' }] } }
 		});
-		await expect.element(screen.getByText('Right-click me')).toBeInTheDocument();
+		await expect.element(screen.getByText('Right-click me', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders menu with role="menu"', async () => {
@@ -109,7 +109,7 @@ describe('ContextMenu', () => {
 		const screen = await render(ContextMenuFixture, {
 			props: { props: { items: [{ label: 'Cut' }, { label: 'Copy' }, { label: 'Paste' }] } }
 		});
-		screen.getByText('Right-click me').element().dispatchEvent(contextMenuEvent());
+		screen.getByText('Right-click me', { exact: true }).element().dispatchEvent(contextMenuEvent());
 		const menu = menuIn(screen.container);
 		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'p', bubbles: true }));
 		expect(menuItem(screen.container, 'Paste')).toHaveFocus();
@@ -142,7 +142,7 @@ describe('ContextMenu', () => {
 		const screen = await render(ContextMenuFixture, {
 			props: { props: { items: [{ label: 'Item 1' }] } }
 		});
-		screen.getByText('Right-click me').element().dispatchEvent(contextMenuEvent());
+		screen.getByText('Right-click me', { exact: true }).element().dispatchEvent(contextMenuEvent());
 		expect(showSpy).toHaveBeenCalled();
 	});
 
@@ -153,7 +153,7 @@ describe('ContextMenu', () => {
 			props: { props: { items: [{ label: 'Item 1' }] } }
 		});
 
-		screen.getByText('Right-click me').element().dispatchEvent(contextMenuEvent());
+		screen.getByText('Right-click me', { exact: true }).element().dispatchEvent(contextMenuEvent());
 		expect(showSpy).toHaveBeenCalled();
 		await flushEffects();
 		// Focus is not inside the menu, so the Escape path must be document-level.
@@ -168,7 +168,7 @@ describe('ContextMenu', () => {
 			props: { props: { items: [{ label: 'Item 1' }] } }
 		});
 
-		screen.getByText('Right-click me').element().dispatchEvent(contextMenuEvent());
+		screen.getByText('Right-click me', { exact: true }).element().dispatchEvent(contextMenuEvent());
 		expect(showSpy).toHaveBeenCalled();
 		await flushEffects();
 		// Upstream fires Tab on the menu itself; the handler is the menu's own
@@ -186,7 +186,7 @@ describe('ContextMenu', () => {
 			props: { props: { items: [{ label: 'Item 1' }] } }
 		});
 
-		screen.getByText('Right-click me').element().dispatchEvent(contextMenuEvent());
+		screen.getByText('Right-click me', { exact: true }).element().dispatchEvent(contextMenuEvent());
 		await flushEffects();
 		keyDownOnDocument({ key: 'Escape', isComposing: true });
 		expect(hideSpy).not.toHaveBeenCalled();
@@ -214,7 +214,7 @@ describe('ContextMenu', () => {
 
 		const event = contextMenuEvent();
 		const preventDefault = vi.spyOn(event, 'preventDefault');
-		screen.getByText('Right-click me').element().dispatchEvent(event);
+		screen.getByText('Right-click me', { exact: true }).element().dispatchEvent(event);
 		expect(preventDefault).toHaveBeenCalled();
 	});
 
@@ -223,7 +223,7 @@ describe('ContextMenu', () => {
 			props: { props: { items: [{ label: 'Item 1' }] } }
 		});
 
-		screen.getByText('Right-click me').element().dispatchEvent(contextMenuEvent());
+		screen.getByText('Right-click me', { exact: true }).element().dispatchEvent(contextMenuEvent());
 		const event = contextMenuEvent();
 		const preventDefault = vi.spyOn(event, 'preventDefault');
 		menuIn(screen.container).dispatchEvent(event);
@@ -236,7 +236,7 @@ describe('ContextMenu', () => {
 			props: { props: { items: [{ label: 'Item 1' }], isDisabled: true } }
 		});
 
-		screen.getByText('Right-click me').element().dispatchEvent(contextMenuEvent());
+		screen.getByText('Right-click me', { exact: true }).element().dispatchEvent(contextMenuEvent());
 		expect(showSpy).not.toHaveBeenCalled();
 	});
 

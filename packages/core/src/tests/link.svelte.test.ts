@@ -137,7 +137,9 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test' }, text: 'Body link' }
 		});
-		await expect.element(screen.getByText('Body link')).toHaveClass('astryx-text', 'body');
+		await expect
+			.element(screen.getByText('Body link', { exact: true }))
+			.toHaveClass('astryx-text', 'body');
 	});
 
 	it('forwards type="inherit" so the link adopts the surrounding text type', async () => {
@@ -146,7 +148,7 @@ describe('Link', () => {
 		});
 		// The inner Text renders with the `inherit` type, so font-size/line-height
 		// inherit from the surrounding text rather than imposing the body type.
-		const text = screen.getByText('Inline link');
+		const text = screen.getByText('Inline link', { exact: true });
 		await expect.element(text).toHaveClass('astryx-text', 'inherit');
 		await expect.element(text).not.toHaveClass('body');
 	});
@@ -163,7 +165,7 @@ describe('Link', () => {
 			props: { props: { href: '/test', isDisabled: true }, text: 'Disabled Link' }
 		});
 		// An href-less anchor has no implicit `link` role, so query by text.
-		const link = screen.getByText('Disabled Link').element().closest('a');
+		const link = screen.getByText('Disabled Link', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		expect(link).toHaveAttribute('aria-disabled', 'true');
 		expect(link).toHaveAttribute('tabindex', '-1');
@@ -175,7 +177,7 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test', isDisabled: true }, text: 'Disabled Link' }
 		});
-		const link = screen.getByText('Disabled Link').element().closest('a');
+		const link = screen.getByText('Disabled Link', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		expect(link).not.toHaveAttribute('href');
 	});
@@ -184,7 +186,7 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test', isDisabled: true }, text: 'Disabled Link' }
 		});
-		const link = screen.getByText('Disabled Link').element().closest('a');
+		const link = screen.getByText('Disabled Link', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		// Counterpart to upstream's `fireEvent.click` return value: dispatch the
 		// same cancelable click Playwright's actionability check would refuse to
@@ -230,7 +232,7 @@ describe('Link', () => {
 				text: 'Disabled External'
 			}
 		});
-		const link = screen.getByText('Disabled External').element().closest('a');
+		const link = screen.getByText('Disabled External', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		expect(link).not.toHaveAttribute('target');
 		expect(link).not.toHaveAttribute('rel');
@@ -244,7 +246,7 @@ describe('Link', () => {
 				text: 'Disabled Custom'
 			}
 		});
-		const link = screen.getByText('Disabled Custom').element().closest('a');
+		const link = screen.getByText('Disabled Custom', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		expect(link).not.toHaveAttribute('data-custom-link');
 		expect(link).not.toHaveAttribute('href');

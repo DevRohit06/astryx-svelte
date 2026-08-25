@@ -43,7 +43,9 @@ describe('CommandPaletteFooter', () => {
 		const screen = await render(Slots, {
 			props: { render: 'footer', footerText: 'Custom footer content' }
 		});
-		await expect.element(screen.getByText('Custom footer content')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Custom footer content', { exact: true }))
+			.toBeInTheDocument();
 		expect(screen.container.textContent).not.toMatch(/Navigate/);
 	});
 
@@ -58,15 +60,15 @@ describe('CommandPaletteFooter', () => {
 describe('CommandPaletteGroup', () => {
 	it('renders heading', async () => {
 		const screen = await render(Slots, { props: { render: 'group', heading: 'Navigation' } });
-		await expect.element(screen.getByText('Navigation')).toBeInTheDocument();
+		await expect.element(screen.getByText('Navigation', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders children', async () => {
 		const screen = await render(Slots, {
 			props: { render: 'group', heading: 'Group', items: ['Child 1', 'Child 2'] }
 		});
-		await expect.element(screen.getByText('Child 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Child 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Child 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Child 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('has group role with aria-label', async () => {
@@ -146,8 +148,8 @@ describe('CommandPaletteList', () => {
 		const screen = await render(Slots, {
 			props: { render: 'list', items: ['Item 1', 'Item 2'] }
 		});
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('has listbox role', async () => {

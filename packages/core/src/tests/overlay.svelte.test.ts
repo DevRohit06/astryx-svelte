@@ -195,7 +195,7 @@ describe('useOverlay', () => {
 			const screen = await render(UseOverlayProbe, {
 				props: { options: { showOn: 'hover' }, renderScrim: true }
 			});
-			await expect.element(screen.getByText('on demand')).toBeInTheDocument();
+			await expect.element(screen.getByText('on demand', { exact: true })).toBeInTheDocument();
 			expect(scrimOf(screen)).not.toBeNull();
 		});
 	});

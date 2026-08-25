@@ -332,7 +332,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 3, onChange: () => {}, totalPages: 10, variant: 'compact' as const }
 			});
-			await expect.element(screen.getByText('Page 3 of 10')).toBeInTheDocument();
+			await expect.element(screen.getByText('Page 3 of 10', { exact: true })).toBeInTheDocument();
 		});
 	});
 
@@ -360,7 +360,7 @@ describe('Pagination', () => {
 					variant: 'compact' as const
 				}
 			});
-			await expect.element(screen.getByText('Page 1 of 5')).toBeInTheDocument();
+			await expect.element(screen.getByText('Page 1 of 5', { exact: true })).toBeInTheDocument();
 		});
 
 		it('clamps negative pageSize to 1', async () => {
@@ -373,7 +373,7 @@ describe('Pagination', () => {
 					variant: 'compact' as const
 				}
 			});
-			await expect.element(screen.getByText('Page 1 of 5')).toBeInTheDocument();
+			await expect.element(screen.getByText('Page 1 of 5', { exact: true })).toBeInTheDocument();
 		});
 
 		it('floors fractional pageSize', async () => {
@@ -386,7 +386,7 @@ describe('Pagination', () => {
 					variant: 'compact' as const
 				}
 			});
-			await expect.element(screen.getByText('Page 1 of 25')).toBeInTheDocument();
+			await expect.element(screen.getByText('Page 1 of 25', { exact: true })).toBeInTheDocument();
 		});
 	});
 

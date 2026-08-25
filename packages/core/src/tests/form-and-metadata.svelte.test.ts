@@ -57,7 +57,9 @@ describe('FieldStatus', () => {
 		const screen = await render(FieldStatus, {
 			props: { type: 'error', message: 'This field is required' }
 		});
-		await expect.element(screen.getByText('This field is required')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('This field is required', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders the message inside a <div>', async () => {
@@ -283,7 +285,7 @@ describe('FieldStatus', () => {
 				props: { type: 'error', message: 'Something went wrong', variant: 'detached' }
 			});
 			const icon = find(screen).querySelector('[aria-hidden="true"]');
-			const text = screen.getByText('Something went wrong').element();
+			const text = screen.getByText('Something went wrong', { exact: true }).element();
 			expect(icon).toBeInTheDocument();
 			// Icon comes before the message text in document order.
 			expect(icon!.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -445,8 +447,8 @@ describe('FormLayout', () => {
 
 		// The label and input wrapper should be direct grid-participating children
 		// (via display:contents on the Field wrapper)
-		const nameLabel = screen.getByText('Name').element();
-		const emailLabel = screen.getByText('Email').element();
+		const nameLabel = screen.getByText('Name', { exact: true }).element();
+		const emailLabel = screen.getByText('Email', { exact: true }).element();
 		expect(nameLabel.tagName).toBe('LABEL');
 		expect(emailLabel.tagName).toBe('LABEL');
 
@@ -497,7 +499,7 @@ describe('MetadataList', () => {
 	it('renders a description list with items', async () => {
 		const screen = await render(MetadataListHarness, { props: { items: pairs } });
 		for (const text of ['Name', 'Alice', 'Role', 'Engineer']) {
-			await expect.element(screen.getByText(text)).toBeInTheDocument();
+			await expect.element(screen.getByText(text, { exact: true })).toBeInTheDocument();
 		}
 	});
 
@@ -512,7 +514,7 @@ describe('MetadataList', () => {
 		const screen = await render(MetadataListHarness, {
 			props: { items: [['Key', 'Value']], hasTitle: true }
 		});
-		await expect.element(screen.getByText('Details')).toBeInTheDocument();
+		await expect.element(screen.getByText('Details', { exact: true })).toBeInTheDocument();
 	});
 
 	it('supports data-testid', async () => {
@@ -533,7 +535,7 @@ describe('MetadataList', () => {
 				maxNumOfItems: 2
 			}
 		});
-		await expect.element(screen.getByText('Show more')).toBeInTheDocument();
+		await expect.element(screen.getByText('Show more', { exact: true })).toBeInTheDocument();
 		// The third item is not rendered at all, as upstream's slice does.
 		expect(screen.container.textContent).not.toContain('C');
 	});
@@ -550,11 +552,11 @@ describe('MetadataList', () => {
 		});
 		expect(screen.container.textContent).not.toContain('B');
 
-		await userEvent.click(screen.getByText('Show more'));
-		await expect.element(screen.getByText('B')).toBeInTheDocument();
-		await expect.element(screen.getByText('Show less')).toBeInTheDocument();
+		await userEvent.click(screen.getByText('Show more', { exact: true }));
+		await expect.element(screen.getByText('B', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Show less', { exact: true })).toBeInTheDocument();
 
-		await userEvent.click(screen.getByText('Show less'));
+		await userEvent.click(screen.getByText('Show less', { exact: true }));
 		expect(screen.container.textContent).not.toContain('B');
 	});
 
@@ -576,8 +578,8 @@ describe('MetadataList', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByText('Afficher plus'));
-		await expect.element(screen.getByText('Afficher moins')).toBeInTheDocument();
+		await userEvent.click(screen.getByText('Afficher plus', { exact: true }));
+		await expect.element(screen.getByText('Afficher moins', { exact: true })).toBeInTheDocument();
 	});
 
 	it('does not show toggle in horizontal mode even with maxNumOfItems', async () => {
@@ -592,8 +594,8 @@ describe('MetadataList', () => {
 			}
 		});
 		expect(screen.container.textContent).not.toContain('Show more');
-		await expect.element(screen.getByText('A')).toBeInTheDocument();
-		await expect.element(screen.getByText('B')).toBeInTheDocument();
+		await expect.element(screen.getByText('A', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('B', { exact: true })).toBeInTheDocument();
 	});
 
 	describe('numeric columns', () => {
@@ -648,8 +650,8 @@ describe('MetadataList', () => {
 describe('MetadataListItem', () => {
 	it('renders label and children', async () => {
 		const screen = await render(MetadataListHarness, { props: { items: [['Status', 'Active']] } });
-		await expect.element(screen.getByText('Status')).toBeInTheDocument();
-		await expect.element(screen.getByText('Active')).toBeInTheDocument();
+		await expect.element(screen.getByText('Status', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Active', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders an icon when provided', async () => {

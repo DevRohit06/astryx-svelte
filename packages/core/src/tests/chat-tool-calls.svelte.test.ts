@@ -39,8 +39,8 @@ describe('ChatToolCalls', () => {
 		const screen = await render(ChatToolCalls, {
 			props: { calls: [{ name: 'bash', status: 'complete', duration: '1.2s' }] }
 		});
-		await expect.element(screen.getByText('bash')).toBeInTheDocument();
-		await expect.element(screen.getByText('1.2s')).toBeInTheDocument();
+		await expect.element(screen.getByText('bash', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('1.2s', { exact: true })).toBeInTheDocument();
 		// No group header / expand button for single call
 		expect(screen.container.querySelector('[role="button"]')).toBeNull();
 	});
@@ -56,7 +56,9 @@ describe('ChatToolCalls', () => {
 			}
 		});
 		// Latest call (editFile) shown at surface + in expanded list
-		expect(screen.getByText('editFile').elements().length).toBeGreaterThanOrEqual(1);
+		expect(screen.getByText('editFile', { exact: true }).elements().length).toBeGreaterThanOrEqual(
+			1
+		);
 		expect(screen.container.querySelector('[role="button"]')).not.toBeNull();
 	});
 
@@ -110,7 +112,7 @@ describe('ChatToolCalls', () => {
 		const screen = await render(ChatToolCalls, {
 			props: { calls: [{ name: 'bash', target: 'git status', status: 'complete' }] }
 		});
-		await expect.element(screen.getByText('git status')).toBeInTheDocument();
+		await expect.element(screen.getByText('git status', { exact: true })).toBeInTheDocument();
 	});
 
 	it('exposes no aria-expanded on a call row without resultDetail', async () => {

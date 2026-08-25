@@ -40,7 +40,7 @@ const dictation: UseSpeechRecognitionReturn = {
 describe('ChatLayout', () => {
 	it('renders children in the message area', async () => {
 		const screen = await render(ChatLayoutProbe, { props: { text: 'Hello message' } });
-		await expect.element(screen.getByText('Hello message')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello message', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders composer in dock', async () => {
@@ -52,14 +52,14 @@ describe('ChatLayout', () => {
 		const screen = await render(ChatLayoutProbe, {
 			props: { emptyStateText: 'No messages yet' }
 		});
-		await expect.element(screen.getByText('No messages yet')).toBeInTheDocument();
+		await expect.element(screen.getByText('No messages yet', { exact: true })).toBeInTheDocument();
 	});
 
 	it('prefers children over empty state when both present', async () => {
 		const screen = await render(ChatLayoutProbe, {
 			props: { text: 'A message', emptyStateText: 'No messages yet' }
 		});
-		await expect.element(screen.getByText('A message')).toBeInTheDocument();
+		await expect.element(screen.getByText('A message', { exact: true })).toBeInTheDocument();
 		expect(screen.container.textContent).not.toContain('No messages yet');
 	});
 

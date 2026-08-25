@@ -44,7 +44,7 @@ describe('Divider', () => {
 
 	it('renders with label', async () => {
 		const screen = await render(Divider, { props: { label: 'Section' } });
-		await expect.element(screen.getByText('Section')).toBeInTheDocument();
+		await expect.element(screen.getByText('Section', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders label centered with lines on both sides', async () => {
@@ -53,7 +53,7 @@ describe('Divider', () => {
 		});
 		const divider = screen.getByTestId('divider');
 		await expect.element(divider).toBeInTheDocument();
-		await expect.element(screen.getByText('Center')).toBeInTheDocument();
+		await expect.element(screen.getByText('Center', { exact: true })).toBeInTheDocument();
 		// Should have 3 children: line, label, line
 		expect(Array.from(divider.element().children).length).toBe(3);
 	});
@@ -117,7 +117,7 @@ describe('Divider', () => {
 		await expect
 			.element(screen.getByTestId('divider'))
 			.toHaveAttribute('aria-orientation', 'vertical');
-		await expect.element(screen.getByText('Vertical')).toBeInTheDocument();
+		await expect.element(screen.getByText('Vertical', { exact: true })).toBeInTheDocument();
 	});
 
 	it('exposes the label as the accessible name of the separator', async () => {

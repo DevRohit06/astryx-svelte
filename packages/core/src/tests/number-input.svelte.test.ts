@@ -242,7 +242,7 @@ describe('NumberInput', () => {
 		const screen = await render(NumberInput, {
 			props: { label: 'Quantity', isLabelHidden: true, value: null, onChange: noop }
 		});
-		const label = screen.getByText('Quantity');
+		const label = screen.getByText('Quantity', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		await expect.element(screen.getByLabelText('Quantity', { exact: true })).toBeInTheDocument();
 	});
@@ -251,7 +251,7 @@ describe('NumberInput', () => {
 		const screen = await render(NumberInput, {
 			props: { label: 'Amount', value: null, onChange: noop }
 		});
-		const label = screen.getByText('Amount');
+		const label = screen.getByText('Amount', { exact: true });
 		await expect.element(label).toBeVisible();
 	});
 
@@ -518,15 +518,15 @@ describe('NumberInput', () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Discount', value: 10, onChange: noop, units: '%' }
 			});
-			await expect.element(screen.getByText('%')).toBeInTheDocument();
+			await expect.element(screen.getByText('%', { exact: true })).toBeInTheDocument();
 		});
 
 		it('does not render units when not provided', async () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Amount', value: 100, onChange: noop }
 			});
-			expect(screen.getByText('%').query()).toBeNull();
-			expect(screen.getByText('GB').query()).toBeNull();
+			expect(screen.getByText('%', { exact: true }).query()).toBeNull();
+			expect(screen.getByText('GB', { exact: true }).query()).toBeNull();
 		});
 
 		it('includes the units text in the accessible description (WCAG 1.3.1)', async () => {
@@ -640,7 +640,9 @@ describe('NumberInput', () => {
 					status: { type: 'error', message: 'Value must be positive' }
 				}
 			});
-			await expect.element(screen.getByText('Value must be positive')).toBeInTheDocument();
+			await expect
+				.element(screen.getByText('Value must be positive', { exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('has no dangling aria-describedby ids inside InputGroup (WCAG 1.3.1)', async () => {
@@ -747,7 +749,7 @@ describe('NumberInput', () => {
 			await userEvent.type(input, '42');
 
 			await expect.element(screen.locator.getByRole('alert')).toHaveTextContent('');
-			expect(screen.getByText('Invalid number').query()).toBeNull();
+			expect(screen.getByText('Invalid number', { exact: true }).query()).toBeNull();
 		});
 	});
 
