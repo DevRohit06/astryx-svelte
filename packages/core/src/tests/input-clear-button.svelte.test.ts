@@ -91,7 +91,7 @@ describe('InputClearButton', () => {
 		const screen = await render(InputClearButton, {
 			props: { label: 'Clear', onclick: () => {} }
 		});
-		const button = screen.getByRole('button', { name: 'Clear' });
+		const button = screen.getByRole('button', { name: 'Clear', exact: true });
 		await expect.element(button).toBeInTheDocument();
 		expect(button.element().tagName).toBe('BUTTON');
 	});
@@ -99,7 +99,7 @@ describe('InputClearButton', () => {
 	it('fires onclick with the native event when pressed', async () => {
 		const onclick = vi.fn();
 		const screen = await render(InputClearButton, { props: { label: 'Clear', onclick } });
-		await screen.getByRole('button', { name: 'Clear' }).click();
+		await screen.getByRole('button', { name: 'Clear', exact: true }).click();
 		expect(onclick).toHaveBeenCalledTimes(1);
 		expect(onclick.mock.calls[0][0]).toBeInstanceOf(Object);
 	});

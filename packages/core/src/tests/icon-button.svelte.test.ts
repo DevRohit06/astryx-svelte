@@ -71,12 +71,16 @@ describe('IconButton', () => {
 		const screen = await render(SlotProbe, {
 			props: iconOnly({ label: 'Delete', variant: 'destructive' })
 		});
-		await expect.element(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Delete', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('forwards size prop', async () => {
 		const screen = await render(SlotProbe, { props: iconOnly({ label: 'Add', size: 'sm' }) });
-		await expect.element(screen.getByRole('button', { name: 'Add' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Add', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('handles click events', async () => {

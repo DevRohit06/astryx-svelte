@@ -40,7 +40,7 @@ describe('DialogHeader', () => {
 	it('renders the title', async () => {
 		const screen = await render(DialogHeader, { props: { title: 'My Dialog Title' } });
 		await expect
-			.element(screen.getByRole('heading', { level: 2, name: 'My Dialog Title' }))
+			.element(screen.getByRole('heading', { level: 2, name: 'My Dialog Title', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -140,14 +140,18 @@ describe('DialogHeader', () => {
 		const screen = await render(DialogHeaderContentProbe, {
 			props: { title: 'Title', endLabel: 'Custom Action' }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Custom Action' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Custom Action', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders endContent alongside close button', async () => {
 		const screen = await render(DialogHeaderContentProbe, {
 			props: { title: 'Title', onOpenChange: noop, endLabel: 'Custom Action' }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Custom Action' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Custom Action', exact: true }))
+			.toBeInTheDocument();
 		await expect.element(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
 	});
 
@@ -155,15 +159,21 @@ describe('DialogHeader', () => {
 		const screen = await render(DialogHeaderContentProbe, {
 			props: { title: 'Title', startLabel: 'Back' }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Back', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders startContent and endContent together', async () => {
 		const screen = await render(DialogHeaderContentProbe, {
 			props: { title: 'Title', startLabel: 'Back', endLabel: 'Save', onOpenChange: noop }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Back' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Back', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Save', exact: true }))
+			.toBeInTheDocument();
 		await expect.element(screen.getByRole('button', { name: /close/i })).toBeInTheDocument();
 	});
 });

@@ -109,7 +109,7 @@ describe('Field', () => {
 		const screen = await render(FieldHarness, {
 			props: { label: 'Email', inputID: 'email-input', controlID: 'email-input' }
 		});
-		await expect.element(screen.getByLabelText('Email')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Email', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description text', async () => {
@@ -153,7 +153,7 @@ describe('Field', () => {
 		const label = screen.getByText('Search');
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
-		await expect.element(screen.getByLabelText('Search')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Search', { exact: true })).toBeInTheDocument();
 	});
 
 	it('visually hides description when isLabelHidden is true', async () => {
@@ -208,7 +208,7 @@ describe('Field', () => {
 		expect(labelEl).not.toHaveAttribute('for');
 		// labelID is applied to the label element and referenced by the group.
 		expect(labelEl).toHaveAttribute('id', 'plan-label');
-		const group = screen.getByRole('radiogroup', { name: 'Plan' }).element();
+		const group = screen.getByRole('radiogroup', { name: 'Plan', exact: true }).element();
 		expect(group.getAttribute('aria-labelledby')).toBe(labelEl.id);
 	});
 
@@ -779,7 +779,7 @@ describe('FieldLabel', () => {
 				hasLink: true,
 				onLinkClick: linkClick
 			});
-			await userEvent.click(screen.getByRole('link', { name: 'terms' }));
+			await userEvent.click(screen.getByRole('link', { name: 'terms', exact: true }));
 			// The nested link handles its own click; the control is not toggled.
 			expect(linkClick).toHaveBeenCalledTimes(1);
 			expect(onClick).not.toHaveBeenCalled();

@@ -545,7 +545,7 @@ describe('DateTimeInput', () => {
 		const screen = await render(DateTimeInput, {
 			props: { label: 'Meeting', onChange: noop }
 		});
-		const button = screen.getByRole('button', { name: 'Open calendar' });
+		const button = screen.getByRole('button', { name: 'Open calendar', exact: true });
 		await expect.element(button).toBeInTheDocument();
 		await expect.element(button).not.toBeDisabled();
 	});
@@ -554,7 +554,9 @@ describe('DateTimeInput', () => {
 		const screen = await render(DateTimeInput, {
 			props: { label: 'Meeting', isDisabled: true, onChange: noop }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('disables inputs and button when isLoading is true', async () => {
@@ -563,7 +565,9 @@ describe('DateTimeInput', () => {
 		});
 		await expect.element(screen.getByRole('combobox')).toBeDisabled();
 		await expect.element(screen.getByLabelText('Meeting time', exact)).toBeDisabled();
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('sets aria-busy when isLoading is true', async () => {
@@ -778,7 +782,7 @@ describe('DateTimeInput', () => {
 				}
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Clear Meeting' }))
+				.element(screen.getByRole('button', { name: 'Clear Meeting', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -786,14 +790,14 @@ describe('DateTimeInput', () => {
 			const screen = await render(DateTimeInput, {
 				props: { label: 'Meeting', onChange: noop, hasClear: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Meeting' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Meeting', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when hasClear is false', async () => {
 			const screen = await render(DateTimeInput, {
 				props: { label: 'Meeting', value: iso('2026-03-15T14:30'), onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Meeting' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Meeting', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
@@ -806,7 +810,7 @@ describe('DateTimeInput', () => {
 					isDisabled: true
 				}
 			});
-			expect(screen.getByRole('button', { name: 'Clear Meeting' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Meeting', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with undefined when clear is clicked', async () => {
@@ -819,7 +823,7 @@ describe('DateTimeInput', () => {
 					hasClear: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Meeting' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Meeting', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(undefined);
 		});
 	});
@@ -1343,7 +1347,7 @@ describe('DateTimeInput', () => {
 			expect(icon).toHaveClass('astryx-icon');
 			expect(icon).toHaveAttribute('data-state', 'collapsed');
 
-			await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Open calendar', exact: true }));
 			await vi.waitFor(() => {
 				expect(
 					screen.container.querySelector('.astryx-date-time-input-toggle-icon')

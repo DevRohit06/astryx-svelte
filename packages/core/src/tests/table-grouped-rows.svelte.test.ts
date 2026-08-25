@@ -108,13 +108,13 @@ describe('useTableGroupedRows', () => {
 		await expect.element(screen.getByText('Alice')).toBeInTheDocument();
 		// The standalone chevron button toggles the group; its accessible name is
 		// qualified with the group key.
-		click(screen.getByRole('button', { name: 'Collapse group Core' }));
+		click(screen.getByRole('button', { name: 'Collapse group Core', exact: true }));
 		await expect.poll(() => screen.getByText('Alice').query()).toBeNull();
 		expect(screen.getByText('Bob').query()).toBeNull();
 		await expect.element(screen.getByText('Core')).toBeInTheDocument();
 		await expect.element(screen.getByText('Carol')).toBeInTheDocument();
 		// Toggle back: the Core chevron now says "Expand group Core".
-		click(screen.getByRole('button', { name: 'Expand group Core' }));
+		click(screen.getByRole('button', { name: 'Expand group Core', exact: true }));
 		await expect.element(screen.getByText('Alice')).toBeInTheDocument();
 		await expect.element(screen.getByText('Bob')).toBeInTheDocument();
 	});
@@ -122,7 +122,7 @@ describe('useTableGroupedRows', () => {
 	it('exposes each group toggle as a named, keyboard-operable button', async () => {
 		const screen = await render(Harness, { props: {} });
 		// Native <button>: focusable and operable without a custom key handler.
-		const coreToggle = screen.getByRole('button', { name: 'Collapse group Core' });
+		const coreToggle = screen.getByRole('button', { name: 'Collapse group Core', exact: true });
 		expect(coreToggle.element().tagName).toBe('BUTTON');
 		await expect.element(coreToggle).toHaveAttribute('aria-expanded', 'true');
 	});

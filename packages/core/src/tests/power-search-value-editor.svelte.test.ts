@@ -253,7 +253,7 @@ describe('EntityListEditor (#1106)', () => {
 		await expect.element(screen.getByText('Bob', { exact: true })).toBeInTheDocument();
 
 		// Remove Alice — the remaining value should still have Bob's photo
-		const removeBtn = screen.getByRole('button', { name: 'Remove Alice' });
+		const removeBtn = screen.getByRole('button', { name: 'Remove Alice', exact: true });
 		(removeBtn.element() as HTMLElement).click();
 
 		expect(onChange).toHaveBeenCalled();

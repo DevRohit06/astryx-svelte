@@ -99,7 +99,9 @@ describe('FormLayout', () => {
 			const screen = await render(Harness, {
 				props: { mode: 'text-input', optionality: 'required' }
 			});
-			await expect.element(screen.getByLabelText('Name')).toHaveAttribute('aria-required', 'true');
+			await expect
+				.element(screen.getByLabelText('Name', { exact: true }))
+				.toHaveAttribute('aria-required', 'true');
 		});
 
 		it('required default: an isOptional input is not aria-required', async () => {
@@ -113,19 +115,23 @@ describe('FormLayout', () => {
 			const screen = await render(Harness, {
 				props: { mode: 'text-input', optionality: 'optional' }
 			});
-			await expect.element(screen.getByLabelText('Name')).not.toHaveAttribute('aria-required');
+			await expect
+				.element(screen.getByLabelText('Name', { exact: true }))
+				.not.toHaveAttribute('aria-required');
 		});
 
 		it('no layout: an unmarked input is not aria-required (backwards compatible)', async () => {
 			const screen = await render(Harness, { props: { mode: 'bare-text-input' } });
-			await expect.element(screen.getByLabelText('Solo')).not.toHaveAttribute('aria-required');
+			await expect
+				.element(screen.getByLabelText('Solo', { exact: true }))
+				.not.toHaveAttribute('aria-required');
 		});
 
 		it('required default resolves aria-required without native required', async () => {
 			const screen = await render(Harness, {
 				props: { mode: 'checkbox', optionality: 'required', label: 'Terms' }
 			});
-			const checkbox = screen.getByRole('checkbox', { name: 'Terms' });
+			const checkbox = screen.getByRole('checkbox', { name: 'Terms', exact: true });
 			// Announced as required (form default)…
 			await expect.element(checkbox).toHaveAttribute('aria-required', 'true');
 			// …but the native `required` attribute is not switched on by the layout.
@@ -136,7 +142,7 @@ describe('FormLayout', () => {
 			const screen = await render(Harness, {
 				props: { mode: 'checkbox', optionality: 'required', isRequired: true, label: 'Consent' }
 			});
-			const checkbox = screen.getByRole('checkbox', { name: 'Consent' });
+			const checkbox = screen.getByRole('checkbox', { name: 'Consent', exact: true });
 			await expect.element(checkbox).toHaveAttribute('aria-required', 'true');
 			await expect.element(checkbox).toHaveAttribute('required');
 		});

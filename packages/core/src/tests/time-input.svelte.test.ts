@@ -164,7 +164,7 @@ describe('TimeInput', () => {
 		const screen = await render(TimeInput, {
 			props: { label: 'Time', onChange: noop }
 		});
-		await expect.element(screen.getByLabelText('Time')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Time', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with placeholder', async () => {
@@ -216,7 +216,7 @@ describe('TimeInput', () => {
 		});
 		const label = screen.getByText('Time');
 		await expect.element(label).toBeInTheDocument();
-		await expect.element(screen.getByLabelText('Time')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Time', { exact: true })).toBeInTheDocument();
 	});
 
 	it('sets aria-required when isRequired is true', async () => {
@@ -237,14 +237,16 @@ describe('TimeInput', () => {
 		const screen = await render(TimeInput, {
 			props: { label: 'Time', value: iso('14:30'), onChange: noop, hasClear: true }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Clear Time' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Clear Time', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('does not show clear button when value is empty', async () => {
 		const screen = await render(TimeInput, {
 			props: { label: 'Time', onChange: noop, hasClear: true }
 		});
-		expect(screen.getByRole('button', { name: 'Clear Time' }).query()).toBeNull();
+		expect(screen.getByRole('button', { name: 'Clear Time', exact: true }).query()).toBeNull();
 	});
 
 	it('calls onChange with undefined when clear button is clicked', async () => {
@@ -253,7 +255,7 @@ describe('TimeInput', () => {
 			props: { label: 'Time', value: iso('14:30'), onChange, hasClear: true }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Clear Time' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Clear Time', exact: true }));
 		expect(onChange).toHaveBeenCalledWith(undefined);
 	});
 
@@ -464,11 +466,13 @@ describe('TimeInput', () => {
 				}
 			});
 
-			const groupLoc = screen.getByRole('group', { name: 'Schedule' });
+			const groupLoc = screen.getByRole('group', { name: 'Schedule', exact: true });
 			await expect.element(groupLoc).toBeInTheDocument();
 			const group = groupLoc.element();
 			const groupLabelID = group.getAttribute('aria-labelledby');
-			const input = screen.getByRole('textbox', { name: 'Schedule Start time' }).element();
+			const input = screen
+				.getByRole('textbox', { name: 'Schedule Start time', exact: true })
+				.element();
 			const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 			expect(labelledByIDs).toHaveLength(2);
@@ -499,7 +503,7 @@ describe('TimeInput', () => {
 				}
 			});
 
-			const inputLoc = screen.getByRole('textbox', { name: 'Schedule Start time' });
+			const inputLoc = screen.getByRole('textbox', { name: 'Schedule Start time', exact: true });
 			await expect.element(inputLoc).toBeInTheDocument();
 			const input = inputLoc.element();
 			const describedByIDs = input.getAttribute('aria-describedby')?.split(' ') ?? [];
@@ -549,7 +553,9 @@ describe('TimeInput', () => {
 				}
 			});
 
-			await expect.element(screen.getByRole('group', { name: 'Schedule' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('group', { name: 'Schedule', exact: true }))
+				.toBeInTheDocument();
 			// The clock icon remains, but the trailing status icon is suppressed in
 			// grouped mode so the shared InputGroup border/status treatment is not
 			// duplicated.
@@ -582,7 +588,7 @@ describe('TimeInput', () => {
 				}
 			});
 
-			const inputLoc = screen.getByRole('textbox', { name: 'Schedule Start time' });
+			const inputLoc = screen.getByRole('textbox', { name: 'Schedule Start time', exact: true });
 			await expect.element(inputLoc).toBeInTheDocument();
 			const input = inputLoc.element();
 			const describedByIDs = input.getAttribute('aria-describedby')?.split(' ') ?? [];
@@ -669,7 +675,7 @@ describe('TimeInput', () => {
 
 			const tooltip = screen.getByRole('tooltip', { includeHidden: true }).element();
 			await userEvent.tab();
-			await expect.element(screen.getByLabelText('Time')).toHaveFocus();
+			await expect.element(screen.getByLabelText('Time', { exact: true })).toHaveFocus();
 			await vi.waitFor(() => {
 				expect(tooltip.matches(':popover-open')).toBe(true);
 			});
@@ -697,7 +703,7 @@ describe('TimeInput', () => {
 					disabledMessage: 'You need the Editor role'
 				}
 			});
-			const input = screen.getByLabelText('Time');
+			const input = screen.getByLabelText('Time', { exact: true });
 			// Restated: upstream's `not.toBeDisabled()` is jest-dom's, which reads the
 			// *native* disabled state only. vitest-browser's matcher of that name is
 			// Playwright's ARIA computation, which counts `aria-disabled="true"` as
@@ -753,7 +759,7 @@ describe('TimeInput', () => {
 			const screen = await render(TimeInput, {
 				props: { label: 'Time', isDisabled: true }
 			});
-			const input = screen.getByLabelText('Time');
+			const input = screen.getByLabelText('Time', { exact: true });
 			await expect.element(input).toBeDisabled();
 			await expect.element(input).not.toHaveAttribute('aria-disabled');
 		});
@@ -771,7 +777,7 @@ describe('TimeInput', () => {
 			input.focus();
 			input.dispatchEvent(new FocusEvent('focus'));
 			await expect
-				.element(screen.getByLabelText('Time'))
+				.element(screen.getByLabelText('Time', { exact: true }))
 				.toHaveAttribute('placeholder', 'Select a time');
 		});
 	});

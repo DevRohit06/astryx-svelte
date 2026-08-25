@@ -264,7 +264,7 @@ describe('DropdownMenu', () => {
 		const button = screen.getByRole('button', { name: /Actions/ });
 		(button.element() as HTMLElement).focus();
 		(button.element() as HTMLElement).click();
-		await expect.element(screen.getByRole('menuitem', { name: 'Edit' })).toHaveFocus();
+		await expect.element(screen.getByRole('menuitem', { name: 'Edit', exact: true })).toHaveFocus();
 
 		// RESTATED: upstream stubs `requestAnimationFrame` to run synchronously and
 		// blurs the trigger from a `toggle` listener, both jsdom accommodations. Here
@@ -307,7 +307,9 @@ describe('DropdownMenu', () => {
 		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
 		const menu = menuIn(screen.container);
 		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', bubbles: true }));
-		await expect.element(screen.getByRole('menuitem', { name: 'Delete' })).toHaveFocus();
+		await expect
+			.element(screen.getByRole('menuitem', { name: 'Delete', exact: true }))
+			.toHaveFocus();
 	});
 
 	it('calls onClick callback when button is clicked', async () => {
@@ -933,7 +935,7 @@ describe('DropdownMenu button customization', () => {
 describe('DropdownMenu icon-only mode', () => {
 	it('renders icon-only button when icon is set without children', async () => {
 		const screen = await render(IconButton, { props: { iconOnly: true } });
-		const button = screen.getByRole('button', { name: 'More options' });
+		const button = screen.getByRole('button', { name: 'More options', exact: true });
 		// label should be aria-label, not visible text
 		await expect.element(button).toHaveAttribute('aria-label', 'More options');
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();

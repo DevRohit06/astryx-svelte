@@ -140,27 +140,27 @@ describe('Outline', () => {
 	it('renders a labelled nav with anchor links', async () => {
 		const screen = await render(Outline, { props: { items, label: 'On this page' } });
 		await expect
-			.element(screen.getByRole('navigation', { name: 'On this page' }))
+			.element(screen.getByRole('navigation', { name: 'On this page', exact: true }))
 			.toBeInTheDocument();
 		await expect
-			.element(screen.getByRole('link', { name: 'Introduction' }))
+			.element(screen.getByRole('link', { name: 'Introduction', exact: true }))
 			.toHaveAttribute('href', '#intro');
 	});
 
 	it('uses the default accessible label', async () => {
 		const screen = await render(Outline, { props: { items } });
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Table of contents' }))
+			.element(screen.getByRole('navigation', { name: 'Table of contents', exact: true }))
 			.toBeInTheDocument();
 	});
 
 	it('marks the controlled active item with aria-current', async () => {
 		const screen = await render(Outline, { props: { items, activeId: 'install' } });
 		await expect
-			.element(screen.getByRole('link', { name: 'Installation' }))
+			.element(screen.getByRole('link', { name: 'Installation', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 		await expect
-			.element(screen.getByRole('link', { name: 'Introduction' }))
+			.element(screen.getByRole('link', { name: 'Introduction', exact: true }))
 			.not.toHaveAttribute('aria-current');
 	});
 
@@ -172,7 +172,7 @@ describe('Outline', () => {
 		const onActiveIdChange = vi.fn();
 
 		const screen = await render(Outline, { props: { items, onActiveIdChange } });
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		expect(target.scrollIntoView).toHaveBeenCalledWith({
 			behavior: 'smooth',
@@ -181,13 +181,16 @@ describe('Outline', () => {
 		// Uncontrolled: the indicator is deferred during the programmatic scroll,
 		// so it has not moved to the clicked item yet.
 		expect(
-			screen.getByRole('link', { name: 'Installation' }).element().getAttribute('aria-current')
+			screen
+				.getByRole('link', { name: 'Installation', exact: true })
+				.element()
+				.getAttribute('aria-current')
 		).not.toBe('location');
 
 		// When the scroll settles, the indicator lands on the clicked item.
 		window.dispatchEvent(new Event('scrollend'));
 		await expect
-			.element(screen.getByRole('link', { name: 'Installation' }))
+			.element(screen.getByRole('link', { name: 'Installation', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 		expect(onActiveIdChange).toHaveBeenCalledWith('install');
 
@@ -204,7 +207,7 @@ describe('Outline', () => {
 		const screen = await render(Outline, {
 			props: { items, activeId: 'intro', onActiveIdChange }
 		});
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		expect(target.scrollIntoView).toHaveBeenCalledWith({
 			behavior: 'smooth',
@@ -222,7 +225,7 @@ describe('Outline', () => {
 			props: { items, 'data-testid': 'outline', activeId: 'api' }
 		});
 		expect(screen.getByTestId('outline').element().className).toContain('astryx-outline');
-		const api = screen.getByRole('link', { name: 'API' }).element();
+		const api = screen.getByRole('link', { name: 'API', exact: true }).element();
 		expect(api.className).toContain('astryx-outline-item');
 		expect(api.className).toContain('active');
 		expect(api.className).toContain('level-3');
@@ -260,7 +263,7 @@ describe('Outline', () => {
 
 	it('renders the active anchor before the indicator for CSS anchor positioning', async () => {
 		const screen = await render(Outline, { props: { items, activeId: 'intro' } });
-		const activeLink = screen.getByRole('link', { name: 'Introduction' }).element();
+		const activeLink = screen.getByRole('link', { name: 'Introduction', exact: true }).element();
 		const indicator = screen.container.querySelector('.astryx-outline-indicator');
 
 		expect(indicator).not.toBeNull();
@@ -277,7 +280,7 @@ describe('Outline', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('link', { name: 'Introduction' }))
+			.element(screen.getByRole('link', { name: 'Introduction', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 
 		// Controlled active id is driven entirely by the prop. Upstream's `rerender`
@@ -286,10 +289,10 @@ describe('Outline', () => {
 		await screen.rerender({ items, activeId: 'api', onActiveIdChange });
 
 		await expect
-			.element(screen.getByRole('link', { name: 'API' }))
+			.element(screen.getByRole('link', { name: 'API', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 		await expect
-			.element(screen.getByRole('link', { name: 'Introduction' }))
+			.element(screen.getByRole('link', { name: 'Introduction', exact: true }))
 			.not.toHaveAttribute('aria-current');
 	});
 
@@ -316,7 +319,7 @@ describe('Outline', () => {
 		const screen = await render(Outline, { props: { items, onActiveIdChange } });
 
 		await expect
-			.element(screen.getByRole('link', { name: 'Installation' }))
+			.element(screen.getByRole('link', { name: 'Installation', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 		expect(onActiveIdChange).toHaveBeenCalledWith('install');
 
@@ -480,7 +483,7 @@ describe('Outline keyboard navigation', () => {
 
 		window.dispatchEvent(new Event('scrollend'));
 		await expect
-			.element(screen.getByRole('link', { name: 'Installation' }))
+			.element(screen.getByRole('link', { name: 'Installation', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 		expect(onNavigateEnd).toHaveBeenCalledTimes(1);
 
@@ -493,7 +496,7 @@ describe('Outline keyboard navigation', () => {
 		const onNavigateEnd = vi.fn();
 
 		const screen = await render(Outline, { props: { items, onNavigateEnd } });
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		// Arrow keys inside the outline move focus; they are prevented, so they do
 		// not scroll the page and must not cancel the in-flight navigation.
@@ -558,7 +561,7 @@ describe('Outline navigate callbacks', () => {
 		const screen = await render(Outline, {
 			props: { items, onNavigateStart, onNavigateEnd }
 		});
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		expect(onNavigateStart).toHaveBeenCalledWith('install');
 		// Still scrolling — arrival has not happened yet.
@@ -580,7 +583,7 @@ describe('Outline navigate callbacks', () => {
 		const screen = await render(Outline, {
 			props: { items, activeId: 'intro', onNavigateStart, onNavigateEnd }
 		});
-		await user.click(screen.getByRole('link', { name: 'API' }).element());
+		await user.click(screen.getByRole('link', { name: 'API', exact: true }).element());
 
 		expect(onNavigateStart).toHaveBeenCalledWith('api');
 		window.dispatchEvent(new Event('scrollend'));
@@ -603,7 +606,9 @@ describe('Outline navigate callbacks', () => {
 			const onNavigateEnd = vi.fn();
 
 			const screen = await render(Outline, { props: { items, onNavigateEnd } });
-			(screen.getByRole('link', { name: 'Installation' }).element() as HTMLElement).click();
+			(
+				screen.getByRole('link', { name: 'Installation', exact: true }).element() as HTMLElement
+			).click();
 
 			expect(onNavigateEnd).not.toHaveBeenCalled();
 			vi.advanceTimersByTime(2000);
@@ -623,7 +628,9 @@ describe('Outline navigate callbacks', () => {
 			const onNavigateEnd = vi.fn();
 
 			const screen = await render(Outline, { props: { items, onNavigateEnd } });
-			(screen.getByRole('link', { name: 'Installation' }).element() as HTMLElement).click();
+			(
+				screen.getByRole('link', { name: 'Installation', exact: true }).element() as HTMLElement
+			).click();
 
 			// Reduced motion turns the smooth scroll into an instant jump: scrollend
 			// arrives immediately. The fallback timer must not fire a second time.
@@ -648,7 +655,7 @@ describe('Outline navigate callbacks', () => {
 		const screen = await render(Outline, {
 			props: { items, onNavigateStart, onNavigateEnd }
 		});
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 		expect(onNavigateStart).toHaveBeenCalledTimes(1);
 
 		window.dispatchEvent(new Event('wheel'));
@@ -669,7 +676,7 @@ describe('Outline navigate callbacks', () => {
 		const screen = await render(Outline, {
 			props: { items, onNavigateStart, onNavigateEnd }
 		});
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		expect(onNavigateStart).not.toHaveBeenCalled();
 		expect(onNavigateEnd).not.toHaveBeenCalled();
@@ -682,7 +689,7 @@ describe('Outline navigate callbacks', () => {
 		window.location.hash = '';
 
 		const screen = await render(Outline, { props: { items } });
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		// The heading is not in the DOM (lazily-rendered or virtualized content).
 		// We own the scroll only when we have something to scroll to; with no
@@ -701,7 +708,7 @@ describe('Outline navigate callbacks', () => {
 
 		const screen = await render(Outline, { props: { items, onNavigateStart } });
 		await user.keyboard('{Meta>}');
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 		await user.keyboard('{/Meta}');
 
 		expect(onNavigateStart).not.toHaveBeenCalled();
@@ -732,7 +739,7 @@ describe('Outline scroll scoping', () => {
 		const screen = await render(Outline, {
 			props: { items, hasScrollOnClick: false, onNavigateStart, onNavigateEnd }
 		});
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		const target = document.getElementById('install') as HTMLElement;
 		expect(target.scrollIntoView).not.toHaveBeenCalled();
@@ -744,7 +751,7 @@ describe('Outline scroll scoping', () => {
 		// for no reason.
 		expect(onNavigateEnd).toHaveBeenCalledWith('install');
 		await expect
-			.element(screen.getByRole('link', { name: 'Installation' }))
+			.element(screen.getByRole('link', { name: 'Installation', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 
 		cleanup();
@@ -765,13 +772,13 @@ describe('Outline scroll scoping', () => {
 		// Without offset the activation line is the viewport top: `install` (top:40)
 		// has not reached it, so `intro` stays active.
 		await expect
-			.element(screen.getByRole('link', { name: 'Introduction' }))
+			.element(screen.getByRole('link', { name: 'Introduction', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 
 		await screen.rerender({ items, offset: 64 });
 		window.dispatchEvent(new Event('resize'));
 		await expect
-			.element(screen.getByRole('link', { name: 'Installation' }))
+			.element(screen.getByRole('link', { name: 'Installation', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 
 		cleanup();
@@ -790,7 +797,7 @@ describe('Outline scroll scoping', () => {
 		install.style.scrollMarginTop = '8px';
 
 		const screen = await render(Outline, { props: { items, offset: 48 } });
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		// A 48px fixed header covers the top of the scroll root, so the heading
 		// must come to rest at 48 (header) + 8 (its own scroll-margin-top) = 56px
@@ -818,7 +825,7 @@ describe('Outline scroll scoping', () => {
 		const screen = await render(Outline, {
 			props: { items, scrollContainerRef: () => pane, offset: 48 }
 		});
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		// Measured from the pane's own top (100), not the viewport's.
 		expect(pane.scrollBy).toHaveBeenCalledWith({
@@ -836,7 +843,7 @@ describe('Outline scroll scoping', () => {
 		const cleanup = mountHeadings();
 
 		const screen = await render(Outline, { props: { items } });
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		// No fixed header to compensate for: let the browser honor
 		// scroll-margin-top itself rather than doing the math in JS.
@@ -870,10 +877,10 @@ describe('Outline scroll scoping', () => {
 		const screen = await render(Outline, { props: { items, offset: 48 } });
 
 		await expect
-			.element(screen.getByRole('link', { name: 'Installation' }))
+			.element(screen.getByRole('link', { name: 'Installation', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 		await expect
-			.element(screen.getByRole('link', { name: 'API' }))
+			.element(screen.getByRole('link', { name: 'API', exact: true }))
 			.not.toHaveAttribute('aria-current');
 
 		cleanup();
@@ -906,7 +913,7 @@ describe('Outline scroll scoping', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('link', { name: 'Installation' }))
+			.element(screen.getByRole('link', { name: 'Installation', exact: true }))
 			.toHaveAttribute('aria-current', 'location');
 
 		pane.remove();
@@ -924,7 +931,7 @@ describe('Outline scroll scoping', () => {
 		const screen = await render(Outline, {
 			props: { items, scrollContainerRef: () => pane, onNavigateEnd }
 		});
-		await user.click(screen.getByRole('link', { name: 'Installation' }).element());
+		await user.click(screen.getByRole('link', { name: 'Installation', exact: true }).element());
 
 		// A window scrollend must NOT settle a container-scoped navigation.
 		window.dispatchEvent(new Event('scrollend'));

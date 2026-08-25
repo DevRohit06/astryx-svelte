@@ -285,11 +285,11 @@ describe('SideNav', () => {
 	it('renders and toggles from outside SideNav when handleRef is provided', async () => {
 		const screen = await render(CollapseHandleFixture, { props: {} });
 
-		const button = screen.getByRole('button', { name: 'Collapse sidebar' });
+		const button = screen.getByRole('button', { name: 'Collapse sidebar', exact: true });
 		await userEvent.click(button);
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Expand sidebar' }))
+			.element(screen.getByRole('button', { name: 'Expand sidebar', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -300,7 +300,9 @@ describe('SideNav', () => {
 
 		// The built-in collapse button is opted out (consumers render their own
 		// SideNavCollapseButton in the header), so it must not appear...
-		expect(screen.getByRole('button', { name: 'Collapse sidebar' }).query()).toBeNull();
+		expect(
+			screen.getByRole('button', { name: 'Collapse sidebar', exact: true }).query()
+		).toBeNull();
 
 		// ...and no empty sticky-bottom container should be left behind. With no
 		// footer/footerIcons and no built-in button, the scrollable content region
@@ -314,12 +316,12 @@ describe('SideNav', () => {
 		const onclick = vi.fn();
 		const screen = await render(CollapseHandleFixture, { props: { onclick } });
 
-		await userEvent.click(screen.getByRole('button', { name: 'Collapse sidebar' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Collapse sidebar', exact: true }));
 
 		expect(onclick).toHaveBeenCalledTimes(1);
 		// Toggle still ran: the label flipped to "Expand sidebar".
 		await expect
-			.element(screen.getByRole('button', { name: 'Expand sidebar' }))
+			.element(screen.getByRole('button', { name: 'Expand sidebar', exact: true }))
 			.toBeInTheDocument();
 	});
 });
@@ -412,7 +414,7 @@ describe('SideNavHeading', () => {
 		// aria-label, producing an empty accessible name (axe rule: link-name).
 		// Every link pointing at /product must now expose "Product Name".
 		const productLinks = screen
-			.getByRole('link', { name: 'Product Name' })
+			.getByRole('link', { name: 'Product Name', exact: true })
 			.elements()
 			.filter((link) => link.getAttribute('href') === '/product');
 		expect(productLinks.length).toBeGreaterThan(0);
@@ -421,7 +423,7 @@ describe('SideNavHeading', () => {
 		}
 		// The independent superheading link is unaffected.
 		await expect
-			.element(screen.getByRole('link', { name: 'Suite Name' }))
+			.element(screen.getByRole('link', { name: 'Suite Name', exact: true }))
 			.toHaveAttribute('href', '/suite');
 		// No link should be missing an accessible name.
 		for (const link of screen.getByRole('link').elements()) {
@@ -549,7 +551,7 @@ describe('SideNavHeading', () => {
 			const screen = await render(HeadingFixture, {
 				props: { props: { heading: 'My App' }, menuItems }
 			});
-			await openMenu(screen.getByRole('button', { name: 'Open menu' }).element());
+			await openMenu(screen.getByRole('button', { name: 'Open menu', exact: true }).element());
 			expect(screen.container.querySelector('[role="dialog"]')).toBeNull();
 			expect(screen.container.querySelector('[aria-modal="true"]')).toBeNull();
 		});
@@ -558,7 +560,7 @@ describe('SideNavHeading', () => {
 			const screen = await render(HeadingFixture, {
 				props: { props: { heading: 'My App' }, menuItems }
 			});
-			await openMenu(screen.getByRole('button', { name: 'Open menu' }).element());
+			await openMenu(screen.getByRole('button', { name: 'Open menu', exact: true }).element());
 			const menu = screen.container.querySelector('[role="menu"]');
 			expect(menu).not.toBeNull();
 			expect(menu).toHaveAttribute('aria-label', 'My App');
@@ -573,7 +575,7 @@ describe('SideNavHeading', () => {
 			const screen = await render(HeadingFixture, {
 				props: { props: { heading: 'My App' }, menuItems }
 			});
-			const trigger = screen.getByRole('button', { name: 'Open menu' }).element();
+			const trigger = screen.getByRole('button', { name: 'Open menu', exact: true }).element();
 			await openMenu(trigger);
 			expect(trigger).toHaveAttribute('aria-expanded', 'true');
 			const menu = screen.container.querySelector('[role="menu"]');
@@ -597,7 +599,7 @@ describe('SideNavHeading', () => {
 			const screen = await render(HeadingFixture, {
 				props: { props: { heading: 'Product', headingHref: '/product' }, menuItems }
 			});
-			await openMenu(screen.getByRole('button', { name: 'Open menu' }).element());
+			await openMenu(screen.getByRole('button', { name: 'Open menu', exact: true }).element());
 			expect(screen.container.querySelector('[role="dialog"]')).toBeNull();
 			const menu = screen.container.querySelector('[role="menu"]');
 			expect(menu).not.toBeNull();
@@ -630,7 +632,9 @@ describe('SideNavHeading', () => {
 			});
 			return {
 				screen,
-				trigger: screen.getByRole('button', { name: 'Open menu' }).element() as HTMLElement
+				trigger: screen
+					.getByRole('button', { name: 'Open menu', exact: true })
+					.element() as HTMLElement
 			};
 		}
 
@@ -1244,7 +1248,7 @@ describe('SideNavItem (collapsed)', () => {
 			}
 		});
 		// Should have an element with aria-label (icon-only)
-		await expect.element(screen.getByLabelText('Dashboard')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Dashboard', { exact: true })).toBeInTheDocument();
 		// Icon should be rendered
 		await expect.element(screen.getByTestId('stub-icon')).toBeInTheDocument();
 	});
@@ -1365,7 +1369,7 @@ describe('SideNavItem — collapsible + href', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Settings' }))
+			.element(screen.getByRole('link', { name: 'Settings', exact: true }))
 			.toHaveAttribute('href', '/settings');
 	});
 
@@ -1411,7 +1415,7 @@ describe('SideNavItem — collapsible + href', () => {
 				}
 			}
 		});
-		await userEvent.click(screen.getByRole('link', { name: 'Settings' }));
+		await userEvent.click(screen.getByRole('link', { name: 'Settings', exact: true }));
 		expect(onclick).toHaveBeenCalledTimes(1);
 		// Children should still be visible (not collapsed)
 		await expect
@@ -1429,7 +1433,7 @@ describe('SideNavItem — collapsible + href', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Settings' }))
+			.element(screen.getByRole('link', { name: 'Settings', exact: true }))
 			.not.toHaveAttribute('aria-expanded');
 	});
 
@@ -1497,7 +1501,7 @@ describe('SideNavItem — collapsible + href', () => {
 			}
 		});
 		// Collapse the item
-		const button = screen.getByRole('button', { name: 'Settings' }).element();
+		const button = screen.getByRole('button', { name: 'Settings', exact: true }).element();
 		await userEvent.click(button);
 		// The children container should have inert attribute
 		const childrenContainer = document.getElementById(button.getAttribute('aria-controls')!);
@@ -1603,14 +1607,14 @@ describe('SideNav focus ring (A15)', () => {
 		const screen = await render(ItemFixture, {
 			props: { item: { props: { label: 'Dashboard', href: '/dashboard' } } }
 		});
-		expectSharedFocusRing(screen.getByRole('link', { name: 'Dashboard' }).element());
+		expectSharedFocusRing(screen.getByRole('link', { name: 'Dashboard', exact: true }).element());
 	});
 
 	it('draws the shared ring on a button item', async () => {
 		const screen = await render(ItemFixture, {
 			props: { item: { props: { label: 'Dashboard', onclick: () => {} } } }
 		});
-		expectSharedFocusRing(screen.getByRole('button', { name: 'Dashboard' }).element());
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Dashboard', exact: true }).element());
 	});
 
 	it('draws the shared ring on a collapsed icon-only item', async () => {
@@ -1620,7 +1624,7 @@ describe('SideNav focus ring (A15)', () => {
 				item: { props: { label: 'Dashboard', href: '/dashboard' }, hasStubIcon: true }
 			}
 		});
-		expectSharedFocusRing(screen.getByRole('link', { name: 'Dashboard' }).element());
+		expectSharedFocusRing(screen.getByRole('link', { name: 'Dashboard', exact: true }).element());
 	});
 
 	it('draws the shared ring on a collapsed submenu trigger', async () => {
@@ -1634,7 +1638,7 @@ describe('SideNav focus ring (A15)', () => {
 				}
 			}
 		});
-		expectSharedFocusRing(screen.getByRole('button', { name: 'Settings' }).element());
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Settings', exact: true }).element());
 	});
 
 	it('rings each focusable of a split-action row, and not the row itself', async () => {
@@ -1648,7 +1652,7 @@ describe('SideNav focus ring (A15)', () => {
 		});
 
 		const link = screen.getByRole('link', { name: 'Settings', exact: true }).element();
-		const toggle = screen.getByRole('button', { name: 'Collapse Settings' }).element();
+		const toggle = screen.getByRole('button', { name: 'Collapse Settings', exact: true }).element();
 		expectSharedFocusRing(link);
 		expectSharedFocusRing(toggle);
 
@@ -1675,14 +1679,14 @@ describe('SideNav focus ring (A15)', () => {
 				icon: { text: 'i' }
 			}
 		});
-		expectSharedFocusRing(screen.getByRole('link', { name: 'My App' }).element());
+		expectSharedFocusRing(screen.getByRole('link', { name: 'My App', exact: true }).element());
 	});
 
 	it('draws the shared ring on the heading menu trigger', async () => {
 		const screen = await render(HeadingFixture, {
 			props: { props: { heading: 'My App' }, menu: 'menu' }
 		});
-		expectSharedFocusRing(screen.getByRole('button', { name: 'Open menu' }).element());
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Open menu', exact: true }).element());
 	});
 });
 

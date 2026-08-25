@@ -50,7 +50,7 @@ import CursorTable from './fixtures/table-pagination-cursor-fixture.svelte';
 type Screen = Awaited<ReturnType<typeof render>>;
 
 function nav(screen: Screen) {
-	return screen.getByRole('navigation', { name: 'Table pagination' });
+	return screen.getByRole('navigation', { name: 'Table pagination', exact: true });
 }
 
 // =============================================================================
@@ -163,9 +163,11 @@ describe('useTablePagination', () => {
 			await expect.element(nav(screen)).toBeInTheDocument();
 			// pageSize is coerced to 1, so 5 items produce 5 pages, not Infinity,
 			// and page 1 shows the first item instead of an empty slice
-			expect(screen.getByRole('button', { name: 'Go to page Infinity' }).query()).toBeNull();
+			expect(
+				screen.getByRole('button', { name: 'Go to page Infinity', exact: true }).query()
+			).toBeNull();
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 5' }))
+				.element(screen.getByRole('button', { name: 'Go to page 5', exact: true }))
 				.toBeInTheDocument();
 			await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 		});
@@ -232,12 +234,14 @@ describe('useTablePagination', () => {
 			const screen = await render(Fixture, {
 				props: { data: generateItems(50), pageSize: 10, pageSizeOptions: [10, 25, 50] }
 			});
-			await expect.element(screen.getByLabelText('Items per page')).toBeInTheDocument();
+			await expect
+				.element(screen.getByLabelText('Items per page', { exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('paginationProps exclude pageSizeOptions when not provided', async () => {
 			const screen = await render(Fixture, { props: { data: generateItems(50), pageSize: 10 } });
-			expect(screen.getByLabelText('Items per page').query()).toBeNull();
+			expect(screen.getByLabelText('Items per page', { exact: true }).query()).toBeNull();
 		});
 	});
 
@@ -261,7 +265,7 @@ describe('useTablePagination', () => {
 			await expect.element(screen.getByText('Item 10', { exact: true })).toBeInTheDocument();
 
 			// Click page 2
-			await userEvent.click(screen.getByRole('button', { name: 'Go to page 2' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to page 2', exact: true }));
 
 			// Now should show Item 11..20
 			await expect.element(screen.getByText('Item 11', { exact: true })).toBeInTheDocument();
@@ -278,7 +282,9 @@ describe('useTablePagination', () => {
 			const screen = await render(DualPlugins, { props: {} });
 			await expect.element(screen.getByRole('table')).toBeInTheDocument();
 			await expect.element(nav(screen)).toBeInTheDocument();
-			await expect.element(screen.getByLabelText('Select all rows')).toBeInTheDocument();
+			await expect
+				.element(screen.getByLabelText('Select all rows', { exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('plugin order does not break rendering', async () => {
@@ -312,7 +318,7 @@ describe('useTablePagination', () => {
 				props: { data: generateItems(30), pageSize: 10, label: 'Custom navigation' }
 			});
 			await expect
-				.element(screen.getByRole('navigation', { name: 'Custom navigation' }))
+				.element(screen.getByRole('navigation', { name: 'Custom navigation', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -321,7 +327,7 @@ describe('useTablePagination', () => {
 				props: { count: 10, hasMore: true, pageSize: 10 }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to next page' }))
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
 				.not.toBeDisabled();
 		});
 
@@ -331,7 +337,7 @@ describe('useTablePagination', () => {
 			});
 
 			// Verify the page size selector is rendered with current value
-			const selector = screen.getByRole('combobox', { name: 'Items per page' });
+			const selector = screen.getByRole('combobox', { name: 'Items per page', exact: true });
 			await expect.element(selector).toBeInTheDocument();
 			await expect.element(selector).toHaveTextContent('10');
 		});
@@ -356,16 +362,18 @@ describe('useTablePagination', () => {
 		it('handles page=1 with no totalItems or totalPages (cursor mode)', async () => {
 			const screen = await render(CursorTable, { props: { count: 5, hasMore: false } });
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeDisabled();
-			await expect.element(screen.getByRole('button', { name: 'Go to next page' })).toBeDisabled();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
+				.toBeDisabled();
 		});
 
 		it('handles rapid page changes', async () => {
 			const screen = await render(Fixture, { props: { data: generateItems(50), pageSize: 10 } });
 
-			await userEvent.click(screen.getByRole('button', { name: 'Go to page 2' }));
-			await userEvent.click(screen.getByRole('button', { name: 'Go to page 3' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to page 2', exact: true }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to page 3', exact: true }));
 
 			// Should be on page 3 showing Item 21..30
 			await expect.element(screen.getByText('Item 21', { exact: true })).toBeInTheDocument();
@@ -386,17 +394,17 @@ describe('useTablePagination', () => {
 		it('page buttons have aria-label "Go to page N"', async () => {
 			const screen = await render(Fixture, { props: { data: generateItems(30), pageSize: 10 } });
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 1' }))
+				.element(screen.getByRole('button', { name: 'Go to page 1', exact: true }))
 				.toBeInTheDocument();
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 2' }))
+				.element(screen.getByRole('button', { name: 'Go to page 2', exact: true }))
 				.toBeInTheDocument();
 		});
 
 		it('current page has aria-current="page"', async () => {
 			const screen = await render(Fixture, { props: { data: generateItems(30), pageSize: 10 } });
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 1' }))
+				.element(screen.getByRole('button', { name: 'Go to page 1', exact: true }))
 				.toHaveAttribute('aria-current', 'page');
 		});
 
@@ -404,7 +412,7 @@ describe('useTablePagination', () => {
 			// Use multi-page data so pagination is rendered; on page 1, prev is disabled.
 			const screen = await render(Fixture, { props: { data: generateItems(30), pageSize: 10 } });
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeDisabled();
 		});
 	});

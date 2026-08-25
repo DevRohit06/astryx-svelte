@@ -1169,27 +1169,6 @@ replica to test the justification, saw it compile, and reported the reason as no
 was half right — the in-file comment claimed Svelte _errors_, and it warns. The rename is correct;
 the overstatement was what made it look invented
 
-### Ported `getByRole` name assertions are substring matches, where upstream's are whole-string
-
-- **units:** src/tests (client project)
-- **kind:** api-divergence
-- **retires:** when every string `name` in the client suites carries `exact: true` and `status.md`'s assertion-strength count reaches zero
-
-Testing Library matches an accessible name as a **whole string**; Playwright, which supplies the
-browser project's locators, matches a string `name` as a case-insensitive **substring**. Every
-ported case that reads `getByRole('button', {name: 'Delete'})` verbatim therefore asserts strictly
-less than the upstream case it ports, and passes in situations upstream's exists to catch.
-
-Found while porting `VisuallyHidden`: removing the icon span's `aria-hidden` made the control's
-accessible name `'Trash Delete'`, and the case still passed. It fails, correctly, with
-`exact: true`.
-
-The count is generated into `port/status.md` rather than stated here, because it is the size of a
-sweep that has not happened and will move. The sweep is its own batch: adding `exact: true` will
-surface every place this port's accessible name differs from upstream's, and each of those is a
-parity defect to triage rather than a test to relax. A regex `name` is substring-matching on both
-sides by construction and is excluded
-
 ### Rest-prop and inline-style precedence disagrees with upstream in four components
 
 - **units:** Blockquote, Badge, ChatComposer, VisuallyHidden
@@ -1374,6 +1353,41 @@ _signature_ differs, which is the thing `astryx-surface` compares
 Closed, kept as the record. **Nothing below counts as an open debt** — `scripts/status.mjs` stops
 tallying at this heading, and `astryx-parity` must not find a retired entry when it greps for
 "is this drift already known?", or it would skip live drift.
+
+### Ported `getByRole` name assertions are substring matches, where upstream's are whole-string
+
+- **units:** src/tests (client project)
+- **kind:** api-divergence
+- **retires:** when every string `name` in the client suites carries `exact: true` and `status.md`'s assertion-strength count reaches zero
+
+Testing Library matches an accessible name as a **whole string**; Playwright, which supplies the
+browser project's locators, matches a string `name` as a case-insensitive **substring**. Every
+ported case that reads `getByRole('button', {name: 'Delete'})` verbatim therefore asserts strictly
+less than the upstream case it ports, and passes in situations upstream's exists to catch.
+
+Found while porting `VisuallyHidden`: removing the icon span's `aria-hidden` made the control's
+accessible name `'Trash Delete'`, and the case still passed. It fails, correctly, with
+`exact: true`.
+
+The count is generated into `port/status.md` rather than stated here, because it is the size of a
+sweep that has not happened and will move. The sweep is its own batch: adding `exact: true` will
+surface every place this port's accessible name differs from upstream's, and each of those is a
+parity defect to triage rather than a test to relax. A regex `name` is substring-matching on both
+sides by construction and is excluded
+
+**Closed in batch 036.** Every string `name` in the client suites carries `exact: true`, and
+`status.md`'s count is zero — verified by hand as well as by the counter: six matches remain in the
+tree and all six are prose in comments, none in code. Nothing went red, which the sweep proved
+meaningful rather than vacuous: shortening a name to a strict substring fails with `exact: true` and
+**passes without it**, so the hazard was live. Upstream settles the semantics itself — its `Calendar`
+and `DateTimeInput` suites use `__tests__/fastRoleQueries.ts`, whose predicate is
+`typeof name === 'string' ? accessibleName === name : name.test(accessibleName)`.
+
+A regex `name` is substring-matching on both sides by construction and is untouched, as is
+`calendar.svelte.test.ts`'s deliberate `exact: false`, where upstream matches day cells with a regex.
+
+`getByText` carries the identical asymmetry over a larger surface and is **not** covered by this;
+it is now its own row in the assertion-strength table rather than a remark
 
 ### `hasActiveFocusTrapEscape` is built on the trap's own Escape stack, not a separate trap-only count
 

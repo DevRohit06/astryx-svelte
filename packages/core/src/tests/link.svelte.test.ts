@@ -47,7 +47,9 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test' }, text: 'Click me' }
 		});
-		await expect.element(screen.getByRole('link', { name: 'Click me' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Click me', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders with href attribute', async () => {
@@ -59,14 +61,18 @@ describe('Link', () => {
 
 	it('renders as a button when href is undefined', async () => {
 		const screen = await render(LinkHarness, { props: { props: {}, text: 'Action' } });
-		await expect.element(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Action', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders as a button when href is explicitly undefined', async () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: undefined }, text: 'Action' }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Action', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('button fallback fires onClick', async () => {
@@ -261,7 +267,7 @@ describe('Link', () => {
 		// The link's accessible name includes the new-tab hint (the icon is
 		// decorative).
 		await expect
-			.element(screen.getByRole('link', { name: 'Docs (opens in new tab)' }))
+			.element(screen.getByRole('link', { name: 'Docs (opens in new tab)', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -273,7 +279,7 @@ describe('Link', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Docs (new window)' }))
+			.element(screen.getByRole('link', { name: 'Docs (new window)', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -281,7 +287,9 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/internal' }, text: 'Internal' }
 		});
-		await expect.element(screen.getByRole('link', { name: 'Internal' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Internal', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders external link with existing rel merged', async () => {
@@ -360,14 +368,16 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/settings', tooltip: 'Configure settings' }, text: 'Settings' }
 		});
-		await expect.element(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Settings', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders custom component when as is provided', async () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/custom', as: CustomLink }, text: 'Custom Link' }
 		});
-		const link = screen.getByRole('link', { name: 'Custom Link' });
+		const link = screen.getByRole('link', { name: 'Custom Link', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).toHaveAttribute('href', '/custom');
 	});
@@ -377,7 +387,7 @@ describe('Link', () => {
 			props: { provider: CustomLink, props: { href: '/provider' }, text: 'Provider Link' }
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Provider Link' }))
+			.element(screen.getByRole('link', { name: 'Provider Link', exact: true }))
 			.toHaveAttribute('data-custom-link');
 	});
 
@@ -389,7 +399,7 @@ describe('Link', () => {
 				text: 'Override Link'
 			}
 		});
-		const link = screen.getByRole('link', { name: 'Override Link' });
+		const link = screen.getByRole('link', { name: 'Override Link', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).not.toHaveAttribute('data-another-link');
 	});
@@ -398,7 +408,7 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test', color: 'secondary' }, text: 'Themed Link' }
 		});
-		const link = screen.getByRole('link', { name: 'Themed Link' }).element();
+		const link = screen.getByRole('link', { name: 'Themed Link', exact: true }).element();
 		expect(link.className).toContain('astryx-link');
 		expect(link.className).toContain('secondary');
 	});

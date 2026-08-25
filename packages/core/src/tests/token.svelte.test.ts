@@ -105,7 +105,7 @@ describe('Token', () => {
 		const screen = await render(Token, {
 			props: { label: 'Clickable', onclick: handleClick, 'data-testid': 'token' }
 		});
-		const button = screen.getByRole('button', { name: 'Clickable' });
+		const button = screen.getByRole('button', { name: 'Clickable', exact: true });
 		await expect.element(button).toBeInTheDocument();
 		expect(button.element().tagName).toBe('BUTTON');
 		// Container is a span, not a button
@@ -130,7 +130,7 @@ describe('Token', () => {
 
 	it('renders as a link when href is provided', async () => {
 		const screen = await render(Token, { props: { label: 'Link', href: '/test' } });
-		const link = screen.getByRole('link', { name: 'Link' });
+		const link = screen.getByRole('link', { name: 'Link', exact: true });
 		await expect.element(link).toBeInTheDocument();
 		expect(link.element().tagName).toBe('A');
 		await expect.element(link).toHaveAttribute('href', '/test');
@@ -139,7 +139,7 @@ describe('Token', () => {
 	it('shows remove button when onRemove is provided', async () => {
 		const handleRemove = vi.fn();
 		const screen = await render(Token, { props: { label: 'Removable', onRemove: handleRemove } });
-		const removeButton = screen.getByRole('button', { name: 'Remove Removable' });
+		const removeButton = screen.getByRole('button', { name: 'Remove Removable', exact: true });
 		await expect.element(removeButton).toBeInTheDocument();
 		await userEvent.click(removeButton);
 		expect(handleRemove).toHaveBeenCalledTimes(1);
@@ -151,7 +151,7 @@ describe('Token', () => {
 		const screen = await render(Token, {
 			props: { label: 'Token', onclick: handleClick, onRemove: handleRemove }
 		});
-		const removeButton = screen.getByRole('button', { name: 'Remove Token' });
+		const removeButton = screen.getByRole('button', { name: 'Remove Token', exact: true });
 		await userEvent.click(removeButton);
 		expect(handleRemove).toHaveBeenCalledTimes(1);
 		expect(handleClick).not.toHaveBeenCalled();
@@ -162,7 +162,7 @@ describe('Token', () => {
 		const screen = await render(Token, {
 			props: { label: 'Disabled', onclick: handleClick, isDisabled: true, 'data-testid': 'token' }
 		});
-		const button = screen.getByRole('button', { name: 'Disabled' });
+		const button = screen.getByRole('button', { name: 'Disabled', exact: true });
 		await expect.element(button).toBeDisabled();
 		expect(button.element().tagName).toBe('BUTTON');
 		// Container click is also disabled (the span's onclick is undefined)
@@ -275,7 +275,9 @@ describe('Token accessibility', () => {
 
 		// Tab to second button (remove button)
 		await userEvent.tab();
-		await expect.element(screen.getByRole('button', { name: 'Remove Token' })).toHaveFocus();
+		await expect
+			.element(screen.getByRole('button', { name: 'Remove Token', exact: true }))
+			.toHaveFocus();
 	});
 
 	it('fires onClick when Enter is pressed on the invisible button', async () => {
@@ -299,7 +301,7 @@ describe('Token accessibility', () => {
 	it('remove button has accessible name including the token label', async () => {
 		const screen = await render(Token, { props: { label: 'JavaScript', onRemove: () => {} } });
 		await expect
-			.element(screen.getByRole('button', { name: 'Remove JavaScript' }))
+			.element(screen.getByRole('button', { name: 'Remove JavaScript', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -334,7 +336,9 @@ describe('Token accessibility', () => {
 		// Try to click remove button (it's disabled). `.click()` respects the
 		// disabled state and is a no-op — unlike a synthetic `dispatchEvent`, which
 		// bypasses that check and would invoke the listener regardless.
-		const removeBtn = screen.getByRole('button', { name: 'Remove Token' }).element() as HTMLElement;
+		const removeBtn = screen
+			.getByRole('button', { name: 'Remove Token', exact: true })
+			.element() as HTMLElement;
 		removeBtn.click();
 		expect(handleRemove).not.toHaveBeenCalled();
 	});
@@ -346,7 +350,7 @@ describe('Token accessibility', () => {
 			props: { label: 'Token', onclick: handleClick, onRemove: handleRemove }
 		});
 
-		const removeButton = screen.getByRole('button', { name: 'Remove Token' });
+		const removeButton = screen.getByRole('button', { name: 'Remove Token', exact: true });
 		await userEvent.click(removeButton);
 
 		expect(handleRemove).toHaveBeenCalledTimes(1);
@@ -358,13 +362,15 @@ describe('Token accessibility', () => {
 			props: { label: 'Hidden Tag', isLabelHidden: true, onclick: () => {} }
 		});
 		// The invisible button should still be findable by its accessible name
-		await expect.element(screen.getByRole('button', { name: 'Hidden Tag' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Hidden Tag', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('link token has correct role and is focusable', async () => {
 		const screen = await render(Token, { props: { label: 'Link Token', href: '/test' } });
 
-		const link = screen.getByRole('link', { name: 'Link Token' });
+		const link = screen.getByRole('link', { name: 'Link Token', exact: true });
 		await expect.element(link).toHaveAttribute('href', '/test');
 
 		await userEvent.tab();
@@ -400,8 +406,8 @@ describe('Token link with remove button', () => {
 		const screen = await render(Token, {
 			props: { label: 'Tag', href: '/test', onRemove: () => {} }
 		});
-		const link = screen.getByRole('link', { name: 'Tag' }).element();
-		const removeButton = screen.getByRole('button', { name: 'Remove Tag' }).element();
+		const link = screen.getByRole('link', { name: 'Tag', exact: true }).element();
+		const removeButton = screen.getByRole('button', { name: 'Remove Tag', exact: true }).element();
 		expect(link.contains(removeButton)).toBe(false);
 	});
 
@@ -411,7 +417,7 @@ describe('Token link with remove button', () => {
 			props: { label: 'Tag', href: '/test', onRemove: handleRemove }
 		});
 
-		const link = screen.getByRole('link', { name: 'Tag' });
+		const link = screen.getByRole('link', { name: 'Tag', exact: true });
 		expect(link.element().tagName).toBe('A');
 		await expect.element(link).toHaveAttribute('href', '/test');
 
@@ -419,7 +425,7 @@ describe('Token link with remove button', () => {
 		await userEvent.tab();
 		await expect.element(link).toHaveFocus();
 		await userEvent.tab();
-		const removeButton = screen.getByRole('button', { name: 'Remove Tag' });
+		const removeButton = screen.getByRole('button', { name: 'Remove Tag', exact: true });
 		await expect.element(removeButton).toHaveFocus();
 
 		// Activating the remove button fires onRemove without involving the link.
@@ -450,7 +456,7 @@ describe('Token link with remove button', () => {
 			onRemove: () => {},
 			'data-testid': 'link-token'
 		});
-		const link = screen.getByRole('link', { name: 'Tag' }).element();
+		const link = screen.getByRole('link', { name: 'Tag', exact: true }).element();
 		const handleLinkClick = vi.fn((e: Event) => e.preventDefault());
 		link.addEventListener('click', handleLinkClick);
 
@@ -464,11 +470,11 @@ describe('Token link with remove button', () => {
 		const screen = await render(Token, {
 			props: { label: 'Tag', href: '/test', onRemove: handleRemove }
 		});
-		const link = screen.getByRole('link', { name: 'Tag' }).element();
+		const link = screen.getByRole('link', { name: 'Tag', exact: true }).element();
 		const handleLinkClick = vi.fn((e: Event) => e.preventDefault());
 		link.addEventListener('click', handleLinkClick);
 
-		click(screen.getByRole('button', { name: 'Remove Tag' }).element());
+		click(screen.getByRole('button', { name: 'Remove Tag', exact: true }).element());
 		expect(handleRemove).toHaveBeenCalledTimes(1);
 		expect(handleLinkClick).not.toHaveBeenCalled();
 	});
@@ -532,7 +538,9 @@ describe('Token text overflow', () => {
 			props: { label: 'A very long clickable label', onclick: () => {} }
 		});
 		// In onClick mode, the label is inside the invisible button
-		const button = screen.getByRole('button', { name: 'A very long clickable label' }).element();
+		const button = screen
+			.getByRole('button', { name: 'A very long clickable label', exact: true })
+			.element();
 		const labelSpan = button.querySelector('span');
 		expect(labelSpan).toBeInTheDocument();
 		expect(labelSpan?.textContent).toBe('A very long clickable label');
@@ -554,7 +562,7 @@ describe('Token focus outline', () => {
 		const screen = await render(Token, {
 			props: { label: 'Focusable', onclick: () => {}, 'data-testid': 'focus-token' }
 		});
-		const button = screen.getByRole('button', { name: 'Focusable' });
+		const button = screen.getByRole('button', { name: 'Focusable', exact: true });
 		await userEvent.tab();
 		await expect.element(button).toHaveFocus();
 		// The container should handle focus outline via :has(:focus-visible),

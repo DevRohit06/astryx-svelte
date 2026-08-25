@@ -58,12 +58,14 @@ describe('ClickableCard', () => {
 
 	it('renders a hidden button for onClick cards', async () => {
 		const screen = await renderCard({ label: 'Test card', onclick: () => {} });
-		await expect.element(screen.getByRole('button', { name: 'Test card' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Test card', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders a hidden link for href cards', async () => {
 		const screen = await renderCard({ label: 'Nav card', href: '/settings' });
-		const link = screen.getByRole('link', { name: 'Nav card' });
+		const link = screen.getByRole('link', { name: 'Nav card', exact: true });
 		await expect.element(link).toBeInTheDocument();
 		await expect.element(link).toHaveAttribute('href', '/settings');
 	});
@@ -97,7 +99,7 @@ describe('ClickableCard', () => {
 	it('hidden button has correct aria-label', async () => {
 		const screen = await renderCard({ label: 'Settings card', onclick: () => {} });
 		await expect
-			.element(screen.getByRole('button', { name: 'Settings card' }))
+			.element(screen.getByRole('button', { name: 'Settings card', exact: true }))
 			.toHaveAttribute('aria-label', 'Settings card');
 	});
 
@@ -108,14 +110,16 @@ describe('ClickableCard', () => {
 			target: '_blank'
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'External' }))
+			.element(screen.getByRole('link', { name: 'External', exact: true }))
 			.toHaveAttribute('target', '_blank');
 	});
 
 	it('disabled button is disabled', async () => {
 		const handleClick = vi.fn();
 		const screen = await renderCard({ label: 'Disabled', onclick: handleClick, isDisabled: true });
-		await expect.element(screen.getByRole('button', { name: 'Disabled' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Disabled', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('disabled link has aria-disabled', async () => {
@@ -125,7 +129,7 @@ describe('ClickableCard', () => {
 			isDisabled: true
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Disabled link' }))
+			.element(screen.getByRole('link', { name: 'Disabled link', exact: true }))
 			.toHaveAttribute('aria-disabled', 'true');
 	});
 

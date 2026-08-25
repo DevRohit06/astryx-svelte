@@ -300,9 +300,9 @@ describe('AvatarGroup — roving focus + keyboard hint', () => {
 			}
 		});
 
-		const alice = screen.getByRole('link', { name: 'Alice' }).element();
-		const bob = screen.getByRole('link', { name: 'Bob' }).element();
-		const charlie = screen.getByRole('link', { name: 'Charlie' }).element();
+		const alice = screen.getByRole('link', { name: 'Alice', exact: true }).element();
+		const bob = screen.getByRole('link', { name: 'Bob', exact: true }).element();
+		const charlie = screen.getByRole('link', { name: 'Charlie', exact: true }).element();
 
 		expect(alice).toHaveAttribute('tabindex', '0');
 		expect(bob).toHaveAttribute('tabindex', '-1');
@@ -320,9 +320,9 @@ describe('AvatarGroup — roving focus + keyboard hint', () => {
 			}
 		});
 
-		const alice = screen.getByRole('link', { name: 'Alice' }).element() as HTMLElement;
-		const bob = screen.getByRole('button', { name: 'Bob' }).element();
-		const charlie = screen.getByRole('link', { name: 'Charlie' }).element();
+		const alice = screen.getByRole('link', { name: 'Alice', exact: true }).element() as HTMLElement;
+		const bob = screen.getByRole('button', { name: 'Bob', exact: true }).element();
+		const charlie = screen.getByRole('link', { name: 'Charlie', exact: true }).element();
 
 		alice.focus();
 		expect(alice).toHaveFocus();
@@ -347,8 +347,8 @@ describe('AvatarGroup — roving focus + keyboard hint', () => {
 			}
 		});
 
-		const alice = screen.getByRole('link', { name: 'Alice' }).element() as HTMLElement;
-		const overflow = screen.getByRole('button', { name: '3 more' }).element();
+		const alice = screen.getByRole('link', { name: 'Alice', exact: true }).element() as HTMLElement;
+		const overflow = screen.getByRole('button', { name: '3 more', exact: true }).element();
 		expect(overflow).toHaveAttribute('data-avatar-item');
 
 		alice.focus();
@@ -366,9 +366,9 @@ describe('AvatarGroup — roving focus + keyboard hint', () => {
 			}
 		});
 
-		const alice = screen.getByRole('link', { name: 'Alice' }).element() as HTMLElement;
-		const bob = screen.getByRole('link', { name: 'Bob' }).element();
-		const statusButton = screen.getByRole('button', { name: 'badge' }).element();
+		const alice = screen.getByRole('link', { name: 'Alice', exact: true }).element() as HTMLElement;
+		const bob = screen.getByRole('link', { name: 'Bob', exact: true }).element();
+		const statusButton = screen.getByRole('button', { name: 'badge', exact: true }).element();
 
 		// The status button carries no data-avatar-item marker.
 		expect(statusButton).not.toHaveAttribute('data-avatar-item');

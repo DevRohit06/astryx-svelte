@@ -72,7 +72,7 @@ describe('Overlay', () => {
 			const screen = await render(OverlayFixture, {
 				props: { content: 'Quick view', isContentButton: true }
 			});
-			const button = screen.getByRole('button', { name: 'Quick view' });
+			const button = screen.getByRole('button', { name: 'Quick view', exact: true });
 			await expect.element(button).toBeInTheDocument();
 			expect(scrimOf(screen).contains(button.element())).toBe(true);
 		});

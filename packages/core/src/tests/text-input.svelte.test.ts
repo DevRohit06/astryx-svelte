@@ -116,7 +116,7 @@ describe('TextInput', () => {
 		const screen = await render(TextInput, {
 			props: { label: 'Name', value: '', onChange: noop }
 		});
-		await expect.element(screen.getByLabelText('Name')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Name', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with placeholder', async () => {
@@ -210,7 +210,7 @@ describe('TextInput', () => {
 		const label = screen.getByText('Search');
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
-		await expect.element(screen.getByLabelText('Search')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Search', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows label visually by default', async () => {
@@ -636,21 +636,23 @@ describe('TextInput', () => {
 			const screen = await render(TextInput, {
 				props: { label: 'Name', value: 'hello', onChange: noop, hasClear: true }
 			});
-			await expect.element(screen.getByRole('button', { name: 'Clear Name' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('button', { name: 'Clear Name', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('does not show clear button when value is empty', async () => {
 			const screen = await render(TextInput, {
 				props: { label: 'Name', value: '', onChange: noop, hasClear: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Name' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Name', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when hasClear is false', async () => {
 			const screen = await render(TextInput, {
 				props: { label: 'Name', value: 'hello', onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Name' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Name', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
@@ -663,7 +665,7 @@ describe('TextInput', () => {
 					isDisabled: true
 				}
 			});
-			expect(screen.getByRole('button', { name: 'Clear Name' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Name', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with empty string when clear is clicked', async () => {
@@ -671,7 +673,7 @@ describe('TextInput', () => {
 			const screen = await render(TextInput, {
 				props: { label: 'Name', value: 'hello', onChange, hasClear: true }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Name' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Name', exact: true }));
 			expect(onChange).toHaveBeenCalledWith('', null);
 		});
 	});

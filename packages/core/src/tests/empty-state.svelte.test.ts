@@ -48,14 +48,14 @@ describe('EmptyState', () => {
 
 	it('renders title as h3 by default', async () => {
 		const screen = await render(EmptyState, { props: { title: 'No data' } });
-		const heading = screen.getByRole('heading', { name: 'No data' });
+		const heading = screen.getByRole('heading', { name: 'No data', exact: true });
 		await expect.element(heading).toBeInTheDocument();
 		expect(heading.element().tagName).toBe('H3');
 	});
 
 	it('renders custom heading level', async () => {
 		const screen = await render(EmptyState, { props: { title: 'No data', headingLevel: 2 } });
-		const heading = screen.getByRole('heading', { name: 'No data' });
+		const heading = screen.getByRole('heading', { name: 'No data', exact: true });
 		expect(heading.element().tagName).toBe('H2');
 	});
 
@@ -65,7 +65,7 @@ describe('EmptyState', () => {
 			const screen = await render(EmptyState, {
 				props: { title: `Level ${level}`, headingLevel: level }
 			});
-			const heading = screen.getByRole('heading', { name: `Level ${level}` });
+			const heading = screen.getByRole('heading', { name: `Level ${level}`, exact: true });
 			expect(heading.element().tagName).toBe(`H${level}`);
 			await screen.unmount();
 		}
@@ -174,7 +174,7 @@ describe('EmptyState', () => {
 	describe('theming targets', () => {
 		it('puts astryx-empty-state-title on the title heading', async () => {
 			const screen = await render(EmptyState, { props: { title: 'No results' } });
-			const heading = screen.getByRole('heading', { name: 'No results' });
+			const heading = screen.getByRole('heading', { name: 'No results', exact: true });
 			await expect.element(heading).toHaveClass('astryx-empty-state-title');
 		});
 
@@ -191,7 +191,7 @@ describe('EmptyState', () => {
 				props: { title: 'No results', description: 'Try another search.', isCompact: true }
 			});
 			await expect
-				.element(screen.getByRole('heading', { name: 'No results' }))
+				.element(screen.getByRole('heading', { name: 'No results', exact: true }))
 				.toHaveAttribute('data-variant', 'compact');
 			await expect
 				.element(screen.getByText('Try another search.'))

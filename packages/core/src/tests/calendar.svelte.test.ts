@@ -201,7 +201,7 @@ function dayName(day: number, month = 'January', year = 2026): string {
 }
 
 function getButton(screen: Screen, name: string): Locator {
-	return screen.getByRole('button', { name });
+	return screen.getByRole('button', { name, exact: true });
 }
 
 /**
@@ -938,7 +938,7 @@ describe('Calendar', () => {
 		it('announces the new month politely when clicking next', async () => {
 			const screen = await render(Calendar, { props: { focusDate: '2026-01-01' } });
 
-			await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Next month', exact: true }));
 
 			await expect.poll(politeRegion).not.toBeNull();
 			await expect.element(politeRegion()!).toHaveTextContent('February 2026');
@@ -947,7 +947,7 @@ describe('Calendar', () => {
 		it('announces the new month politely when clicking previous', async () => {
 			const screen = await render(Calendar, { props: { focusDate: '2026-02-01' } });
 
-			await userEvent.click(screen.getByRole('button', { name: 'Previous month' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Previous month', exact: true }));
 
 			await expect.poll(politeRegion).not.toBeNull();
 			await expect.element(politeRegion()!).toHaveTextContent('January 2026');
@@ -980,7 +980,7 @@ describe('Calendar', () => {
 				props: { numberOfMonths: 2, focusDate: '2026-01-01' }
 			});
 
-			await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Next month', exact: true }));
 
 			await expect.poll(politeRegion).not.toBeNull();
 			await expect.element(politeRegion()!).toHaveTextContent('February 2026 – March 2026');

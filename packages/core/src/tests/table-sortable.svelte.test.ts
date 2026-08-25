@@ -405,7 +405,9 @@ describe('useTableSortable', () => {
 			});
 
 			await expect
-				.element(screen.getByRole('button', { name: 'Sort by Name, sorted ascending' }))
+				.element(
+					screen.getByRole('button', { name: 'Sort by Name, sorted ascending', exact: true })
+				)
 				.toBeInTheDocument();
 		});
 
@@ -444,12 +446,18 @@ describe('useTableSortable', () => {
 
 			await expect
 				.element(
-					screen.getByRole('button', { name: 'Sort by Name, sorted ascending, priority 1 of 2' })
+					screen.getByRole('button', {
+						name: 'Sort by Name, sorted ascending, priority 1 of 2',
+						exact: true
+					})
 				)
 				.toBeInTheDocument();
 			await expect
 				.element(
-					screen.getByRole('button', { name: 'Sort by Age, sorted descending, priority 2 of 2' })
+					screen.getByRole('button', {
+						name: 'Sort by Age, sorted descending, priority 2 of 2',
+						exact: true
+					})
 				)
 				.toBeInTheDocument();
 		});
@@ -471,7 +479,7 @@ describe('useTableSortable', () => {
 			});
 
 			await expect
-				.element(screen.getByRole('button', { name: 'Sort by Name' }))
+				.element(screen.getByRole('button', { name: 'Sort by Name', exact: true }))
 				.toBeInTheDocument();
 			expect(headers(screen).filter((h) => h.hasAttribute('aria-sort'))).toHaveLength(0);
 		});
@@ -481,9 +489,11 @@ describe('useTableSortable', () => {
 
 			// All sortable columns should show unsorted state
 			await expect
-				.element(screen.getByRole('button', { name: 'Sort by Name' }))
+				.element(screen.getByRole('button', { name: 'Sort by Name', exact: true }))
 				.toBeInTheDocument();
-			await expect.element(screen.getByRole('button', { name: 'Sort by Age' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('button', { name: 'Sort by Age', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		// COUNTERPART. Upstream renders a `Capture` component twice and compares
@@ -516,7 +526,9 @@ describe('useTableSortable', () => {
 			await screen.rerender({ data: [{ name: 'Cara', age: 41, email: 'c@example.com' }] });
 			await userEvent.click(screen.getByRole('button', { name: /sort by name/i }));
 			await expect
-				.element(screen.getByRole('button', { name: 'Sort by Name, sorted ascending' }))
+				.element(
+					screen.getByRole('button', { name: 'Sort by Name, sorted ascending', exact: true })
+				)
 				.toBeInTheDocument();
 
 			expect(screen.component.captured.plugin).toBe(first);
@@ -638,9 +650,11 @@ describe('useTableSortable — i18n', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Trier par Name' }))
+			.element(screen.getByRole('button', { name: 'Trier par Name', exact: true }))
 			.toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Trier par Age' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Trier par Age', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('localizes the multi-sort priority aria-label with ICU number args', async () => {
@@ -668,12 +682,18 @@ describe('useTableSortable — i18n', () => {
 		// the enum without translating it cannot pass — for either direction.
 		await expect
 			.element(
-				screen.getByRole('button', { name: 'Trier par Name, tri croissant, priorité 1 sur 2' })
+				screen.getByRole('button', {
+					name: 'Trier par Name, tri croissant, priorité 1 sur 2',
+					exact: true
+				})
 			)
 			.toBeInTheDocument();
 		await expect
 			.element(
-				screen.getByRole('button', { name: 'Trier par Age, tri décroissant, priorité 2 sur 2' })
+				screen.getByRole('button', {
+					name: 'Trier par Age, tri décroissant, priorité 2 sur 2',
+					exact: true
+				})
 			)
 			.toBeInTheDocument();
 	});
@@ -696,7 +716,7 @@ describe('useTableSortable — i18n', () => {
 		// their own catalog keys; 'croissant' differs from the raw enum value,
 		// so neither a hardcoded English frame nor raw-enum interpolation passes.
 		await expect
-			.element(screen.getByRole('button', { name: 'Trié par Name, croissant' }))
+			.element(screen.getByRole('button', { name: 'Trié par Name, croissant', exact: true }))
 			.toBeInTheDocument();
 	});
 });

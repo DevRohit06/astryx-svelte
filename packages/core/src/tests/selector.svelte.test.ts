@@ -590,7 +590,7 @@ describe('Selector', () => {
 			});
 
 			// In hasSearch mode the trigger is a plain button, not a combobox.
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			const popover = popoverOf(screen.container);
 			await vi.waitFor(() => {
 				expect(popover.style.getPropertyValue('--x-marginBlockStart')).toBe(
@@ -643,7 +643,9 @@ describe('Selector', () => {
 					hasClear: true
 				}
 			});
-			await expect.element(screen.getByRole('button', { name: 'Clear Fruit' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('button', { name: 'Clear Fruit', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('does not show clear button when value is null', async () => {
@@ -685,7 +687,7 @@ describe('Selector', () => {
 			const screen = await render(Selector, {
 				props: { label: 'Fruit', options: OPTIONS, value: 'Banana', onChange, hasClear: true }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Fruit', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(null);
 		});
 
@@ -761,7 +763,7 @@ describe('Selector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await expect.element(screen.getByRole('combobox')).toBeInTheDocument();
 		});
 
@@ -775,7 +777,7 @@ describe('Selector', () => {
 					hasSearch: true
 				}
 			});
-			const triggerBtn = screen.getByRole('button', { name: 'Fruit' });
+			const triggerBtn = screen.getByRole('button', { name: 'Fruit', exact: true });
 			// In hasSearch mode the trigger is a plain button, not a combobox.
 			await expect.element(triggerBtn).not.toHaveAttribute('role', 'combobox');
 			await userEvent.click(triggerBtn);
@@ -799,7 +801,7 @@ describe('Selector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			const search = screen.getByRole('combobox');
 			// Filter to Apple and Banana so "last" means last *visible* option.
 			await userEvent.fill(search, 'a');
@@ -826,7 +828,7 @@ describe('Selector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			// `userEvent.type`, not `fill`: this case is about the caret, and only a
 			// real per-character keystroke sequence leaves it where typing would.
 			const search = screen.getByRole('combobox').element() as HTMLInputElement;
@@ -866,7 +868,7 @@ describe('Selector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await userEvent.fill(screen.getByRole('combobox'), 'ban');
 			await vi.waitFor(() => {
 				const options = optionsIn(screen.container);
@@ -885,7 +887,7 @@ describe('Selector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await userEvent.fill(screen.getByRole('combobox'), 'xyz');
 			await vi.waitFor(() => {
 				expect(optionsIn(screen.container)).toHaveLength(0);
@@ -905,7 +907,7 @@ describe('Selector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await userEvent.fill(screen.getByRole('combobox'), 'xyz');
 
 			// role="listbox" only permits option/group children — the visual
@@ -922,7 +924,7 @@ describe('Selector', () => {
 			const screen = await render(Selector, {
 				props: { label: 'Fruit', options: OPTIONS, value: 'Apple', onChange, hasSearch: true }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await userEvent.fill(screen.getByRole('combobox'), 'ban');
 			await vi.waitFor(() => {
 				expect(optionsIn(screen.container)).toHaveLength(1);
@@ -947,7 +949,7 @@ describe('Selector', () => {
 
 			// In hasSearch mode the trigger is a plain button (the popup's search
 			// input is the combobox); it still owns aria-expanded.
-			const trigger = screen.getByRole('button', { name: 'Fruit' });
+			const trigger = screen.getByRole('button', { name: 'Fruit', exact: true });
 			await userEvent.click(trigger);
 			await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 
@@ -966,7 +968,7 @@ describe('Selector', () => {
 					searchPlaceholder: 'Find a fruit...'
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await expect.element(screen.getByPlaceholder('Find a fruit...')).toBeInTheDocument();
 		});
 
@@ -981,7 +983,7 @@ describe('Selector', () => {
 						hasSearch: true
 					}
 				});
-				await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 				// "a" matches Apple and Banana.
 				await userEvent.fill(screen.getByRole('combobox'), 'a');
 				await vi.waitFor(() => {
@@ -999,7 +1001,7 @@ describe('Selector', () => {
 						hasSearch: true
 					}
 				});
-				await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 				// "ban" matches only Banana. Anchored so it cannot pass on "1 results".
 				await userEvent.fill(screen.getByRole('combobox'), 'ban');
 				await vi.waitFor(() => {
@@ -1017,7 +1019,7 @@ describe('Selector', () => {
 						hasSearch: true
 					}
 				});
-				await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 				await userEvent.fill(screen.getByRole('combobox'), 'xyz');
 				await vi.waitFor(() => {
 					expect(politeRegion()).toHaveTextContent('No results found');
@@ -1037,7 +1039,7 @@ describe('Selector', () => {
 				// Popover closed: nothing announced.
 				expect(politeRegion()?.textContent ?? '').toBe('');
 				// Open with an empty query: still nothing announced.
-				await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 				expect(politeRegion()?.textContent ?? '').toBe('');
 			});
 		});
@@ -1066,7 +1068,7 @@ describe('Selector', () => {
 				const screen = await render(Selector, {
 					props: { label: 'Fruit', options: GROUPED, onChange: () => {}, hasSearch: true }
 				});
-				await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 				// "orange" only matches within the Citrus group.
 				await userEvent.fill(screen.getByRole('combobox'), 'orange');
 
@@ -1082,7 +1084,7 @@ describe('Selector', () => {
 				const screen = await render(Selector, {
 					props: { label: 'Fruit', options: GROUPED, onChange: () => {}, hasSearch: true }
 				});
-				await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 				// "berry" only matches items inside the Berries group.
 				await userEvent.fill(screen.getByRole('combobox'), 'berry');
 
@@ -1097,7 +1099,7 @@ describe('Selector', () => {
 				const screen = await render(Selector, {
 					props: { label: 'Fruit', options: GROUPED, onChange: () => {}, hasSearch: true }
 				});
-				await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 				const search = screen.getByRole('combobox');
 				// "berry" leaves Strawberry, Blueberry (in that document order).
 				await userEvent.fill(search, 'berry');
@@ -1116,7 +1118,7 @@ describe('Selector', () => {
 				const screen = await render(Selector, {
 					props: { label: 'Fruit', options: GROUPED, onChange: () => {}, hasSearch: true }
 				});
-				await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 				await userEvent.fill(screen.getByRole('combobox'), 'zzz');
 				await vi.waitFor(() => {
 					expect(optionsIn(screen.container)).toHaveLength(0);
@@ -1195,7 +1197,7 @@ describe('Selector', () => {
 			});
 			// RESTATED: lowercase `tabindex`, as above.
 			await expect
-				.element(screen.getByRole('button', { name: 'Clear Fruit' }))
+				.element(screen.getByRole('button', { name: 'Clear Fruit', exact: true }))
 				.not.toHaveAttribute('tabindex', '-1');
 		});
 
@@ -1676,10 +1678,12 @@ describe('Selector', () => {
 				}
 			});
 
-			const group = screen.getByRole('group', { name: 'Destination' }).element() as HTMLElement;
+			const group = screen
+				.getByRole('group', { name: 'Destination', exact: true })
+				.element() as HTMLElement;
 			const groupLabelID = group.getAttribute('aria-labelledby');
 			const trigger = screen
-				.getByRole('combobox', { name: 'Destination Channel' })
+				.getByRole('combobox', { name: 'Destination Channel', exact: true })
 				.element() as HTMLElement;
 			const labelledByIDs = trigger.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
@@ -1705,7 +1709,7 @@ describe('Selector', () => {
 			});
 
 			const trigger = screen
-				.getByRole('combobox', { name: 'Destination Channel' })
+				.getByRole('combobox', { name: 'Destination Channel', exact: true })
 				.element() as HTMLElement;
 			const tooltip = tooltipIn(screen.container);
 
@@ -1972,7 +1976,7 @@ describe('Selector statusVariant forwarding', () => {
 		});
 		expect(screen.container.querySelector('.astryx-field-status')).toBeNull();
 		const statusButton = screen
-			.getByRole('button', { name: 'Warning details' })
+			.getByRole('button', { name: 'Warning details', exact: true })
 			.element() as HTMLElement;
 		const tooltip = tooltipIn(screen.container);
 		expect(tooltip).toHaveTextContent('Visible to all users');
@@ -1989,7 +1993,7 @@ describe('Selector empty-state theme target', () => {
 		const screen = await render(Selector, {
 			props: { label: 'Fruit', options: OPTIONS, onChange: () => {}, hasSearch: true }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		await userEvent.fill(screen.getByRole('combobox'), 'xyz');
 
 		await vi.waitFor(() => {
@@ -2040,7 +2044,9 @@ describe('Selector clear icon theme target', () => {
 		const screen = await render(Selector, {
 			props: { label: 'Fruit', options: OPTIONS, value: 'Banana', onChange, hasClear: true }
 		});
-		const clear = screen.getByRole('button', { name: 'Clear Fruit' }).element() as HTMLElement;
+		const clear = screen
+			.getByRole('button', { name: 'Clear Fruit', exact: true })
+			.element() as HTMLElement;
 		expect(clear.tagName).toBe('BUTTON');
 		// RESTATED only in mechanism: upstream's `fireEvent.click` is a dispatched
 		// click with no pointer sequence, which a native `.click()` is here.
@@ -2273,7 +2279,7 @@ describe('Selector search focus ring', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		await expect.element(screen.getByRole('combobox')).toHaveFocus();
 		expect(fieldOf(screen.container)).not.toHaveAttribute('data-keyboard-focus');
 	});
@@ -2288,7 +2294,7 @@ describe('Selector search focus ring', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		await expect.element(screen.getByRole('combobox')).toHaveFocus();
 		await userEvent.keyboard('an');
 		// Typing does not retroactively make a pointer focus a keyboard one; the
@@ -2324,7 +2330,7 @@ describe('Selector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 
 		const search = screen.getByRole('combobox').element() as HTMLElement;
 		// The row is the outer gutter; the input sits inside the rounded field.
@@ -2367,7 +2373,7 @@ describe('Selector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		const search = screen.getByRole('combobox').element() as HTMLElement;
 		// The magnifier leads the search row, as a sibling of the <input>.
 		const container = search.parentElement;
@@ -2388,14 +2394,14 @@ describe('Selector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		const search = screen.getByRole('combobox');
 		await userEvent.fill(search, 'ap');
 		await expect.element(search).toHaveValue('ap');
 
 		// The clear button is the shared InputClearButton; its name is derived from
 		// the field label ("Search options").
-		const clear = screen.getByRole('button', { name: 'Clear Search options' });
+		const clear = screen.getByRole('button', { name: 'Clear Search options', exact: true });
 		await userEvent.click(clear);
 		await expect.element(search).toHaveValue('');
 		await expect.element(search).toHaveFocus();
@@ -2411,7 +2417,7 @@ describe('Selector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		expect(
 			screen.container.querySelector('[aria-label="Clear Search options"]')
 		).not.toBeInTheDocument();
@@ -2427,7 +2433,7 @@ describe('Selector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		// Exactly one combobox — the input. The magnifier and clear button are not
 		// part of the combobox contract.
 		const comboboxes = screen.container.querySelectorAll('[role="combobox"]');
@@ -2446,7 +2452,7 @@ describe('Selector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Fruit' });
+		const trigger = screen.getByRole('button', { name: 'Fruit', exact: true });
 		await userEvent.click(trigger);
 		const search = screen.getByRole('combobox');
 		await userEvent.fill(search, 'ap');
@@ -2457,7 +2463,7 @@ describe('Selector search affordances', () => {
 		// input's Tab dismisses the popup.
 		await userEvent.keyboard('{Tab}');
 		await expect
-			.element(screen.getByRole('button', { name: 'Clear Search options' }))
+			.element(screen.getByRole('button', { name: 'Clear Search options', exact: true }))
 			.toHaveFocus();
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 	});
@@ -2695,7 +2701,9 @@ describe('Selector popup theme target', () => {
 		// the search input's own (hidden, then visible) combobox role — so the
 		// branch reads the parameter that decided which trigger exists.
 		await userEvent.click(
-			hasSearch ? screen.getByRole('button', { name: 'Fruit' }) : screen.getByRole('combobox')
+			hasSearch
+				? screen.getByRole('button', { name: 'Fruit', exact: true })
+				: screen.getByRole('combobox')
 		);
 
 		const popup = screen.container.querySelector('.astryx-selector-popup');

@@ -233,7 +233,9 @@ describe('Tokenizer', () => {
 		const screen = await render(Tokenizer, {
 			props: { label: 'Members', searchSource: userSource, value: [users[0]], onChange: () => {} }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Remove Alice' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Remove Alice', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('calls onChange with remove when token is removed', async () => {
@@ -246,7 +248,7 @@ describe('Tokenizer', () => {
 				onChange
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Remove Alice' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Remove Alice', exact: true }));
 		expect(onChange).toHaveBeenCalledWith([users[1]], { item: users[0], type: 'remove' });
 	});
 
@@ -288,7 +290,9 @@ describe('Tokenizer', () => {
 				hasClear: true
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Clear all' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Clear all', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('does not show clear all when no tokens', async () => {
@@ -301,7 +305,9 @@ describe('Tokenizer', () => {
 				hasClear: true
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Clear all' })).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Clear all', exact: true }))
+			.not.toBeInTheDocument();
 	});
 
 	it('renders description text', async () => {
@@ -343,7 +349,7 @@ describe('Tokenizer', () => {
 		expect(comboboxIn(screen.container)).toBeDisabled();
 		// Remove button should not be present when disabled
 		await expect
-			.element(screen.getByRole('button', { name: 'Remove Alice' }))
+			.element(screen.getByRole('button', { name: 'Remove Alice', exact: true }))
 			.not.toBeInTheDocument();
 	});
 
@@ -1020,7 +1026,7 @@ describe('Tokenizer', () => {
 					onChange: () => {}
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Remove Alice' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Remove Alice', exact: true }));
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Removed Alice');
 			});

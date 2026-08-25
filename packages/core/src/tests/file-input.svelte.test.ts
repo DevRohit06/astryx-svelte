@@ -195,7 +195,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Resume', isRequired: true, value: null, onChange: noop }
 		});
-		const trigger = screen.getByRole('button', { name: 'Resume' });
+		const trigger = screen.getByRole('button', { name: 'Resume', exact: true });
 		// Required is conveyed via a visually hidden "Required" node referenced from
 		// aria-describedby on the focusable trigger — not the hidden file input
 		// (forms-6).
@@ -215,7 +215,7 @@ describe('FileInput', () => {
 				onChange: noop
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Resume' });
+		const trigger = screen.getByRole('button', { name: 'Resume', exact: true });
 		await expect.element(trigger).toHaveAccessibleDescription(/PDF only/);
 		await expect.element(trigger).toHaveAccessibleDescription(/Required/);
 	});
@@ -224,7 +224,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Resume', value: null, onChange: noop }
 		});
-		const trigger = screen.getByRole('button', { name: 'Resume' });
+		const trigger = screen.getByRole('button', { name: 'Resume', exact: true });
 		await expect.element(trigger).not.toHaveAccessibleDescription(/Required/);
 		await expect.element(trigger).not.toHaveAttribute('aria-required');
 	});
@@ -233,7 +233,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Resume', description: 'PDF only', value: null, onChange: noop }
 		});
-		const button = screen.getByRole('button', { name: 'Resume' });
+		const button = screen.getByRole('button', { name: 'Resume', exact: true });
 		await expect.element(button).toHaveAttribute('aria-describedby');
 		// The hidden file input no longer carries the describedby/required/invalid.
 		const input = fileInputIn(screen.container);
@@ -246,7 +246,7 @@ describe('FileInput', () => {
 			props: { label: 'Resume', value: null, onChange: noop }
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'Resume' }))
+			.element(screen.getByRole('button', { name: 'Resume', exact: true }))
 			.not.toHaveAttribute('aria-required');
 	});
 
@@ -268,7 +268,7 @@ describe('FileInput', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'Upload' }))
+			.element(screen.getByRole('button', { name: 'Upload', exact: true }))
 			.toHaveAttribute('aria-invalid', 'true');
 	});
 
@@ -277,7 +277,7 @@ describe('FileInput', () => {
 			props: { label: 'Upload', value: null, onChange: noop, status: { type: 'warning' } }
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'Upload' }))
+			.element(screen.getByRole('button', { name: 'Upload', exact: true }))
 			.not.toHaveAttribute('aria-invalid');
 	});
 
@@ -467,7 +467,7 @@ describe('FileInput', () => {
 				props: { label: 'Upload', value: file, onChange: noop }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Clear Upload' }))
+				.element(screen.getByRole('button', { name: 'Clear Upload', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -475,7 +475,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Upload' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Upload', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
@@ -483,7 +483,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: file, onChange: noop, isDisabled: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Upload' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Upload', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with null when clear is clicked', async () => {
@@ -492,7 +492,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: file, onChange: handleChange }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Upload' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Upload', exact: true }));
 			expect(handleChange).toHaveBeenCalledWith(null);
 		});
 
@@ -501,7 +501,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: file, onChange: noop, isLoading: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Upload' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Upload', exact: true }).query()).toBeNull();
 		});
 	});
 
@@ -511,7 +511,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: handleChange, mode: 'dropzone' }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const file = createFile('dropped.txt', 100);
 			drop(dropzone, [file]);
 			expect(handleChange).toHaveBeenCalledWith(file);
@@ -522,7 +524,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: handleChange }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const file = createFile('dropped.txt', 100);
 			drop(dropzone, [file]);
 			expect(handleChange).not.toHaveBeenCalled();
@@ -539,7 +543,9 @@ describe('FileInput', () => {
 					isDisabled: true
 				}
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const file = createFile('dropped.txt', 100);
 			drop(dropzone, [file]);
 			expect(handleChange).not.toHaveBeenCalled();
@@ -551,7 +557,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const input = fileInputIn(screen.container);
 			// `mockImplementation` rather than `vi.spyOn`'s default call-through:
 			// jsdom's `input.click()` only dispatches an event, but Chromium's opens
@@ -567,7 +575,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const input = fileInputIn(screen.container);
 			const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {});
 			dropzone.focus();
@@ -589,7 +599,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop, mode: 'dropzone' }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			// `await tick()` after each dispatch is upstream's `act()` flush, and it
 			// is load-bearing rather than tidy: Svelte applies a `$state` write in a
 			// microtask, so a *retrying* matcher would pass on its first attempt —

@@ -76,7 +76,9 @@ describe('TopNavMegaMenu — default mode', () => {
 				items: [{ title: 'Analytics', href: '/analytics' }]
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Products' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Products', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('trigger has aria-haspopup and aria-expanded attributes', async () => {
@@ -86,7 +88,7 @@ describe('TopNavMegaMenu — default mode', () => {
 				items: [{ title: 'Analytics', href: '/analytics' }]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-haspopup', 'true');
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -101,7 +103,9 @@ describe('TopNavMegaMenu — default mode', () => {
 				]
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Products' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Products', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders with featured content', async () => {
@@ -112,12 +116,16 @@ describe('TopNavMegaMenu — default mode', () => {
 				featured: { text: 'Featured content', testid: 'featured' }
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Products' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Products', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders without items or featured', async () => {
 		const screen = await render(MegaMenu, { props: { menu: { label: 'Empty' } } });
-		await expect.element(screen.getByRole('button', { name: 'Empty' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Empty', exact: true }))
+			.toBeInTheDocument();
 	});
 });
 
@@ -163,7 +171,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		const triggerLoc = screen.getByRole('button', { name: 'Products' });
+		const triggerLoc = screen.getByRole('button', { name: 'Products', exact: true });
 		await expect.element(triggerLoc).toHaveAttribute('aria-expanded', 'false');
 		const trigger = triggerLoc.element();
 
@@ -178,7 +186,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 		await expect.element(triggerLoc).toHaveAttribute('aria-expanded', 'true');
 		// The referenced element is the popup that contains the panel content.
 		expect(popup).toContainElement(
-			screen.getByRole('group', { name: 'Products', includeHidden: true }).element()
+			screen.getByRole('group', { name: 'Products', exact: true, includeHidden: true }).element()
 		);
 	});
 
@@ -190,7 +198,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		openPanel(screen.getByRole('button', { name: 'Products' }).element());
+		openPanel(screen.getByRole('button', { name: 'Products', exact: true }).element());
 
 		// Focus stays on the trigger while the panel is open, so a modal dialog
 		// wrapper would tell assistive tech the focused control is inert.
@@ -209,7 +217,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		openPanel(screen.getByRole('button', { name: 'Products' }).element());
+		openPanel(screen.getByRole('button', { name: 'Products', exact: true }).element());
 
 		// Per the WAI-ARIA APG, mega menu panels of navigation links must not use
 		// the menu role (reserved for action menus with menuitem children).
@@ -225,10 +233,10 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		openPanel(screen.getByRole('button', { name: 'Products' }).element());
+		openPanel(screen.getByRole('button', { name: 'Products', exact: true }).element());
 
 		await expect
-			.element(screen.getByRole('group', { name: 'Products', includeHidden: true }))
+			.element(screen.getByRole('group', { name: 'Products', exact: true, includeHidden: true }))
 			.toBeInTheDocument();
 	});
 
@@ -243,7 +251,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		openPanel(screen.getByRole('button', { name: 'Products' }).element());
+		openPanel(screen.getByRole('button', { name: 'Products', exact: true }).element());
 
 		await expect
 			.element(screen.getByRole('link', { name: /Analytics/, includeHidden: true }))
@@ -272,7 +280,7 @@ async function renderMenu() {
 			items: [{ title: 'Analytics', href: '/analytics' }]
 		}
 	});
-	return { screen, trigger: screen.getByRole('button', { name: 'Products' }) };
+	return { screen, trigger: screen.getByRole('button', { name: 'Products', exact: true }) };
 }
 
 /**
@@ -493,8 +501,8 @@ describe('TopNavMegaMenu — hover/click guard (default mode)', () => {
 			}
 		});
 
-		const products = screen.getByRole('button', { name: 'Products' });
-		const solutions = screen.getByRole('button', { name: 'Solutions' });
+		const products = screen.getByRole('button', { name: 'Products', exact: true });
+		const solutions = screen.getByRole('button', { name: 'Solutions', exact: true });
 
 		click(products.element());
 		await expect.element(products).toHaveAttribute('aria-expanded', 'true');
@@ -688,7 +696,7 @@ describe('TopNavMegaMenu — drawer mode', () => {
 				items: [{ title: 'Analytics', href: '/analytics' }]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await expect.element(trigger).toBeInTheDocument();
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -705,7 +713,7 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 
 		await userEvent.click(trigger);
@@ -724,7 +732,7 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await userEvent.click(trigger);
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 		await userEvent.click(trigger);
@@ -740,7 +748,7 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
 		await expect.element(screen.getByText('Analytics')).toBeInTheDocument();
 		await expect.element(screen.getByText('Track behavior')).toBeInTheDocument();
@@ -755,9 +763,9 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
-		const link = screen.getByRole('link', { name: 'Analytics' });
+		const link = screen.getByRole('link', { name: 'Analytics', exact: true });
 		await expect.element(link).toHaveAttribute('href', '/analytics');
 	});
 
@@ -772,8 +780,8 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Tools' }));
-		await userEvent.click(screen.getByRole('button', { name: 'Export' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Tools', exact: true }));
+		await userEvent.click(screen.getByRole('button', { name: 'Export', exact: true }));
 
 		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
@@ -788,7 +796,7 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
 		await expect.element(screen.getByText('Featured: New AI Tools')).toBeInTheDocument();
 	});
@@ -843,7 +851,7 @@ describe('TopNavMegaMenu — drawer focus ring', () => {
 				items: [{ title: 'Analytics', href: '/analytics' }]
 			}
 		});
-		expectSharedFocusRing(screen.getByRole('button', { name: 'Products' }).element());
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Products', exact: true }).element());
 	});
 
 	it('draws the shared ring on a drawer item', async () => {

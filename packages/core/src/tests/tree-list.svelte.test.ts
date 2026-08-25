@@ -309,7 +309,7 @@ describe('TreeList', () => {
 
 	it('renders a keyboard-focusable toggle button for parents without onClick/href', async () => {
 		const screen = await render(TreeListFixture, { props: { items: nestedItems } });
-		const toggle = screen.getByRole('button', { name: 'Toggle children' });
+		const toggle = screen.getByRole('button', { name: 'Toggle children', exact: true });
 		await expect.element(toggle).toBeInTheDocument();
 		await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -318,7 +318,9 @@ describe('TreeList', () => {
 		const screen = await render(TreeListFixture, { props: { items: nestedItems } });
 		// Collapsed: children are not rendered.
 		expect(labelExists(screen.container, 'Child 1')).toBe(false);
-		const toggle = screen.getByRole('button', { name: 'Toggle children' }).element() as HTMLElement;
+		const toggle = screen
+			.getByRole('button', { name: 'Toggle children', exact: true })
+			.element() as HTMLElement;
 		toggle.focus();
 		expect(document.activeElement).toBe(toggle);
 		await userEvent.keyboard('{Enter}');

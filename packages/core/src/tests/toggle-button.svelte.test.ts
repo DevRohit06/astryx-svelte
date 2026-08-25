@@ -44,7 +44,9 @@ describe('ToggleButton', () => {
 		const screen = await render(ToggleButtonProbe, {
 			props: { label: 'Bold', isPressed: false, onPressedChange: noop }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Bold', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	// 2
@@ -73,7 +75,7 @@ describe('ToggleButton', () => {
 				isIconOnly: true
 			}
 		});
-		const button = screen.getByRole('button', { name: 'Bold' });
+		const button = screen.getByRole('button', { name: 'Bold', exact: true });
 		await expect.element(button).toHaveAttribute('aria-label', 'Bold');
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
 	});
@@ -230,7 +232,7 @@ describe('ToggleButton', () => {
 			}
 		});
 
-		const button = screen.getByRole('button', { name: 'Favorite' });
+		const button = screen.getByRole('button', { name: 'Favorite', exact: true });
 		await expect.element(button).toHaveAttribute('aria-pressed', 'false');
 
 		await userEvent.click(button);
@@ -267,7 +269,7 @@ describe('ToggleButton', () => {
 			}
 		});
 
-		const button = screen.getByRole('button', { name: 'Favorite' });
+		const button = screen.getByRole('button', { name: 'Favorite', exact: true });
 		await userEvent.click(button);
 
 		await expect.element(button).toHaveAttribute('aria-busy', 'true');
@@ -299,7 +301,7 @@ describe('ToggleButton', () => {
 			}
 		});
 
-		const button = screen.getByRole('button', { name: 'Favorite' });
+		const button = screen.getByRole('button', { name: 'Favorite', exact: true });
 		const el = button.element() as HTMLButtonElement;
 
 		// Each click derives the next state from the optimistic (in-progress)
@@ -337,7 +339,7 @@ describe('ToggleButton', () => {
 			}
 		});
 
-		const button = screen.getByRole('button', { name: 'Favorite' });
+		const button = screen.getByRole('button', { name: 'Favorite', exact: true });
 		await userEvent.click(button);
 
 		expect(onPressedChange).toHaveBeenCalledWith(true, expect.anything());
@@ -360,7 +362,7 @@ describe('ToggleButton', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Favorite' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Favorite', exact: true }));
 
 		expect(onPressedChange).toHaveBeenCalledWith(true, expect.anything());
 		expect(pressedChangeAction).not.toHaveBeenCalled();
@@ -383,7 +385,9 @@ describe('ToggleButtonGroup (single)', () => {
 		const screen = await render(ToggleButtonGroupProbe, {
 			props: { label: 'View mode', single: 'list', items }
 		});
-		await expect.element(screen.getByRole('group', { name: 'View mode' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('group', { name: 'View mode', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	// 20
@@ -392,10 +396,10 @@ describe('ToggleButtonGroup (single)', () => {
 			props: { label: 'View mode', single: 'list', items }
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'List' }))
+			.element(screen.getByRole('button', { name: 'List', exact: true }))
 			.toHaveAttribute('aria-pressed', 'true');
 		await expect
-			.element(screen.getByRole('button', { name: 'Grid' }))
+			.element(screen.getByRole('button', { name: 'Grid', exact: true }))
 			.toHaveAttribute('aria-pressed', 'false');
 	});
 
@@ -405,13 +409,13 @@ describe('ToggleButtonGroup (single)', () => {
 			props: { label: 'View mode', single: 'list', items }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Grid' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Grid', exact: true }));
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Grid' }))
+			.element(screen.getByRole('button', { name: 'Grid', exact: true }))
 			.toHaveAttribute('aria-pressed', 'true');
 		await expect
-			.element(screen.getByRole('button', { name: 'List' }))
+			.element(screen.getByRole('button', { name: 'List', exact: true }))
 			.toHaveAttribute('aria-pressed', 'false');
 	});
 
@@ -421,13 +425,13 @@ describe('ToggleButtonGroup (single)', () => {
 			props: { label: 'View mode', single: 'list', items }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'List' }));
+		await userEvent.click(screen.getByRole('button', { name: 'List', exact: true }));
 
 		await expect
-			.element(screen.getByRole('button', { name: 'List' }))
+			.element(screen.getByRole('button', { name: 'List', exact: true }))
 			.toHaveAttribute('aria-pressed', 'false');
 		await expect
-			.element(screen.getByRole('button', { name: 'Grid' }))
+			.element(screen.getByRole('button', { name: 'Grid', exact: true }))
 			.toHaveAttribute('aria-pressed', 'false');
 	});
 });
@@ -449,10 +453,10 @@ describe('ToggleButtonGroup (multiple)', () => {
 			props: { type: 'multiple', label: 'Formatting', multiple: ['bold'], items }
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'Bold' }))
+			.element(screen.getByRole('button', { name: 'Bold', exact: true }))
 			.toHaveAttribute('aria-pressed', 'true');
 		await expect
-			.element(screen.getByRole('button', { name: 'Italic' }))
+			.element(screen.getByRole('button', { name: 'Italic', exact: true }))
 			.toHaveAttribute('aria-pressed', 'false');
 	});
 
@@ -462,13 +466,13 @@ describe('ToggleButtonGroup (multiple)', () => {
 			props: { type: 'multiple', label: 'Formatting', multiple: ['bold'], items }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Italic' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Italic', exact: true }));
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Bold' }))
+			.element(screen.getByRole('button', { name: 'Bold', exact: true }))
 			.toHaveAttribute('aria-pressed', 'true');
 		await expect
-			.element(screen.getByRole('button', { name: 'Italic' }))
+			.element(screen.getByRole('button', { name: 'Italic', exact: true }))
 			.toHaveAttribute('aria-pressed', 'true');
 	});
 
@@ -478,10 +482,10 @@ describe('ToggleButtonGroup (multiple)', () => {
 			props: { type: 'multiple', label: 'Formatting', multiple: ['bold'], items }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Bold' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Bold', exact: true }));
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Bold' }))
+			.element(screen.getByRole('button', { name: 'Bold', exact: true }))
 			.toHaveAttribute('aria-pressed', 'false');
 	});
 });

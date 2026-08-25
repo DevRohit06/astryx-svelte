@@ -398,7 +398,9 @@ describe('useTableTreeState — batched toggles', () => {
 		// second `onToggleItem` must build on the set the first one wrote.
 		const screen = await render(TwoTogglesTable, { props: {} });
 
-		(screen.getByRole('button', { name: 'expand two' }).element() as HTMLElement).click();
+		(
+			screen.getByRole('button', { name: 'expand two', exact: true }).element() as HTMLElement
+		).click();
 
 		// Both toggles must survive the batch.
 		await expect.poll(() => findRowByText(screen, 'components')).toBeDefined();

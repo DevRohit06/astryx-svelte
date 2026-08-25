@@ -149,7 +149,7 @@ describe('RadioList', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByLabelText('Option B'));
+		await userEvent.click(screen.getByLabelText('Option B', { exact: true }));
 		expect(handleChange).toHaveBeenCalledTimes(1);
 		expect(handleChange).toHaveBeenCalledWith('b');
 	});
@@ -391,7 +391,7 @@ describe('RadioList', () => {
 		// The radiogroup is named by the label element via aria-labelledby (not a
 		// duplicated aria-label), so its accessible name is still "Hidden label".
 		await expect
-			.element(screen.getByRole('radiogroup', { name: 'Hidden label' }))
+			.element(screen.getByRole('radiogroup', { name: 'Hidden label', exact: true }))
 			.toBeInTheDocument();
 		await expect.element(screen.getByRole('radiogroup')).toHaveAttribute('aria-labelledby');
 		await expect.element(screen.getByRole('radiogroup')).not.toHaveAttribute('aria-label');
@@ -417,7 +417,7 @@ describe('RadioList', () => {
 		expect(labelEl.tagName).toBe('SPAN');
 		expect(labelEl.closest('label')).toBeNull();
 		expect(labelEl).not.toHaveAttribute('for');
-		const group = screen.getByRole('radiogroup', { name: 'Plan' }).element();
+		const group = screen.getByRole('radiogroup', { name: 'Plan', exact: true }).element();
 		expect(group.getAttribute('aria-labelledby')).toBe(labelEl.id);
 	});
 
@@ -491,7 +491,9 @@ describe('RadioList', () => {
 					]
 				}
 			});
-			const selected = screen.getByLabelText('Option B').element() as HTMLInputElement;
+			const selected = screen
+				.getByLabelText('Option B', { exact: true })
+				.element() as HTMLInputElement;
 			// A selected value provides a deterministic native tab stop; focusing it
 			// must not be redirected elsewhere.
 			selected.focus();
@@ -588,8 +590,12 @@ describe('RadioList', () => {
 				}
 			});
 			const outside = screen.getByText('before').element() as HTMLButtonElement;
-			const optionB = screen.getByLabelText('Option B').element() as HTMLInputElement;
-			const optionC = screen.getByLabelText('Option C').element() as HTMLInputElement;
+			const optionB = screen
+				.getByLabelText('Option B', { exact: true })
+				.element() as HTMLInputElement;
+			const optionC = screen
+				.getByLabelText('Option C', { exact: true })
+				.element() as HTMLInputElement;
 			// A middle enabled radio (C) entered from outside is normalized to the first
 			// *enabled* radio (B) — the disabled Option A is skipped.
 			outside.focus();
@@ -696,7 +702,7 @@ describe('RadioList', () => {
 		it('blocks selection while focusable-disabled', async () => {
 			const onChange = vi.fn();
 			const screen = await renderGroup(onChange);
-			const pro = screen.getByLabelText('Pro').element() as HTMLInputElement;
+			const pro = screen.getByLabelText('Pro', { exact: true }).element() as HTMLInputElement;
 			// Restated delivery (see file header): the radio is focusable-disabled
 			// (`aria-disabled`, not native), which Playwright refuses to click. A native
 			// `.click()` is upstream's `fireEvent.click` — it toggles and fires `change`,

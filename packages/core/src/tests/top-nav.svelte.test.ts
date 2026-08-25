@@ -98,7 +98,7 @@ describe('TopNav', () => {
 	it('defaults the landmark label to "Top navigation" when label is omitted', async () => {
 		const screen = await render(TopNav);
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Top navigation' }))
+			.element(screen.getByRole('navigation', { name: 'Top navigation', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -107,7 +107,7 @@ describe('TopNav', () => {
 			props: { mode: 'mobile-bar', heading: { text: 'Logo' } }
 		});
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Top navigation' }))
+			.element(screen.getByRole('navigation', { name: 'Top navigation', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -116,7 +116,7 @@ describe('TopNav', () => {
 			props: { mode: 'mobile-bar', nav: { label: 'Utility navigation' } }
 		});
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Utility navigation' }))
+			.element(screen.getByRole('navigation', { name: 'Utility navigation', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -146,8 +146,12 @@ describe('TopNav', () => {
 			}
 		});
 
-		await expect.element(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('link', { name: 'About' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'About', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('prefers startContent when both startContent and children are provided', async () => {
@@ -158,8 +162,12 @@ describe('TopNav', () => {
 			}
 		});
 
-		await expect.element(screen.getByRole('link', { name: 'Start' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('link', { name: 'Child' })).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Start', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Child', exact: true }))
+			.not.toBeInTheDocument();
 	});
 
 	it('renders endContent slot', async () => {
@@ -344,7 +352,7 @@ describe('TopNavHeading', () => {
 				props: { logo, props: { headingHref: '/home', logoLabel: 'Home' } }
 			});
 			await expect
-				.element(screen.getByRole('link', { name: 'Home' }))
+				.element(screen.getByRole('link', { name: 'Home', exact: true }))
 				.toHaveAttribute('href', '/home');
 		});
 	});
@@ -405,7 +413,9 @@ describe('TopNavItem', () => {
 
 	it('renders as anchor element', async () => {
 		const screen = await render(TopNavItem, { props: { label: 'Home', href: '/' } });
-		await expect.element(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+		await expect
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
+			.toHaveAttribute('href', '/');
 	});
 
 	it('renders children instead of label when provided', async () => {
@@ -511,7 +521,7 @@ describe('TopNavItem', () => {
 			const screen = await render(TopNavItem, {
 				props: { label: 'Home', href: '#', onclick: handleClick }
 			});
-			const link = screen.getByRole('link', { name: 'Home' });
+			const link = screen.getByRole('link', { name: 'Home', exact: true });
 			await expect.element(link).toHaveAttribute('href', '#');
 			await expect.element(link).not.toHaveAttribute('aria-disabled');
 
@@ -566,7 +576,7 @@ describe('TopNavItem', () => {
 		const screen = await render(TopNavItem, {
 			props: { label: 'Home', href: '/', as: CustomLink as LinkComponentType }
 		});
-		const link = screen.getByRole('link', { name: 'Home' });
+		const link = screen.getByRole('link', { name: 'Home', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).toHaveAttribute('href', '/');
 	});
@@ -576,7 +586,7 @@ describe('TopNavItem', () => {
 			props: { props: { label: 'Home', href: '/' }, provider: CustomLink }
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Home' }))
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
 			.toHaveAttribute('data-custom-link');
 	});
 
@@ -587,7 +597,7 @@ describe('TopNavItem', () => {
 				provider: AnotherLink
 			}
 		});
-		const link = screen.getByRole('link', { name: 'Home' });
+		const link = screen.getByRole('link', { name: 'Home', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).not.toHaveAttribute('data-another-link');
 	});
@@ -635,7 +645,9 @@ describe('TopNavHeading hover/click guard', () => {
 		await parkPointer();
 		return {
 			screen,
-			trigger: screen.getByRole('button', { name: 'Open menu' }).element() as HTMLElement
+			trigger: screen
+				.getByRole('button', { name: 'Open menu', exact: true })
+				.element() as HTMLElement
 		};
 	}
 

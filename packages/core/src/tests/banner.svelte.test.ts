@@ -138,7 +138,9 @@ describe('Banner', () => {
 		const screen = await render(Banner, {
 			props: { status: 'info', title: 'Dismissable', isDismissable: true }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Dismiss', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('calls onDismiss when dismiss button is clicked', async () => {
@@ -146,7 +148,7 @@ describe('Banner', () => {
 		const screen = await render(Banner, {
 			props: { status: 'info', title: 'Dismissable', isDismissable: true, onDismiss }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Dismiss', exact: true }));
 		expect(onDismiss).toHaveBeenCalledTimes(1);
 	});
 
@@ -160,7 +162,7 @@ describe('Banner', () => {
 			}
 		});
 		expect(screen.container.querySelector('[data-testid="banner"]')).toBeInTheDocument();
-		await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Dismiss', exact: true }));
 		expect(screen.container.querySelector('[data-testid="banner"]')).not.toBeInTheDocument();
 	});
 
@@ -175,7 +177,7 @@ describe('Banner', () => {
 				'data-testid': 'banner'
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Dismiss', exact: true }));
 		expect(screen.container.querySelector('[data-testid="banner"]')).not.toBeInTheDocument();
 		expect(onDismiss).toHaveBeenCalledTimes(1);
 	});
@@ -326,17 +328,23 @@ describe('Banner', () => {
 
 		// Initially collapsed
 		expect(screen.container.querySelector('[data-testid="child-content"]')).not.toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Expand' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Expand', exact: true }))
+			.toBeInTheDocument();
 
 		// Click to expand
-		await userEvent.click(screen.getByRole('button', { name: 'Expand' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Expand', exact: true }));
 		await expect.element(screen.getByTestId('child-content')).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Collapse' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Collapse', exact: true }))
+			.toBeInTheDocument();
 
 		// Click to collapse
-		await userEvent.click(screen.getByRole('button', { name: 'Collapse' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Collapse', exact: true }));
 		expect(screen.container.querySelector('[data-testid="child-content"]')).not.toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Expand' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Expand', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('reports open-state changes through onOpenChange', async () => {
@@ -407,7 +415,7 @@ describe('Banner', () => {
 			}
 		});
 
-		const toggle = screen.getByRole('button', { name: 'Collapse' }).element();
+		const toggle = screen.getByRole('button', { name: 'Collapse', exact: true }).element();
 		const controlsId = toggle.getAttribute('aria-controls');
 		// aria-controls must be present and point at the real content region.
 		expect(controlsId).toBeTruthy();
@@ -429,12 +437,12 @@ describe('Banner', () => {
 		});
 
 		// Collapsed: the region is unmounted, so no dangling aria-controls target.
-		const collapsedToggle = screen.getByRole('button', { name: 'Expand' });
+		const collapsedToggle = screen.getByRole('button', { name: 'Expand', exact: true });
 		await expect.element(collapsedToggle).not.toHaveAttribute('aria-controls');
 
 		// Expanded: aria-controls resolves to the mounted region with the children.
 		await userEvent.click(collapsedToggle);
-		const expandedToggle = screen.getByRole('button', { name: 'Collapse' }).element();
+		const expandedToggle = screen.getByRole('button', { name: 'Collapse', exact: true }).element();
 		const controlsId = expandedToggle.getAttribute('aria-controls');
 		expect(controlsId).toBeTruthy();
 		const region = document.getElementById(controlsId as string);
@@ -592,11 +600,15 @@ describe('Banner', () => {
 	describe('dismiss focus handoff', () => {
 		it('returns focus to where it came from instead of dropping it to body', async () => {
 			const screen = await render(BannerFocusHandoff);
-			const before = screen.getByRole('button', { name: 'Before' }).element() as HTMLElement;
+			const before = screen
+				.getByRole('button', { name: 'Before', exact: true })
+				.element() as HTMLElement;
 			before.focus();
 
 			await userEvent.tab();
-			await expect.element(screen.getByRole('button', { name: 'Dismiss' })).toHaveFocus();
+			await expect
+				.element(screen.getByRole('button', { name: 'Dismiss', exact: true }))
+				.toHaveFocus();
 
 			await userEvent.keyboard('{Enter}');
 
@@ -607,7 +619,7 @@ describe('Banner', () => {
 
 		it('leaves focus alone when it never entered the banner', async () => {
 			const screen = await render(BannerFocusHandoff, { props: { beforeLabel: 'Elsewhere' } });
-			await userEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Dismiss', exact: true }));
 			await expect.element(screen.getByRole('status')).not.toBeInTheDocument();
 		});
 	});
@@ -619,7 +631,9 @@ describe('Banner', () => {
 			const screen = await render(BannerFixture, {
 				props: { props: { status: 'info', title: 'Heads up' }, hasChildren: true }
 			});
-			await expect.element(screen.getByRole('button', { name: 'Expand' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('button', { name: 'Expand', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('renders no description node for a description that renders nothing', async () => {

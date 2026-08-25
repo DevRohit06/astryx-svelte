@@ -259,7 +259,7 @@ describe('Layout', () => {
 describe('edge compensation', () => {
 	it('applies the edge comp attribute to a ghost button', async () => {
 		const screen = await render(Button, { props: { label: 'Action', variant: 'ghost' } });
-		expect(screen.getByRole('button', { name: 'Action' }).element()).toHaveAttribute(
+		expect(screen.getByRole('button', { name: 'Action', exact: true }).element()).toHaveAttribute(
 			EDGE_COMP_ATTR
 		);
 	});
@@ -273,7 +273,7 @@ describe('edge compensation', () => {
 				rest: { label: 'Settings', variant: 'ghost', isIconOnly: true }
 			}
 		});
-		expect(screen.getByRole('button', { name: 'Settings' }).element()).toHaveAttribute(
+		expect(screen.getByRole('button', { name: 'Settings', exact: true }).element()).toHaveAttribute(
 			EDGE_COMP_ATTR
 		);
 	});
@@ -281,9 +281,9 @@ describe('edge compensation', () => {
 	for (const variant of ['primary', 'secondary', 'destructive'] as const) {
 		it(`does not apply the edge comp attribute to the ${variant} variant`, async () => {
 			const screen = await render(Button, { props: { label: variant, variant } });
-			expect(screen.getByRole('button', { name: variant }).element()).not.toHaveAttribute(
-				EDGE_COMP_ATTR
-			);
+			expect(
+				screen.getByRole('button', { name: variant, exact: true }).element()
+			).not.toHaveAttribute(EDGE_COMP_ATTR);
 		});
 	}
 
@@ -299,16 +299,16 @@ describe('edge compensation', () => {
 
 		it('applies the edge comp attribute to a tab', async () => {
 			const screen = await render(TabListFixture, strip);
-			expect(screen.getByRole('button', { name: 'Tab 1' }).element()).toHaveAttribute(
+			expect(screen.getByRole('button', { name: 'Tab 1', exact: true }).element()).toHaveAttribute(
 				EDGE_COMP_ATTR
 			);
 		});
 
 		it('applies the edge comp attribute to the TabList wrapper', async () => {
 			const screen = await render(TabListFixture, strip);
-			expect(screen.getByRole('navigation', { name: 'Tabs' }).element()).toHaveAttribute(
-				EDGE_COMP_ATTR
-			);
+			expect(
+				screen.getByRole('navigation', { name: 'Tabs', exact: true }).element()
+			).toHaveAttribute(EDGE_COMP_ATTR);
 		});
 	});
 
@@ -321,8 +321,10 @@ describe('edge compensation', () => {
 					end: { props: { label: 'Paste', variant: 'ghost' } }
 				}
 			});
-			expect(screen.getByRole('button', { name: 'Cut' }).element()).toHaveAttribute(EDGE_COMP_ATTR);
-			expect(screen.getByRole('button', { name: 'Paste' }).element()).toHaveAttribute(
+			expect(screen.getByRole('button', { name: 'Cut', exact: true }).element()).toHaveAttribute(
+				EDGE_COMP_ATTR
+			);
+			expect(screen.getByRole('button', { name: 'Paste', exact: true }).element()).toHaveAttribute(
 				EDGE_COMP_ATTR
 			);
 		});
@@ -331,9 +333,9 @@ describe('edge compensation', () => {
 			const screen = await render(ToolbarEdgeComp, {
 				props: { label: 'Actions', end: { props: { label: 'Save', variant: 'primary' } } }
 			});
-			expect(screen.getByRole('button', { name: 'Save' }).element()).not.toHaveAttribute(
-				EDGE_COMP_ATTR
-			);
+			expect(
+				screen.getByRole('button', { name: 'Save', exact: true }).element()
+			).not.toHaveAttribute(EDGE_COMP_ATTR);
 		});
 	});
 
@@ -342,9 +344,9 @@ describe('edge compensation', () => {
 			const screen = await render(Banner, {
 				props: { status: 'info', title: 'Test', isDismissable: true }
 			});
-			expect(screen.getByRole('button', { name: 'Dismiss' }).element()).toHaveAttribute(
-				EDGE_COMP_ATTR
-			);
+			expect(
+				screen.getByRole('button', { name: 'Dismiss', exact: true }).element()
+			).toHaveAttribute(EDGE_COMP_ATTR);
 		});
 	});
 
@@ -375,7 +377,9 @@ describe('edge compensation', () => {
 					}
 				}
 			});
-			const button = screen.getByRole('button', { name: 'Close' }).element() as HTMLElement;
+			const button = screen
+				.getByRole('button', { name: 'Close', exact: true })
+				.element() as HTMLElement;
 			const toolbar = screen.container.querySelector('[role="toolbar"]') as HTMLElement;
 			const slot = findSlot(button, toolbar);
 			const directMarked = slot.querySelector(`:scope > [${EDGE_COMP_ATTR}]`);
@@ -397,7 +401,9 @@ describe('edge compensation', () => {
 					}
 				}
 			});
-			const button = screen.getByRole('button', { name: 'Close' }).element() as HTMLElement;
+			const button = screen
+				.getByRole('button', { name: 'Close', exact: true })
+				.element() as HTMLElement;
 			const toolbar = screen.container.querySelector('[role="toolbar"]') as HTMLElement;
 			const slot = findSlot(button, toolbar);
 			// The tooltip is attached via the hook (no wrapper element), so the

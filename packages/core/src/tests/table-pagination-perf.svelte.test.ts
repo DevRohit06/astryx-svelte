@@ -75,7 +75,7 @@ describe('Pagination plugin render performance', () => {
 		const tbody = screen.container.querySelector('tbody');
 
 		// Navigate to page 2
-		await userEvent.click(screen.getByRole('button', { name: 'Go to page 2' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Go to page 2', exact: true }));
 		await expect.element(screen.getByText('Item 6', { exact: true })).toBeInTheDocument();
 
 		// Page 1 rows are gone — they are not in the DOM at all.

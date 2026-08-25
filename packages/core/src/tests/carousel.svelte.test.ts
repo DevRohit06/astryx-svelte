@@ -98,7 +98,7 @@ describe('Carousel', () => {
 			props: { props: { 'aria-label': 'Photos' }, items: [{ text: 'Item' }] }
 		});
 		await expect
-			.element(screen.getByRole('region', { name: 'Photos' }))
+			.element(screen.getByRole('region', { name: 'Photos', exact: true }))
 			.toHaveAttribute('aria-roledescription', 'carousel');
 	});
 
@@ -108,7 +108,7 @@ describe('Carousel', () => {
 		});
 		// The inner scroll container overflows, so it must be reachable by
 		// keyboard (axe: scrollable-region-focusable).
-		const region = screen.getByRole('region', { name: 'Photos' }).element();
+		const region = screen.getByRole('region', { name: 'Photos', exact: true }).element();
 		expect(region.firstElementChild).toHaveAttribute('tabindex', '0');
 	});
 

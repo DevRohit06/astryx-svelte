@@ -293,7 +293,7 @@ describe('BaseTypeahead focus-out', () => {
 		});
 
 		// Focus moves to an element outside the field/dropdown → menu closes.
-		blurTo(input, screen.getByRole('button', { name: 'Outside' }).element());
+		blurTo(input, screen.getByRole('button', { name: 'Outside', exact: true }).element());
 
 		await vi.waitFor(() => {
 			expect(input).toHaveAttribute('aria-expanded', 'false');
@@ -315,7 +315,7 @@ describe('BaseTypeahead focus-out', () => {
 		});
 
 		// A sibling control inside the field (e.g. a clear button) receives focus.
-		blurTo(input, screen.getByRole('button', { name: 'Sibling' }).element());
+		blurTo(input, screen.getByRole('button', { name: 'Sibling', exact: true }).element());
 
 		// Menu stays open because focus is still within the field.
 		expect(input).toHaveAttribute('aria-expanded', 'true');
@@ -390,7 +390,7 @@ describe('Typeahead', () => {
 		const screen = await render(Typeahead, {
 			props: { label: 'Fruit', searchSource: fruitSource, value: null, onChange: () => {} }
 		});
-		await expect.element(screen.getByLabelText('Fruit')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Fruit', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description text', async () => {
@@ -450,7 +450,7 @@ describe('Typeahead', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'Clear selection' }))
+			.element(screen.getByRole('button', { name: 'Clear selection', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -480,7 +480,7 @@ describe('Typeahead', () => {
 				hasClear: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Clear selection', exact: true }));
 		expect(onChange).toHaveBeenCalledWith(null);
 	});
 
@@ -509,7 +509,7 @@ describe('Typeahead size', () => {
 				size: 'lg' as const
 			}
 		});
-		await expect.element(screen.getByLabelText('Fruit')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Fruit', { exact: true })).toBeInTheDocument();
 	});
 });
 
@@ -716,7 +716,7 @@ describe('Typeahead collapsed input tab order', () => {
 		});
 		// Focus the token's internal button, then Tab away — focus must not land on
 		// the visually hidden combobox input.
-		screen.getByRole('button', { name: fruits[0].label }).element().focus();
+		screen.getByRole('button', { name: fruits[0].label, exact: true }).element().focus();
 		await userEvent.tab();
 		expect(comboboxIn(screen.container)).not.toHaveFocus();
 	});

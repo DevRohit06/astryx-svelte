@@ -37,7 +37,7 @@ describe('InputGroup', () => {
 		// The group is named by the field label via aria-labelledby (not a
 		// duplicated aria-label). The label is rendered as a <span> (not a literal
 		// <label>, which can't name a group) and carries no orphaned htmlFor.
-		const groupLoc = screen.getByRole('group', { name: 'Price' });
+		const groupLoc = screen.getByRole('group', { name: 'Price', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		expect(group).not.toHaveAttribute('aria-label');
@@ -58,7 +58,7 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Price' });
+		const groupLoc = screen.getByRole('group', { name: 'Price', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const describedBy = group.getAttribute('aria-describedby');
@@ -78,12 +78,12 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Price' });
+		const groupLoc = screen.getByRole('group', { name: 'Price', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const input = screen.getByRole('textbox', { name: 'Price Amount' }).element();
+		const input = screen.getByRole('textbox', { name: 'Price Amount', exact: true }).element();
 		const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -103,12 +103,14 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Favorite fruit' });
+		const groupLoc = screen.getByRole('group', { name: 'Favorite fruit', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const input = screen.getByRole('combobox', { name: 'Favorite fruit Selection' }).element();
+		const input = screen
+			.getByRole('combobox', { name: 'Favorite fruit Selection', exact: true })
+			.element();
 		const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -129,12 +131,12 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Budget' });
+		const groupLoc = screen.getByRole('group', { name: 'Budget', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const input = screen.getByRole('spinbutton', { name: 'Budget Amount' }).element();
+		const input = screen.getByRole('spinbutton', { name: 'Budget Amount', exact: true }).element();
 		const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -154,11 +156,11 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Deadline' });
+		const groupLoc = screen.getByRole('group', { name: 'Deadline', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
-		const input = screen.getByRole('combobox', { name: 'Deadline Date' }).element();
+		const input = screen.getByRole('combobox', { name: 'Deadline Date', exact: true }).element();
 		const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -178,12 +180,14 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Destination' });
+		const groupLoc = screen.getByRole('group', { name: 'Destination', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const trigger = screen.getByRole('combobox', { name: 'Destination Channel' }).element();
+		const trigger = screen
+			.getByRole('combobox', { name: 'Destination Channel', exact: true })
+			.element();
 		const labelledByIDs = trigger.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -203,12 +207,14 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Destinations' });
+		const groupLoc = screen.getByRole('group', { name: 'Destinations', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const trigger = screen.getByRole('combobox', { name: 'Destinations Channels' }).element();
+		const trigger = screen
+			.getByRole('combobox', { name: 'Destinations Channels', exact: true })
+			.element();
 		const labelledByIDs = trigger.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -224,9 +230,11 @@ describe('InputGroup', () => {
 			props: { variant: 'date', label: 'Deadline' }
 		});
 
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeInTheDocument();
 		await expect
-			.element(screen.getByRole('combobox', { name: 'Deadline Date' }))
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('combobox', { name: 'Deadline Date', exact: true }))
 			.toHaveAttribute('aria-expanded', 'false');
 	});
 

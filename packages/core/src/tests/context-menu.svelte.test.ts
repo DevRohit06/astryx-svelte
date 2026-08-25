@@ -197,7 +197,7 @@ describe('ContextMenu', () => {
 			props: { props: { items: [{ label: 'Item 1' }] }, isTriggerButton: true }
 		});
 
-		const trigger = screen.getByRole('button', { name: 'Right-click me' }).element();
+		const trigger = screen.getByRole('button', { name: 'Right-click me', exact: true }).element();
 		(trigger as HTMLElement).focus();
 		expect(trigger).toHaveFocus();
 

@@ -157,6 +157,8 @@ describe('useTableRowExpansion (detail panel)', () => {
 			}
 		});
 
-		expect(screen.getByRole('button', { name: 'Développer la ligne' }).elements().length).toBe(3);
+		expect(
+			screen.getByRole('button', { name: 'Développer la ligne', exact: true }).elements().length
+		).toBe(3);
 	});
 });

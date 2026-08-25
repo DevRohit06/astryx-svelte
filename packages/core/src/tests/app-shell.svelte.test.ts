@@ -730,7 +730,7 @@ describe('AppShell', () => {
 
 		const screen = await render(AppShellFixture, { props: { sideNav: 'test' } });
 
-		const toggle = screen.getByRole('button', { name: 'Open navigation' });
+		const toggle = screen.getByRole('button', { name: 'Open navigation', exact: true });
 		await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
 
 		(toggle.element() as HTMLElement).focus();
@@ -802,7 +802,7 @@ describe('AppShell', () => {
 			hasId: true
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Open navigation', exact: true }));
 
 		// `expect.poll` rather than a bare read: upstream's assertion follows a
 		// React re-render that `act()` has already flushed, and the retrying form

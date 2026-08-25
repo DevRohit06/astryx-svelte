@@ -312,14 +312,18 @@ describe('DateRangeInput', () => {
 		const screen = await render(DateRangeInput, {
 			props: { label: 'Range', value: null, onChange: noop }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('calendar icon button is disabled when isDisabled', async () => {
 		const screen = await render(DateRangeInput, {
 			props: { label: 'Range', isDisabled: true, value: null, onChange: noop }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('renders with size="lg"', async () => {
@@ -334,21 +338,23 @@ describe('DateRangeInput', () => {
 			const screen = await render(DateRangeInput, {
 				props: { label: 'Range', value: range, onChange: noop, hasClear: true }
 			});
-			await expect.element(screen.getByRole('button', { name: 'Clear Range' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('button', { name: 'Clear Range', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('does not show clear button when value is null', async () => {
 			const screen = await render(DateRangeInput, {
 				props: { label: 'Range', value: null, onChange: noop, hasClear: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Range' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Range', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when hasClear is false', async () => {
 			const screen = await render(DateRangeInput, {
 				props: { label: 'Range', value: range, onChange: noop, hasClear: false }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Range' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Range', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
@@ -361,7 +367,7 @@ describe('DateRangeInput', () => {
 					isDisabled: true
 				}
 			});
-			expect(screen.getByRole('button', { name: 'Clear Range' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Range', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with null when clear is clicked', async () => {
@@ -370,7 +376,7 @@ describe('DateRangeInput', () => {
 				props: { label: 'Range', value: range, onChange, hasClear: true }
 			});
 
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Range' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Range', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(null);
 		});
 	});
@@ -395,10 +401,14 @@ describe('DateRangeInput', () => {
 			// options (which would announce a Tab-navigable listbox it isn't).
 			expect(screen.getByRole('listbox', { includeHidden: true }).query()).toBeNull();
 			expect(
-				screen.getByRole('group', { name: 'Preset date ranges', includeHidden: true }).element()
+				screen
+					.getByRole('group', { name: 'Preset date ranges', includeHidden: true, exact: true })
+					.element()
 			).toBeInTheDocument();
 			expect(
-				screen.getByRole('button', { name: 'Last 7 days', includeHidden: true }).element()
+				screen
+					.getByRole('button', { name: 'Last 7 days', includeHidden: true, exact: true })
+					.element()
 			).toBeInTheDocument();
 		});
 
@@ -412,12 +422,12 @@ describe('DateRangeInput', () => {
 				}
 			});
 			const active = screen
-				.getByRole('button', { name: 'Last 7 days', includeHidden: true })
+				.getByRole('button', { name: 'Last 7 days', includeHidden: true, exact: true })
 				.element();
 			expect(active).toHaveAttribute('aria-current', 'true');
 			expect(active).not.toHaveAttribute('aria-selected');
 			const inactive = screen
-				.getByRole('button', { name: 'This month', includeHidden: true })
+				.getByRole('button', { name: 'This month', includeHidden: true, exact: true })
 				.element();
 			expect(inactive).not.toHaveAttribute('aria-current');
 		});
@@ -607,7 +617,7 @@ describe('DateRangeInput statusVariant forwarding', () => {
 		// is `userEvent`'s rather than a synthetic `fireEvent.click`, which is what
 		// the rest of this file already does.
 		const openAndReadWeekdays = async (screen: Screen): Promise<(string | null)[]> => {
-			await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Open calendar', exact: true }));
 			return Array.from(screen.container.querySelectorAll('[role="columnheader"]'))
 				.slice(0, 7)
 				.map((h) => h.textContent);
@@ -656,7 +666,7 @@ describe('DateRangeInput icon theme targets', () => {
 		// defineTheme — a button-level target could not reach the icon's own
 		// color/size. The original per-component name rides along for a
 		// deprecation window.
-		const clearLoc = screen.getByRole('button', { name: 'Clear Range' });
+		const clearLoc = screen.getByRole('button', { name: 'Clear Range', exact: true });
 		await expect.element(clearLoc).toBeInTheDocument();
 		const icon = iconIn(clearLoc.element() as HTMLElement);
 		expect(icon).toHaveClass('astryx-input-clear-icon');
@@ -668,7 +678,7 @@ describe('DateRangeInput icon theme targets', () => {
 		const screen = await render(DateRangeInput, {
 			props: { label: 'Range', value: null, onChange: noop }
 		});
-		const toggleLoc = screen.getByRole('button', { name: 'Open calendar' });
+		const toggleLoc = screen.getByRole('button', { name: 'Open calendar', exact: true });
 		await expect.element(toggleLoc).toBeInTheDocument();
 		const icon = iconIn(toggleLoc.element() as HTMLElement);
 		expect(icon).toHaveClass('astryx-date-range-input-toggle-icon');
@@ -686,7 +696,7 @@ describe('DateRangeInput icon theme targets', () => {
 		const screen = await render(DateRangeInput, {
 			props: { label: 'Range', value: range, onChange: noop, hasClear: true }
 		});
-		const clearLoc = screen.getByRole('button', { name: 'Clear Range' });
+		const clearLoc = screen.getByRole('button', { name: 'Clear Range', exact: true });
 		await expect.element(clearLoc).toBeInTheDocument();
 		const clearIcon = iconIn(clearLoc.element() as HTMLElement);
 
@@ -787,7 +797,7 @@ describe('DateRangeInput range-span forwarding', () => {
 			props: { label: 'Reporting period', value: null, onChange: noop, maxRangeSpan: 7 }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Open calendar', exact: true }));
 
 		// Before a start is picked, a far-off day is selectable.
 		expect(dayButton(screen.container, '2026-01-20')).not.toBeDisabled();
@@ -821,11 +831,13 @@ describe('DateRangeInput range-span forwarding', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Open calendar', exact: true }));
 
 		// The 3-day preset fits the 7-day cap; the 30-day preset can't be committed.
-		const withinCap = screen.getByRole('button', { name: 'Last 3 days' }).element();
-		const overCap = screen.getByRole('button', { name: 'Last 30 days' }).element() as HTMLElement;
+		const withinCap = screen.getByRole('button', { name: 'Last 3 days', exact: true }).element();
+		const overCap = screen
+			.getByRole('button', { name: 'Last 30 days', exact: true })
+			.element() as HTMLElement;
 		expect(withinCap).not.toBeDisabled();
 		expect(overCap).toBeDisabled();
 

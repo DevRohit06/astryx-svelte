@@ -167,9 +167,15 @@ describe('ButtonGroup', () => {
 			}
 		});
 
-		await expect.element(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Cut' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Paste' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Copy', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Cut', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Paste', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('works with IconButton children', async () => {
@@ -183,8 +189,12 @@ describe('ButtonGroup', () => {
 			}
 		});
 
-		await expect.element(screen.getByRole('button', { name: 'Bold' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Italic' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Bold', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Italic', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('applies data-testid', async () => {
@@ -244,18 +254,26 @@ describe('ButtonGroup', () => {
 		});
 
 		await expect.element(screen.getByRole('group')).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Cut' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Copy', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Cut', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders with different sizes', async () => {
 		const screen = await render(ButtonGroupHarness, {
 			props: { label: 'Actions', size: 'sm', members: [{ label: 'Copy' }] }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Copy', exact: true }))
+			.toBeInTheDocument();
 
 		await screen.rerender({ label: 'Actions', size: 'lg', members: [{ label: 'Copy' }] });
-		await expect.element(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Copy', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('disables all buttons when isDisabled is true', async () => {
@@ -268,8 +286,8 @@ describe('ButtonGroup', () => {
 		});
 
 		await expect.element(screen.getByRole('group')).toHaveAttribute('aria-disabled', 'true');
-		await expect.element(screen.getByRole('button', { name: 'Copy' })).toBeDisabled();
-		await expect.element(screen.getByRole('button', { name: 'Cut' })).toBeDisabled();
+		await expect.element(screen.getByRole('button', { name: 'Copy', exact: true })).toBeDisabled();
+		await expect.element(screen.getByRole('button', { name: 'Cut', exact: true })).toBeDisabled();
 	});
 
 	it('does not set aria-disabled when not disabled', async () => {
@@ -285,7 +303,9 @@ describe('ButtonGroup', () => {
 			props: { label: 'Actions', members: [{ label: 'Copy' }] }
 		});
 
-		await expect.element(screen.getByRole('button', { name: 'Copy' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Copy', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders mixed Button and IconButton children', async () => {
@@ -296,8 +316,12 @@ describe('ButtonGroup', () => {
 			}
 		});
 
-		await expect.element(screen.getByRole('button', { name: 'Edit' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'More options' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Edit', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'More options', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	// ===========================================================================
@@ -371,7 +395,7 @@ describe('ButtonGroup', () => {
 					props: { label: 'Actions', orientation, members: [{ label: 'Save' }] }
 				});
 
-				const save = screen.getByRole('button', { name: 'Save' }).element();
+				const save = screen.getByRole('button', { name: 'Save', exact: true }).element();
 				const selectors = trailingRoundingSelectors(save, orientation);
 
 				for (const selector of selectors) {
@@ -398,8 +422,8 @@ describe('ButtonGroup', () => {
 					}
 				});
 
-				const save = screen.getByRole('button', { name: 'Save' }).element();
-				const more = screen.getByRole('button', { name: 'More' }).element();
+				const save = screen.getByRole('button', { name: 'Save', exact: true }).element();
+				const more = screen.getByRole('button', { name: 'More', exact: true }).element();
 				const rules = roundingRules(save, LEADING_CORNERS[orientation]);
 
 				expect(rules.map((rule) => rule.property).sort()).toEqual([
@@ -429,8 +453,8 @@ describe('ButtonGroup', () => {
 				});
 
 				const group = groupIn(screen.container);
-				const save = screen.getByRole('button', { name: 'Save' }).element();
-				const more = screen.getByRole('button', { name: 'More' }).element();
+				const save = screen.getByRole('button', { name: 'Save', exact: true }).element();
+				const more = screen.getByRole('button', { name: 'More', exact: true }).element();
 
 				// Precondition: the tooltip layer really is an inline DOM sibling that
 				// follows the button — this is exactly what broke `:last-child`.
@@ -462,8 +486,10 @@ describe('ButtonGroup', () => {
 				});
 
 				const group = groupIn(screen.container);
-				const allow = screen.getByRole('button', { name: 'Allow once' }).element();
-				const trigger = screen.getByRole('button', { name: 'Allow options' }).element();
+				const allow = screen.getByRole('button', { name: 'Allow once', exact: true }).element();
+				const trigger = screen
+					.getByRole('button', { name: 'Allow options', exact: true })
+					.element();
 
 				// The popover surface is an inline sibling after the trigger.
 				expect(trigger).not.toBe(group.lastElementChild);
@@ -486,7 +512,7 @@ describe('ButtonGroup', () => {
 			});
 
 			const group = groupIn(screen.container);
-			const link = screen.getByRole('link', { name: 'Docs' }).element();
+			const link = screen.getByRole('link', { name: 'Docs', exact: true }).element();
 
 			expect(link.tagName).toBe('A');
 			expect(link).not.toBe(group.lastElementChild);
@@ -536,7 +562,7 @@ describe('ButtonGroup', () => {
 				}
 			});
 
-			const only = screen.getByRole('button', { name: 'Only' }).element();
+			const only = screen.getByRole('button', { name: 'Only', exact: true }).element();
 
 			// Leading edge is unaffected: a member's button always precedes its layer.
 			expect(only.matches(':first-child')).toBe(true);
@@ -561,7 +587,7 @@ describe('ButtonGroup', () => {
 				}
 			});
 
-			const save = screen.getByRole('button', { name: 'Save' }).element();
+			const save = screen.getByRole('button', { name: 'Save', exact: true }).element();
 
 			// Tooltip wraps element children in a `display: contents` <div>, so the
 			// inner Button is a DESCENDANT of the wrapper, not a DOM sibling of Save.
@@ -579,7 +605,7 @@ describe('ButtonGroup', () => {
 				}
 			});
 
-			const save = screen.getByRole('button', { name: 'Save' }).element();
+			const save = screen.getByRole('button', { name: 'Save', exact: true }).element();
 
 			// Button has no `hoverCard` prop, so wrapping is the ONLY way to put a
 			// HoverCard on a group button — this composition has no alternative.
@@ -594,7 +620,7 @@ describe('ButtonGroup', () => {
 				}
 			});
 
-			const save = screen.getByRole('button', { name: 'Save' }).element();
+			const save = screen.getByRole('button', { name: 'Save', exact: true }).element();
 
 			expect(hasRoundedTrailingCorners(save)).toBe(false);
 		});

@@ -14,7 +14,7 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
-| Ledger entries            | 36                                                                       |
+| Ledger entries            | 37                                                                       |
 
 ## Test parity
 
@@ -33,7 +33,8 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 
 |                                                               | Sites | Files |
 | ------------------------------------------------------------- | ----- | ----- |
-| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 854   | 74    |
+| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 0     | 0     |
+| `getByText` with a string, no `exact`                         | 605   | 81    |
 
 Testing Library matches an accessible name as a whole string; Playwright matches a string
 `name` as a case-insensitive **substring**. Every site above is therefore a ported assertion
@@ -44,8 +45,8 @@ substring-matching on both sides by design and is not counted.
 
 | Kind                  | Count   |
 | --------------------- | ------- |
-| api-divergence        | 33      |
+| api-divergence        | 32      |
 | deliberate-divergence | 46      |
 | unported              | 15      |
 | upstream-lag          | 11      |
-| **total**             | **105** |
+| **total**             | **104** |

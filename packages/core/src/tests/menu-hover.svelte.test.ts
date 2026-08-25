@@ -57,7 +57,7 @@ async function renderMenu(delay = SHOW_DELAY): Promise<{
 		props: { props: { label: 'Products', delay }, items }
 	});
 	return {
-		trigger: screen.getByRole('button', { name: 'Products' }).element() as HTMLElement,
+		trigger: screen.getByRole('button', { name: 'Products', exact: true }).element() as HTMLElement,
 		container: screen.container
 	};
 }

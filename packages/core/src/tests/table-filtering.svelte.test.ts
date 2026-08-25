@@ -67,7 +67,7 @@ describe('useTableFiltering', () => {
 
 		it('filter trigger button is clickable', async () => {
 			const screen = await render(FilterTable, { props: {} });
-			const filterButton = screen.getByRole('button', { name: 'Filter Name' });
+			const filterButton = screen.getByRole('button', { name: 'Filter Name', exact: true });
 			await userEvent.click(filterButton);
 			// Button exists and is interactive
 			await expect.element(filterButton).toBeInTheDocument();

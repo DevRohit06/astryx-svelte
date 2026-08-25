@@ -67,7 +67,9 @@ describe('StatusDot — tooltip', () => {
 		const screen = await render(StatusDot, {
 			props: { variant: 'success', label: 'Online', tooltip: 'Online' }
 		});
-		await expect.element(screen.getByRole('img', { name: 'Online' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('img', { name: 'Online', exact: true }))
+			.toBeInTheDocument();
 	});
 });
 

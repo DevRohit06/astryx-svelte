@@ -105,7 +105,9 @@ function escape(init: KeyboardEventInit = {}): void {
 describe('Tooltip', () => {
 	it('renders trigger element', async () => {
 		const screen = await render(Tooltip, { props: { content: 'Tooltip text' } });
-		await expect.element(screen.getByRole('button', { name: 'Trigger' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Trigger', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('gives the tooltip layer role="tooltip" linked from the trigger', async () => {

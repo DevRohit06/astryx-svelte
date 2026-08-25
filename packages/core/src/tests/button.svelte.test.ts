@@ -63,7 +63,9 @@ import ButtonI18nFixture from './fixtures/button-i18n.svelte';
 describe('Button', () => {
 	it('renders label as visible text', async () => {
 		const screen = await render(Button, { props: { label: 'Click me' } });
-		await expect.element(screen.getByRole('button', { name: 'Click me' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Click me', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders children instead of label when provided', async () => {
@@ -92,7 +94,7 @@ describe('Button', () => {
 		const screen = await render(ButtonFixture, {
 			props: { button: { label: 'Settings', isIconOnly: true }, icon: '⚙' }
 		});
-		const button = screen.getByRole('button', { name: 'Settings' });
+		const button = screen.getByRole('button', { name: 'Settings', exact: true });
 		await expect.element(button).toHaveAttribute('aria-label', 'Settings');
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
 	});
@@ -294,9 +296,9 @@ describe('Button', () => {
 		const screen = await render(Button, {
 			props: { label: 'Sign in', href: 'https://example.com', width: '100%' }
 		});
-		expect(screen.getByRole('link', { name: 'Sign in' }).element().getAttribute('style')).toContain(
-			'100%'
-		);
+		expect(
+			screen.getByRole('link', { name: 'Sign in', exact: true }).element().getAttribute('style')
+		).toContain('100%');
 	});
 
 	// P0: onClick fires before clickAction, clickAction respects preventDefault

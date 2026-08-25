@@ -484,7 +484,7 @@ describe('Dialog', () => {
 				}
 			});
 			const dialog = screen.getByRole('dialog');
-			const heading = screen.getByRole('heading', { name: 'Dialog title' });
+			const heading = screen.getByRole('heading', { name: 'Dialog title', exact: true });
 			const headingEl = heading.element() as HTMLElement;
 			expect(headingEl.id).not.toBe('');
 			await expect.element(dialog).toHaveAttribute('aria-labelledby', headingEl.id);

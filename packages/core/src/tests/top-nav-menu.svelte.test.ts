@@ -99,14 +99,16 @@ describe('TopNavMenu', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Products' }, items: mockItems }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Products' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Products', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('trigger announces a menu popup, not a dialog', async () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Products' }, items: mockItems }
 		});
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		// usePopover with role:'none' emits aria-haspopup="true" (the ARIA synonym
 		// for "menu") because the exposed semantics of the popup are its child
 		// role="menu", not a dialog.
@@ -120,7 +122,9 @@ describe('TopNavMenu', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Menu' }, items }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Menu' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Menu', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders icon when provided in items', async () => {
@@ -135,7 +139,9 @@ describe('TopNavMenu', () => {
 			props: { props: { label: 'Menu' }, items }
 		});
 		// Icon is in the hover card content, which may not be visible initially
-		await expect.element(screen.getByRole('button', { name: 'Menu' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Menu', exact: true }))
+			.toBeInTheDocument();
 	});
 });
 
@@ -149,7 +155,7 @@ describe('menu semantics (APG)', () => {
 		expect(screen.getByRole('dialog', { includeHidden: true }).query()).not.toBeInTheDocument();
 		expect(document.querySelector('[aria-modal]')).toBeNull();
 		await expect
-			.element(screen.getByRole('menu', { name: 'Products', includeHidden: true }))
+			.element(screen.getByRole('menu', { name: 'Products', exact: true, includeHidden: true }))
 			.toBeInTheDocument();
 	});
 });
@@ -159,7 +165,7 @@ describe('keyboard navigation (APG menu pattern)', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Products' }, items: mockItems }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
 		const items = menuItemsOf(screen);
 		expect(items).toHaveLength(2);
@@ -171,7 +177,7 @@ describe('keyboard navigation (APG menu pattern)', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Products' }, items: mockItems }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
 		const menu = menuOf(screen);
 		const items = menuItemsOf(screen);
@@ -192,7 +198,7 @@ describe('keyboard navigation (APG menu pattern)', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Products' }, items: mockItems }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
 		const menu = menuOf(screen);
 		const items = menuItemsOf(screen);
@@ -209,7 +215,7 @@ describe('keyboard navigation (APG menu pattern)', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Products' }, items: mockItems }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
 		const menu = menuOf(screen);
 		pressKey(menu, 'm');
@@ -227,7 +233,7 @@ describe('keyboard navigation (APG menu pattern)', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Menu' }, items: actionItem(onclick) }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Menu' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Menu', exact: true }));
 
 		const item = menuItemsOf(screen)[0];
 		item.focus();
@@ -240,7 +246,7 @@ describe('keyboard navigation (APG menu pattern)', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Menu' }, items: actionItem(onclick) }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Menu' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Menu', exact: true }));
 
 		await userEvent.click(screen.getByRole('menuitem', { includeHidden: true }));
 		expect(onclick).toHaveBeenCalledOnce();
@@ -250,7 +256,7 @@ describe('keyboard navigation (APG menu pattern)', () => {
 		const screen = await render(TopNavMenuFixture, {
 			props: { props: { label: 'Products' }, items: mockItems }
 		});
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await userEvent.click(trigger);
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 

@@ -122,7 +122,9 @@ function escape(element: HTMLElement): void {
 describe('HoverCard', () => {
 	it('renders trigger element', async () => {
 		const screen = await render(HoverCard);
-		await expect.element(screen.getByRole('button', { name: 'Trigger' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Trigger', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('exposes the floating layer as role="group" when no label is provided', async () => {
@@ -158,7 +160,7 @@ describe('HoverCard', () => {
 	it('wraps element children in an inline-safe span', async () => {
 		const screen = await render(HoverCardParagraph);
 
-		const trigger = screen.getByRole('link', { name: 'Trigger' }).element();
+		const trigger = screen.getByRole('link', { name: 'Trigger', exact: true }).element();
 		const paragraph = screen.container.querySelector('p');
 
 		expect(trigger.parentElement?.tagName).toBe('SPAN');
@@ -210,7 +212,9 @@ describe('HoverCard', () => {
 		const screen = await render(HoverCardSafeHost, { props: { delay: 0 } });
 
 		const layer = await open(screen.container);
-		const following = screen.getByRole('button', { name: 'Following control' }).element();
+		const following = screen
+			.getByRole('button', { name: 'Following control', exact: true })
+			.element();
 
 		// The marker's parent is safe, so nothing moves: the container mounts where
 		// the layer was written, immediately before the next control.
@@ -300,13 +304,13 @@ describe('HoverCard', () => {
 
 	it('injects aria-describedby on trigger', async () => {
 		const screen = await render(HoverCard);
-		const trigger = screen.getByRole('button', { name: 'Trigger' }).element();
+		const trigger = screen.getByRole('button', { name: 'Trigger', exact: true }).element();
 		expect(trigger).toHaveAttribute('aria-describedby');
 	});
 
 	it('merges existing aria-describedby', async () => {
 		const screen = await render(HoverCard, { props: { triggerDescribedBy: 'existing-id' } });
-		const trigger = screen.getByRole('button', { name: 'Trigger' }).element();
+		const trigger = screen.getByRole('button', { name: 'Trigger', exact: true }).element();
 		const describedBy = trigger.getAttribute('aria-describedby');
 		expect(describedBy).toContain('existing-id');
 	});

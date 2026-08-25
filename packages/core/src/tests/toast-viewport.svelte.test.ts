@@ -187,7 +187,7 @@ describe('ToastViewport keyboard reach + focus', () => {
 
 		// Focus lands on the dismiss button of the newest toast.
 		const dismiss = screen
-			.getByRole('button', { name: 'Dismiss notification' })
+			.getByRole('button', { name: 'Dismiss notification', exact: true })
 			.element() as HTMLElement;
 		expect(document.activeElement).toBe(dismiss);
 	});
@@ -234,7 +234,7 @@ describe('ToastViewport keyboard reach + focus', () => {
 		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F6', bubbles: true }));
 		await tick();
 		const dismiss = screen
-			.getByRole('button', { name: 'Dismiss notification' })
+			.getByRole('button', { name: 'Dismiss notification', exact: true })
 			.element() as HTMLElement;
 		expect(document.activeElement).toBe(dismiss);
 
@@ -299,7 +299,7 @@ describe('Toast blur timer pause', () => {
 describe('ToastViewport region ARIA', () => {
 	it('exposes the notifications region without a prohibited aria-modal', async () => {
 		const screen = await renderViewport([{}]);
-		const region = screen.getByRole('region', { name: 'Notifications' });
+		const region = screen.getByRole('region', { name: 'Notifications', exact: true });
 		// aria-modal is only valid on role="dialog"/"alertdialog"; a region must
 		// not declare it (axe: aria-allowed-attr).
 		await expect.element(region).not.toHaveAttribute('aria-modal');
@@ -449,7 +449,7 @@ describe('toast timer lifecycle (#3589)', () => {
 		(screen.getByText('Show').element() as HTMLElement).click();
 		await tick();
 		const dismiss = screen
-			.getByRole('button', { name: 'Dismiss notification' })
+			.getByRole('button', { name: 'Dismiss notification', exact: true })
 			.element() as HTMLElement;
 		dismiss.click();
 		// The toast stays mounted during its exit transition; a second click

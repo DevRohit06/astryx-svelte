@@ -510,7 +510,7 @@ describe('BaseTable', () => {
 				'aria-label': 'Users',
 				'data-analytics': 'tables'
 			});
-			const table = screen.getByRole('table', { name: 'Users' }).element();
+			const table = screen.getByRole('table', { name: 'Users', exact: true }).element();
 			expect(table.id).toBe('users-table');
 			expect(table).toHaveAttribute('data-analytics', 'tables');
 		});

@@ -252,18 +252,47 @@ const sumCases = (list) => list.reduce((a, t) => a + t.cases, 0);
 // counted. Only string literals are, and the number is the size of the sweep
 // that has not happened yet — every one of them is a place where our assertion
 // admits names upstream's would reject.
+// Drop whole-line comments before counting. A suite that *documents* this very
+// idiom otherwise inflates its own figure: `timestamp.svelte.test.ts` explains
+// in its header that `getByRole('button', {name: 'Copied'})` reads the
+// aria-label, and those three prose mentions counted as three weak assertions
+// that no edit could ever remove. This is the second counter in this file to
+// have counted its own documentation — the case counter did it with a
+// backtick-quoted `it` — so the rule is worth stating once: a metric over
+// source has to skip prose, because the file most likely to discuss a
+// construct is the file that uses it most carefully.
+const withoutCommentLines = (text) =>
+	text
+		.split('\n')
+		.filter((line) => !/^\s*(?:\/\/|\*|\/\*)/.test(line))
+		.join('\n');
+
 const NAME_STRING = /getBy(?:Role|LabelText)\([^)]*name:\s*'/g;
+const TEXT_STRING = /getByText\(\s*'/g;
+const TEXT_EXACT = /getByText\(\s*'[^']*'\s*,\s*\{[^}]*exact:\s*true/g;
 const NAME_EXACT = /getBy(?:Role|LabelText)\([^)]*name:\s*'[^']*'[^)]*exact:\s*true/g;
 
 let looseNameSites = 0;
 let looseNameFiles = 0;
+let looseTextSites = 0;
+let looseTextFiles = 0;
 for (const file of testFiles(path.join(root, 'packages/core/src/tests'))) {
-	const text = readFileSync(file, 'utf8');
+	const text = withoutCommentLines(readFileSync(file, 'utf8'));
 	const total = (text.match(NAME_STRING) ?? []).length;
 	const exact = (text.match(NAME_EXACT) ?? []).length;
 	if (total - exact > 0) {
 		looseNameSites += total - exact;
 		looseNameFiles += 1;
+	}
+	// `getByText` carries the identical asymmetry and a larger surface: Testing
+	// Library matches the whole normalised string, Playwright matches a
+	// case-insensitive substring. Counted separately because closing it is its
+	// own sweep, not because it is a lesser hazard.
+	const textTotal = (text.match(TEXT_STRING) ?? []).length;
+	const textExact = (text.match(TEXT_EXACT) ?? []).length;
+	if (textTotal - textExact > 0) {
+		looseTextSites += textTotal - textExact;
+		looseTextFiles += 1;
 	}
 }
 
@@ -425,7 +454,8 @@ push(
 			"`getByRole`/`getByLabelText` with a string `name`, no `exact`",
 			String(looseNameSites),
 			String(looseNameFiles)
-		]
+		],
+		["`getByText` with a string, no `exact`", String(looseTextSites), String(looseTextFiles)]
 	]),
 	''
 );
