@@ -7,8 +7,10 @@ import FileInput from '$lib/components/file-input/file-input.svelte';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 
 /**
- * Astryx's `FileInput/FileInput.test.tsx`, ported case for case — **all 58 of
- * upstream's 58**, across 14 `describe` blocks.
+ * Astryx's `FileInput/FileInput.test.tsx`, ported case for case — **all 59 of
+ * upstream's 59 at the 0.5.0 pin**, across its `describe` blocks. (This header
+ * said "**all 58 of upstream's 58** … across 14 `describe` blocks"; upstream
+ * declares 59 in 12 blocks at this pin, and all 59 are here.)
  *
  * The seven that used to be absent have landed: `trigger accessible name` (4),
  * `FileInput statusVariant forwarding` (2), and `announces a validation error

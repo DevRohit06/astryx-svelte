@@ -3,10 +3,28 @@ import { cleanup, render } from 'vitest-browser-svelte';
 import Probe from './fixtures/scroll-lock-probe.svelte';
 
 /**
- * Astryx's `hooks/useScrollLock.test.ts` at **v0.4.5**, all 3 cases, in
- * upstream's order and with its titles and assertions verbatim. None dropped:
- * the file has no `displayName` case, no non-JSX construction form and no
- * snapshot.
+ * Astryx's `hooks/useScrollLock.test.ts` at the **0.5.0** pin — **3 of
+ * upstream's 6**, in upstream's order and with its titles and assertions
+ * verbatim. The file has no `displayName` case, no non-JSX construction form
+ * and no snapshot, so none of this port's standing drops applies to the three
+ * that are missing.
+ *
+ * **The 3 that are not here arrived at 0.5.0**, and they are one subject —
+ * scrollbar-gutter compensation, which the lock did not do at v0.4.5:
+ *
+ * - `holds the page still across the scrollbar it hides` — locking must not let
+ *   the content jump sideways by the width of the scrollbar it removes.
+ * - `leaves the page alone when the scrollbar is an overlay one` — the
+ *   compensation must not fire where the scrollbar never took space.
+ * - `holds the gutter for the outermost overlay only, and gives it back once` —
+ *   the same through-zero invariant the three cases below assert for the body
+ *   snapshot, applied to the gutter.
+ *
+ * 0.5.0 also added a whole `hooks/scrollbarGutter.test.ts` beside this suite,
+ * which has no ported counterpart at all. Both are a **hook** gap rather than
+ * only a test gap: this port's `useScrollLock` does not compensate for the
+ * scrollbar it hides. (This header read "at **v0.4.5**, all 3 cases … None
+ * dropped", true at that pin, where 3 was the whole suite.)
  *
  * This is a new suite — the hook had none here before — and it exists to pin
  * #4788. The lock counter and the body snapshot are **module** state, not

@@ -125,7 +125,7 @@ export default {
 		},
 		{
 			name: 'headingLevel',
-			type: '1 | 2 | 3 | 4 | 5 | 6',
+			type: '6 | 2 | 4 | 1 | 3 | 5',
 			description:
 				'Controls only the rendered HTML heading tag (h1-h6) so the title fits the document outline. This is a semantic change for accessibility and does not change the visual size of the title, which stays fixed regardless of level.',
 			default: '3'

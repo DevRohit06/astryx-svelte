@@ -5,8 +5,10 @@ import type { UseOverflowOptions } from '$lib/hooks/use-overflow.svelte.js';
 import Probe from './fixtures/overflow-probe.svelte';
 
 /**
- * Ported from Astryx's `hooks/useOverflow.test.ts`, all twenty cases, arithmetic
- * comments and all.
+ * Ported from Astryx's `hooks/useOverflow.test.ts`, all **26** cases at the
+ * 0.5.0 pin, arithmetic comments and all. Nothing is dropped. (The header read
+ * "all twenty cases" while both files held 26 — the port was complete and only
+ * the number was stale.)
  *
  * The mock elements are upstream's — plain objects carrying only `offsetWidth`
  * and `children`. They work here for the same reason: the hook reads widths and

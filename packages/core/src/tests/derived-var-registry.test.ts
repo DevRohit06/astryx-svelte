@@ -6,7 +6,7 @@ import { derivedVarRegistry, getDerivedVars } from '$lib/theme/derived-var-regis
 
 /**
  * Astryx's `theme/derivedVarRegistry.test.ts`, ported case for case — **10
- * upstream `it` declarations at v0.4.5, 10 here**, in upstream's order and under
+ * upstream `it` declarations at the 0.5.0 pin, 10 here**, in upstream's order and under
  * upstream's titles. Nothing dropped, nothing added. Two of the ten are declared
  * inside a loop over the discovered components, so the case count that actually
  * runs is higher on both sides and tracks the tree.
@@ -235,6 +235,7 @@ const DIR_TO_REGISTRY_KEY: Record<string, string> = {
 	'dropdown-menu': 'dropdown-menu',
 	field: 'field',
 	'hover-card': 'hovercard',
+	'number-input': 'number-input',
 	popover: 'popover',
 	'progress-bar': 'progressbar-mark',
 	section: 'section',

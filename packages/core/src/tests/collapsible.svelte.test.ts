@@ -8,10 +8,12 @@ import CollapsibleGroupProbe from './fixtures/collapsible-group-probe.svelte';
 /**
  * Astryx's `Collapsible/Collapsible.test.tsx`, ported case for case.
  *
- * Upstream at v0.3.0 has **36** `it` cases across seven describe blocks (8
- * structure, 7 uncontrolled, 4 controlled, 6 disabled, 3 prop-forwarding, 4
- * single-group, 2 multiple-group, 2 presentation). **35 are ported here; 1 is
- * dropped** (`exposes a displayName for devtools`, below).
+ * Upstream at the **0.5.0** pin has **36** `it` cases across seven describe
+ * blocks (8 structure, 7 uncontrolled, 4 controlled, 6 disabled, 3
+ * prop-forwarding, 4 single-group, 2 multiple-group, 2 presentation). **35 are
+ * ported here; 1 is dropped** (`exposes a displayName for devtools`, below).
+ * Upstream's file is unchanged between v0.3.0 — where this header last stated
+ * the count — and 0.5.0, so the 36 and the block breakdown carry over intact.
  *
  * (The previous header said "**35** … 7 structure … 34 ported, 1 dropped". The
  * structure block has 8: `renders the stable astryx-collapsible-trigger class on

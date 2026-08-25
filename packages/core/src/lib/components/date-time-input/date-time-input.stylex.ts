@@ -9,6 +9,7 @@ import {
 import type { InputStatusType } from '../field/types.js';
 import {
 	colorVars,
+	fontWeightVars,
 	radiusVars,
 	sizeVars,
 	spacingVars,
@@ -97,6 +98,57 @@ const styles = stylex.create({
 	timeWrapper: {
 		flex: 1,
 		flexBasis: 0
+	},
+	// Preset-time list. Paddings and states mirror BaseTypeahead's dropdown and
+	// Selector's options so every list in the system reads the same.
+	timeListbox: {
+		boxSizing: 'border-box',
+		maxHeight: 300,
+		overflowY: 'auto',
+		padding: spacingVars['--spacing-1'],
+		minWidth: 'anchor-size(width)'
+	},
+	timeOption: {
+		boxSizing: 'border-box',
+		display: 'flex',
+		alignItems: 'center',
+		width: '100%',
+		paddingBlock: spacingVars['--spacing-1-5'],
+		paddingInline: spacingVars['--spacing-2'],
+		borderRadius: radiusVars['--radius-element'],
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
+		textAlign: 'start',
+		fontFamily: typographyVars['--font-family-body'],
+		fontSize: typeScaleVars['--text-body-size'],
+		lineHeight: typeScaleVars['--text-body-leading'],
+		color: colorVars['--color-text-primary'],
+		backgroundColor: 'transparent'
+	},
+	timeOptionHighlighted: {
+		backgroundColor: colorVars['--color-overlay-hover']
+	},
+	timeOptionSelected: {
+		fontWeight: fontWeightVars['--font-weight-medium']
+	}
+});
+
+/**
+ * Size-specific padding for the preset-time options, so an `sm` field gets a
+ * compact list. Matches DropdownMenuItem / Selector / BaseTypeahead.
+ */
+const timeOptionSizeStyles = stylex.create({
+	sm: {
+		paddingBlock: spacingVars['--spacing-1'],
+		paddingInline: spacingVars['--spacing-2']
+	},
+	md: {
+		paddingBlock: spacingVars['--spacing-1-5']
+	},
+	lg: {
+		paddingBlock: spacingVars['--spacing-2']
 	}
 });
 
@@ -184,4 +236,31 @@ export function dateTimeInputIconAttrs(): SvelteStyleAttrs {
  */
 export function dateTimeInputAttrs(isDisabled: boolean, isInvalid: boolean): SvelteStyleAttrs {
 	return sx(styles.input, isDisabled && styles.inputDisabled, isInvalid && styles.inputInvalid);
+}
+
+/**
+ * The preset-time dropdown's scroll container. Sized from the anchor with
+ * `anchor-size(width)`, so the list is as wide as the time field it drops from.
+ */
+export function dateTimeInputTimeListboxAttrs(): SvelteStyleAttrs {
+	return sx(styles.timeListbox);
+}
+
+/**
+ * One preset-time row. `timeOptionSizeStyles[size]` follows `timeOption` so the
+ * size-specific padding replaces the base padding rather than joining it, and
+ * the highlight/selected pair come last — the order upstream's `stylex.props`
+ * call uses.
+ */
+export function dateTimeInputTimeOptionAttrs(
+	size: DateTimeInputSize,
+	isHighlighted: boolean,
+	isSelected: boolean
+): SvelteStyleAttrs {
+	return sx(
+		styles.timeOption,
+		timeOptionSizeStyles[size],
+		isHighlighted && styles.timeOptionHighlighted,
+		isSelected && styles.timeOptionSelected
+	);
 }

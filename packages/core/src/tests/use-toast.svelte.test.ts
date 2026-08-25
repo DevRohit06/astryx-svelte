@@ -5,7 +5,8 @@ import Fixture from './fixtures/theme-show-toast.svelte';
 import type { ToastOptions } from '$lib/components/toast/types.js';
 
 /**
- * Ported from Astryx's `Toast/useToast.test.tsx`, all 4 cases, in order.
+ * Ported from Astryx's `Toast/useToast.test.tsx`, all 4 cases at the 0.5.0 pin,
+ * in order.
  *
  * The suite was **deferred at batch 7** because every case drives theme-mode
  * resolution through `<Theme>` + `defineTheme` + a `matchMedia` mock, and

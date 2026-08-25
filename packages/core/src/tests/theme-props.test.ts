@@ -3,7 +3,7 @@ import { themeDataAttributes, themeProps } from '$lib/internal/theme-props.js';
 
 /**
  * Astryx's `src/utils/themeProps.test.ts`, ported case for case — **10 upstream
- * `it` declarations at v0.4.5, 10 here**, in upstream's order and under
+ * `it` declarations at the 0.5.0 pin, 10 here**, in upstream's order and under
  * upstream's titles. Nothing dropped, nothing added.
  *
  * A **server** project file (`*.test.ts`), as upstream's is: the module is pure

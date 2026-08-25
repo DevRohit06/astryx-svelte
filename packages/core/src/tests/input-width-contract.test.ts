@@ -23,7 +23,28 @@ import TypeaheadDocs from '$lib/components/typeahead/Typeahead.doc.mjs';
  * **1 upstream `it` declaration at v0.4.5, 1 here**, under upstream's title and
  * with upstream's assertions. Nothing dropped, nothing added. The declaration
  * sits inside a `forEach` over the seventeen input-family components, so the
- * case count that *runs* is 17 on both sides, and it tracks the list.
+ * case count that *ran* was 17 on both sides, and it tracks the list.
+ *
+ * ## The upstream suite no longer exists — the count above is frozen at v0.4.5
+ *
+ * **Upstream deleted this file at 0.5.0**, in `63f398dfa` — *"test(core): drop
+ * the tautological #4163 doc-contract tests (#5382)"* — along with
+ * `apiContractDrift`, `fieldContract`, `structuralComponentContract` and lab's
+ * `labApiContractDrift`. There is therefore **nothing at the 0.5.0 pin for this
+ * file's count to be a contract against**, and the v0.4.5 numbers above are
+ * kept only as the record of what it was ported from. This is the one suite
+ * header in `src/tests/` that deliberately does not name the current pin,
+ * because naming it would assert a file that is not there.
+ *
+ * The file is kept rather than deleted alongside upstream's, because the reason
+ * for the deletion does not transfer: upstream's `.doc.mjs` are hand-authored,
+ * so asserting that a hand-written `type` string says `SizeValue` really is
+ * tautological — the assertion and the thing asserted are the same edit. This
+ * port's are **generated** from the built `dist/**` declarations (see the note
+ * on `type` below), so the same assertion reads the *components'* declared prop
+ * types and can fail on a real drift upstream's never could. Whether to follow
+ * upstream and drop it anyway is a decision for `port/debts.md`, not for this
+ * documentation pass.
  *
  * The contract is a **documentation** one, not a rendering one, which is why
  * this file renders nothing and lives in the **server** project as upstream's

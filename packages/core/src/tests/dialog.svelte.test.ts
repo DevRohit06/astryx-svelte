@@ -4,8 +4,15 @@ import { resolveDialogPositionOffsets } from '$lib/components/dialog/dialog.styl
 import DialogProbe from './fixtures/dialog-probe.svelte';
 
 /**
- * Ported from Astryx's `Dialog/Dialog.test.tsx` at v0.3.0: **34 upstream cases,
- * 34 here.** Nothing is dropped.
+ * Ported from Astryx's `Dialog/Dialog.test.tsx` — **34 of its 44 cases at the
+ * 0.5.0 pin.**
+ *
+ * The 10 not here are four whole describes, all added after the 0.3.0 pin this
+ * header last stated a count against: `IME composition` (2), `nested-modal
+ * dismissal` (4), `responsive sizing` (3) and `container padding isolation` (1)
+ * — composition-guarded Escape, top-layer ordering across stacked modals,
+ * viewport/safe-area clamping, and the container-query padding reset. No case
+ * outside those blocks is missing.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *

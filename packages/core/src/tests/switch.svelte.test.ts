@@ -10,11 +10,12 @@ import { cssIn, forcedColorsCssIn } from './forced-colors.js';
 
 /**
  * Astryx's `Switch/Switch.test.tsx`, ported case for case — **50** upstream
- * cases at v0.4.5, **50** of them here, plus one beyond upstream (`supports
+ * cases at the 0.5.0 pin, **50** of them here, plus one beyond upstream (`supports
  * two-way bind:value`) that pins the `$bindable` decision (justified below, and
  * recorded in port/todo.md). **51 `it` in the file.** Nothing is dropped.
  *
- * The count is re-derived at the 0.4.5 pin. It read "**49** … at v0.4.1" and
+ * The count is re-derived at the 0.5.0 pin, where upstream's file stands
+ * unchanged since v0.4.5. It read "**49** … at v0.4.1" and
  * stayed true only until the pin moved: 0.4.x added `drops the label gap when
  * isLabelHidden so the row is only as wide as the track`, which is ported here
  * (restated only in how the second render is driven — see the case).

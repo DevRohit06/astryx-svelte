@@ -5,7 +5,7 @@ import { renderTable } from './render-table.js';
 
 /**
  * Ported from Astryx's `Table/tableContextMenu.test.tsx` — all **6** of its `it`
- * cases, in order and under upstream's names. Nothing dropped, nothing deferred:
+ * cases at the 0.5.0 pin, in order and under upstream's names. Nothing dropped, nothing deferred:
  * both of its plugins are hand-written objects handed to the public `plugins`
  * prop, so none of the ten deferred plugin hooks is involved.
  *

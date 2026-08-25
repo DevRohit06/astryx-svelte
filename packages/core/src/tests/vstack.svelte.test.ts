@@ -5,7 +5,7 @@ import VStack from '$lib/components/stack/vstack.svelte';
 import StackProbe from './fixtures/stack-probe.svelte';
 
 /**
- * Astryx's `VStack/VStack.test.tsx` at the **0.4.5** pin — upstream declares
+ * Astryx's `VStack/VStack.test.tsx` at the **0.5.0** pin — upstream declares
  * **12** `it`s and **12** are here. Nothing is dropped.
  *
  * Two translations, neither of them a dropped case:

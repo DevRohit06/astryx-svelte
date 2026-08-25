@@ -9,7 +9,7 @@ import ShellFixture from './fixtures/complex-selector-shell.svelte';
 
 /**
  * Astryx's `ComplexSelector/ComplexSelector.test.tsx`, ported case for case —
- * **all 12 upstream cases at v0.4.5**, none dropped and none added. There is no
+ * **all 12 upstream cases at the 0.5.0 pin**, none dropped and none added. There is no
  * ref-callback and no `displayName` case in the file, so nothing is React-only.
  *
  * (At v0.4.2 this was 6. The six added at 0.4.5 cover the `ghost` variant, the

@@ -3,7 +3,8 @@ import { useTableTreeState } from '$lib/components/table/plugins/tree/use-table-
 
 /**
  * Ported from Astryx's `Table/plugins/tree/useTableTreeState.test.tsx` — all
- * **36** of its `it` cases, in upstream's order and under upstream's names.
+ * **36** of its `it` cases at the 0.5.0 pin, in upstream's order and under
+ * upstream's names.
  * Nothing dropped.
  *
  * ## Standing translations

@@ -4,7 +4,7 @@ import { createAttachmentKey } from 'svelte/attachments';
 import VisuallyHiddenProbe from './fixtures/visually-hidden-probe.svelte';
 
 /**
- * Astryx's `VisuallyHidden/VisuallyHidden.test.tsx` at **v0.4.5**, ported case
+ * Astryx's `VisuallyHidden/VisuallyHidden.test.tsx` at the **0.5.0** pin, ported case
  * for case.
  *
  * The count is the contract: upstream declares **7** `it` blocks at this pin,

@@ -8,16 +8,42 @@ import type { SearchableItem, SearchSource } from '$lib/components/typeahead/typ
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 
 /**
- * Astryx's `Typeahead/Typeahead.test.tsx` at **v0.3.0**, ported case for case —
- * 49 upstream cases across its twelve describe blocks (`BaseTypeahead` and its
- * nested `empty results active descendant (#4059)`, `BaseTypeahead focus-out`,
- * `Typeahead` and its nested `out-of-order async results`, `Typeahead size`,
- * `BaseTypeahead hasEntriesOnFocus`, `BaseTypeahead hasSearched reset`,
- * `BaseTypeahead popover after selection`, `Typeahead edit mode`, `Typeahead
- * collapsed input tab order`, `BaseTypeahead paste behavior`, `Typeahead
- * disabledMessage` and `Typeahead statusVariant forwarding`), 49 here, none
- * dropped. There is no ref-callback and no `displayName` case in the file, so
- * nothing is React-only.
+ * Astryx's `Typeahead/Typeahead.test.tsx`. The 49 cases below are its **v0.3.0**
+ * file ported case for case — all 49 it had then, across its twelve describe
+ * blocks (`BaseTypeahead` and its nested `empty results active descendant
+ * (#4059)`, `BaseTypeahead focus-out`, `Typeahead` and its nested
+ * `out-of-order async results`, `Typeahead size`, `BaseTypeahead
+ * hasEntriesOnFocus`, `BaseTypeahead hasSearched reset`, `BaseTypeahead
+ * popover after selection`, `Typeahead edit mode`, `Typeahead collapsed input
+ * tab order`, `BaseTypeahead paste behavior`, `Typeahead disabledMessage` and
+ * `Typeahead statusVariant forwarding`), none dropped. There is no
+ * ref-callback and no `displayName` case in the file, so nothing is
+ * React-only.
+ *
+ * ## The count against the current pin
+ *
+ * **At the 0.5.0 pin upstream's file holds 56 cases in thirteen top-level
+ * describe blocks; 49 are ported and 7 are not.** Two pins moved under this
+ * header without it being re-derived, so the "49 upstream" it used to state was
+ * false from 0.4.5 onward. The seven, in upstream's order:
+ *
+ * - 0.4.5, in `BaseTypeahead`: *announces the plural result count*, *speaks the
+ *   result count from a provider catalog*, *exposes the empty state as a
+ *   themeable target*.
+ * - 0.4.5, in a thirteenth describe block this file has no counterpart for,
+ *   `IME composition guard (#4828)`: *does not select the highlighted result on
+ *   a composing Enter*, *does not exit edit mode on a composing Escape (IME)*.
+ * - 0.5.0, in `BaseTypeahead focus-out`: *closes the list on the Tab keydown,
+ *   before the blur it produces*, *Tab from the input with the list open moves
+ *   focus to the next control*.
+ *
+ * They are **unported, not dropped** — every one has a real Svelte counterpart
+ * and nothing here excuses them. Five of the seven cover behaviour that *is*
+ * ported (the IME guard, the announce calls and the `typeahead-empty-state`
+ * theme target are all in `base-typeahead.svelte`); the two 0.5.0 `Tab` cases
+ * cover behaviour that is **not** — `handleKeyDown` has no `Tab` branch, so
+ * they would fail today and the source fix is a unit of its own. 0.5.0's option
+ * grouping added no upstream case at all, so there is no grouping case to port.
  *
  * (`use-typeahead.test.ts` is a different suite entirely — the type-to-select
  * hook `DropdownMenu` uses. It was renamed off this filename when the component

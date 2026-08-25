@@ -30,6 +30,11 @@ import { selectedBgColor } from './selection.stylex.js';
  * through the normal cell pipeline so component overrides apply — is upstream's
  * design and is kept exactly.
  *
+ * `hasRowHighlight` survives the rewrite unchanged in meaning. Upstream has to
+ * write the background on every pass because the flag can flip while a row is
+ * already selected and the wash has to come back off; here `transformBodyRow`
+ * is a derived, so recomputing the whole `style` string *is* that guarantee.
+ *
  * No runes are needed, so this is a plain `.ts` module: the plugin object holds
  * closures over the `config` **getter**, which is what upstream's `useRef` +
  * `useMemo` pair is for — a stable plugin identity that still reads fresh
@@ -70,6 +75,22 @@ export interface UseTableSelectionConfig<T extends Record<string, unknown>> {
 	 * ```
 	 */
 	getRowLabel?: (item: T) => string;
+	/**
+	 * Paint checked rows with the accent wash. Set false when the surrounding
+	 * UI already uses row background to mean something else — a row that is
+	 * open in a detail panel, for instance. The wash is an inline style, so
+	 * it cannot be overridden from userland; this flag is the way off it.
+	 *
+	 * Only the background is dropped. `aria-selected` is still set on checked
+	 * rows either way, so the selection stays legible to screen readers.
+	 *
+	 * @default true
+	 * @example
+	 * ```ts
+	 * useTableSelection(() => ({ ...selectionConfig, hasRowHighlight: false }))
+	 * ```
+	 */
+	hasRowHighlight?: boolean;
 }
 
 /** Selection column key — prefixed to avoid collisions with user columns. */
@@ -135,16 +156,24 @@ export function useTableSelection<T extends Record<string, unknown>>(
 		},
 
 		transformBodyRow(props: BodyRowRenderProps, item: T) {
-			const isSelected = config().getIsItemSelected(item);
+			// Read as one snapshot and call through it, exactly as upstream's
+			// `applyStyle` does: `getIsItemSelected` stays a method call on the
+			// config object rather than a destructured reference.
+			const currentConfig = config();
+			const isSelected = currentConfig.getIsItemSelected(item);
+			const hasRowHighlight = currentConfig.hasRowHighlight ?? true;
 
 			return {
 				...props,
 				htmlProps: {
 					...props.htmlProps,
+					// `aria-selected` tracks selection on its own: it is the semantic
+					// half of the state and stays correct whether or not the row is
+					// painted, so `hasRowHighlight` deliberately does not gate it.
 					...(isSelected ? { 'aria-selected': true } : {}),
 					style: mergeStyle(
 						props.htmlProps.style as string | undefined,
-						isSelected ? `background-color:${selectedBgColor}` : null
+						isSelected && hasRowHighlight ? `background-color:${selectedBgColor}` : null
 					)
 				}
 			};

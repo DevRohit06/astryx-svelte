@@ -4,7 +4,7 @@ import { standaloneShortWeekdayNamesByLocale } from '$lib/components/calendar/st
 
 /**
  * Ported from Astryx's `Calendar/getStandaloneShortWeekdayNames.test.ts`, all
- * **5** cases at v0.4.5. Nothing is dropped.
+ * **5** cases at the 0.5.0 pin. Nothing is dropped.
  *
  * Runs in the **server** project: a pure lookup over generated reference data,
  * with no DOM.

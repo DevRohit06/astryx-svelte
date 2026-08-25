@@ -265,6 +265,13 @@ export { default as Spinner } from './components/spinner/spinner.svelte';
 export { default as Stack } from './components/stack/stack.svelte';
 export { default as StackItem } from './components/stack/stack-item.svelte';
 export { default as StatusDot } from './components/status-dot/status-dot.svelte';
+// Upstream's `Stepper/index.ts` publishes `Stepper`, `Step` and
+// `useStepperContext`, but not the context object or its provider —
+// `setStepperContext` is an implementation detail of the Svelte port, as
+// `setInputGroupContext` is, and stays unpublished.
+export { default as Stepper } from './components/stepper/stepper.svelte';
+export { default as Step } from './components/stepper/step.svelte';
+export { useStepperContext } from './components/stepper/stepper-context.svelte.js';
 export { default as Switch } from './components/switch/switch.svelte';
 export { default as Tab } from './components/tab-list/tab.svelte';
 export { default as TabList } from './components/tab-list/tab-list.svelte';
@@ -446,6 +453,7 @@ export type {
 	DateTimeInputStatus,
 	DateTimeInputStatusType,
 	DateTimeInputTimeIncrement,
+	DateTimeInputTimeOptionInterval,
 	ISODateTimeString
 } from './components/date-time-input/date-time-input.svelte';
 export type { DateTimeInputSize } from './components/date-time-input/date-time-input.stylex.js';
@@ -719,7 +727,7 @@ export type {
 	TableAlignment,
 	IncrementalState as IncrementalParseState
 } from './components/markdown/parser.js';
-export type { MediaThemeProps } from './theme/media-theme.svelte';
+export type { MediaThemeMode, MediaThemeProps } from './theme/media-theme.svelte';
 export type { MetadataListProps } from './components/metadata-list/metadata-list.svelte';
 export type { MetadataListItemProps } from './components/metadata-list/metadata-list-item.svelte';
 export type { MoreMenuProps } from './components/more-menu/more-menu.svelte';
@@ -862,6 +870,18 @@ export type { SpinnerProps } from './components/spinner/spinner.svelte';
 export type { StackAlignment, StackProps } from './components/stack/stack.svelte';
 export type { StackItemProps } from './components/stack/stack-item.svelte';
 export type { StatusDotProps } from './components/status-dot/status-dot.svelte';
+// Upstream's `Stepper/index.ts` publishes exactly these seven names.
+// `StepDensity` and `StepperDensity` are module-public upstream and
+// barrel-absent, so they stay unpublished here too — the `focusableSelector`
+// rule.
+export type { StepperProps } from './components/stepper/stepper.svelte';
+export type { StepProps, StepIndicatorPreset } from './components/stepper/step.svelte';
+export type { StepStatus } from './components/stepper/step-status.js';
+export type {
+	StepperContextValue,
+	StepperOrientation,
+	StepperIndicatorPosition
+} from './components/stepper/stepper-context.svelte.js';
 export type {
 	SwitchProps,
 	SwitchLabelPosition,
@@ -1585,6 +1605,7 @@ export {
 	InternationalizationProvider,
 	getLocaleDirection,
 	useDirection,
+	useLocale,
 	useTranslator,
 	type InternationalizationProviderProps,
 	type Catalog,

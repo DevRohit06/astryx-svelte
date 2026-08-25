@@ -6,7 +6,7 @@ import ClickableCardNestedButton from './fixtures/clickable-card-nested-button.s
 
 /**
  * Astryx's `ClickableCard/ClickableCard.test.tsx`, ported case for case — all
- * **11** upstream `it()`s at v0.3.0, 11 here. None dropped: upstream has no
+ * **11** upstream `it()`s at the 0.5.0 pin, 11 here. None dropped: upstream has no
  * `displayName` and no `ref` case.
  *
  * (The previous header said "all 9 upstream `it()`s, 9 here". It was counting

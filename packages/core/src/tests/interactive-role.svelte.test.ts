@@ -8,7 +8,9 @@ import Probe from './fixtures/interactive-role-probe.svelte';
 import Provider from './fixtures/interactive-role-provider.svelte';
 
 /**
- * Ported from Astryx's `InteractiveRoleContext/InteractiveRoleContext.test.tsx`.
+ * Ported from Astryx's `InteractiveRoleContext/InteractiveRoleContext.test.tsx`
+ * — **19 of its 21 collected cases at the 0.5.0 pin** (18 plain `it` plus a
+ * three-row `it.each` upstream; 16 plus the same table here).
  *
  * Upstream uses `renderHook` with a `wrapper`; Svelte has no `renderHook`, so
  * the two fixtures next door play that part — a probe component that runs the

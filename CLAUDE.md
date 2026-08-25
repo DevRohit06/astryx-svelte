@@ -61,6 +61,10 @@ pnpm verify        # the gate: every stage runs and every result reports, then p
                    #   regenerated and diffed against what's committed. Prefer this to chaining
                    #   build/check/lint/test with && — that reports "failed" identically whether
                    #   one stage failed or both ran, and once hid six real errors behind the first.
+                   #   **Redirect its output, never pipe it.** `pnpm verify 2>&1 | tail -80` returns
+                   #   `tail`'s exit code, so a run that failed 3 of 7 stages reads as a clean pass
+                   #   — the same hazard as the && chain, reached from the other direction. Write to
+                   #   a file and grep the file (batch 032).
 pnpm verify --fast # skips the whole test stage — the browser suite (real Chromium, thousands of
                    #   cases), the node suites, the CLI's own checks and the theme oracles. Use it
                    #   for a quick read *between* commits, never as a batch's gate. Batch 029 was
@@ -89,6 +93,13 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   It reads as a catastrophic regression rather than as contention, and it cost
 #   a full 30-minute gate run to a background agent that was running the suite
 #   at the same time. Same rule for `pnpm verify`, which runs this.
+#   **The same contention bites the runner's own concurrency on a cold Vite cache.**
+#   It launches four chunks at once; run straight after a `pnpm -r build` — which
+#   empties the optimize cache — three of the first four raced `Forced
+#   re-optimization of dependencies`, never printed a header, and held their slots
+#   until the 30-minute stage timeout killed the run, while chunks 5-17 all passed.
+#   Nothing was wrong with the tests: each stalled chunk passes in isolation. Warm
+#   the cache (run one chunk, or the suite once) before gating after a build.
 #   The client project cannot be run in one process: it dies partway through with
 #   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
 #   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a

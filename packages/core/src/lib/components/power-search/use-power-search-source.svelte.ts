@@ -1,5 +1,6 @@
 import { useTranslator } from '../../i18n/index.js';
 import type { SearchSource } from '../typeahead/types.js';
+import { groupItems } from '../../utils/group-items.js';
 import { resolveOperatorLabel } from './resolve-operator-label.js';
 import type { FilterValue, PowerSearchItem, PowerSearchOperator } from './types.js';
 import type { InternalConfig } from './use-internal-config.svelte.js';
@@ -13,8 +14,11 @@ import type { InternalConfig } from './use-internal-config.svelte.js';
  *
  * ## What changes
  *
- * - **`config` is a getter**, so the source tracks a config change instead of
- *   freezing on the one it was built with.
+ * - **`config` and `maxTypedResults` are getters**, so the source tracks a
+ *   change to either instead of freezing on what it was built with. Upstream
+ *   lists both in the `useMemo` dependency array for the same reason; the
+ *   returned `search()` closure would otherwise capture the cap it was created
+ *   with, and `maxSearchResults` is a live `PowerSearch` prop.
  * - **`allItems` stays a real cache** (`$derived`), because it is upstream's
  *   only genuine memo: `search('')` and `bootstrap()` return *the same array
  *   instance*. Do not defensively copy — but note the property is **not pinned
@@ -54,7 +58,15 @@ import type { InternalConfig } from './use-internal-config.svelte.js';
  *   `seen`. That is what makes `"  Foo"` searchable as literal text.
  */
 
-export function usePowerSearchSource(config: () => InternalConfig): SearchSource<PowerSearchItem> {
+/**
+ * @param maxTypedResults Cap applied to ranked results for a non-empty query.
+ *   The source never truncates empty-query browsing; `PowerSearch`'s view
+ *   applies a separate 1,000-row safety ceiling.
+ */
+export function usePowerSearchSource(
+	config: () => InternalConfig,
+	maxTypedResults: () => number
+): SearchSource<PowerSearchItem> {
 	const t = useTranslator();
 
 	const allItems = $derived(buildFieldItems(config()));
@@ -225,7 +237,7 @@ export function usePowerSearchSource(config: () => InternalConfig): SearchSource
 				}
 			}
 
-			return results;
+			return results.slice(0, maxTypedResults());
 		},
 
 		bootstrap(): PowerSearchItem[] {
@@ -304,10 +316,11 @@ function buildFieldItems(config: InternalConfig): PowerSearchItem[] {
 			label: field.label,
 			auxiliaryData: {
 				fieldKey: field.key,
-				operatorKey: defaultOp?.key
+				operatorKey: defaultOp?.key,
+				group: field.group
 			}
 		});
 	}
 
-	return items;
+	return groupItems(items, { ungroupedFirst: true }).flatMap((group) => group.items);
 }

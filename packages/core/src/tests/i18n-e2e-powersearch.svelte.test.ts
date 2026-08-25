@@ -8,10 +8,14 @@ import type { PowerSearchFilter } from '$lib/components/power-search/types.js';
 import pseudoCatalog from '$lib/locales/pseudo.json' with { type: 'json' };
 
 /**
- * Ported from Astryx's `i18n/__tests__/e2e-powersearch.test.tsx` at **v0.4.5**,
- * which declares **5** `test` cases in one
+ * Ported from Astryx's `i18n/__tests__/e2e-powersearch.test.tsx` at the
+ * **0.5.0** pin, which declares **6** `test` cases in one
  * `describe('PowerSearch × i18n — end to end')`. **5 here**, in upstream's
- * order, with upstream's titles and assertions. **None dropped, none restated.**
+ * order, with upstream's titles and assertions. None restated.
+ *
+ * Unported: `date tokens update when the provider locale changes`, which 0.5.0
+ * added. (The header read "declares 5 … none dropped" at the v0.4.5 pin, where 5
+ * was the whole suite.)
  *
  * What the file exists to prove is upstream's list, unchanged: that the shipped
  * default operators look their labels up through `t()` at *render* time rather

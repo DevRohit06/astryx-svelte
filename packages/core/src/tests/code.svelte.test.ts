@@ -5,7 +5,7 @@ import Code from '$lib/components/code/code.svelte';
 import TextChildProbe from './fixtures/text-child-probe.svelte';
 
 /**
- * Astryx's `Code/Code.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `Code/Code.test.tsx` at the **0.5.0** pin, ported case for case.
  *
  * The count is the contract: upstream declares **6** `it` blocks at this pin,
  * and **6** are here. **Nothing is dropped.** Upstream has no `displayName`

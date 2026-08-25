@@ -7,8 +7,8 @@ import { parseOutlineFromMarkdown } from '$lib/components/outline/parse-outline-
 import type { OutlineItem } from '$lib/components/outline/types.js';
 
 /**
- * Ported from Astryx's `Outline/Outline.test.tsx` — **all 46 of its `it` cases**,
- * across its six describes (3 `parseOutlineFromMarkdown`, 13 `Outline`, 13
+ * Ported from Astryx's `Outline/Outline.test.tsx` — **all 46 of its `it` cases**
+ * at the 0.5.0 pin, across its six describes (3 `parseOutlineFromMarkdown`, 13 `Outline`, 13
  * `Outline keyboard navigation`, 8 `Outline navigate callbacks`, 8 `Outline
  * scroll scoping`, 1 `useOutlineFromDOM`). Nothing is dropped.
  *

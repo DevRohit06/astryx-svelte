@@ -237,13 +237,13 @@ export default {
 		},
 		{
 			name: 'numberOfMonths',
-			type: '1 | 2',
+			type: '2 | 1',
 			description: 'Number of months displayed simultaneously in the calendar popover.',
 			default: '1'
 		},
 		{
 			name: 'weekStartsOn',
-			type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
+			type: "0 | 6 | 2 | 4 | 1 | 3 | 5 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
 			description:
 				'First day of week in the calendar popover. A number (0 = Sunday to 6 = Saturday) or a three-letter day name.',
 			default: '0'

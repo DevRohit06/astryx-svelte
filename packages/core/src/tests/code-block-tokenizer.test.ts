@@ -10,7 +10,7 @@ import {
 /**
  * Astryx's `CodeBlock/tokenizer.test.ts`, ported case for case.
  *
- * Upstream has **12** `it` cases across four describe blocks (8 `tokenize`, 2
+ * Upstream has **12** `it` cases at the **0.5.0** pin, across four describe blocks (8 `tokenize`, 2
  * `tokenizeAsync`, 1 `tokenizeStreaming`, 1 `flatTokensToLines`). All 12 are
  * ported, with their assertions unchanged — `tokenizer.ts` is a pure module
  * transcribed verbatim from upstream, so there is nothing to translate. Nothing

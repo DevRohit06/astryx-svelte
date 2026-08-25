@@ -69,7 +69,13 @@ function isApplePlatform(): boolean {
 	}
 	const uaData = 'userAgentData' in navigator ? navigator.userAgentData : null;
 	if (uaData && typeof uaData === 'object' && 'platform' in uaData) {
-		return /mac/i.test((uaData as { platform: string }).platform ?? '');
+		const uaPlatform = (uaData as { platform?: unknown }).platform;
+		// A blank platform is no answer, not a negative one. Builds that rewrite
+		// their client-hints identity ship '', so fall through rather than
+		// reading it as "not Apple".
+		if (typeof uaPlatform === 'string' && uaPlatform.trim() !== '') {
+			return /mac/i.test(uaPlatform);
+		}
 	}
 	return /Mac|iPhone|iPad|iPod/.test(navigator.platform ?? '');
 }

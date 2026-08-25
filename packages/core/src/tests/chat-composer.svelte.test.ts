@@ -4,7 +4,7 @@ import type { ChatComposerElevation } from '$lib/components/chat/chat-composer.s
 import ChatComposerInputSlotProbe from './fixtures/chat-composer-input-slot-probe.svelte';
 
 /**
- * Ported from Astryx's `Chat/ChatComposer.test.tsx`, all **5** cases at v0.4.5
+ * Ported from Astryx's `Chat/ChatComposer.test.tsx`, all **5** cases at the 0.5.0 pin
  * (2 in `ChatComposer elevation`, 3 in `ChatComposer input composition
  * contract`). Nothing is dropped and nothing is added.
  *

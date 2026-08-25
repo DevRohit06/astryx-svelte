@@ -10,7 +10,7 @@ import TimeInputI18n from './fixtures/time-input-i18n.svelte';
 
 /**
  * Astryx's `TimeInput/TimeInput.test.tsx`, ported case for case — **44 of
- * upstream's 45** at v0.4.5 (26 directly in `describe('TimeInput')`, 6 in the
+ * upstream's 45** at the **0.5.0** pin (26 directly in `describe('TimeInput')`, 6 in the
  * nested `describe('InputGroup integration')` — the last two of which are the
  * grouped-status/live-region pair — 9 in `describe('disabledMessage')`, 2 in the
  * top-level `describe('TimeInput statusVariant forwarding')` and 2 in
@@ -18,24 +18,26 @@ import TimeInputI18n from './fixtures/time-input-i18n.svelte';
  * no snapshot and no no-JSX construction form in the file, so nothing is
  * React-only except the ref case, which gets a counterpart.
  *
- * ## ONE CASE IS MISSING, and it is blocked on a port defect
+ * ## ONE CASE IS MISSING — its blocker is gone, the case is simply unported
  *
  * **`does not step the time on a composing ArrowUp/ArrowDown (IME)`**
  * (upstream `:45`) is NOT here. It is not droppable — nothing about it is
- * React-only — and it would fail if written, because `time-input.svelte`'s
- * `handleInputKeyDown` (`:445`) has **no `isImeKeyEvent` guard**, where
- * upstream's has carried one since the case landed (`TimeInput.tsx`). An IME
- * candidate window navigates with the arrows, so a CJK user picking a candidate
- * silently steps the time. `utils/ime.ts` is ported and exported here; it is
- * simply not called from this component. Write the case the moment the guard
- * lands — it transcribes from upstream unchanged. The same gap blocks two cases
- * in `date-time-input` and one each in `date-input` and `selector`.
+ * React-only — and it now has no obstacle either.
  *
- * ## The count, re-derived at the v0.4.5 pin
+ * **The stated reason expired.** This section used to read *"it would fail if
+ * written, because `time-input.svelte`'s `handleInputKeyDown` (`:445`) has no
+ * `isImeKeyEvent` guard"*, and named `date-time-input`, `date-input` and
+ * `selector` as blocked on the same defect. `time-input.svelte`'s
+ * `handleInputKeyDown` calls `isImeKeyEvent` now, and so do the keydown
+ * handlers in all three of those components. The case transcribes from upstream
+ * unchanged whenever someone writes it.
+ *
+ * ## The count, re-derived at the 0.5.0 pin
  *
  * This header read "**44** … at v0.4.1, **44 here, none dropped**" and stayed
  * true only until the pin moved: 0.4.x added the IME case above, so the header
- * was hiding a one-case gap.
+ * was hiding a one-case gap. Upstream's file is unchanged between v0.4.5 and
+ * 0.5.0, so the 45 and the block breakdown above carry over intact.
  *
  * ## v0.3.0 → v0.4.1
  *

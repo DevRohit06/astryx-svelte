@@ -4,17 +4,25 @@ import PowerSearchValueEditor from '$lib/components/power-search/power-search-va
 import RenderItemProbe from './fixtures/power-search-render-item-probe.svelte';
 import type {
 	FilterValueEntityList,
+	OperatorValue,
 	PowerSearchEntity
 } from '$lib/components/power-search/types.js';
 import type { InternalConfig } from '$lib/components/power-search/use-internal-config.svelte.js';
 import type { SearchableItem, SearchSource } from '$lib/components/typeahead/types.js';
 
 /**
- * Astryx's `PowerSearch/PowerSearchValueEditor.test.tsx`, ported case for case —
- * **11 upstream cases across three describe blocks** (`StringEditor (#1103)` 4,
- * `EntityListEditor (#1106)` 3, `StringListEditor (#1107)` 4), **11 here**, in
- * upstream's order and under upstream's `describe` names. Nothing dropped,
- * nothing added. There is no `displayName` case and no ref case in this file.
+ * Astryx's `PowerSearch/PowerSearchValueEditor.test.tsx` at the **0.5.0** pin —
+ * **14 upstream cases across four describe blocks** (`StringEditor (#1103)` 4,
+ * `EntityListEditor (#1106)` 3, `StringListEditor (#1107)` 4, `maxMenuItems` 3),
+ * **14 here**, in upstream's order and under upstream's `describe` names.
+ * Nothing dropped, nothing added. There is no `displayName` case and no ref
+ * case in this file.
+ *
+ * The `maxMenuItems` describe is new at 0.5.0 and belongs to the same
+ * menu-capping change that added `maxOperatorMenuItems` and the field-menu
+ * sizing block to `PowerSearch.test.tsx`, and the `typed-result cap` describe
+ * to `usePowerSearchSource.test.ts`. (This header read "**11 upstream cases
+ * across three describe blocks** … 11 here", true at the v0.4.5 pin.)
  *
  * Runs in the **client (real Chromium)** project. Upstream's `beforeAll` stubs
  * for `ResizeObserver`, `showPopover`/`hidePopover` and `:popover-open` are
@@ -35,7 +43,11 @@ import type { SearchableItem, SearchSource } from '$lib/components/typeahead/typ
  *   `await new Promise(r => setTimeout(r, …))` debounce waits survive verbatim
  *   as `settle(ms)`.
  * - `screen.queryByRole/queryByText` become container queries or
- *   `expect.element(...)`, which retries.
+ *   `expect.element(...)`, which retries. `getAllByRole('option', {hidden:
+ *   true})` becomes `optionsIn(container)`, the `[role="option"]` sweep
+ *   `typeahead.svelte.test.ts` uses: upstream needs `hidden: true` because
+ *   jsdom does not resolve the popover's visibility, and a DOM query does not
+ *   ask the question at all.
  * - **`getByText` carries `{exact: true}`** wherever the sought string is a
  *   prefix of another rendered one: Playwright's text engine is substring by
  *   default, so a bare `getByText('Alice')` is a strict-mode violation waiting
@@ -82,6 +94,10 @@ function comboboxIn(container: HTMLElement): HTMLInputElement {
 	const el = container.querySelector('input[role="combobox"]');
 	if (!(el instanceof HTMLInputElement)) throw new Error('expected a role="combobox" input');
 	return el;
+}
+
+function optionsIn(container: HTMLElement): HTMLElement[] {
+	return Array.from(container.querySelectorAll<HTMLElement>('[role="option"]'));
 }
 
 /**
@@ -394,5 +410,47 @@ describe('StringListEditor (#1107)', () => {
 
 		// Should render the tokenizer with a combobox
 		expect(comboboxIn(screen.container)).toBeInTheDocument();
+	});
+});
+
+// =============================================================================
+// maxMenuItems — the 0.5.0 cap on value-typeahead suggestions
+// =============================================================================
+
+describe('maxMenuItems', () => {
+	const source = createSearchSource(
+		Array.from({ length: 6 }, (_, index) => ({
+			id: `option-${index}`,
+			label: `Option ${index}`
+		}))
+	);
+
+	async function expectCapped(operatorValue: OperatorValue): Promise<void> {
+		const screen = await render(PowerSearchValueEditor, {
+			props: {
+				operatorValue,
+				filterValue: undefined,
+				onChange: vi.fn(),
+				config: stubConfig,
+				maxMenuItems: 2
+			}
+		});
+
+		setQuery(comboboxIn(screen.container), 'Option');
+		await settle(200);
+
+		expect(optionsIn(screen.container)).toHaveLength(2);
+	}
+
+	it('caps string suggestions', async () => {
+		await expectCapped({ type: 'string', searchSource: source });
+	});
+
+	it('caps string-list suggestions', async () => {
+		await expectCapped({ type: 'string_list', searchSource: source });
+	});
+
+	it('caps entity-list suggestions', async () => {
+		await expectCapped({ type: 'entity_list', searchSource: source });
 	});
 });

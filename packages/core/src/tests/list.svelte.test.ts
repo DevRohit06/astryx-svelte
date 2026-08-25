@@ -4,7 +4,10 @@ import { render } from 'vitest-browser-svelte';
 import ListFixture from './fixtures/list-fixture.svelte';
 
 /**
- * Astryx's `List/List.test.tsx` (52 cases), ported case for case.
+ * Astryx's `List/List.test.tsx` at the **0.5.0** pin, ported case for case —
+ * **50 blocks producing 53 cases** (49 plain `it`s plus one four-row `it.each`),
+ * and all 50 are here. (This header said "(52 cases)", which counted the
+ * `it.each` short by one row.)
  *
  * Every case renders `<List>` with `<ListItem>` children, so all of them go
  * through `list-fixture.svelte`: upstream writes the items as JSX children with

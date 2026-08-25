@@ -6,7 +6,7 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
  * Astryx's `Badge/Badge.test.tsx`, ported case for case — **8 upstream
- * declarations at v0.4.5**, all in `describe('Badge')`, **8 here, none
+ * declarations at the 0.5.0 pin**, all in `describe('Badge')`, **8 here, none
  * dropped**. Upstream's `Badge/` directory also holds `Badge.test-violations.tsx`,
  * which is an eslint-rule fixture rather than a suite and declares no cases.
  * There is no `displayName` case, no snapshot and no no-JSX construction form,

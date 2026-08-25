@@ -11,10 +11,12 @@ import HostingHarness from './fixtures/layer-hosting-harness.svelte';
 import RelocatingHarness from './fixtures/layer-relocating-harness.svelte';
 
 /**
- * Ported from Astryx's `Layer/useLayer.test.tsx` at **v0.4.5** — **all 32 of its
- * `it` blocks / 43 cases** (two `it.each` tables expand to 11 rows between
- * them), plus one beyond-upstream case documented at its own site. **33 `it` in
- * the file, 44 cases.**
+ * Ported from Astryx's `Layer/useLayer.test.tsx` at the **0.5.0** pin — **all 32
+ * of its `it` blocks / 43 cases** (31 plain `it` plus one `it.each` table of 12
+ * rows), plus one beyond-upstream case documented at its own site. **33 `it` in
+ * the file, 44 cases.** (The parenthetical read "two `it.each` tables expand to
+ * 11 rows between them"; there is one table of 12, on both sides. The totals it
+ * fed were right regardless.)
  *
  * The header has now stated a wrong count three times: "all twenty-nine cases"
  * (0.4.1 minus `describe('offset')`, naming none of the five it was short), a

@@ -5,10 +5,30 @@ import EditPopoverProbe from './fixtures/power-search-edit-popover-probe.svelte'
 import type { PowerSearchConfig, PowerSearchFilter } from '$lib/components/power-search/types.js';
 
 /**
- * Astryx's `PowerSearch/PowerSearchEditPopover.test.tsx`, ported case for case —
- * **3 upstream cases** at v0.3.0 in a single `describe('PowerSearch')`, **3
- * here**, in upstream's order with upstream's titles. Nothing dropped, nothing
- * added.
+ * Astryx's `PowerSearch/PowerSearchEditPopover.test.tsx` at the **0.5.0** pin —
+ * **9 upstream cases** (4 in `describe('PowerSearch')`, 5 in
+ * `describe('narrow-width layout (#4761)')`), **3 here**, in upstream's order
+ * with upstream's titles.
+ *
+ * **The 6 that are not here split two ways:**
+ *
+ * - **The whole 5-case `narrow-width layout (#4761)` describe, added at
+ *   0.5.0** — the popover root establishing the container the collapse query
+ *   measures, the filter chip row wrapping below the collapse width instead of
+ *   overflowing, the operator cell capped at the row width, nested sub-filter
+ *   rows wrapping instead of overflowing on one line, and the edit popover
+ *   layer yielding to viewports narrower than its 400px floor. Every one is a
+ *   container-query/layout assertion, so they need the `.stylex.ts` side of the
+ *   change ported before the cases can mean anything.
+ * - **`does not save/close on a composing Enter while typing a filter value
+ *   (#4828)`**, the fourth case in `describe('PowerSearch')`. This one predates
+ *   0.5.0 — upstream already had 4 here at v0.4.5, so this header's "3 upstream
+ *   cases … 3 here" was false at that pin too. It is portable now:
+ *   `power-search-edit-popover.svelte` calls `isImeKeyEvent` in its keydown
+ *   handler, so the guard the case asserts is in place.
+ *
+ * (This header read "**3 upstream cases** at v0.3.0 … 3 here. Nothing dropped,
+ * nothing added". It said "**2** … 2 here" before that, which was wrong too.)
  *
  * (The previous header said "**2 upstream cases** … **2 here**". Upstream has
  * three: `does not save/close edit popover when Enter is consumed by child

@@ -5,6 +5,7 @@
 		operatorValue: StringListOperatorValue;
 		filterValue: FilterValue | undefined;
 		onChange: (value: FilterValue) => void;
+		maxMenuItems?: number;
 	}
 </script>
 
@@ -24,7 +25,7 @@
 	 * plainly than a fresh literal would.
 	 */
 
-	const { operatorValue, filterValue, onChange }: StringListEditorProps = $props();
+	const { operatorValue, filterValue, onChange, maxMenuItems }: StringListEditorProps = $props();
 
 	const t = useTranslator();
 
@@ -56,4 +57,5 @@
 	placeholder={t('@astryx.powersearch.valueEditor.addValuesPlaceholder')}
 	debounceMs={operatorValue.searchSource ? 150 : 0}
 	{hasCreate}
+	{maxMenuItems}
 />

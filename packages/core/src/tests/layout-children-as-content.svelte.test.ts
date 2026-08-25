@@ -5,7 +5,7 @@ import LayoutShell from './fixtures/layout-shell.svelte';
 
 /**
  * Astryx's `Layout/__tests__/childrenAsContent.test.tsx`, ported case for case —
- * **4 upstream `it` declarations at v0.4.5, 4 here**, in upstream's order and
+ * **4 upstream `it` declarations at the 0.5.0 pin, 4 here**, in upstream's order and
  * under upstream's titles. Nothing dropped, nothing added.
  *
  * The contract: `<Layout>…</Layout>` treats its children as a shorthand for the

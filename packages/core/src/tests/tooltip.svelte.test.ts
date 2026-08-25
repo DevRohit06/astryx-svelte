@@ -5,8 +5,16 @@ import { TIMER_BUDGET } from './timer-budget.js';
 import { whenWired } from './trigger-wiring.js';
 
 /**
- * Ported from Astryx's `Tooltip/Tooltip.test.tsx`, all **twelve** cases at
- * v0.3.0. Nothing is dropped.
+ * Ported from Astryx's `Tooltip/Tooltip.test.tsx` — **12 of its 24 cases at the
+ * 0.5.0 pin**.
+ *
+ * The 12 not here are two whole describes: `controlled` (1 — `echoes the close
+ * through onOpenChange when the consumer flips isOpen`) and `touch` (11), the
+ * tap-to-open/tap-to-dismiss, pen-hover and touch-then-focus behaviour behind
+ * `touchTrigger` that 0.5.0 added with #5248. Nothing in this file covers
+ * `touchTrigger`. (The header read "all twelve cases at v0.3.0 … nothing is
+ * dropped"; 12 was the whole suite at that tag, and the version bumps
+ * invalidated it.)
  *
  * (The previous header said "all ten cases". Upstream has 12: its nested
  * `describe('press-to-dismiss')` pair — `hides the tooltip when the trigger is

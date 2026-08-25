@@ -4,7 +4,7 @@ import type { LinkifySegment, UseLinkifyOptions } from '$lib/components/link/use
 import Renderer from './fixtures/use-linkify-renderer.svelte';
 
 /**
- * Ported from Astryx's `Link/useLinkify.test.tsx`, all 13 cases.
+ * Ported from Astryx's `Link/useLinkify.test.tsx`, all 13 cases at the 0.5.0 pin.
  *
  * Upstream's `useLinkify` returns `ReactNode[]` — strings interleaved with
  * rendered `<Link>` elements. Ours returns structured `LinkifySegment[]` (a

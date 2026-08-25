@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { stubMatchMedia } from './stub-match-media.js';
 
 /**
- * Ported from Astryx's `__tests__/stubMatchMedia.test.ts`, all **6** cases at
- * v0.4.5. Nothing is dropped.
+ * Ported from Astryx's `__tests__/stubMatchMedia.test.ts`, all **6** cases at the
+ * 0.5.0 pin. Nothing is dropped.
  *
  * A test helper with its own suite, which is unusual — the reason is in
  * `stub-match-media.ts`'s header: the failure mode of the blanket stub it

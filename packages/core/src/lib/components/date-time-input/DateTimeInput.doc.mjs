@@ -238,7 +238,7 @@ export default {
 		},
 		{
 			name: 'timeOptionInterval',
-			type: '5 | 10 | 15 | 30 | 60',
+			type: '5 | 10 | 60 | 15 | 30',
 			description:
 				'Minute cadence for a dropdown of preset times on the time portion. Set it to turn the time field into a combobox listing every valid time at that cadence (60 gives a 12 AM to 11 PM list). Omitted, the time field stays a plain text input and gains no combobox semantics. Typed entry keeps working either way, so a time between two options is still reachable. Independent of timeIncrement, which governs arrow-key stepping.'
 		},
@@ -284,13 +284,13 @@ export default {
 		},
 		{
 			name: 'numberOfMonths',
-			type: '1 | 2',
+			type: '2 | 1',
 			description: 'Number of months displayed simultaneously in the calendar.',
 			default: '1'
 		},
 		{
 			name: 'weekStartsOn',
-			type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
+			type: "0 | 6 | 2 | 4 | 1 | 3 | 5 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
 			description:
 				'First day of week in the calendar. A number (0 = Sunday to 6 = Saturday) or a three-letter day name.',
 			default: '0'

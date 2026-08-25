@@ -4,7 +4,7 @@ import { computeBoundaries, computeSegments } from '$lib/components/markdown/str
 /**
  * Astryx's `Markdown/streaming.test.ts`, ported case for case.
  *
- * Upstream has **14** `it` cases across two describe blocks (5 `computeBoundaries`,
+ * Upstream has **14** `it` cases at the **0.5.0** pin, across two describe blocks (5 `computeBoundaries`,
  * 9 `computeSegments`). All 14 are ported with their assertions unchanged —
  * `streaming.ts` is a pure module transcribed verbatim from upstream, so there is
  * nothing to translate. Nothing is dropped.

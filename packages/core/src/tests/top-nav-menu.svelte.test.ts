@@ -6,15 +6,18 @@ import TopNavMenuFixture, { type TopNavMenuItemSpec } from './fixtures/top-nav-m
 import { expectSharedFocusRing } from './shared-focus-ring.js';
 
 /**
- * Ported from Astryx's `TopNav/TopNavMenu.test.tsx` — all 12 of its `it` cases,
- * across its three describes (`TopNavMenu`, `menu semantics (APG)` and `keyboard
- * navigation (APG menu pattern)`). Nothing dropped. Client (real Chromium)
- * project: eight of the twelve are focus, click or keyboard work.
+ * Ported from Astryx's `TopNav/TopNavMenu.test.tsx` — all **14** of its `it`
+ * cases at the 0.5.0 pin, across its four describes (`TopNavMenu`, `menu
+ * semantics (APG)`, `keyboard navigation (APG menu pattern)` and `TopNavMenu —
+ * drawer focus ring`). Nothing dropped. Client (real Chromium) project: eight of
+ * the fourteen are focus, click or keyboard work.
  *
- * This header used to claim "all 4 … nothing dropped" while upstream has had 12
- * at every tag from 0.2.0 — both APG describes were unported and the count said
- * otherwise. That is the header-rot failure mode `top-nav.svelte.test.ts` names;
- * the count is a contract against *upstream's* file, not against this one.
+ * This header used to claim "all 4 … nothing dropped" while upstream had 12 —
+ * both APG describes were unported and the count said otherwise. It then read
+ * "all 12" after the two `drawer focus ring` cases had landed on both sides, so
+ * the number was stale a second time while the port was in fact complete. That
+ * is the header-rot failure mode `top-nav.svelte.test.ts` names; the count is a
+ * contract against *upstream's* file, not against this one.
  *
  * Standing translations:
  *

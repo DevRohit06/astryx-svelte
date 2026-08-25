@@ -8,9 +8,9 @@
 
 |                           |                                                                          |
 | ------------------------- | ------------------------------------------------------------------------ |
-| Component dirs (ours)     | 99                                                                       |
+| Component dirs (ours)     | 100                                                                      |
 | Component dirs (upstream) | 104                                                                      |
-| Missing here              | Stepper                                                                  |
+| Missing here              | none                                                                     |
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
@@ -21,9 +21,9 @@
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 275    | 7041           |
-| Ported here              | 249    | 6605           |
+| Ported here              | 255    | 6823           |
 | No counterpart by design | 5      | 69             |
-| **Unported**             | **21** | **367**        |
+| **Unported**             | **15** | **149**        |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -33,18 +33,12 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 
 | Suite                                                         | Cases |
 | ------------------------------------------------------------- | ----- |
-| `DateInput/DateInputTouch.test.tsx`                           | 134   |
-| `Stepper/Stepper.test.tsx`                                    | 48    |
 | `theme/generateThemeRules.test.ts`                            | 44    |
 | `Layer/useLayerDismissal.test.tsx`                            | 21    |
 | `Layer/layerDismissalInvariants.test.tsx`                     | 15    |
 | `Calendar/getInitialFocusDate.test.ts`                        | 13    |
 | `hooks/useFocusTrapEscapeShim.test.tsx`                       | 11    |
 | `Layer/layerDismissalFamilies.test.tsx`                       | 11    |
-| `BottomSheet/BottomSheetEdgeTint.test.tsx`                    | 10    |
-| `hooks/useAutoMediaMode.test.ts`                              | 10    |
-| `hooks/scrollbarGutter.test.ts`                               | 8     |
-| `theme/MediaTheme.dom.test.tsx`                               | 8     |
 | `i18n/__tests__/useCollator.test.tsx`                         | 7     |
 | `Layer/useTouchTrigger.test.ts`                               | 5     |
 | `MobileNav/MobileNavEntryAnimation.test.tsx`                  | 5     |
@@ -73,7 +67,7 @@ substring-matching on both sides by design and is not counted.
 | Kind                  | Count   |
 | --------------------- | ------- |
 | api-divergence        | 33      |
-| deliberate-divergence | 45      |
+| deliberate-divergence | 46      |
 | unported              | 15      |
-| upstream-lag          | 10      |
-| **total**             | **103** |
+| upstream-lag          | 11      |
+| **total**             | **105** |

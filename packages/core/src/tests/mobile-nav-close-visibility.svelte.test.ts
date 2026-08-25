@@ -6,7 +6,7 @@ import { parseShortestDurationMs } from '$lib/components/mobile-nav/close-timing
 
 /**
  * Ported from Astryx's `MobileNav/MobileNavCloseVisibility.test.tsx`, all **5**
- * cases at v0.4.5. Nothing is dropped.
+ * cases at the 0.5.0 pin. Nothing is dropped.
  *
  * Repro for #4290 (page unresponsive after closing the drawer in Safari 26.1).
  *

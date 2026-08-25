@@ -127,9 +127,10 @@
 		labelTooltip?: string;
 		/**
 		 * Icon displayed at the start of the selector trigger — a registry name, or
-		 * a snippet for a custom icon. Upstream applies `size="sm" color="secondary"`
-		 * to a registry icon; a snippet is authored by the caller, so set them
-		 * yourself to match.
+		 * a snippet for a custom icon. Takes precedence over the selected option's
+		 * own `icon`, which the trigger otherwise renders. Upstream applies
+		 * `size="sm" color="secondary"` to a registry icon; a snippet is authored
+		 * by the caller, so set them yourself to match.
 		 */
 		startIcon?: IconName | Snippet;
 		/**
@@ -138,6 +139,31 @@
 		 * `Snippet` translates directly.
 		 */
 		renderOption?: Snippet<[SelectorOptionData]>;
+		/**
+		 * Custom renderer for the selected option inside the closed trigger. Only
+		 * rendered when something is selected; the placeholder is unaffected.
+		 *
+		 * Passing this does not change the trigger's height — what it draws does. A
+		 * one-line value measures exactly the `size` token, so the control still
+		 * lines up with the Buttons and inputs beside it; each further line of
+		 * content adds one text line. Inside an `InputGroup` the group owns the row
+		 * height: the trigger clamps its value box to that row, so a
+		 * `SelectorOption` folds onto one line and ellipsizes, and anything taller
+		 * than the row is cut off at it rather than bleeding over the rows above
+		 * and below.
+		 *
+		 * @example
+		 * ```svelte
+		 * {#snippet renderValue(option)}
+		 *   <SelectorOption
+		 *     icon={option.icon}
+		 *     label={option.label ?? option.value}
+		 *     description={option.description}
+		 *   />
+		 * {/snippet}
+		 * ```
+		 */
+		renderValue?: Snippet<[SelectorOptionData]>;
 		/**
 		 * Which edge of the option row carries the selected mark. `start` reserves a
 		 * mark column ahead of every label so they stay aligned, the way a native
@@ -285,6 +311,8 @@
 	import VisuallyHidden from '../visually-hidden/visually-hidden.svelte';
 	import { useInputGroup } from '../input-group/input-group-context.svelte.js';
 	import SelectorOption from './selector-option.svelte';
+	import SelectorRowLayoutProvider from './selector-row-layout-provider.svelte';
+	import type { SelectorRowLayout } from './selector-row-layout-context.svelte.js';
 	import { useCombobox } from './use-combobox.svelte.js';
 	import { useSelectedItemOffset } from './use-selected-item-offset.svelte.js';
 	import { useResolvedRequired } from '../../hooks/use-resolved-required.svelte.js';
@@ -311,7 +339,8 @@
 		selectorTriggerAttrs,
 		selectorTriggerContainerAttrs,
 		selectorTriggerIconStyle,
-		selectorTriggerLabelAttrs
+		selectorTriggerLabelAttrs,
+		selectorTriggerValueAttrs
 	} from './selector.stylex.js';
 
 	/**
@@ -366,6 +395,7 @@
 		startIcon,
 		htmlName,
 		renderOption,
+		renderValue,
 		indicatorPosition = 'end',
 		hasSearch = false,
 		searchPlaceholder: searchPlaceholderFromProps,
@@ -829,8 +859,18 @@
 			xstyle
 		)
 	);
-	const triggerAttrs = selectorTriggerAttrs();
+	const triggerAttrs = selectorTriggerAttrs(inputGroup != null);
 	const triggerLabelAttrs = selectorTriggerLabelAttrs();
+	const triggerValueAttrs = selectorTriggerValueAttrs(inputGroup != null);
+	// Two lines cannot fit inside an `InputGroup`: the group pins the row height,
+	// and the trigger clamps its value box to one line so nothing bleeds through
+	// its border (`triggerValueInGroup`). The clamp holds for any node; the
+	// context is what lets the rows the system draws itself reflow into that one
+	// line — label and description side by side — instead of being cut off at it.
+	// Outside a group the caller's own row decides, and the trigger's padding
+	// sizes it to whatever that draws. `inputGroup` is resolved once at init, so
+	// this is a plain constant rather than a `$derived`.
+	const rowLayout: SelectorRowLayout = inputGroup ? 'inline' : 'stacked';
 	const chevronXstyle = $derived(selectorChevronXstyle(popover.isOpen));
 	const statusButtonAttrs = selectorStatusButtonAttrs();
 	// `dropdownHidden` rides `!isPositioned`, which the search branch can never
@@ -864,8 +904,39 @@
 	{/if}
 {/snippet}
 
+<!--
+	What the closed trigger shows for the current selection: the option's icon and
+	label, or whatever `renderValue` draws. `startIcon` wins over the option's own
+	icon so a caller who pins a field icon does not get two.
+-->
+{#snippet valueContent()}
+	{#if selectedItem && renderValue}
+		<SelectorRowLayoutProvider layout={rowLayout}>
+			<span class={triggerValueAttrs.class} style={triggerValueAttrs.style}>
+				{@render renderValue(selectedItem)}
+			</span>
+		</SelectorRowLayoutProvider>
+	{:else}
+		{#if !startIcon && selectedItem?.icon != null}
+			{@const selectedIcon = selectedItem.icon}
+			{#if typeof selectedIcon === 'string'}
+				<Icon icon={selectedIcon} size="sm" color="secondary" />
+			{:else}
+				{@render selectedIcon()}
+			{/if}
+		{/if}
+		<span class={triggerLabelAttrs.class} style={triggerLabelAttrs.style}>
+			{selectedItem?.label ?? placeholder}
+		</span>
+	{/if}
+{/snippet}
+
 {#snippet defaultOption(item: SelectorOptionData)}
-	<SelectorOption icon={item.icon} label={item.label ?? item.value} />
+	<SelectorOption
+		icon={item.icon}
+		label={item.label ?? item.value}
+		description={item.description}
+	/>
 {/snippet}
 
 {#snippet optionRow(item: SelectorOptionData, flatIndex: number)}
@@ -1048,9 +1119,7 @@
 			class={triggerAttrs.class}
 			style={triggerAttrs.style}
 		>
-			<span class={triggerLabelAttrs.class} style={triggerLabelAttrs.style}>
-				{selectedItem?.label ?? placeholder}
-			</span>
+			{@render valueContent()}
 		</button>
 		{#if htmlName != null}
 			<!--

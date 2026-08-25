@@ -3,7 +3,7 @@ import { expandMotionScale } from '$lib/theme/expand-motion-scale.js';
 
 /**
  * Astryx's `theme/expandMotionScale.test.ts`, ported case for case — **10
- * upstream cases at v0.4.5, 10 here**, in upstream's order and under upstream's
+ * upstream cases at the 0.5.0 pin, 10 here**, in upstream's order and under upstream's
  * titles. Nothing dropped, nothing added.
  *
  * A **server** project file (`*.test.ts`), as upstream's is: the expander is

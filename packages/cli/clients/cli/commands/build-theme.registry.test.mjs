@@ -141,18 +141,17 @@ describe('theme-build documented target validation', () => {
 	// Hygiene runs in both directions, exactly as the class oracle's `skip` list
 	// does: an entry that stops being orphaned fails the run, so porting the
 	// feature forces the entry out rather than leaving a dead exemption behind.
-	const UNPORTED_FEATURE_TARGETS = new Map([
-		[
-			'date-time-input-time-listbox',
-			'DateTimeInput `timeOptionInterval` (upstream #4837) is not ported — the time ' +
-				'field has no combobox/listbox to carry the target'
-		],
-		[
-			'date-time-input-time-option',
-			'DateTimeInput `timeOptionInterval` (upstream #4837) is not ported — there are ' +
-				'no preset time options to carry the target'
-		]
-	]);
+	// Documented theming targets whose feature is not ported yet, so nothing
+	// renders the class the docs promise. Each entry carries its reason, and the
+	// list is self-retiring in both directions: an entry whose target stops being
+	// orphaned fails the run (below), and an orphan with no entry fails too.
+	//
+	// It is EMPTY, and the way the last two went is the point. Both were
+	// `date-time-input-time-listbox` / `-time-option`, added when `timeOptionInterval`
+	// (#4837) was unported. Porting that feature made the literals real, and this
+	// check failed on the stale entries rather than letting them sit — which is
+	// exactly the behaviour that stops a deferral outliving its reason.
+	const UNPORTED_FEATURE_TARGETS = new Map([]);
 
 	it('every documented theming target is backed by a real themeProps literal', () => {
 		// Guards against a component whose doc target className and rendered

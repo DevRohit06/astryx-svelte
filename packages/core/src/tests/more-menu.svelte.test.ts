@@ -6,8 +6,8 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
  * Ported from Astryx's `MoreMenu/MoreMenu.test.tsx` — 21 of its 22 cases,
- * re-derived at **v0.4.5** (the file is unchanged since v0.4.1, which is where
- * this header's count last came from). 16 → 21 is 0.4.x's five additions: the
+ * re-derived at the **0.5.0** pin (the file is unchanged since v0.4.1, which is
+ * where this header's count last came from). 16 → 21 is 0.4.x's five additions: the
  * two `#4477` open-modality cases and the three-case `placement and alignment`
  * block.
  *

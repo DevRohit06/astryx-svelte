@@ -8,10 +8,18 @@ import ItemProbe from './fixtures/item-probe.svelte';
 import ItemDelegating from './fixtures/item-delegating.svelte';
 
 /**
- * Astryx's `Item/Item.test.tsx` at v0.3.0 — **45 upstream cases, 45 here**,
- * ported case for case with nothing dropped. (The header previously said "37";
- * it was wrong on 0.2.0 too, where both sides had 40. Re-derived by enumerating
- * `git show v0.3.0:packages/core/src/Item/Item.test.tsx`.)
+ * Astryx's `Item/Item.test.tsx` at the **0.5.0** pin — **48 upstream cases, 45
+ * here**, ported case for case. (This header read "**45** upstream cases, 45
+ * here … nothing dropped" at the v0.3.0 pin, where 45 was the whole suite. It
+ * said "37" before that, which was wrong on 0.2.0 too, where both sides had 40.)
+ *
+ * **The 3 that are not here all arrived at 0.5.0**, and all three cover the
+ * `layout="inline"` branch: `puts the label and description in one row when
+ * layout is inline`, `ellipsizes a ReactNode description when layout is
+ * inline`, and `ignores inline layout when there is no description`. This is a
+ * test gap only — `item.svelte` implements the branch (`layout` defaults to
+ * `'stacked'`, and `isInline` requires a `description`), and its StyleX trio is
+ * wired through, so all three transcribe from upstream unchanged.
  *
  * Upstream's `marker`/`startContent`/`endContent` are `ReactNode` props and its
  * `label`/`description` are `ReactNode` too; here they are Svelte snippets (and

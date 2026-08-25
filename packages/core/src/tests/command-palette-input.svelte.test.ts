@@ -6,7 +6,8 @@ import InputProvider from './fixtures/command-palette-input-provider.svelte';
 
 /**
  * Ported from Astryx's `CommandPalette/CommandPaletteInput.test.tsx`, all 13
- * `it` cases across its two describe blocks — 13 upstream, 13 here, none
+ * `it` cases at the 0.5.0 pin, across its two describe blocks — 13 upstream, 13
+ * here, none
  * dropped. There is no `displayName` case and no snapshot in the file.
  *
  * Runs in the **client** (real Chromium) project: the auto-focus path is a

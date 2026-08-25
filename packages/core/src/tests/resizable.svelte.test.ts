@@ -6,18 +6,23 @@ import type { ResizableProps } from '$lib/components/resizable/use-resizable.sve
 import Harness from './fixtures/resize-handle-harness.svelte';
 
 /**
- * Ported from Astryx's `Resizable/ResizeHandle.test.tsx` at v0.3.0.
+ * Ported from Astryx's `Resizable/ResizeHandle.test.tsx` — **14 of its 19 `it`
+ * blocks at the 0.5.0 pin** (18 plain `it` plus one two-row `it.each` upstream;
+ * 20 collected cases there against 14 here).
  *
- * **Upstream 18 cases, 14 here.** The header used to claim the suite was
- * "ported whole" and it never was — it is corrected rather than trusted. The
- * four with no counterpart, all predating this slice and all recorded as a gap
- * in `port/todo.md` rather than silently dropped:
+ * The header used to claim the suite was "ported whole" and it never was — it is
+ * corrected rather than trusted. The five with no counterpart, named rather than
+ * silently dropped:
  *
  * - `drives the region with the raw pointer delta under LTR`
  * - `inverts the pointer delta under RTL so dragging resizes intuitively`
  * - `anchors the biased grab zone with the pill offset and a dir-flipped
  *   centering shift`
  * - `centers the grab zone on the divider when the pill is centered (no bias)`
+ * - the two-row `it.each` table `offsets the %s grab zone along the pill axis
+ *   only`, new at 0.5.0. Unlike the two below it, this one reads `translateX(`
+ *   / `translateY(` out of the inline `style` rather than a debug class name, so
+ *   it is portable as written.
  *
  * The first two hinge on a `getComputedStyle` mock that answers `direction:
  * 'rtl'` for one element — a jsdom substitution with no clean counterpart in a

@@ -7,7 +7,7 @@ import KeyboardHintI18nFixture from './fixtures/keyboard-hint-i18n.svelte';
 
 /**
  * Ported from Astryx's `hooks/useKeyboardHint.test.tsx` — **7 upstream cases at
- * v0.3.0 (5 at v0.2.0 plus the two i18n cases 0.3.0 added), 7 here, none
+ * the 0.5.0 pin (5 at v0.2.0 plus the two i18n cases 0.3.0 added), 7 here, none
  * dropped**.
  *
  * Upstream's `TestHint` becomes `keyboard-hint-probe.svelte`: the hook cannot

@@ -8,8 +8,8 @@ import CustomLink from './fixtures/custom-link.svelte';
  * Ported from Astryx's `TabList/TabList.test.tsx`. **46 of its 74 cases at the
  * 0.5.0 pin.** This suite ported all 45 at 0.4.5; 0.5.0 rewrote two `aria-current`
  * cases (`"page"` -> `"true"`), added a link-tab counterpart — the three that are
- * here — and added 28 more across three new describes that are **not yet ported**:
- * `TabList overflow (scroll)` (17), `ARIA pattern - role="tablist"` (9), `- no
+ * here — and added 28 more across four new describes that are **not yet ported**:
+ * `TabList overflow (scroll)` (16), `ARIA pattern - role="tablist"` (9), `- no
  * role` (2) and `- any other role` (1). Those cover #5348 and #5349, whose source
  * half landed in batch 032; the suite is the half still owed.
  * Client (real Chromium) project.

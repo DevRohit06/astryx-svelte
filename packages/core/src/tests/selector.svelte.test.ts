@@ -14,33 +14,51 @@ import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 import { spacingVars } from '$lib/styles/tokens.stylex.js';
 
 /**
- * Astryx's `Selector/Selector.test.tsx` at v0.4.5, ported case for case — 124
- * upstream blocks producing **125 cases** (the last is an `it.each` with two
- * rows), **124 here**. There is no ref-callback, no `displayName` and no
- * snapshot in the file, so nothing is React-only.
+ * Astryx's `Selector/Selector.test.tsx` at the **0.5.0** pin, ported case for
+ * case — **144 upstream blocks producing 145 cases** (one is an `it.each` with
+ * two rows), **123 blocks producing 124 cases here**. There is no ref-callback,
+ * no `displayName` and no snapshot in the file, so nothing is React-only.
  *
- * ## ONE CASE IS MISSING, and it is blocked on a port defect
+ * One title differs and is **not** a gap: upstream's `announces the
+ * empty-results message when nothing matches` is here as `announces "No results
+ * found" when nothing matches`, the same case reading this port's default
+ * English catalog where upstream reads an `fr` override.
  *
- * **`does not select the highlighted option on a composing Enter (IME)`**
- * (upstream `:1004`, in `describe('hasSearch')`) is NOT here. It is not
- * droppable, and it would fail if written: the search input's keydown handler in
- * `selector.svelte` has **no `isImeKeyEvent` guard**, where upstream's has
- * carried one since the case landed (`Selector.tsx:1066`). A CJK user committing
- * an IME candidate with Enter therefore selects the highlighted option instead.
- * `utils/ime.ts` is ported and exported here; it is simply not called from this
- * component. Write the case the moment the guard lands — it transcribes from
- * upstream unchanged. The same gap blocks two cases in `date-time-input` and one
- * each in `time-input` and `date-input`.
+ * ## The 21 cases that are not here
  *
- * ## The count, re-derived at the v0.4.5 pin
+ * **20 of them arrived at 0.5.0**, which added 572 lines to upstream's file.
+ * Named so none can be mistaken for accounted-for work:
  *
- * This header read "123 upstream blocks … **124 cases**, 124 here, none
- * dropped" at v0.4.1 and stayed true only until the pin moved: 0.4.x added the
- * IME case above, so the header was hiding a one-case gap. The one other title
- * that differs is not a gap — upstream's `announces the empty-results message
- * when nothing matches` is here as `announces "No results found" when nothing
- * matches`, the same case reading this port's default English catalog where
- * upstream reads an `fr` override.
+ * - **The whole 12-case `Selector option descriptions and trigger value`
+ *   block** — an option description in the dropdown row, keeping it out of the
+ *   closed trigger by default, the selected option's icon (rendered, absent
+ *   under the placeholder, and losing to `startIcon`), `renderValue` (drawing
+ *   the trigger, sizing it from what it draws, following the caller, not being
+ *   called for the placeholder), the trigger value box clamped in a group,
+ *   a control sized above its group not growing the row, and type-ahead
+ *   matching the label rather than the description.
+ * - **The whole 6-case `Selector option-row theme target` block** —
+ *   `astryx-selector-option-row` with its size on every row, the selected and
+ *   disabled states reflected on it, the state attributes left off an
+ *   unselected enabled row, the target surviving a `renderOption` replacement,
+ *   and the target plus its states and size exposed to `defineTheme`.
+ * - **`hides a standalone divider from the accessibility tree (#4994)`** — one
+ *   of the two `Selector section headings` cases.
+ * - **`Tab from the open listbox moves focus to the next control`** — one of
+ *   the eight `keyboard accessibility` cases.
+ *
+ * The twenty-first predates 0.5.0 and is called out separately below.
+ *
+ * ## `does not select the highlighted option on a composing Enter (IME)`
+ *
+ * Upstream declares it in `describe('hasSearch')`; it is still not here. **Its
+ * former blocker is gone.** This header used to read *"it would fail if
+ * written: the search input's keydown handler in `selector.svelte` has no
+ * `isImeKeyEvent` guard"* — that reason **expired**. `selector.svelte` now
+ * calls `isImeKeyEvent` in the search input's keydown handler, as do
+ * `time-input.svelte`, `date-input.svelte` and `date-time-input.svelte`, which
+ * the same paragraph named as blocked on the same defect. The case is now an
+ * ordinary unported case and transcribes from upstream unchanged.
  *
  * Runs in the **client (real Chromium)** project, for the reason
  * `popover.svelte.test.ts` and `dropdown-menu.svelte.test.ts` do: the popup opens

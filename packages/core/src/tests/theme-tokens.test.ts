@@ -4,7 +4,7 @@ import { resolveThemeToken, resolveThemeTokens, tokenVar, tokenVars } from '$lib
 
 /**
  * Astryx's `theme/tokens.test.ts`, ported case for case — **26 upstream cases at
- * v0.4.5, 26 here**, in upstream's order and under upstream's titles. Nothing
+ * the 0.5.0 pin, 26 here**, in upstream's order and under upstream's titles. Nothing
  * dropped, nothing added.
  *
  * A **server** project file (`*.test.ts`), as upstream's is: token resolution is

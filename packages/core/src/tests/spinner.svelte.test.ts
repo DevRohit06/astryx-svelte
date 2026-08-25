@@ -5,8 +5,9 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 import SpinnerMany from './fixtures/spinner-many.svelte';
 
 /**
- * Ported from Astryx's `Spinner/Spinner.test.tsx`, all 24 cases across its two
- * describe blocks. Nothing is dropped.
+ * Ported from Astryx's `Spinner/Spinner.test.tsx`, all 24 `it` blocks (21 plain
+ * plus three `it.each` tables) at the 0.5.0 pin, across its two describe blocks.
+ * Nothing is dropped.
  *
  * The suite is a late addition: `Spinner` was one of the first components
  * ported, before the case-for-case discipline, and its `label` prop was missed

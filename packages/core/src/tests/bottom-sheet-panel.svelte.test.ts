@@ -10,8 +10,24 @@ import BottomSheetPanel, {
 import { stubMatchMedia } from './stub-match-media.js';
 
 /**
- * Astryx's `BottomSheet/BottomSheetPanel.test.tsx`, ported case for case —
- * **all 7 upstream cases at v0.4.5**, none dropped and none added.
+ * Astryx's `BottomSheet/BottomSheetPanel.test.tsx` — **7 of upstream's 12 at
+ * the 0.5.0 pin**, none dropped and none added.
+ *
+ * **The 5 that are not here all arrived at 0.5.0**, and four of them are one
+ * subject — the floating handle bar and the sheet's edge treatment:
+ *
+ * - `floats the handle bar over content that starts at the sheet top edge`
+ * - `backs the floating handle bar with a surface gradient`
+ * - `draws a hairline on the three edges that face the scrim`
+ * - `paints the surface across the scrolling body so the edge stays uniform`
+ * - `closes on an accelerating curve of its own, not the entrance timing` —
+ *   the exit easing, which the third restatement below is otherwise about.
+ *
+ * The first four are computed-style assertions against StyleX output, so they
+ * need the `.stylex.ts` side of the 0.5.0 change ported first; 0.5.0 also added
+ * a whole `BottomSheetEdgeTint.test.tsx` beside this suite, which has no ported
+ * counterpart. (This header read "**all 7 upstream cases at v0.4.5**", true at
+ * that pin, where 7 was the whole suite.)
  *
  * Three restatements, all forced by this project running the suite in a real
  * Chromium rather than jsdom:

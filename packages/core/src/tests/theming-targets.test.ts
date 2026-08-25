@@ -7,7 +7,7 @@ import { stableClassName } from '$lib/internal/naming.js';
 
 /**
  * Astryx's `theme/themingTargets.test.ts`, ported case for case — **16 upstream
- * `it` declarations at v0.4.5, 16 here**, in upstream's order and under
+ * `it` declarations at the 0.5.0 pin, 16 here**, in upstream's order and under
  * upstream's titles. Nothing dropped, nothing added. Two of the sixteen are
  * declared inside a loop over the discovered components, so the case count that
  * runs is higher on both sides and tracks the tree.

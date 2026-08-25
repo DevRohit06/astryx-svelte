@@ -142,7 +142,7 @@ export default {
 		},
 		{
 			name: 'size',
-			type: "48 | 'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 32 | 36 | 40 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
+			type: "48 | 32 | 'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 36 | 40 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
 			description:
 				"Avatar size. Use a named size ('xsm' 20px, 'sm' 24px, 'md' 36px, 'lg' 48px, 'xl' 128px) or a numeric pixel value. Avatar shares Icon's abbreviated scale, but its tiers are larger because avatars align with media rather than glyphs. Inside an AvatarGroup the group's size wins and this prop is ignored.",
 			default: "'md'"

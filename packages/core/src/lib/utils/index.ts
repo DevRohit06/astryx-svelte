@@ -22,10 +22,12 @@ export { dateToISO, isLocaleDayFirst, parseDateInput, parseISO } from './date-pa
 
 export {
 	DATE_FORMAT_LONG,
+	DATE_FORMAT_MONTH_ONLY,
 	DATE_FORMAT_MONTH_YEAR,
 	DATE_FORMAT_SHORT,
 	DATE_FORMAT_SHORT_WITH_WEEKDAY,
 	DATE_FORMAT_SHORT_WITH_YEAR,
+	DATE_FORMAT_WEEKDAY_ONLY,
 	DATE_FORMAT_WITH_WEEKDAY,
 	formatSharedDate,
 	getDaysInMonth,
@@ -73,7 +75,7 @@ export {
 
 export { getKey, type Key, type KeyFallback } from './get-key.js';
 
-export { groupItems, getItemGroup, type ItemGroup } from './group-items.js';
+export { groupItems, getItemGroup, type ItemGroup, type GroupItemsOptions } from './group-items.js';
 
 export { getInputARIA, type InputARIA, type InputARIAInputGroup } from './input-aria.js';
 

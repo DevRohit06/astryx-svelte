@@ -12,7 +12,8 @@ import {
 import { plainDateFromISO, plainDateIsEqual } from '$lib/utils/plain-date.js';
 
 /**
- * Ported from Astryx's `Calendar/dayCellUtils.test.ts`, all 42 cases, in
+ * Ported from Astryx's `Calendar/dayCellUtils.test.ts`, all 42 cases at the 0.5.0
+ * pin, in
  * upstream's order and with upstream's assertions verbatim.
  *
  * Nothing needed translating. These are pure functions with no DOM, no

@@ -5,7 +5,7 @@ import { stubMatchMedia } from './stub-match-media.js';
 
 /**
  * Ported from Astryx's `MobileNav/MobileNavToggle.test.tsx`, all **3** cases at
- * v0.4.5. Nothing is dropped and nothing is added.
+ * the 0.5.0 pin. Nothing is dropped and nothing is added.
  *
  * This is `MobileNavToggle.test.tsx` and only that. `MobileNav.test.tsx`,
  * `MobileNavCloseEdgeCases.test.tsx`, `MobileNavCloseTiming.test.ts`,

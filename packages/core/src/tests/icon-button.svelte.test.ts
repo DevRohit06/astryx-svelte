@@ -6,10 +6,13 @@ import IconButton from '$lib/components/icon-button/icon-button.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Astryx's `IconButton/IconButton.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `IconButton/IconButton.test.tsx` at the **0.5.0** pin, ported case
+ * for case.
  *
  * The count is the contract: upstream declares **10** `it` blocks at this pin,
- * one of which is a standing drop, and **9** are here.
+ * one of which is a standing drop, and **9** are here. Upstream's file is
+ * unchanged between v0.4.5 — where this header last stated the count — and
+ * 0.5.0.
  *
  * Eight of these lived in `nav-icon.svelte.test.ts` until now — a file carrying
  * two upstream suites at once and therefore able to state a count against

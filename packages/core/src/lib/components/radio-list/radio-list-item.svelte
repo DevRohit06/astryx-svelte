@@ -22,16 +22,14 @@
 </script>
 
 <script lang="ts">
-	import { cx, mergeStyle } from '../../internal/sx.js';
+	import { cx } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import Item from '../item/item.svelte';
 	import { useRadioList } from './radio-list-context.svelte.js';
 	import {
-		radioEmbeddedRoot,
 		radioIndicatorSlotAttrs,
 		radioInputAttrs,
-		radioLabelAttrs,
-		radioListItemContainerAttrs,
+		radioListItemRowXstyle,
 		radioWrapperAttrs
 	} from './radio-list-item.stylex.js';
 	import { useIndicator } from '../indicator/use-indicator.svelte.js';
@@ -40,7 +38,7 @@
 	/**
 	 * A single radio within a `RadioList`. The visible circle is decorative; the
 	 * real `<input type="radio">` is transparent and overlaid on it, and the
-	 * label/description/end content are laid out through a nested `Item`.
+	 * label/description/end content are laid out by the `Item` that *is* the row.
 	 */
 	let {
 		label,
@@ -52,6 +50,7 @@
 		class: className,
 		style: styleProp,
 		xstyle,
+		onclick: onclickProp,
 		...rest
 	}: RadioListItemProps = $props();
 
@@ -68,12 +67,31 @@
 	const isChecked = $derived(ctx().value === value);
 	const size = $derived(ctx().size);
 
-	const containerTheme = themeProps('radio-list-item');
-	const containerAttrs = $derived(radioListItemContainerAttrs(isDisabled, xstyle));
+	// One target for every row, carrying its size and runtime state so a theme can
+	// express "selected option at large" or restyle disabled rows without reaching
+	// for structural selectors. It lands on the element Item paints — the row
+	// surface — so a theme styling `radio-list-item`'s background/padding/
+	// borderRadius (and its `:hover`) actually takes effect from the
+	// `astryx-theme` layer, even though the component zeroes those by default.
+	const rowTheme = $derived(
+		themeProps('radio-list-item', {
+			size,
+			selected: isChecked ? 'selected' : null,
+			disabled: isDisabled ? 'disabled' : null
+		})
+	);
+	const rowXstyle = $derived(radioListItemRowXstyle(isDisabled, xstyle));
 	const wrapperAttrs = $derived(radioWrapperAttrs(size));
 	const inputAttrs = $derived(radioInputAttrs(size, isDisabled));
 	const indicatorSlotAttrs = radioIndicatorSlotAttrs();
-	const labelAttrs = $derived(radioLabelAttrs(isDisabled));
+
+	// Upstream types `RadioListItem`'s props `BaseProps<HTMLDivElement>` — the
+	// element `Item` really renders — while `Item`'s own props are
+	// `BaseProps<HTMLElement>`. Event handlers are contravariant in that element
+	// type, so the two are incompatible at the seam even though the DOM agrees.
+	// The public type stays upstream's; the widening happens at the one point the
+	// rest props cross into `Item`, exactly as `ListItem` does it.
+	const itemRest = $derived(rest as Omit<BaseProps<HTMLElement>, 'onclick'>);
 
 	// The circle and its dot are a component the theme resolves now, so it
 	// carries its own `radio-indicator` / `radio-indicator-dot` targets (with the
@@ -89,6 +107,16 @@
 		container: indicatorSlot,
 		isDisabled
 	}));
+
+	// The radio is the row's single keyboard control and action. The row is an
+	// enlarged click/tap target that delegates surface clicks — the description
+	// and the empty hover area, not just the control and its label — to the input
+	// via Item's `interactiveRef` (useClickableContainer). This matches
+	// CheckboxListItem so the whole row is clickable, and keeps one tab stop per
+	// option (WCAG 4.1.2). The radio carries its accessible name via `aria-label`
+	// since the visible label is now a plain (non-`<label>`) text node — a real
+	// `<label for>` would double-fire under delegation.
+	let radioInput = $state<HTMLInputElement | null>(null);
 
 	function handleChange(e: Event): void {
 		if (isDisabled) {
@@ -125,16 +153,19 @@
 		onfocusout={focusProps.onBlur}
 	>
 		<input
+			bind:this={radioInput}
 			{id}
 			type="radio"
 			name={ctx().name}
 			{value}
 			checked={isChecked}
+			aria-label={label}
 			disabled={isDisabled && !keepsFocusableForMessage}
 			aria-disabled={keepsFocusableForMessage ? 'true' : undefined}
 			form={keepsFocusableForMessage ? '' : undefined}
 			required={ctx().isRequired}
 			onchange={handleChange}
+			onclick={onclickProp}
 			aria-describedby={description ? descriptionID : undefined}
 			class={inputAttrs.class}
 			style={inputAttrs.style}
@@ -156,24 +187,23 @@
 {/snippet}
 
 {#snippet labelContent()}
-	<label for={id} class={labelAttrs.class} style={labelAttrs.style}>{label}</label>
+	<span>{label}</span>
 {/snippet}
 
 {#snippet descriptionContent()}
 	<span id={descriptionID}>{description}</span>
 {/snippet}
 
-<div
-	{...rest}
-	{...containerTheme}
-	class={cx(containerTheme.class, containerAttrs.class, className)}
-	style={mergeStyle(containerAttrs.style, styleProp as string | undefined)}
->
-	<Item
-		startContent={mediaContent}
-		label={labelContent}
-		description={description != null ? descriptionContent : undefined}
-		{endContent}
-		xstyle={radioEmbeddedRoot}
-	/>
-</div>
+<Item
+	{...itemRest}
+	startContent={mediaContent}
+	interactiveRef={() => radioInput}
+	{isDisabled}
+	label={labelContent}
+	description={description != null ? descriptionContent : undefined}
+	{endContent}
+	xstyle={rowXstyle}
+	{...rowTheme}
+	class={cx(rowTheme.class, className)}
+	style={styleProp}
+/>

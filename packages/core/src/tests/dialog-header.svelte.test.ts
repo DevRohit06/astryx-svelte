@@ -5,7 +5,7 @@ import DialogHeaderContentProbe from './fixtures/dialog-header-content-probe.sve
 import DialogHeaderDividerProbe from './fixtures/dialog-header-divider-probe.svelte';
 
 /**
- * Ported from Astryx's `DialogHeader/DialogHeader.test.tsx`, all 17 cases.
+ * Ported from Astryx's `Dialog/DialogHeader.test.tsx`, all 17 cases at the 0.5.0 pin.
  *
  * The **client** project (real Chromium): the title autofocuses through an
  * effect, and `auto-focuses the title when mounted` reads `document.activeElement`

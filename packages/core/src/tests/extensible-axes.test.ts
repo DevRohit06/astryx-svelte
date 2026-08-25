@@ -6,10 +6,12 @@ import ts from 'typescript';
 import { stableClassName } from '$lib/internal/naming.js';
 
 /**
- * Astryx's `theme/extensibleAxes.test.ts` — **3 of upstream's 4 `it`
- * declarations**, in upstream's order and under upstream's titles. The fourth is
- * dropped, named below with its reason. Two of the three are `it.each` over the
- * axes found in the tree, so the case count runs with the tree on both sides.
+ * Astryx's `theme/extensibleAxes.test.ts` at the **0.5.0** pin — **3 of
+ * upstream's 4 `it` declarations**, in upstream's order and under upstream's
+ * titles. The fourth is dropped, named below with its reason. Two of the three
+ * are `it.each` over the axes found in the tree, so the case count runs with
+ * the tree on both sides. Upstream's file is unchanged between v0.4.5 and
+ * 0.5.0.
  *
  * A **server** project file (`*.test.ts`), as upstream's is.
  *
@@ -45,8 +47,10 @@ import { stableClassName } from '$lib/internal/naming.js';
  *
  * **Where a map may be declared.** Following from the above, `collectExtensibleAxes`
  * reads every source file under a component directory rather than only its
- * index, and takes the directory as the owner. The same 19 maps are found as
- * upstream's index-only walk finds.
+ * index, and takes the directory as the owner. It finds the same maps
+ * upstream's index-only walk finds. (This sentence used to state how many; a
+ * count belongs in the generated `port/status.md`, and upstream asserts only
+ * that the walk finds more than ten.)
  *
  * **Reading a `.svelte` file.** Props interfaces live in `<script module>` here,
  * so a component's `*Props` declaration is inside the markup file. The script

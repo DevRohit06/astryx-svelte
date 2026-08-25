@@ -4,19 +4,29 @@ import Text from '$lib/components/text/text.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Astryx's `Text/Text.test.tsx` — **3 of upstream's 30**, and the file is new
- * with this batch.
+ * Astryx's `Text/Text.test.tsx` — **3 of upstream's 31 at the 0.5.0 pin**.
  *
- * `Text` had **no ported suite at all**, a pre-existing gap recorded in port/todo.md;
- * the 27 cases upstream carried at 0.2.0 (rendering, `as`, the type scale,
- * truncation, `weight`/`size`/`justify`, tabular numbers, custom types) are
- * still unported and are deliberately left counted here rather than closed
- * quietly. What lands is exactly the 3 cases 0.3.0 added for the `TextColorMap`
- * seam, which is what this batch's change needs.
+ * `Text` had **no ported suite at all**, a pre-existing gap recorded in
+ * port/todo.md. What lands is exactly upstream's 3-case `Text custom colors`
+ * describe, added at 0.3.0 for the `TextColorMap` seam, which is what the batch
+ * that created this file needed.
  *
- * Upstream added **no** `Heading` case for the same change — `Heading.test.tsx`
- * is unchanged at 23 — even though `Heading` applies the same fallback through
- * the shared `resolveStyleColor`. Nothing is invented here to cover it.
+ * **The other 28 are unported**, and are deliberately left counted here rather
+ * than closed quietly. Named so the gap cannot be mistaken for accounted-for
+ * work: `describe('rendering')` (7 — the default `body` type, children, a ref
+ * kept attached across rerenders, and the four `as` mappings), `describe('types')`
+ * (5 — body/large/supporting/code/label), `describe('props')` (12 — prop
+ * forwarding, `color`, `weight`, explicit `size` overrides, `display`,
+ * `hasStrikethrough`, `hasTabularNumbers`, `hasCapsize`, `textWrap`,
+ * `maxLines`, `wordBreak`, and `hasTruncateTooltip={false}`), the one top-level
+ * `renders astryx-* class names for theme targeting` case, and
+ * `describe('Text custom types')` (3 — the body fallback, the default primary
+ * colour, and the per-type override).
+ *
+ * Upstream added **no** `Heading` case for the `TextColorMap` change — even
+ * though `Heading` applies the same fallback through the shared
+ * `resolveStyleColor`. Nothing is invented here to cover it. (`Heading.test.tsx`
+ * stands at 24 at this pin; it has no ported suite either.)
  *
  * `children` is a `Snippet`, so upstream's inline text is supplied through the
  * shared `slot-probe`. Upstream writes `color={'brand' as TextColor}` because a

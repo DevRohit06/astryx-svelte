@@ -7,7 +7,7 @@ import { atomicClasses, probe } from './fixtures/avatar-status-dot-probe.stylex.
 
 /**
  * Astryx's `Avatar/AvatarStatusDot.test.tsx`, ported case for case — **19
- * upstream cases, 19 here, none dropped**. The file has no `displayName` case,
+ * upstream cases at the 0.5.0 pin, 19 here, none dropped**. The file has no `displayName` case,
  * no snapshot, no `ref` case and no no-JSX construction form, so nothing is
  * legitimately absent.
  *

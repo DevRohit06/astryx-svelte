@@ -6,7 +6,7 @@ import ColumnSettingsStateProbe from './fixtures/table-column-settings-state-pro
 
 /**
  * Astryx's `Table/plugins/columnSettings/useTableColumnSettingsState.test.tsx`,
- * ported case for case — **18 upstream cases, 18 here**, in upstream's order and
+ * ported case for case — **18 upstream cases at the 0.5.0 pin, 18 here**, in upstream's order and
  * under upstream's `describe`s. Nothing dropped, nothing added.
  *
  * Two translations, both structural and neither touching an assertion:

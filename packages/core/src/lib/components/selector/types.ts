@@ -15,7 +15,10 @@ import type { IconName } from '../icon/icon-registry.js';
  */
 export type SelectorOptionData = {
 	value: string;
+	// Kept a string, not renderable content: search filtering and type-ahead
+	// both lowercase this to match keystrokes.
 	label?: string;
+	description?: string | Snippet;
 	disabled?: boolean;
 	/** A registry name, or a snippet for a custom icon. */
 	icon?: IconName | Snippet;

@@ -4,7 +4,8 @@ import Harness from './fixtures/table-sticky-columns-fixture.svelte';
 
 /**
  * Astryx's `Table/plugins/stickyColumns/useTableStickyColumns.test.tsx`, ported
- * case for case — **6 of 6**, in upstream's order and under its titles. Nothing
+ * case for case — **6 of 6 at the 0.5.0 pin**, in upstream's order and under
+ * its titles. Nothing
  * dropped.
  *
  * Upstream's file-level note explains what it asserts and why, and it carries

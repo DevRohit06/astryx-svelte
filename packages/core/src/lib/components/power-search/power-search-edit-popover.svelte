@@ -14,6 +14,8 @@
 		onCancel: () => void;
 		/** Label for the save button. @default 'Apply' */
 		saveButtonLabel?: string;
+		/** Max suggestions in string and entity value typeaheads. */
+		maxMenuItems?: number;
 		/** Whether the filter is read-only. */
 		isReadOnly?: boolean;
 	}
@@ -100,6 +102,7 @@
 		onSave,
 		onCancel,
 		saveButtonLabel: saveButtonLabelFromProps,
+		maxMenuItems,
 		isReadOnly = false
 	}: PowerSearchEditPopoverProps = $props();
 
@@ -341,6 +344,7 @@
 					onPartialFilterChange={(filter) => {
 						partialFilter = filter;
 					}}
+					{maxMenuItems}
 					{isReadOnly}
 				/>
 			</VStack>
@@ -373,6 +377,7 @@
 							onChange={handleValueChange}
 							onEnter={handleSave}
 							{config}
+							{maxMenuItems}
 							isDisabled={isReadOnly}
 						/>
 					</div>

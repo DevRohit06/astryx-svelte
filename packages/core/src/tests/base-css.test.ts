@@ -4,7 +4,14 @@ import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 
 /**
- * Ported from Astryx's `reset.test.ts`, both cases.
+ * Ported from Astryx's `reset.test.ts` — **2 of its 3 cases at the 0.5.0 pin**.
+ *
+ * Unported: `reset.css accessibility invariants` → `gives disabled elements the
+ * disabled cursor`, which 0.5.0 added. It is portable and would pass —
+ * `styles/base.css` already carries the `:where(:disabled, [aria-disabled='true'])
+ * { cursor: default; }` rule the case looks for — so this is coverage debt, not
+ * a translation decision. (The header read "both cases" against a file that had
+ * grown a third.)
  *
  * Upstream's reset is a plain stylesheet, so its tests assert on the source
  * text; this port's counterpart is `styles/base.css`, which it owns in full

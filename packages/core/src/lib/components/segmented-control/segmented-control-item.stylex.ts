@@ -33,6 +33,7 @@ const styles = stylex.create({
 			default: 'pointer',
 			':is(:disabled,[aria-disabled="true"])': 'default'
 		},
+		whiteSpace: 'nowrap',
 		transitionProperty: 'color, background-color, box-shadow',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard']
@@ -75,6 +76,7 @@ const styles = stylex.create({
 	},
 	fill: {
 		flex: 1,
+		minWidth: 0,
 		justifyContent: 'center'
 	},
 	icon: {
@@ -82,6 +84,11 @@ const styles = stylex.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		flexShrink: 0
+	},
+	labelText: {
+		overflow: 'hidden',
+		textOverflow: 'ellipsis',
+		minWidth: 0
 	}
 });
 
@@ -137,6 +144,11 @@ export function segmentedControlItemAttrs({
 		!isSelected && !isItemDisabled && styles.hover,
 		isItemDisabled && styles.disabled
 	);
+}
+
+/** The label span, which ellipsizes rather than pushing the segment wider. */
+export function segmentedControlLabelTextAttrs(): SvelteStyleAttrs {
+	return sx(styles.labelText);
 }
 
 /** The leading icon slot. */

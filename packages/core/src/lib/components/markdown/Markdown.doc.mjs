@@ -118,7 +118,7 @@ export default {
 		},
 		{
 			name: 'headingLevelStart',
-			type: '1 | 2 | 3 | 4 | 5 | 6',
+			type: '6 | 2 | 4 | 1 | 3 | 5',
 			description:
 				'The HTML heading level that markdown # maps to. Shifts all heading levels down to fit the surrounding page hierarchy. Levels exceeding h6 are clamped to h6.',
 			default: '1'

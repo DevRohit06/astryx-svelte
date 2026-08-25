@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAnnounce, __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 
 /**
- * Ported from Astryx's `hooks/useAnnounce.test.tsx`, all nine cases.
+ * Ported from Astryx's `hooks/useAnnounce.test.tsx`, all nine cases at the 0.5.0
+ * pin.
  *
  * This is the one hook that needs no `renderHook` stand-in: it holds no state
  * of its own and touches no component context, so the test calls it directly

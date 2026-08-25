@@ -8,9 +8,25 @@ import MarkdownInlinePlugins from './fixtures/markdown-inline-plugins.svelte';
 import type { MarkdownPluginSpec } from './fixtures/markdown-inline-plugins.svelte';
 
 /**
- * Astryx's `Markdown/Markdown.test.tsx` (62 cases at 0.3.0), ported case for
- * case. Nothing is dropped; every upstream `it` has a counterpart here, in
- * upstream's order and under upstream's name.
+ * Astryx's `Markdown/Markdown.test.tsx` at the **0.5.0** pin, where it declares
+ * **67** cases; **62** are here, in upstream's order and under upstream's
+ * names.
+ *
+ * **The 5 that are not here are one block, `describe('heading ids')`** —
+ * generated `id` attributes on headings, numeric-suffix disambiguation of
+ * duplicate headings, ids matching `parseOutlineFromMarkdown` for the same
+ * source, the generated id reaching a custom heading component, and headings
+ * nested inside blockquotes getting no id. The block landed upstream between
+ * v0.3.0 — where this header last stated its count — and v0.4.5; upstream's
+ * file is unchanged between v0.4.5 and 0.5.0. This is a **component** gap, not
+ * only a test gap: `markdown.svelte` emits no `id` on a heading at all, so none
+ * of the five has anything to assert against. `parse-outline-from-markdown.test.ts`
+ * is ported in full, so the id-*derivation* half of the contract already has a
+ * home here — what is missing is the renderer putting the derived id on the
+ * element.
+ *
+ * (This header read "(62 cases at 0.3.0) … Nothing is dropped; every upstream
+ * `it` has a counterpart here", true only at 0.3.0.)
  *
  * Five things read differently, each commented where it appears:
  *

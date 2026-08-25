@@ -5,7 +5,7 @@ import GridHarness from './fixtures/grid-harness.svelte';
 
 /**
  * Astryx's `Grid/Grid.test.tsx` — **36 of upstream's 36** `it` declarations at
- * the 0.4.5 pin (28 under `describe('Grid')`, 8 under `describe('GridSpan')`).
+ * the 0.5.0 pin (28 under `describe('Grid')`, 8 under `describe('GridSpan')`).
  * Nothing is dropped.
  *
  * Two translations, neither a dropped case:

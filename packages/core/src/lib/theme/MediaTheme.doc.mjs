@@ -61,7 +61,7 @@ export default {
 	props: [
 		{
 			name: 'mode',
-			type: "'dark' | 'light'",
+			type: "'off' | 'auto' | 'dark' | 'light'",
 			description:
 				'Surface luminance context: dark for content over dark backgrounds (light text, white-tinted interactions), light for content over light backgrounds (dark text, black-tinted interactions), auto to decide from the painted surface (no media context when the ambient text already reads on the surface at 3:1, otherwise the side that reads better), and off to turn it off explicitly. The element renders either way, so a surface can switch contexts without remounting children.',
 			required: true

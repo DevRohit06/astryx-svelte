@@ -8,12 +8,19 @@ import ButtonFixture from './fixtures/button-fixture.svelte';
 import ButtonI18nFixture from './fixtures/button-i18n.svelte';
 
 /**
- * Astryx's `Button/Button.test.tsx`, ported case for case — **39 upstream cases
- * at v0.3.0 (37 in `describe('Button')` plus 2 in its nested `elevation` block),
- * 39 here, none dropped**. `Button.test.tsx` is the only test file in upstream's `Button/`
- * directory. There is no `displayName` case, no snapshot and no no-JSX
- * construction form, so `ref` is the only React-only surface and it gets a
- * counterpart.
+ * Astryx's `Button/Button.test.tsx`, ported case for case — **40 upstream cases
+ * at the 0.5.0 pin (38 in `describe('Button')` plus 2 in its nested `elevation`
+ * block), 39 here**. `Button.test.tsx` is the only test file in upstream's
+ * `Button/` directory. There is no `displayName` case, no snapshot and no
+ * no-JSX construction form, so `ref` is the only React-only surface and it gets
+ * a counterpart.
+ *
+ * **The one that is not here arrived at 0.5.0**: `keeps its merged ref attached
+ * across unrelated rerenders`. It is not a standing React-only drop — this port
+ * answers `ref` with an attachment, and an attachment surviving a rerender is
+ * exactly the reactivity hazard worth pinning — so it is an ordinary unported
+ * case rather than an accounted-for one. (This header read "**39** upstream
+ * cases at v0.3.0 … 39 here, none dropped", true at that pin.)
  *
  * What translated, each commented where it appears:
  *

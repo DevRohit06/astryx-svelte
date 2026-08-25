@@ -6,7 +6,7 @@ import type { TokenColor } from '$lib/components/token/token.stylex.js';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Astryx's `Token/Token.test.tsx` at v0.3.0 — **42 upstream cases, 42 here**,
+ * Astryx's `Token/Token.test.tsx` at the 0.5.0 pin — **42 upstream cases, 42 here**,
  * ported case for case across 6 describe blocks: `Token` 18,
  * `Token accessibility` 11, `Token link with remove button` 9 (new in 0.3.0),
  * `Token text overflow` 2, `Token size` 1, `Token focus outline` 1.

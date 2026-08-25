@@ -90,7 +90,7 @@ export default {
 		},
 		{
 			name: 'size',
-			type: "48 | 'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 32 | 36 | 40 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
+			type: "48 | 32 | 'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 36 | 40 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
 			description:
 				"Size applied to all avatars via context. This wins over each child Avatar's own size prop, including when it is left at the default, so set the size here rather than on the children.",
 			default: "'md'"

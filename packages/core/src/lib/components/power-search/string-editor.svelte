@@ -6,6 +6,7 @@
 		filterValue: FilterValue | undefined;
 		onChange: (value: FilterValue, shouldSave?: boolean) => void;
 		onEnter?: () => void;
+		maxMenuItems?: number;
 	}
 </script>
 
@@ -29,7 +30,13 @@
 	 * dead channel on both sides, not a port omission.
 	 */
 
-	const { operatorValue, filterValue, onChange, onEnter: _onEnter }: StringEditorProps = $props();
+	const {
+		operatorValue,
+		filterValue,
+		onChange,
+		onEnter: _onEnter,
+		maxMenuItems
+	}: StringEditorProps = $props();
 
 	const t = useTranslator();
 
@@ -57,6 +64,7 @@
 		}}
 		placeholder={t('@astryx.powersearch.valueEditor.searchPlaceholder')}
 		debounceMs={150}
+		{maxMenuItems}
 	/>
 {:else}
 	<TextInput

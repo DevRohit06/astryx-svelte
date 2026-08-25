@@ -131,7 +131,7 @@ export default {
 		},
 		{
 			name: 'contentPadding',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Padding for the main content area. Set based on the dominant content pattern: 4 (16px) for forms/settings/text, 0 for dashboards/maps/tables. Override individual sections with Section.',
 			default: '0'

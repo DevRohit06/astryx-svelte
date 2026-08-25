@@ -1,4 +1,4 @@
-import type { TranslatorFn } from '../../i18n/index.js';
+import type { Locale, TranslatorFn } from '../../i18n/index.js';
 import type { EnumItem, FilterValue, OperatorValue } from './types.js';
 import type { InternalConfig } from './use-internal-config.svelte.js';
 import { truncateCharacters } from '../../utils/characters.js';
@@ -21,10 +21,11 @@ import { truncateCharacters } from '../../utils/characters.js';
  *   the joined labels before falling back to the count; with any *other*
  *   operator it goes straight to the count for 2+ items and never attempts the
  *   join, so `['x','y']` renders `2 items` even though `x, y` would fit.
- * - **`Intl.NumberFormat()` / `Intl.DateTimeFormat(undefined, …)` take the
- *   runtime default locale**, not the `InternationalizationProvider` one. That
- *   is upstream's behaviour; threading the provider locale in would be a
- *   divergence, not a fix.
+ * - **`Intl.NumberFormat` / `Intl.DateTimeFormat` take the provider locale**,
+ *   threaded in as an explicit `locale` parameter since 0.5.0. Before that both
+ *   sides read the *runtime default* locale and the note here said threading the
+ *   provider locale in would be a divergence; upstream made exactly that change,
+ *   so the parameter is now the transcription rather than a fix.
  *
  * `truncate` here is *not* `PowerSearch.svelte`'s `truncateString`. They differ
  * in threshold, ellipsis and output length, both are fed the same
@@ -47,12 +48,16 @@ function formatEnumLabel(value: string, enumValues: ReadonlyArray<EnumItem>): st
 	return item?.label ?? value;
 }
 
-function formatNumber(value: number, units?: string): string {
-	const formatted = new Intl.NumberFormat().format(value);
+function formatNumber(value: number, locale: Locale, units?: string): string {
+	const formatted = new Intl.NumberFormat(locale).format(value);
 	return units ? `${formatted} ${units}` : formatted;
 }
 
-function formatDateAbsolute(unixSeconds: number, timezoneID?: string): string {
+export function formatDateAbsolute(
+	unixSeconds: number,
+	locale: Locale,
+	timezoneID?: string
+): string {
 	const options: Intl.DateTimeFormatOptions = {
 		year: 'numeric',
 		month: 'short',
@@ -61,7 +66,22 @@ function formatDateAbsolute(unixSeconds: number, timezoneID?: string): string {
 		minute: '2-digit',
 		...(timezoneID ? { timeZone: timezoneID } : {})
 	};
-	return new Intl.DateTimeFormat(undefined, options).format(unixSeconds * 1000);
+	return new Intl.DateTimeFormat(locale, options).format(unixSeconds * 1000);
+}
+
+/**
+ * Compact date-only rendering (no time-of-day) for the token pill's inline
+ * value display, which has less room than the editor's full summary. Kept
+ * separate from {@link formatDateAbsolute} rather than reusing it with
+ * different options threaded through a param, since the two callers want
+ * genuinely different shapes, not a parameterization of the same one.
+ */
+export function formatDateAbsoluteCompact(unixSeconds: number, locale: Locale): string {
+	return new Intl.DateTimeFormat(locale, {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric'
+	}).format(unixSeconds * 1000);
 }
 
 function formatRelativeDate(value: string): string {
@@ -79,6 +99,7 @@ export function formatFilterValue(
 	filterValue: FilterValue,
 	maxLength: number,
 	t: TranslatorFn,
+	locale: Locale,
 	timezoneID?: string
 ): string {
 	switch (filterValue.type) {
@@ -91,12 +112,14 @@ export function formatFilterValue(
 		case 'integer':
 			return formatNumber(
 				filterValue.value,
+				locale,
 				operatorValue.type === 'integer' ? operatorValue.units : undefined
 			);
 
 		case 'float':
 			return formatNumber(
 				filterValue.value,
+				locale,
 				operatorValue.type === 'float' ? operatorValue.units : undefined
 			);
 
@@ -170,7 +193,7 @@ export function formatFilterValue(
 			return filterValue.value;
 
 		case 'date_absolute':
-			return truncate(formatDateAbsolute(filterValue.unixSeconds, timezoneID), maxLength);
+			return truncate(formatDateAbsolute(filterValue.unixSeconds, locale, timezoneID), maxLength);
 
 		case 'date_relative':
 			return formatRelativeDate(filterValue.value);

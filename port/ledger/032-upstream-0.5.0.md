@@ -105,34 +105,56 @@ catches a regression, and only for a module it already covers.
 
 Class oracle: 341 -> 103.
 
-### `Stepper` / `Step` — not started
+### `Stepper` / `Step` — DONE
 
-New component dir, promoted out of `lab`. 9 files, 48 test cases, its own `.doc.mjs` pair, and an
-animated connector whose only animating case is a single forward step.
+New component dir, promoted out of `lab`. Nine files, its own `stepper.markers.stylex.ts` (upstream
+names that file `stepper.stylex.ts`, which is taken here by Stepper's own styles), and the upstream
+suite ported whole — none dropped. Its `indicator` prop is declared as the spelled-out union rather
+than the `StepIndicatorPreset` alias: the docs emitter reads this package's compiled `.d.ts`, so an
+alias would publish the type *name* and hide the legal values, which is exactly what
+`doc-prop-literals.test.ts` (#1645) exists to catch. Upstream's hand-authored doc spells the same
+union out. That defect shipped and was caught by the doc regeneration, not by review.
+
+`theming-targets.test.ts` skips a component directory that has **no `.doc.mjs`** rather than
+failing it, so Stepper's five theme targets were guarded by nothing until `emit-core-docs` ran.
+
+### `DateInput` touch surface — DONE (source), suite mostly not
+
+Nine new source files and the surface switch in `date-input.svelte` (`useMediaQuery('(pointer:
+coarse)')`), with the old implementation moved verbatim into `pointer-date-field.svelte`. The
+`tokens.stylex.ts` it introduces is this port's first `stylex.defineConsts` and is what forced both
+oracles to learn const hashing (above).
+
+Its suite is the batch's largest at 134 cases and **36 are ported** — `monthGeometry` and the
+definition-level CSS checks, all executed. The other 98 are DOM cases needing a harness (per-test
+`matchMedia` stub, a `clientWidth` prototype shadow, fake timers past `SCROLL_QUIET_MS`) that means
+something different in real Chromium than in jsdom; writing them blind would have been a false
+green. Named in the suite header.
 
 ### `Layer` — one dismissal stack (#4881) — not started
 
-The batch's deepest change. `useLayerDismissal` + `layerStack.ts` + `LayerDepthContext` +
-`useTouchTrigger` replace every overlay's own Escape listener. 4 new upstream suites, 52 cases.
+The batch's deepest change, and now its largest remaining one. `useLayerDismissal` + `layerStack.ts`
++ `LayerDepthContext` + `useTouchTrigger` replace every overlay's own Escape listener. 4 new
+upstream suites, 52 cases. It also blocks four documented-but-undeclared props — `touchTrigger` on
+`Tooltip`, `HoverCard` and both their hooks — because `useTouchTrigger` is what backs them.
 
 ### `Banner` — `collapsible` (#5255) — not started
 
 `defaultIsExpanded` removed; the axis becomes `boolean | CollapsibleConfig` over the shared
 `useCollapsible` hook.
 
-### `DateInput` touch surface — not started
-
-7 new source files (`TouchDateField`, `MonthScroller`, `MonthYearWheels`, `Wheel`, `monthGeometry`,
-`useOwnScrollGesture`, `usePointerDragScroll`, `useScrollSettle`) and the batch's single largest
-suite at 134 cases.
-
 ### Remaining, by size
 
-`TabList` (scrolling strip + `role="tablist"`, #5348/#5349), `DateTimeInput`
-(`timeOptionInterval`), `Selector`/`MultiSelector`, `Table` plugins, `PowerSearch`, `Markdown`
-source ranges, `useMergedRefs`, `i18n/useLocale` + `useCollator`, `hooks/useAutoMediaMode`,
-`hooks/scrollbarGutter`, `MediaTheme`, `Item.layout`, the CLI's `v0.5.0` codemod directory and
-theme-targets API.
+`Layer`'s dismissal stack (the big one), `Banner`'s `collapsible`, `TabList` (scrolling strip +
+`role="tablist"`, #5348/#5349), `MultiSelector`, `Table` plugins, `Markdown` source ranges and
+heading ids, `useMergedRefs`, `i18n/useCollator`, `hooks/scrollbarGutter`,
+`BottomSheet/BottomSheetEdgeTint`, `Calendar/getInitialFocusDate`, and the CLI's `v0.5.0` codemod
+directory and theme-targets API.
+
+Three documented props remain undeclared outside the `Layer` four: `Section`'s five per-edge padding
+props (the same 0.5.0 family closed here for `Stack`/`Center`, and the maps it needs already exist),
+`ChatMessageList.align` and `MultiSelector.formatValue`. The emitter names them on every run, so
+they cannot rot quietly.
 
 ## Oracle bookkeeping
 
@@ -148,23 +170,56 @@ The 0.4.5 baseline was **measured**, not assumed: the 0.4.5 tarball was unpacked
 | After the disabled-cursor sweep         | 173          | 0            |
 | After the hover-guard sweep             | 103          | 0            |
 | After the four parallel component units | 47           | 0            |
-| After `Item`, `Selector`, `PowerSearch` | **42**       | 0            |
+| After `Item`, `Selector`, `PowerSearch` | 42           | 0            |
+| After the eight closing component units | 2            | 0            |
+| After `MediaTheme` + `BaseTypeahead`    | **0**        | 0            |
 
-Style keys checked went 1656 -> 1723 with the six new padding groups. The skip list is still empty
-and needs no entries so far: nothing in this bump is a case of the tarball lagging source.
+The skip list is still empty, and this bump needed no entries: nothing in it is a case of the
+tarball lagging source. Both class-oracle totals moved for real work — style keys and inline call
+sites both rose as the 0.5.0 surfaces landed, and every rise was checked against the tree-shake
+trap below rather than assumed.
 
-Remaining 42, by module — each a per-component feature port rather than a sweep:
+### Both oracles learned `stylex.defineConsts`
 
-`item`(6) `date-time-input`(5) `slider`(4) `mobile-nav`(4) `selector`(3) `number-input`(3)
-`segmented-control-item`(2) `radio-list-item`(2) `dialog`(2) `avatar-group-overflow`(2)
-`power-search`(1) `media-theme`(1) `input-clear-button`(1) `chat-composer-input`(1) `button`(1)
-`blockquote`(1) `base-typeahead`(1)
+`DateInput/tokens.stylex.ts` is the first `defineConsts` in either tree, and it broke an assumption
+both oracles were built on.
 
-`item`'s six and `selector`'s three are **inline call-site combinations**, not missing styles: the
-compiler folded new permutations upstream (`Item`'s three content wrappers × the inline layout, and
-`Selector`'s `renderValue` box) and the oracle's hand-maintained `inline:` lists have not been
-extended to claim them. `date-time-input`'s five include a whole `timeOptionSizeStyles` group that
-belongs to the unported `timeOptionInterval` combobox.
+Under `unstable_moduleResolution: {type: 'commonJS'}` the plugin never reads the defining module, so
+a *consumer* compiles to `var(--<constKey>)` where the key is
+``hash(`${packageName}:${pathFromPackageRoot}//${exportName}.${key}`)``. `processStylexRules` puts the
+literal back only when the sheet is written. So a const-derived rule ends up with a **byte-identical
+declaration** on both sides and a class name that can never agree — ours hashes
+`@astryx-svelte/core:src/lib/components/date-input/tokens.stylex.ts`, upstream's
+`@astryxdesign/core:src/DateInput/tokens.stylex.ts`. Nine rules were affected.
+
+This is the same standing a `defineMarker` class already has, and both oracles now treat it that
+way rather than carrying nine permanent skips:
+
+- **Class oracle** — a case may declare `constHashed: '<defining module>'`. It rides the existing
+  marker comparison (which diffs emitted CSS with the rule's own class blinded) and additionally
+  substitutes `constKey -> constVal` from the defining module's metadata, exactly as
+  `processStylexRules` does. It is deliberately denied the marker path's lookup-table filler
+  tolerance: that exists for a marker's 2^n conditional permutations, and waving leftovers through
+  here would hide a genuinely unclaimed call site.
+- **CSS oracle** — leftovers pair by declaration, but **only where exactly one unmatched rule on
+  each side carries that declaration**. An ambiguous declaration stays a finding, so the pairing
+  cannot launder a real difference into a rename. The count is reported in the summary line beside
+  the marker shapes.
+
+### The oracle a static reader cannot be
+
+`compare-upstream-classes.mjs` reads modules statically, so a `stylex.create` **function style** is
+invisible to it. Three real 0.5.0 defects lived in exactly that blind spot and were found only by
+`compare-upstream-css.mjs` or by reading the tag diff:
+
+- `AspectRatio`'s ratio moved from an inline style to a class-level `aspect-ratio: var(--x)`
+  declaration — the whole point being that an inline style beats every class and so can never be
+  made responsive, while a compiled declaration in `astryx-base` loses to any unlayered consumer
+  rule. Nine assertions in our suite still read `element.style.aspectRatio`; upstream's own suite
+  switched to reading the variable, which is strictly stronger (a custom property is stored
+  verbatim, escaping Blink's six-significant-figure serialisation of `aspect-ratio`).
+- `Dialog`'s `sizing` signature and its missing `overlayPaddingReset.reset`.
+- `Typeahead`'s `menuWidth`, documented here but implemented nowhere, driving `popoverCustomWidth`.
 
 `compare-upstream-classes.mjs` is this batch's merge hazard: three of the four parallel units needed
 to edit it, and its inline claim lists are hand-maintained. It survived, but a fourth concurrent
@@ -306,18 +361,37 @@ Class oracle: 7 -> 0.
 
 ## The gate
 
-`pnpm verify` is **not green**, and the batch is not closable. What was run, and what it said:
+Every stage green. What was run, and what it said:
 
-| Stage                                    | Result                                              |
-| ---------------------------------------- | --------------------------------------------------- |
-| `pnpm -r build`                          | clean                                               |
-| `pnpm -r check`                          | 0 errors (core 1789 files, docs 1498)               |
-| prettier / eslint                        | clean                                               |
-| core server project                      | 59 files, 1358 cases, 0 failed                      |
-| core client project (real Chromium)      | 200/200 files, 5162 cases, 0 failed                 |
-| all 8 theme packages                     | oracles and icon checks green                       |
-| `@astryx-svelte/cli`                     | 114 files, 2091 cases, 0 failed                     |
-| **class oracle**                         | **42 mismatches** — the one stage still red         |
+| Stage                               | Result                                        |
+| ----------------------------------- | --------------------------------------------- |
+| `pnpm -r build`                     | clean                                         |
+| `pnpm -r check`                     | 0 errors, 34 warnings (1820 files)            |
+| prettier / eslint / `lint:root`     | clean                                         |
+| core server project                 | 61 files, 1407 cases, 0 failed                |
+| core client project (real Chromium) | 201/201 files, 5243 cases, 0 failed           |
+| **class oracle**                    | 1810 keys, 599 inline sites, **0 mismatches** |
+| **CSS oracle**                      | **0 mismatches**                              |
+| pseudo-locale                       | current                                       |
+| all 8 theme packages                | oracles green, mismatch 0 each                |
+| `@astryx-svelte/cli`                | 114 files, 2104 cases, themes bundle current  |
+| `emit-core-docs --check`            | 224 docs, all current                         |
+
+### Two things the gate caught that review had not
+
+**The client runner deadlocks on a cold Vite cache.** `run-client-tests.mjs` launches four chunks at
+a time; on the first full run three of the first four never printed a header and held their slots
+until the 30-minute stage timeout killed everything, while chunks 5-17 all passed. It is not a test
+defect — chunk 2 runs clean in isolation (12 files, 323 cases), and so does every file in it. The
+log shows `ENOENT`, repeated `Port … is in use` and `Forced re-optimization of dependencies` at the
+start: four browsers racing a Vite optimize cache that the immediately preceding `pnpm -r build` had
+emptied. Re-run warm, the whole suite passes. CLAUDE.md's warning about concurrent client-project
+processes fighting over `.svelte-kit` applies to the runner's **own** concurrency, not just to two
+people running it at once.
+
+**Piping the gate hides its exit code.** `pnpm verify 2>&1 | tail -80` returns `tail`'s status, so a
+run that failed 3 of 7 stages read as a pass. Redirect to a file instead. This is the same hazard
+the `pnpm verify` docstring records for `&&`-chained stages, reached from the other direction.
 
 Three failures found by running the stages rather than by review, each from the version bump rather
 than from a code change:

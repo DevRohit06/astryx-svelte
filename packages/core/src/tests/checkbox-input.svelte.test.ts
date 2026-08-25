@@ -16,10 +16,10 @@ import { forcedColorsCssIn } from './forced-colors.js';
 
 /**
  * Astryx's `CheckboxInput/CheckboxInput.test.tsx`, ported case for case — **42**
- * upstream cases at v0.4.5 (24 `CheckboxInput`, 8 `disabledMessage`, 5 `form
+ * upstream cases at the 0.5.0 pin (24 `CheckboxInput`, 8 `disabledMessage`, 5 `form
  * participation`, 2 `forced colors`, 3 `focus ring ownership`), **42** here.
- * Nothing added, nothing dropped. Re-derived at the 0.4.5 pin (the header last
- * stated it at v0.4.1); upstream's file has not moved since.
+ * Nothing added, nothing dropped. Re-derived at the 0.5.0 pin (the header last
+ * stated it at v0.4.5); upstream's file has not moved since v0.4.1.
  *
  * ## v0.3.0 → v0.4.1
  *

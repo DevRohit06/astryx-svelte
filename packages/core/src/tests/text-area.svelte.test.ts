@@ -12,11 +12,12 @@ import { TIMER_BUDGET } from './timer-budget.js';
 
 /**
  * Astryx's `TextArea/TextArea.test.tsx`, ported case for case — **82** upstream
- * cases at v0.4.5, 82 here, plus one beyond upstream (`supports two-way
+ * cases at the 0.5.0 pin, 82 here, plus one beyond upstream (`supports two-way
  * bind:value`) that pins the `$bindable` decision. **83 `it` in the file.**
  *
- * ## The count, re-derived at the 0.4.5 pin
+ * ## The count, re-derived at the 0.5.0 pin
  *
+ * Upstream's file is unchanged between v0.4.5 and 0.5.0, so the 82 carries over.
  * This header read "**78** … at v0.4.1" and stayed true only until the pin
  * moved. 0.4.x added four `maxLength prop` cases with #4759 — the grapheme-count
  * fix — and all four are ported here, in upstream's positions: `counts

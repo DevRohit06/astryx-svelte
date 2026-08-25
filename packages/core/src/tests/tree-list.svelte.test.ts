@@ -8,7 +8,7 @@ import type { TreeListFixtureItem } from './fixtures/tree-list-fixture.svelte';
 
 /**
  * Ported from Astryx's `TreeList/TreeList.test.tsx` — **all 76 of its `it`
- * cases** at v0.4.5. Client (real Chromium) project: focus, roving tabindex and
+ * cases** at the 0.5.0 pin. Client (real Chromium) project: focus, roving tabindex and
  * the APG tree keyboard model are the bulk of what is here.
  *
  * The header read "**71 of its 76** at v0.4.1" and named the five that were

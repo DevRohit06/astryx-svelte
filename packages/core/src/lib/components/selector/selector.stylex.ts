@@ -297,6 +297,33 @@ const styles = stylex.create({
 	triggerInGroup: {
 		minHeight: 0,
 		paddingBlock: 0
+	},
+	// Wrapper for `renderValue` output. Takes the free width and clips
+	// horizontally so a long value ellipsizes rather than widening the trigger;
+	// vertically the content sizes the control, which the size styles below
+	// handle.
+	triggerValue: {
+		flexGrow: 1,
+		minWidth: 0,
+		overflow: 'hidden',
+		textAlign: 'start'
+	},
+	// Inside an `InputGroup` the row height is the group's, so the trigger clamps
+	// its own value box to that row rather than asking the value to fit it: any
+	// node is cut off at the row's edge instead of bleeding through the border
+	// over whatever sits above and below the group. The rows the system draws
+	// itself never reach the cut — the row-layout context folds them onto one
+	// line first (`selector-row-layout-context.svelte.ts`).
+	//
+	// The clamp is a percentage, not the size token, because a group can be a
+	// different size than the control inside it; the row is whatever the group
+	// made it. That needs a definite height to resolve against, which is what
+	// stretching the button provides.
+	triggerButtonInGroup: {
+		alignSelf: 'stretch'
+	},
+	triggerValueInGroup: {
+		maxHeight: '100%'
 	}
 });
 
@@ -392,13 +419,18 @@ export function selectorTriggerContainerAttrs(
 }
 
 /** The `role="combobox"` button itself. */
-export function selectorTriggerAttrs(): SvelteStyleAttrs {
-	return sx(styles.trigger);
+export function selectorTriggerAttrs(inGroup: boolean): SvelteStyleAttrs {
+	return sx(styles.trigger, inGroup && styles.triggerButtonInGroup);
 }
 
 /** The truncating label inside the trigger. */
 export function selectorTriggerLabelAttrs(): SvelteStyleAttrs {
 	return sx(styles.triggerLabel);
+}
+
+/** The box a `renderValue` snippet draws into, in place of the label. */
+export function selectorTriggerValueAttrs(inGroup: boolean): SvelteStyleAttrs {
+	return sx(styles.triggerValue, inGroup && styles.triggerValueInGroup);
 }
 
 /**

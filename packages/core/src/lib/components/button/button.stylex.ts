@@ -99,11 +99,11 @@ const styles = stylex.create({
 		}
 	},
 	ariaDisabled: {
+		// The variants' hover treatment already steps aside for
+		// `[aria-disabled]`; `:active` still matches a press on an aria-disabled
+		// button, so that one is suppressed here.
 		backgroundImage: {
 			default: 'none',
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': 'none'
-			},
 			':active': 'none'
 		}
 	},

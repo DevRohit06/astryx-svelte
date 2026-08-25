@@ -3,13 +3,15 @@ import { render } from 'vitest-browser-svelte';
 import CarouselFixture from './fixtures/carousel-fixture.svelte';
 
 /**
- * Ported from Astryx's `Carousel/Carousel.test.tsx` — **16 of upstream's 23**.
+ * Ported from Astryx's `Carousel/Carousel.test.tsx` — **16 of its 23 cases at the
+ * 0.5.0 pin**.
  *
  * The 8 originally ported cases were the ones outside upstream's two nested
  * `describe`s; 0.3.0's `hasLoop` (4) and `handleRef` (4) groups are ported here
- * in full, which is what took the count to 16. Still unported, from 0.2.0 and
- * recorded in port/todo.md as part of the batch-9 test-parity debt: the 3
- * `slide semantics` cases and the 4 `Shift + wheel horizontal scroll` cases.
+ * in full, which is what took the count to 16. Still unported, both whole
+ * describes and both predating 0.5.0: the 3 `slide semantics` cases (per-slide
+ * `role="group"`, `aria-roledescription="slide"` and positional names) and the 4
+ * `Shift + wheel horizontal scroll` cases.
  *
  * Every case goes through `carousel-fixture.svelte`: the port takes `items` plus
  * an `item` snippet where upstream takes children and wraps each with

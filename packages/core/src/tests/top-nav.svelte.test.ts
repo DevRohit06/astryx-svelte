@@ -18,16 +18,22 @@ import { parkPointer } from './park-pointer.js';
 import TopNavItemFixture from './fixtures/top-nav-item-fixture.svelte';
 
 /**
- * Ported from Astryx's `TopNav/TopNav.test.tsx` — **46 of its 54 `it` cases**,
- * across its describes (`TopNav`, `TopNavHeading`, the nested `logo link
- * accessible name`, `NavIcon`, `TopNavItem` including 17c's `disabled items do
- * not navigate`, and the nested `TopNavMegaMenuFeaturedCard rest forwarding`).
- * Client (real Chromium) project.
+ * Ported from Astryx's `TopNav/TopNav.test.tsx` — **50 of its 58 `it` cases at
+ * the 0.5.0 pin**, across its describes (`TopNav`, `TopNavHeading`, the nested
+ * `logo link accessible name`, `NavIcon`, `TopNavItem` including 17c's `disabled
+ * items do not navigate`, and the nested `TopNavMegaMenuFeaturedCard rest
+ * forwarding`). Client (real Chromium) project.
  *
- * The eight not here belong to the 0.2.0 APG/a11y assertions that were not
- * written when the components landed — the behaviour ships, the assertions do
- * not. Tracked with the rest of that gap in `port/todo.md`; this header said "all 43"
- * while the file held 46, which is the header-rot failure mode that entry names.
+ * The eight not here are two whole nested describes plus one stray: `menu
+ * popover semantics` (4 — the heading menu's non-modal popover and its
+ * `role="menu"` scoping), `TopNavMegaMenuFeaturedCard image alt handling` (3)
+ * and `keeps href and click behavior for enabled items (drawer mode)`. Every
+ * subject is ported — `imageAlt` is implemented on
+ * `top-nav-mega-menu-featured-card.svelte` with exactly the `role="presentation"`
+ * / `aria-hidden` behaviour those cases assert — so the behaviour ships and only
+ * the assertions do not. This header has now rotted twice: it said "all 43"
+ * while the file held 46, then "46 of its 54" while the file held 50 and
+ * upstream 58.
  *
  * Standing translations:
  *

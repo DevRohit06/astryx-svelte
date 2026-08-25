@@ -47,7 +47,7 @@
 		/**
 		 * Maximum height; the actual height fits the content. Numbers are pixels,
 		 * strings pass through. Ignored when `variant` is `fullscreen`.
-		 * @default '75vh'
+		 * @default '75dvh'
 		 */
 		maxHeight?: number | string;
 		/**
@@ -88,7 +88,12 @@
 	import { spacingStepToToken } from '../../internal/padding.stylex.js';
 	import type { SpacingToken } from '../../internal/container.stylex.js';
 	import { setDialogContext } from './dialog-context.svelte.js';
-	import { dialogAttrs, dialogInlineAttrs, dialogInnerAttrs } from './dialog.stylex.js';
+	import {
+		dialogAttrs,
+		dialogInlineAttrs,
+		dialogInnerAttrs,
+		resolveDialogSizing
+	} from './dialog.stylex.js';
 
 	/**
 	 * A dialog on the native `<dialog>` element, driven imperatively through
@@ -114,7 +119,7 @@
 		isInline = false,
 		onOpenChange,
 		width = 400,
-		maxHeight = '75vh',
+		maxHeight = '75dvh',
 		position,
 		variant = 'standard',
 		purpose = 'info',
@@ -137,9 +142,10 @@
 	const allowEscape = $derived(purpose !== 'required');
 	const allowBackdropClick = $derived(purpose === 'info');
 
-	const innerMaxHeight = $derived(
-		isFullscreen ? undefined : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight
-	);
+	// A standard dialog's resolved surface dimensions: `width` is the *preferred*
+	// width, clamped to the dynamic viewport with a gutter each side. `null` when
+	// fullscreen — that variant sizes itself and ignores both props.
+	const standardSizing = $derived(isFullscreen ? null : resolveDialogSizing(width, maxHeight));
 
 	// Default accessible name: publish a title id through the dialog context so a
 	// `DialogHeader` applies it to its heading (mirroring `AlertDialog`'s explicit
@@ -310,10 +316,16 @@
 	}
 
 	const theme = $derived(themeProps('dialog', { variant }));
-	const root = $derived(dialogAttrs({ isOpen, isFullscreen, width, maxHeight, position, xstyle }));
-	const inlineRoot = $derived(dialogInlineAttrs({ isFullscreen, width, maxHeight, xstyle }));
+	const root = $derived(dialogAttrs({ isOpen, isFullscreen, standardSizing, position, xstyle }));
+	const inlineRoot = $derived(dialogInlineAttrs({ isFullscreen, standardSizing, xstyle }));
 	const inner = $derived(
-		dialogInnerAttrs({ useThemeDefault, paddingToken, effectivePadding, maxHeight: innerMaxHeight })
+		dialogInnerAttrs({
+			useThemeDefault,
+			paddingToken,
+			effectivePadding,
+			maxHeight: standardSizing?.maxHeight,
+			isFullscreen
+		})
 	);
 
 	// Strip the native `open` attribute from rest props — passing it to a modal

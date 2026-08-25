@@ -4,10 +4,12 @@ import DropdownMenu from '$lib/components/dropdown-menu/dropdown-menu.svelte';
 import SubMenu from './fixtures/dropdown-menu-sub-menu.svelte';
 
 /**
- * Ported from Astryx's `DropdownMenu/DropdownMenuSubMenu.test.tsx`, all 19 cases
- * (v0.3.0) across its four describe blocks (`DropdownMenuSubMenu`, `DropdownMenu
- * data-driven submenus`, the WCAG 2.2 / APG block, and `theming slots`).
- * Nothing is dropped.
+ * Ported from Astryx's `DropdownMenu/DropdownMenuSubMenu.test.tsx`, all **22**
+ * cases at the 0.5.0 pin, across its four describe blocks
+ * (`DropdownMenuSubMenu`, `DropdownMenu data-driven submenus`, the WCAG 2.2 /
+ * APG block, and `theming slots`). Nothing is dropped. (The header read "all 19
+ * cases (v0.3.0)" while both files held 22 — the port was complete and only the
+ * number was stale.)
  *
  * Like `dropdown-menu-selectable.svelte.test.ts`, this suite could not exist
  * before the 0.2.0 pin — `DropdownMenuSubMenu` was part of the slice the

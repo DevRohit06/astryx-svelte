@@ -5,8 +5,8 @@ import ThemeProbe from './fixtures/theme-probe.svelte';
 import NestedThemeProbe from './fixtures/theme-nested-probe.svelte';
 
 /**
- * Ported from Astryx's `theme/Theme.test.tsx` — all 11 of its `it` cases,
- * nothing dropped.
+ * Ported from Astryx's `theme/Theme.test.tsx` — all 11 of its `it` cases at the
+ * 0.5.0 pin, nothing dropped.
  *
  * Client (Chromium) project: every case reads or writes
  * `document.documentElement`, and the unmount cases depend on real effect

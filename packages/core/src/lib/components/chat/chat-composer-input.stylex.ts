@@ -60,6 +60,10 @@ const styles = stylex.create({
 	disabled: {
 		opacity: 0.5,
 		pointerEvents: 'none' as const
+	},
+	tokenSpan: {
+		display: 'inline-flex',
+		verticalAlign: 'middle'
 	}
 });
 
@@ -76,4 +80,13 @@ export function chatComposerInputEditableAttrs(): SvelteStyleAttrs {
 
 export function chatComposerInputPlaceholderAttrs(): SvelteStyleAttrs {
 	return sx(styles.placeholder);
+}
+
+/**
+ * The token chip's own span. `insertToken` writes the same two declarations
+ * imperatively onto the span it creates (it cannot carry a compiled class), so
+ * the two must stay in step.
+ */
+export function chatComposerInputTokenSpanAttrs(): SvelteStyleAttrs {
+	return sx(styles.tokenSpan);
 }

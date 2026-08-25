@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * Astryx's `src/docPropLiterals.test.ts`, ported case for case — **20 upstream
- * `it` declarations at v0.4.5, 20 here**, in upstream's order and under
+ * `it` declarations at the 0.5.0 pin, 20 here**, in upstream's order and under
  * upstream's titles. Nothing dropped, nothing added.
  *
  * A **server** project file (`*.test.ts`), as upstream's is: it reads source and

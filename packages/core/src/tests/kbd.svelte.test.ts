@@ -3,10 +3,15 @@ import { render } from 'vitest-browser-svelte';
 import Kbd from '$lib/components/kbd/kbd.svelte';
 
 /**
- * Astryx's `Kbd/Kbd.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `Kbd/Kbd.test.tsx` at the **0.5.0** pin, ported case for case.
  *
- * The count is the contract: upstream declares **15** `it` blocks at this pin,
- * and **15** are here. **Nothing is dropped.** Upstream's suite carries no
+ * The count is the contract: upstream declares **16** `it` blocks at this pin,
+ * and **16** are here. **Nothing is dropped.** The sixteenth arrived at 0.5.0
+ * with the blank-`userAgentData.platform` guard, and it is a regression case
+ * with teeth here: this port read a blank platform as "not Apple" rather than
+ * falling through to `navigator.platform`, so `mod` rendered Ctrl on a Mac whose
+ * build rewrites its client-hints identity. `kbd-keys.ts` and
+ * `hooks/use-hotkeys.svelte.ts` both carried the defect and both are fixed. Upstream's suite carries no
  * `displayName` case, no snapshot, no `ref` case and no no-JSX construction
  * form, so none of this port's standing drops applies — every case is upstream's
  * title with upstream's assertions.
@@ -92,6 +97,24 @@ describe('Kbd', () => {
 
 		const screen = await render(Kbd, { props: { keys: 'mod' } });
 		await expect.element(screen.getByText('⌘')).toBeInTheDocument(); // ⌘
+	});
+
+	it('reads a blank userAgentData.platform as unknown, not as non-Mac', async () => {
+		// Builds that rewrite their client-hints identity expose the key with an
+		// empty value; navigator.platform is the only surface left that answers.
+		// Deliberately NOT `spoofPlatform`, which blanks `userAgentData` entirely —
+		// the point of this case is that the key is present and empty.
+		Object.defineProperty(navigator, 'userAgentData', {
+			value: { platform: '' },
+			configurable: true
+		});
+		Object.defineProperty(navigator, 'platform', {
+			value: 'MacIntel',
+			configurable: true
+		});
+
+		const screen = await render(Kbd, { props: { keys: 'mod' } });
+		await expect.element(screen.getByText('⌘')).toBeInTheDocument();
 	});
 
 	it('maps modifier keys to symbols', async () => {

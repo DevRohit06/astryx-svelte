@@ -7,10 +7,15 @@ import { createStaticSource } from '$lib/components/typeahead/create-static-sour
 import type { SearchSource, SearchableItem } from '$lib/components/typeahead/types.js';
 
 /**
- * Ported from Astryx's `CommandPalette/CommandPalette.test.tsx`, all 19 `it`
- * cases — 14 top-level plus the five-case `screen reader announcements`
- * describe. 19 upstream, 19 here, none dropped; there is no `displayName` case
- * and no snapshot in the file.
+ * Ported from Astryx's `CommandPalette/CommandPalette.test.tsx` — **19 of its 21
+ * `it` cases at the 0.5.0 pin**: 14 of upstream's 16 top-level cases plus the
+ * whole five-case `screen reader announcements` describe. There is no
+ * `displayName` case and no snapshot in the file.
+ *
+ * The 2 not here are both top-level race guards, portable against source that
+ * already implements them: `discards a search response that resolves after the
+ * palette closed` and `does not move the highlight while typing in the search
+ * input`. (The header read "all 19 … none dropped" while upstream held 21.)
  *
  * Runs in the **client** (real Chromium) project. Upstream's
  * `showModal`/`close` `vi.fn` mock is reproduced exactly as the `Dialog` and

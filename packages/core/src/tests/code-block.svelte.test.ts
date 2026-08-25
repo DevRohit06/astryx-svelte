@@ -10,10 +10,24 @@ import CodeBlockI18nFixture from './fixtures/code-block-i18n.svelte';
 /**
  * Astryx's `CodeBlock/CodeBlock.test.tsx`, ported case for case.
  *
- * Upstream has **16** `it` cases at v0.3.0, all in one describe block. All 16
- * are ported — nothing is dropped. (The previous header claimed 13 upstream and
- * 13 here; upstream had 15 even at v0.2.0, so the two `inert` cases were a
- * silent gap. They are ported now, along with 0.3.0's new i18n case.)
+ * Upstream has **22** `it` cases at the **0.5.0** pin, and **16** are here.
+ * (This header read "**16** … at v0.3.0. All 16 are ported — nothing is
+ * dropped", true at that pin; before that it claimed 13 upstream and 13 here,
+ * while upstream had 15 even at v0.2.0.)
+ *
+ * **The 6 that are not here all landed between v0.3.0 and v0.4.5** — upstream's
+ * file is unchanged between v0.4.5 and 0.5.0 — and they are two groups, both
+ * about theming surfaces the port has not exposed:
+ *
+ * - **Two copy-button cases** — `renders the copy button as a themeable target
+ *   with a "Copy code" tooltip`, and `keeps the copy button tooltip as "Copy
+ *   code" after copying` (the tooltip must not follow the button's transient
+ *   "Copied" state).
+ * - **A four-case header/title theming block** — `puts astryx-codeblock-header
+ *   on the header row when a header shows`, `puts astryx-codeblock-title on the
+ *   header title element`, `renders no header targets when there is no header`,
+ *   and `exposes the header and title as themeable defineTheme targets`.
+ *
  * `CodeBlock` has no `ref` case and no `displayName` case,
  * so the two usual translations do not arise here, and `syntaxTheme` is a real
  * prop in this port (the `theme/syntax/` subsystem landed with it), so the last

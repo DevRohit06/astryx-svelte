@@ -9,13 +9,20 @@ import { colorDefaults } from '$lib/styles/tokens.stylex.js';
 import { formatColor, parseColor } from '$lib/utils/color.js';
 
 /**
- * Ported from Astryx's `theme/expandColorScale.test.ts`, all 63 of its cases.
+ * Ported from Astryx's `theme/expandColorScale.test.ts` — **24 of its 34 `it`
+ * blocks at the 0.5.0 pin**, plus both `it.each` tables, which run out to 64
+ * collected cases against upstream's 74.
+ *
+ * The 10 not here are two whole `#2279` describes: `expandColorScale — tuple
+ * accent (#2279)` (6, the `[light, dark]` seed pair) and `accent precedence —
+ * color config vs tokens overrides (#2279)` (4). Both are portable — the tuple
+ * form is declared and normalised in `theme/expand-color-scale.ts` — so this is
+ * coverage debt, not a translation decision.
  *
  * The `expandColorScale + defineTheme integration` block — five cases — was
  * dropped when this suite first landed, because `define-theme.ts` deliberately
  * omitted the `color` field those cases configure and there was nothing to
- * assert against. That field is ported, so all five are restored below and the
- * count is whole.
+ * assert against. That field is ported and all five are restored below.
  *
  * Everything that tests the expander itself is here, including all 41 WCAG
  * assertions. Those are load-bearing beyond their own block: they exercise

@@ -96,7 +96,7 @@ export default {
 		},
 		{
 			name: 'padding',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Internal padding using the spacing scale (0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10). Use padding={0} for edge-to-edge content.',
 			default: '4'
@@ -121,7 +121,7 @@ export default {
 		},
 		{
 			name: 'paddingBlock',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Block (vertical) padding override. Overrides only the block-axis padding while preserving inline padding from `padding` or the container theme default. Accepts the spacing scale (0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10).'
 		},

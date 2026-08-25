@@ -5,7 +5,8 @@ import PaginationI18n from './fixtures/pagination-i18n.svelte';
 import pseudoCatalog from '$lib/locales/pseudo.json' with { type: 'json' };
 
 /**
- * Ported from Astryx's `i18n/__tests__/e2e-pagination.test.tsx` at **v0.4.5**,
+ * Ported from Astryx's `i18n/__tests__/e2e-pagination.test.tsx` at the **0.5.0**
+ * pin,
  * which declares **5** `test` cases in one
  * `describe('Pagination × i18n — end to end')`. **5 here**, in upstream's order,
  * with upstream's titles and assertions. **None dropped, none restated.**

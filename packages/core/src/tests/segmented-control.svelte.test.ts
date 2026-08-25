@@ -7,13 +7,17 @@ import { cssIn, forcedColorsCssIn } from './forced-colors.js';
 /**
  * Astryx's `SegmentedControl/SegmentedControl.test.tsx`, ported case for case.
  *
- * The file recount is the contract: upstream has **42** `it` cases at 0.3.0 (not
- * the "33" the task summary cited), spread over nine describe blocks — 11
- * `SegmentedControl`, 9 `keyboard navigation` (a nested "#3597 pure focus move"
- * block of 3 plus 6), 14 `disabled state` (6 direct plus a nested
- * `disabledMessage` of 8), 3 `data-testid forwarding`, 2 `onClick composition`,
- * 2 `container handler forwarding`, 1 `forced colors` (new at 0.3.0). All 42 are
- * ported here; none dropped.
+ * The file recount is the contract: upstream has **43** `it` cases at the
+ * **0.5.0** pin, spread over nine describe blocks — 12 `SegmentedControl`, 9
+ * `keyboard navigation` (a nested "#3597 pure focus move" block of 3 plus 6),
+ * 14 `disabled state` (6 direct plus a nested `disabledMessage` of 8), 3
+ * `data-testid forwarding`, 2 `onClick composition`, 2 `container handler
+ * forwarding`, 1 `forced colors`. **42 are ported here.**
+ *
+ * **The one that is not here arrived at 0.5.0**: `fill items can shrink and
+ * truncate long labels`, in the top-level `SegmentedControl` block. It
+ * transcribes unchanged. (This header read "**42** … at 0.3.0 … All 42 are
+ * ported here; none dropped", true at that pin.)
  *
  * Because `<SegmentedControl>` takes its `SegmentedControlItem` children as a snippet,
  * every case renders through `segmented-control-probe.svelte`, which describes the

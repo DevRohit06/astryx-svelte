@@ -4,9 +4,14 @@ import Popover from './fixtures/popover-fixture.svelte';
 import PopoverInDialog from './fixtures/popover-in-dialog.svelte';
 
 /**
- * Ported from Astryx's `Popover/Popover.test.tsx` at v0.3.0: **23 upstream cases,
- * 23 here**, across its three describe blocks (`Popover`, `dismiss controls`,
- * `focus restoration`). Nothing is dropped and nothing is skipped.
+ * Ported from Astryx's `Popover/Popover.test.tsx` — **23 of its 24 cases at the
+ * 0.5.0 pin**, across its three describe blocks (`Popover`, `dismiss controls`,
+ * `focus restoration`).
+ *
+ * Unported: `dismiss controls` → `dismisses on Escape pressed inside a
+ * roving-focus list`, which 0.5.0 added. Nothing is skipped. (The header read
+ * "23 upstream cases, 23 here … nothing is dropped" at the v0.3.0 pin, where 23
+ * was the whole suite.)
  *
  * (Through the previous revision, case #21 — the host-`Dialog` Escape
  * fall-through — was an `it.skip` with an **empty body**: present and counted,

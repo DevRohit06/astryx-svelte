@@ -9,9 +9,20 @@ import CursorTable from './fixtures/table-pagination-cursor-fixture.svelte';
 
 /**
  * Astryx's `Table/plugins/pagination/useTablePagination.test.tsx`, ported case
- * for case — **39 of 39**, in upstream's order and under its titles (7
- * `paginateData`, 2 plugin hook, 12 plugin behavior, 5 Table integration, 5
- * props passthrough, 4 edge cases, 4 accessibility). Nothing dropped.
+ * for case — **39 of upstream's 40 at the 0.5.0 pin**, in upstream's order and
+ * under its titles (7 `paginateData`, 2 plugin hook, 12 plugin behavior, 5
+ * Table integration, 5 props passthrough, 4 edge cases, 4 accessibility).
+ *
+ * **0.5.0 replaced one case with two**, and this file still carries the
+ * replaced one. Upstream **removed** `transformTableContext renders Pagination
+ * above and below` — which is still here, at `:172` — and **added**
+ * `transformTableContext renders distinctly named Pagination above and below`
+ * plus `position="both" interpolates a consumer label into distinct nav names`.
+ * Both additions are about the same thing: when `position="both"` renders two
+ * navs, each needs its own accessible name, so a screen-reader user can tell
+ * the top one from the bottom one. Porting them means renaming the case at
+ * `:172` rather than adding beside it. (This header read "**39 of 39** …
+ * Nothing dropped", true at the v0.4.5 pin.)
  *
  * The seven `paginateData` cases are pure and would run in the node project,
  * but upstream keeps them in one file with the rendering cases and the count is

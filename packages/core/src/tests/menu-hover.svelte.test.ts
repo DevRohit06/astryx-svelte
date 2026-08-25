@@ -6,7 +6,7 @@ import TopNavMenuFixture, { type TopNavMenuItemSpec } from './fixtures/top-nav-m
 /**
  * Ported from Astryx's `hooks/useMenuHover.test.tsx`, new at v0.4.2 with #3121 —
  * all 21 of its `it` cases across five describes. Nothing dropped, nothing added.
- * **Still 21 at the v0.4.5 pin**, re-derived there; upstream's file has not
+ * **Still 21 at the 0.5.0 pin**, re-derived there; upstream's file has not
  * moved since it landed.
  *
  * **Exercised through `TopNavMenu`, a real consumer, not a synthetic harness.**

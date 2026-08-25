@@ -7,8 +7,8 @@ import CustomLink from './fixtures/custom-link.svelte';
 import AnotherLink from './fixtures/another-link.svelte';
 
 /**
- * Astryx's `Link/Link.test.tsx`, ported case for case — 36 upstream cases, 36
- * here. Upstream authors `<Link>…</Link>` markup inline in every case; Svelte
+ * Astryx's `Link/Link.test.tsx`, ported case for case — **36 upstream cases at
+ * the 0.5.0 pin, 36 here**. Upstream authors `<Link>…</Link>` markup inline in every case; Svelte
  * cannot write children in a test, so `link-harness.svelte` renders the `Link`
  * (optionally under a `LinkProvider`) with props and either text or an icon-only
  * child. `CustomLink`/`AnotherLink` are the two `LinkComponentType` helpers

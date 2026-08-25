@@ -15,7 +15,7 @@ import type { DateRange } from '$lib/utils/date-types.js';
 
 /**
  * Astryx's `DateRangeInput/DateRangeInput.test.tsx`, ported case for case —
- * **47** upstream cases at v0.4.5 (19 directly in `describe('DateRangeInput')`,
+ * **47** upstream cases at the 0.5.0 pin (19 directly in `describe('DateRangeInput')`,
  * 5 in `describe('hasClear')`, 2 in `describe('presets')`, 8 in
  * `describe('disabledMessage')`, 2 + a nested 3-case `describe('weekStartsOn')`
  * in `describe('DateRangeInput statusVariant forwarding')`, 4 in
@@ -50,7 +50,7 @@ import type { DateRange } from '$lib/utils/date-types.js';
  *   the clear glyph through the shared clear button (default look unchanged)`
  *   with its filter list updated. Both are upstream's amended text, verbatim.
  *
- * ## v0.4.5 (the count, re-derived at the current pin)
+ * ## The count, re-derived at the 0.5.0 pin
  *
  * This header read "**45** … at v0.4.1" and stayed true only until the pin
  * moved. 0.4.x added the two-case `describe('DateRangeInput range-span

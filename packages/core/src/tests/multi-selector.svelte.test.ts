@@ -9,22 +9,57 @@ import { defineTheme } from '$lib/theme/define-theme.js';
 import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 
 /**
- * Astryx's `MultiSelector/MultiSelector.test.tsx`, ported case for case — **102
- * upstream cases** across its sixteen describe blocks (the top-level
- * `MultiSelector` and its nested `grouped search`, `result announcements`,
- * `keyboard accessibility`, `announcements`, `disabledMessage` and `form
- * participation`, then the nine top-level `MultiSelector statusVariant
- * forwarding`, `MultiSelector empty-state theme target`, `MultiSelector clear
- * icon theme target`, `MultiSelector indicator (chevron) icon theme target`,
- * `MultiSelector list structure`, `MultiSelector search affordances`,
- * `MultiSelector disabled state theme target`, `MultiSelector dropdown option
- * theme target` and `MultiSelector popup theme target`), 101 here, 1 dropped and
- * named below.
+ * Astryx's `MultiSelector/MultiSelector.test.tsx`, ported case for case — **111
+ * upstream cases at the 0.5.0 pin** across its sixteen describe blocks (the
+ * top-level `MultiSelector` and its nested `grouped search`, `result
+ * announcements`, `keyboard accessibility`, `announcements`, `disabledMessage`
+ * and `form participation`, then the nine top-level `MultiSelector
+ * statusVariant forwarding`, `MultiSelector empty-state theme target`,
+ * `MultiSelector clear icon theme target`, `MultiSelector indicator (chevron)
+ * icon theme target`, `MultiSelector list structure`, `MultiSelector search
+ * affordances`, `MultiSelector disabled state theme target`, `MultiSelector
+ * dropdown option theme target` and `MultiSelector popup theme target`), **101
+ * here** — 1 dropped and 9 unported, all named below.
+ *
+ * Two titles differ and are **not** gaps: upstream's `announces the
+ * empty-results message when nothing matches`, `announces the all-selected
+ * message when select-all selects everything` and `announces the
+ * selection-cleared message when clearing` read an `fr` catalog override, and
+ * are here under the literal English their default catalog produces (`announces
+ * "No results found" …`, `announces "All selected" …`, `announces "Selection
+ * cleared" …`). Same cases, same assertions.
  *
  * DROPPED (1): `has displayName` — `MultiSelector.displayName` is a React
  * component surface with no Svelte counterpart, the same case
  * `collapsible.svelte.test.ts` and `more-menu.svelte.test.ts` drop. There is no
  * ref-callback case in the file, so nothing else is React-only.
+ *
+ * ## The 9 that are unported
+ *
+ * **Six arrived at 0.5.0**, all in the top-level `MultiSelector` block:
+ *
+ * - **Five `formatValue` cases** — `formats the count display with
+ *   formatValue`, `passes selected values and resolved labels to formatValue`,
+ *   `formats the labels display with formatValue`, `ignores formatValue in
+ *   badges display`, and `shows the placeholder rather than calling formatValue
+ *   when empty`. This is a **component** gap: `MultiSelector` here has no
+ *   `formatValue` prop at all, so none of the five has anything to call.
+ * - **`hides a standalone divider from the accessibility tree (#4994)`**, in
+ *   `MultiSelector list structure`. `Selector` and `AvatarGroup` carry the
+ *   sibling of this case, and both are unported there too.
+ *
+ * **Three predate 0.5.0** and have been missing across more than one pin, since
+ * this header stated its count against a stale tag:
+ *
+ * - `does not toggle the highlighted option on a composing Enter (IME)`.
+ *   Portable now — `multi-selector.svelte` calls `isImeKeyEvent` in its keydown
+ *   handler.
+ * - `speaks the result count from a provider catalog (plural)`, in `result
+ *   announcements`.
+ * - `prefers a provider override over the provider catalog`, in
+ *   `announcements`. With the one above it, these two are the provider-catalog
+ *   half of announcements — the part the three renamed cases above deliberately
+ *   read past by asserting the default English instead.
  *
  * Runs in the **client (real Chromium)** project, for the reason
  * `selector.svelte.test.ts` does: the popup opens through the native Popover API

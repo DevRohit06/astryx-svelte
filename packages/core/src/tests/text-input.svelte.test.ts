@@ -10,10 +10,10 @@ import TextInputGroupProbe from './fixtures/text-input-group-probe.svelte';
 
 /**
  * Astryx's `TextInput/TextInput.test.tsx`, ported case for case — **all 74 of
- * upstream's 74** at v0.4.5, plus one beyond upstream (`supports two-way
+ * upstream's 74** at the 0.5.0 pin, plus one beyond upstream (`supports two-way
  * bind:value`) that pins the `$bindable` decision. **75 `it` in the file.**
- * Re-derived at the 0.4.5 pin (the header last stated it at v0.4.1); upstream's
- * file has not moved since.
+ * Re-derived at the 0.5.0 pin (the header last stated it at v0.4.5); upstream's
+ * file has not moved since v0.4.1.
  * Sibling of `text-area.svelte.test.ts`, which solved the same translation
  * problems first; this file follows it.
  *

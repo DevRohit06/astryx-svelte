@@ -4,11 +4,47 @@ import { parseInline, parseMarkdown, type InlineNode } from '$lib/components/mar
 /**
  * Astryx's `Markdown/parser.test.ts`, ported case for case.
  *
- * Upstream has **107** `it` cases across four top-level describe blocks
- * (19 `parseInline`, 32 `parseMarkdown`, 37 `citation parsing`, 19
- * `link reference definitions`). All 107 are ported with their assertions
- * unchanged — `parser.ts` is a pure, framework-free module transcribed verbatim
- * from upstream, so there is nothing to translate. Nothing is dropped.
+ * The count is the contract: upstream declares **122** `it` cases at the
+ * **0.5.0** pin, across five top-level describe blocks (24 `parseInline`, 32
+ * `parseMarkdown`, 38 `citation parsing`, 19 `link reference definitions`, 9
+ * `sourceRanges`), and **107** are here. The 107 are ported with their
+ * assertions unchanged — `parser.ts` is a pure, framework-free module
+ * transcribed verbatim from upstream, so there is nothing to translate.
+ *
+ * **The 15 that are not here all arrived at 0.5.0**, and they are named rather
+ * than left as a bare shortfall:
+ *
+ * - **The whole 9-case `sourceRanges` describe** — the option off by default, a
+ *   block addressed by named start/end offsets, every top-level block carrying
+ *   the source it came from, offsets into the input rather than into the
+ *   link-definition-stripped text, absolute offsets under incremental parsing,
+ *   the blank lines an unterminated fence owns, a slice that re-parses to the
+ *   same block, a re-parse when the caller flips the option on existing state,
+ *   and a span across both halves of a list the incremental parser merged.
+ * - **Six URL-scheme XSS cases** — five in `parseInline` (`javascript:` links,
+ *   `javascript:` with mixed case and whitespace, `vbscript:` links,
+ *   `data:text/html` image `src`, and the paired allow-case for normal
+ *   http/https) and one in `citation parsing > autolink (gfm)`
+ *   (`<javascript:…>` angle-bracket autolinks).
+ *
+ * Both gaps are **module** gaps and not only test gaps, in different ways:
+ *
+ * - `parser.ts` here does not implement `sourceRanges` at all, so those 9 have
+ *   nothing to run against.
+ * - The 6 XSS cases assert at a layer this port does not guard at. Upstream
+ *   0.5.0 rejects the scheme **in the parser** — a `javascript:` link is never
+ *   minted as a link node, and `parseInline` returns the raw source as `text`.
+ *   This port still mints the node and neutralises it **at render**, through
+ *   `sanitizeUrl` in `markdown-render-plan.ts` (applied to link `href` and to
+ *   both image `src` sites in `markdown.svelte`), which drops the element and
+ *   renders the children as plain text instead. The rendered output is
+ *   therefore safe on both sides, but a case written against `parseInline`'s
+ *   return value cannot pass here, which is why porting these six is a
+ *   component change rather than a test change. Two divergences to settle when
+ *   it happens, both recorded here rather than fixed in a documentation pass:
+ *   the layer, and the scheme list — upstream blocks `data:text/html` only,
+ *   while `DANGEROUS_URL_PATTERN` here blocks every `data:` URL, so a
+ *   `data:image/*` inline image that renders upstream does not render here.
  *
  * No DOM is touched, so this is a plain `.test.ts` and runs in the **server**
  * project; a `.svelte.test.ts` would boot Chromium for nothing.

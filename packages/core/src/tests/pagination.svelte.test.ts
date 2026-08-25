@@ -5,11 +5,19 @@ import Pagination, { generatePageRange } from '$lib/components/pagination/pagina
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 
 /**
- * Astryx's `Pagination/Pagination.test.tsx`, ported case for case — 92 upstream
- * cases at 0.3.0 (9 in `describe('generatePageRange')` and 83 in
- * `describe('Pagination')` across its thirteen nested blocks, two of which nest
- * again inside `variant: input`), 92 here, none dropped. There is no
+ * Astryx's `Pagination/Pagination.test.tsx`, ported case for case — **93
+ * upstream cases at the 0.5.0 pin** (9 in `describe('generatePageRange')` and
+ * 84 in `describe('Pagination')` across its thirteen nested blocks, two of
+ * which nest again inside `variant: input`), **92 here**. There is no
  * ref-callback and no `displayName` case in the file, so nothing is React-only.
+ *
+ * **The one that is not here** is `renders the prev/next caret icons without an
+ * extra mirror wrapper span`, in `basic rendering`. It is not a standing drop —
+ * it asserts on rendered DOM shape and transcribes unchanged. It landed
+ * upstream between v0.3.0 and v0.4.1, so it has been missing across three pins;
+ * this header read "92 upstream cases at 0.3.0 … 92 here, none dropped", which
+ * was true only at 0.3.0 and hid the gap through both later re-pins. Upstream's
+ * file is unchanged between v0.4.1 and 0.5.0.
  *
  * 0.3.0 added 28 of those: the prev/next hover-tooltip case in `basic
  * rendering`, the 19 of `variant: input` (11 direct, 6 in `first/last buttons`,

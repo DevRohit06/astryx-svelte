@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * Astryx's `src/docPropReferences.test.ts`, ported case for case — **2 upstream
- * `it` declarations at v0.4.5, 2 here**, in upstream's order and under
+ * `it` declarations at the 0.5.0 pin, 2 here**, in upstream's order and under
  * upstream's titles. Nothing dropped, nothing added, and both assertions are
  * upstream's.
  *

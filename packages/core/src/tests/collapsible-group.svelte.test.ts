@@ -10,7 +10,7 @@ import CollapsibleNestedGroupProbe from './fixtures/collapsible-nested-group-pro
 /**
  * Astryx's `Collapsible/CollapsibleGroup.test.tsx`, ported case for case.
  *
- * Upstream has **34** `it` cases: 9 in a standalone `Collapsible` describe, then a
+ * Upstream has **34** `it` cases at the **0.5.0** pin: 9 in a standalone `Collapsible` describe, then a
  * `CollapsibleGroup` describe (1 direct + single/multiple/controlled/defaultValue/
  * standalone-vs-group/accessibility/dividers sub-blocks). All 34 are ported here;
  * none dropped.

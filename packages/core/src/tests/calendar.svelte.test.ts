@@ -13,8 +13,26 @@ import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import CalendarRtl from './fixtures/calendar-rtl-fixture.svelte';
 
 /**
- * Ported from Astryx's `Calendar/Calendar.test.tsx` — **all 73 of upstream's
- * 73** at v0.3.0, in upstream's order and with upstream's titles.
+ * Ported from Astryx's `Calendar/Calendar.test.tsx` — **73 of its 86 cases at
+ * the 0.5.0 pin**, in upstream's order and with upstream's titles.
+ *
+ * The 13 not here are three clusters. The whole `opens on a month inside the
+ * min/max window` describe (6) covers upstream's `getInitialFocusDate`, which
+ * has no counterpart here — `seedFocusDate()` is `focusDate → value → today`
+ * with no min/max clamp — so that block is unported *source*, not only unported
+ * tests. The other seven are pure test debt against ported source: five
+ * `minRangeSpan`/`maxRangeSpan` clamp cases (`caps the end date to
+ * maxRangeSpan once a start is picked`, `enforces minRangeSpan once a start is
+ * picked`, `clears the in-progress start when the anchor is clicked again`,
+ * `does not apply range-span constraints in single mode`, `keeps a controlled
+ * value that is wider than maxRangeSpan (selection-only)`) and the two that
+ * drive stand-alone short weekday names off the provider locale (`uses the
+ * provider locale for stand-alone short day names`, `rotates localized day names
+ * by numeric weekday index`).
+ *
+ * One title is deliberately reworded, not dropped: upstream's `wraps both nav
+ * chevrons in the navIcon wrapper` is here as `… in the RTL-mirroring navIcon
+ * wrapper`.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *

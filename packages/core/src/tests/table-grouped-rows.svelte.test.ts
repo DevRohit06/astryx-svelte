@@ -5,8 +5,20 @@ import { customGroupHeader } from './fixtures/table-plugin-slots.svelte';
 
 /**
  * Astryx's `Table/plugins/groupedRows/useTableGroupedRows.test.tsx`, ported case
- * for case — **10 of 10**, in upstream's order and under its titles. Nothing
- * dropped.
+ * for case — **10 of upstream's 12 declarations at the 0.5.0 pin**, in
+ * upstream's order and under its titles.
+ *
+ * **The 2 that are not here arrived at 0.5.0**, and both guard the same
+ * invariant — a column's `renderCell` must never be handed a group *header*
+ * row:
+ *
+ * - `never runs a column renderCell against a group header row`.
+ * - `renders the group headers without throwing`, declared inside a
+ *   `describe.each` over `['grouped first', true]` and `['rowStatus first',
+ *   false]`, so it runs twice — it pins the invariant whichever order the
+ *   consumer registers the `grouped` and `rowStatus` plugins in.
+ *
+ * (This header read "**10 of 10** … Nothing dropped", true at the v0.4.5 pin.)
  *
  * Upstream's `Harness`, `OrderedHarness` and `ChangingHarness` are one fixture,
  * `fixtures/table-grouped-rows-fixture.svelte`; they differ only in a prop and a

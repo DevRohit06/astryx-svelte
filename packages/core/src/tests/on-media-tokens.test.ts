@@ -9,7 +9,7 @@ import {
 
 /**
  * Astryx's `theme/onMediaTokens.test.ts`, ported case for case — **22 upstream
- * cases at v0.4.5, 22 here**, in upstream's order and under upstream's titles.
+ * cases at the 0.5.0 pin, 22 here**, in upstream's order and under upstream's titles.
  * Nothing dropped, nothing added.
  *
  * A **server** project file (`*.test.ts`), as upstream's is: the resolver is

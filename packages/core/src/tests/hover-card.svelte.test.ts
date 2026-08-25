@@ -9,15 +9,20 @@ import { TIMER_BUDGET } from './timer-budget.js';
 import { whenWired } from './trigger-wiring.js';
 
 /**
- * Ported from Astryx's `HoverCard/HoverCard.test.tsx` at **v0.4.5**, which
- * declares twenty-eight cases. Twenty-four of them live here. (The count is
- * re-derived at the 0.4.5 pin, where this header last read v0.4.2; upstream's
- * file has not moved since.)
+ * Ported from Astryx's `HoverCard/HoverCard.test.tsx` at the **0.5.0** pin,
+ * which declares **35** cases. **Twenty-four of them live here.**
  *
- * Three of the remaining four are server-side and live in `hover-card.test.ts`,
- * which runs in the node project against `svelte/server` — the repo rule that
- * decides the project by filename. The fourth is dropped; both facts are
- * accounted for in the `SSR / hydration` note at the bottom of this file.
+ * Three more are server-side and live in `hover-card.test.ts`, which runs in the
+ * node project against `svelte/server` — the repo rule that decides the project
+ * by filename — so 27 of upstream's 35 are ported between the two files. One of
+ * the remaining eight is dropped with its reason: the `SSR / hydration`
+ * mismatch case, accounted for in the note at the bottom of this file.
+ *
+ * The other **seven are upstream's whole `touch` describe**, new at 0.5.0 with
+ * #5248 (tap to open where there is no hover). Nothing here covers
+ * `touchTrigger`, tap-to-open, tap-to-dismiss or the focus a tap leaves behind.
+ * (This header read "declares twenty-eight cases … upstream's file has not moved
+ * since" at the v0.4.5 pin; #5248 moved it.)
  *
  * Upstream's `beforeAll`/`afterAll` block is gone, exactly as it is in
  * `tooltip.svelte.test.ts` and for the same reason: it exists only to give jsdom

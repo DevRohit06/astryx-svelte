@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { isImeKeyEvent } from '$lib/utils/ime.js';
 
 /**
- * Ported from Astryx's `utils/ime.test.ts`, all **4** cases at v0.4.5. Nothing
+ * Ported from Astryx's `utils/ime.test.ts`, all **4** cases at the 0.5.0 pin.
+ * Nothing
  * is dropped.
  *
  * Runs in the **server** project: a pure predicate over a structural shape, with

@@ -5,7 +5,7 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
  * Astryx's `SelectableCard/SelectableCard.test.tsx`, ported case for case —
- * **all 15 of upstream's 15** at v0.3.0. Upstream has no `displayName` and no
+ * **all 15 of upstream's 15** at the 0.5.0 pin. Upstream has no `displayName` and no
  * `ref` case, so nothing is dropped.
  *
  * The 4 newest are 0.3.0's Enter-toggles group. The last 2 are upstream's nested

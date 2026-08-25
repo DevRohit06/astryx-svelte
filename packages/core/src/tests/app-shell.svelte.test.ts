@@ -7,9 +7,9 @@ import AppShellI18n from './fixtures/app-shell-i18n.svelte';
 import AppShellMobileProbe from './fixtures/app-shell-mobile-probe.svelte';
 
 /**
- * Ported from Astryx's `AppShell/AppShell.test.tsx`, all **48** cases at
- * v0.4.5. Nothing is dropped. (Re-derived at the 0.4.5 pin, where this header
- * last read v0.4.1: upstream's file has not moved since, so 48 still holds.)
+ * Ported from Astryx's `AppShell/AppShell.test.tsx`, all **48** cases at the
+ * 0.5.0 pin. Nothing is dropped. (Re-derived at the 0.5.0 pin, where this header
+ * last read v0.4.5: upstream's file has not moved since, so 48 still holds.)
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *

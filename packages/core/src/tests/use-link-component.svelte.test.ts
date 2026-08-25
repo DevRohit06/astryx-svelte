@@ -9,7 +9,8 @@ import ToBasedRouterLink from './fixtures/to-based-router-link.svelte';
 import SpyLink from './fixtures/spy-link.svelte';
 
 /**
- * Ported from Astryx's `Link/useLinkComponent.test.tsx`, all 11 cases.
+ * Ported from Astryx's `Link/useLinkComponent.test.tsx`, all 11 cases at the
+ * 0.5.0 pin.
  *
  * Upstream's `useLinkComponent` returns a renderable component; ours follows the
  * `useSize` split and returns a *resolver* `(as?) => { component, isNative }`,

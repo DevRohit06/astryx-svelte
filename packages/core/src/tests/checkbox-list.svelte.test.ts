@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-svelte';
 import CheckboxListFixture from './fixtures/checkbox-list-fixture.svelte';
 
 /**
- * Astryx's `CheckboxList/CheckboxList.test.tsx` at v0.3.0, ported case for case
+ * Astryx's `CheckboxList/CheckboxList.test.tsx` at the 0.5.0 pin, ported case for case
  * — **51 upstream cases, 51 here**. Nothing dropped, nothing added.
  *
  * By block: `CheckboxList` 25 (20, plus the nested five-case

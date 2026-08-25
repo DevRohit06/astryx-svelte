@@ -9,15 +9,21 @@ import ContextMenuFixture from './fixtures/context-menu-fixture.svelte';
  * local total, and why they differ — because a header naming only an upstream
  * count goes stale on every upstream release by construction:
  *
- * - upstream at **0.3.0: 41** cases
+ * - upstream at the **0.5.0 pin: 43** cases
  * - here: **32**
  *
  * The 32nd is 0.3.0's `closes the menu when Tab is pressed inside it`, ported
  * with the component change it covers (the APG menus-5 fix).
  *
- * The remaining **9** are a pre-existing coverage gap, NOT a deliberate drop,
- * and they are counted in port/todo.md's batch-17c coverage-gap list (`ContextMenu
- * 40→31`). Batch 18 deliberately closes only what its own changes need.
+ * The remaining **11** are a pre-existing coverage gap, NOT a deliberate drop:
+ * the whole `ContextMenu destructive variant` case (1), the whole `ContextMenu
+ * selectable items` describe (2), the whole seven-case `ContextMenu keyboard
+ * access for menuitemradio/menuitemcheckbox (#3829)` describe, and the
+ * compound-mode `renders the menu divider surface through the ContextMenu alias`
+ * case. Every subject is ported — the checkbox/radio trio, `ContextMenuDivider`
+ * and the submenu are all exported — so nothing here is blocked. (The header
+ * read "upstream at 0.3.0: 41 … the remaining 9", and cited a
+ * `port/todo.md` batch-17c list that does not exist.)
  *
  * A previous version of this header said "31 of its 33 cases" and explained a
  * 2-case DROP as blocked on the deferred `DropdownMenu` selectable trio, which

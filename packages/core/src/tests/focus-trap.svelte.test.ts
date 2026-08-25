@@ -7,7 +7,16 @@ import RestoreFixture from './fixtures/restore-fixture.svelte';
 import Trap from './fixtures/focus-trap-fixture.svelte';
 
 /**
- * Ported from Astryx's `hooks/useFocusTrap.test.tsx`, all sixteen cases.
+ * Ported from Astryx's `hooks/useFocusTrap.test.tsx` — **17 of its 18 cases at
+ * the 0.5.0 pin**.
+ *
+ * Unported: `useFocusTrap tabbable model (infra-8)` → `leaves Tab alone when
+ * focus is outside a trap with no tabbable controls`, the negative half of
+ * 0.5.0's no-tabbable-controls pair (Tab from outside such a trap must go
+ * unhandled). Its positive twin is here, relocated into a
+ * `useFocusTrap with no tabbable controls` describe that has no upstream
+ * counterpart. (The header read "all sixteen cases" while this file ran 17 and
+ * upstream held 18 — wrong on both sides.)
  *
  * `render`/`rerender` map straight across; `fireEvent.keyDown(document, …)`
  * becomes a dispatched `KeyboardEvent`, and `toHaveFocus()` is the same matcher.

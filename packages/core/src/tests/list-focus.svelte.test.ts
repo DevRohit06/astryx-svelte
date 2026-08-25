@@ -9,8 +9,15 @@ import NestedMenuWithInnerProbe from './fixtures/list-focus-nested-menu-inner-pr
 import Toolbar from './fixtures/list-focus-toolbar.svelte';
 
 /**
- * Ported from Astryx's `hooks/useListFocus.test.tsx` — **all 31 of upstream's
- * 31** at v0.3.0.
+ * Ported from Astryx's `hooks/useListFocus.test.tsx` — **31 of its 34 cases at
+ * the 0.5.0 pin**.
+ *
+ * The 3 not here are the whole `useListFocus Escape` describe: `leaves Escape to
+ * the host when no onEscape is supplied`, `consumes Escape and runs onEscape
+ * when one is supplied`, `still consumes arrow keys with no onEscape (page-scroll
+ * suppression)`. They are portable — `use-list-focus` declares and calls
+ * `onEscape` — so this is coverage debt. (The header read "all 31 of upstream's
+ * 31 at v0.3.0"; the version bumps invalidated it.)
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *

@@ -11,8 +11,8 @@ import FormLayoutLiveDirection from './fixtures/form-layout-live-direction.svelt
 import IconSlotProbe from './fixtures/icon-slot-probe.svelte';
 
 /**
- * Astryx's `Field/Field.test.tsx` (33 cases at v0.3.0) and
- * `Field/FieldLabel.test.tsx` (**17** at v0.3.0), ported together because the
+ * Astryx's `Field/Field.test.tsx` (33 cases at the 0.5.0 pin) and
+ * `Field/FieldLabel.test.tsx` (**17** at the 0.5.0 pin), ported together because the
  * second is entirely about markup the first renders through the former. **49 of
  * upstream's 50 here**, plus one addition named below; the one absence is
  * `Field.test.tsx`'s `forwards ref correctly`, explained under "Not ported".

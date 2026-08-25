@@ -10,7 +10,27 @@ import NumberInputGroupProbe from './fixtures/number-input-group-probe.svelte';
 
 /**
  * Astryx's `NumberInput/NumberInput.test.tsx`, ported case for case. Upstream at
- * 0.4.1 has **113** `it(` cases and **113** are here — nothing is dropped.
+ * the **0.5.0** pin declares **117** blocks producing **122 cases** — 116 `it(`s
+ * plus one `it.each` with six rows — and **113** are here.
+ *
+ * **The 4 blocks (9 cases) that are not here:**
+ *
+ * - **`does not step or commit on a composing keydown (IME)`**, added at
+ *   v0.4.5. This one has been missing across two re-pins, because the header
+ *   below stated its count against 0.4.1 and so never moved. It is portable
+ *   now: `number-input.svelte` calls `isImeKeyEvent` in its keydown handler.
+ * - **The whole 3-block `NumberInput stepper padding coupling` describe, added
+ *   at 0.5.0** — `reads its padding from the public number-input padding
+ *   tokens`, the six-row `it.each` `a themed padding reaches the steppers in
+ *   every spelling` (the `padding` shorthand in one and two values, and the
+ *   per-edge spellings), and `carries a themed border radius to the stepper
+ *   column corners`. All three assert that the stepper column reads the *public*
+ *   `--astryx-number-input-padding*` custom properties rather than a private
+ *   copy, so porting them means checking that this port's stepper styles are
+ *   keyed on the same public tokens.
+ *
+ * (This header read "Upstream at 0.4.1 has **113** `it(` cases and **113** are
+ * here — nothing is dropped", true only at 0.4.1.)
  *
  * The 0.4.1 rewrite (#4896) turned the control into a *text-backed spinbutton*:
  * `type="text"` + `role="spinbutton"` + `inputmode`, with `aria-valuemin`/

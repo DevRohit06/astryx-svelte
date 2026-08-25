@@ -5,12 +5,31 @@ import Blockquote from '$lib/components/blockquote/blockquote.svelte';
 import TextChildProbe from './fixtures/text-child-probe.svelte';
 
 /**
- * Astryx's `Blockquote/Blockquote.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `Blockquote/Blockquote.test.tsx` at the **0.5.0** pin, ported case
+ * for case.
  *
- * The count is the contract: upstream declares **8** `it` blocks at this pin,
- * and **8** are here. **Nothing is dropped.** Upstream has no `displayName`
- * case, no snapshot and no no-JSX construction form, so none of those standing
- * drops applies.
+ * The count is the contract: upstream declares **11** blocks producing **12
+ * cases** at this pin — 10 `it`s plus one `it.each` with two rows — and **8**
+ * are here. Upstream has no `displayName` case, no snapshot and no no-JSX
+ * construction form, so none of those standing drops applies.
+ *
+ * **The 3 blocks (4 cases) that are not here all arrived at 0.5.0**:
+ *
+ * - **`never wraps the attribution in a landmark element`** — the guard that
+ *   the `cite` attribution is not emitted as a `<section>`/`<aside>`/etc., so
+ *   it adds no landmark to the accessibility tree.
+ * - **The two-row `it.each`, `renders no cite element when cite is %s`** —
+ *   `false` and the empty string, i.e. the `cond && <node>` shapes that must
+ *   not produce an empty `<cite>`.
+ * - **`renders on the server`** — a `renderToString` case. By this repo's
+ *   filename rule it cannot live in this file at all: a server render belongs
+ *   in the node project, so porting it means a `blockquote.test.ts` beside this
+ *   one, the arrangement `media-query.test.ts` and `hover-card.test.ts` already
+ *   use.
+ *
+ * (This header read "upstream declares **8** `it` blocks at this pin, and **8**
+ * are here. **Nothing is dropped.**" at the v0.4.5 pin, where 8 was the whole
+ * suite and there was no `it.each`.)
  *
  * Two things are restated, and neither is a dropped case:
  *

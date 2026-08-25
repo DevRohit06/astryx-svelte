@@ -49,11 +49,31 @@ const styles = stylex.create({
 	}
 });
 
+// The ratio compiles to a CSS variable + a class-level declaration
+// (`aspect-ratio: var(--x)`) instead of a raw inline style, so consumer
+// overrides — `xstyle` rules, including ones inside @media/@container
+// queries — can still win. A raw inline `aspect-ratio` would beat any class
+// (same rationale as Grid's dynamic track values). Non-StyleX consumers
+// don't need a dedicated hook: the compiled declaration sits in the
+// `astryx-base` cascade layer, so any unlayered consumer rule wins
+// regardless of specificity.
+const dynamicStyles = stylex.create({
+	ratio: (ratio: number) => ({
+		aspectRatio: ratio
+	})
+});
+
 export function aspectRatioContainerAttrs(
 	shape: AspectRatioShape,
+	ratio: number,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
-	return sx(styles.container, shape === 'ellipse' && styles.ellipse, xstyle);
+	return sx(
+		styles.container,
+		dynamicStyles.ratio(ratio),
+		shape === 'ellipse' && styles.ellipse,
+		xstyle
+	);
 }
 
 export function aspectRatioChildAttrs(fit: AspectRatioFit | undefined): SvelteStyleAttrs {

@@ -10,7 +10,7 @@ import ColumnSettingsTable from './fixtures/table-column-settings-fixture.svelte
 
 /**
  * Astryx's `Table/plugins/columnSettings/useTableColumnSettings.test.tsx`,
- * ported case for case — **6 upstream cases** (4 `useTableColumnSettings`, 2
+ * ported case for case — **6 upstream cases at the 0.5.0 pin** (4 `useTableColumnSettings`, 2
  * `integration with Table`), **6 here**. Nothing dropped, nothing added.
  *
  * Two harness translations, both forced and both documented at their fixture:

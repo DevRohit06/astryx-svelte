@@ -45,7 +45,7 @@ export default {
 		},
 		{
 			name: 'layout',
-			type: "'stacked' | 'inline'",
+			type: "'inline' | 'stacked'",
 			description:
 				"How the label and description sit together. 'stacked' puts the description on its own line; 'inline' keeps both on one line so the row fits a fixed-height host. Inside a Selector trigger the trigger's padding sizes itself to whichever layout you pick, so both land on the 4px rhythm; an InputGroup pins the row height and forces 'inline'.",
 			default: "'stacked'"

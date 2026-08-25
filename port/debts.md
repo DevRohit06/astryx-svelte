@@ -448,7 +448,7 @@ Every icon slot here is already a `Snippet`, nothing to dispatch on (Svelte-obvi
 - **kind:** api-divergence
 - **retires:** never
 
-Upstream slices `Children.toArray(children)` into a visible subset and a hidden measurement copy; a Svelte snippet is one opaque unit that can be rendered twice but never _sliced_, so the visible row is data-driven (exactly the shape `useOverflow`'s docstring anticipates). `overflowRenderer` is a `Snippet<[OverflowItem<T>[]]>` and `OverflowItem<T>` carries `{ value, index }` where upstream's carries `{ child: ReactElement, index }`. Rendered DOM, classes (byte-identical, oracle-clean) and fit behaviour are otherwise identical. Same forced-snippet-translation family as `Popover`/`Tooltip` above. This resolves the "**`Children.toArray` rendered twice**" blocking design decision (§Blocking design decisions) in favour of candidate (a) — the single hidden measurement container is kept, not given up. **Test suite ported** in `src/tests/overflow-list.svelte.test.ts` (14 of upstream's 15 `it` cases; `exposes a displayName` dropped — Svelte has no such surface; `forwards a ref` ported as an attachment counterpart; three `textContent`/`toBeEmptyDOMElement` cases restated to tolerate Svelte's `{#if}`/`{#each}` anchor comments + whitespace, which are `display:none` in the flex container). Runs in the **client** (Chromium) project with upstream's exact `offsetWidth`/`ResizeObserver` monkeypatch — the `server` node project has no DOM to mount into
+Upstream slices `Children.toArray(children)` into a visible subset and a hidden measurement copy; a Svelte snippet is one opaque unit that can be rendered twice but never _sliced_, so the visible row is data-driven (exactly the shape `useOverflow`'s docstring anticipates). `overflowRenderer` is a `Snippet<[OverflowItem<T>[]]>` and `OverflowItem<T>` carries `{ value, index }` where upstream's carries `{ child: ReactElement, index }`. Rendered DOM, classes (byte-identical, oracle-clean) and fit behaviour are otherwise identical. Same forced-snippet-translation family as `Popover`/`Tooltip` above. This resolves the "**`Children.toArray` rendered twice**" blocking design decision (§Blocking design decisions) in favour of candidate (a) — the single hidden measurement container is kept, not given up. **Test suite ported** in `src/tests/overflow-list.svelte.test.ts`, whose own header carries the case contract against the current pin (`exposes a displayName` dropped — Svelte has no such surface; `forwards a ref` ported as an attachment counterpart; three `textContent`/`toBeEmptyDOMElement` cases restated to tolerate Svelte's `{#if}`/`{#each}` anchor comments + whitespace, which are `display:none` in the flex container). Runs in the **client** (Chromium) project with upstream's exact `offsetWidth`/`ResizeObserver` monkeypatch — the `server` node project has no DOM to mount into
 
 ### `Switch` omits an upstream leading-whitespace text node
 
@@ -782,7 +782,6 @@ Created and attached but never read upstream. There is no `bind:this` to justify
 - **retires:** never
 
 The two announcement strings (`"<alt>, N of M"` / `"Image N of M"`) are hard-coded English, unlike the four button/dialog labels which do go through `useTranslator`
-
 
 ### `Lightbox` renders nothing at all when `media` is empty; pan is unclamped and zoom is a toggle
 
@@ -1336,12 +1335,51 @@ module serves both hosts here, so `bottomSheetDialogAttrs` takes the host-specif
 class oracle proves the emitted classes are; recorded only because the two hosts' conditions now sit
 apart from the key they select
 
+### `useAutoMediaMode` re-measures on its tracked signals, not on every render
+
+- **units:** useAutoMediaMode, MediaTheme
+- **kind:** deliberate-divergence
+- **retires:** never
+
+Upstream's measurement effect carries **no dependency array on purpose** — its own comment says a
+surface's colour is a painted value that no dependency could name, so it re-runs on every React
+render and skips its expensive half through a `lastRef` memo when neither the backdrop nor the
+theme moved. Svelte has no per-render hook: an effect re-runs only when a signal it read changed.
+Ours tracks the three things that are signals — the bound element, `mode === 'auto'`, and
+`useTheme().tokens` — and keeps the same memo, so every case upstream's array-free effect exists to
+catch is still caught **except one**: an ancestor's painted background changing while the theme
+stays put (an inline `style` written by a parent, a class swap). `mode="auto"` then keeps its
+previous answer until the theme, the mode or the element changes. The alternative — a
+`MutationObserver` over the ancestor chain's `style`/`class` — is machinery upstream does not have
+and would still miss a distant opaque ancestor, so the gap is recorded rather than invented around.
+Upstream's own regression case for this (`MediaTheme.dom.test.tsx`, "re-measures when the surface
+changes without the theme changing") is in the unported client suite
+
+### `BaseTypeahead`'s grouped dropdown numbers options by render order, not by `results` order
+
+- **units:** BaseTypeahead
+- **kind:** upstream-lag
+- **retires:** when upstream fixes it
+
+Replicated, not fixed. Option grouping arrived at 0.5.0: the dropdown renders
+`groupItems(results, {ungroupedFirst: true})` and numbers the rows with a counter that walks
+**render** order (`flatIndex++` inside upstream's render IIFE), while the keyboard model still
+indexes `results` — `ArrowDown` clamps to `results.length`, and `Enter` selects
+`results[highlightedIndex]`. Grouping reorders: ungrouped rows come first and each named
+group's rows are gathered together, so as soon as any item carries an `auxiliaryData.group`
+and the source's order interleaves groups, flat row _n_ is no longer `results[n]` — the
+highlighted row and the row `Enter` commits come apart, and `aria-activedescendant` points at
+the row the arrow keys did not move to. Ungrouped results are unaffected (`groupItems` returns
+one `heading: null` group holding `results` verbatim, so the two orders coincide), which is
+every call site that predates 0.5.0. Upstream shipped the feature with no test for it — the
+0.5.0 suite delta is two `Tab`-dismissal cases and nothing about groups — so nothing upstream
+catches this either
+
 ## Retired
 
 Closed, kept as the record. **Nothing below counts as an open debt** — `scripts/status.mjs` stops
 tallying at this heading, and `astryx-parity` must not find a retired entry when it greps for
 "is this drift already known?", or it would skip live drift.
-
 
 ### Batch 5's doc omissions — two of the four closed at 0.4.1
 
@@ -1365,6 +1403,7 @@ Real props (present in `LightboxProps` and the shipped `.d.ts`) but are absent f
 
 **Closed at 0.5.0.** Both are documented in upstream's `Lightbox.doc.mjs`, and our re-emitted
 copy carries them.
+
 ### `{...rest}` position now matches upstream everywhere it is observable
 
 - **units:** Breadcrumbs, Heading, Lightbox, SideNav, TopNav, Collapsible, MobileNav, ChatComposerDrawer, CodeBlock, Text
@@ -1400,6 +1439,63 @@ open, and the spread's position stops mattering.
 **The rule this earns:** a debt that states a count is as rotten as a test header that states one.
 This one had been carried across three batches on an estimate nobody re-measured, and it named
 four components that were never the problem while missing all five that were.
+
+### `DateInput`'s touch geometry cannot match upstream's class names — `defineConsts` hashes the file path
+
+- **units:** date-input (tokens.stylex.ts, wheel.stylex.ts, month-scroller.stylex.ts, month-year-wheels.stylex.ts, touch-date-field.stylex.ts)
+- **kind:** deliberate-divergence
+- **retires:** never — unless upstream stops using `defineConsts`, or both oracles learn to blind a const hash the way they already blind a marker hash
+
+`DateInput/tokens.stylex.ts` is the first `stylex.defineConsts` in either tree, and it breaks the
+property this whole port is built on: _authoring against the same token references makes the
+compiler emit byte-identical CSS_. That holds for `defineVars` because upstream's variable keys
+are `--`-prefixed literals — `resolveVarGroupKey` short-circuits on those and returns
+`var(--spacing-2)` whatever file it was called from. `defineConsts` has the same escape hatch and
+upstream does **not** take it: its keys are `daySize`, `paneBlockSize`, … so
+`@stylexjs/babel-plugin` names each one
+
+```
+constKey = 'x' + hash(`${packageName}:${pathFromPackageRoot}//${exportName}.${key}`)
+```
+
+A consumer of a `defineConsts` member compiles to `var(--<constKey>)` — the plugin never reads the
+defining file under `unstable_moduleResolution: {type: 'commonJS'}` (only
+`experimental_crossFileParsing` does) — and the atomic class is hashed from _that string_.
+`processStylexRules` substitutes the literal back in at sheet-generation time, so the emitted
+**declaration** is right; the **class name** is a hash of our package name and our file path.
+
+Ours is `@astryx-svelte/core:src/lib/components/date-input/tokens.stylex.ts`; upstream's is
+`@astryxdesign/core:src/DateInput/tokens.stylex.ts`. Neither half can be made equal — the package
+name is ours by definition — so eleven classes differ **by name only**, verified declaration for
+declaration against `dist/astryx.css`:
+
+| upstream   | ours       | declaration                                 |
+| ---------- | ---------- | ------------------------------------------- |
+| `xm8gem`   | `x1jwe3ac` | `height:calc(6 * 44px)`                     |
+| `xygd9yz`  | `x5rzc5i`  | `min-height:44px` (doubled selector)        |
+| `xngvp7v`  | `x1pmxr54` | `min-width:44px` (doubled selector)         |
+| `x1uameg1` | `xho1bbs`  | `padding-block:calc((6 * 44px - 28px) / 2)` |
+| `xy8nx85`  | `x1h0w9py` | `grid-template-rows:repeat(6, 1fr)`         |
+| `x6hpsvf`  | `x3qkrzd`  | `height:28px`                               |
+| `x1y2t9nm` | `x178ksff` | `width:calc(44px - 8px)`                    |
+| `xw1wawg`  | `x1dfrq2f` | `height:calc(44px - 8px)`                   |
+| `x1tutbut` | `x1ywprd`  | `min-width:44px`                            |
+| `x1dg37ty` | `x5ly87c`  | `min-height:44px`                           |
+| `x7rbydg`  | `x184n3b7` | `top:calc(50% - (28px / 2))`                |
+
+The other **119** classes the four touch modules emit match upstream's by name, byte for byte.
+
+This is the same shape as `defineMarker`, whose class is also path-derived and which the class
+oracle already diffs as marker-normalised CSS while the CSS oracle blinds its hash. The two
+oracles need the same treatment here, and until they have it the eleven rows above read as
+missing classes rather than as renamed ones.
+
+**Rejected alternative, recorded so it is not re-proposed:** a nested `package.json` naming the
+directory `@astryxdesign/core`, with the tokens module at `src/DateInput/tokens.stylex.ts` inside
+it, _would_ reproduce upstream's canonical path exactly and close all eleven. It puts another
+package's name in our tree to steer a hash, it would be copied into `dist/` by `svelte-package`,
+and it encodes upstream's directory layout in a place no reader would think to look — a worse
+thing to carry than a named debt.
 
 ### `TypeRole` takes no `weight` — retired
 

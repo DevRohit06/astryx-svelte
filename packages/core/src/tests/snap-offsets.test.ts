@@ -1,6 +1,6 @@
 /**
- * Ported from Astryx's `BottomSheet/snapOffsets.test.ts`, all **34** cases at
- * v0.4.5. Nothing is dropped.
+ * Ported from Astryx's `BottomSheet/snapOffsets.test.ts`, all **34** cases at the
+ * 0.5.0 pin. Nothing is dropped.
  *
  * Runs in the **server** project: pure geometry, no DOM — which is the whole
  * point of `snap-offsets.ts` being a module of its own.

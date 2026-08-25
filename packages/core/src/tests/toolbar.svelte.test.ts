@@ -5,7 +5,7 @@ import { createAttachmentKey } from 'svelte/attachments';
 import ToolbarFixture from './fixtures/toolbar-fixture.svelte';
 
 /**
- * Ported from Astryx's `Toolbar/Toolbar.test.tsx`, all 25 cases.
+ * Ported from Astryx's `Toolbar/Toolbar.test.tsx`, all 25 cases at the 0.5.0 pin.
  *
  * Every case goes through `toolbar-fixture.svelte` — the three content slots are
  * snippets here, and a snippet can only be authored in a template.

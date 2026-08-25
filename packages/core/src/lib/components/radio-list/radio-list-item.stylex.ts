@@ -1,6 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
-import { colorVars, spacingVars } from '../../styles/tokens.stylex.js';
 import { indicatorScope } from '../indicator/indicator.markers.stylex.js';
 import type { RadioListSize } from './radio-list-context.svelte.js';
 
@@ -9,19 +8,17 @@ import type { RadioListSize } from './radio-list-context.svelte.js';
  *
  * **This component no longer draws a radio.** Upstream 0.4.0 moved the circle,
  * its inner dot and their two size ramps into `RadioIndicator`, so what is left
- * is the row, the wrapper square, the transparent `<input type="radio">`, the
- * `display: contents` indicator slot and the label. The hover tints still
- * resolve through an ancestor marker so a parent container's hover never bleeds
- * in — now the shared `indicatorScope` rather than a `radioScope` of its own,
- * since the tinted element belongs to the theme's indicator. The item container
- * carries the marker only when enabled.
+ * is the wrapper square, the transparent `<input type="radio">` and the
+ * `display: contents` indicator slot. The hover tints still resolve through an
+ * ancestor marker so a parent container's hover never bleeds in — the shared
+ * `indicatorScope` rather than a `radioScope` of its own, since the tinted
+ * element belongs to the theme's indicator.
+ *
+ * Upstream 0.5.0 made the whole row a click target: the row's own flex
+ * container is gone and `Item` **is** the row, so the marker and the
+ * appearance reset ride `Item`'s `xstyle` rather than a wrapper of their own.
  */
 const styles = stylex.create({
-	container: {
-		display: 'flex',
-		alignItems: 'center',
-		gap: spacingVars['--spacing-2']
-	},
 	radioWrapper: {
 		position: 'relative',
 		display: 'flex',
@@ -69,10 +66,6 @@ const styles = stylex.create({
 	// layout relationship it already had with the wrapper.
 	indicatorSlot: {
 		display: 'contents'
-	},
-	labelDisabled: {
-		color: colorVars['--color-text-disabled'],
-		cursor: 'default'
 	}
 });
 
@@ -86,25 +79,38 @@ const wrapperSizeStyles = stylex.create({
 // the circle and its inner dot. This component no longer draws a radio — it
 // renders whichever indicator the theme resolves for the `radio` name.
 
-const embeddedStyles = stylex.create({
+const rowStyles = stylex.create({
+	// The row's default appearance is a bare surface: no density padding, no
+	// radius, and no full-row background — only the indicator tints on hover
+	// (via `indicatorScope`). Item paints padding/radius/hover as an interactive
+	// row, so this neutralizes them at the component level. A theme's
+	// `radio-list-item` overrides still win: they land in `@layer astryx-theme`,
+	// above the component's base StyleX layer, so themes opt back into row
+	// padding/radius/hover/selected styling. `minWidth: 0` preserves label
+	// truncation now that the Item is the row's flex child.
 	root: {
 		paddingBlock: 0,
 		paddingInline: 0,
 		borderRadius: 0,
-		flex: 1,
-		minWidth: 0
+		minWidth: 0,
+		// Suppress Item's interactive hover/press background so the resting and
+		// hovered row look identical by default (a theme can restyle either).
+		backgroundColor: 'transparent'
 	}
 });
 
-/** Passed to the nested `Item` as `xstyle` so it fills the row flush. */
-export const radioEmbeddedRoot: StyleArg = embeddedStyles.root;
-
-/** The item container, marked (for hover scoping) only when enabled. */
-export function radioListItemContainerAttrs(
-	isDisabled: boolean,
-	xstyle: StyleArg
-): SvelteStyleAttrs {
-	return sx(styles.container, !isDisabled && indicatorScope, xstyle);
+/**
+ * The `xstyle` array the row hands to `Item`.
+ *
+ * Hover reaches the radio visual through the ancestor marker rather than props,
+ * so hovering the row tints the control. The marker rides the painting row
+ * element (Item), the same element that carries the theme target, so a theme's
+ * hover styling stays in step with the tint. `rowStyles.root` restores the bare
+ * default look, applied after Item's own base styles so it wins within the base
+ * layer.
+ */
+export function radioListItemRowXstyle(isDisabled: boolean, xstyle: StyleArg): StyleArg {
+	return [!isDisabled && indicatorScope, rowStyles.root, xstyle];
 }
 
 /**
@@ -135,9 +141,4 @@ export function radioInputAttrs(size: RadioListSize, isDisabled: boolean): Svelt
  */
 export function radioIndicatorSlotAttrs(): SvelteStyleAttrs {
 	return sx(styles.indicatorSlot);
-}
-
-/** The `<label>`, dimmed when disabled. */
-export function radioLabelAttrs(isDisabled: boolean): SvelteStyleAttrs {
-	return sx(isDisabled && styles.labelDisabled);
 }

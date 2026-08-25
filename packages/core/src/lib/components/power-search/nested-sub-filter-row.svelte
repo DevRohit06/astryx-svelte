@@ -6,6 +6,7 @@
 		config: InternalConfig;
 		subFilter: EditablePartialFilter;
 		onChange: (subFilter: EditablePartialFilter) => void;
+		maxMenuItems?: number;
 		isReadOnly: boolean;
 	}
 </script>
@@ -33,7 +34,8 @@
 	 * through a keyed bound snippet whose identity is stable by construction.
 	 */
 
-	const { config, subFilter, onChange, isReadOnly }: NestedSubFilterRowProps = $props();
+	const { config, subFilter, onChange, maxMenuItems, isReadOnly }: NestedSubFilterRowProps =
+		$props();
 
 	const t = useTranslator();
 
@@ -119,6 +121,7 @@
 				filterValue={subFilter.value}
 				onChange={handleValueChange}
 				{config}
+				{maxMenuItems}
 				isDisabled={isReadOnly}
 			/>
 		</div>

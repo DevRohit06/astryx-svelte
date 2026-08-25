@@ -7,8 +7,8 @@ import { __resetLiveRegionsForTest, type AnnouncePoliteness } from '$lib/hooks/u
 import type { ToastOptions } from '$lib/components/toast/types.js';
 
 /**
- * Ported from Astryx's `Toast/ToastViewport.test.tsx` at v0.3.0 — **13 upstream
- * cases, 13 here**, in order. Nothing is dropped. Two cases are restated, each
+ * Ported from Astryx's `Toast/ToastViewport.test.tsx` at the 0.5.0 pin — **13
+ * upstream cases, 13 here**, in order. Nothing is dropped. Two cases are restated, each
  * for the reason given above it: "pauses the auto-hide timer while the window is
  * blurred", and (new in 0.3.0) "announces exactly once at dispatch".
  *

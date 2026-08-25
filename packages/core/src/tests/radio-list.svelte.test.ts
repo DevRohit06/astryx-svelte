@@ -5,10 +5,25 @@ import RadioListProbe from './fixtures/radio-list-probe.svelte';
 import { forcedColorsCssIn } from './forced-colors.js';
 
 /**
- * Astryx's `RadioList/RadioList.test.tsx`, ported case for case — 44 upstream
- * cases at 0.3.0 (26 `RadioList`, 5 `focus management`, 8 `disabledMessage`, 3
- * `form participation`, 1 `RadioListItem rest forwarding`, 1 `forced colors`),
- * 44 here.
+ * Astryx's `RadioList/RadioList.test.tsx`, ported case for case — **49 upstream
+ * cases at the 0.5.0 pin**, **44 here**. The 44 are the whole of upstream's
+ * suite as it stood from 0.3.0 through v0.4.5 (26 `RadioList`, 5 `focus
+ * management`, 8 `disabledMessage`, 3 `form participation`, 1 `RadioListItem
+ * rest forwarding`, 1 `forced colors`).
+ *
+ * **The 5 that are not here all arrived at 0.5.0:**
+ *
+ * - **The whole 4-case `radio-list-item theme target` block** — `renders
+ *   astryx-radio-list-item, with its size, on every row`, `carries the selected
+ *   and disabled states a theme keys on`, `rides the painting row element
+ *   (astryx-item), not a bare layout wrapper`, and `keeps the bare default row
+ *   appearance: zeroed padding/radius, no default background`.
+ * - **`calls onChange when clicking the description`**, in the top-level
+ *   `RadioList` block — the description text must be part of the row's click
+ *   target, not inert beside it.
+ *
+ * (This header read "44 upstream cases at 0.3.0 … 44 here", true through
+ * v0.4.5.)
  *
  * Because `<RadioList>` takes its `RadioListItem` children as a snippet, every
  * case renders through `radio-list-probe.svelte`, which describes the items as an

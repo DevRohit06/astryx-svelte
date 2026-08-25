@@ -8,6 +8,8 @@
 		onChange: (value: FilterValue, shouldSave?: boolean) => void;
 		onEnter?: () => void;
 		config: InternalConfig;
+		/** Max suggestions in string and entity value typeaheads. */
+		maxMenuItems?: number;
 		isDisabled?: boolean;
 		timezoneID?: string;
 	}
@@ -66,15 +68,16 @@
 		onChange,
 		onEnter,
 		config: _config,
+		maxMenuItems,
 		isDisabled,
 		timezoneID: _timezoneID
 	}: PowerSearchValueEditorProps = $props();
 </script>
 
 {#if operatorValue.type === 'string'}
-	<StringEditor {operatorValue} {filterValue} {onChange} {onEnter} />
+	<StringEditor {operatorValue} {filterValue} {onChange} {onEnter} {maxMenuItems} />
 {:else if operatorValue.type === 'string_list'}
-	<StringListEditor {operatorValue} {filterValue} {onChange} />
+	<StringListEditor {operatorValue} {filterValue} {onChange} {maxMenuItems} />
 {:else if operatorValue.type === 'integer'}
 	<IntegerEditor {operatorValue} {filterValue} {onChange} />
 {:else if operatorValue.type === 'float'}
@@ -92,7 +95,7 @@
 {:else if operatorValue.type === 'enum_list'}
 	<EnumListEditor {operatorValue} {filterValue} {onChange} />
 {:else if operatorValue.type === 'entity_list'}
-	<EntityListEditor {operatorValue} {filterValue} {onChange} />
+	<EntityListEditor {operatorValue} {filterValue} {onChange} {maxMenuItems} />
 {:else if operatorValue.type === 'custom'}
 	<CustomEditor {operatorValue} {filterValue} {onChange} {isDisabled} />
 {/if}

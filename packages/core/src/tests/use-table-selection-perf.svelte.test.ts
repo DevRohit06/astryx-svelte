@@ -5,7 +5,7 @@ import SelectionTestTable, { type PerfRow } from './fixtures/table-selection-per
 
 /**
  * Astryx's `Table/plugins/selection/useTableSelection-perf.test.tsx` — **5
- * upstream cases, 5 here**: three ported, two **counterparts**. Nothing is
+ * upstream cases at the 0.5.0 pin, 5 here**: three ported, two **counterparts**. Nothing is
  * dropped, and nothing is added.
  *
  * Upstream's premise, stated in its own header, is that "the selection plugin

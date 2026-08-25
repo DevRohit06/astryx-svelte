@@ -3,7 +3,8 @@ import { render } from 'vitest-browser-svelte';
 import Fixture from './fixtures/input-container-fixture.svelte';
 
 /**
- * Ported from Astryx's `hooks/useInputContainer.test.tsx` (6 cases, all ported).
+ * Ported from Astryx's `hooks/useInputContainer.test.tsx` (6 cases at the 0.5.0
+ * pin, all ported).
  *
  * Ours is `hooks/use-input-container.svelte.ts`. Upstream's `TestContainer`
  * render prop becomes the fixture next door, which describes the control rather

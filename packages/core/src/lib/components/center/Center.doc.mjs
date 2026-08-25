@@ -103,43 +103,43 @@ export default {
 		},
 		{
 			name: 'padding',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Inner padding on all sides, using the spacing scale (0, 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10). Matches the padding prop on Stack, Card, LayoutContent, and LayoutPanel. Pass as a JSX number expression e.g. padding={3}.'
 		},
 		{
 			name: 'paddingInline',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Inline (horizontal) padding, using the spacing scale. Overrides padding on the inline axis when both are set.'
 		},
 		{
 			name: 'paddingInlineStart',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Inline-start padding, using the spacing scale (left in LTR, right in RTL). Overrides paddingInline and padding on that edge only.'
 		},
 		{
 			name: 'paddingInlineEnd',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Inline-end padding, using the spacing scale (right in LTR, left in RTL). Overrides paddingInline and padding on that edge only.'
 		},
 		{
 			name: 'paddingBlock',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Block (vertical) padding, using the spacing scale. Overrides padding on the block axis when both are set.'
 		},
 		{
 			name: 'paddingBlockStart',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Block-start (top) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.'
 		},
 		{
 			name: 'paddingBlockEnd',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
 				'Block-end (bottom) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.'
 		},

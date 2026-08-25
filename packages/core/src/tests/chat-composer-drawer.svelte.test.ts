@@ -5,7 +5,7 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
  * Ported from Astryx's `Chat/ChatComposerDrawer.test.tsx`, all **3** cases at
- * v0.4.5. Nothing is dropped and nothing is added.
+ * the 0.5.0 pin. Nothing is dropped and nothing is added.
  *
  * This is `ChatComposerDrawer.test.tsx` and only that. `ChatComposer.test.tsx`
  * is `chat-composer.svelte.test.ts`; `ChatComposerInput.test.tsx` is

@@ -77,7 +77,7 @@ export default {
 		},
 		{
 			name: 'radius',
-			type: "0 | 'none' | 1 | 2 | 3 | 4 | 'rounded'",
+			type: "0 | 2 | 4 | 'none' | 1 | 3 | 'rounded'",
 			description:
 				'Border radius using design token scale. Use none for sharp corners, rounded for fully rounded (avatars, pills, circles).',
 			default: '3'

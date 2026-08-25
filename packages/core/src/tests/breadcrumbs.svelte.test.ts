@@ -6,8 +6,9 @@ import BreadcrumbsFixture from './fixtures/breadcrumbs-fixture.svelte';
 import CustomLink from './fixtures/custom-link.svelte';
 
 /**
- * Ported from Astryx's `Breadcrumbs/Breadcrumbs.test.tsx`, all 39 cases across
- * its three describe blocks. Nothing is dropped.
+ * Ported from Astryx's `Breadcrumbs/Breadcrumbs.test.tsx`, all 39 cases at the
+ * 0.5.0 pin, across its three describe blocks. Nothing is dropped. (0.5.0 added
+ * the two variant theme-target cases; they are here.)
  *
  * Every case renders a trail, so all of them go through
  * `breadcrumbs-fixture.svelte`: the crumbs are JSX children upstream, with

@@ -8,7 +8,7 @@ import { expectSharedFocusRing } from './shared-focus-ring.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMegaMenu.test.tsx` — **all 39 of its `it`
- * cases** at v0.4.5, across all nine of its describes (`default mode`, `popup
+ * cases** at the 0.5.0 pin, across all nine of its describes (`default mode`, `popup
  * semantics`, `hover/click guard`, `dismissal`, `keyboard`, `mobile-bar mode`,
  * `drawer mode`, `TopNavMegaMenuItem`, `drawer focus ring`). Nothing dropped.
  * Client (real Chromium) project.

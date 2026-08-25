@@ -7,8 +7,9 @@ import { testStyles } from './fixtures/field-status-xstyle.stylex.js';
 
 /**
  * Astryx's `FieldStatus/FieldStatus.test.tsx`, ported case for case — **34**
- * `it` declarations upstream at v0.4.5, **33** of them here. One is dropped, and
- * it is named below.
+ * `it` declarations upstream at the **0.5.0** pin, **33** of them here. One is
+ * dropped, and it is named below. Upstream's file is unchanged between v0.4.5 —
+ * where this header last stated the count — and 0.5.0.
  *
  * `Field/Field.test.tsx` and `Field/FieldLabel.test.tsx` are ported in
  * `field.svelte.test.ts`; neither touches `FieldStatus`'s own markup, so nothing

@@ -3,7 +3,8 @@ import { render } from 'vitest-browser-svelte';
 import ImperativeDialogProbe from './fixtures/imperative-dialog-probe.svelte';
 
 /**
- * Ported from Astryx's `Dialog/useImperativeDialog.test.tsx`, all 5 cases.
+ * Ported from Astryx's `Dialog/useImperativeDialog.test.tsx`, all 5 cases at the
+ * 0.5.0 pin.
  *
  * The suite was previously dropped in full, because `useImperativeDialog` was
  * deferred: its `element: ReactNode` return is a render-returning hook needing a

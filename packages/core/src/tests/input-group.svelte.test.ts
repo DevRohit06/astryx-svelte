@@ -3,8 +3,8 @@ import { render } from 'vitest-browser-svelte';
 import InputGroupProbe from './fixtures/input-group-probe.svelte';
 
 /**
- * Astryx's `InputGroup/InputGroup.test.tsx`, ported case for case — 18 upstream
- * cases, 18 here.
+ * Astryx's `InputGroup/InputGroup.test.tsx`, ported case for case — **18
+ * upstream cases at the 0.5.0 pin, 18 here**.
  *
  * The children are member controls and addons, which a test file cannot author
  * as a Svelte snippet; `input-group-probe.svelte` renders them, selecting the

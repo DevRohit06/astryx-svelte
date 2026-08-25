@@ -5,7 +5,8 @@ import Divider from '$lib/components/divider/divider.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Ported from Astryx's `Divider/Divider.test.tsx`, all sixteen cases.
+ * Ported from Astryx's `Divider/Divider.test.tsx`, all sixteen cases at the 0.5.0
+ * pin.
  *
  * The suite had no counterpart here until 17c, which is what made it worth
  * porting rather than recording: the batch gives `Divider` its `aria-labelledby`

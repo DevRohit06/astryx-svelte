@@ -3,14 +3,21 @@ import { render } from 'vitest-browser-svelte';
 import Harness from './fixtures/form-optionality-harness.svelte';
 
 /**
- * Ported from Astryx's `FormLayout/FormLayout.test.tsx`, **13 of upstream's 30**
- * cases at v0.4.5 — the whole `defaultOptionality` delta that release added.
+ * Ported from Astryx's `FormLayout/FormLayout.test.tsx`, **13 of its 30 cases at
+ * the 0.5.0 pin** — the whole `defaultOptionality` delta v0.4.5 added.
  *
- * **The other 17 are a pre-existing gap, not a drop.** This port had no
- * `FormLayout` suite at all before 0.4.5; the 17 cover layout direction and the
- * grid, none of which changed in this batch. They are the standing "port
- * upstream's suites case for case" backlog item, and are named here so the gap
- * is visible rather than implied by a missing file.
+ * **Upstream's suite is split across two files here, and this is the smaller
+ * half.** The other 14 of upstream's 30 are in `form-and-metadata.svelte.test.ts`
+ * (upstream's layout, direction and grid cases; its three `direction` cases are
+ * merged into one loop there). Between the two files, 27 of upstream's 30 are
+ * ported. The only true gap is upstream's 3 `matches snapshot for … direction`
+ * cases, dropped with their reason stated in that file. Splitting one upstream
+ * suite across two of ours means no count in either file can be stated against
+ * upstream's file alone, which is why the split is named in both.
+ *
+ * (This header read "the other 17 are a pre-existing gap" and "this port had no
+ * `FormLayout` suite at all before 0.4.5". Both were false: the sibling file
+ * ports 14 of those 17, and the remaining 3 are dropped there with a reason.)
  *
  * Every case goes through `form-optionality-harness.svelte`: upstream renders
  * each arrangement as inline JSX, and children can only be authored in a Svelte

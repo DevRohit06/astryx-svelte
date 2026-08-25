@@ -6,7 +6,8 @@ import Lightbox from '$lib/components/lightbox/lightbox.svelte';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 
 /**
- * Ported from Astryx's `Lightbox/Lightbox.test.tsx`, all 37 cases.
+ * Ported from Astryx's `Lightbox/Lightbox.test.tsx`, all 37 cases at the 0.5.0
+ * pin.
  *
  * ## Project
  *

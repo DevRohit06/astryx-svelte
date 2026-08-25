@@ -2,7 +2,8 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { characterCount, firstCharacter, truncateCharacters } from '$lib/utils/characters.js';
 
 /**
- * Ported from Astryx's `utils/characters.test.ts`, all **22** cases at v0.4.5.
+ * Ported from Astryx's `utils/characters.test.ts`, all **22** cases at the 0.5.0
+ * pin.
  * Nothing is dropped.
  *
  * Runs in the **server** project: pure string functions, no DOM.

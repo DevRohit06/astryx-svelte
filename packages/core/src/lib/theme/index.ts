@@ -4,7 +4,7 @@ export { default as Theme } from './theme.svelte';
 // `SyntaxThemeProps`.
 
 export { default as MediaTheme } from './media-theme.svelte';
-export type { MediaThemeProps } from './media-theme.svelte';
+export type { MediaThemeMode, MediaThemeProps } from './media-theme.svelte';
 
 // Upstream publishes the `ThemeContext` object itself alongside its value type
 // (`theme/index.ts` re-exports both from `useTheme.ts`), so ours does too; the

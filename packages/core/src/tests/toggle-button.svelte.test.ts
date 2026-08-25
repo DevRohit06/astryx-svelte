@@ -8,7 +8,7 @@ import { cssIn, forcedColorsCssIn } from './forced-colors.js';
 /**
  * Astryx's `ToggleButton/ToggleButton.test.tsx`, ported case for case.
  *
- * The recount is the contract: upstream has **26** `it` cases at 0.3.0 across
+ * The recount is the contract: upstream has **26** `it` cases at the 0.5.0 pin across
  * four describe blocks — `ToggleButton` (18), `ToggleButtonGroup (single)` (4),
  * `ToggleButtonGroup (multiple)` (3), `forced colors` (1, new at 0.3.0). All 26
  * are ported here; none dropped.

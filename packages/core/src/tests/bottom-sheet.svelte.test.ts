@@ -9,9 +9,19 @@ import FocusRestoreHarness from './fixtures/bottom-sheet-focus-restore-harness.s
 import { stubMatchMedia } from './stub-match-media.js';
 
 /**
- * Ported from Astryx's `BottomSheet/BottomSheet.test.tsx` at v0.4.5 — **all 63
- * `it` cases and both `it.each` tables, 70 running cases**, none dropped and
- * none added.
+ * Ported from Astryx's `BottomSheet/BottomSheet.test.tsx` — **63 of its 70 `it`
+ * cases at the 0.5.0 pin**, plus both `it.each` tables (7 rows), for 70 running
+ * cases against upstream's 77.
+ *
+ * The 7 not here are both 0.5.0 additions: the six-case Escape/IME-composition
+ * guard from #5322 (five top-level — `ignores Escape while an IME composition is
+ * active`, `claims the composing Escape so no native close request follows`,
+ * `keeps a form sheet open when Escape cancels a field composition`, `still
+ * dismisses on the Escape after a composition is cancelled`, `leaves the IME the
+ * composition keys that are not Escape` — plus its `hasScrim={false} (non-modal)`
+ * twin), and the single `container padding isolation` case from #5208/#5209.
+ * Nothing else is dropped and nothing is added. (This header read "all 63 … none
+ * dropped" at the v0.4.5 pin, where 63 was the whole suite.)
  *
  * Runs in the **client** project, in real Chromium, where upstream's is jsdom.
  * That difference drives every restatement below, and each is a difference in

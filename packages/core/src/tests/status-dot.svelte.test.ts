@@ -9,7 +9,7 @@ import { atomicClasses, probe } from './fixtures/status-dot-probe.stylex.js';
 
 /**
  * Astryx's `StatusDot/StatusDot.test.tsx`, ported case for case — **17 upstream
- * declarations at v0.4.5** (11 in `describe('StatusDot')`, 4 in `describe('custom
+ * declarations at the 0.5.0 pin** (11 in `describe('StatusDot')`, 4 in `describe('custom
  * icon (parity with AvatarStatusDot)')` — one of them an `it.each` — 1 in
  * `describe('variant ink …')` and 1 in `describe('accessible name …')`),
  * **17 here, none dropped**. `StatusDot.test.tsx` is the only test file in

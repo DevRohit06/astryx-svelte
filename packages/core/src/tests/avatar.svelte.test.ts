@@ -8,13 +8,57 @@ import AvatarStatusFixture from './fixtures/avatar-status-fixture.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Astryx's `Avatar/Avatar.test.tsx`, ported case for case — **42 upstream cases
- * (29 in `describe('Avatar')`, of which 8 are in the nested `status in the
- * accessible name` block and 14 in the nested `name tooltip` block, plus 13 in
- * `describe('Avatar — interactivity (Button trichotomy)')`), 42 here, none
- * dropped**. The file has no `displayName` case, no snapshot and no no-JSX
- * construction form, so `ref` is the only React-only surface and it gets a
- * counterpart.
+ * Astryx's `Avatar/Avatar.test.tsx`, ported case for case at the **0.5.0** pin.
+ *
+ * The count is the contract: upstream declares **70** cases at this pin — 50 in
+ * `describe('Avatar')` (13 direct, 8 in `status in the accessible name (WCAG
+ * 4.1.2)`, 10 in `status label through a consumer wrapper (P14)`, 4 in `a
+ * whitespace-only name carries no identity`, 15 in `name tooltip`), 16 in
+ * `describe('Avatar — interactivity (Button trichotomy)')` and 4 in
+ * `describe('Avatar — consumer ARIA overrides win (Icon labelling pattern)')` —
+ * and **48** are here. The file has no `displayName` case, no snapshot and no
+ * no-JSX construction form, so `ref` is the only React-only surface and it gets
+ * a counterpart.
+ *
+ * **Two cases sit under a different parent here than upstream, and neither is a
+ * dropped case.** Upstream declares `puts the avatar box on the element that
+ * carries the theme target` and `keeps the box on the root for an interactive
+ * avatar too` directly under `describe('Avatar')`; they are in the
+ * interactivity block here, because the second needs the interactive root the
+ * block already sets up. Upstream's `a whitespace-only name carries no
+ * identity` block is likewise nested under `Avatar` upstream and under
+ * interactivity here. All six cases are present with upstream's titles and
+ * assertions.
+ *
+ * ## The 22 that are not here
+ *
+ * Named so none of them can be mistaken for accounted-for work:
+ *
+ * - **The whole 10-case `status label through a consumer wrapper (P14)`
+ *   block** — a label reported from inside a wrapper component, reported at any
+ *   nesting depth, changing after mount, dropped when the status element
+ *   unmounts, announced on an otherwise decorative avatar, a reported label
+ *   winning over introspection, costing no extra render and not looping, a
+ *   directly-passed dot named on the first render before any report, a label
+ *   changing without re-rendering the avatar, and a consumer `aria-label` left
+ *   alone when a wrapped status reports. This is the block that exercises the
+ *   *upward* half of the context sink described below, which is precisely the
+ *   mechanism this port had to invent — so it is the costliest of the four gaps.
+ * - **The whole 4-case `Avatar — consumer ARIA overrides win (Icon labelling
+ *   pattern)` block** — a consumer `aria-label` overriding the derived name on
+ *   the static root and on an interactive root, a consumer `role` overriding
+ *   the derived role, and a consumer hiding a named avatar with `aria-hidden`.
+ * - **4 of the 13 `describe('Avatar')` direct cases** — `marks the fallback
+ *   surface with the stable theming class (initials and icon)`, and the three
+ *   grapheme cases (`does not split an emoji surrogate pair`, `preserves a
+ *   complete character`, `keeps a ZWJ family emoji intact`) that guard initials
+ *   generation against splitting a code point.
+ * - **3 of the 16 interactivity cases** — `warns when the only accessible name
+ *   is a status label`, `warns when interactive with an empty-string name and
+ *   alt`, and `does not warn when the consumer names the control with
+ *   aria-label`.
+ * - **1 of the 15 `name tooltip` cases** — `keeps its merged ref attached
+ *   across unrelated rerenders`.
  *
  * What translated, each commented where it appears:
  *

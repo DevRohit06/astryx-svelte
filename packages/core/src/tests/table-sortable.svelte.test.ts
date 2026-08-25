@@ -8,7 +8,7 @@ import { customSortHeader } from './fixtures/table-plugin-slots.svelte';
 
 /**
  * Astryx's `Table/plugins/sortable/useTableSortable.test.tsx`, ported case for
- * case — **40 of 40** at v0.3.0, in upstream's order and under its titles (11
+ * case — **40 of 40** at the 0.5.0 pin, in upstream's order and under its titles (11
  * rendering, 10 interactions, 8 accessibility, 6 edge cases, 2 context-menu, 3
  * i18n). Nothing dropped.
  *

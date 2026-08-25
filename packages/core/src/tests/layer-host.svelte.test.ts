@@ -2,8 +2,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { resolveLayerPortalTarget } from '$lib/components/layer/layer-host.js';
 
 /**
- * Ported case-for-case from Astryx's `Layer/layerHost.test.ts` (19 cases; the
- * two `it.each` tables contribute 11 and 4).
+ * Ported case-for-case from Astryx's `Layer/layerHost.test.ts` at the **0.5.0**
+ * pin — **6 blocks producing 19 cases** (4 plain `it`s; the two `it.each` tables
+ * contribute 11 and 4), and all 19 are here.
  *
  * **Upstream's file is a `.test.ts`; this one is `.svelte.test.ts`.** The suite
  * builds real DOM subtrees and reads `parentElement`, and this port's `.test.ts`

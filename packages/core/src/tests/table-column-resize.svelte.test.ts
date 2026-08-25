@@ -15,7 +15,8 @@ import ReorderTable from './fixtures/table-column-resize-reorder-fixture.svelte'
 
 /**
  * Ported from Astryx's
- * `Table/plugins/columnResize/useTableColumnResize.test.tsx` — all **37** of its
+ * `Table/plugins/columnResize/useTableColumnResize.test.tsx` at the 0.5.0 pin —
+ * all **37** of its
  * `it` cases, in upstream's order and under upstream's names. Nothing dropped.
  *
  * ## Standing translations

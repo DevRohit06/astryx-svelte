@@ -16,7 +16,8 @@ import { renderTable } from './render-table.js';
 
 /**
  * Ported from Astryx's `Table/plugins/tree/useTableTreeData.test.tsx` — all
- * **38** of its `it` cases, in upstream's order and under upstream's names.
+ * **38** of its `it` cases at the 0.5.0 pin, in upstream's order and under
+ * upstream's names.
  * Nothing dropped.
  *
  * ## Standing translations

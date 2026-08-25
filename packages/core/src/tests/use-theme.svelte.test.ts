@@ -6,15 +6,22 @@ import { resolveThemeTokens } from '$lib/theme/tokens.js';
 import Probe from './fixtures/use-theme-probe.svelte';
 
 /**
- * Ported from Astryx's `theme/useTheme.test.tsx` — 18 of its 19 `it` cases.
+ * Ported from Astryx's `theme/useTheme.test.tsx` — **18 of its 20 `it` cases at
+ * the 0.5.0 pin**.
  *
- * **Dropped, named:** `resolves derived accent tokens to raw values, not
- * var()/color-mix` builds its theme with `defineTheme({color: {accent}})`, the
- * HCT-generative `color` field this port deliberately does not implement (TODO
- * Phase 3, "deferred without loss"). There is no theme shape to write the case
- * against; restore it with that field. Note the *resolver* half it exercises —
- * `var()` substitution and `color-mix` evaluation — is ported in full and is
- * what the "same resolution as `resolveThemeTokens`" case compares against.
+ * **Unported, both named:**
+ *
+ * - `resolves derived accent tokens to raw values, not var()/color-mix`, which
+ *   builds its theme with `defineTheme({color: {accent}})`. That HCT-generative
+ *   `color` field **is** implemented now (`theme/define-theme.ts` declares it and
+ *   applies it through `expandColorScale`), so the case is writable as-is; the
+ *   header's stated reason — that this port "deliberately does not implement" the
+ *   field — had expired. The *resolver* half it exercises (`var()` substitution
+ *   and `color-mix` evaluation) is ported in full and is what the "same
+ *   resolution as `resolveThemeTokens`" case compares against.
+ * - `resolves --border-width override when defined in theme`, added upstream at
+ *   v0.4.2. It was never named: the header's "19" was a stale v0.4.1 count, and
+ *   the stale total is exactly what hid this case.
  *
  * ## Project
  *

@@ -15,10 +15,15 @@ import CollapseButtonScope from './fixtures/side-nav-collapse-button-scope.svelt
 
 /**
  * Ported from Astryx's `SideNav/SideNav.test.tsx`. Upstream declares **144**
- * cases at **v0.4.5** (it had 99 at v0.3.0, 101 at v0.4.1 and the same 144 at
- * v0.4.2, where this header last stated it — upstream has not moved the file
- * since); **116 are here**, so the suite is **28 short**. Every one of the 28 is
- * named in `port/debts.md`, and the block-level summary below says which.
+ * cases at the **0.5.0** pin (it had 99 at v0.3.0, 101 at v0.4.1 and the same
+ * 144 at v0.4.2, where this header last stated it — upstream has not moved the
+ * file since); **116 are here**, so the suite is **28 short**. Twenty-six of the
+ * 28 are named in `port/debts.md`, and the block-level summary below says which.
+ * The other two predate that delta and are named here: `centers footer content
+ * when collapsed, matching children alignment` (in `SideNav`) and `anchors the
+ * collapsed icon-only trigger so the popover positions against it` (in
+ * `SideNavHeading collapsed`). The header used to claim all 28 were recorded in
+ * `port/debts.md`, which its own "Twenty-six are not" line below contradicted.
  *
  * ## The 0.4.2 delta, stated rather than implied
  *

@@ -10,8 +10,8 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 import { customChevron, customInfo } from './fixtures/banner-registry-icons.svelte';
 
 /**
- * Ported from Astryx's `Banner/Banner.test.tsx`, **49 of upstream's 52** cases at
- * v0.5.0.
+ * Ported from Astryx's `Banner/Banner.test.tsx`, **49 of upstream's 52** cases at the
+ * 0.5.0 pin.
  *
  * **Three cases have no Svelte analogue and are dropped**, all for the same
  * reason: they pass `{false}` as a snippet-typed slot to exercise upstream's

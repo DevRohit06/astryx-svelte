@@ -7,7 +7,7 @@ import { generateThemeRulesSplit } from '$lib/theme/generate-theme-rules.js';
 import EmptyStateSlots from './fixtures/empty-state-slots.svelte';
 
 /**
- * Astryx's `EmptyState/EmptyState.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `EmptyState/EmptyState.test.tsx` at the **0.5.0** pin, ported case for case.
  *
  * The count is the contract: upstream declares **20** `it` blocks at this pin —
  * 16 in `describe('EmptyState')` and 4 in the nested `describe('theming
