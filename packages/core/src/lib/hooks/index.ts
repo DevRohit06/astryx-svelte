@@ -39,6 +39,8 @@ export { useEntryAnimation, type EntryAnimationPreset } from './use-entry-animat
 
 // `hasActiveFocusTrapEscape` joined upstream's barrel at 0.4.2 (#5023): it
 // coordinates nested traps, so an overlay outside this package needs it too.
+// 0.5.0 keeps the export and marks the function `@deprecated` — see the tag on
+// the module, which states why the redirect it names is not reachable yet here.
 export {
 	hasActiveFocusTrapEscape,
 	useFocusTrap,

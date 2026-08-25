@@ -216,6 +216,33 @@ delta as scope rather than as follow-up (`track-upstream` step 5b). Four headers
 exactly what the unported cases existed to catch. A dropped case's stated reason expires too:
 `button-group` carried "`DropdownMenu` is not ported" for three batches after it was.
 
+**A header that names an upstream suite in order to say it is _not_ ported is read as coverage.**
+`status.mjs` attributes a suite to any file under `src/tests/` that names it — deliberately
+generous, because a false "covered" is visible the moment someone opens the file. So a header
+written to be honest about a gap closes it on paper instead: `scroll-lock.svelte.test.ts` said
+"0.5.0 also added a whole `hooks/scrollbarGutter.test.ts` beside this suite, which has no ported
+counterpart at all", and that sentence subtracted eight cases from the delta rather than adding
+them. Write `UNPORTED: <upstream/path.test.tsx>` in the header **alongside** the prose; the marker
+is what `status.mjs` reads, and it errs safe — one left behind after the suite lands overstates
+the work remaining rather than hiding it. This is the second occurrence, which is why the marker
+already existed: `layout.svelte.test.ts` understated its gap by 34 cases the same way (batch 033).
+
+**The compiled StyleX sheet is on a browser-test page twice.** Vite's dev server injects it for
+the module graph `setup-stylex.ts` imports, and that setup file then appends its own `<style>` so
+the sheet is complete whatever the suite imports. A suite counting rules out of
+`document.styleSheets` therefore reads every rule twice, and an upstream `toHaveLength(1)` fails
+for a reason that is about the harness rather than the styles. De-duplicate by rule text — never
+loosen it to `toBeGreaterThan(0)`, which would still pass with a second, contradictory rule in the
+sheet. The rules also sit inside `@layer` blocks, so the walk has to descend where upstream's
+single top-level pass did not (`mobile-nav-entry-animation.svelte.test.ts`).
+
+**A header that discusses `it` in backticks used to inflate its own count.** `status.mjs` counted a
+bare `it` followed by a backtick as a declaration, and a backtick-quoted `it` in prose is exactly
+that — so a suite explaining its own counting could overstate the contract it exists to state, and
+two upstream suites read one case higher than they declare. Only `it.each` and `it.for` are tagged
+templates; the regex now requires a call paren for everything else. If a derived count ever looks
+implausible, check the header's prose before the code (batch 033).
+
 Coverage _beyond_ upstream needs a high bar: a hazard with **no upstream analogue**, which the ported
 suites structurally cannot catch — a Svelte-specific DOM or reactivity failure React cannot
 reproduce. Such a file says so at the top and mutation-checks its fixes.

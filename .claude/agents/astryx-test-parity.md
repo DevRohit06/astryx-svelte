@@ -65,6 +65,23 @@ unmount. `useLongPress` fakes `setTimeout`/`clearTimeout` and nothing else.
 pins a Svelte-specific hazard upstream gets for free (the four `MetadataList` SSR cases
 are the precedent). It must say so in a comment and be recorded in `port/debts.md`.
 
+**Never encode a failure as the expectation.** When a ported case fails, the finding is a port
+defect until proven otherwise — that is what the case is *for*. `it.fails`, an `appliesReset`-style
+flag on a `describe.each` table that quietly exempts the failing rows, a `.skip` with a shrug, or a
+loosened matcher all do something worse than weaken the assertion: they invert it. The suite reports
+green while the defect stands, and the day someone fixes the defect the test starts failing and
+reads as a regression. `Layout/overlayPaddingReset.test.tsx` was one edit away from shipping that
+way, and behind it were three overlays — MobileNav, Lightbox and every `useLayer` surface — that
+never reset the container padding at their boundary, in a port where Dialog and BottomSheet did
+(batch 033).
+
+The check is mechanical: **if upstream's file does not contain the construct, you may not introduce
+it.** Upstream had no `it.fails`. Diagnose instead — compare the call sites, not just the module,
+because a helper can compile identically on both sides and simply never be called. Then report the
+defect with file and rule, hand back a suite written the way upstream wrote it, and say plainly
+which assertions fail. A failing suite that names real defects is worth more than a green one that
+hides them, and it is never your call to decide the defect is acceptable.
+
 ## Cases that legitimately have no counterpart
 
 Drop these, naming each in the file's header comment:

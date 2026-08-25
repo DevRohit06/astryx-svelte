@@ -176,6 +176,25 @@ reference) → `Component<…>`. `Icon` draws the line where upstream draws it, 
 load-bearing. Likewise slot presence: `slot != null` distinguishes an omitted snippet
 from an empty one, and only the omitted one is absent.
 
+**A lazy `useState` initialiser inlined without `svelte-ignore`.** React's
+`useState(() => seed(props))` reads props once, on the first render, and deliberately does
+not track them. The Svelte counterpart is `$state(seed(props))`, which is correct — but the
+compiler warns `state_referenced_locally` once per prop the initialiser touches, and the
+warning is right in general and wrong here. Carry
+`// svelte-ignore state_referenced_locally` with a line saying the capture is intentional;
+`touch-date-field.svelte` is the precedent for its shape. The trap is that moving such a
+seed out of a helper and inline — which is what makes it match upstream — is exactly what
+surfaces the warnings, so a correct translation looks noisier than the incorrect one it
+replaced (`Calendar`'s focus-date seed, batch 033).
+
+**A `useMemo` translated to a bare closure.** Where upstream's memo is *contract* rather than
+optimisation — `useCollator`'s collator exists to be reused across every comparison of a sort —
+`() => new Thing(...)` constructs one per call and is simply not the same hook. It has to be a
+`$derived` read through the returned getter. Testing it needs care in a way that is easy to get
+wrong: a memoization case only has power if something forces a **second** read of the getter, so
+the probe must carry an input the memoized value does not depend on. Mutation-check it — without
+that input the case passes against a non-memoized hook and proves nothing (batch 033).
+
 ## Not findings
 
 Absence of `mergeRefs`, `mergeProps`, `composeEventHandlers`, `isRenderable`,

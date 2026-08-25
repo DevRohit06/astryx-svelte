@@ -93,13 +93,29 @@ function isTopEscapeHandler(handler: () => void): boolean {
 }
 
 /**
- * Whether any focus-trap Escape handler is currently active (i.e. a popover
- * layer is open). Other overlay primitives that manage their own Escape (e.g.
- * Dialog) can consult this to defer to a popover layered on top of them,
- * giving topmost-only dismissal until a full layer stack exists.
+ * Whether an Escape-dismissible focus trap is currently active — a Popover,
+ * menu or other trapped layer that would take an Escape press.
  *
- * As upstream, this is reachable from the module but not from the hooks barrel:
- * its only consumer is `Dialog`, which imports it directly.
+ * Public API, exported from the hooks barrel as upstream's is. Its answer must
+ * stay about focus traps *alone*: `BottomSheetSwitcher` gates its own dismissal
+ * on it, so a shim that also counted tooltips, hover cards and dialogs would
+ * tell the sheet a trap is above it when none is, and the sheet would stop
+ * closing. `Dialog` consults it for the same reason, to defer to a popover
+ * layered on top of it. `tests/focus-trap-escape-shim.svelte.test.ts` is the
+ * guard on that meaning.
+ *
+ * What it reads is the trap stack below, which nothing but a focus trap ever
+ * pushes onto — the same guarantee upstream 0.5.0 buys by keeping a separate
+ * `activeEscapeTrapCount` beside its shared stack. Re-base this on a trap-only
+ * count when `useLayerDismissal` lands, or the shim starts answering for every
+ * family that joins.
+ *
+ * @deprecated Upstream 0.5.0 moved Escape coordination off the focus trap and
+ *   onto one shared stack (`useLayerDismissal`), which routes each press to the
+ *   top-most layer; a layer that wants that ordering should join the stack
+ *   rather than ask whether a trap exists. That stack is not ported yet, so the
+ *   trap still owns Escape here — the tag carries upstream's published
+ *   deprecation, not a redirect that works today.
  */
 export function hasActiveFocusTrapEscape(): boolean {
 	return escapeStack.length > 0;

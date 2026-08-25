@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { typeScaleVars, typographyVars } from '../../styles/tokens.stylex.js';
+import { overlayPaddingReset } from '../../internal/padding.stylex.js';
 
 /**
  * The layer container's own styles, from Astryx's `Layer/useLayer.tsx`.
@@ -81,5 +82,9 @@ export function layerAttrs(
 				? styles.offsetBlock(toCssLength(offset))
 				: styles.offsetInline(toCssLength(offset))
 			: null;
-	return sx(styles.base, isFixed && styles.fixed, offsetStyle, xstyle);
+	// The overlay root is not inside any padded container, so the inherited
+	// container padding vars are reset at its boundary. Upstream applies it
+	// immediately after `styles.base` at both of `useLayer`'s call sites, so
+	// `styles.fixed` and the offset still win over it, as they do there.
+	return sx(styles.base, overlayPaddingReset.reset, isFixed && styles.fixed, offsetStyle, xstyle);
 }

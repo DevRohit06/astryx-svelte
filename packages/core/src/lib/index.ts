@@ -1544,16 +1544,19 @@ export {
 } from './components/tooltip/use-tooltip.svelte.js';
 
 // Style utilities, so a component can take stack or container layout without
-// being wrapped in one. These are upstream's four exactly — `stackAttrs` and
-// `stackItemAttrs` are ours, built on `stack()`/`stackItem()` to fold in the
+// being wrapped in one. These mirror upstream's `Layout` barrel — `stackAttrs`
+// and `stackItemAttrs` are ours, built on `stack()`/`stackItem()` to fold in the
 // padding and overflow `Stack.tsx` keeps to itself, and stay internal for the
-// same reason every other component's `*Attrs` helper does.
+// same reason every other component's `*Attrs` helper does. (This comment used
+// to say "upstream's four exactly"; upstream publishes five, and
+// `overlayPaddingReset` was the one missing — batch 033.)
 export {
 	container,
 	type ContainerComponent,
 	type ContainerOptions,
 	type SpacingToken
 } from './internal/container.stylex.js';
+export { overlayPaddingReset } from './internal/padding.stylex.js';
 export { stack, type StackOptions } from './components/stack/stack.stylex.js';
 export { stackItem, type StackItemOptions } from './components/stack/stack-item.stylex.js';
 export { EDGE_COMP_ATTR, edgeCompSlot } from './internal/edge-compensation.stylex.js';
@@ -1604,6 +1607,7 @@ export {
 	InternationalizationContext,
 	InternationalizationProvider,
 	getLocaleDirection,
+	useCollator,
 	useDirection,
 	useLocale,
 	useTranslator,

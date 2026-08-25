@@ -36,13 +36,21 @@ Each front is sequenced so the thing that _catches_ mistakes lands before the th
 them.
 
 1. **The test delta.** The largest and most mechanical front, and the one that protects every
-   other. `status.md` counts the suites with no counterpart at all; suites that exist but fall
-   short state it in their own header (`SideNav`, `Text`, `Center`, `DateInput`, `DropdownMenu`,
-   `Carousel`, `Slider`, `HoverCard` are the largest). Take the whole-suite gaps first — they are
-   contiguous work — starting with `theme/`, then the primitives that never got a suite at all
-   (`Grid`, the `Stack` family, `AspectRatio`, `FieldStatus`, `EmptyState`, `Indicator`,
-   `StatusDot`, `Kbd`, `Badge`, `Blockquote`, `Code`, `Card`, `Skeleton`, `VisuallyHidden`,
-   `IconButton`).
+   other — and the one that keeps proving it protects more than tests. Batch 033 found three of
+   `0.5.0`'s new suites were testing **modules this port did not have** (`scrollbarGutter`,
+   `getInitialFocusDate`, `useCollator`) and a fourth caught three overlays that never reset the
+   container padding. None of that was visible to either style oracle, which read modules and
+   emitted CSS rather than call sites. Treat an unported suite as a possible missing implementation
+   until you have checked, and check with the **kebab-case** name — a camelCase grep against this
+   tree returns a false absence.
+
+   `status.md` counts the suites with no counterpart at all; suites that exist but fall short state
+   it in their own header, and a header that names a suite in order to disclose a gap needs the
+   `UNPORTED:` marker or it is read as coverage instead. What remains of this front is two units,
+   each blocked on its own re-architecture rather than on effort: the four `Layer` dismissal suites
+   behind the shared dismissal stack, and `theme/generateThemeRules.test.ts` behind the
+   `generateThemeCSS` shape change recorded in `debts.md`.
+
 2. **The published surface.** Settle the Layer/over-export decision as one call at a minor, then
    the `./theme` barrel renames, the `./theme/tokens` subpath keys, `reset.css` at its own subpath,
    and the Tailwind bridge. Every one is an addition to or removal from a shipped API, so they

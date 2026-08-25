@@ -59,6 +59,7 @@
 	import Button from '../button/button.svelte';
 	import Heading from '../heading/heading.svelte';
 	import Icon from '../icon/icon.svelte';
+	import { holdScrollbarGutter, type ScrollbarGutterHold } from '../../hooks/scrollbar-gutter.js';
 	import { resolveCloseDelay } from './close-timing.js';
 	import {
 		mobileNavContentAttrs,
@@ -131,6 +132,20 @@
 	let dialogEl = $state<HTMLDialogElement>();
 	// Plain `let`s: values that must survive without causing a re-run.
 	let closeTimeout: ReturnType<typeof setTimeout> | null = null;
+	// The gutter held open in place of the scrollbar `overflow: clip` hides.
+	// Upstream keeps it in a `useRef` for the same reason it is a plain `let`
+	// here: it is written from inside the effect that reads it, and a `$state`
+	// would make that write re-run the effect.
+	let gutter: ScrollbarGutterHold | null = null;
+
+	/** Gives back the gutter held open in place of the hidden scrollbar. */
+	function releaseGutter(): void {
+		if (gutter) {
+			gutter.release();
+			gutter = null;
+		}
+	}
+
 	// Resolved side — computed from trigger position when side='auto'. Seeded once,
 	// as upstream's `useState` initialiser is.
 	let resolvedSide = $state<'start' | 'end'>(side === 'auto' ? 'end' : side);
@@ -179,6 +194,10 @@
 		}
 
 		if (isOpen) {
+			// Taken first: every mutation below is one that can hide the scrollbar,
+			// and the gutter has to be measured while it is still there.
+			gutter ??= holdScrollbarGutter(document.documentElement);
+
 			if (!dialog.open) {
 				dialog.showModal();
 			}
@@ -186,8 +205,10 @@
 			// overflow: clip avoids creating a scroll container (unlike hidden),
 			// so there's no scroll bounce and no need to save/restore scroll position.
 			document.documentElement.style.overflow = 'clip';
+			gutter.settle();
 		} else if (dialog.open) {
 			document.documentElement.style.overflow = '';
+			releaseGutter();
 
 			closeTimeout = setTimeout(() => {
 				dialog.close();
@@ -200,6 +221,7 @@
 				closeTimeout = null;
 			}
 			document.documentElement.style.overflow = '';
+			releaseGutter();
 		};
 	});
 

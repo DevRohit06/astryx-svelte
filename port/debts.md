@@ -1183,7 +1183,7 @@ applied, which is the shape `<Theme>`, the theme build scripts and the docs buil
 consume. Upstream also exports `generateThemeRules(theme): string[]`, the rule list
 behind the split; this port has only `generateThemeRulesSplit`.
 
-Found while porting `theme/generateThemeRules.test.ts` in batch 030, whose 36 cases
+Found while porting `theme/generateThemeRules.test.ts` in batch 030, whose cases
 call both `generateThemeRules` and the two-block `generateThemeCSS` and so cannot be
 ported case for case until the shapes match. **The suite is deliberately left
 unported rather than partially ported**, and `port/status.md` keeps counting it: the
@@ -1191,6 +1191,20 @@ fix is a wide change — around twenty test files call `generateThemeCss(theme)`
 assert on the string, plus `<Theme>`, both theme build scripts and the docs build —
 and belongs in a batch of its own rather than inside one restructuring `defineTheme`
 at the same time
+
+Scoping it in batch 033 found the entry understates it in two ways. **It is a
+re-architecture, not an added export**: upstream derives the split _from_ the flat
+list by testing each rule for a leading `:where(`, and this port generates the two
+groups separately, so `generateThemeRules` cannot simply be exported — the flat list
+has to become the source the split is taken from, in upstream's rule order (tokens,
+component overrides, prose, colour overrides, size overrides) and with upstream's
+literal indentation, both of which the suite's cases assert on. **And it is
+DOM-observable**: upstream's `<Theme>` injects _two_ `<style>` elements, marked
+`data-astryx-theme-prose` for the reset layer and `data-astryx-theme` for the theme
+layer, where `theme.svelte` injects one carrying both. A consumer or test selecting
+`style[data-astryx-theme-prose]` finds nothing here. The two name drifts in the
+`0.4.5` surface entry above (`generateThemeCss`/`generateOnMediaCss` vs upstream's
+`…CSS`) are the same change and should land with it
 
 ### Ported `getByRole` name assertions are substring matches, where upstream's are whole-string
 
@@ -1374,6 +1388,31 @@ one `heading: null` group holding `results` verbatim, so the two orders coincide
 every call site that predates 0.5.0. Upstream shipped the feature with no test for it — the
 0.5.0 suite delta is two `Tab`-dismissal cases and nothing about groups — so nothing upstream
 catches this either
+
+### `hasActiveFocusTrapEscape` is built on the trap's own Escape stack, not a separate trap-only count
+
+- **units:** hooks/use-focus-trap.svelte.ts
+- **kind:** deliberate-divergence
+- **retires:** when `useLayerDismissal` + `layerStack` land and the shim is re-based on a trap-only count
+
+Upstream 0.5.0 moved Escape coordination onto one shared dismissal stack and then went to the
+trouble of keeping a _second_, private `activeEscapeTrapCount` beside it, incremented from the
+same `isActive && onEscape != null` expression that registers the trap on the stack. The
+duplication is the point: the shared stack carries families that never trap focus — tooltips,
+hover cards, dialogs — and a shim that counted those would tell `BottomSheetSwitcher` a trap sits
+above it when none does, so the sheet would stop closing.
+
+Here there is one stack, `useFocusTrap`'s own, and the shim reads its length. The answers are
+identical today because nothing but a focus trap ever pushes onto it, and
+`tests/focus-trap-escape-shim.svelte.test.ts` pins every one of upstream's answers — including
+the four families that must stay `false`. The divergence only becomes a defect the moment the
+shared stack lands and other families join: at that point the shim needs its own trap-only
+count, exactly as upstream's does, or those four cases start failing. Which is what they are
+there to do.
+
+The `@deprecated` tag is carried with the same qualification. Upstream's redirect — "join the
+stack rather than ask whether a trap exists" — names a stack this port does not have, so the tag
+says so rather than pointing consumers at nothing
 
 ## Retired
 

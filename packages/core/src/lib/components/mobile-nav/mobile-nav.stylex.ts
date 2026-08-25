@@ -1,5 +1,6 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
+import { overlayPaddingReset } from '../../internal/padding.stylex.js';
 import {
 	borderVars,
 	colorVars,
@@ -206,6 +207,9 @@ const dynamicStyles = stylex.create({
 export function mobileNavDialogAttrs(isOpen: boolean, xstyle: StyleArg): SvelteStyleAttrs {
 	return sx(
 		styles.dialog,
+		// The overlay root is not inside any padded container, so the inherited
+		// container padding vars are reset at its boundary.
+		overlayPaddingReset.reset,
 		isOpen && styles.open,
 		styles.backdrop,
 		isOpen && styles.backdropOpen,

@@ -14,16 +14,16 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
-| Ledger entries            | 33                                                                       |
+| Ledger entries            | 34                                                                       |
 
 ## Test parity
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
-| Upstream                 | 275    | 7041           |
-| Ported here              | 255    | 6823           |
-| No counterpart by design | 5      | 69             |
-| **Unported**             | **15** | **149**        |
+| Upstream                 | 275    | 7039           |
+| Ported here              | 263    | 6869           |
+| No counterpart by design | 7      | 74             |
+| **Unported**             | **5**  | **96**         |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -31,23 +31,13 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 
 <details><summary>Unported upstream suites</summary>
 
-| Suite                                                         | Cases |
-| ------------------------------------------------------------- | ----- |
-| `theme/generateThemeRules.test.ts`                            | 44    |
-| `Layer/useLayerDismissal.test.tsx`                            | 21    |
-| `Layer/layerDismissalInvariants.test.tsx`                     | 15    |
-| `Calendar/getInitialFocusDate.test.ts`                        | 13    |
-| `hooks/useFocusTrapEscapeShim.test.tsx`                       | 11    |
-| `Layer/layerDismissalFamilies.test.tsx`                       | 11    |
-| `i18n/__tests__/useCollator.test.tsx`                         | 7     |
-| `Layer/useTouchTrigger.test.ts`                               | 5     |
-| `MobileNav/MobileNavEntryAnimation.test.tsx`                  | 5     |
-| `Layout/overlayPaddingReset.test.tsx`                         | 4     |
-| `hooks/useMergedRefs.test.tsx`                                | 3     |
-| `i18n/__tests__/useLocale.test.tsx`                           | 3     |
-| `MobileNav/MobileNavScrollbarGutter.test.tsx`                 | 3     |
-| `Table/plugins/groupedRows/useTableGroupedRows-perf.test.tsx` | 2     |
-| `theme/syntax/serverSafeSyntax.test.ts`                       | 2     |
+| Suite                                     | Cases |
+| ----------------------------------------- | ----- |
+| `theme/generateThemeRules.test.ts`        | 44    |
+| `Layer/useLayerDismissal.test.tsx`        | 21    |
+| `Layer/layerDismissalInvariants.test.tsx` | 15    |
+| `Layer/layerDismissalFamilies.test.tsx`   | 11    |
+| `Layer/useTouchTrigger.test.ts`           | 5     |
 
 </details>
 
@@ -67,7 +57,7 @@ substring-matching on both sides by design and is not counted.
 | Kind                  | Count   |
 | --------------------- | ------- |
 | api-divergence        | 33      |
-| deliberate-divergence | 46      |
+| deliberate-divergence | 47      |
 | unported              | 15      |
 | upstream-lag          | 11      |
-| **total**             | **105** |
+| **total**             | **106** |

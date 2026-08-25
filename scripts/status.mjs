@@ -112,7 +112,18 @@ const invented = ours.filter((o) => !theirsCanon.has(canon(o)));
 // suite that already exists. What it never does is guess at case-level
 // coverage: a suite that is present but short states that in its own header,
 // which is the mechanism that already exists for it.
-const testCase = /(?<![\w.])(?:it|test)(?:\.(?:each|skip|only|todo|fails|concurrent|for))?\s*[(`]/g;
+// A bare `it`/`test` must be followed by a call paren. Only the table forms,
+// it.each and it.for, are tagged templates, so only those may be followed by a
+// backtick. The single character class this replaces accepted a backtick after
+// a bare `it` too — which is not a vitest API at all, but is exactly what an
+// identifier quoted in prose looks like. Since backticks are this repo's house
+// style and upstream's, every doc comment mentioning `it` counted as a
+// declaration: two upstream suites were credited one case more than they
+// declare, and two of batch 033's own headers scanned at four times their real
+// contract. A header written to explain its own counting was the thing most
+// able to corrupt it.
+const testCase =
+	/(?<![\w.])(?:it|test)(?:\.(?:each|skip|only|todo|fails|concurrent|for))?\s*\(|(?<![\w.])(?:it|test)\.(?:each|for)\s*`/g;
 const countCases = (file) => (readFileSync(file, 'utf8').match(testCase) ?? []).length;
 
 /** Every `*.test.ts`/`*.test.tsx` under `dir`, recursively, as absolute paths. */
@@ -138,7 +149,18 @@ const NO_TEST_COUNTERPART = {
 	'serverSafeComponents.test.ts':
 		"guards the React Server Components boundary — no 'use client' directive in Svelte, no react-server condition, no per-component subpaths",
 	'__tests__/babelPluginAddExtensions.test.ts':
-		'guards a Babel plugin that adds file extensions during upstream\'s build; svelte-package does the inverse and this port has no such transform'
+		'guards a Babel plugin that adds file extensions during upstream\'s build; svelte-package does the inverse and this port has no such transform',
+	// Two more absences already recorded elsewhere, reached through a different
+	// door. Both were counted as unported for the whole 0.5.0 delta, which
+	// overstated the work remaining by 5 cases and pointed it at suites that
+	// can never be written.
+	'hooks/useMergedRefs.test.tsx':
+		'useMergedRefs is not ported — Svelte binds an element once via bind:this and a focus trap arrives as an attachment, so there is no callback ref identity to stabilise (port/debts.md records it as never retiring)',
+	// Upstream's own header calls this the narrow sibling of
+	// serverSafeComponents.test.ts above, and every assertion in it reads a
+	// module prologue for the directive.
+	'theme/syntax/serverSafeSyntax.test.ts':
+		"guards the React Server Components boundary for the ./theme/syntax subpath — no 'use client' directive in Svelte, same reason as serverSafeComponents.test.ts"
 };
 
 const upstreamTests = testFiles(upstreamRoot).map((f) => ({
