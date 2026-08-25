@@ -268,4 +268,12 @@ reproduce. Such a file says so at the top and mutation-checks its fixes.
   explicitly, in upstream's documented order — `{...rest}` beside an explicit handler for the same
   event is one object literal, and the last key silently wins. `ComplexSelector` shipped with a
   consumer's `onclick` discarded exactly this way (`port/ledger/026-selector-family.md`).
+- **A React node prop gated on state translates to a conditional _snippet_, never an `{#if}` inside
+  the tag.** Upstream writes `{active === N && (…)}` for a `children`/slot prop, which hands the
+  component a falsy child so nothing renders. A snippet passed by slot is always defined, so an
+  `{#if}` wrapping the body leaves every `{#if children}` guard _inside_ the component true and
+  renders its wrapper around an empty slot. `Step` has two such guards and the second is not
+  cosmetic: `hasContentSeg = isVertical && children != null` drives the **connector geometry**, so
+  the vertical `StepperCustomContent` block would have grown a segment on every inactive step. Pass
+  it through instead — `children={active === 0 ? content : undefined}` (batch 038).
 - Prettier: **tabs**, single quotes, **no trailing commas**, 100 columns.

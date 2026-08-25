@@ -73,6 +73,19 @@ them.
    it as their retirement condition, because upstream's stories use Heroicons the registry has no
    match for.
 
+   On the examples: batch 038 ported the `Stepper` and `Step` blocks, and every icon they reach for
+   already resolves, so they opened no new demo debt. What is left are the blocks for
+   `ComplexSelector`, `ChatDictation`, `AvatarGroup`, `ChatMessageBubble`, `Dialog` and `Selector`.
+   These are ports, not authored demos — the source is
+   `@astryxdesign/cli`'s `assets/templates/blocks/components/<Name>/`, resolved by `exampleFor` in
+   the block's `.doc.mjs`, so the parity rule applies to them exactly as it does to a component.
+
+   **The count of them is not tracked anywhere.** `docs/scripts/generate-content.mjs` prints
+   `examples N ported / M pending` as it runs and then discards it; `status.md` has no row for it.
+   So this front is the one place where progress is described rather than measured, against this
+   file's own rule. Wiring that figure into `status.mjs` is the next piece of work here, and it is
+   small.
+
 ### The release, held
 
 `0.4.5` is merged to `main` and **not tagged**. The gate is green and the manifests are at `0.4.5`,
