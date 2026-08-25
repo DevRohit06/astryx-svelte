@@ -122,8 +122,15 @@ const invented = ours.filter((o) => !theirsCanon.has(canon(o)));
 // declare, and two of batch 033's own headers scanned at four times their real
 // contract. A header written to explain its own counting was the thing most
 // able to corrupt it.
+//
+// The lookbehind also rejects a preceding backtick, which is what closes the
+// other half. `it.each` and `it.for` really are tagged templates, so the second
+// alternative below has to accept a backtick after them - and that made a
+// backtick-quoted `it.each` in prose match all over again, exactly the way the
+// bare form used to. In code nothing precedes `it` with a backtick; in prose
+// that is precisely what does.
 const testCase =
-	/(?<![\w.])(?:it|test)(?:\.(?:each|skip|only|todo|fails|concurrent|for))?\s*\(|(?<![\w.])(?:it|test)\.(?:each|for)\s*`/g;
+	/(?<![\w.`])(?:it|test)(?:\.(?:each|skip|only|todo|fails|concurrent|for))?\s*\(|(?<![\w.`])(?:it|test)\.(?:each|for)\s*`/g;
 const countCases = (file) => (readFileSync(file, 'utf8').match(testCase) ?? []).length;
 
 /** Every `*.test.ts`/`*.test.tsx` under `dir`, recursively, as absolute paths. */

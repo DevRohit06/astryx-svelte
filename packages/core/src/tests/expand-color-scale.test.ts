@@ -3,7 +3,7 @@ import { ensureContrastTone, expandColorScale } from '$lib/theme/expand-color-sc
 import { compositeOver, contrastRatio } from '$lib/theme/contrast.js';
 import { hexToHct, tonalPalette } from '$lib/theme/hct.js';
 import { defineTheme, type DefinedTheme } from '$lib/theme/define-theme.js';
-import { generateOnMediaCss, generateThemeCss } from '$lib/theme/generate-theme-rules.js';
+import { generateOnMediaCSS, generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 import { resolveThemeTokens } from '$lib/theme/tokens.js';
 import { colorDefaults } from '$lib/styles/tokens.stylex.js';
 import { formatColor, parseColor } from '$lib/utils/color.js';
@@ -209,7 +209,7 @@ describe('expandColorScale — neutral-only themes (#2279)', () => {
  */
 function themeRules(theme: DefinedTheme): string {
 	const css = generateThemeCss(theme);
-	const onMedia = generateOnMediaCss(theme);
+	const onMedia = generateOnMediaCSS(theme);
 	if (!onMedia) {
 		return css;
 	}

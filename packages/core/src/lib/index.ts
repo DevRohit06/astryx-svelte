@@ -204,7 +204,7 @@ export { default as MediaTheme } from './theme/media-theme.svelte';
 // `SyntaxTheme` is surfaced at the root for the same reason `MediaTheme` is —
 // both are theme *components*, and upstream's root `export * from './theme'`
 // reaches them. (Our root barrel is deliberately not a full mirror of `./theme`:
-// `defineTheme`, `generateThemeCss` and friends stay on the `./theme` subpath.
+// `defineTheme`, `generateThemeCSS` and friends stay on the `./theme` subpath.
 // The components are the practical exception, applied consistently.) No
 // `SyntaxThemeProps` — upstream keeps that interface module-private.
 export { default as SyntaxTheme } from './theme/syntax/syntax-theme.svelte';

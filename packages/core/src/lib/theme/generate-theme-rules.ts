@@ -498,7 +498,7 @@ function onMediaRules(theme: DefinedTheme): string[] {
  * Returns the empty string when there is nothing to emit, so a caller can test
  * it before wrapping it in a layer.
  */
-export function generateOnMediaCss(theme: DefinedTheme): string {
+export function generateOnMediaCSS(theme: DefinedTheme): string {
 	const rules = onMediaRules(theme);
 	if (rules.length === 0) return '';
 
@@ -643,6 +643,77 @@ export function generateThemeRulesSplit(theme: DefinedTheme): ThemeRulesSplit {
 }
 
 /**
+ * A theme's rules as one flat list — upstream's `generateThemeRules(theme)`.
+ *
+ * Upstream generates this list and *derives* {@link generateThemeRulesSplit}
+ * from it, by testing each rule for a leading `:where(`. This port generates the
+ * two groups directly and concatenates them here, which was measured to agree
+ * exactly: every rule in `prose` starts with `:where(`, no rule in `component`
+ * does, and the size overrides already fall after the themed type rules they
+ * have to beat on source order. Same list, reached from the other side.
+ *
+ * @param theme A theme returned by `defineTheme`.
+ */
+export function generateThemeRules(theme: DefinedTheme): string[] {
+	const { component, prose } = generateThemeRulesSplit(theme);
+	return [...component, ...prose];
+}
+
+/**
+ * Output from {@link generateThemeCSS} — two CSS blocks for different layers.
+ */
+export interface ThemeCSSOutput {
+	/**
+	 * Prose element defaults scoped to the theme. Belongs in `@layer reset`,
+	 * where any class-based style beats it. Empty string if there are no prose
+	 * rules.
+	 */
+	prose: string;
+	/**
+	 * Token overrides and component `.astryx-*` overrides scoped to the theme.
+	 * Belongs in `@layer astryx-theme`, above StyleX, so a theme can restyle a
+	 * component on purpose. Empty string if there are no rules.
+	 */
+	component: string;
+}
+
+/**
+ * A theme's two `@scope` blocks, **without** layer wrappers — upstream's
+ * `generateThemeCSS(theme)`, and the shape `<Theme>` consumes.
+ *
+ * Each caller decides which layer each block belongs in, because only the caller
+ * knows whether it is writing a `<style>` element, a built stylesheet or a
+ * document. {@link generateThemeCss} is this plus this port's layer wrappers and
+ * a generated-file header; it is kept off the public barrel, because upstream
+ * has no such export and the theme build scripts reach it by deep path.
+ *
+ * The blocks are joined without re-indenting, so every string
+ * {@link generateThemeRules} returns appears verbatim in one of them.
+ *
+ * @param theme A theme returned by `defineTheme`.
+ */
+export function generateThemeCSS(theme: DefinedTheme): ThemeCSSOutput {
+	const scopeSelector = `[${THEME_ATTR}="${theme.name}"]`;
+	const scope = (rules: string[]): string =>
+		`@scope (${scopeSelector}) to (${THEME_SCOPE_TO}) {\n${rules.join('\n\n')}\n}`;
+
+	const { component, prose } = generateThemeRulesSplit(theme);
+
+	const proseCss = prose.length > 0 ? scope(prose) : '';
+	let componentCss = component.length > 0 ? scope(component) : '';
+
+	// A separate block rather than another rule inside the first, matching
+	// upstream: the on-media scope is unbounded so it can reach
+	// `[data-astryx-media]` elements, which the bounded scope above cannot.
+	const onMedia = generateOnMediaCSS(theme);
+	if (onMedia) {
+		componentCss = componentCss ? `${componentCss}\n\n${onMedia}` : onMedia;
+	}
+
+	return { prose: proseCss, component: componentCss };
+}
+
+/**
  * Generates the full stylesheet for a theme.
  *
  * @param theme A theme returned by `defineTheme`.
@@ -669,7 +740,7 @@ export function generateThemeCss(theme: DefinedTheme): string {
 
 	// A second layer block rather than another rule inside the first, matching
 	// upstream: the on-media scope is generated separately and appended.
-	const onMedia = generateOnMediaCss(theme);
+	const onMedia = generateOnMediaCSS(theme);
 	if (onMedia) {
 		parts.push('', `@layer ${THEME_LAYER} {`, indent(onMedia), '}');
 	}

@@ -14,16 +14,16 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
-| Ledger entries            | 34                                                                       |
+| Ledger entries            | 35                                                                       |
 
 ## Test parity
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 275    | 7039           |
-| Ported here              | 263    | 6869           |
+| Ported here              | 264    | 6913           |
 | No counterpart by design | 7      | 74             |
-| **Unported**             | **5**  | **96**         |
+| **Unported**             | **4**  | **52**         |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -33,7 +33,6 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 
 | Suite                                     | Cases |
 | ----------------------------------------- | ----- |
-| `theme/generateThemeRules.test.ts`        | 44    |
 | `Layer/useLayerDismissal.test.tsx`        | 21    |
 | `Layer/layerDismissalInvariants.test.tsx` | 15    |
 | `Layer/layerDismissalFamilies.test.tsx`   | 11    |
@@ -56,8 +55,8 @@ substring-matching on both sides by design and is not counted.
 
 | Kind                  | Count   |
 | --------------------- | ------- |
-| api-divergence        | 33      |
+| api-divergence        | 32      |
 | deliberate-divergence | 47      |
 | unported              | 15      |
 | upstream-lag          | 11      |
-| **total**             | **106** |
+| **total**             | **105** |

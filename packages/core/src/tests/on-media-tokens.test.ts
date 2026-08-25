@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { defineTheme } from '$lib/theme/define-theme.js';
-import { generateOnMediaCss } from '$lib/theme/generate-theme-rules.js';
+import { generateOnMediaCSS } from '$lib/theme/generate-theme-rules.js';
 import {
 	defaultOnDarkTokens,
 	defaultOnLightTokens,
@@ -18,9 +18,10 @@ import {
  *
  * ## Two translations, neither a case
  *
- * `generateOnMediaCSS` is `generateOnMediaCss` here, and lives in
- * `generate-theme-rules.ts` rather than beside `defineTheme` — the name drift is
- * recorded in `port/debts.md` under the `./theme` barrel entry.
+ * `generateOnMediaCSS` lives in `generate-theme-rules.ts` rather than beside
+ * `defineTheme`, and is re-exported from both `./theme` and `./theme/define` as
+ * upstream re-exports it from both of its own. It spelled the name
+ * `generateOnMediaCss` here until batch 034 closed that drift.
  *
  * Upstream's last three cases read `../reset.css`; this port folds the reset
  * into the always-loaded `base.css`, because the components genuinely require
@@ -128,9 +129,9 @@ describe('defineTheme with onDark/onLight', () => {
 	});
 });
 
-describe('generateOnMediaCss', () => {
+describe('generateOnMediaCSS', () => {
 	it('emits @scope with [data-astryx-media] token rules', () => {
-		const css = generateOnMediaCss(defineTheme({ name: 'test' }));
+		const css = generateOnMediaCSS(defineTheme({ name: 'test' }));
 		expect(css).toContain('@scope ([data-astryx-theme="test"])');
 		// Same scope boundary as the main theme block.
 		expect(css).toContain('to ([data-astryx-theme])');
@@ -140,13 +141,13 @@ describe('generateOnMediaCss', () => {
 	});
 
 	it('emits light media rules', () => {
-		const css = generateOnMediaCss(defineTheme({ name: 'test' }));
+		const css = generateOnMediaCSS(defineTheme({ name: 'test' }));
 		expect(css).toContain('[data-astryx-media="light"]');
 		expect(css).toContain('color-scheme: light');
 	});
 
 	it('emits component override rules', () => {
-		const css = generateOnMediaCss(
+		const css = generateOnMediaCSS(
 			defineTheme({
 				name: 'test',
 				onDark: {
@@ -165,7 +166,7 @@ describe('generateOnMediaCss', () => {
 	});
 
 	it('emits pseudo-class rules for on-media components', () => {
-		const css = generateOnMediaCss(
+		const css = generateOnMediaCSS(
 			defineTheme({
 				name: 'test',
 				onDark: {
@@ -185,7 +186,7 @@ describe('generateOnMediaCss', () => {
 /**
  * The baseline `<MediaTheme>` needs with no theme present: a `color-scheme`
  * flip on `[data-astryx-media]`. Token overrides are theme-level and come from
- * `generateOnMediaCss` — asserted here to *not* be in the baseline, since a
+ * `generateOnMediaCSS` — asserted here to *not* be in the baseline, since a
  * theme that could not override them would be the bug.
  */
 describe('base.css baseline media rules', () => {

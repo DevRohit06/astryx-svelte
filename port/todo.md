@@ -46,10 +46,12 @@ them.
 
    `status.md` counts the suites with no counterpart at all; suites that exist but fall short state
    it in their own header, and a header that names a suite in order to disclose a gap needs the
-   `UNPORTED:` marker or it is read as coverage instead. What remains of this front is two units,
-   each blocked on its own re-architecture rather than on effort: the four `Layer` dismissal suites
-   behind the shared dismissal stack, and `theme/generateThemeRules.test.ts` behind the
-   `generateThemeCSS` shape change recorded in `debts.md`.
+   `UNPORTED:` marker or it is read as coverage instead. What remains of this front is one unit:
+   the four `Layer` dismissal suites, behind the shared dismissal stack. The other,
+   `theme/generateThemeRules.test.ts`, is closed: batch 034 aligned the `generateThemeCSS` API and
+   ported it whole — and found the blocking debt had overstated itself, which is the standing
+   warning about estimating a port from reading two implementations against each other instead of
+   running either.
 
 2. **The published surface.** Settle the Layer/over-export decision as one call at a minor, then
    the `./theme` barrel renames, the `./theme/tokens` subpath keys, `reset.css` at its own subpath,

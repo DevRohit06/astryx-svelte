@@ -92,12 +92,17 @@ export {
 	type ResolvedOnMedia
 } from './on-media-tokens.js';
 
+// Upstream's four, exactly. `generateThemeCss` — this port's layered, headered
+// document, which the theme build scripts and the docs build consume — is
+// deliberately NOT here: upstream publishes no such function, and its callers
+// reach it by deep path into `dist/`, which the `exports` map does not expose.
 export {
-	generateOnMediaCss,
-	generateThemeCss,
+	generateOnMediaCSS,
+	generateThemeCSS,
+	generateThemeRules,
 	generateThemeRulesSplit
 } from './generate-theme-rules.js';
-export type { ThemeRulesSplit } from './generate-theme-rules.js';
+export type { ThemeCSSOutput, ThemeRulesSplit } from './generate-theme-rules.js';
 export { parseStyleKey } from './parse-style-key.js';
 
 export { expandMotionScale } from './expand-motion-scale.js';

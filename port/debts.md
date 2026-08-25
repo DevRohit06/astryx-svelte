@@ -532,12 +532,12 @@ polish pass before a patch.
 
 - **units:** -
 - **kind:** api-divergence
-- **retires:** when `generateThemeCss`/`generateOnMediaCss` and `ThemeConfig`/`ComponentOverrides` are renamed to match upstream, and the remaining `theme/types.ts` + over-exports are swept
+- **retires:** when `ThemeConfig`/`ComponentOverrides` are renamed to match upstream, and the remaining `theme/types.ts` + over-exports are swept
 
 A substantial set of names upstream's `theme/index.ts` publishes that ours does not — deliberately
 unnumbered here, because every count this entry has carried went stale within a batch and a stale
 count makes a growing gap read as a settled one. Re-measure with the surface sweep rather than
-trusting a figure in this paragraph. **Batch 8 closed the `Theme`/`useTheme` family** (`Theme`, `ThemeContext`, `ThemeContextValue`, `useTheme`, `UseThemeReturn`, `ThemeMode`, `ResolvedThemeMode`, `resolveThemeToken(s)`, the two options types, `tokenVar`, `tokenVars`, `tokenDefaults`) and started `theme/types.ts`, which now holds `ThemeMode` alone — the prose-theming types in it land with the Prose-defaults item. What remains is chiefly the per-group token `*Vars`/`*Defaults` exports and the rest of `theme/types.ts` — plus a set of over-exports and two name drifts (`generateThemeCss`/`generateOnMediaCss` vs upstream's `…CSS`; `ThemeConfig`/`ComponentOverrides` vs `DefineThemeInput`/`ComponentStyleMap`). The 0.4.5 sweep also found the gap splits two ways that this entry did not distinguish: some names are absent from _every_ barrel here, others are reachable from the root but not from `./theme` — the second kind is a placement problem, not a missing port, and is the cheaper half to close
+trusting a figure in this paragraph. **Batch 8 closed the `Theme`/`useTheme` family** (`Theme`, `ThemeContext`, `ThemeContextValue`, `useTheme`, `UseThemeReturn`, `ThemeMode`, `ResolvedThemeMode`, `resolveThemeToken(s)`, the two options types, `tokenVar`, `tokenVars`, `tokenDefaults`) and started `theme/types.ts`, which now holds `ThemeMode` alone — the prose-theming types in it land with the Prose-defaults item. What remains is chiefly the per-group token `*Vars`/`*Defaults` exports and the rest of `theme/types.ts` — plus a set of over-exports and one remaining name drift, `ThemeConfig`/`ComponentOverrides` vs `DefineThemeInput`/`ComponentStyleMap`. (The other drift, `generateThemeCss`/`generateOnMediaCss` vs upstream's `…CSS`, closed in batch 034 along with the shape change behind it — see the retired entry.) The 0.4.5 sweep also found the gap splits two ways that this entry did not distinguish: some names are absent from _every_ barrel here, others are reachable from the root but not from `./theme` — the second kind is a placement problem, not a missing port, and is the cheaper half to close
 
 ### Three `./theme` names have no upstream counterpart or the wrong one
 
@@ -1169,43 +1169,6 @@ replica to test the justification, saw it compile, and reported the reason as no
 was half right — the in-file comment claimed Svelte _errors_, and it warns. The rename is correct;
 the overstatement was what made it look invented
 
-### `generateThemeCss` returns a flat stylesheet where upstream returns two blocks
-
-- **units:** theme/generate-theme-rules.ts
-- **kind:** api-divergence
-- **retires:** when `generateThemeCss` returns `ThemeCSSOutput`, its `@layer` wrappers move to its callers, and `generateThemeRules` is exported
-
-Upstream's `generateThemeCSS(theme)` returns `{prose, component}` — two `@scope`
-blocks and no layer wrappers — and leaves it to each caller to put them in the right
-layer. This port's `generateThemeCss(theme)` returns one string with the
-`@layer reset` / `@layer astryx-theme` wrappers and a generated-file header already
-applied, which is the shape `<Theme>`, the theme build scripts and the docs build all
-consume. Upstream also exports `generateThemeRules(theme): string[]`, the rule list
-behind the split; this port has only `generateThemeRulesSplit`.
-
-Found while porting `theme/generateThemeRules.test.ts` in batch 030, whose cases
-call both `generateThemeRules` and the two-block `generateThemeCSS` and so cannot be
-ported case for case until the shapes match. **The suite is deliberately left
-unported rather than partially ported**, and `port/status.md` keeps counting it: the
-fix is a wide change — around twenty test files call `generateThemeCss(theme)` and
-assert on the string, plus `<Theme>`, both theme build scripts and the docs build —
-and belongs in a batch of its own rather than inside one restructuring `defineTheme`
-at the same time
-
-Scoping it in batch 033 found the entry understates it in two ways. **It is a
-re-architecture, not an added export**: upstream derives the split _from_ the flat
-list by testing each rule for a leading `:where(`, and this port generates the two
-groups separately, so `generateThemeRules` cannot simply be exported — the flat list
-has to become the source the split is taken from, in upstream's rule order (tokens,
-component overrides, prose, colour overrides, size overrides) and with upstream's
-literal indentation, both of which the suite's cases assert on. **And it is
-DOM-observable**: upstream's `<Theme>` injects _two_ `<style>` elements, marked
-`data-astryx-theme-prose` for the reset layer and `data-astryx-theme` for the theme
-layer, where `theme.svelte` injects one carrying both. A consumer or test selecting
-`style[data-astryx-theme-prose]` finds nothing here. The two name drifts in the
-`0.4.5` surface entry above (`generateThemeCss`/`generateOnMediaCss` vs upstream's
-`…CSS`) are the same change and should land with it
-
 ### Ported `getByRole` name assertions are substring matches, where upstream's are whole-string
 
 - **units:** src/tests (client project)
@@ -1419,6 +1382,56 @@ says so rather than pointing consumers at nothing
 Closed, kept as the record. **Nothing below counts as an open debt** — `scripts/status.mjs` stops
 tallying at this heading, and `astryx-parity` must not find a retired entry when it greps for
 "is this drift already known?", or it would skip live drift.
+
+### `generateThemeCss` returns a flat stylesheet where upstream returns two blocks
+
+- **units:** theme/generate-theme-rules.ts
+- **kind:** api-divergence
+- **retires:** when `generateThemeCss` returns `ThemeCSSOutput`, its `@layer` wrappers move to its callers, and `generateThemeRules` is exported
+
+Upstream's `generateThemeCSS(theme)` returns `{prose, component}` — two `@scope`
+blocks and no layer wrappers — and leaves it to each caller to put them in the right
+layer. This port's `generateThemeCss(theme)` returns one string with the
+`@layer reset` / `@layer astryx-theme` wrappers and a generated-file header already
+applied, which is the shape `<Theme>`, the theme build scripts and the docs build all
+consume. Upstream also exports `generateThemeRules(theme): string[]`, the rule list
+behind the split; this port has only `generateThemeRulesSplit`.
+
+Found while porting `theme/generateThemeRules.test.ts` in batch 030, whose cases
+call both `generateThemeRules` and the two-block `generateThemeCSS` and so cannot be
+ported case for case until the shapes match. **The suite is deliberately left
+unported rather than partially ported**, and `port/status.md` keeps counting it: the
+fix is a wide change — around twenty test files call `generateThemeCss(theme)` and
+assert on the string, plus `<Theme>`, both theme build scripts and the docs build —
+and belongs in a batch of its own rather than inside one restructuring `defineTheme`
+at the same time
+
+Scoping it across batches 033 and 034 revised it twice, and the first revision was
+wrong. Batch 033 recorded that exporting `generateThemeRules` would require
+re-architecting the generator, because upstream derives the split _from_ the flat list
+while this port generates the two groups separately. Running the generator disproved
+that: **every** rule this port puts in `prose` starts with `:where(`, **no** rule it
+puts in `component` does, and the size overrides already fall after the themed type
+rules that the ordering case pins. Upstream's derivation and this port's grouping
+therefore agree exactly, and the flat list is a genuine addition. The claim had been
+reasoned from reading the two implementations rather than measured, and one probe
+settled it.
+
+What the entry did understate is real, and it is **DOM-observable**: upstream's `<Theme>` injects _two_ `<style>` elements, marked
+`data-astryx-theme-prose` for the reset layer and `data-astryx-theme` for the theme
+layer, where `theme.svelte` injects one carrying both. A consumer or test selecting
+`style[data-astryx-theme-prose]` finds nothing here. The two name drifts in the
+`0.4.5` surface entry above (`generateThemeCss`/`generateOnMediaCss` vs upstream's
+`…CSS`) are the same change and should land with it
+
+**Closed at 0.5.0, in batch 034.** `generateThemeRules`, `generateThemeCSS` and `ThemeCSSOutput`
+are exported from `./theme` and `./theme/define`, `generateOnMediaCss` is `generateOnMediaCSS`, and
+`<Theme>` injects one `<style>` per layer. The published surface is upstream's exactly.
+`generateThemeCss` — the layered, headered document — still exists and still backs the theme build
+scripts and the docs build, but is off the public barrel: every one of its callers reaches it by
+deep path into `dist/`, which the `exports` map does not expose, so the single generator that keeps
+a built stylesheet and the runtime from drifting survives without appearing in the API. The suite
+this entry blocked, `theme/generateThemeRules.test.ts`, is ported whole
 
 ### Batch 5's doc omissions — two of the four closed at 0.4.1
 
