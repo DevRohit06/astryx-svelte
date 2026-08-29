@@ -9,7 +9,7 @@ import ShellFixture from './fixtures/complex-selector-shell.svelte';
 
 /**
  * Astryx's `ComplexSelector/ComplexSelector.test.tsx`, ported case for case —
- * **all 12 upstream cases at v0.4.5**, none dropped and none added. There is no
+ * **all 12 upstream cases at the 0.5.0 pin**, none dropped and none added. There is no
  * ref-callback and no `displayName` case in the file, so nothing is React-only.
  *
  * (At v0.4.2 this was 6. The six added at 0.4.5 cover the `ghost` variant, the
@@ -71,12 +71,12 @@ describe('ComplexSelector', () => {
 			props: { value: APPLE_RIPE, onChange }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend' }));
-		await userEvent.click(screen.getByRole('gridcell', { name: 'Banana Juicy' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend', exact: true }));
+		await userEvent.click(screen.getByRole('gridcell', { name: 'Banana Juicy', exact: true }));
 
 		expect(onChange).toHaveBeenCalledWith({ fruit: 'Banana', ripeness: 'Juicy' });
 		await expect
-			.element(screen.getByRole('button', { name: 'Fruit blend' }))
+			.element(screen.getByRole('button', { name: 'Fruit blend', exact: true }))
 			.toHaveAttribute('aria-expanded', 'false');
 	});
 
@@ -84,7 +84,7 @@ describe('ComplexSelector', () => {
 		const screen = await render(FruitFixture, {
 			props: { value: APPLE_RIPE, onChange: () => {} }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend', exact: true }));
 		const popup = screen.container.querySelector('[popover]') as HTMLElement;
 		expect(popup).not.toBeNull();
 		// Both edges, not just the leading one: the trailing edge is what faces
@@ -110,8 +110,8 @@ describe('ComplexSelector', () => {
 			props: { value: APPLE_RIPE, onChange, changeAction }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend' }));
-		await userEvent.click(screen.getByRole('gridcell', { name: 'Banana Crisp' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend', exact: true }));
+		await userEvent.click(screen.getByRole('gridcell', { name: 'Banana Crisp', exact: true }));
 
 		expect(onChange).toHaveBeenCalledWith({ fruit: 'Banana', ripeness: 'Crisp' });
 		await vi.waitFor(() => {
@@ -125,11 +125,11 @@ describe('ComplexSelector', () => {
 	it('passes a close helper to composed content', async () => {
 		const screen = await render(CloseFixture);
 
-		const trigger = screen.getByRole('button', { name: 'Fruit blend' });
+		const trigger = screen.getByRole('button', { name: 'Fruit blend', exact: true });
 		await userEvent.click(trigger);
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 
-		await userEvent.click(screen.getByRole('button', { name: 'Done' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Done', exact: true }));
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 	});
 });
@@ -144,7 +144,7 @@ describe('ComplexSelector popup theme target', () => {
 				children: doneContent
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend', exact: true }));
 
 		const popup = screen.container.querySelector('.astryx-complex-selector-popup') as HTMLElement;
 		expect(popup).not.toBeNull();
@@ -158,7 +158,7 @@ describe('ComplexSelector popup theme target', () => {
 		expect(popup).toHaveClass('astryx-popover-surface');
 		expect(popup.querySelector('[id]')).not.toBeNull();
 		expect(popup).toContainElement(
-			screen.getByRole('button', { name: 'Done' }).element() as HTMLElement
+			screen.getByRole('button', { name: 'Done', exact: true }).element() as HTMLElement
 		);
 
 		// And it is not the bare positioning layer either.
@@ -177,7 +177,7 @@ describe('ComplexSelector popup theme target', () => {
 				children: doneContent
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit blend', exact: true }));
 
 		expect(screen.container.querySelector('.astryx-complex-selector-popup')).not.toBeNull();
 	});
@@ -235,7 +235,7 @@ describe('ComplexSelector popup theme target', () => {
 		it('exposes imperative open, close, toggle, and isOpen via bind:this', async () => {
 			const screen = await render(ShellFixture);
 			const handle = screen.component.handle()!;
-			const trigger = screen.getByRole('button', { name: 'View options' });
+			const trigger = screen.getByRole('button', { name: 'View options', exact: true });
 
 			await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 			expect(handle.isOpen()).toBe(false);
@@ -258,7 +258,7 @@ describe('ComplexSelector popup theme target', () => {
 		it('does not open via the imperative handle when disabled', async () => {
 			const screen = await render(ShellFixture, { props: { isDisabled: true } });
 			const handle = screen.component.handle()!;
-			const trigger = screen.getByRole('button', { name: 'View options' });
+			const trigger = screen.getByRole('button', { name: 'View options', exact: true });
 
 			handle.open();
 			handle.toggle();
@@ -269,7 +269,7 @@ describe('ComplexSelector popup theme target', () => {
 		it('does not reopen from the trigger click that follows light dismiss', async () => {
 			const screen = await render(ShellFixture);
 			const handle = screen.component.handle()!;
-			const trigger = screen.getByRole('button', { name: 'View options' });
+			const trigger = screen.getByRole('button', { name: 'View options', exact: true });
 
 			await userEvent.click(trigger);
 			await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');

@@ -27,6 +27,16 @@ export default {
 				visualProps: ['size', 'status'],
 				states: ['disabled', 'readonly']
 			}
+		],
+		derived: [
+			{
+				property: 'padding',
+				expand: 'container'
+			},
+			{
+				property: 'borderRadius',
+				vars: ['--_field-radius']
+			}
 		]
 	},
 	usage: {
@@ -128,6 +138,11 @@ export default {
 			name: 'isOptional',
 			type: 'boolean',
 			description: 'Whether the field is optional (mutually exclusive with isRequired).'
+		},
+		{
+			name: 'onkeydown',
+			type: 'KeyboardEventHandler<HTMLInputElement>',
+			description: 'Callback fired on keydown events on the input.'
 		},
 		{
 			name: 'isRequired',

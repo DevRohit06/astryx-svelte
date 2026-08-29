@@ -6,7 +6,9 @@ import Provider from './fixtures/size-provider.svelte';
 import Siblings from './fixtures/size-siblings.svelte';
 
 /**
- * Ported from Astryx's `SizeContext/SizeContext.test.tsx` (27 cases).
+ * Ported from Astryx's `SizeContext/SizeContext.test.tsx` at the 0.5.0 pin — its
+ * 21 `it` blocks plus two three-row `it.each` tables run out to **27 collected
+ * cases**, of which **25 are here** (see the two dropped below).
  *
  * Our implementation is `useSize` / `setSizeContext` / `SizeContext` in
  * `internal/contexts.svelte.ts`. Upstream's `renderHook` has no Svelte

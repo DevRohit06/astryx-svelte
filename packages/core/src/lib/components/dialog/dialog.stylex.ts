@@ -7,14 +7,16 @@ import {
 	paddingStyles,
 	containerPaddingInlineVarStyles,
 	containerPaddingBlockStartVarStyles,
-	containerPaddingBlockEndVarStyles
+	containerPaddingBlockEndVarStyles,
+	overlayPaddingReset
 } from '../../internal/padding.stylex.js';
 import {
 	colorVars,
 	radiusVars,
 	durationVars,
 	easeVars,
-	shadowVars
+	shadowVars,
+	spacingVars
 } from '../../styles/tokens.stylex.js';
 
 const enterDirectional = stylex.keyframes({
@@ -23,6 +25,11 @@ const enterDirectional = stylex.keyframes({
 		transform: 'translate(var(--dialog-dir-x, 0px), var(--dialog-dir-y, 16px)) scale(0.95)'
 	},
 	to: { opacity: 1, transform: 'translate(0, 0) scale(1)' }
+});
+
+const enterFullscreen = stylex.keyframes({
+	from: { opacity: 0 },
+	to: { opacity: 1 }
 });
 
 const styles = stylex.create({
@@ -74,6 +81,19 @@ const styles = stylex.create({
 		margin: 0,
 		inset: 0
 	},
+	fullscreenOpen: {
+		animationName: {
+			default: enterFullscreen,
+			'@media (prefers-reduced-motion: reduce)': 'none'
+		}
+	},
+	fullscreenSafeArea: {
+		paddingBlockStart: 'max(var(--container-padding-block-start), env(safe-area-inset-top, 0px))',
+		paddingBlockEnd: 'max(var(--container-padding-block-end), env(safe-area-inset-bottom, 0px))',
+		paddingInlineStart:
+			'max(var(--container-padding-inline-start), env(safe-area-inset-left, 0px))',
+		paddingInlineEnd: 'max(var(--container-padding-inline-end), env(safe-area-inset-right, 0px))'
+	},
 	inner: {
 		display: 'flex',
 		flexDirection: 'column',
@@ -97,12 +117,54 @@ const styles = stylex.create({
 	}
 });
 
-// Dynamic styles for width, maxHeight, and position
+/**
+ * The standard variant treats `width` as the *preferred* surface width and
+ * clamps it to the dynamic viewport, leaving a spacing-token gutter on each
+ * side, so a narrow viewport keeps content and controls on screen without any
+ * change to the public API.
+ */
+const STANDARD_DIALOG_VIEWPORT_GUTTER = spacingVars['--spacing-4'];
+const STANDARD_DIALOG_VIEWPORT_MAX_WIDTH = `calc(100dvw - ${STANDARD_DIALOG_VIEWPORT_GUTTER} - ${STANDARD_DIALOG_VIEWPORT_GUTTER})`;
+const STANDARD_DIALOG_MAX_WIDTH = `min(100%, ${STANDARD_DIALOG_VIEWPORT_MAX_WIDTH})`;
+
+/**
+ * Numbers become pixels, strings pass through. Upstream keeps this beside
+ * `formatPosition`, which is the same function under another name — both are
+ * ported rather than merged, so a later upstream change to either lands cleanly.
+ */
+function formatSizeValue(value: number | string): string {
+	return typeof value === 'number' ? `${value}px` : value;
+}
+
+/** The resolved surface dimensions of a standard (non-fullscreen) dialog. */
+export interface DialogSizing {
+	width: string;
+	maxWidth: string;
+	maxHeight: string;
+}
+
+/**
+ * Resolve the sizing a standard dialog is rendered at. The three values are
+ * finished CSS strings because they feed a `stylex.create` *function style*,
+ * which cannot call a helper of its own — the same reason
+ * `resolveDialogPositionOffsets` exists.
+ */
+export function resolveDialogSizing(
+	width: number | string,
+	maxHeight: number | string
+): DialogSizing {
+	return {
+		width: formatSizeValue(width),
+		maxWidth: STANDARD_DIALOG_MAX_WIDTH,
+		maxHeight: formatSizeValue(maxHeight)
+	};
+}
+
 const dynamicStyles = stylex.create({
-	sizing: (width: number | string, maxHeight: number | string) => ({
-		width: typeof width === 'number' ? `${width}px` : width,
-		maxWidth: '90vw',
-		maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight
+	sizing: (width: string, maxWidth: string, maxHeight: string) => ({
+		width,
+		maxWidth,
+		maxHeight
 	}),
 	position: (top: string, insetInlineStart: string, insetInlineEnd: string, bottom: string) => ({
 		// Assigns pre-resolved offsets from `resolveDialogPositionOffsets`. This
@@ -176,8 +238,8 @@ export function resolveDialogPositionOffsets(position: DialogPosition): {
 export interface DialogRootOptions {
 	isOpen: boolean;
 	isFullscreen: boolean;
-	width: number | string;
-	maxHeight: number | string;
+	/** `null` when fullscreen — the fullscreen variant sizes itself. */
+	standardSizing: DialogSizing | null;
 	/** Only applied when set and not fullscreen. */
 	position?: Readonly<DialogPosition>;
 	xstyle?: StyleArg;
@@ -187,8 +249,7 @@ export interface DialogRootOptions {
 export function dialogAttrs({
 	isOpen,
 	isFullscreen,
-	width,
-	maxHeight,
+	standardSizing,
 	position,
 	xstyle
 }: DialogRootOptions): SvelteStyleAttrs {
@@ -198,9 +259,13 @@ export function dialogAttrs({
 	const offsets = position != null && !isFullscreen ? resolveDialogPositionOffsets(position) : null;
 	return focusOutlineProps.focusVisible(
 		styles.dialog,
+		// The overlay root is not inside any padded container, so the inherited
+		// container padding vars are reset at its boundary.
+		overlayPaddingReset.reset,
 		isOpen && styles.open,
 		styles.backdrop,
-		!isFullscreen && dynamicStyles.sizing(width, maxHeight),
+		standardSizing != null &&
+			dynamicStyles.sizing(standardSizing.width, standardSizing.maxWidth, standardSizing.maxHeight),
 		offsets != null &&
 			dynamicStyles.position(
 				offsets.top,
@@ -209,27 +274,29 @@ export function dialogAttrs({
 				offsets.bottom
 			),
 		isFullscreen && styles.fullscreen,
+		isFullscreen && isOpen && styles.fullscreenOpen,
 		xstyle
 	);
 }
 
 export interface DialogInlineOptions {
 	isFullscreen: boolean;
-	width: number | string;
-	maxHeight: number | string;
+	/** `null` when fullscreen — the fullscreen variant sizes itself. */
+	standardSizing: DialogSizing | null;
 	xstyle?: StyleArg;
 }
 
 /** The `<div>` wrapper in the inline (docs preview) path. */
 export function dialogInlineAttrs({
 	isFullscreen,
-	width,
-	maxHeight,
+	standardSizing,
 	xstyle
 }: DialogInlineOptions): SvelteStyleAttrs {
 	return sx(
 		styles.inlineWrapper,
-		!isFullscreen && dynamicStyles.sizing(width, maxHeight),
+		overlayPaddingReset.reset,
+		standardSizing != null &&
+			dynamicStyles.sizing(standardSizing.width, standardSizing.maxWidth, standardSizing.maxHeight),
 		isFullscreen && styles.fullscreen,
 		xstyle
 	);
@@ -242,6 +309,7 @@ export interface DialogInnerOptions {
 	effectivePadding: SpacingStep;
 	/** Undefined when fullscreen. */
 	maxHeight: string | undefined;
+	isFullscreen: boolean;
 }
 
 /** The inner content wrapper — the padding/max-height container. */
@@ -249,7 +317,8 @@ export function dialogInnerAttrs({
 	useThemeDefault,
 	paddingToken,
 	effectivePadding,
-	maxHeight
+	maxHeight,
+	isFullscreen
 }: DialogInnerOptions): SvelteStyleAttrs {
 	const explicit = !useThemeDefault && effectivePadding !== 4;
 	return sx(
@@ -268,6 +337,7 @@ export function dialogInnerAttrs({
 		explicit && paddingStyles[effectivePadding],
 		explicit && containerPaddingInlineVarStyles[effectivePadding],
 		explicit && containerPaddingBlockStartVarStyles[effectivePadding],
-		explicit && containerPaddingBlockEndVarStyles[effectivePadding]
+		explicit && containerPaddingBlockEndVarStyles[effectivePadding],
+		isFullscreen && styles.fullscreenSafeArea
 	);
 }

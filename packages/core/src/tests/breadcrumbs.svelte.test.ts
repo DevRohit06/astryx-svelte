@@ -6,8 +6,9 @@ import BreadcrumbsFixture from './fixtures/breadcrumbs-fixture.svelte';
 import CustomLink from './fixtures/custom-link.svelte';
 
 /**
- * Ported from Astryx's `Breadcrumbs/Breadcrumbs.test.tsx`, all 37 cases across
- * its three describe blocks. Nothing is dropped.
+ * Ported from Astryx's `Breadcrumbs/Breadcrumbs.test.tsx`, all 39 cases at the
+ * 0.5.0 pin, across its three describe blocks. Nothing is dropped. (0.5.0 added
+ * the two variant theme-target cases; they are here.)
  *
  * Every case renders a trail, so all of them go through
  * `breadcrumbs-fixture.svelte`: the crumbs are JSX children upstream, with
@@ -170,7 +171,9 @@ describe('Breadcrumbs', () => {
 				]
 			}
 		});
-		await expect.element(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+		await expect
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
+			.toHaveAttribute('href', '/');
 		await expect
 			.element(screen.getByText('Detail', { exact: true }))
 			.toHaveAttribute('aria-current', 'page');
@@ -188,7 +191,7 @@ describe('BreadcrumbItem', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Home' }))
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
 			.toHaveAttribute('href', '/home');
 	});
 
@@ -269,7 +272,7 @@ describe('BreadcrumbItem', () => {
 				]
 			}
 		});
-		await userEvent.click(screen.getByRole('link', { name: 'Home' }));
+		await userEvent.click(screen.getByRole('link', { name: 'Home', exact: true }));
 		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
 
@@ -283,7 +286,7 @@ describe('BreadcrumbItem', () => {
 				]
 			}
 		});
-		const button = screen.getByRole('button', { name: 'Home' });
+		const button = screen.getByRole('button', { name: 'Home', exact: true });
 		expect(button.element().tagName).toBe('BUTTON');
 		await expect.element(button).toHaveAttribute('type', 'button');
 		await userEvent.click(button);
@@ -347,7 +350,7 @@ describe('BreadcrumbItem', () => {
 				]
 			}
 		});
-		const link = screen.getByRole('link', { name: 'Home' });
+		const link = screen.getByRole('link', { name: 'Home', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).toHaveAttribute('href', '/');
 	});
@@ -378,10 +381,10 @@ describe('BreadcrumbItem', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Home' }))
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
 			.toHaveAttribute('data-custom-link');
 		await expect
-			.element(screen.getByRole('link', { name: 'Projects' }))
+			.element(screen.getByRole('link', { name: 'Projects', exact: true }))
 			.toHaveAttribute('data-custom-link');
 		// The current item is still a span
 		expect(screen.getByText('Current', { exact: true }).element().tagName).toBe('SPAN');
@@ -448,7 +451,7 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Teams' });
+		const trigger = screen.getByRole('button', { name: 'Teams', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-haspopup', 'menu');
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -462,7 +465,7 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		(screen.getByRole('button', { name: 'Teams' }).element() as HTMLElement).click();
+		(screen.getByRole('button', { name: 'Teams', exact: true }).element() as HTMLElement).click();
 		const menu = menuIn(screen.container);
 		expect(menu).toHaveAttribute('aria-label', 'Teams');
 		expect(menuRow(screen.container, 'Design')).toBeInTheDocument();
@@ -481,7 +484,7 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		(screen.getByRole('button', { name: 'Teams' }).element() as HTMLElement).click();
+		(screen.getByRole('button', { name: 'Teams', exact: true }).element() as HTMLElement).click();
 		menuRow(screen.container, 'Design').click();
 		expect(onDesign).toHaveBeenCalledTimes(1);
 		expect(hideSpy).toHaveBeenCalled();
@@ -500,7 +503,7 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		(screen.getByRole('button', { name: 'Project' }).element() as HTMLElement).click();
+		(screen.getByRole('button', { name: 'Project', exact: true }).element() as HTMLElement).click();
 		expect(menuRow(screen.container, 'Overview')).toBeInTheDocument();
 		menuRow(screen.container, 'Overview').click();
 		expect(onOverview).toHaveBeenCalledTimes(1);
@@ -519,7 +522,7 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		(screen.getByRole('button', { name: 'Filters' }).element() as HTMLElement).click();
+		(screen.getByRole('button', { name: 'Filters', exact: true }).element() as HTMLElement).click();
 		const checkbox = menuRow(screen.container, 'Show archived');
 		expect(checkbox).toHaveAttribute('aria-checked', 'false');
 		checkbox.click();
@@ -547,7 +550,7 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		(screen.getByRole('button', { name: 'Sort' }).element() as HTMLElement).click();
+		(screen.getByRole('button', { name: 'Sort', exact: true }).element() as HTMLElement).click();
 		expect(menuRow(screen.container, 'Name')).toHaveAttribute('aria-checked', 'true');
 		menuRow(screen.container, 'Date').click();
 		expect(onChange).toHaveBeenCalledWith('date');
@@ -564,7 +567,9 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Teams' }).element() as HTMLElement;
+		const trigger = screen
+			.getByRole('button', { name: 'Teams', exact: true })
+			.element() as HTMLElement;
 		trigger.focus();
 		press(trigger, 'ArrowDown');
 		await vi.waitFor(() => {
@@ -590,7 +595,9 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Teams' }).element() as HTMLElement;
+		const trigger = screen
+			.getByRole('button', { name: 'Teams', exact: true })
+			.element() as HTMLElement;
 		trigger.focus();
 		press(trigger, 'ArrowDown');
 		const menu = menuIn(screen.container);
@@ -631,7 +638,9 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Teams' }).element() as HTMLElement;
+		const trigger = screen
+			.getByRole('button', { name: 'Teams', exact: true })
+			.element() as HTMLElement;
 		trigger.focus();
 		press(trigger, 'ArrowDown');
 		// Two role="menu" exist (the breadcrumb menu + the inline submenu flyout);
@@ -658,7 +667,7 @@ describe('BreadcrumbItem menu', () => {
 				]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Teams' });
+		const trigger = screen.getByRole('button', { name: 'Teams', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-current', 'page');
 		await expect.element(trigger).toHaveAttribute('aria-haspopup', 'menu');
 	});
@@ -675,13 +684,52 @@ describe('BreadcrumbItem menu', () => {
 		});
 		// menu wins: it's a button trigger, not a link.
 		await expect
-			.element(screen.getByRole('button', { name: 'Teams' }))
+			.element(screen.getByRole('button', { name: 'Teams', exact: true }))
 			.toHaveAttribute('aria-haspopup', 'menu');
 		expect(screen.container.querySelector('a[href="/teams"]')).not.toBeInTheDocument();
 		expect(warn).toHaveBeenCalledWith(
 			expect.stringContaining('`menu` and `href` are mutually exclusive')
 		);
 		warn.mockRestore();
+	});
+
+	it('reflects the variant on the item and menu-trigger theme targets', async () => {
+		const screen = await render(BreadcrumbsFixture, {
+			props: {
+				list: { variant: 'supporting' },
+				items: [
+					{ label: 'Home', props: { href: '/' } },
+					{ label: 'Teams', props: { menu: items } },
+					{ label: 'Overview', props: { isCurrent: true } }
+				]
+			}
+		});
+		// The variant selects between style objects on both elements, so a theme
+		// needs it as a data attribute on both targets to reach them.
+		const crumbs = [...screen.container.querySelectorAll('.astryx-breadcrumb-item')];
+		expect(crumbs).toHaveLength(3);
+		for (const item of crumbs) {
+			expect(item).toHaveAttribute('data-variant', 'supporting');
+		}
+		expect(screen.container.querySelector('.astryx-breadcrumb-item-menu-trigger')).toHaveAttribute(
+			'data-variant',
+			'supporting'
+		);
+	});
+
+	it('defaults the item theme target to the default variant', async () => {
+		const screen = await render(BreadcrumbsFixture, {
+			props: {
+				items: [
+					{ label: 'Home', props: { href: '/' } },
+					{ label: 'Overview', props: { isCurrent: true } }
+				]
+			}
+		});
+		expect(screen.container.querySelector('.astryx-breadcrumb-item')).toHaveAttribute(
+			'data-variant',
+			'default'
+		);
 	});
 
 	it('keeps mid-trail separators intact around a menu crumb', async () => {

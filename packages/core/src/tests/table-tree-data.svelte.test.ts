@@ -16,7 +16,8 @@ import { renderTable } from './render-table.js';
 
 /**
  * Ported from Astryx's `Table/plugins/tree/useTableTreeData.test.tsx` — all
- * **38** of its `it` cases, in upstream's order and under upstream's names.
+ * **38** of its `it` cases at the 0.5.0 pin, in upstream's order and under
+ * upstream's names.
  * Nothing dropped.
  *
  * ## Standing translations
@@ -397,7 +398,9 @@ describe('useTableTreeState — batched toggles', () => {
 		// second `onToggleItem` must build on the set the first one wrote.
 		const screen = await render(TwoTogglesTable, { props: {} });
 
-		(screen.getByRole('button', { name: 'expand two' }).element() as HTMLElement).click();
+		(
+			screen.getByRole('button', { name: 'expand two', exact: true }).element() as HTMLElement
+		).click();
 
 		// Both toggles must survive the batch.
 		await expect.poll(() => findRowByText(screen, 'components')).toBeDefined();

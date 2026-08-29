@@ -6,12 +6,14 @@
 		config: InternalConfig;
 		subFilter: EditablePartialFilter;
 		onChange: (subFilter: EditablePartialFilter) => void;
+		maxMenuItems?: number;
 		isReadOnly: boolean;
 	}
 </script>
 
 <script lang="ts">
 	import HStack from '../stack/hstack.svelte';
+	import { editPopoverChipRowStyle } from './power-search-edit-popover.stylex.js';
 	import Selector from '../selector/selector.svelte';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import {
@@ -32,7 +34,8 @@
 	 * through a keyed bound snippet whose identity is stable by construction.
 	 */
 
-	const { config, subFilter, onChange, isReadOnly }: NestedSubFilterRowProps = $props();
+	const { config, subFilter, onChange, maxMenuItems, isReadOnly }: NestedSubFilterRowProps =
+		$props();
 
 	const t = useTranslator();
 
@@ -86,7 +89,7 @@
 	}
 </script>
 
-<HStack gap={2} vAlign="center">
+<HStack gap={2} vAlign="center" xstyle={editPopoverChipRowStyle}>
 	<div {...editPopoverNestedFieldSelectorAttrs()}>
 		<Selector
 			label={t('@astryx.powersearch.editor.field')}
@@ -118,6 +121,7 @@
 				filterValue={subFilter.value}
 				onChange={handleValueChange}
 				{config}
+				{maxMenuItems}
 				isDisabled={isReadOnly}
 			/>
 		</div>

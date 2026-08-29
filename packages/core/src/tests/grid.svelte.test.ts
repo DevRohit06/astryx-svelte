@@ -5,7 +5,7 @@ import GridHarness from './fixtures/grid-harness.svelte';
 
 /**
  * Astryx's `Grid/Grid.test.tsx` — **36 of upstream's 36** `it` declarations at
- * the 0.4.5 pin (28 under `describe('Grid')`, 8 under `describe('GridSpan')`).
+ * the 0.5.0 pin (28 under `describe('Grid')`, 8 under `describe('GridSpan')`).
  * Nothing is dropped.
  *
  * Two translations, neither a dropped case:
@@ -265,9 +265,9 @@ describe('Grid', () => {
 				items: ['Item 1', 'Item 2', 'Item 3']
 			}
 		});
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 3')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 3', { exact: true })).toBeInTheDocument();
 	});
 
 	// --- columns object API ---

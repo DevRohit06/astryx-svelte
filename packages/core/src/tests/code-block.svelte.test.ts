@@ -10,10 +10,24 @@ import CodeBlockI18nFixture from './fixtures/code-block-i18n.svelte';
 /**
  * Astryx's `CodeBlock/CodeBlock.test.tsx`, ported case for case.
  *
- * Upstream has **16** `it` cases at v0.3.0, all in one describe block. All 16
- * are ported — nothing is dropped. (The previous header claimed 13 upstream and
- * 13 here; upstream had 15 even at v0.2.0, so the two `inert` cases were a
- * silent gap. They are ported now, along with 0.3.0's new i18n case.)
+ * Upstream has **22** `it` cases at the **0.5.0** pin, and **16** are here.
+ * (This header read "**16** … at v0.3.0. All 16 are ported — nothing is
+ * dropped", true at that pin; before that it claimed 13 upstream and 13 here,
+ * while upstream had 15 even at v0.2.0.)
+ *
+ * **The 6 that are not here all landed between v0.3.0 and v0.4.5** — upstream's
+ * file is unchanged between v0.4.5 and 0.5.0 — and they are two groups, both
+ * about theming surfaces the port has not exposed:
+ *
+ * - **Two copy-button cases** — `renders the copy button as a themeable target
+ *   with a "Copy code" tooltip`, and `keeps the copy button tooltip as "Copy
+ *   code" after copying` (the tooltip must not follow the button's transient
+ *   "Copied" state).
+ * - **A four-case header/title theming block** — `puts astryx-codeblock-header
+ *   on the header row when a header shows`, `puts astryx-codeblock-title on the
+ *   header title element`, `renders no header targets when there is no header`,
+ *   and `exposes the header and title as themeable defineTheme targets`.
+ *
  * `CodeBlock` has no `ref` case and no `displayName` case,
  * so the two usual translations do not arise here, and `syntaxTheme` is a real
  * prop in this port (the `theme/syntax/` subsystem landed with it), so the last
@@ -116,7 +130,7 @@ describe('CodeBlock', () => {
 		const screen = await render(CodeBlock, {
 			props: { code: 'const x = 1;', language: 'javascript' }
 		});
-		const copyButton = screen.getByRole('button', { name: 'Copy code' });
+		const copyButton = screen.getByRole('button', { name: 'Copy code', exact: true });
 		await userEvent.click(copyButton);
 		expect(writeText).toHaveBeenCalledWith('const x = 1;');
 	});
@@ -125,7 +139,7 @@ describe('CodeBlock', () => {
 		const screen = await render(CodeBlock, {
 			props: { code: 'const x = 1;', language: 'javascript' }
 		});
-		const copyButton = screen.getByRole('button', { name: 'Copy code' });
+		const copyButton = screen.getByRole('button', { name: 'Copy code', exact: true });
 		await userEvent.click(copyButton);
 		await vi.waitFor(() => {
 			expect(politeRegion()).toHaveTextContent('Copied');
@@ -142,11 +156,13 @@ describe('CodeBlock', () => {
 			}
 		});
 		// The button label and the live-region announcement share the same key.
-		await userEvent.click(screen.getByRole('button', { name: 'Copy code' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Copy code', exact: true }));
 		await vi.waitFor(() => {
 			expect(politeRegion()).toHaveTextContent('Copié');
 		});
-		await expect.element(screen.getByRole('button', { name: 'Copié' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Copié', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('keeps the copied indicator a full 2s after a rapid re-copy', async () => {
@@ -162,27 +178,37 @@ describe('CodeBlock', () => {
 			// `userEvent.click` drives the browser over a channel that needs real
 			// timers; a native `.click()` is the direct equivalent of upstream's
 			// `fireEvent.click` and is timer-free.
-			(screen.getByRole('button', { name: 'Copy code' }).element() as HTMLElement).click();
+			(
+				screen.getByRole('button', { name: 'Copy code', exact: true }).element() as HTMLElement
+			).click();
 			// Flush the async clipboard write.
 			await flushCopy();
-			expect(screen.getByRole('button', { name: 'Copied' }).element()).toBeInTheDocument();
+			expect(
+				screen.getByRole('button', { name: 'Copied', exact: true }).element()
+			).toBeInTheDocument();
 
 			// 1.5s later the user copies again.
 			vi.advanceTimersByTime(1500);
 			await tick();
-			(screen.getByRole('button', { name: 'Copied' }).element() as HTMLElement).click();
+			(
+				screen.getByRole('button', { name: 'Copied', exact: true }).element() as HTMLElement
+			).click();
 			await flushCopy();
 
 			// 600ms after the second copy (2.1s after the first): the first
 			// click's timer must not have reverted the indicator early.
 			vi.advanceTimersByTime(600);
 			await tick();
-			expect(screen.getByRole('button', { name: 'Copied' }).element()).toBeInTheDocument();
+			expect(
+				screen.getByRole('button', { name: 'Copied', exact: true }).element()
+			).toBeInTheDocument();
 
 			// It resets 2s after the most recent copy.
 			vi.advanceTimersByTime(1400);
 			await tick();
-			expect(screen.getByRole('button', { name: 'Copy code' }).element()).toBeInTheDocument();
+			expect(
+				screen.getByRole('button', { name: 'Copy code', exact: true }).element()
+			).toBeInTheDocument();
 		} finally {
 			vi.useRealTimers();
 		}
@@ -202,7 +228,7 @@ describe('CodeBlock', () => {
 		expect(header).toBeTruthy();
 		expect(header).toHaveAttribute('aria-expanded', 'true');
 
-		const copyButton = screen.getByRole('button', { name: 'Copy code' });
+		const copyButton = screen.getByRole('button', { name: 'Copy code', exact: true });
 		await userEvent.click(copyButton);
 		// A toggle would only reach the DOM on the next microtask, so flush before
 		// asserting it did not happen.
@@ -223,7 +249,7 @@ describe('CodeBlock', () => {
 			}
 		});
 		const header = collapsibleHeader(screen.container);
-		const copyButton = screen.getByRole('button', { name: 'Copy code' }).element();
+		const copyButton = screen.getByRole('button', { name: 'Copy code', exact: true }).element();
 		expect(header).toBeTruthy();
 		// The copy button must be a sibling, not a descendant of the interactive
 		// header — nested interactive controls are invalid ARIA.

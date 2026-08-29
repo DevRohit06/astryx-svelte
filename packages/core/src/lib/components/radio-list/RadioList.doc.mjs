@@ -26,7 +26,9 @@ export default {
 				visualProps: ['orientation', 'size']
 			},
 			{
-				className: 'astryx-radio-list-item'
+				className: 'astryx-radio-list-item',
+				visualProps: ['size'],
+				states: ['selected', 'disabled']
 			},
 			{
 				className: 'astryx-radio-indicator',

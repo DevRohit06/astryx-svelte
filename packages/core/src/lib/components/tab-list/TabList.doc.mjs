@@ -28,6 +28,12 @@ export default {
 				visualProps: ['size']
 			},
 			{
+				className: 'astryx-tab-strip'
+			},
+			{
+				className: 'astryx-tab-scroll-button'
+			},
+			{
 				className: 'astryx-tab',
 				states: ['selected']
 			},
@@ -67,12 +73,17 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Use TabMenu to group overflow items when horizontal space is limited rather than scrolling tabs off-screen.'
+					'Leave overflow handling on: a strip narrower than its tabs scrolls, and the selected tab is kept in view. Use TabMenu when you want a curated group of extra options rather than a scrolling strip.'
 			},
 			{
 				guidance: true,
 				description:
 					'When using hasDivider with action buttons alongside tabs, match the Button size to the TabList size (both md, both sm); the divided tab strip reserves space so tabs and same-size buttons align to a shared baseline above the rail.'
+			},
+			{
+				guidance: true,
+				description:
+					'Reach for role="tablist" when the strip switches panels in place, and give each tab a panelId pointing at the panel it opens: that link is how a screen reader gets from a tab to its content. Leave it off for navigation between views.'
 			},
 			{
 				guidance: false,
@@ -146,9 +157,22 @@ export default {
 			default: 'false'
 		},
 		{
+			name: 'role',
+			type: 'AriaRole | null',
+			description:
+				'ARIA role for the strip. \'tablist\' asks for the WAI-ARIA tabs pattern: role="tablist" / role="tab" and aria-selected, with each tab pointing at the panel it controls via its panelId; only tabs may live in a tablist strip, and an href on a tab is ignored there. Left unset, the strip is a nav landmark marking the current tab with aria-current. Any other value is passed through to the element unchanged.'
+		},
+		{
+			name: 'overflow',
+			type: "'auto' | 'scroll' | 'visible'",
+			description:
+				"What happens when the tabs are wider than the strip. 'auto' lets the component choose, which today always scrolls. 'scroll' scrolls the tabs horizontally, with edge fades and arrow affordances for pointers that can hover. 'visible' turns overflow handling off and lets the tabs spill out of the strip. The selected tab is always scrolled back into view.",
+			default: "'auto'"
+		},
+		{
 			name: 'children',
 			type: 'Snippet',
-			description: 'Tab and TabMenu items to render inside the nav.',
+			description: 'Tab and TabMenu items to render inside the strip.',
 			required: true
 		},
 		{

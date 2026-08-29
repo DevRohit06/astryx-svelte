@@ -11,11 +11,21 @@ import {
 /**
  * Astryx's `Markdown/incremental.test.ts`, ported case for case.
  *
- * Upstream has **56** `it` cases across five top-level describe blocks
- * (18 `parseMarkdownIncremental`, 17 `trimStreamingArtifacts`, 8 `streaming
- * structural suppression`, 11 `streaming end-to-end: no raw syntax visible`,
- * 2 `parseMarkdownIncremental link reference definitions`). All 56 are ported.
- * Nothing is dropped.
+ * Upstream has **57** `it` cases at the **0.5.0** pin, across five top-level
+ * describe blocks (19 `parseMarkdownIncremental`, 17 `trimStreamingArtifacts`,
+ * 8 `streaming structural suppression`, 11 `streaming end-to-end: no raw syntax
+ * visible`, 2 `parseMarkdownIncremental link reference definitions`), and **56
+ * are here**.
+ *
+ * **The 0.5.0 re-pin changed the unclosed-fence contract**, and that is where
+ * the one-case gap is. Upstream **removed** `unclosed fence keeps everything
+ * unsettled` and **added two** in its place: `settles what precedes an unclosed
+ * fence, and nothing inside it`, and `does not hold back lines inside an
+ * unclosed fence`. This file still carries the removed case's behaviour, so the
+ * gap is not a bare shortfall — it is a **contract change** to work through:
+ * porting the two new cases means first deciding whether `parser.ts` here
+ * settles text before an unclosed fence the way 0.5.0's does. (This header read
+ * "**56** … All 56 are ported. Nothing is dropped", true at the v0.4.5 pin.)
  *
  * `parser.ts` is a pure, framework-free transcription of upstream's, so every
  * assertion is upstream's verbatim — with **one** exception, marked in place:

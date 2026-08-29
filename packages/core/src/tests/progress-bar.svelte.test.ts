@@ -4,10 +4,10 @@ import { render } from 'vitest-browser-svelte';
 import ProgressBar from '$lib/components/progress-bar/progress-bar.svelte';
 
 /**
- * Ported from Astryx's `ProgressBar/ProgressBar.test.tsx` at v0.4.5.
+ * Ported from Astryx's `ProgressBar/ProgressBar.test.tsx` at the 0.5.0 pin.
  *
  * **Upstream 54 cases, 54 here.** No case is dropped; the count is the contract.
- * Re-derived at the 0.4.5 pin (the header last stated it at v0.4.1); upstream's
+ * Re-derived at the 0.5.0 pin (the header last stated it at v0.4.5); upstream's
  * file has not moved since, so 54 is still what it declares.
  * The suite is a late addition — `ProgressBar` landed before the case-for-case
  * discipline, and `marks` is what finally brought it. Nine cases arrived with
@@ -111,7 +111,7 @@ describe('ProgressBar', () => {
 
 	it('renders visible label by default', async () => {
 		const screen = await render(ProgressBar, { props: { value: 50, label: 'Storage used' } });
-		await expect.element(screen.getByText('Storage used')).toBeInTheDocument();
+		await expect.element(screen.getByText('Storage used', { exact: true })).toBeInTheDocument();
 	});
 
 	it('hides label visually when isLabelHidden is true', async () => {
@@ -126,7 +126,7 @@ describe('ProgressBar', () => {
 		const screen = await render(ProgressBar, {
 			props: { value: 75, label: 'Upload', hasValueLabel: true }
 		});
-		await expect.element(screen.getByText('75%')).toBeInTheDocument();
+		await expect.element(screen.getByText('75%', { exact: true })).toBeInTheDocument();
 	});
 
 	it('uses custom formatValueLabel', async () => {
@@ -139,7 +139,7 @@ describe('ProgressBar', () => {
 				formatValueLabel: (v: number, m: number) => `${v} GB / ${m} GB`
 			}
 		});
-		await expect.element(screen.getByText('3 GB / 5 GB')).toBeInTheDocument();
+		await expect.element(screen.getByText('3 GB / 5 GB', { exact: true })).toBeInTheDocument();
 		await expect
 			.element(screen.getByRole('progressbar'))
 			.toHaveAttribute('aria-valuetext', '3 GB / 5 GB');
@@ -207,7 +207,7 @@ describe('ProgressBar', () => {
 		const screen = await render(ProgressBar, {
 			props: { value: 60, label: 'Hidden', isLabelHidden: true, hasValueLabel: true }
 		});
-		await expect.element(screen.getByText('60%')).toBeInTheDocument();
+		await expect.element(screen.getByText('60%', { exact: true })).toBeInTheDocument();
 		expect(screen.container.textContent).toContain('Hidden');
 	});
 
@@ -219,7 +219,7 @@ describe('ProgressBar', () => {
 			props: { value: 42, label: 'Context usage', isLabelHidden: true }
 		});
 		expect(screen.container.textContent).not.toContain('42%');
-		const label = screen.getByText('Context usage').element();
+		const label = screen.getByText('Context usage', { exact: true }).element();
 		expect(label).toBeInTheDocument();
 		await expect
 			.element(screen.getByRole('progressbar'))
@@ -264,7 +264,7 @@ describe('ProgressBar', () => {
 		expect(screen.container.textContent).not.toMatch(/NaN|Infinity/);
 		const progressbar = progressbarIn(screen.container);
 		expect(progressbar.getAttribute('aria-valuetext') ?? '').not.toMatch(/NaN|Infinity/);
-		await expect.element(screen.getByText('0%')).toBeInTheDocument();
+		await expect.element(screen.getByText('0%', { exact: true })).toBeInTheDocument();
 	});
 
 	// Disabled state
@@ -274,14 +274,16 @@ describe('ProgressBar', () => {
 				props: { value: 50, label: 'Canceled', isDisabled: true, hasValueLabel: true }
 			});
 			await expect.element(screen.getByRole('progressbar')).toBeInTheDocument();
-			await expect.element(screen.getByText('50%')).toBeInTheDocument();
+			await expect.element(screen.getByText('50%', { exact: true })).toBeInTheDocument();
 		});
 
 		it('still renders label when disabled', async () => {
 			const screen = await render(ProgressBar, {
 				props: { value: 50, label: 'Canceled upload', isDisabled: true }
 			});
-			await expect.element(screen.getByText('Canceled upload')).toBeInTheDocument();
+			await expect
+				.element(screen.getByText('Canceled upload', { exact: true }))
+				.toBeInTheDocument();
 		});
 	});
 
@@ -309,7 +311,7 @@ describe('ProgressBar', () => {
 			const screen = await render(ProgressBar, {
 				props: { isIndeterminate: true, label: 'Processing' }
 			});
-			await expect.element(screen.getByText('Processing')).toBeInTheDocument();
+			await expect.element(screen.getByText('Processing', { exact: true })).toBeInTheDocument();
 		});
 
 		it('hides value label when indeterminate even if hasValueLabel is true', async () => {

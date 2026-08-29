@@ -59,8 +59,9 @@ export type {
 } from '../syntax/define-syntax-theme.js';
 
 export {
-	generateOnMediaCss,
-	generateThemeCss,
+	generateOnMediaCSS,
+	generateThemeCSS,
+	generateThemeRules,
 	generateThemeRulesSplit
 } from '../generate-theme-rules.js';
-export type { ThemeRulesSplit } from '../generate-theme-rules.js';
+export type { ThemeCSSOutput, ThemeRulesSplit } from '../generate-theme-rules.js';

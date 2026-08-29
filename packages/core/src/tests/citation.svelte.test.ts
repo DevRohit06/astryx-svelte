@@ -5,8 +5,8 @@ import CitationIconProbe from './fixtures/citation-icon-probe.svelte';
 import { atomicClasses } from './fixtures/citation-probe.stylex.js';
 
 /**
- * Ported from Astryx 0.2.0's `Citation/Citation.test.tsx`, all 16 cases, in
- * upstream's order and with upstream's titles.
+ * Ported from Astryx's `Citation/Citation.test.tsx`, all 16 cases at the 0.5.0
+ * pin, in upstream's order and with upstream's titles.
  *
  * **Nothing is dropped.** Upstream's suite has no `displayName` case, no `ref`
  * case, no no-JSX construction form and no snapshot, so the four standing

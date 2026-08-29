@@ -3,7 +3,8 @@ import { compositeOver, contrastRatio, relativeLuminance } from '$lib/theme/cont
 import { parseColor } from '$lib/utils/color.js';
 
 /**
- * Ported from Astryx's `theme/contrast.test.ts`, all 10 of its cases.
+ * Ported from Astryx's `theme/contrast.test.ts`, all 10 of its cases at the 0.5.0
+ * pin.
  *
  * `contrast.ts` is module-private to the theme layer (as upstream's is), and
  * until this suite landed the only thing exercising it in-repo was

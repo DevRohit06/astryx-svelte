@@ -61,7 +61,7 @@ const styles = stylex.create({
 		}
 	},
 	inputDisabled: {
-		cursor: 'not-allowed'
+		cursor: 'default'
 	},
 	inputInvalid: {
 		color: colorVars['--color-text-secondary']

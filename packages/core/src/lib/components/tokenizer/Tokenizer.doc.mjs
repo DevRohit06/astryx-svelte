@@ -239,6 +239,11 @@ export default {
 			default: '10'
 		},
 		{
+			name: 'menuWidth',
+			type: 'number',
+			description: 'Fixed dropdown width in pixels. The menu never shrinks below its anchor width.'
+		},
+		{
 			name: 'emptySearchResultsText',
 			type: 'string',
 			description: 'Text shown when search returns no results.',
@@ -298,6 +303,22 @@ export default {
 			type: 'SizeValue',
 			description:
 				'Width of the field (number = pixels, string used as-is, e.g. "100%"). Sizes the whole field (label, control, and status) so they stay aligned.'
+		},
+		{
+			name: 'tokenOverflowBehavior',
+			type: "'none' | 'unfocusedInline' | 'unfocusedLayer'",
+			description: 'Controls how tokens overflow when the container is too narrow.',
+			default: "'none'"
+		},
+		{
+			name: 'onfocus',
+			type: 'FocusEventHandler<T> | null',
+			description: 'Fires when focus enters the tokenizer input.'
+		},
+		{
+			name: 'onblur',
+			type: 'FocusEventHandler<T> | null',
+			description: 'Fires when focus leaves the tokenizer input.'
 		},
 		{
 			name: 'xstyle',

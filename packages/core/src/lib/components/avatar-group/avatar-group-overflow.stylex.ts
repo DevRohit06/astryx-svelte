@@ -6,6 +6,7 @@ import {
 	fontWeightVars,
 	radiusVars,
 	spacingVars,
+	typeScaleVars,
 	typographyVars
 } from '../../styles/tokens.stylex.js';
 
@@ -20,7 +21,10 @@ const OVERFLOW_FONT_RATIO = 0.35;
 const styles = stylex.create({
 	base: {
 		position: 'relative',
-		display: 'flex',
+		// inline-flex, not flex: outside an AvatarGroup this span is not a flex
+		// item, and a block-level flex container stretches to its parent's width
+		// instead of staying a circle.
+		display: 'inline-flex',
 		alignItems: 'center',
 		justifyContent: 'center',
 		borderRadius: radiusVars['--radius-full'],
@@ -44,21 +48,29 @@ const styles = stylex.create({
 		backgroundImage: `linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
 	},
 	button: {
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		// Reset the UA button's block padding only; the inline padding from `base`
 		// provides the pill's breathing room and must be preserved.
 		paddingBlock: 0,
 		// Interactive overlay states layered on top via backgroundImage
 		backgroundImage: {
 			default: `linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`,
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
 		}
 	},
 	overlap: {
-		marginInlineStart: 'var(--_avatar-group-overlap)'
+		// Matches Avatar's own overlap rule: the first item in the row must not be
+		// pulled outside the group's box.
+		marginInlineStart: {
+			default: null,
+			':not(:first-child)': 'var(--_avatar-group-overlap)'
+		}
 	}
 });
 
@@ -75,7 +87,11 @@ const dynamicStyles = stylex.create({
 		height: s + BORDER_WIDTH * 2
 	}),
 	fontSize: (s: number) => ({
-		fontSize: s * OVERFLOW_FONT_RATIO
+		// Scales with the avatar, but never below the supporting-text role token,
+		// which is the 12px legibility floor. At xsm the bare ratio computes 7px,
+		// where the glyph stroke is thinner than a pixel and never reaches its
+		// own text colour (measured 1.63:1 against a 4.5:1 requirement).
+		fontSize: `max(${typeScaleVars['--text-supporting-size']}, ${s * OVERFLOW_FONT_RATIO}px)`
 	}),
 	overlap: (offset: number) => ({
 		'--_avatar-group-overlap': `${offset}px`

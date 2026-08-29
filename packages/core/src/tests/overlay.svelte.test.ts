@@ -72,7 +72,7 @@ describe('Overlay', () => {
 			const screen = await render(OverlayFixture, {
 				props: { content: 'Quick view', isContentButton: true }
 			});
-			const button = screen.getByRole('button', { name: 'Quick view' });
+			const button = screen.getByRole('button', { name: 'Quick view', exact: true });
 			await expect.element(button).toBeInTheDocument();
 			expect(scrimOf(screen).contains(button.element())).toBe(true);
 		});
@@ -195,7 +195,7 @@ describe('useOverlay', () => {
 			const screen = await render(UseOverlayProbe, {
 				props: { options: { showOn: 'hover' }, renderScrim: true }
 			});
-			await expect.element(screen.getByText('on demand')).toBeInTheDocument();
+			await expect.element(screen.getByText('on demand', { exact: true })).toBeInTheDocument();
 			expect(scrimOf(screen)).not.toBeNull();
 		});
 	});

@@ -16,7 +16,7 @@
  *   bg = T90 (light) / T20 (dark)   border = T80 / T30
  *   icon = T30 / T80                text   = T30 / T80
  *
- * All nine saturated badge values pass WCAG AA (5.6–9.6 contrast).
+ * All nine saturated badge values pass WCAG AA against their own label (>= 4.5:1).
  *
  * Only tokens that differ from the defaults are overridden.
  *
@@ -338,7 +338,11 @@ export const neutralTheme = defineTheme({
 				color: '#171717'
 			},
 			'variant:error': {
-				backgroundColor: 'light-dark(#e33f4a, #ff705d)',
+				// Light is the T58 stop, not the saturated T55 #e33f4a: that one
+				// pairs with white at 4.14:1, and a 12px/500 label wants AA's
+				// 4.5 rather than the 3:1 large-text allowance. One step down
+				// holds the hue and reaches 5.29:1. Dark is unchanged at 6.60:1.
+				backgroundColor: 'light-dark(#c9303a, #ff705d)',
 				color: 'light-dark(#ffffff, #171717)'
 			},
 
@@ -397,7 +401,7 @@ export const neutralTheme = defineTheme({
 		statusdot: {
 			'variant:success': { backgroundColor: 'light-dark(#198100, #64af4c)' },
 			'variant:warning': { backgroundColor: '#ffce2f' },
-			'variant:error': { backgroundColor: 'light-dark(#e33f4a, #ff705d)' },
+			'variant:error': { backgroundColor: 'light-dark(#c9303a, #ff705d)' },
 			// StatusDot "accent" is the info/attention colour, so it pairs with
 			// the info badge rather than --color-accent (near-black #262626).
 			'variant:accent': { backgroundColor: 'light-dark(#0074e2, #6d9cfe)' }
@@ -466,7 +470,7 @@ export const neutralTheme = defineTheme({
 			'variant:accent': { '--color-accent': '#0074e2' },
 			'variant:success': { '--color-success': '#198100' },
 			'variant:warning': { '--color-warning': '#ffce2f' },
-			'variant:error': { '--color-error': '#e33f4a' }
+			'variant:error': { '--color-error': '#c9303a' }
 		},
 
 		// Tighter padding via the public container padding tokens.

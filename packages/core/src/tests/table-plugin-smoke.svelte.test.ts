@@ -91,8 +91,8 @@ describe('table plugin bridge', () => {
 
 		// rowIndex prepends 1..n; selection prepends its checkbox column. Both
 		// synthetic columns render, plus the one real column.
-		await expect.element(screen.getByRole('cell', { name: '1' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('cell', { name: '3' })).toBeInTheDocument();
+		await expect.element(screen.getByRole('cell', { name: '1', exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByRole('cell', { name: '3', exact: true })).toBeInTheDocument();
 		expect(screen.getByRole('checkbox').elements()).toHaveLength(ROWS.length + 1);
 	});
 
@@ -102,7 +102,9 @@ describe('table plugin bridge', () => {
 		});
 
 		expect(screen.getByRole('checkbox').elements()).toHaveLength(ROWS.length);
-		await expect.element(screen.getByRole('cell', { name: 'Bob' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('cell', { name: 'Bob', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('a disabled row renders a disabled checkbox', async () => {
@@ -132,8 +134,12 @@ describe('table plugin bridge — bound slots', () => {
 	it('wraps a sortable header’s content in a sort button, keeping its label', async () => {
 		const screen = await render(TableSortableFixture, { props: { data: SORT_ROWS } });
 
-		await expect.element(screen.getByRole('button', { name: 'Sort by Name' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Sort by Age' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Sort by Name', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Sort by Age', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('leaves a non-sortable column’s header untouched', async () => {
@@ -145,7 +151,9 @@ describe('table plugin bridge — bound slots', () => {
 	it('sorts on click and reflects it in aria-sort and the button label', async () => {
 		const screen = await render(TableSortableFixture, { props: { data: SORT_ROWS } });
 
-		(screen.getByRole('button', { name: 'Sort by Name' }).element() as HTMLElement).click();
+		(
+			screen.getByRole('button', { name: 'Sort by Name', exact: true }).element() as HTMLElement
+		).click();
 
 		await expect
 			.element(screen.getByRole('columnheader', { name: /Name/ }))

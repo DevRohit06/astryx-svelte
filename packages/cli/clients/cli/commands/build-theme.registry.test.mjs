@@ -134,6 +134,25 @@ function renderedClassLiterals() {
 }
 
 describe('theme-build documented target validation', () => {
+	// Targets upstream documents for a feature this port has not ported yet. They
+	// are orphaned here because the component that would render them does not
+	// exist, not because a literal disagrees with its doc.
+	//
+	// Hygiene runs in both directions, exactly as the class oracle's `skip` list
+	// does: an entry that stops being orphaned fails the run, so porting the
+	// feature forces the entry out rather than leaving a dead exemption behind.
+	// Documented theming targets whose feature is not ported yet, so nothing
+	// renders the class the docs promise. Each entry carries its reason, and the
+	// list is self-retiring in both directions: an entry whose target stops being
+	// orphaned fails the run (below), and an orphan with no entry fails too.
+	//
+	// It is EMPTY, and the way the last two went is the point. Both were
+	// `date-time-input-time-listbox` / `-time-option`, added when `timeOptionInterval`
+	// (#4837) was unported. Porting that feature made the literals real, and this
+	// check failed on the stale entries rather than letting them sit — which is
+	// exactly the behaviour that stops a deferral outliving its reason.
+	const UNPORTED_FEATURE_TARGETS = new Map([]);
+
 	it('every documented theming target is backed by a real themeProps literal', () => {
 		// Guards against a component whose doc target className and rendered
 		// themeProps()/stableClassName() literal disagree. The docs are what theme
@@ -142,7 +161,15 @@ describe('theme-build documented target validation', () => {
 		const rendered = renderedClassLiterals();
 
 		const orphanTargets = [...targets].filter((k) => !rendered.has(k));
-		expect(orphanTargets).toEqual([]);
+
+		const stale = [...UNPORTED_FEATURE_TARGETS.keys()].filter((k) => !orphanTargets.includes(k));
+		expect(
+			stale,
+			`UNPORTED_FEATURE_TARGETS lists ${stale.length} target(s) that are no longer ` +
+				`orphaned: ${stale.join(', ')}. Remove them — the list may only shrink.`
+		).toEqual([]);
+
+		expect(orphanTargets.filter((k) => !UNPORTED_FEATURE_TARGETS.has(k))).toEqual([]);
 	});
 });
 

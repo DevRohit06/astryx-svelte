@@ -119,7 +119,7 @@ export default {
 		},
 		{
 			name: 'numberOfMonths',
-			type: '1 | 2',
+			type: '2 | 1',
 			description: 'Number of months to display.',
 			default: '1'
 		},
@@ -153,7 +153,8 @@ export default {
 		{
 			name: 'focusDate',
 			type: 'ISODateString',
-			description: 'Controlled visible month.'
+			description:
+				'Controlled visible month. Unset, the calendar opens on the selected date, else on today clamped into the min/max window.'
 		},
 		{
 			name: 'onFocusDateChange',
@@ -185,7 +186,7 @@ export default {
 		},
 		{
 			name: 'weekStartsOn',
-			type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
+			type: "0 | 6 | 2 | 4 | 1 | 3 | 5 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
 			description:
 				'First day of week. Accepts a number (0=Sunday) or a three-letter day name (e.g. "mon").',
 			default: '0'

@@ -15,7 +15,8 @@ import ReorderTable from './fixtures/table-column-resize-reorder-fixture.svelte'
 
 /**
  * Ported from Astryx's
- * `Table/plugins/columnResize/useTableColumnResize.test.tsx` — all **37** of its
+ * `Table/plugins/columnResize/useTableColumnResize.test.tsx` at the 0.5.0 pin —
+ * all **37** of its
  * `it` cases, in upstream's order and under upstream's names. Nothing dropped.
  *
  * ## Standing translations
@@ -480,7 +481,7 @@ describe('useTableColumnResize', () => {
 			expect(headers[1].style.width).toBe('150px');
 
 			// Reorder columns
-			(screen.getByText('Reorder').element() as HTMLElement).click();
+			(screen.getByText('Reorder', { exact: true }).element() as HTMLElement).click();
 
 			await expect
 				.poll(() => getHeaders(screen)[0].style.width)

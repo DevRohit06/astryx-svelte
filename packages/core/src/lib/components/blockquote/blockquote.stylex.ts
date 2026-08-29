@@ -9,6 +9,7 @@ const styles = stylex.create({
 		borderInlineStartColor: colorVars['--color-border-emphasized'],
 		paddingInlineStart: spacingVars['--spacing-4'],
 		color: colorVars['--color-text-secondary'],
+		overflowWrap: 'break-word',
 		// The UA stylesheet gives blockquote 1em block margins and 40px inline
 		// indents; the rule is zeroed so spacing comes from layout, not the tag.
 		marginInlineStart: 0,

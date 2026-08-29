@@ -163,6 +163,7 @@
 	} from '../../utils/plain-date.js';
 	import Button from '../button/button.svelte';
 	import Icon from '../icon/icon.svelte';
+	import { getInitialFocusDate } from './get-initial-focus-date.js';
 	import MonthGrid from './month-grid.svelte';
 	import {
 		calendarAttrs,
@@ -241,21 +242,23 @@
 
 	// Focus date state (which month is visible). Seeded once, as upstream's lazy
 	// `useState` initialiser is: `focusDate` → the effective value (a range
-	// unwraps to its `start`) → today.
-	let internalFocusDate = $state<PlainDate>(seedFocusDate());
-
-	function seedFocusDate(): PlainDate {
-		if (focusDateProp) {
-			return plainDateFromISO(focusDateProp);
-		}
-		if (effectiveValue) {
-			if (typeof effectiveValue === 'string') {
-				return plainDateFromISO(effectiveValue);
-			}
-			return plainDateFromISO(effectiveValue.start);
-		}
-		return plainDateToday();
-	}
+	// unwraps to its `start`) → today, clamped into the min/max window so a
+	// window that doesn't contain today doesn't open on an all-disabled month.
+	//
+	// Capturing the first render's props is the point — upstream's initialiser
+	// runs once and later prop changes must not move the visible month — so the
+	// one-shot reads here are deliberate (`touch-date-field.svelte`'s precedent).
+	// svelte-ignore state_referenced_locally
+	let internalFocusDate = $state<PlainDate>(
+		getInitialFocusDate({
+			focusDate: focusDateProp,
+			value: effectiveValue,
+			min,
+			max,
+			numberOfMonths,
+			today
+		})
+	);
 
 	// Focus is controlled only when *both* are supplied. `focusDate` alone leaves
 	// focus internal, seeded from it on the first render — upstream's test, both

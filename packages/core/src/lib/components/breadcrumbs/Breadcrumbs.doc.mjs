@@ -25,10 +25,12 @@ export default {
 	theming: {
 		targets: [
 			{
-				className: 'astryx-breadcrumb-item'
+				className: 'astryx-breadcrumb-item',
+				visualProps: ['variant']
 			},
 			{
-				className: 'astryx-breadcrumb-item-menu-trigger'
+				className: 'astryx-breadcrumb-item-menu-trigger',
+				visualProps: ['variant']
 			},
 			{
 				className: 'astryx-breadcrumb-menu'
@@ -64,6 +66,16 @@ export default {
 					'Make the last item plain text, not a link; it represents the current page. The component does this automatically when you set isCurrent.'
 			},
 			{
+				guidance: true,
+				description:
+					'The component implements the WAI-ARIA APG Breadcrumb pattern: a labelled nav landmark wrapping an ordered list, with aria-current="page" on the current item. A crumb with a menu additionally implements the APG Menu Button pattern, opening on Enter, Space or ArrowDown and closing on Escape.'
+			},
+			{
+				guidance: true,
+				description:
+					'Give each trail its own label when a page renders more than one, so the nav landmarks stay distinguishable in a screen reader landmark list.'
+			},
+			{
 				guidance: false,
 				description:
 					'Use breadcrumbs as the primary navigation. They supplement a sidebar or top nav, not replace it.'
@@ -77,6 +89,11 @@ export default {
 				guidance: false,
 				description:
 					'Let the trail grow beyond 5 levels. If you need more, consider simplifying the page hierarchy instead.'
+			},
+			{
+				guidance: false,
+				description:
+					'Mirror a separator the bidi algorithm already mirrors. An angle-quote glyph such as › is Bidi_Mirrored, so it flips under RTL on its own and rtlStyles.mirror would flip it back. An arrow glyph such as → and any Icon separator are not, so those do need rtlStyles.mirror through xstyle.'
 			}
 		],
 		anatomy: [

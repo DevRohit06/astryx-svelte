@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { hctToHex, hexToHct, hexWithAlpha, tonalPalette } from '$lib/theme/hct.js';
 
 /**
- * Ported from Astryx's `theme/hct.test.ts`, all 19 of its cases.
+ * Ported from Astryx's `theme/hct.test.ts`, all 19 of its cases at the 0.5.0 pin.
  *
  * `hct.ts` is module-private to the theme layer (as upstream's is), and until
  * this suite landed the only thing exercising it in-repo was

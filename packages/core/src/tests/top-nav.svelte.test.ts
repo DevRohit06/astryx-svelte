@@ -18,16 +18,22 @@ import { parkPointer } from './park-pointer.js';
 import TopNavItemFixture from './fixtures/top-nav-item-fixture.svelte';
 
 /**
- * Ported from Astryx's `TopNav/TopNav.test.tsx` — **46 of its 54 `it` cases**,
- * across its describes (`TopNav`, `TopNavHeading`, the nested `logo link
- * accessible name`, `NavIcon`, `TopNavItem` including 17c's `disabled items do
- * not navigate`, and the nested `TopNavMegaMenuFeaturedCard rest forwarding`).
- * Client (real Chromium) project.
+ * Ported from Astryx's `TopNav/TopNav.test.tsx` — **50 of its 58 `it` cases at
+ * the 0.5.0 pin**, across its describes (`TopNav`, `TopNavHeading`, the nested
+ * `logo link accessible name`, `NavIcon`, `TopNavItem` including 17c's `disabled
+ * items do not navigate`, and the nested `TopNavMegaMenuFeaturedCard rest
+ * forwarding`). Client (real Chromium) project.
  *
- * The eight not here belong to the 0.2.0 APG/a11y assertions that were not
- * written when the components landed — the behaviour ships, the assertions do
- * not. Tracked with the rest of that gap in `port/todo.md`; this header said "all 43"
- * while the file held 46, which is the header-rot failure mode that entry names.
+ * The eight not here are two whole nested describes plus one stray: `menu
+ * popover semantics` (4 — the heading menu's non-modal popover and its
+ * `role="menu"` scoping), `TopNavMegaMenuFeaturedCard image alt handling` (3)
+ * and `keeps href and click behavior for enabled items (drawer mode)`. Every
+ * subject is ported — `imageAlt` is implemented on
+ * `top-nav-mega-menu-featured-card.svelte` with exactly the `role="presentation"`
+ * / `aria-hidden` behaviour those cases assert — so the behaviour ships and only
+ * the assertions do not. This header has now rotted twice: it said "all 43"
+ * while the file held 46, then "46 of its 54" while the file held 50 and
+ * upstream 58.
  *
  * Standing translations:
  *
@@ -47,11 +53,15 @@ import TopNavItemFixture from './fixtures/top-nav-item-fixture.svelte';
  * in rest props. Asserting on the element received checks more than upstream's
  * "the callback ran with some HTMLElement" does. Each is marked at the case.
  *
- * RESTATED — one assertion, in `names the logo link in the independent-links
- * config`; see the comment at the case. `sets tabIndex to -1 when disabled` reads
- * `tabindex` rather than React's `tabIndex` prop name: it is the same attribute on
- * the same node (HTML attribute lookups are case-insensitive), spelled as the DOM
- * spells it.
+ * RESTATED — two assertions. One in `names the logo link in the independent-links
+ * config`; see the comment at the case. The other is `renders icon with label`'s
+ * `getByText('Settings')`, which goes through `ownText` below: the two
+ * `getByText` implementations read different text off an element with mixed
+ * children, and only `ownText` states what upstream's states.
+ *
+ * `sets tabIndex to -1 when disabled` reads `tabindex` rather than React's
+ * `tabIndex` prop name: it is the same attribute on the same node (HTML attribute
+ * lookups are case-insensitive), spelled as the DOM spells it.
  *
  * NOTE ON OVERLAP: upstream's `NavIcon` describe here duplicates its own
  * `NavIcon/NavIcon.test.tsx`, which this port already carries in
@@ -76,6 +86,28 @@ function linksIn(container: HTMLElement): HTMLElement[] {
 	);
 }
 
+/**
+ * An element's **own** text — its direct text-node children, whitespace-
+ * normalised — which is what Testing Library's `getByText` matches against
+ * (`getNodeText`), and is not what a Playwright-style locator matches.
+ *
+ * `renders icon with label` needs it: `TopNavItem` renders `{icon}{label}` into
+ * one element, so upstream's `getByText('Settings')` matches the item, whose own
+ * text is exactly `Settings` beside the icon element. This project's locators
+ * match the full `textContent` — `Icon Settings` — so `getByText('Settings')`
+ * would pass only on the substring and `getByText('Settings', {exact: true})`
+ * matches nothing. This is upstream's rule written out.
+ */
+function ownText(element: Element | null): string | undefined {
+	if (!element) return undefined;
+	return Array.from(element.childNodes)
+		.filter((node) => node.nodeType === Node.TEXT_NODE)
+		.map((node) => node.textContent ?? '')
+		.join('')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
 describe('TopNav', () => {
 	it('renders with navigation role', async () => {
 		const screen = await render(TopNav, { props: { label: 'Main navigation' } });
@@ -92,7 +124,7 @@ describe('TopNav', () => {
 	it('defaults the landmark label to "Top navigation" when label is omitted', async () => {
 		const screen = await render(TopNav);
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Top navigation' }))
+			.element(screen.getByRole('navigation', { name: 'Top navigation', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -101,7 +133,7 @@ describe('TopNav', () => {
 			props: { mode: 'mobile-bar', heading: { text: 'Logo' } }
 		});
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Top navigation' }))
+			.element(screen.getByRole('navigation', { name: 'Top navigation', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -110,7 +142,7 @@ describe('TopNav', () => {
 			props: { mode: 'mobile-bar', nav: { label: 'Utility navigation' } }
 		});
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Utility navigation' }))
+			.element(screen.getByRole('navigation', { name: 'Utility navigation', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -140,8 +172,12 @@ describe('TopNav', () => {
 			}
 		});
 
-		await expect.element(screen.getByRole('link', { name: 'Home' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('link', { name: 'About' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'About', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('prefers startContent when both startContent and children are provided', async () => {
@@ -152,8 +188,12 @@ describe('TopNav', () => {
 			}
 		});
 
-		await expect.element(screen.getByRole('link', { name: 'Start' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('link', { name: 'Child' })).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Start', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Child', exact: true }))
+			.not.toBeInTheDocument();
 	});
 
 	it('renders endContent slot', async () => {
@@ -259,7 +299,7 @@ describe('TopNav', () => {
 describe('TopNavHeading', () => {
 	it('renders heading text', async () => {
 		const screen = await render(TopNavHeading, { props: { heading: 'My App' } });
-		await expect.element(screen.getByText('My App')).toBeInTheDocument();
+		await expect.element(screen.getByText('My App', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders logo element', async () => {
@@ -273,7 +313,7 @@ describe('TopNavHeading', () => {
 		const screen = await render(TopNavHeadingFixture, {
 			props: { props: { heading: 'Dashboard' }, logo: { text: 'Logo', testid: 'logo' } }
 		});
-		await expect.element(screen.getByText('Dashboard')).toBeInTheDocument();
+		await expect.element(screen.getByText('Dashboard', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByTestId('logo')).toBeInTheDocument();
 	});
 
@@ -338,7 +378,7 @@ describe('TopNavHeading', () => {
 				props: { logo, props: { headingHref: '/home', logoLabel: 'Home' } }
 			});
 			await expect
-				.element(screen.getByRole('link', { name: 'Home' }))
+				.element(screen.getByRole('link', { name: 'Home', exact: true }))
 				.toHaveAttribute('href', '/home');
 		});
 	});
@@ -394,19 +434,21 @@ describe('NavIcon', () => {
 describe('TopNavItem', () => {
 	it('renders label as visible text', async () => {
 		const screen = await render(TopNavItem, { props: { label: 'Home' } });
-		await expect.element(screen.getByText('Home')).toBeInTheDocument();
+		await expect.element(screen.getByText('Home', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as anchor element', async () => {
 		const screen = await render(TopNavItem, { props: { label: 'Home', href: '/' } });
-		await expect.element(screen.getByRole('link', { name: 'Home' })).toHaveAttribute('href', '/');
+		await expect
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
+			.toHaveAttribute('href', '/');
 	});
 
 	it('renders children instead of label when provided', async () => {
 		const screen = await render(TopNavItemFixture, {
 			props: { props: { label: 'Accessible name' }, body: 'Custom content' }
 		});
-		await expect.element(screen.getByText('Custom content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Custom content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('applies aria-current when isSelected', async () => {
@@ -505,7 +547,7 @@ describe('TopNavItem', () => {
 			const screen = await render(TopNavItem, {
 				props: { label: 'Home', href: '#', onclick: handleClick }
 			});
-			const link = screen.getByRole('link', { name: 'Home' });
+			const link = screen.getByRole('link', { name: 'Home', exact: true });
 			await expect.element(link).toHaveAttribute('href', '#');
 			await expect.element(link).not.toHaveAttribute('aria-disabled');
 
@@ -519,7 +561,8 @@ describe('TopNavItem', () => {
 			props: { props: { label: 'Settings' }, icon: { text: 'Icon', testid: 'icon' } }
 		});
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
-		await expect.element(screen.getByText('Settings')).toBeInTheDocument();
+		// COUNTERPART for upstream's `getByText('Settings')` — see `ownText`.
+		expect(ownText(screen.container.querySelector('a'))).toBe('Settings');
 	});
 
 	it('hides label and sets aria-label when isIconOnly', async () => {
@@ -530,7 +573,7 @@ describe('TopNavItem', () => {
 			}
 		});
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
-		await expect.element(screen.getByText('Settings')).not.toBeInTheDocument();
+		await expect.element(screen.getByText('Settings', { exact: true })).not.toBeInTheDocument();
 		await expect.element(screen.getByRole('link')).toHaveAttribute('aria-label', 'Settings');
 	});
 
@@ -560,7 +603,7 @@ describe('TopNavItem', () => {
 		const screen = await render(TopNavItem, {
 			props: { label: 'Home', href: '/', as: CustomLink as LinkComponentType }
 		});
-		const link = screen.getByRole('link', { name: 'Home' });
+		const link = screen.getByRole('link', { name: 'Home', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).toHaveAttribute('href', '/');
 	});
@@ -570,7 +613,7 @@ describe('TopNavItem', () => {
 			props: { props: { label: 'Home', href: '/' }, provider: CustomLink }
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Home' }))
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
 			.toHaveAttribute('data-custom-link');
 	});
 
@@ -581,7 +624,7 @@ describe('TopNavItem', () => {
 				provider: AnotherLink
 			}
 		});
-		const link = screen.getByRole('link', { name: 'Home' });
+		const link = screen.getByRole('link', { name: 'Home', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).not.toHaveAttribute('data-another-link');
 	});
@@ -629,7 +672,9 @@ describe('TopNavHeading hover/click guard', () => {
 		await parkPointer();
 		return {
 			screen,
-			trigger: screen.getByRole('button', { name: 'Open menu' }).element() as HTMLElement
+			trigger: screen
+				.getByRole('button', { name: 'Open menu', exact: true })
+				.element() as HTMLElement
 		};
 	}
 

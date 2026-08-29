@@ -448,7 +448,7 @@ Every icon slot here is already a `Snippet`, nothing to dispatch on (Svelte-obvi
 - **kind:** api-divergence
 - **retires:** never
 
-Upstream slices `Children.toArray(children)` into a visible subset and a hidden measurement copy; a Svelte snippet is one opaque unit that can be rendered twice but never _sliced_, so the visible row is data-driven (exactly the shape `useOverflow`'s docstring anticipates). `overflowRenderer` is a `Snippet<[OverflowItem<T>[]]>` and `OverflowItem<T>` carries `{ value, index }` where upstream's carries `{ child: ReactElement, index }`. Rendered DOM, classes (byte-identical, oracle-clean) and fit behaviour are otherwise identical. Same forced-snippet-translation family as `Popover`/`Tooltip` above. This resolves the "**`Children.toArray` rendered twice**" blocking design decision (§Blocking design decisions) in favour of candidate (a) — the single hidden measurement container is kept, not given up. **Test suite ported** in `src/tests/overflow-list.svelte.test.ts` (14 of upstream's 15 `it` cases; `exposes a displayName` dropped — Svelte has no such surface; `forwards a ref` ported as an attachment counterpart; three `textContent`/`toBeEmptyDOMElement` cases restated to tolerate Svelte's `{#if}`/`{#each}` anchor comments + whitespace, which are `display:none` in the flex container). Runs in the **client** (Chromium) project with upstream's exact `offsetWidth`/`ResizeObserver` monkeypatch — the `server` node project has no DOM to mount into
+Upstream slices `Children.toArray(children)` into a visible subset and a hidden measurement copy; a Svelte snippet is one opaque unit that can be rendered twice but never _sliced_, so the visible row is data-driven (exactly the shape `useOverflow`'s docstring anticipates). `overflowRenderer` is a `Snippet<[OverflowItem<T>[]]>` and `OverflowItem<T>` carries `{ value, index }` where upstream's carries `{ child: ReactElement, index }`. Rendered DOM, classes (byte-identical, oracle-clean) and fit behaviour are otherwise identical. Same forced-snippet-translation family as `Popover`/`Tooltip` above. This resolves the "**`Children.toArray` rendered twice**" blocking design decision (§Blocking design decisions) in favour of candidate (a) — the single hidden measurement container is kept, not given up. **Test suite ported** in `src/tests/overflow-list.svelte.test.ts`, whose own header carries the case contract against the current pin (`exposes a displayName` dropped — Svelte has no such surface; `forwards a ref` ported as an attachment counterpart; three `textContent`/`toBeEmptyDOMElement` cases restated to tolerate Svelte's `{#if}`/`{#each}` anchor comments + whitespace, which are `display:none` in the flex container). Runs in the **client** (Chromium) project with upstream's exact `offsetWidth`/`ResizeObserver` monkeypatch — the `server` node project has no DOM to mount into
 
 ### `Switch` omits an upstream leading-whitespace text node
 
@@ -532,12 +532,12 @@ polish pass before a patch.
 
 - **units:** -
 - **kind:** api-divergence
-- **retires:** when `generateThemeCss`/`generateOnMediaCss` and `ThemeConfig`/`ComponentOverrides` are renamed to match upstream, and the remaining `theme/types.ts` + over-exports are swept
+- **retires:** when `ThemeConfig`/`ComponentOverrides` are renamed to match upstream, and the remaining `theme/types.ts` + over-exports are swept
 
 A substantial set of names upstream's `theme/index.ts` publishes that ours does not — deliberately
 unnumbered here, because every count this entry has carried went stale within a batch and a stale
 count makes a growing gap read as a settled one. Re-measure with the surface sweep rather than
-trusting a figure in this paragraph. **Batch 8 closed the `Theme`/`useTheme` family** (`Theme`, `ThemeContext`, `ThemeContextValue`, `useTheme`, `UseThemeReturn`, `ThemeMode`, `ResolvedThemeMode`, `resolveThemeToken(s)`, the two options types, `tokenVar`, `tokenVars`, `tokenDefaults`) and started `theme/types.ts`, which now holds `ThemeMode` alone — the prose-theming types in it land with the Prose-defaults item. What remains is chiefly the per-group token `*Vars`/`*Defaults` exports and the rest of `theme/types.ts` — plus a set of over-exports and two name drifts (`generateThemeCss`/`generateOnMediaCss` vs upstream's `…CSS`; `ThemeConfig`/`ComponentOverrides` vs `DefineThemeInput`/`ComponentStyleMap`). The 0.4.5 sweep also found the gap splits two ways that this entry did not distinguish: some names are absent from _every_ barrel here, others are reachable from the root but not from `./theme` — the second kind is a placement problem, not a missing port, and is the cheaper half to close
+trusting a figure in this paragraph. **Batch 8 closed the `Theme`/`useTheme` family** (`Theme`, `ThemeContext`, `ThemeContextValue`, `useTheme`, `UseThemeReturn`, `ThemeMode`, `ResolvedThemeMode`, `resolveThemeToken(s)`, the two options types, `tokenVar`, `tokenVars`, `tokenDefaults`) and started `theme/types.ts`, which now holds `ThemeMode` alone — the prose-theming types in it land with the Prose-defaults item. What remains is chiefly the per-group token `*Vars`/`*Defaults` exports and the rest of `theme/types.ts` — plus a set of over-exports and one remaining name drift, `ThemeConfig`/`ComponentOverrides` vs `DefineThemeInput`/`ComponentStyleMap`. (The other drift, `generateThemeCss`/`generateOnMediaCss` vs upstream's `…CSS`, closed in batch 034 along with the shape change behind it — see the retired entry.) The 0.4.5 sweep also found the gap splits two ways that this entry did not distinguish: some names are absent from _every_ barrel here, others are reachable from the root but not from `./theme` — the second kind is a placement problem, not a missing port, and is the cheaper half to close
 
 ### Three `./theme` names have no upstream counterpart or the wrong one
 
@@ -649,14 +649,6 @@ Only `role`/`aria-label`/`data-testid` + the stylex/theme classes reach the `<di
 - **retires:** when upstream's `.doc.mjs` documents these
 
 `Spinner` `size="xl"` (source + `SpinnerSizes` use it; `.doc.mjs` omits); `Kbd` `plus` special key; `Code` `color`/`size` props
-
-### Batch 5's doc omissions — two of the four closed at 0.4.1
-
-- **units:** NumberInput, CodeBlock
-- **kind:** upstream-lag
-- **retires:** when upstream documents `onKeyDown` and `highlightMode` in their `.doc.mjs`
-
-`NumberInput`'s `onKeyDown` and `CodeBlock`'s `highlightMode` are still real source props absent from both locales of their `.doc.mjs` props tables; ported from source, as the `Lightbox` `defaultIndex`/`hasAutoPlay` gap below already is. `NumberInput`'s `width` and `FileInput`'s `width` were the other two, and **0.4.1's props tables document both**, so those halves are retired.
 
 ### `Badge.label` is `string | Snippet`, not `ReactNode`
 
@@ -790,14 +782,6 @@ Created and attached but never read upstream. There is no `bind:this` to justify
 - **retires:** never
 
 The two announcement strings (`"<alt>, N of M"` / `"Image N of M"`) are hard-coded English, unlike the four button/dialog labels which do go through `useTranslator`
-
-### Upstream doc gap: `defaultIndex` and `hasAutoPlay` are absent from `Lightbox.doc.mjs`
-
-- **units:** Lightbox
-- **kind:** upstream-lag
-- **retires:** when upstream documents `defaultIndex`/`hasAutoPlay`
-
-Real props (present in `LightboxProps` and the shipped `.d.ts`) but are absent from `Lightbox.doc.mjs`'s props table in both locales. Ported from source, per the Icon px→rem precedent
 
 ### `Lightbox` renders nothing at all when `media` is empty; pan is unclamped and zoom is a toggle
 
@@ -1185,50 +1169,6 @@ replica to test the justification, saw it compile, and reported the reason as no
 was half right — the in-file comment claimed Svelte _errors_, and it warns. The rename is correct;
 the overstatement was what made it look invented
 
-### `generateThemeCss` returns a flat stylesheet where upstream returns two blocks
-
-- **units:** theme/generate-theme-rules.ts
-- **kind:** api-divergence
-- **retires:** when `generateThemeCss` returns `ThemeCSSOutput`, its `@layer` wrappers move to its callers, and `generateThemeRules` is exported
-
-Upstream's `generateThemeCSS(theme)` returns `{prose, component}` — two `@scope`
-blocks and no layer wrappers — and leaves it to each caller to put them in the right
-layer. This port's `generateThemeCss(theme)` returns one string with the
-`@layer reset` / `@layer astryx-theme` wrappers and a generated-file header already
-applied, which is the shape `<Theme>`, the theme build scripts and the docs build all
-consume. Upstream also exports `generateThemeRules(theme): string[]`, the rule list
-behind the split; this port has only `generateThemeRulesSplit`.
-
-Found while porting `theme/generateThemeRules.test.ts` in batch 030, whose 36 cases
-call both `generateThemeRules` and the two-block `generateThemeCSS` and so cannot be
-ported case for case until the shapes match. **The suite is deliberately left
-unported rather than partially ported**, and `port/status.md` keeps counting it: the
-fix is a wide change — around twenty test files call `generateThemeCss(theme)` and
-assert on the string, plus `<Theme>`, both theme build scripts and the docs build —
-and belongs in a batch of its own rather than inside one restructuring `defineTheme`
-at the same time
-
-### Ported `getByRole` name assertions are substring matches, where upstream's are whole-string
-
-- **units:** src/tests (client project)
-- **kind:** api-divergence
-- **retires:** when every string `name` in the client suites carries `exact: true` and `status.md`'s assertion-strength count reaches zero
-
-Testing Library matches an accessible name as a **whole string**; Playwright, which supplies the
-browser project's locators, matches a string `name` as a case-insensitive **substring**. Every
-ported case that reads `getByRole('button', {name: 'Delete'})` verbatim therefore asserts strictly
-less than the upstream case it ports, and passes in situations upstream's exists to catch.
-
-Found while porting `VisuallyHidden`: removing the icon span's `aria-hidden` made the control's
-accessible name `'Trash Delete'`, and the case still passed. It fails, correctly, with
-`exact: true`.
-
-The count is generated into `port/status.md` rather than stated here, because it is the size of a
-sweep that has not happened and will move. The sweep is its own batch: adding `exact: true` will
-surface every place this port's accessible name differs from upstream's, and each of those is a
-parity defect to triage rather than a test to relax. A regex `name` is substring-matching on both
-sides by construction and is excluded
-
 ### Rest-prop and inline-style precedence disagrees with upstream in four components
 
 - **units:** Blockquote, Badge, ChatComposer, VisuallyHidden
@@ -1310,11 +1250,287 @@ through a gap in its `babel-plugin-add-extensions` — the subject of a suite re
 no-counterpart here — and this port would reach the same failure by omission. Surfaced while
 assessing that suite in batch 031
 
+### `TabList`'s stranger-in-the-strip warning cannot see a `role` attribute flip
+
+- **units:** TabList
+- **kind:** api-divergence
+- **retires:** when Svelte gains an after-every-render hook
+
+Upstream's warning is a **dependency-less** `useEffect` — "after every commit" — because React cannot
+know which render put a non-tab into a `role="tablist"` strip. Svelte has no after-every-render hook,
+and the strip's children belong to the consumer's snippet, so this port uses a `MutationObserver` on
+`childList` (the same substitution `useListFocus` makes for its roving-tab-stop repair), checked once
+on mount and latched after the first warning. It catches a stranger mounting or unmounting; it does
+**not** catch an existing child's `role` attribute flipping away from `tab`, which upstream's next
+commit would. Upstream's own new test only covers the initial-render case, so the gap is unexercised
+on both sides
+
+### `useMergedRefs` (#5267) has no Svelte counterpart
+
+- **units:** hooks/useMergedRefs
+- **kind:** unported
+- **retires:** never
+
+0.5.0 adds `useMergedRefs` as a published hook and migrates `Avatar`, `Button`, `Item`, `SideNav`,
+`TabList`, `TopNav`, `Text` and `Heading` onto it, so a merged ref keeps its identity across
+rerenders (#5266, #5267, #5429). The whole hook exists to stabilise a callback ref React would
+otherwise recreate every render. Svelte binds the element once via `bind:this` and a focus trap
+arrives as an attachment, so there is no ref-merging to stabilise and nothing for the hook to do.
+The absence is recorded rather than filled: an empty image, not a behaviour difference
+
+### `BottomSheet`'s scrim-closing condition is a parameter, not a call-site expression
+
+- **units:** BottomSheet
+- **kind:** deliberate-divergence
+- **retires:** never
+
+Upstream evaluates `hasScrim && !isOpen && isPresented` (standalone) and
+`hasScrim && isFlowVisible && activeSheet == null` (switcher) inline at each `stylex.props`. One
+module serves both hosts here, so `bottomSheetDialogAttrs` takes the host-specific half as an
+`isScrimClosing` parameter and keeps the `hasScrim &&` conjunct inside. Logically identical, and the
+class oracle proves the emitted classes are; recorded only because the two hosts' conditions now sit
+apart from the key they select
+
+### `useAutoMediaMode` re-measures on its tracked signals, not on every render
+
+- **units:** useAutoMediaMode, MediaTheme
+- **kind:** deliberate-divergence
+- **retires:** never
+
+Upstream's measurement effect carries **no dependency array on purpose** — its own comment says a
+surface's colour is a painted value that no dependency could name, so it re-runs on every React
+render and skips its expensive half through a `lastRef` memo when neither the backdrop nor the
+theme moved. Svelte has no per-render hook: an effect re-runs only when a signal it read changed.
+Ours tracks the three things that are signals — the bound element, `mode === 'auto'`, and
+`useTheme().tokens` — and keeps the same memo, so every case upstream's array-free effect exists to
+catch is still caught **except one**: an ancestor's painted background changing while the theme
+stays put (an inline `style` written by a parent, a class swap). `mode="auto"` then keeps its
+previous answer until the theme, the mode or the element changes. The alternative — a
+`MutationObserver` over the ancestor chain's `style`/`class` — is machinery upstream does not have
+and would still miss a distant opaque ancestor, so the gap is recorded rather than invented around.
+Upstream's own regression case for this (`MediaTheme.dom.test.tsx`, "re-measures when the surface
+changes without the theme changing") is in the unported client suite
+
+### `BaseTypeahead`'s grouped dropdown numbers options by render order, not by `results` order
+
+- **units:** BaseTypeahead
+- **kind:** upstream-lag
+- **retires:** when upstream fixes it
+
+Replicated, not fixed. Option grouping arrived at 0.5.0: the dropdown renders
+`groupItems(results, {ungroupedFirst: true})` and numbers the rows with a counter that walks
+**render** order (`flatIndex++` inside upstream's render IIFE), while the keyboard model still
+indexes `results` — `ArrowDown` clamps to `results.length`, and `Enter` selects
+`results[highlightedIndex]`. Grouping reorders: ungrouped rows come first and each named
+group's rows are gathered together, so as soon as any item carries an `auxiliaryData.group`
+and the source's order interleaves groups, flat row _n_ is no longer `results[n]` — the
+highlighted row and the row `Enter` commits come apart, and `aria-activedescendant` points at
+the row the arrow keys did not move to. Ungrouped results are unaffected (`groupItems` returns
+one `heading: null` group holding `results` verbatim, so the two orders coincide), which is
+every call site that predates 0.5.0. Upstream shipped the feature with no test for it — the
+0.5.0 suite delta is two `Tab`-dismissal cases and nothing about groups — so nothing upstream
+catches this either
+
+### `useTouchTrigger`'s two ref members have no Svelte spelling
+
+- **units:** components/layer/use-touch-trigger
+- **kind:** api-divergence
+- **retires:** never — Svelte has no ref objects
+
+`useTouchTrigger` is public API upstream, exported from the `./Layer` subpath, and two members of
+its signature are React ref objects. `UseTouchTriggerOptions.triggerRef: RefObject<HTMLElement |
+null>` is `trigger: HTMLElement | null` here, read through the options getter at event time — the
+same shape `Popover`'s anchor already takes. `UseTouchTriggerReturn.isTouchPointerRef:
+RefObject<boolean>` is an `isTouchPointer` getter.
+
+Both are this port's standing ref-object-to-value mapping rather than anything specific to touch,
+and everything a consumer can observe is unchanged: the `LayerTouchTrigger` union, the `'auto'`
+default, and the behaviour on every pointer type are byte-identical. Recorded because the published
+_signature_ differs, which is the thing `astryx-surface` compares
+
+### Svelte keeps the whitespace between adjacent expressions where JSX drops it
+
+- **units:** core (markup convention)
+- **kind:** deliberate-divergence
+- **retires:** never — it is a language difference, not a porting choice
+
+JSX discards whitespace between two expressions when it contains a newline, so upstream's
+
+```jsx
+{
+	icon;
+}
+{
+	!isIconOnly && (children ?? label);
+}
+```
+
+renders `<span>Icon</span>Settings`. Svelte keeps the newline-and-indent between the two blocks as a
+text node, so the counterpart renders `<span>Icon</span> Settings`. The difference is one space in
+`textContent`, and it will appear anywhere a component emits adjacent expressions on separate lines.
+
+It is inert where it has been seen. `TopNavItem`'s root is `inline-flex`, and a whitespace-only text
+run between flex items generates no anonymous flex item at all, so nothing renders. The accessible
+name matches on both sides regardless, because name computation joins each child's result with a
+space either way — which is why no ported case has ever caught it.
+
+Recorded rather than fixed, because the fix is to run the blocks together on one line and that costs
+more readability than the space costs correctness. **Where it would stop being inert is a non-flex
+container**, and there the space is real and visible; a component in that shape should close the tags
+up. Surfaced by the `getByText` sweep in batch 037, which reads `textContent` and is the first thing
+in this port able to see it at all
+
 ## Retired
 
 Closed, kept as the record. **Nothing below counts as an open debt** — `scripts/status.mjs` stops
 tallying at this heading, and `astryx-parity` must not find a retired entry when it greps for
 "is this drift already known?", or it would skip live drift.
+
+### Ported `getByRole` name assertions are substring matches, where upstream's are whole-string
+
+- **units:** src/tests (client project)
+- **kind:** api-divergence
+- **retires:** when every string `name` in the client suites carries `exact: true` and `status.md`'s assertion-strength count reaches zero
+
+Testing Library matches an accessible name as a **whole string**; Playwright, which supplies the
+browser project's locators, matches a string `name` as a case-insensitive **substring**. Every
+ported case that reads `getByRole('button', {name: 'Delete'})` verbatim therefore asserts strictly
+less than the upstream case it ports, and passes in situations upstream's exists to catch.
+
+Found while porting `VisuallyHidden`: removing the icon span's `aria-hidden` made the control's
+accessible name `'Trash Delete'`, and the case still passed. It fails, correctly, with
+`exact: true`.
+
+The count is generated into `port/status.md` rather than stated here, because it is the size of a
+sweep that has not happened and will move. The sweep is its own batch: adding `exact: true` will
+surface every place this port's accessible name differs from upstream's, and each of those is a
+parity defect to triage rather than a test to relax. A regex `name` is substring-matching on both
+sides by construction and is excluded
+
+**Closed in batch 036.** Every string `name` in the client suites carries `exact: true`, and
+`status.md`'s count is zero — verified by hand as well as by the counter: six matches remain in the
+tree and all six are prose in comments, none in code. Nothing went red, which the sweep proved
+meaningful rather than vacuous: shortening a name to a strict substring fails with `exact: true` and
+**passes without it**, so the hazard was live. Upstream settles the semantics itself — its `Calendar`
+and `DateTimeInput` suites use `__tests__/fastRoleQueries.ts`, whose predicate is
+`typeof name === 'string' ? accessibleName === name : name.test(accessibleName)`.
+
+A regex `name` is substring-matching on both sides by construction and is untouched, as is
+`calendar.svelte.test.ts`'s deliberate `exact: false`, where upstream matches day cells with a regex.
+
+`getByText` carries the identical asymmetry over a larger surface and is **not** covered by this;
+it is now its own row in the assertion-strength table rather than a remark
+
+### `hasActiveFocusTrapEscape` is built on the trap's own Escape stack, not a separate trap-only count
+
+- **units:** hooks/use-focus-trap.svelte.ts
+- **kind:** deliberate-divergence
+- **retires:** when `useLayerDismissal` + `layerStack` land and the shim is re-based on a trap-only count
+
+Upstream 0.5.0 moved Escape coordination onto one shared dismissal stack and then went to the
+trouble of keeping a _second_, private `activeEscapeTrapCount` beside it, incremented from the
+same `isActive && onEscape != null` expression that registers the trap on the stack. The
+duplication is the point: the shared stack carries families that never trap focus — tooltips,
+hover cards, dialogs — and a shim that counted those would tell `BottomSheetSwitcher` a trap sits
+above it when none does, so the sheet would stop closing.
+
+Here there is one stack, `useFocusTrap`'s own, and the shim reads its length. The answers are
+identical today because nothing but a focus trap ever pushes onto it, and
+`tests/focus-trap-escape-shim.svelte.test.ts` pins every one of upstream's answers — including
+the four families that must stay `false`. The divergence only becomes a defect the moment the
+shared stack lands and other families join: at that point the shim needs its own trap-only
+count, exactly as upstream's does, or those four cases start failing. Which is what they are
+there to do.
+
+The `@deprecated` tag is carried with the same qualification. Upstream's redirect — "join the
+stack rather than ask whether a trap exists" — names a stack this port does not have, so the tag
+says so rather than pointing consumers at nothing
+
+**Closed at 0.5.0, in batch 035.** `layerStack` and `useLayerDismissal` are ported, and
+`useFocusTrap` is migrated onto the shared stack exactly as upstream's is — its sixty lines of
+private registry, document listener and DOM-containment ordering are gone. `hasActiveFocusTrapEscape`
+now reads `activeEscapeTrapCount`, a trap-only counter driven by the same
+`isActive && onEscape != null` expression that registers the trap, so the two cannot disagree.
+
+This entry predicted that the four families answering `false` would fail when the stack landed. They
+did not, and the prediction was imprecise rather than wrong: adding the stack changes nothing on its
+own, because it is a separate registry. The failure it describes is real but conditional on pointing
+the shim _at_ the shared stack, which is what the migration must not do and does not. The mechanism
+was right; the trigger was not. Recorded because a prediction that names a symptom instead of a
+mechanism sends the next reader hunting a failure that never appears
+
+### `generateThemeCss` returns a flat stylesheet where upstream returns two blocks
+
+- **units:** theme/generate-theme-rules.ts
+- **kind:** api-divergence
+- **retires:** when `generateThemeCss` returns `ThemeCSSOutput`, its `@layer` wrappers move to its callers, and `generateThemeRules` is exported
+
+Upstream's `generateThemeCSS(theme)` returns `{prose, component}` — two `@scope`
+blocks and no layer wrappers — and leaves it to each caller to put them in the right
+layer. This port's `generateThemeCss(theme)` returns one string with the
+`@layer reset` / `@layer astryx-theme` wrappers and a generated-file header already
+applied, which is the shape `<Theme>`, the theme build scripts and the docs build all
+consume. Upstream also exports `generateThemeRules(theme): string[]`, the rule list
+behind the split; this port has only `generateThemeRulesSplit`.
+
+Found while porting `theme/generateThemeRules.test.ts` in batch 030, whose cases
+call both `generateThemeRules` and the two-block `generateThemeCSS` and so cannot be
+ported case for case until the shapes match. **The suite is deliberately left
+unported rather than partially ported**, and `port/status.md` keeps counting it: the
+fix is a wide change — around twenty test files call `generateThemeCss(theme)` and
+assert on the string, plus `<Theme>`, both theme build scripts and the docs build —
+and belongs in a batch of its own rather than inside one restructuring `defineTheme`
+at the same time
+
+Scoping it across batches 033 and 034 revised it twice, and the first revision was
+wrong. Batch 033 recorded that exporting `generateThemeRules` would require
+re-architecting the generator, because upstream derives the split _from_ the flat list
+while this port generates the two groups separately. Running the generator disproved
+that: **every** rule this port puts in `prose` starts with `:where(`, **no** rule it
+puts in `component` does, and the size overrides already fall after the themed type
+rules that the ordering case pins. Upstream's derivation and this port's grouping
+therefore agree exactly, and the flat list is a genuine addition. The claim had been
+reasoned from reading the two implementations rather than measured, and one probe
+settled it.
+
+What the entry did understate is real, and it is **DOM-observable**: upstream's `<Theme>` injects _two_ `<style>` elements, marked
+`data-astryx-theme-prose` for the reset layer and `data-astryx-theme` for the theme
+layer, where `theme.svelte` injects one carrying both. A consumer or test selecting
+`style[data-astryx-theme-prose]` finds nothing here. The two name drifts in the
+`0.4.5` surface entry above (`generateThemeCss`/`generateOnMediaCss` vs upstream's
+`…CSS`) are the same change and should land with it
+
+**Closed at 0.5.0, in batch 034.** `generateThemeRules`, `generateThemeCSS` and `ThemeCSSOutput`
+are exported from `./theme` and `./theme/define`, `generateOnMediaCss` is `generateOnMediaCSS`, and
+`<Theme>` injects one `<style>` per layer. The published surface is upstream's exactly.
+`generateThemeCss` — the layered, headered document — still exists and still backs the theme build
+scripts and the docs build, but is off the public barrel: every one of its callers reaches it by
+deep path into `dist/`, which the `exports` map does not expose, so the single generator that keeps
+a built stylesheet and the runtime from drifting survives without appearing in the API. The suite
+this entry blocked, `theme/generateThemeRules.test.ts`, is ported whole
+
+### Batch 5's doc omissions — two of the four closed at 0.4.1
+
+- **units:** NumberInput, CodeBlock
+- **kind:** upstream-lag
+- **retires:** retired at 0.5.0
+
+`NumberInput`'s `onKeyDown` and `CodeBlock`'s `highlightMode` are still real source props absent from both locales of their `.doc.mjs` props tables; ported from source, as the `Lightbox` `defaultIndex`/`hasAutoPlay` gap below already is. `NumberInput`'s `width` and `FileInput`'s `width` were the other two, and **0.4.1's props tables document both**, so those halves are retired.
+
+**Closed at 0.5.0.** Upstream's documentation PRs (#4315-#4320) document
+`NumberInput.onKeyDown` and `CodeBlock.highlightMode`. Our re-emitted `.doc.mjs` carry both — the
+handler under Svelte's lowercase `onkeydown`, with upstream's description.
+
+### Upstream doc gap: `defaultIndex` and `hasAutoPlay` are absent from `Lightbox.doc.mjs`
+
+- **units:** Lightbox
+- **kind:** upstream-lag
+- **retires:** retired at 0.5.0
+
+Real props (present in `LightboxProps` and the shipped `.d.ts`) but are absent from `Lightbox.doc.mjs`'s props table in both locales. Ported from source, per the Icon px→rem precedent
+
+**Closed at 0.5.0.** Both are documented in upstream's `Lightbox.doc.mjs`, and our re-emitted
+copy carries them.
 
 ### `{...rest}` position now matches upstream everywhere it is observable
 
@@ -1351,6 +1567,63 @@ open, and the spread's position stops mattering.
 **The rule this earns:** a debt that states a count is as rotten as a test header that states one.
 This one had been carried across three batches on an estimate nobody re-measured, and it named
 four components that were never the problem while missing all five that were.
+
+### `DateInput`'s touch geometry cannot match upstream's class names — `defineConsts` hashes the file path
+
+- **units:** date-input (tokens.stylex.ts, wheel.stylex.ts, month-scroller.stylex.ts, month-year-wheels.stylex.ts, touch-date-field.stylex.ts)
+- **kind:** deliberate-divergence
+- **retires:** never — unless upstream stops using `defineConsts`, or both oracles learn to blind a const hash the way they already blind a marker hash
+
+`DateInput/tokens.stylex.ts` is the first `stylex.defineConsts` in either tree, and it breaks the
+property this whole port is built on: _authoring against the same token references makes the
+compiler emit byte-identical CSS_. That holds for `defineVars` because upstream's variable keys
+are `--`-prefixed literals — `resolveVarGroupKey` short-circuits on those and returns
+`var(--spacing-2)` whatever file it was called from. `defineConsts` has the same escape hatch and
+upstream does **not** take it: its keys are `daySize`, `paneBlockSize`, … so
+`@stylexjs/babel-plugin` names each one
+
+```
+constKey = 'x' + hash(`${packageName}:${pathFromPackageRoot}//${exportName}.${key}`)
+```
+
+A consumer of a `defineConsts` member compiles to `var(--<constKey>)` — the plugin never reads the
+defining file under `unstable_moduleResolution: {type: 'commonJS'}` (only
+`experimental_crossFileParsing` does) — and the atomic class is hashed from _that string_.
+`processStylexRules` substitutes the literal back in at sheet-generation time, so the emitted
+**declaration** is right; the **class name** is a hash of our package name and our file path.
+
+Ours is `@astryx-svelte/core:src/lib/components/date-input/tokens.stylex.ts`; upstream's is
+`@astryxdesign/core:src/DateInput/tokens.stylex.ts`. Neither half can be made equal — the package
+name is ours by definition — so eleven classes differ **by name only**, verified declaration for
+declaration against `dist/astryx.css`:
+
+| upstream   | ours       | declaration                                 |
+| ---------- | ---------- | ------------------------------------------- |
+| `xm8gem`   | `x1jwe3ac` | `height:calc(6 * 44px)`                     |
+| `xygd9yz`  | `x5rzc5i`  | `min-height:44px` (doubled selector)        |
+| `xngvp7v`  | `x1pmxr54` | `min-width:44px` (doubled selector)         |
+| `x1uameg1` | `xho1bbs`  | `padding-block:calc((6 * 44px - 28px) / 2)` |
+| `xy8nx85`  | `x1h0w9py` | `grid-template-rows:repeat(6, 1fr)`         |
+| `x6hpsvf`  | `x3qkrzd`  | `height:28px`                               |
+| `x1y2t9nm` | `x178ksff` | `width:calc(44px - 8px)`                    |
+| `xw1wawg`  | `x1dfrq2f` | `height:calc(44px - 8px)`                   |
+| `x1tutbut` | `x1ywprd`  | `min-width:44px`                            |
+| `x1dg37ty` | `x5ly87c`  | `min-height:44px`                           |
+| `x7rbydg`  | `x184n3b7` | `top:calc(50% - (28px / 2))`                |
+
+The other **119** classes the four touch modules emit match upstream's by name, byte for byte.
+
+This is the same shape as `defineMarker`, whose class is also path-derived and which the class
+oracle already diffs as marker-normalised CSS while the CSS oracle blinds its hash. The two
+oracles need the same treatment here, and until they have it the eleven rows above read as
+missing classes rather than as renamed ones.
+
+**Rejected alternative, recorded so it is not re-proposed:** a nested `package.json` naming the
+directory `@astryxdesign/core`, with the tokens module at `src/DateInput/tokens.stylex.ts` inside
+it, _would_ reproduce upstream's canonical path exactly and close all eleven. It puts another
+package's name in our tree to steer a hash, it would be copied into `dist/` by `svelte-package`,
+and it encodes upstream's directory layout in a place no reader would think to look — a worse
+thing to carry than a named debt.
 
 ### `TypeRole` takes no `weight` — retired
 

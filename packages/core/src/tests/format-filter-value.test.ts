@@ -4,10 +4,20 @@ import type { TranslatorFn } from '$lib/i18n/index.js';
 import type { FilterValue, OperatorValue } from '$lib/components/power-search/types.js';
 
 /**
- * Astryx's `PowerSearch/formatFilterValue.test.ts`, ported case for case —
- * **32 upstream cases, 32 here**, in upstream's order and under upstream's
- * `describe`s, with every assertion verbatim. Nothing dropped, nothing added,
- * nothing restated.
+ * Astryx's `PowerSearch/formatFilterValue.test.ts` at the **0.5.0** pin —
+ * **35 upstream cases, 33 here**, in upstream's order and under upstream's
+ * `describe`s, with every assertion verbatim. Nothing is restated.
+ *
+ * **The 2 that are not here** are both in `describe('string')`, both #4759 and
+ * both grapheme-safety cases: `truncates by characters, never splitting an
+ * emoji` and `keeps multi-unit characters within maxLength intact`. They landed
+ * upstream before 0.5.0, so this file has been short of them across more than
+ * one pin.
+ *
+ * Both transcribe unchanged — the module is pure and this port transcribes it
+ * line for line, so there is nothing standing between the cases and the file.
+ * (This header read "**32** upstream cases, 32 here … Nothing dropped, nothing
+ * added", which was already wrong at the v0.4.5 pin.)
  *
  * Nothing needed translating. `formatFilterValue` is pure — upstream's module
  * has no React in it at all, not even a `'use client'` directive — and this
@@ -18,12 +28,12 @@ import type { FilterValue, OperatorValue } from '$lib/components/power-search/ty
  * Two details of the environment that the assertions lean on, and that the
  * server project happens to give for free:
  *
- * - `Intl.NumberFormat()` and `Intl.DateTimeFormat(undefined, …)` take the
- *   *runtime default* locale, which is what upstream's own vitest run reads
- *   too. The one grouping case computes its expectation through the same
- *   `Intl.NumberFormat()` rather than hard-coding `1,234,567`, so it is
- *   locale-independent either way; the `date_absolute` case asserts only on
- *   `'1970'`, a length and a trailing ellipsis, so it is too.
+ * - Since 0.5.0 `formatFilterValue` takes an explicit `locale`, so the helper
+ *   below pins `'en-US'` and the run no longer depends on the machine's default
+ *   locale at all. The grouping case still computes its expectation through
+ *   `Intl.NumberFormat('en-US')` rather than hard-coding `1,234,567`, as
+ *   upstream's does; the `date_absolute` case asserts only on `'1970'`, a
+ *   length and a trailing ellipsis.
  * - The translator stub is upstream's, kept because it is what makes the
  *   overflow-summary strings (`'3 items'`, `'2 entities'`, `'1 filter'`)
  *   assertable without pulling the real catalog in.
@@ -58,7 +68,7 @@ const fmt = (
 	value: FilterValue,
 	maxLength = 20,
 	timezoneID?: string
-): string => formatFilterValue({} as never, operator, value, maxLength, t, timezoneID);
+): string => formatFilterValue({} as never, operator, value, maxLength, t, 'en-US', timezoneID);
 
 const ELLIPSIS = '…';
 
@@ -84,8 +94,20 @@ describe('formatFilterValue', () => {
 	});
 
 	describe('integer / float', () => {
+		it('formats the same number differently when the locale changes', () => {
+			const args = [
+				{} as never,
+				{ type: 'float' } as OperatorValue,
+				{ type: 'float', value: 1234.5 } as FilterValue,
+				40,
+				t
+			] as const;
+			expect(formatFilterValue(...args, 'en-US')).toBe('1,234.5');
+			expect(formatFilterValue(...args, 'de-DE')).toBe('1.234,5');
+		});
+
 		it('formats an integer with locale grouping', () => {
-			const expected = new Intl.NumberFormat().format(1234567);
+			const expected = new Intl.NumberFormat('en-US').format(1234567);
 			expect(fmt({ type: 'integer' }, { type: 'integer', value: 1234567 }, 40)).toBe(expected);
 		});
 

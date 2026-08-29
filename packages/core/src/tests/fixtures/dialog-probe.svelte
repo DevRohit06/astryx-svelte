@@ -15,7 +15,7 @@
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		props: Record<string, any>;
 		/** Which body to render inside the dialog. */
-		body?: 'text' | 'child' | 'header';
+		body?: 'text' | 'child' | 'header' | 'field';
 		/** Text for the `text` and `child` bodies. */
 		text?: string;
 		/** Title for the `header` body. */
@@ -47,5 +47,8 @@
 		<div data-testid="child">{text}</div>
 	{:else if body === 'header'}
 		<DialogHeader title={headerTitle} />
+	{:else if body === 'field'}
+		<!-- Upstream's local `DialogWithField`: a text field to compose into. -->
+		<input aria-label="Search" />
 	{/if}
 </Dialog>

@@ -204,7 +204,7 @@ export { default as MediaTheme } from './theme/media-theme.svelte';
 // `SyntaxTheme` is surfaced at the root for the same reason `MediaTheme` is —
 // both are theme *components*, and upstream's root `export * from './theme'`
 // reaches them. (Our root barrel is deliberately not a full mirror of `./theme`:
-// `defineTheme`, `generateThemeCss` and friends stay on the `./theme` subpath.
+// `defineTheme`, `generateThemeCSS` and friends stay on the `./theme` subpath.
 // The components are the practical exception, applied consistently.) No
 // `SyntaxThemeProps` — upstream keeps that interface module-private.
 export { default as SyntaxTheme } from './theme/syntax/syntax-theme.svelte';
@@ -265,6 +265,13 @@ export { default as Spinner } from './components/spinner/spinner.svelte';
 export { default as Stack } from './components/stack/stack.svelte';
 export { default as StackItem } from './components/stack/stack-item.svelte';
 export { default as StatusDot } from './components/status-dot/status-dot.svelte';
+// Upstream's `Stepper/index.ts` publishes `Stepper`, `Step` and
+// `useStepperContext`, but not the context object or its provider —
+// `setStepperContext` is an implementation detail of the Svelte port, as
+// `setInputGroupContext` is, and stays unpublished.
+export { default as Stepper } from './components/stepper/stepper.svelte';
+export { default as Step } from './components/stepper/step.svelte';
+export { useStepperContext } from './components/stepper/stepper-context.svelte.js';
 export { default as Switch } from './components/switch/switch.svelte';
 export { default as Tab } from './components/tab-list/tab.svelte';
 export { default as TabList } from './components/tab-list/tab-list.svelte';
@@ -446,6 +453,7 @@ export type {
 	DateTimeInputStatus,
 	DateTimeInputStatusType,
 	DateTimeInputTimeIncrement,
+	DateTimeInputTimeOptionInterval,
 	ISODateTimeString
 } from './components/date-time-input/date-time-input.svelte';
 export type { DateTimeInputSize } from './components/date-time-input/date-time-input.stylex.js';
@@ -719,7 +727,7 @@ export type {
 	TableAlignment,
 	IncrementalState as IncrementalParseState
 } from './components/markdown/parser.js';
-export type { MediaThemeProps } from './theme/media-theme.svelte';
+export type { MediaThemeMode, MediaThemeProps } from './theme/media-theme.svelte';
 export type { MetadataListProps } from './components/metadata-list/metadata-list.svelte';
 export type { MetadataListItemProps } from './components/metadata-list/metadata-list-item.svelte';
 export type { MoreMenuProps } from './components/more-menu/more-menu.svelte';
@@ -862,22 +870,35 @@ export type { SpinnerProps } from './components/spinner/spinner.svelte';
 export type { StackAlignment, StackProps } from './components/stack/stack.svelte';
 export type { StackItemProps } from './components/stack/stack-item.svelte';
 export type { StatusDotProps } from './components/status-dot/status-dot.svelte';
+// Upstream's `Stepper/index.ts` publishes exactly these seven names.
+// `StepDensity` and `StepperDensity` are module-public upstream and
+// barrel-absent, so they stay unpublished here too — the `focusableSelector`
+// rule.
+export type { StepperProps } from './components/stepper/stepper.svelte';
+export type { StepProps, StepIndicatorPreset } from './components/stepper/step.svelte';
+export type { StepStatus } from './components/stepper/step-status.js';
+export type {
+	StepperContextValue,
+	StepperOrientation,
+	StepperIndicatorPosition
+} from './components/stepper/stepper-context.svelte.js';
 export type {
 	SwitchProps,
 	SwitchLabelPosition,
 	SwitchLabelSpacing
 } from './components/switch/switch.svelte';
 export type { TabProps } from './components/tab-list/tab.svelte';
-export type { TabListProps } from './components/tab-list/tab-list.svelte';
+export type { TabListProps, TabListOverflow } from './components/tab-list/tab-list.svelte';
 export type { TabMenuProps, TabMenuOption } from './components/tab-list/tab-menu.svelte';
-// Upstream's `TabList/index.ts` publishes `useTabListContext` plus the size and
-// layout types. `TabListContext` itself has no Svelte value counterpart (only the
-// reader is public, as `DropdownMenu`'s is). There is no orientation type to
-// publish: 0.2.0 removed the `orientation` prop as a misleading no-op, and the
-// type with it.
+// Upstream's `TabList/index.ts` publishes `useTabListContext` plus the size,
+// layout and pattern types. `TabListContext` itself has no Svelte value
+// counterpart (only the reader is public, as `DropdownMenu`'s is). There is no
+// orientation type to publish: 0.2.0 removed the `orientation` prop as a
+// misleading no-op, and the type with it.
 export {
 	useTabListContext,
 	type TabListLayout,
+	type TabListPattern,
 	type TabListSize
 } from './components/tab-list/tab-list-context.svelte.js';
 // Table. `TableContext` is published and `useTableContext` is not, which is
@@ -1342,6 +1363,13 @@ export {
 	writeAnchorNames
 } from './components/layer/anchor-name.js';
 export { layerAnimations } from './components/layer/layer-animations.stylex.js';
+export {
+	isActionTrigger,
+	useTouchTrigger,
+	type LayerTouchTrigger,
+	type UseTouchTriggerOptions,
+	type UseTouchTriggerReturn
+} from './components/layer/use-touch-trigger.svelte.js';
 // The two `Layout` contexts upstream publishes from `Layout/index.ts`. The
 // slots context is not among them there, and is not here either.
 export {
@@ -1513,26 +1541,31 @@ export {
 	useHoverCard,
 	type HoverCardFocusTrigger,
 	type HoverCardOptions,
-	type HoverCardReturn
+	type HoverCardReturn,
+	type HoverCardTouchTrigger
 } from './components/hover-card/use-hover-card.svelte.js';
 export {
 	useTooltip,
 	type TooltipFocusTrigger,
 	type TooltipOptions,
-	type TooltipReturn
+	type TooltipReturn,
+	type TooltipTouchTrigger
 } from './components/tooltip/use-tooltip.svelte.js';
 
 // Style utilities, so a component can take stack or container layout without
-// being wrapped in one. These are upstream's four exactly — `stackAttrs` and
-// `stackItemAttrs` are ours, built on `stack()`/`stackItem()` to fold in the
+// being wrapped in one. These mirror upstream's `Layout` barrel — `stackAttrs`
+// and `stackItemAttrs` are ours, built on `stack()`/`stackItem()` to fold in the
 // padding and overflow `Stack.tsx` keeps to itself, and stay internal for the
-// same reason every other component's `*Attrs` helper does.
+// same reason every other component's `*Attrs` helper does. (This comment used
+// to say "upstream's four exactly"; upstream publishes five, and
+// `overlayPaddingReset` was the one missing — batch 033.)
 export {
 	container,
 	type ContainerComponent,
 	type ContainerOptions,
 	type SpacingToken
 } from './internal/container.stylex.js';
+export { overlayPaddingReset } from './internal/padding.stylex.js';
 export { stack, type StackOptions } from './components/stack/stack.stylex.js';
 export { stackItem, type StackItemOptions } from './components/stack/stack-item.stylex.js';
 export { EDGE_COMP_ATTR, edgeCompSlot } from './internal/edge-compensation.stylex.js';
@@ -1583,7 +1616,9 @@ export {
 	InternationalizationContext,
 	InternationalizationProvider,
 	getLocaleDirection,
+	useCollator,
 	useDirection,
+	useLocale,
 	useTranslator,
 	type InternationalizationProviderProps,
 	type Catalog,

@@ -3,11 +3,13 @@ import { render } from 'vitest-browser-svelte';
 import Probe from './fixtures/media-query-probe.svelte';
 
 /**
- * Ported from Astryx's `hooks/useMediaQuery.test.ts`.
+ * Ported from Astryx's `hooks/useMediaQuery.test.ts` at the **0.5.0** pin, which
+ * declares **10** cases.
  *
- * Eight of upstream's ten cases live here; the two that call `renderToString`
- * are the SSR path and run in the node project instead — see
- * `media-query.test.ts` next door.
+ * Eight of them live here; the two that call `renderToString` are the SSR path
+ * and run in the node project instead — see `media-query.test.ts` next door.
+ * Nothing is dropped: upstream's suite is split across those two files, so no
+ * count in either states the whole of it, and both name the split.
  *
  * The mock `MediaQueryList` is upstream's verbatim. What changes is how the
  * value is read: `renderHook`'s `result.current` becomes the probe's rendered

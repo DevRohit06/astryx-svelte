@@ -29,7 +29,7 @@ export default {
 			{
 				name: '--_thumbnail-hit-inset',
 				description:
-					'Outset of the remove button’s invisible hit area, applied to a ::after overlay. 0 on a fine pointer; negative on a coarse one, which grows the 20px button to the 24px touch target without changing what is drawn.',
+					"Outset of the remove button's invisible hit area, applied to a ::after overlay. 0 on a fine pointer; negative on a coarse one, which grows the 20px button to the 24px touch target without changing what is drawn.",
 				default: '0px',
 				private: true
 			}

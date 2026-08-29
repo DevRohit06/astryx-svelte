@@ -4,7 +4,7 @@ import Card from '$lib/components/card/card.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Astryx's `Card/Card.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `Card/Card.test.tsx` at the **0.5.0** pin, ported case for case.
  *
  * The count is the contract: upstream declares **5** `it` blocks at this pin,
  * and **5** are here. **Nothing is dropped.** Upstream's suite has no
@@ -35,7 +35,7 @@ const cardWith = (text: string, rest: Record<string, unknown> = {}) => ({
 describe('Card', () => {
 	it('renders children', async () => {
 		const screen = await render(SlotProbe, { props: cardWith('Hello') });
-		await expect.element(screen.getByText('Hello')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders astryx-* class names for theme targeting', async () => {

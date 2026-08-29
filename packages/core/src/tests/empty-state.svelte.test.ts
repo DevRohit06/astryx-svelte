@@ -7,7 +7,7 @@ import { generateThemeRulesSplit } from '$lib/theme/generate-theme-rules.js';
 import EmptyStateSlots from './fixtures/empty-state-slots.svelte';
 
 /**
- * Astryx's `EmptyState/EmptyState.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `EmptyState/EmptyState.test.tsx` at the **0.5.0** pin, ported case for case.
  *
  * The count is the contract: upstream declares **20** `it` blocks at this pin —
  * 16 in `describe('EmptyState')` and 4 in the nested `describe('theming
@@ -43,19 +43,19 @@ function generateThemeTestCss(theme: Parameters<typeof generateThemeRulesSplit>[
 describe('EmptyState', () => {
 	it('renders with title', async () => {
 		const screen = await render(EmptyState, { props: { title: 'No results found' } });
-		await expect.element(screen.getByText('No results found')).toBeInTheDocument();
+		await expect.element(screen.getByText('No results found', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders title as h3 by default', async () => {
 		const screen = await render(EmptyState, { props: { title: 'No data' } });
-		const heading = screen.getByRole('heading', { name: 'No data' });
+		const heading = screen.getByRole('heading', { name: 'No data', exact: true });
 		await expect.element(heading).toBeInTheDocument();
 		expect(heading.element().tagName).toBe('H3');
 	});
 
 	it('renders custom heading level', async () => {
 		const screen = await render(EmptyState, { props: { title: 'No data', headingLevel: 2 } });
-		const heading = screen.getByRole('heading', { name: 'No data' });
+		const heading = screen.getByRole('heading', { name: 'No data', exact: true });
 		expect(heading.element().tagName).toBe('H2');
 	});
 
@@ -65,7 +65,7 @@ describe('EmptyState', () => {
 			const screen = await render(EmptyState, {
 				props: { title: `Level ${level}`, headingLevel: level }
 			});
-			const heading = screen.getByRole('heading', { name: `Level ${level}` });
+			const heading = screen.getByRole('heading', { name: `Level ${level}`, exact: true });
 			expect(heading.element().tagName).toBe(`H${level}`);
 			await screen.unmount();
 		}
@@ -75,7 +75,7 @@ describe('EmptyState', () => {
 		const screen = await render(EmptyState, {
 			props: { title: 'No results', description: 'Try adjusting your search.' }
 		});
-		const description = screen.getByText('Try adjusting your search.');
+		const description = screen.getByText('Try adjusting your search.', { exact: true });
 		await expect.element(description).toBeInTheDocument();
 		// Description renders as <div> (never <p>) so block content composes safely.
 		expect(description.element().tagName).toBe('DIV');
@@ -85,7 +85,9 @@ describe('EmptyState', () => {
 		const screen = await render(EmptyState, { props: { title: 'No results' } });
 		// `.elements()` is the locator counterpart to React Testing Library's
 		// `queryBy*` — no match is an empty list rather than a throw.
-		expect(screen.getByText('Try adjusting your search.').elements()).toHaveLength(0);
+		expect(screen.getByText('Try adjusting your search.', { exact: true }).elements()).toHaveLength(
+			0
+		);
 	});
 
 	it('renders with icon', async () => {
@@ -130,7 +132,7 @@ describe('EmptyState', () => {
 	it('renders compact variant', async () => {
 		const screen = await render(EmptyState, { props: { title: 'No results', isCompact: true } });
 		await expect.element(screen.getByRole('status')).toBeInTheDocument();
-		await expect.element(screen.getByText('No results')).toBeInTheDocument();
+		await expect.element(screen.getByText('No results', { exact: true })).toBeInTheDocument();
 	});
 
 	it('hands the root element to an attachment passed through rest props', async () => {
@@ -165,16 +167,18 @@ describe('EmptyState', () => {
 			}
 		});
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
-		await expect.element(screen.getByText('No results found')).toBeInTheDocument();
-		await expect.element(screen.getByText('Try a different search term.')).toBeInTheDocument();
-		await expect.element(screen.getByText('Clear filters')).toBeInTheDocument();
-		await expect.element(screen.getByText('Go back')).toBeInTheDocument();
+		await expect.element(screen.getByText('No results found', { exact: true })).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Try a different search term.', { exact: true }))
+			.toBeInTheDocument();
+		await expect.element(screen.getByText('Clear filters', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Go back', { exact: true })).toBeInTheDocument();
 	});
 
 	describe('theming targets', () => {
 		it('puts astryx-empty-state-title on the title heading', async () => {
 			const screen = await render(EmptyState, { props: { title: 'No results' } });
-			const heading = screen.getByRole('heading', { name: 'No results' });
+			const heading = screen.getByRole('heading', { name: 'No results', exact: true });
 			await expect.element(heading).toHaveClass('astryx-empty-state-title');
 		});
 
@@ -182,7 +186,7 @@ describe('EmptyState', () => {
 			const screen = await render(EmptyState, {
 				props: { title: 'No results', description: 'Try another search.' }
 			});
-			const description = screen.getByText('Try another search.');
+			const description = screen.getByText('Try another search.', { exact: true });
 			await expect.element(description).toHaveClass('astryx-empty-state-description');
 		});
 
@@ -191,10 +195,10 @@ describe('EmptyState', () => {
 				props: { title: 'No results', description: 'Try another search.', isCompact: true }
 			});
 			await expect
-				.element(screen.getByRole('heading', { name: 'No results' }))
+				.element(screen.getByRole('heading', { name: 'No results', exact: true }))
 				.toHaveAttribute('data-variant', 'compact');
 			await expect
-				.element(screen.getByText('Try another search.'))
+				.element(screen.getByText('Try another search.', { exact: true }))
 				.toHaveAttribute('data-variant', 'compact');
 		});
 

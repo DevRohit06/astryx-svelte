@@ -11,8 +11,8 @@ import FormLayoutLiveDirection from './fixtures/form-layout-live-direction.svelt
 import IconSlotProbe from './fixtures/icon-slot-probe.svelte';
 
 /**
- * Astryx's `Field/Field.test.tsx` (33 cases at v0.3.0) and
- * `Field/FieldLabel.test.tsx` (**17** at v0.3.0), ported together because the
+ * Astryx's `Field/Field.test.tsx` (33 cases at the 0.5.0 pin) and
+ * `Field/FieldLabel.test.tsx` (**17** at the 0.5.0 pin), ported together because the
  * second is entirely about markup the first renders through the former. **49 of
  * upstream's 50 here**, plus one addition named below; the one absence is
  * `Field.test.tsx`'s `forwards ref correctly`, explained under "Not ported".
@@ -70,6 +70,11 @@ import IconSlotProbe from './fixtures/icon-slot-probe.svelte';
  * Restated, each noted at the case:
  * - `renders Optional text with bullet separator` — vitest's `getByText` has no
  *   `selector` option, so the `aria-hidden` element is reached by query.
+ * - the three `getByText('Name')` assertions on the label (`renders Optional
+ *   text when isOptional is set`, `renders Required text when isRequired is
+ *   set`, `renders Optional text with bullet separator`) go through `ownText`:
+ *   the two `getByText` implementations read different text off an element with
+ *   mixed children, and only `ownText` states what upstream's states.
  * - the DOM-wide `document.querySelector('svg')` assertions are scoped to the
  *   render container, which is what RTL's freshly-cleaned `document` amounts to.
  *
@@ -104,12 +109,36 @@ function fieldRoot(container: HTMLElement): HTMLElement {
 	return el;
 }
 
+/**
+ * An element's **own** text — its direct text-node children, whitespace-
+ * normalised — which is what Testing Library's `getByText` matches against
+ * (`getNodeText`), and is not what a Playwright-style locator matches.
+ *
+ * Upstream's `getByText('Name')` finds the `<label>` because the label's own
+ * text is exactly `Name`; the ` ∙ Optional` sits in a nested `<span>` that
+ * `getNodeText` does not read. This project's locators match the full
+ * `textContent` — `Name ∙ Optional` — so neither spelling states upstream's
+ * assertion: `getByText('Name')` passes on a substring (the hazard this file's
+ * `exact: true` sweep exists to remove) and `getByText('Name', {exact: true})`
+ * finds nothing at all. The three cases that need it call this instead, which
+ * is upstream's rule written out.
+ */
+function ownText(element: Element | null): string | undefined {
+	if (!element) return undefined;
+	return Array.from(element.childNodes)
+		.filter((node) => node.nodeType === Node.TEXT_NODE)
+		.map((node) => node.textContent ?? '')
+		.join('')
+		.replace(/\s+/g, ' ')
+		.trim();
+}
+
 describe('Field', () => {
 	it('renders with label', async () => {
 		const screen = await render(FieldHarness, {
 			props: { label: 'Email', inputID: 'email-input', controlID: 'email-input' }
 		});
-		await expect.element(screen.getByLabelText('Email')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Email', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description text', async () => {
@@ -123,7 +152,9 @@ describe('Field', () => {
 				controlDescribedBy: 'email-desc'
 			}
 		});
-		await expect.element(screen.getByText("We'll never share your email")).toBeInTheDocument();
+		await expect
+			.element(screen.getByText("We'll never share your email", { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('associates description with correct ID', async () => {
@@ -137,7 +168,7 @@ describe('Field', () => {
 				controlDescribedBy: 'email-desc'
 			}
 		});
-		const description = screen.getByText('Description text');
+		const description = screen.getByText('Description text', { exact: true });
 		await expect.element(description).toHaveAttribute('id', 'email-desc');
 	});
 
@@ -150,10 +181,10 @@ describe('Field', () => {
 				controlID: 'search-input'
 			}
 		});
-		const label = screen.getByText('Search');
+		const label = screen.getByText('Search', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
-		await expect.element(screen.getByLabelText('Search')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Search', { exact: true })).toBeInTheDocument();
 	});
 
 	it('visually hides description when isLabelHidden is true', async () => {
@@ -168,7 +199,7 @@ describe('Field', () => {
 			}
 		});
 		// Description should still be in the DOM for screen readers
-		const description = screen.getByText('Search for items');
+		const description = screen.getByText('Search for items', { exact: true });
 		await expect.element(description).toBeInTheDocument();
 		// But should have the visually-hidden styles applied
 		expect(description.element().className).toContain('srOnly');
@@ -178,7 +209,7 @@ describe('Field', () => {
 		const screen = await render(FieldHarness, {
 			props: { label: 'Email', inputID: 'email-input', controlID: 'email-input' }
 		});
-		const label = screen.getByText('Email');
+		const label = screen.getByText('Email', { exact: true });
 		await expect.element(label).toBeVisible();
 	});
 
@@ -186,7 +217,7 @@ describe('Field', () => {
 		const screen = await render(FieldHarness, {
 			props: { label: 'Email', inputID: 'email-input', controlID: 'email-input' }
 		});
-		const labelEl = screen.getByText('Email').element();
+		const labelEl = screen.getByText('Email', { exact: true }).element();
 		expect(labelEl.tagName).toBe('LABEL');
 		expect(labelEl).toHaveAttribute('for', 'email-input');
 	});
@@ -201,14 +232,14 @@ describe('Field', () => {
 				groupLabelledBy: 'plan-label'
 			}
 		});
-		const labelEl = screen.getByText('Plan').element();
+		const labelEl = screen.getByText('Plan', { exact: true }).element();
 		// A group's accessible-name element must not be a literal <label>.
 		expect(labelEl.tagName).toBe('SPAN');
 		expect(labelEl.closest('label')).toBeNull();
 		expect(labelEl).not.toHaveAttribute('for');
 		// labelID is applied to the label element and referenced by the group.
 		expect(labelEl).toHaveAttribute('id', 'plan-label');
-		const group = screen.getByRole('radiogroup', { name: 'Plan' }).element();
+		const group = screen.getByRole('radiogroup', { name: 'Plan', exact: true }).element();
 		expect(group.getAttribute('aria-labelledby')).toBe(labelEl.id);
 	});
 
@@ -223,7 +254,7 @@ describe('Field', () => {
 				controlID: 'email-input'
 			}
 		});
-		const description = screen.getByText('Description text');
+		const description = screen.getByText('Description text', { exact: true });
 		await expect.element(description).toBeInTheDocument();
 		await expect.element(description).toHaveAttribute('id', 'email-input-desc');
 	});
@@ -232,7 +263,8 @@ describe('Field', () => {
 		const screen = await render(FieldHarness, {
 			props: { label: 'Name', inputID: 'name-input', isOptional: true, controlID: 'name-input' }
 		});
-		await expect.element(screen.getByText('Name')).toBeInTheDocument();
+		// COUNTERPART for upstream's `getByText('Name')` — see `ownText`.
+		expect(ownText(screen.container.querySelector('label'))).toBe('Name');
 		await expect.element(screen.getByText(/Optional/)).toBeInTheDocument();
 	});
 
@@ -240,7 +272,8 @@ describe('Field', () => {
 		const screen = await render(FieldHarness, {
 			props: { label: 'Name', inputID: 'name-input', isRequired: true, controlID: 'name-input' }
 		});
-		await expect.element(screen.getByText('Name')).toBeInTheDocument();
+		// COUNTERPART for upstream's `getByText('Name')` — see `ownText`.
+		expect(ownText(screen.container.querySelector('label'))).toBe('Name');
 		await expect.element(screen.getByText(/Required/)).toBeInTheDocument();
 	});
 
@@ -256,7 +289,7 @@ describe('Field', () => {
 				controlDescribedBy: 'name-desc'
 			}
 		});
-		await expect.element(screen.getByText('Enter your name')).toBeInTheDocument();
+		await expect.element(screen.getByText('Enter your name', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByText(/Optional/)).toBeInTheDocument();
 	});
 
@@ -272,7 +305,9 @@ describe('Field', () => {
 				controlDescribedBy: 'name-desc'
 			}
 		});
-		await expect.element(screen.getByText('This field is mandatory')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('This field is mandatory', { exact: true }))
+			.toBeInTheDocument();
 		await expect.element(screen.getByText(/Required/)).toBeInTheDocument();
 	});
 
@@ -280,7 +315,8 @@ describe('Field', () => {
 		const screen = await render(FieldHarness, {
 			props: { label: 'Name', inputID: 'name-input', isOptional: true, controlID: 'name-input' }
 		});
-		await expect.element(screen.getByText('Name')).toBeInTheDocument();
+		// COUNTERPART for upstream's `getByText('Name')` — see `ownText`.
+		expect(ownText(screen.container.querySelector('label'))).toBe('Name');
 		// Upstream: `getByText('∙', {selector: '[aria-hidden="true"]'})`. Vitest's
 		// locators take no `selector` option, so the same element is reached by
 		// query and its text asserted.
@@ -327,7 +363,9 @@ describe('Field', () => {
 				controlID: 'email-input'
 			}
 		});
-		expect(screen.getByText('Invalid email').element()).not.toHaveAttribute('role');
+		expect(screen.getByText('Invalid email', { exact: true }).element()).not.toHaveAttribute(
+			'role'
+		);
 		await vi.waitFor(() => {
 			expect(assertiveRegion()).toHaveTextContent('Invalid email');
 		});
@@ -342,7 +380,9 @@ describe('Field', () => {
 				controlID: 'email-input'
 			}
 		});
-		expect(screen.getByText('Check this').element()).not.toHaveAttribute('aria-live');
+		expect(screen.getByText('Check this', { exact: true }).element()).not.toHaveAttribute(
+			'aria-live'
+		);
 		await vi.waitFor(() => {
 			expect(politeRegion()).toHaveTextContent('Check this');
 		});
@@ -377,7 +417,9 @@ describe('Field', () => {
 				controlID: 'my-input'
 			}
 		});
-		await expect.element(screen.getByText('Help text')).toHaveAttribute('id', 'my-input-desc');
+		await expect
+			.element(screen.getByText('Help text', { exact: true }))
+			.toHaveAttribute('id', 'my-input-desc');
 	});
 
 	it('auto-generates status message ID as {inputID}-status when messageID is not provided', async () => {
@@ -389,7 +431,9 @@ describe('Field', () => {
 				controlID: 'my-input'
 			}
 		});
-		await expect.element(screen.getByText('Required')).toHaveAttribute('id', 'my-input-status');
+		await expect
+			.element(screen.getByText('Required', { exact: true }))
+			.toHaveAttribute('id', 'my-input-status');
 	});
 
 	it('warns when isOptional and isRequired are both set', async () => {
@@ -506,7 +550,7 @@ describe('Field', () => {
 			const field = screen.getByTestId('field').element();
 			// With display:contents, the field's children participate in the parent grid.
 			// The field should contain: label alignment wrapper + input wrapper div
-			const label = screen.getByText('Name').element();
+			const label = screen.getByText('Name', { exact: true }).element();
 			expect(label.tagName).toBe('LABEL');
 			expect(field.contains(label)).toBe(true);
 			expect(field.contains(screen.getByTestId('name').element())).toBe(true);
@@ -525,7 +569,7 @@ describe('Field', () => {
 					controlTestID: 'email'
 				}
 			});
-			const descEl = screen.getByText("We won't share it").element();
+			const descEl = screen.getByText("We won't share it", { exact: true }).element();
 			const inputEl = screen.getByTestId('email').element();
 			// Both description and input should be inside the same wrapper div (column 2)
 			expect(descEl.parentElement).toBe(inputEl.parentElement);
@@ -543,7 +587,7 @@ describe('Field', () => {
 					controlTestID: 'email'
 				}
 			});
-			const statusEl = screen.getByText('Required').element();
+			const statusEl = screen.getByText('Required', { exact: true }).element();
 			const inputEl = screen.getByTestId('email').element();
 			// Both status and input should be inside the same wrapper div (column 2)
 			expect(statusEl.parentElement).toBe(inputEl.parentElement);
@@ -608,14 +652,14 @@ describe('FieldLabel', () => {
 		const screen = await render(FieldLabel, {
 			props: { label: 'Email', inputID: 'email-input' }
 		});
-		await expect.element(screen.getByText('Email')).toBeInTheDocument();
+		await expect.element(screen.getByText('Email', { exact: true })).toBeInTheDocument();
 	});
 
 	it('associates label with input via htmlFor', async () => {
 		const screen = await render(FieldLabel, {
 			props: { label: 'Email', inputID: 'email-input' }
 		});
-		const label = screen.getByText('Email').element().closest('label');
+		const label = screen.getByText('Email', { exact: true }).element().closest('label');
 		expect(label).toHaveAttribute('for', 'email-input');
 	});
 
@@ -754,13 +798,13 @@ describe('FieldLabel', () => {
 
 		it('forwards a description click to a click-activatable control (checkbox)', async () => {
 			const { screen, onClick } = await renderWithControl({ controlType: 'checkbox' });
-			await userEvent.click(screen.getByText("We'll email you"));
+			await userEvent.click(screen.getByText("We'll email you", { exact: true }));
 			expect(onClick).toHaveBeenCalledTimes(1);
 		});
 
 		it('focuses (does not click) a text input on description click', async () => {
 			const { screen, onClick } = await renderWithControl({ controlType: 'text' });
-			await userEvent.click(screen.getByText("We'll email you"));
+			await userEvent.click(screen.getByText("We'll email you", { exact: true }));
 			// Text inputs focus rather than click — matching native label behavior,
 			// so no synthetic click fires but the control receives focus.
 			expect(onClick).not.toHaveBeenCalled();
@@ -769,7 +813,7 @@ describe('FieldLabel', () => {
 
 		it('does NOT forward description clicks for a group label', async () => {
 			const { screen, onClick } = await renderWithControl({ isGroupLabel: true });
-			await userEvent.click(screen.getByText("We'll email you"));
+			await userEvent.click(screen.getByText("We'll email you", { exact: true }));
 			expect(onClick).not.toHaveBeenCalled();
 		});
 
@@ -779,7 +823,7 @@ describe('FieldLabel', () => {
 				hasLink: true,
 				onLinkClick: linkClick
 			});
-			await userEvent.click(screen.getByRole('link', { name: 'terms' }));
+			await userEvent.click(screen.getByRole('link', { name: 'terms', exact: true }));
 			// The nested link handles its own click; the control is not toggled.
 			expect(linkClick).toHaveBeenCalledTimes(1);
 			expect(onClick).not.toHaveBeenCalled();
@@ -787,7 +831,7 @@ describe('FieldLabel', () => {
 
 		it('keeps the description a sibling of the label (not nested inside it)', async () => {
 			const { screen } = await renderWithControl({});
-			const description = screen.getByText("We'll email you").element();
+			const description = screen.getByText("We'll email you", { exact: true }).element();
 			// The description must not live inside the <label> — nesting it there
 			// would fold it into the control's accessible name.
 			expect(description.closest('label')).toBeNull();

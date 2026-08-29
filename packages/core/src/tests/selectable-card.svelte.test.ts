@@ -5,7 +5,7 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
  * Astryx's `SelectableCard/SelectableCard.test.tsx`, ported case for case —
- * **all 15 of upstream's 15** at v0.3.0. Upstream has no `displayName` and no
+ * **all 15 of upstream's 15** at the 0.5.0 pin. Upstream has no `displayName` and no
  * `ref` case, so nothing is dropped.
  *
  * The 4 newest are 0.3.0's Enter-toggles group. The last 2 are upstream's nested
@@ -61,22 +61,28 @@ describe('SelectableCard', () => {
 			{ label: 'Test', isSelected: false, onChange: () => {} },
 			'Card content'
 		);
-		await expect.element(screen.getByText('Card content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Card content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders a hidden checkbox', async () => {
 		const screen = await renderCard({ label: 'Test', isSelected: false, onChange: () => {} });
-		await expect.element(screen.getByRole('checkbox', { name: 'Test' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('checkbox', { name: 'Test', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('checkbox reflects isSelected=true as checked', async () => {
 		const screen = await renderCard({ label: 'Plan A', isSelected: true, onChange: () => {} });
-		await expect.element(screen.getByRole('checkbox', { name: 'Plan A' })).toBeChecked();
+		await expect
+			.element(screen.getByRole('checkbox', { name: 'Plan A', exact: true }))
+			.toBeChecked();
 	});
 
 	it('checkbox reflects isSelected=false as unchecked', async () => {
 		const screen = await renderCard({ label: 'Plan B', isSelected: false, onChange: () => {} });
-		await expect.element(screen.getByRole('checkbox', { name: 'Plan B' })).not.toBeChecked();
+		await expect
+			.element(screen.getByRole('checkbox', { name: 'Plan B', exact: true }))
+			.not.toBeChecked();
 	});
 
 	it('calls onChange with true when card surface is clicked (unselected)', async () => {
@@ -84,7 +90,7 @@ describe('SelectableCard', () => {
 		const screen = await renderCard({ label: 'Test', isSelected: false, onChange: handleChange });
 		// Restated in delivery: a bubbling `click` dispatched on the surface `<span>`
 		// so `event.target` is the surface — upstream's `fireEvent.click(getByText())`.
-		const surface = screen.getByText('Content').element();
+		const surface = screen.getByText('Content', { exact: true }).element();
 		surface.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		expect(handleChange).toHaveBeenCalledWith(true);
 	});
@@ -92,7 +98,7 @@ describe('SelectableCard', () => {
 	it('calls onChange with false when card surface is clicked (selected)', async () => {
 		const handleChange = vi.fn();
 		const screen = await renderCard({ label: 'Test', isSelected: true, onChange: handleChange });
-		const surface = screen.getByText('Content').element();
+		const surface = screen.getByText('Content', { exact: true }).element();
 		surface.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		expect(handleChange).toHaveBeenCalledWith(false);
 	});
@@ -103,7 +109,9 @@ describe('SelectableCard', () => {
 		// The checkbox's native `.click()` performs the real toggle + `change` the
 		// component's `onchange` listens on; the bubbled click reaches the card's
 		// delegate but bails on the interactive-ancestor walk, so `onChange` fires once.
-		const checkbox = screen.getByRole('checkbox', { name: 'Test' }).element() as HTMLInputElement;
+		const checkbox = screen
+			.getByRole('checkbox', { name: 'Test', exact: true })
+			.element() as HTMLInputElement;
 		checkbox.click();
 		expect(handleChange).toHaveBeenCalledWith(true);
 	});
@@ -116,7 +124,9 @@ describe('SelectableCard', () => {
 			onChange: handleChange,
 			isDisabled: true
 		});
-		await expect.element(screen.getByRole('checkbox', { name: 'Disabled' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('checkbox', { name: 'Disabled', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('does not call onChange when disabled card is clicked', async () => {
@@ -129,21 +139,21 @@ describe('SelectableCard', () => {
 		});
 		// The card wires no `onclick` when disabled; the surface's native `.click()`
 		// bubbles but finds no handler, so the guard holds and nothing calls back.
-		(screen.getByText('Content').element() as HTMLElement).click();
+		(screen.getByText('Content', { exact: true }).element() as HTMLElement).click();
 		expect(handleChange).not.toHaveBeenCalled();
 	});
 
 	it('calls onChange with true when Enter is pressed on the checkbox (unselected)', async () => {
 		const handleChange = vi.fn();
 		const screen = await renderCard({ label: 'Test', isSelected: false, onChange: handleChange });
-		pressKey(screen.getByRole('checkbox', { name: 'Test' }).element(), 'Enter');
+		pressKey(screen.getByRole('checkbox', { name: 'Test', exact: true }).element(), 'Enter');
 		expect(handleChange).toHaveBeenCalledWith(true);
 	});
 
 	it('calls onChange with false when Enter is pressed on the checkbox (selected)', async () => {
 		const handleChange = vi.fn();
 		const screen = await renderCard({ label: 'Test', isSelected: true, onChange: handleChange });
-		pressKey(screen.getByRole('checkbox', { name: 'Test' }).element(), 'Enter');
+		pressKey(screen.getByRole('checkbox', { name: 'Test', exact: true }).element(), 'Enter');
 		expect(handleChange).toHaveBeenCalledWith(false);
 	});
 
@@ -155,14 +165,16 @@ describe('SelectableCard', () => {
 			onChange: handleChange,
 			isDisabled: true
 		});
-		pressKey(screen.getByRole('checkbox', { name: 'Disabled' }).element(), 'Enter');
+		pressKey(screen.getByRole('checkbox', { name: 'Disabled', exact: true }).element(), 'Enter');
 		expect(handleChange).not.toHaveBeenCalled();
 	});
 
 	it('toggles exactly once on Space (native), not doubled by the Enter handler', async () => {
 		const handleChange = vi.fn();
 		const screen = await renderCard({ label: 'Test', isSelected: false, onChange: handleChange });
-		const checkbox = screen.getByRole('checkbox', { name: 'Test' }).element() as HTMLInputElement;
+		const checkbox = screen
+			.getByRole('checkbox', { name: 'Test', exact: true })
+			.element() as HTMLInputElement;
 		// Space activates the native checkbox, firing a single change event.
 		checkbox.click();
 		pressKey(checkbox, ' ');

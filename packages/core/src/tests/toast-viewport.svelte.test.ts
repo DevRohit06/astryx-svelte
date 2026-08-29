@@ -7,8 +7,8 @@ import { __resetLiveRegionsForTest, type AnnouncePoliteness } from '$lib/hooks/u
 import type { ToastOptions } from '$lib/components/toast/types.js';
 
 /**
- * Ported from Astryx's `Toast/ToastViewport.test.tsx` at v0.3.0 — **13 upstream
- * cases, 13 here**, in order. Nothing is dropped. Two cases are restated, each
+ * Ported from Astryx's `Toast/ToastViewport.test.tsx` at the 0.5.0 pin — **13
+ * upstream cases, 13 here**, in order. Nothing is dropped. Two cases are restated, each
  * for the reason given above it: "pauses the auto-hide timer while the window is
  * blurred", and (new in 0.3.0) "announces exactly once at dispatch".
  *
@@ -172,14 +172,14 @@ afterEach(() => {
 describe('ToastViewport keyboard reach + focus', () => {
 	it('F6 moves focus into the newest toast', async () => {
 		const screen = await renderViewport([{ options: INFO_A, triggerLabel: 'Trigger A' }]);
-		const trigger = screen.getByText('Trigger A').element() as HTMLElement;
+		const trigger = screen.getByText('Trigger A', { exact: true }).element() as HTMLElement;
 		trigger.focus();
 		trigger.click();
 		await tick();
 
 		// Scoped to the render container: the toast text is also mirrored into the
 		// singleton live region, which lives on <body>, outside it.
-		await expect.element(screen.locator.getByText('Toast A')).toBeInTheDocument();
+		await expect.element(screen.locator.getByText('Toast A', { exact: true })).toBeInTheDocument();
 		expect(document.activeElement).toBe(trigger);
 
 		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F6', bubbles: true }));
@@ -187,7 +187,7 @@ describe('ToastViewport keyboard reach + focus', () => {
 
 		// Focus lands on the dismiss button of the newest toast.
 		const dismiss = screen
-			.getByRole('button', { name: 'Dismiss notification' })
+			.getByRole('button', { name: 'Dismiss notification', exact: true })
 			.element() as HTMLElement;
 		expect(document.activeElement).toBe(dismiss);
 	});
@@ -197,9 +197,9 @@ describe('ToastViewport keyboard reach + focus', () => {
 			{ options: INFO_A, triggerLabel: 'Trigger A' },
 			{ options: INFO_B, triggerLabel: 'Trigger B' }
 		]);
-		(screen.getByText('Trigger A').element() as HTMLElement).click();
+		(screen.getByText('Trigger A', { exact: true }).element() as HTMLElement).click();
 		await tick();
-		(screen.getByText('Trigger B').element() as HTMLElement).click();
+		(screen.getByText('Trigger B', { exact: true }).element() as HTMLElement).click();
 		await tick();
 
 		expect(dismissButtons()).toHaveLength(2);
@@ -225,7 +225,7 @@ describe('ToastViewport keyboard reach + focus', () => {
 
 	it('dismissing the last focused toast restores the previously-focused element', async () => {
 		const screen = await renderViewport([{ options: INFO_A, triggerLabel: 'Trigger A' }]);
-		const trigger = screen.getByText('Trigger A').element() as HTMLElement;
+		const trigger = screen.getByText('Trigger A', { exact: true }).element() as HTMLElement;
 		trigger.focus();
 		trigger.click();
 		await tick();
@@ -234,7 +234,7 @@ describe('ToastViewport keyboard reach + focus', () => {
 		document.dispatchEvent(new KeyboardEvent('keydown', { key: 'F6', bubbles: true }));
 		await tick();
 		const dismiss = screen
-			.getByRole('button', { name: 'Dismiss notification' })
+			.getByRole('button', { name: 'Dismiss notification', exact: true })
 			.element() as HTMLElement;
 		expect(document.activeElement).toBe(dismiss);
 
@@ -267,7 +267,7 @@ describe('Toast blur timer pause', () => {
 			const screen = await renderViewport([
 				{ options: { ...AUTO_TOAST, onHide }, triggerLabel: 'Trigger Auto' }
 			]);
-			(screen.getByText('Trigger Auto').element() as HTMLElement).click();
+			(screen.getByText('Trigger Auto', { exact: true }).element() as HTMLElement).click();
 			await tick();
 			expect(screen.container.textContent).toContain('Auto toast');
 
@@ -299,7 +299,7 @@ describe('Toast blur timer pause', () => {
 describe('ToastViewport region ARIA', () => {
 	it('exposes the notifications region without a prohibited aria-modal', async () => {
 		const screen = await renderViewport([{}]);
-		const region = screen.getByRole('region', { name: 'Notifications' });
+		const region = screen.getByRole('region', { name: 'Notifications', exact: true });
 		// aria-modal is only valid on role="dialog"/"alertdialog"; a region must
 		// not declare it (axe: aria-allowed-attr).
 		await expect.element(region).not.toHaveAttribute('aria-modal');
@@ -337,7 +337,7 @@ describe('toast announcements via singleton live regions', () => {
 		// to the toast's own (born-with-content) region instead.
 		recorder = recordAnnouncements();
 		const screen = await renderViewport([{ options: INFO_A, triggerLabel: 'Show' }]);
-		(screen.getByText('Show').element() as HTMLElement).click();
+		(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
 		await settleAnnouncements();
 
 		// Announced at dispatch, exactly once, into the polite region.
@@ -350,7 +350,7 @@ describe('toast announcements via singleton live regions', () => {
 	it('announces an error toast assertively', async () => {
 		recorder = recordAnnouncements();
 		const screen = await renderViewport([{ options: ERROR_TOAST, triggerLabel: 'Show' }]);
-		(screen.getByText('Show').element() as HTMLElement).click();
+		(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
 		await settleAnnouncements();
 
 		expect(recorder.calls).toEqual([['Upload failed', 'assertive']]);
@@ -381,13 +381,13 @@ describe('toast announcements via singleton live regions', () => {
 			{ options: SAVING_V1, triggerLabel: 'Show v1' },
 			{ options: SAVING_V2, triggerLabel: 'Show v2' }
 		]);
-		(screen.getByText('Show v1').element() as HTMLElement).click();
+		(screen.getByText('Show v1', { exact: true }).element() as HTMLElement).click();
 		await settleAnnouncements();
 		expect(recorder.calls).toEqual([['Saving changes', 'polite']]);
 
 		// Overwriting via uniqueID replaces the toast in place — the new content is
 		// a fresh dispatch and must be announced again.
-		(screen.getByText('Show v2').element() as HTMLElement).click();
+		(screen.getByText('Show v2', { exact: true }).element() as HTMLElement).click();
 		await settleAnnouncements();
 		expect(recorder.calls).toEqual([
 			['Saving changes', 'polite'],
@@ -405,14 +405,14 @@ describe('toast announcements via singleton live regions', () => {
 			{ options: INFO_A, triggerLabel: 'Show A' },
 			{ options: ERROR_TOAST, triggerLabel: 'Show B' }
 		]);
-		(screen.getByText('Show A').element() as HTMLElement).click();
+		(screen.getByText('Show A', { exact: true }).element() as HTMLElement).click();
 		await settleAnnouncements();
 		expect(recorder.calls).toHaveLength(1);
 
 		// A second toast arriving re-renders the viewport with a new toast list.
 		// Toast A is not re-dispatched, so it must not be announced again — only
 		// the newly dispatched toast produces a call.
-		(screen.getByText('Show B').element() as HTMLElement).click();
+		(screen.getByText('Show B', { exact: true }).element() as HTMLElement).click();
 		await settleAnnouncements();
 		expect(recorder.calls).toEqual([
 			['Toast A', 'polite'],
@@ -426,13 +426,13 @@ describe('toast announcements via singleton live regions', () => {
 			{ options: IGNORE_KEPT, triggerLabel: 'Show 1' },
 			{ options: IGNORE_DROPPED, triggerLabel: 'Show 2' }
 		]);
-		(screen.getByText('Show 1').element() as HTMLElement).click();
+		(screen.getByText('Show 1', { exact: true }).element() as HTMLElement).click();
 		await settleAnnouncements();
 		expect(recorder.calls).toEqual([['Kept', 'polite']]);
 
 		// The colliding toast is suppressed (collisionBehavior: 'ignore'), so it is
 		// neither shown nor announced.
-		(screen.getByText('Show 2').element() as HTMLElement).click();
+		(screen.getByText('Show 2', { exact: true }).element() as HTMLElement).click();
 		await settleAnnouncements();
 		expect(recorder.calls).toEqual([['Kept', 'polite']]);
 		expect(screen.container.textContent).toContain('Kept');
@@ -446,10 +446,10 @@ describe('toast timer lifecycle (#3589)', () => {
 		const screen = await renderViewport([
 			{ options: { body: 'Once', onHide }, triggerLabel: 'Show' }
 		]);
-		(screen.getByText('Show').element() as HTMLElement).click();
+		(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
 		await tick();
 		const dismiss = screen
-			.getByRole('button', { name: 'Dismiss notification' })
+			.getByRole('button', { name: 'Dismiss notification', exact: true })
 			.element() as HTMLElement;
 		dismiss.click();
 		// The toast stays mounted during its exit transition; a second click
@@ -467,12 +467,12 @@ describe('toast timer lifecycle (#3589)', () => {
 				{ options: { body: 'Paused', autoHideDuration: 3000, onHide }, triggerLabel: 'Show A' },
 				{ options: INFO_B, triggerLabel: 'Show B' }
 			]);
-			(screen.getByText('Show A').element() as HTMLElement).click();
+			(screen.getByText('Show A', { exact: true }).element() as HTMLElement).click();
 			await tick();
 			window.dispatchEvent(new Event('blur'));
 			// A second toast arriving re-renders the viewport; the paused timer
 			// must not silently restart.
-			(screen.getByText('Show B').element() as HTMLElement).click();
+			(screen.getByText('Show B', { exact: true }).element() as HTMLElement).click();
 			await tick();
 			vi.advanceTimersByTime(60_000);
 			await tick();

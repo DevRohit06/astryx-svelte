@@ -8,7 +8,7 @@ import type { TreeListFixtureItem } from './fixtures/tree-list-fixture.svelte';
 
 /**
  * Ported from Astryx's `TreeList/TreeList.test.tsx` — **all 76 of its `it`
- * cases** at v0.4.5. Client (real Chromium) project: focus, roving tabindex and
+ * cases** at the 0.5.0 pin. Client (real Chromium) project: focus, roving tabindex and
  * the APG tree keyboard model are the bulk of what is here.
  *
  * The header read "**71 of its 76** at v0.4.1" and named the five that were
@@ -309,7 +309,7 @@ describe('TreeList', () => {
 
 	it('renders a keyboard-focusable toggle button for parents without onClick/href', async () => {
 		const screen = await render(TreeListFixture, { props: { items: nestedItems } });
-		const toggle = screen.getByRole('button', { name: 'Toggle children' });
+		const toggle = screen.getByRole('button', { name: 'Toggle children', exact: true });
 		await expect.element(toggle).toBeInTheDocument();
 		await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -318,7 +318,9 @@ describe('TreeList', () => {
 		const screen = await render(TreeListFixture, { props: { items: nestedItems } });
 		// Collapsed: children are not rendered.
 		expect(labelExists(screen.container, 'Child 1')).toBe(false);
-		const toggle = screen.getByRole('button', { name: 'Toggle children' }).element() as HTMLElement;
+		const toggle = screen
+			.getByRole('button', { name: 'Toggle children', exact: true })
+			.element() as HTMLElement;
 		toggle.focus();
 		expect(document.activeElement).toBe(toggle);
 		await userEvent.keyboard('{Enter}');

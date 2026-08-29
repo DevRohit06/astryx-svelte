@@ -37,7 +37,7 @@ const styles = stylex.create({
 		}
 	},
 	inputDisabled: {
-		cursor: 'not-allowed'
+		cursor: 'default'
 	},
 	dropdown: {
 		boxSizing: 'border-box',
@@ -52,6 +52,22 @@ const styles = stylex.create({
 		marginBlockStart: spacingVars['--spacing-1'],
 		marginBlockEnd: spacingVars['--spacing-1']
 	},
+	// `menuWidth` — a fixed pixel width for the dropdown. It rides beside
+	// `popover`'s `min-width: anchor-size(width)` rather than replacing it, which
+	// is what upstream's "never shrinks below the anchor width" means: the floor
+	// wins whenever the anchor is wider than the number asked for.
+	popoverCustomWidth: (width: number) => ({
+		width: `${width}px`
+	}),
+	groupHeading: {
+		paddingInline: spacingVars['--spacing-2'],
+		paddingBlockStart: spacingVars['--spacing-2'],
+		paddingBlockEnd: spacingVars['--spacing-1'],
+		fontSize: typeScaleVars['--text-supporting-size'],
+		lineHeight: typeScaleVars['--text-supporting-leading'],
+		color: colorVars['--color-text-secondary'],
+		userSelect: 'none'
+	},
 	item: {
 		boxSizing: 'border-box',
 		display: 'flex',
@@ -59,7 +75,10 @@ const styles = stylex.create({
 		width: '100%',
 		padding: spacingVars['--spacing-2'],
 		borderRadius: radiusVars['--radius-element'],
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		outline: 'none',
 		backgroundColor: 'transparent',
 		border: 'none',
@@ -150,6 +169,15 @@ export function baseTypeaheadItemAttrs(
 	);
 }
 
+/**
+ * The `aria-hidden` label above a named option group. New at 0.5.0 with the
+ * grouped dropdown; the group's accessible name comes from the wrapper's
+ * `aria-label`, so this row is decoration.
+ */
+export function baseTypeaheadGroupHeadingAttrs(): SvelteStyleAttrs {
+	return sx(styles.groupHeading);
+}
+
 /** The option's content span. */
 export function baseTypeaheadItemContentAttrs(): SvelteStyleAttrs {
 	return sx(styles.itemContent);
@@ -161,7 +189,15 @@ export function baseTypeaheadEmptyStateAttrs(): SvelteStyleAttrs {
 }
 
 /**
- * `xstyle` for the layer container — upstream's `[styles.popover,
- * styles.popoverGap]`, handed to `render` as one array.
+ * `xstyle` for the layer container, handed to the layer as one array — the shape
+ * upstream passes to `render`. `menuWidth` joined it at 0.5.0; it is a
+ * `stylex.create` **function style**, so the class oracle cannot see it and only
+ * the CSS oracle covers what it emits.
  */
-export const baseTypeaheadPopoverStyle: StyleArg = [styles.popover, styles.popoverGap];
+export function baseTypeaheadPopoverStyle(menuWidth?: number): StyleArg {
+	return [
+		styles.popover,
+		styles.popoverGap,
+		menuWidth != null && styles.popoverCustomWidth(menuWidth)
+	];
+}

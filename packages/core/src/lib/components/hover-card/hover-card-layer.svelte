@@ -103,10 +103,14 @@
 		or correcting its parent, so the card's content no longer has to be
 		phrasing-safe and can use block markup (#5039).
 
-		The keydown handler is why the a11y rule fires: the div is a styling and
-		event surface, and the ARIA pattern is completed by the `role="dialog"` on
-		the layer container above it. Giving this div a role of its own would put
-		a second element in the accessibility tree where upstream has one.
+		There is no `onkeydown` as of 0.5.0. It handled Escape by dismissing and
+		refocusing the trigger, and upstream deleted it when the hook joined the
+		shared dismissal stack — the stack's one document-level listener routes the
+		press to the top-most layer, and `useHoverCard`'s `onDismiss` does the
+		refocus. The div is a styling and event surface either way; the ARIA
+		pattern is completed by the `role="dialog"` on the layer container above
+		it, and giving this div a role of its own would put a second element in the
+		accessibility tree where upstream has one.
 	-->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
@@ -114,7 +118,6 @@
 		style={content.style}
 		onmouseenter={hoverCard.handleContentMouseEnter}
 		onmouseleave={hoverCard.handleContentMouseLeave}
-		onkeydown={hoverCard.handleContentKeyDown}
 		onfocusout={hoverCard.handleContentFocusOut}
 	>
 		{@render children()}

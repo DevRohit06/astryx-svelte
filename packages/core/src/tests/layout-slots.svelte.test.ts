@@ -62,7 +62,7 @@ describe('LayoutHeader', () => {
 
 	it('renders its children', async () => {
 		const screen = await render(SlotProbe, slot('Page title'));
-		await expect.element(screen.getByText('Page title')).toBeInTheDocument();
+		await expect.element(screen.getByText('Page title', { exact: true })).toBeInTheDocument();
 	});
 
 	it('carries the astryx-layout-header class', async () => {
@@ -135,7 +135,8 @@ describe('LayoutHeader', () => {
 	it('renders children in an inner wrapper (the padding owner), not on the root', async () => {
 		const screen = await render(SlotProbe, slot('Inner'));
 		const root = find(screen);
-		const inner = (screen.getByText('Inner').element() as HTMLElement).parentElement;
+		const inner = (screen.getByText('Inner', { exact: true }).element() as HTMLElement)
+			.parentElement;
 		expect(inner).not.toBe(root);
 		expect(inner?.parentElement).toBe(root);
 		expect(root).toContainElement(inner);
@@ -155,7 +156,7 @@ describe('LayoutFooter', () => {
 
 	it('renders its children', async () => {
 		const screen = await render(SlotProbe, slot('Actions'));
-		await expect.element(screen.getByText('Actions')).toBeInTheDocument();
+		await expect.element(screen.getByText('Actions', { exact: true })).toBeInTheDocument();
 	});
 
 	it('carries the astryx-layout-footer class', async () => {
@@ -216,7 +217,7 @@ describe('LayoutContent', () => {
 
 	it('renders its children', async () => {
 		const screen = await render(SlotProbe, slot('Body'));
-		await expect.element(screen.getByText('Body')).toBeInTheDocument();
+		await expect.element(screen.getByText('Body', { exact: true })).toBeInTheDocument();
 	});
 
 	it('carries the astryx-layout-content class', async () => {
@@ -284,7 +285,7 @@ describe('LayoutPanel', () => {
 
 	it('renders its children', async () => {
 		const screen = await render(SlotProbe, slot('Nav'));
-		await expect.element(screen.getByText('Nav')).toBeInTheDocument();
+		await expect.element(screen.getByText('Nav', { exact: true })).toBeInTheDocument();
 	});
 
 	it('carries the astryx-layout-panel class', async () => {

@@ -326,12 +326,12 @@ describe('useChatNewMessages — content callback (issue #2282)', () => {
 		});
 
 		// Empty state showing — no content observer yet
-		await expect.element(screen.getByText('Empty state')).toBeInTheDocument();
+		await expect.element(screen.getByText('Empty state', { exact: true })).toBeInTheDocument();
 
 		// Add first message — ChatMessageList mounts
 		await userEvent.click(screen.getByTestId('add-message'));
 
-		await expect.element(screen.getByText('msg-0')).toBeInTheDocument();
+		await expect.element(screen.getByText('msg-0', { exact: true })).toBeInTheDocument();
 
 		// The inner content div should now be observed
 		const contentObservation = activeObservations.find((o) => {

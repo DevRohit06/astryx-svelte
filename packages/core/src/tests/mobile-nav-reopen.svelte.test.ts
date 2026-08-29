@@ -4,7 +4,8 @@ import { stubMatchMedia } from './stub-match-media.js';
 import AppShellFixture from './fixtures/app-shell-fixture.svelte';
 
 /**
- * Ported from Astryx's `MobileNav/MobileNavReopen.test.tsx`, its single case.
+ * Ported from Astryx's `MobileNav/MobileNavReopen.test.tsx`, its single case at
+ * the 0.5.0 pin.
  * Nothing is dropped, and nothing is added.
  *
  * ## What this file pins, and what it cannot

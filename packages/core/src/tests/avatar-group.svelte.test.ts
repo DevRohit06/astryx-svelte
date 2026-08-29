@@ -6,13 +6,30 @@ import AvatarGroupFixture from './fixtures/avatar-group-fixture.svelte';
 import AvatarGroupI18nFixture from './fixtures/avatar-group-i18n.svelte';
 
 /**
- * Astryx's `AvatarGroup/AvatarGroup.test.tsx`, ported case for case — **25
- * upstream cases at v0.3.0 (7 in `describe('AvatarGroup')`, 5 in
- * `describe('AvatarGroupOverflow')`, 7 in `describe('AvatarGroupOverflow —
- * hardening')` and 6 in `describe('AvatarGroup — roving focus + keyboard
- * hint')`), 25 here, none dropped**. There is no `displayName` case, no snapshot
- * and no no-JSX construction form, so `ref` is the only React-only surface and it
- * gets a counterpart.
+ * Astryx's `AvatarGroup/AvatarGroup.test.tsx`, ported case for case — **31
+ * upstream cases at the 0.5.0 pin** (7 in `describe('AvatarGroup')`, 6 in
+ * `describe('AvatarGroupOverflow')`, 9 in `describe('AvatarGroupOverflow —
+ * hardening')`, 6 in `describe('AvatarGroup — roving focus + keyboard hint')`
+ * and 3 in `describe('AvatarGroup — size cascade')`), **25 here**. There is no
+ * `displayName` case, no snapshot and no no-JSX construction form, so `ref` is
+ * the only React-only surface and it gets a counterpart.
+ *
+ * **The 6 that are not here all arrived at 0.5.0**, and none is droppable:
+ *
+ * - **The whole 3-case `AvatarGroup — size cascade` block** — the group's
+ *   explicit size overriding a child's own `size` prop, the group's *default*
+ *   size doing the same, and an avatar outside a group keeping its own size.
+ * - **2 of the 9 `AvatarGroupOverflow — hardening` cases** — `clamps a negative
+ *   count rather than rendering "+-3"` and `renders outside an AvatarGroup at
+ *   the md fallback size`.
+ * - **1 of the 6 `AvatarGroupOverflow` cases** — `applies the group size class
+ *   to the overflow chip`.
+ *
+ * All six are the same subject: the size a chip or an avatar resolves to,
+ * inside a group and outside one.
+ *
+ * (This header read "**25** upstream cases at v0.3.0 … 25 here, none dropped",
+ * true at that pin.)
  *
  * What translated, each commented where it appears:
  *
@@ -283,9 +300,9 @@ describe('AvatarGroup — roving focus + keyboard hint', () => {
 			}
 		});
 
-		const alice = screen.getByRole('link', { name: 'Alice' }).element();
-		const bob = screen.getByRole('link', { name: 'Bob' }).element();
-		const charlie = screen.getByRole('link', { name: 'Charlie' }).element();
+		const alice = screen.getByRole('link', { name: 'Alice', exact: true }).element();
+		const bob = screen.getByRole('link', { name: 'Bob', exact: true }).element();
+		const charlie = screen.getByRole('link', { name: 'Charlie', exact: true }).element();
 
 		expect(alice).toHaveAttribute('tabindex', '0');
 		expect(bob).toHaveAttribute('tabindex', '-1');
@@ -303,9 +320,9 @@ describe('AvatarGroup — roving focus + keyboard hint', () => {
 			}
 		});
 
-		const alice = screen.getByRole('link', { name: 'Alice' }).element() as HTMLElement;
-		const bob = screen.getByRole('button', { name: 'Bob' }).element();
-		const charlie = screen.getByRole('link', { name: 'Charlie' }).element();
+		const alice = screen.getByRole('link', { name: 'Alice', exact: true }).element() as HTMLElement;
+		const bob = screen.getByRole('button', { name: 'Bob', exact: true }).element();
+		const charlie = screen.getByRole('link', { name: 'Charlie', exact: true }).element();
 
 		alice.focus();
 		expect(alice).toHaveFocus();
@@ -330,8 +347,8 @@ describe('AvatarGroup — roving focus + keyboard hint', () => {
 			}
 		});
 
-		const alice = screen.getByRole('link', { name: 'Alice' }).element() as HTMLElement;
-		const overflow = screen.getByRole('button', { name: '3 more' }).element();
+		const alice = screen.getByRole('link', { name: 'Alice', exact: true }).element() as HTMLElement;
+		const overflow = screen.getByRole('button', { name: '3 more', exact: true }).element();
 		expect(overflow).toHaveAttribute('data-avatar-item');
 
 		alice.focus();
@@ -349,9 +366,9 @@ describe('AvatarGroup — roving focus + keyboard hint', () => {
 			}
 		});
 
-		const alice = screen.getByRole('link', { name: 'Alice' }).element() as HTMLElement;
-		const bob = screen.getByRole('link', { name: 'Bob' }).element();
-		const statusButton = screen.getByRole('button', { name: 'badge' }).element();
+		const alice = screen.getByRole('link', { name: 'Alice', exact: true }).element() as HTMLElement;
+		const bob = screen.getByRole('link', { name: 'Bob', exact: true }).element();
+		const statusButton = screen.getByRole('button', { name: 'badge', exact: true }).element();
 
 		// The status button carries no data-avatar-item marker.
 		expect(statusButton).not.toHaveAttribute('data-avatar-item');

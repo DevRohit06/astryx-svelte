@@ -49,7 +49,10 @@ const styles = stylex.create({
 		fontSize: typeScaleVars['--text-label-size'],
 		lineHeight: typeScaleVars['--text-label-leading'],
 		color: colorVars['--color-text-primary'],
-		cursor: 'pointer'
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	// Trigger button — the actual combobox button, visually integrated with the container
 	trigger: {
@@ -70,7 +73,10 @@ const styles = stylex.create({
 		fontSize: 'inherit',
 		lineHeight: 'inherit',
 		color: 'inherit',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		// The wrapper (inputWrapperStyles.base) renders the focus ring via
 		// :focus-within when this button is focused, matching
 		// TextInput/NumberInput/Selector. The button must not draw its own
@@ -136,14 +142,14 @@ const styles = stylex.create({
 		backgroundColor: 'transparent',
 		backgroundImage: {
 			default: null,
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
 			},
 			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
 		},
 		boxShadow: {
 			default: 'none',
-			':hover:not(:focus-within)': {
+			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': 'none'
 			},
 			':focus-within': 'none'
@@ -174,7 +180,10 @@ const styles = stylex.create({
 		borderStyle: 'none',
 		backgroundColor: 'transparent',
 		color: 'inherit',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		borderRadius: radiusVars['--radius-element']
 	},
 
@@ -196,7 +205,10 @@ const styles = stylex.create({
 		display: 'flex',
 		alignItems: 'center',
 		gap: spacingVars['--spacing-2'],
-		cursor: 'pointer'
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 
 	// Section heading. Plain secondary text, no rules — the same treatment
@@ -227,7 +239,10 @@ const styles = stylex.create({
 		gap: spacingVars['--spacing-2'],
 		width: '100%',
 		borderRadius: radiusVars['--radius-element'],
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		// Row typography lives here, not on the label span, so a theme override on
 		// the row target reaches both the fallback label and renderOption output
 		// (a declaration on the span would win over the inherited row value).
@@ -246,7 +261,7 @@ const styles = stylex.create({
 	itemDisabled: {
 		opacity: 0.5,
 		color: colorVars['--color-text-disabled'],
-		cursor: 'not-allowed'
+		cursor: 'default'
 	},
 
 	// Decorative checkbox (non-interactive, purely visual)

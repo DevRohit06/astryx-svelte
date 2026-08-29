@@ -130,6 +130,17 @@ export default {
 				'Link relationship tokens. noopener noreferrer are merged automatically for target="_blank".'
 		},
 		{
+			name: 'download',
+			type: 'string | boolean',
+			description:
+				'Causes the browser to download the linked URL. A string specifies the suggested filename.'
+		},
+		{
+			name: 'referrerPolicy',
+			type: "'' | 'no-referrer' | 'no-referrer-when-downgrade' | 'origin' | 'origin-when-cross-origin' | 'same-origin' | 'strict-origin' | 'strict-origin-when-cross-origin' | 'unsafe-url'",
+			description: 'Referrer policy for the link.'
+		},
+		{
 			name: 'onclick',
 			type: '(event: MouseEvent) => void',
 			description: 'Click event handler'
@@ -144,6 +155,34 @@ export default {
 			type: 'boolean',
 			description: 'Applies base font sizing',
 			default: 'false'
+		},
+		{
+			name: 'size',
+			type: "'base' | 'sm' | 'lg' | 'xl' | '4xs' | '3xs' | '2xs' | 'xsm' | '2xl' | '3xl' | '4xl'",
+			description: 'Explicit font size override forwarded to Text.'
+		},
+		{
+			name: 'weight',
+			type: "'medium' | 'normal' | 'semibold' | 'bold'",
+			description: 'Font weight override forwarded to Text.'
+		},
+		{
+			name: 'color',
+			type: "'placeholder' | 'inherit' | 'disabled' | 'primary' | 'secondary' | 'accent'",
+			description: 'Text color forwarded to Text.',
+			default: "'accent'"
+		},
+		{
+			name: 'display',
+			type: "'inline' | 'block'",
+			description: 'Display type for Text.',
+			default: "'inline'"
+		},
+		{
+			name: 'maxLines',
+			type: 'number',
+			description: 'Maximum lines before truncation.',
+			default: '0'
 		},
 		{
 			name: 'children',

@@ -5,7 +5,7 @@ import type { PowerSearchFilter } from '$lib/components/power-search/types.js';
 
 /**
  * Astryx's `PowerSearch/usePowerSearchConfig.test.ts`, ported case for case —
- * **51 upstream cases, 51 here**, in upstream's order and under upstream's
+ * **51 upstream cases at the 0.5.0 pin, 51 here**, in upstream's order and under upstream's
  * `describe`s, with every assertion verbatim. Nothing dropped, nothing added,
  * nothing restated.
  *

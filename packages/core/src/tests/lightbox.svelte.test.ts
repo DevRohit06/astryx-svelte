@@ -6,7 +6,8 @@ import Lightbox from '$lib/components/lightbox/lightbox.svelte';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 
 /**
- * Ported from Astryx's `Lightbox/Lightbox.test.tsx`, all 37 cases.
+ * Ported from Astryx's `Lightbox/Lightbox.test.tsx`, all 37 cases at the 0.5.0
+ * pin.
  *
  * ## Project
  *
@@ -159,7 +160,9 @@ describe('Lightbox', () => {
 				}
 			}
 		});
-		await expect.element(screen.getByText('Sunset over the ocean')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Sunset over the ocean', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('does not render caption when not provided', async () => {
@@ -190,7 +193,7 @@ describe('Lightbox', () => {
 				media: { src: '/photo.jpg', alt: 'Photo' }
 			}
 		});
-		const closeButton = screen.getByLabelText('Close').element() as HTMLElement;
+		const closeButton = screen.getByLabelText('Close', { exact: true }).element() as HTMLElement;
 		closeButton.click();
 		expect(onOpenChange).toHaveBeenCalledWith(false);
 	});
@@ -257,15 +260,15 @@ describe('Lightbox', () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, index: 0 }
 			});
-			await expect.element(screen.getByText('1 / 3')).toBeInTheDocument();
+			await expect.element(screen.getByText('1 / 3', { exact: true })).toBeInTheDocument();
 		});
 
 		it('shows prev/next buttons for middle item', async () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, index: 1 }
 			});
-			await expect.element(screen.getByLabelText('Previous')).toBeInTheDocument();
-			await expect.element(screen.getByLabelText('Next')).toBeInTheDocument();
+			await expect.element(screen.getByLabelText('Previous', { exact: true })).toBeInTheDocument();
+			await expect.element(screen.getByLabelText('Next', { exact: true })).toBeInTheDocument();
 		});
 
 		it('keeps prev mounted and disabled on first item', async () => {
@@ -275,20 +278,20 @@ describe('Lightbox', () => {
 			// The Prev button stays mounted at the range boundary (disabled) rather
 			// than unmounting, so navigating to the first item never removes the
 			// focused control and drops focus to <body>.
-			const prev = screen.getByLabelText('Previous');
+			const prev = screen.getByLabelText('Previous', { exact: true });
 			await expect.element(prev).toBeInTheDocument();
 			await expect.element(prev).toBeDisabled();
-			await expect.element(screen.getByLabelText('Next')).not.toBeDisabled();
+			await expect.element(screen.getByLabelText('Next', { exact: true })).not.toBeDisabled();
 		});
 
 		it('keeps next mounted and disabled on last item', async () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, index: 2 }
 			});
-			const next = screen.getByLabelText('Next');
+			const next = screen.getByLabelText('Next', { exact: true });
 			await expect.element(next).toBeInTheDocument();
 			await expect.element(next).toBeDisabled();
-			await expect.element(screen.getByLabelText('Previous')).not.toBeDisabled();
+			await expect.element(screen.getByLabelText('Previous', { exact: true })).not.toBeDisabled();
 		});
 
 		it('does not drop focus to <body> when navigating to the last item', async () => {
@@ -299,8 +302,8 @@ describe('Lightbox', () => {
 			await screen.rerender({ index: 2 });
 			// Both nav buttons remain in the DOM; the dialog stays available so
 			// keyboard gallery navigation isn't dead-ended.
-			await expect.element(screen.getByLabelText('Previous')).toBeInTheDocument();
-			await expect.element(screen.getByLabelText('Next')).toBeInTheDocument();
+			await expect.element(screen.getByLabelText('Previous', { exact: true })).toBeInTheDocument();
+			await expect.element(screen.getByLabelText('Next', { exact: true })).toBeInTheDocument();
 			const dialog = screen.container.querySelector('dialog');
 			expect(dialog).toBeInTheDocument();
 			// Arrow handling is on the dialog, so navigation still works at the edge.
@@ -317,7 +320,7 @@ describe('Lightbox', () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, index: 0, onIndexChange }
 			});
-			(screen.getByLabelText('Next').element() as HTMLElement).click();
+			(screen.getByLabelText('Next', { exact: true }).element() as HTMLElement).click();
 			expect(onIndexChange).toHaveBeenCalledWith(1);
 		});
 
@@ -326,7 +329,7 @@ describe('Lightbox', () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, index: 2, onIndexChange }
 			});
-			(screen.getByLabelText('Previous').element() as HTMLElement).click();
+			(screen.getByLabelText('Previous', { exact: true }).element() as HTMLElement).click();
 			expect(onIndexChange).toHaveBeenCalledWith(1);
 		});
 
@@ -354,7 +357,7 @@ describe('Lightbox', () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, defaultIndex: 0 }
 			});
-			(screen.getByLabelText('Next').element() as HTMLElement).click();
+			(screen.getByLabelText('Next', { exact: true }).element() as HTMLElement).click();
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Image B, 2 of 3');
 			});
@@ -375,7 +378,7 @@ describe('Lightbox', () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, defaultIndex: 2 }
 			});
-			(screen.getByLabelText('Previous').element() as HTMLElement).click();
+			(screen.getByLabelText('Previous', { exact: true }).element() as HTMLElement).click();
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Image B, 2 of 3');
 			});
@@ -389,7 +392,7 @@ describe('Lightbox', () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media: unlabeled, defaultIndex: 0 }
 			});
-			(screen.getByLabelText('Next').element() as HTMLElement).click();
+			(screen.getByLabelText('Next', { exact: true }).element() as HTMLElement).click();
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Image 2 of 2');
 			});
@@ -432,7 +435,7 @@ describe('Lightbox', () => {
 					hasZoom: true
 				}
 			});
-			const target = screen.getByRole('button', { name: 'Zoom' });
+			const target = screen.getByRole('button', { name: 'Zoom', exact: true });
 			await expect.element(target).toHaveAttribute('tabindex', '0');
 			await expect.element(target).toHaveAttribute('aria-pressed', 'false');
 		});
@@ -446,7 +449,7 @@ describe('Lightbox', () => {
 					hasZoom: true
 				}
 			});
-			const target = screen.getByRole('button', { name: 'Zoom' });
+			const target = screen.getByRole('button', { name: 'Zoom', exact: true });
 			press(target.element(), 'Enter');
 			await expect.element(target).toHaveAttribute('aria-pressed', 'true');
 			press(target.element(), 'Enter');
@@ -462,7 +465,7 @@ describe('Lightbox', () => {
 					hasZoom: true
 				}
 			});
-			const target = screen.getByRole('button', { name: 'Zoom' });
+			const target = screen.getByRole('button', { name: 'Zoom', exact: true });
 			press(target.element(), ' ');
 			await expect.element(target).toHaveAttribute('aria-pressed', 'true');
 			press(target.element(), ' ');
@@ -479,7 +482,7 @@ describe('Lightbox', () => {
 				}
 			});
 			const dialog = dialogIn(screen.container);
-			const target = screen.getByRole('button', { name: 'Zoom' });
+			const target = screen.getByRole('button', { name: 'Zoom', exact: true });
 			press(dialog, '+');
 			await expect.element(target).toHaveAttribute('aria-pressed', 'true');
 			press(dialog, '-');
@@ -495,7 +498,7 @@ describe('Lightbox', () => {
 				props: { isOpen: true, onOpenChange: noop, media, index: 1, onIndexChange, hasZoom: true }
 			});
 			const dialog = dialogIn(screen.container);
-			const target = screen.getByRole('button', { name: 'Zoom' }).element();
+			const target = screen.getByRole('button', { name: 'Zoom', exact: true }).element();
 			press(target, 'Enter');
 			const img = screen.getByAltText('Image B').element();
 			// The transform rides a `--x-transform` custom property (StyleX's dynamic
@@ -534,7 +537,7 @@ describe('Lightbox', () => {
 					hasZoom: true
 				}
 			});
-			const target = screen.getByRole('button', { name: 'Zoom' }).element();
+			const target = screen.getByRole('button', { name: 'Zoom', exact: true }).element();
 			press(target, 'Enter');
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Zoomed in');
@@ -550,7 +553,7 @@ describe('Lightbox', () => {
 			const screen = await render(Lightbox, {
 				props: { isOpen: true, onOpenChange: noop, media, index: 1, onIndexChange }
 			});
-			expect(screen.getByRole('button', { name: 'Zoom' }).elements()).toHaveLength(0);
+			expect(screen.getByRole('button', { name: 'Zoom', exact: true }).elements()).toHaveLength(0);
 			const dialog = dialogIn(screen.container);
 			press(dialog, '+');
 			// `tick()` so this is a real observation rather than one that passes
@@ -574,7 +577,7 @@ describe('Lightbox', () => {
 					hasZoom: true
 				}
 			});
-			expect(screen.getByRole('button', { name: 'Zoom' }).elements()).toHaveLength(0);
+			expect(screen.getByRole('button', { name: 'Zoom', exact: true }).elements()).toHaveLength(0);
 		});
 	});
 

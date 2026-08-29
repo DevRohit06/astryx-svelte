@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { isFocusDetached } from '$lib/utils/focus-return.js';
 
 /**
- * Astryx's `utils/focusReturn.test.ts` (4 cases at v0.4.5), ported whole — **4
- * of upstream's 4**, nothing dropped. The count is re-derived at the 0.4.5 pin;
- * upstream's file has not moved since v0.4.1, where this header last stated it.
+ * Astryx's `utils/focusReturn.test.ts` (4 cases at the 0.5.0 pin), ported whole
+ * — **4 of upstream's 4**, nothing dropped. The count is re-derived at the 0.5.0
+ * pin; upstream's file has not moved since v0.4.1.
  *
  * Upstream runs it under its jsdom-backed unit environment, so the file is a
  * plain `.test.ts` there. Here it is a `*.svelte.test.ts` — i.e. the **client**

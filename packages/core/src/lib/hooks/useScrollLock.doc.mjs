@@ -18,7 +18,11 @@ export default {
 		'background',
 		'ios',
 		'safari',
-		'fixed'
+		'fixed',
+		'scrollbar',
+		'gutter',
+		'layout shift',
+		'reflow'
 	],
 	params: [
 		{
@@ -31,7 +35,7 @@ export default {
 	returns: [],
 	usage: {
 		description:
-			'Locks body scroll when active by pinning the body with position: fixed. This prevents background scrolling behind modals and dialogs, which is necessary for iOS Safari where overscroll-behavior: contain does not work. Restores the original scroll position when unlocked.',
+			'Locks body scroll when active by pinning the body with position: fixed. This prevents background scrolling behind modals and dialogs, which is necessary for iOS Safari where overscroll-behavior: contain does not work. Restores the original scroll position when unlocked. Pinning hides the document scrollbar, so where that scrollbar takes layout space (desktop) the hook holds its gutter open with scrollbar-gutter: stable for the duration of the lock. The page, including any position: fixed chrome, does not shift sideways.',
 		bestPractices: [
 			{
 				guidance: true,

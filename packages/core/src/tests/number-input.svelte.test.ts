@@ -10,7 +10,27 @@ import NumberInputGroupProbe from './fixtures/number-input-group-probe.svelte';
 
 /**
  * Astryx's `NumberInput/NumberInput.test.tsx`, ported case for case. Upstream at
- * 0.4.1 has **113** `it(` cases and **113** are here — nothing is dropped.
+ * the **0.5.0** pin declares **117** blocks producing **122 cases** — 116 `it(`s
+ * plus one `it.each` with six rows — and **113** are here.
+ *
+ * **The 4 blocks (9 cases) that are not here:**
+ *
+ * - **`does not step or commit on a composing keydown (IME)`**, added at
+ *   v0.4.5. This one has been missing across two re-pins, because the header
+ *   below stated its count against 0.4.1 and so never moved. It is portable
+ *   now: `number-input.svelte` calls `isImeKeyEvent` in its keydown handler.
+ * - **The whole 3-block `NumberInput stepper padding coupling` describe, added
+ *   at 0.5.0** — `reads its padding from the public number-input padding
+ *   tokens`, the six-row `it.each` `a themed padding reaches the steppers in
+ *   every spelling` (the `padding` shorthand in one and two values, and the
+ *   per-edge spellings), and `carries a themed border radius to the stepper
+ *   column corners`. All three assert that the stepper column reads the *public*
+ *   `--astryx-number-input-padding*` custom properties rather than a private
+ *   copy, so porting them means checking that this port's stepper styles are
+ *   keyed on the same public tokens.
+ *
+ * (This header read "Upstream at 0.4.1 has **113** `it(` cases and **113** are
+ * here — nothing is dropped", true only at 0.4.1.)
  *
  * The 0.4.1 rewrite (#4896) turned the control into a *text-backed spinbutton*:
  * `type="text"` + `role="spinbutton"` + `inputmode`, with `aria-valuemin`/
@@ -169,7 +189,7 @@ describe('NumberInput', () => {
 		const screen = await render(NumberInput, {
 			props: { label: 'Quantity', value: null, onChange: noop }
 		});
-		await expect.element(screen.getByLabelText('Quantity')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Quantity', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with placeholder', async () => {
@@ -222,16 +242,16 @@ describe('NumberInput', () => {
 		const screen = await render(NumberInput, {
 			props: { label: 'Quantity', isLabelHidden: true, value: null, onChange: noop }
 		});
-		const label = screen.getByText('Quantity');
+		const label = screen.getByText('Quantity', { exact: true });
 		await expect.element(label).toBeInTheDocument();
-		await expect.element(screen.getByLabelText('Quantity')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Quantity', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows label visually by default', async () => {
 		const screen = await render(NumberInput, {
 			props: { label: 'Amount', value: null, onChange: noop }
 		});
-		const label = screen.getByText('Amount');
+		const label = screen.getByText('Amount', { exact: true });
 		await expect.element(label).toBeVisible();
 	});
 
@@ -498,15 +518,15 @@ describe('NumberInput', () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Discount', value: 10, onChange: noop, units: '%' }
 			});
-			await expect.element(screen.getByText('%')).toBeInTheDocument();
+			await expect.element(screen.getByText('%', { exact: true })).toBeInTheDocument();
 		});
 
 		it('does not render units when not provided', async () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Amount', value: 100, onChange: noop }
 			});
-			expect(screen.getByText('%').query()).toBeNull();
-			expect(screen.getByText('GB').query()).toBeNull();
+			expect(screen.getByText('%', { exact: true }).query()).toBeNull();
+			expect(screen.getByText('GB', { exact: true }).query()).toBeNull();
 		});
 
 		it('includes the units text in the accessible description (WCAG 1.3.1)', async () => {
@@ -620,7 +640,9 @@ describe('NumberInput', () => {
 					status: { type: 'error', message: 'Value must be positive' }
 				}
 			});
-			await expect.element(screen.getByText('Value must be positive')).toBeInTheDocument();
+			await expect
+				.element(screen.getByText('Value must be positive', { exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('has no dangling aria-describedby ids inside InputGroup (WCAG 1.3.1)', async () => {
@@ -727,7 +749,7 @@ describe('NumberInput', () => {
 			await userEvent.type(input, '42');
 
 			await expect.element(screen.locator.getByRole('alert')).toHaveTextContent('');
-			expect(screen.getByText('Invalid number').query()).toBeNull();
+			expect(screen.getByText('Invalid number', { exact: true }).query()).toBeNull();
 		});
 	});
 
@@ -939,10 +961,10 @@ describe('NumberInput', () => {
 					isReadOnly: true
 				}
 			});
-			const increment = screen.getByRole('button', { name: 'Increment Quantity' });
+			const increment = screen.getByRole('button', { name: 'Increment Quantity', exact: true });
 			await expect.element(increment).toBeDisabled();
 			await expect
-				.element(screen.getByRole('button', { name: 'Decrement Quantity' }))
+				.element(screen.getByRole('button', { name: 'Decrement Quantity', exact: true }))
 				.toBeDisabled();
 
 			// Upstream's `fireEvent.click` on a disabled button, dispatched directly:
@@ -984,28 +1006,30 @@ describe('NumberInput', () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Qty', value: 5, onChange: noop, hasClear: true }
 			});
-			await expect.element(screen.getByRole('button', { name: 'Clear Qty' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('button', { name: 'Clear Qty', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('does not show clear button when value is null', async () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Qty', value: null, onChange: noop, hasClear: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Qty' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Qty', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when hasClear is false', async () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Qty', value: 5, onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Qty' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Qty', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Qty', value: 5, onChange: noop, hasClear: true, isDisabled: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Qty' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Qty', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with null when clear is clicked', async () => {
@@ -1013,7 +1037,7 @@ describe('NumberInput', () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Qty', value: 5, onChange, hasClear: true }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Qty' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Qty', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(null);
 		});
 	});
@@ -1503,8 +1527,12 @@ describe('NumberInput stepping', () => {
 			const screen = await render(NumberInput, {
 				props: { label: 'Quantity', value: 5, onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Increment Quantity' }).query()).toBeNull();
-			expect(screen.getByRole('button', { name: 'Decrement Quantity' }).query()).toBeNull();
+			expect(
+				screen.getByRole('button', { name: 'Increment Quantity', exact: true }).query()
+			).toBeNull();
+			expect(
+				screen.getByRole('button', { name: 'Decrement Quantity', exact: true }).query()
+			).toBeNull();
 		});
 
 		it('shows localized increment and decrement buttons when enabled', async () => {
@@ -1512,10 +1540,10 @@ describe('NumberInput stepping', () => {
 				props: { label: 'Quantity', value: 5, onChange: noop, hasNumberSteppers: true }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Increment Quantity' }))
+				.element(screen.getByRole('button', { name: 'Increment Quantity', exact: true }))
 				.toHaveAttribute('tabindex', '-1');
 			await expect
-				.element(screen.getByRole('button', { name: 'Decrement Quantity' }))
+				.element(screen.getByRole('button', { name: 'Decrement Quantity', exact: true }))
 				.toHaveAttribute('tabindex', '-1');
 		});
 
@@ -1531,14 +1559,14 @@ describe('NumberInput stepping', () => {
 			// hand it to the input from the click handler, so a real pointer would
 			// add a focus round-trip the case is not about.
 			screen
-				.getByRole('button', { name: 'Increment Quantity' })
+				.getByRole('button', { name: 'Increment Quantity', exact: true })
 				.element()
 				.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 			expect(onChange).toHaveBeenLastCalledWith(6);
 			expect(input).toHaveFocus();
 
 			screen
-				.getByRole('button', { name: 'Decrement Quantity' })
+				.getByRole('button', { name: 'Decrement Quantity', exact: true })
 				.element()
 				.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 			expect(onChange).toHaveBeenLastCalledWith(4);
@@ -1557,10 +1585,10 @@ describe('NumberInput stepping', () => {
 				}
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Increment Quantity' }))
+				.element(screen.getByRole('button', { name: 'Increment Quantity', exact: true }))
 				.toBeDisabled();
 			await expect
-				.element(screen.getByRole('button', { name: 'Decrement Quantity' }))
+				.element(screen.getByRole('button', { name: 'Decrement Quantity', exact: true }))
 				.not.toBeDisabled();
 		});
 
@@ -1575,10 +1603,10 @@ describe('NumberInput stepping', () => {
 				}
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Increment Quantity' }))
+				.element(screen.getByRole('button', { name: 'Increment Quantity', exact: true }))
 				.toBeDisabled();
 			await expect
-				.element(screen.getByRole('button', { name: 'Decrement Quantity' }))
+				.element(screen.getByRole('button', { name: 'Decrement Quantity', exact: true }))
 				.toBeDisabled();
 		});
 	});

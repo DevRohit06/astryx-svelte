@@ -179,6 +179,16 @@ export default {
 			default: 'false'
 		},
 		{
+			name: 'onEnter',
+			type: '() => void',
+			description: 'Callback fired when the user presses the Enter key.'
+		},
+		{
+			name: 'onkeydown',
+			type: 'KeyboardEventHandler<HTMLInputElement>',
+			description: 'Callback fired on keydown events on the input.'
+		},
+		{
 			name: 'isDisabled',
 			type: 'boolean',
 			description: 'Disables the input, preventing interaction and dimming the element.',

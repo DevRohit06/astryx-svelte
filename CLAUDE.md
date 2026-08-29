@@ -61,6 +61,10 @@ pnpm verify        # the gate: every stage runs and every result reports, then p
                    #   regenerated and diffed against what's committed. Prefer this to chaining
                    #   build/check/lint/test with && — that reports "failed" identically whether
                    #   one stage failed or both ran, and once hid six real errors behind the first.
+                   #   **Redirect its output, never pipe it.** `pnpm verify 2>&1 | tail -80` returns
+                   #   `tail`'s exit code, so a run that failed 3 of 7 stages reads as a clean pass
+                   #   — the same hazard as the && chain, reached from the other direction. Write to
+                   #   a file and grep the file (batch 032).
 pnpm verify --fast # skips the whole test stage — the browser suite (real Chromium, thousands of
                    #   cases), the node suites, the CLI's own checks and the theme oracles. Use it
                    #   for a quick read *between* commits, never as a batch's gate. Batch 029 was
@@ -89,6 +93,13 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   It reads as a catastrophic regression rather than as contention, and it cost
 #   a full 30-minute gate run to a background agent that was running the suite
 #   at the same time. Same rule for `pnpm verify`, which runs this.
+#   **The same contention bites the runner's own concurrency on a cold Vite cache.**
+#   It launches four chunks at once; run straight after a `pnpm -r build` — which
+#   empties the optimize cache — three of the first four raced `Forced
+#   re-optimization of dependencies`, never printed a header, and held their slots
+#   until the 30-minute stage timeout killed the run, while chunks 5-17 all passed.
+#   Nothing was wrong with the tests: each stalled chunk passes in isolation. Warm
+#   the cache (run one chunk, or the suite once) before gating after a build.
 #   The client project cannot be run in one process: it dies partway through with
 #   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
 #   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a
@@ -97,6 +108,15 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   a chunk that collected nothing fails the run instead of shrinking the total. This
 #   is what `core`'s `test` script and CI both use; a bare `--project=client` over every
 #   client test file is not a measurement.
+#   **Audit a generated script for control characters before trusting its output.**
+#   A `\b` written through a shell heredoc can reach the file as the character it
+#   names rather than the escape - U+0008, not a word boundary. Inside a regex
+#   literal that still compiles, still lints, still typechecks, and simply never
+#   matches. In batch 037 that made `status.mjs` report 38 weak assertions where
+#   one was, and it was found only by piping the line through `cat -A` and seeing
+#   `^H`. It failed *safe* - overstating the work - which is why nobody audits it.
+#   `node -e "const s=require('fs').readFileSync(F,'utf8');"` plus a scan for
+#   codepoints under 32 settles it in one command.
 pnpm dev          # the docs site — the only demo surface (see below)
 pnpm -F docs generate   # regenerate the docs content registries (runs automatically on dev/build)
 ```
@@ -161,6 +181,12 @@ record a self-retiring skip.
   JSX. `internal/sx.ts` is the adapter from `stylex.props()` to Svelte's `class`/`style`.
 - Adding a **new** `.stylex.ts` file requires a dev-server restart — StyleX's dev cache doesn't pick
   it up.
+- **A `stylex.create` key that nothing in the module references is compiled away**, so adding a
+  style group is invisible until a component actually uses it — the class oracle reports it as
+  `ours: (absent)` and its "style keys checked" total does not move, which reads exactly like the
+  oracle failing to re-read the file. It is not: `treeshakeCompensation` drops the key. Wire the key
+  through its `*Attrs` helper and its `.svelte` call site in the same change, then re-run the
+  oracle. (Batch 032, `Item`'s `layout="inline"` trio.)
 
 ## Testing
 
@@ -199,6 +225,33 @@ delta as scope rather than as follow-up (`track-upstream` step 5b). Four headers
 exactly what the unported cases existed to catch. A dropped case's stated reason expires too:
 `button-group` carried "`DropdownMenu` is not ported" for three batches after it was.
 
+**A header that names an upstream suite in order to say it is _not_ ported is read as coverage.**
+`status.mjs` attributes a suite to any file under `src/tests/` that names it — deliberately
+generous, because a false "covered" is visible the moment someone opens the file. So a header
+written to be honest about a gap closes it on paper instead: `scroll-lock.svelte.test.ts` said
+"0.5.0 also added a whole `hooks/scrollbarGutter.test.ts` beside this suite, which has no ported
+counterpart at all", and that sentence subtracted eight cases from the delta rather than adding
+them. Write `UNPORTED: <upstream/path.test.tsx>` in the header **alongside** the prose; the marker
+is what `status.mjs` reads, and it errs safe — one left behind after the suite lands overstates
+the work remaining rather than hiding it. This is the second occurrence, which is why the marker
+already existed: `layout.svelte.test.ts` understated its gap by 34 cases the same way (batch 033).
+
+**The compiled StyleX sheet is on a browser-test page twice.** Vite's dev server injects it for
+the module graph `setup-stylex.ts` imports, and that setup file then appends its own `<style>` so
+the sheet is complete whatever the suite imports. A suite counting rules out of
+`document.styleSheets` therefore reads every rule twice, and an upstream `toHaveLength(1)` fails
+for a reason that is about the harness rather than the styles. De-duplicate by rule text — never
+loosen it to `toBeGreaterThan(0)`, which would still pass with a second, contradictory rule in the
+sheet. The rules also sit inside `@layer` blocks, so the walk has to descend where upstream's
+single top-level pass did not (`mobile-nav-entry-animation.svelte.test.ts`).
+
+**A header that discusses `it` in backticks used to inflate its own count.** `status.mjs` counted a
+bare `it` followed by a backtick as a declaration, and a backtick-quoted `it` in prose is exactly
+that — so a suite explaining its own counting could overstate the contract it exists to state, and
+two upstream suites read one case higher than they declare. Only `it.each` and `it.for` are tagged
+templates; the regex now requires a call paren for everything else. If a derived count ever looks
+implausible, check the header's prose before the code (batch 033).
+
 Coverage _beyond_ upstream needs a high bar: a hazard with **no upstream analogue**, which the ported
 suites structurally cannot catch — a Svelte-specific DOM or reactivity failure React cannot
 reproduce. Such a file says so at the top and mutation-checks its fixes.
@@ -215,4 +268,12 @@ reproduce. Such a file says so at the top and mutation-checks its fixes.
   explicitly, in upstream's documented order — `{...rest}` beside an explicit handler for the same
   event is one object literal, and the last key silently wins. `ComplexSelector` shipped with a
   consumer's `onclick` discarded exactly this way (`port/ledger/026-selector-family.md`).
+- **A React node prop gated on state translates to a conditional _snippet_, never an `{#if}` inside
+  the tag.** Upstream writes `{active === N && (…)}` for a `children`/slot prop, which hands the
+  component a falsy child so nothing renders. A snippet passed by slot is always defined, so an
+  `{#if}` wrapping the body leaves every `{#if children}` guard _inside_ the component true and
+  renders its wrapper around an empty slot. `Step` has two such guards and the second is not
+  cosmetic: `hasContentSeg = isVertical && children != null` drives the **connector geometry**, so
+  the vertical `StepperCustomContent` block would have grown a segment on every inactive step. Pass
+  it through instead — `children={active === 0 ? content : undefined}` (batch 038).
 - Prettier: **tabs**, single quotes, **no trailing commas**, 100 columns.

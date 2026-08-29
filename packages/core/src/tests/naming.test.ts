@@ -11,7 +11,7 @@ import {
 
 /**
  * Astryx's `src/naming.test.ts`, ported case for case — **5 upstream `it`
- * declarations at v0.4.5, 5 here**, in upstream's order and under upstream's
+ * declarations at the 0.5.0 pin, 5 here**, in upstream's order and under upstream's
  * titles. Nothing dropped, nothing added, and every assertion is upstream's
  * verbatim.
  *

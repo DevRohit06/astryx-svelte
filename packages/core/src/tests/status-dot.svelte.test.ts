@@ -9,7 +9,7 @@ import { atomicClasses, probe } from './fixtures/status-dot-probe.stylex.js';
 
 /**
  * Astryx's `StatusDot/StatusDot.test.tsx`, ported case for case — **17 upstream
- * declarations at v0.4.5** (11 in `describe('StatusDot')`, 4 in `describe('custom
+ * declarations at the 0.5.0 pin** (11 in `describe('StatusDot')`, 4 in `describe('custom
  * icon (parity with AvatarStatusDot)')` — one of them an `it.each` — 1 in
  * `describe('variant ink …')` and 1 in `describe('accessible name …')`),
  * **17 here, none dropped**. `StatusDot.test.tsx` is the only test file in
@@ -59,7 +59,7 @@ import { atomicClasses, probe } from './fixtures/status-dot-probe.stylex.js';
 /** Renders a StatusDot and returns its root element. Upstream's `renderDot`. */
 async function renderDot(props: StatusDotProps): Promise<HTMLElement> {
 	const screen = await render(StatusDot, { props });
-	return screen.getByRole('img', { name: props.label }).element() as HTMLElement;
+	return screen.getByRole('img', { name: props.label, exact: true }).element() as HTMLElement;
 }
 
 const ICON_TESTID = 'custom-icon';
@@ -81,19 +81,21 @@ async function renderDotWithIcon(props: { variant: StatusDotVariant; label: stri
 	});
 	return {
 		screen,
-		dot: screen.getByRole('img', { name: props.label }).element() as HTMLElement
+		dot: screen.getByRole('img', { name: props.label, exact: true }).element() as HTMLElement
 	};
 }
 
 describe('StatusDot', () => {
 	it('renders with role="img" and aria-label', async () => {
 		const screen = await render(StatusDot, { props: { variant: 'success', label: 'Online' } });
-		await expect.element(screen.getByRole('img', { name: 'Online' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('img', { name: 'Online', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders as a span element', async () => {
 		const screen = await render(StatusDot, { props: { variant: 'success', label: 'Online' } });
-		const dot = screen.getByRole('img', { name: 'Online' }).element();
+		const dot = screen.getByRole('img', { name: 'Online', exact: true }).element();
 		expect(dot.tagName).toBe('SPAN');
 	});
 
@@ -102,7 +104,9 @@ describe('StatusDot', () => {
 
 		for (const variant of variants) {
 			const screen = await render(StatusDot, { props: { variant, label: variant } });
-			await expect.element(screen.getByRole('img', { name: variant })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('img', { name: variant, exact: true }))
+				.toBeInTheDocument();
 			await screen.unmount();
 		}
 	});
@@ -114,7 +118,7 @@ describe('StatusDot', () => {
 		// dot's own geometry is readable and the case asserts it. Upstream's
 		// presence check is kept as the first line.
 		const screen = await render(StatusDot, { props: { variant: 'success', label: 'Online' } });
-		const dot = screen.getByRole('img', { name: 'Online' }).element();
+		const dot = screen.getByRole('img', { name: 'Online', exact: true }).element();
 		expect(dot).toBeInTheDocument();
 		const box = getComputedStyle(dot);
 		expect(box.width).toBe('8px');
@@ -150,7 +154,7 @@ describe('StatusDot', () => {
 
 	it('is not focusable', async () => {
 		const screen = await render(StatusDot, { props: { variant: 'success', label: 'Online' } });
-		const dot = screen.getByRole('img', { name: 'Online' }).element();
+		const dot = screen.getByRole('img', { name: 'Online', exact: true }).element();
 		expect(dot.getAttribute('tabindex')).toBeNull();
 	});
 
@@ -158,19 +162,25 @@ describe('StatusDot', () => {
 		const screen = await render(StatusDot, {
 			props: { variant: 'success', label: 'Live', isPulsing: true }
 		});
-		await expect.element(screen.getByRole('img', { name: 'Live' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('img', { name: 'Live', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders without isPulsing by default', async () => {
 		const screen = await render(StatusDot, { props: { variant: 'success', label: 'Online' } });
-		await expect.element(screen.getByRole('img', { name: 'Online' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('img', { name: 'Online', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders with tooltip', async () => {
 		const screen = await render(StatusDot, {
 			props: { variant: 'success', label: 'Online', tooltip: 'Online' }
 		});
-		await expect.element(screen.getByRole('img', { name: 'Online' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('img', { name: 'Online', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders every variant as a plain childless dot by default (design review #4373)', async () => {
@@ -248,7 +258,7 @@ describe('StatusDot', () => {
 				const screen = await render(StatusDot, {
 					props: { variant, label: `Status: ${variant}` }
 				});
-				const dot = screen.getByRole('img', { name: `Status: ${variant}` }).element();
+				const dot = screen.getByRole('img', { name: `Status: ${variant}`, exact: true }).element();
 				expect(dot).toHaveAttribute('aria-label', `Status: ${variant}`);
 				// The name must not depend on hover or focus.
 				expect(dot.getAttribute('tabindex')).toBeNull();

@@ -4,7 +4,7 @@ import Selectable from './fixtures/dropdown-menu-selectable.svelte';
 
 /**
  * Ported from Astryx's `DropdownMenu/DropdownMenuSelectable.test.tsx`, all 9
- * cases (v0.3.0) across its two describe blocks. Nothing is dropped.
+ * cases at the 0.5.0 pin, across its two describe blocks. Nothing is dropped.
  *
  * This suite could not exist until the 0.2.0 pin: the trio it covers
  * (`DropdownMenuCheckboxItem` / `RadioGroup` / `RadioItem`) was the slice the

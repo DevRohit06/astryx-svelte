@@ -4,7 +4,7 @@ import Skeleton from '$lib/components/skeleton/skeleton.svelte';
 import { forcedColorsCssIn } from './forced-colors.js';
 
 /**
- * Astryx's `Skeleton/Skeleton.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `Skeleton/Skeleton.test.tsx` at the **0.5.0** pin, ported case for case.
  *
  * The count is the contract: upstream declares **4** `it` blocks at this pin —
  * 3 in `describe('Skeleton')` and 1 in `describe('forced colors (WCAG

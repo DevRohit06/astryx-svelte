@@ -5,7 +5,7 @@ import type { TokenLine } from '$lib/components/code-block/tokenizer.js';
 /**
  * Astryx's `CodeBlock/highlightRanges.test.ts`, ported case for case.
  *
- * Upstream has **3** `it` cases in one describe block. All 3 are ported with
+ * Upstream has **3** `it` cases in one describe block at the **0.5.0** pin. All 3 are ported with
  * their assertions unchanged — `highlight-ranges.ts` is pure DOM, transcribed
  * verbatim, so there is nothing to translate. Nothing is dropped.
  *

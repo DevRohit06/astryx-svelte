@@ -131,6 +131,11 @@ export default {
 			default: "'Context menu'"
 		},
 		{
+			name: 'onOpenChange',
+			type: '(isOpen: boolean) => void',
+			description: 'Callback fired when the menu opens or closes.'
+		},
+		{
 			name: 'isDisabled',
 			type: 'boolean',
 			description: 'When true, right-click shows the native browser context menu instead.',

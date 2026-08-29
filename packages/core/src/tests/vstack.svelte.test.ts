@@ -5,7 +5,7 @@ import VStack from '$lib/components/stack/vstack.svelte';
 import StackProbe from './fixtures/stack-probe.svelte';
 
 /**
- * Astryx's `VStack/VStack.test.tsx` at the **0.4.5** pin — upstream declares
+ * Astryx's `VStack/VStack.test.tsx` at the **0.5.0** pin — upstream declares
  * **12** `it`s and **12** are here. Nothing is dropped.
  *
  * Two translations, neither of them a dropped case:
@@ -39,8 +39,8 @@ function renderVStack(
 describe('VStack', () => {
 	it('renders children correctly', async () => {
 		const screen = await renderVStack({}, { items: ['Item 1', 'Item 2'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as div by default', async () => {
@@ -57,17 +57,17 @@ describe('VStack', () => {
 
 	it('renders with gap prop', async () => {
 		const screen = await renderVStack({ gap: 4 }, { items: ['Item 1', 'Item 2'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with hAlign prop', async () => {
 		const screen = await renderVStack({ hAlign: 'center' }, { items: ['Item 1'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with wrap prop', async () => {
 		const screen = await renderVStack({ wrap: 'wrap' }, { items: ['Item 1', 'Item 2'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('forwards ref correctly', async () => {

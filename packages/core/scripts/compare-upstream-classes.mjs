@@ -80,6 +80,29 @@ if (!existsSync(upstream)) {
 /** Pseudo-key for `stylex.defaultMarker()` in an `inline` combination. */
 const BUILTIN_DEFAULT_MARKER = 'stylex.defaultMarker()';
 
+/**
+ * `constHashed: true` marks a case whose module consumes a `stylex.defineConsts`
+ * export, and it is the same shape as `marker` for the same reason.
+ *
+ * Under `unstable_moduleResolution: {type: 'commonJS'}` the plugin never reads
+ * the defining module, so a consumer compiles to `var(--<constKey>)` where the
+ * key is `hash(`${packageName}:${pathFromPackageRoot}//${exportName}.${key}`)`.
+ * `processStylexRules` substitutes the literal back before the sheet is written,
+ * so the **declarations are byte-identical** — but the atomic class was already
+ * hashed from the text that still held the var, so the class *names* cannot
+ * agree across two packages with different names and layouts. Ours hashes
+ * `@astryx-svelte/core:src/lib/components/date-input/tokens.stylex.ts`, upstream's
+ * `@astryxdesign/core:src/DateInput/tokens.stylex.ts`.
+ *
+ * `normaliseRule` already blinds a rule's own atomic class as `.SELF`, which is
+ * the whole of what this needs — so the case rides the marker comparison with a
+ * marker class no rule can carry. What it does NOT get is the marker path's
+ * lookup-table filler tolerance: that exists for a marker case's 2^n conditional
+ * permutations, and waving leftovers through here would hide a genuinely
+ * unclaimed call site.
+ */
+const NO_MARKER_CLASS = '\u0000none';
+
 /*
  * THE SKIP LIST IS EMPTY, and the way the last three went is worth recording
  * because it is the strongest case yet for how a deferral must be written.
@@ -237,10 +260,16 @@ const CASES = [
 		upstreamFile: 'ButtonGroup/ButtonGroup.js'
 	},
 	{
-		// Object mode covers `styles.wrapper` and `styles.spinner` — both ride runtime
-		// `stylex.props` calls with an `xstyle` spread beside them.
+		// Object mode covers `styles.wrapper`, `styles.spinner`, `styles.circle` and
+		// the whole of `arcStyles` / `trackStyles`. The first two ride runtime
+		// `stylex.props` calls with an `xstyle` spread beside them; the last three
+		// are **new at upstream 0.5.0**, where the canvas ring became two SVG
+		// `<circle>`s whose paint comes off the cascade. Each circle merges
+		// `styles.circle` with a `shade`-indexed key from one of the two ramps, and
+		// a dynamic index defeats the fold, so `dist/` keeps all three objects.
 		//
-		// `styles.canvas` folds to a literal upstream, and claiming it is what
+		// `styles.ring` (upstream's `styles.canvas` through 0.4.5) folds to a
+		// literal upstream, and claiming it is what
 		// **found a real style defect that had been live since the case was
 		// written**. The case was object-mode only, so the key was checked by
 		// nothing; the first run that claimed it failed on one property:
@@ -258,7 +287,7 @@ const CASES = [
 		// writes `'0%'`/`'100%'` and the key is checked.
 		file: 'src/lib/components/spinner/spinner.stylex.js',
 		upstreamFile: 'Spinner/Spinner.js',
-		inline: [['styles.canvas']]
+		inline: [['styles.ring']]
 	},
 	{
 		file: 'src/lib/components/visually-hidden/visually-hidden.stylex.js',
@@ -851,9 +880,14 @@ const CASES = [
 	{
 		file: 'src/lib/theme/media-theme.stylex.js',
 		upstreamFile: 'theme/MediaTheme.js',
-		// MediaTheme's one style is applied at its one call site, so upstream's
-		// `dist/` carries the finished class string and no style object.
-		inline: [['styles.root']]
+		// MediaTheme's styles are applied at its one call site, so upstream's
+		// `dist/` carries finished class strings and no style object. 0.5.0 split
+		// the single style in two and made the second conditional
+		// (`resolved !== 'off'`), so the compiler emits a two-entry lookup table and
+		// there are two strings to claim rather than one — `root` alone is the
+		// `off` branch, which renders the element with no media attribute and no
+		// colour of its own.
+		inline: [['styles.root'], ['styles.root', 'styles.active']]
 	},
 	{
 		// All three theme-default padding chains are now compared: `card`, `dialog`
@@ -1033,20 +1067,34 @@ const CASES = [
 		// were resolved into literal class strings — the compiler emits a two-entry
 		// lookup table keyed by `!!isDisabled << 0` for the four that carry a
 		// disabled dim. `startContent` has no disabled variant, so it is a single
-		// string. The nine inline combos below are those strings, with and without
+		// string. The inline combos below are those strings, with and without
 		// `disabledContent` (`xbyyjgo`, opacity 0.5), which simply joins since it
 		// touches a property none of the base keys set. `invisibleAnchor` differs
 		// from `invisibleButton` only by `x1hl2dhg` — its `text-decoration: none`.
+		//
+		// `layout="inline"` (0.5.0) doubles the middle-column trio: `inlineContent`
+		// overrides the column's `flex-direction` to `row` (`x1q0g3np`) and adds
+		// `align-items: center` (`x6s0dn4`) and a `column-gap` (`x1lfs0n9`), so each
+		// of `content` / `invisibleButton` / `invisibleAnchor` reaches the compiler
+		// as two distinct strings rather than one. `inlineLabel` and
+		// `inlineDescription` ride the label/description keys, which stay in the
+		// object, so they need no entry here.
 		file: 'src/lib/components/item/item.stylex.js',
 		upstreamFile: 'Item/Item.js',
 		inline: [
 			['styles.startContent'],
 			['styles.content'],
 			['styles.content', 'styles.disabledContent'],
+			['styles.content', 'styles.inlineContent'],
+			['styles.content', 'styles.inlineContent', 'styles.disabledContent'],
 			['styles.invisibleButton'],
 			['styles.invisibleButton', 'styles.disabledContent'],
+			['styles.invisibleButton', 'styles.inlineContent'],
+			['styles.invisibleButton', 'styles.inlineContent', 'styles.disabledContent'],
 			['styles.invisibleAnchor'],
 			['styles.invisibleAnchor', 'styles.disabledContent'],
+			['styles.invisibleAnchor', 'styles.inlineContent'],
+			['styles.invisibleAnchor', 'styles.inlineContent', 'styles.disabledContent'],
 			['styles.endContent'],
 			['styles.endContent', 'styles.disabledContent']
 		]
@@ -1086,7 +1134,7 @@ const CASES = [
 		// whose lone `display: contents` folds to one class.
 		file: 'src/lib/components/radio-list/radio-list-item.stylex.js',
 		upstreamFile: 'RadioList/RadioListItem.js',
-		inline: [['styles.labelDisabled'], ['styles.indicatorSlot']]
+		inline: [['styles.indicatorSlot']]
 	},
 	{
 		// Both modes at once. Upstream's `dist/` keeps exactly four of `styles`
@@ -1301,8 +1349,57 @@ const CASES = [
 		// concentric `max(0px, calc(var(--_segmented-control-radius) -
 		// var(--_segmented-control-padding)))`, authored verbatim from the source, so
 		// it hashes identically.
+		//
+		// **Both modes from 0.5.0.** The label `<span>` gained its own `labelText`
+		// group (`overflow`/`textOverflow`/`minWidth`), and it is that span's only
+		// style — so the compiler folded it to a literal class string and `dist/`
+		// keeps no object for it. Object mode cannot reach it; the inline entry can.
 		file: 'src/lib/components/segmented-control/segmented-control-item.stylex.js',
-		upstreamFile: 'SegmentedControl/SegmentedControlItem.js'
+		upstreamFile: 'SegmentedControl/SegmentedControlItem.js',
+		inline: [['styles.labelText']]
+	},
+	{
+		// **New at 0.5.0** — promoted out of `lab`. Object mode only: all five keys
+		// are reached through `stepperRootAttrs`, so nothing folded.
+		file: 'src/lib/components/stepper/stepper.stylex.js',
+		upstreamFile: 'Stepper/Stepper.js'
+	},
+	{
+		// Both modes. `otSegHiddenIfFirst`/`otSegHiddenIfLast` embed
+		// `when.ancestor(':first-child' | ':last-child', stepMarker)`, so those two
+		// diff as marker-normalised CSS — a `defineMarker()`'s class is path-derived
+		// and cannot match upstream's by name. The marker module holds only the
+		// marker, so it rides here rather than as a case of its own; upstream names
+		// that file `stepper.stylex.ts`, which is taken on this side by Stepper's
+		// own styles, hence `stepper.markers.stylex.ts`.
+		//
+		// The inline list is shorter than the fold count because the extractor keys
+		// upstream's strings **by content**: `iconLabelRow` and `otLabelRowStart`
+		// fold to the same string, `optionalDot` and `optionalText` are identical
+		// across four call sites, and `otContent` shares its single class with
+		// `stepContent`. Claiming a duplicate twice would find the string already
+		// deleted from the Set and report a spurious miss — the same standing
+		// `Pagination`'s `inputTotal` pair has.
+		file: 'src/lib/components/stepper/step.stylex.js',
+		upstreamFile: 'Stepper/Step.js',
+		marker: {
+			file: 'src/lib/components/stepper/stepper.markers.stylex.js',
+			upstreamFile: 'Stepper/stepper.stylex.js',
+			name: 'stepMarker'
+		},
+		inline: [
+			['styles.verticalBody'],
+			['styles.iconLabelRow'],
+			['styles.optionalDot'],
+			['styles.descriptionRow'],
+			['styles.descriptionRowWithIndicator'],
+			['styles.description'],
+			['styles.otBodyV'],
+			['styles.otLabelRowCenter'],
+			['styles.otContentWrapV'],
+			['styles.otContent'],
+			['styles.otTrackRowH']
+		]
 	},
 	{
 		// Both modes at once. Upstream declares ToggleButton's styles inline in the
@@ -1561,17 +1658,20 @@ const CASES = [
 		inline: [['listStyles.root']]
 	},
 	{
-		// Both modes at once. Only `root` and the two size variants survive as
-		// objects (a variant ternary plus an `xstyle` spread reach `stylex.props`
-		// together); every other key is a single call site.
+		// Both modes at once. Object mode covers `root`, the two size variants (a
+		// variant ternary plus an `xstyle` spread reach `stylex.props` together) and
+		// — **new at upstream 0.5.0** — `link`, `buttonReset`, `defaultLink` and
+		// `supportingLink`. Those four moved *out* of the inline list rather than
+		// changing: #4605 routes the `<a>` and `<button>` branches through
+		// `focusOutlineProps.focusVisible(...)` instead of a bare `stylex.props(...)`,
+		// and the compiler cannot fold a call it does not own, so `dist/` now keeps
+		// the objects and emits no literal for either branch. Their two inline
+		// claims are deleted rather than repaired; leaving them in fails with
+		// "upstream has no matching call site".
 		//
-		// `defaultLink` and `supportingLink` are **the same declaration** —
-		// `--color-text-secondary` both — so the link and button branches each emit
-		// one string for both variants, not two. Listing the supporting pair as well
-		// would ask the oracle for a second copy of a string upstream only has once
-		// (it compares distinct call sites), so the two link combos below cover all
-		// four branches. The current-wrapper pair *does* differ (primary vs
-		// secondary) and both are listed.
+		// The current-wrapper pair *does* still fold, differs between the variants
+		// (primary vs secondary text) and stays claimed below — which is what
+		// checks `current`'s semibold weight, the accessibility half of #4605.
 		//
 		// **`itemStyles.chevron` is object mode as of upstream 0.4.1 (#4838), and
 		// its inline claim is deleted rather than repaired.** It was right for
@@ -1589,8 +1689,6 @@ const CASES = [
 			['itemStyles.separator'],
 			['itemStyles.contentWrapper', 'itemStyles.current', 'itemStyles.defaultCurrent'],
 			['itemStyles.contentWrapper', 'itemStyles.current', 'itemStyles.supportingCurrent'],
-			['itemStyles.link', 'itemStyles.defaultLink'],
-			['itemStyles.link', 'itemStyles.buttonReset', 'itemStyles.defaultLink'],
 			// The menu surface. `menuStyles.popover` is *not* here: it is handed to
 			// the layer as an `xstyle` value, never resolved at a static call site,
 			// so it stays an object on both sides and object mode covers it.
@@ -2106,6 +2204,85 @@ const CASES = [
 		]
 	},
 	{
+		// 0.5.0's touch date surface. All four modules consume
+		// `date-input/tokens.stylex.ts` — this port's first `stylex.defineConsts` —
+		// so their const-derived classes are path-hashed and can never match
+		// upstream's by name. `constHashed` compares the emitted CSS instead; see
+		// its note at the head of this file.
+		file: 'src/lib/components/date-input/wheel.stylex.js',
+		upstreamFile: 'DateInput/Wheel.js',
+		constHashed: 'src/lib/components/date-input/tokens.stylex.js',
+		inline: [
+			['styles.column'],
+			['styles.band'],
+			['styles.item'],
+			['styles.item', 'styles.itemActive'],
+			['styles.item', 'styles.itemDisabled'],
+			['styles.item', 'styles.itemActive', 'styles.itemDisabled'],
+			['styles.itemInner']
+		]
+	},
+	{
+		// `dynamic.spacer`/`dynamic.pane` are function styles — opaque to this
+		// oracle by construction, and covered by `compare-upstream-css.mjs`.
+		file: 'src/lib/components/date-input/month-scroller.stylex.js',
+		upstreamFile: 'DateInput/MonthScroller.js',
+		constHashed: 'src/lib/components/date-input/tokens.stylex.js',
+		inline: [
+			['styles.scroller'],
+			['styles.row'],
+			['styles.cell'],
+			['styles.puck'],
+			['styles.puck', 'styles.puckToday'],
+			['styles.puck', 'styles.puckHoverable'],
+			['styles.puck', 'styles.puckHoverable', 'styles.puckToday'],
+			// `puckSelected` overrides every property `puckToday` and `puckHoverable`
+			// set, so all four selected permutations merge to ONE class string —
+			// on both sides. `upstreamInline` is a Set, so a second claim would find
+			// the string already deleted and report a spurious "upstream has no
+			// matching call site"; the selected branch is therefore claimed once.
+			// Same shape as `Pagination`'s `inputTotal`/`inputLabel` pair above.
+			['styles.puck', 'styles.puckSelected']
+		]
+	},
+	{
+		// Inline only — upstream keeps no style object for this module at all.
+		file: 'src/lib/components/date-input/month-year-wheels.stylex.js',
+		upstreamFile: 'DateInput/MonthYearWheels.js',
+		constHashed: 'src/lib/components/date-input/tokens.stylex.js',
+		inline: [['styles.wheels']]
+	},
+	{
+		// `styles.divider` is declared upstream and applied nowhere, so it is
+		// tree-shaken on both sides and has nothing to diff against — the same
+		// standing `Selector`'s `itemCheckmark` has.
+		file: 'src/lib/components/date-input/touch-date-field.stylex.js',
+		upstreamFile: 'DateInput/TouchDateField.js',
+		constHashed: 'src/lib/components/date-input/tokens.stylex.js',
+		inline: [
+			['styles.surface'],
+			['styles.header'],
+			['styles.monthArrows'],
+			['styles.monthArrows', 'styles.monthArrowsHidden'],
+			['styles.weekdays'],
+			['styles.weekdays', 'styles.weekdaysHidden'],
+			['styles.weekday'],
+			['styles.body'],
+			['styles.panel', 'styles.panelBeneath'],
+			['styles.panel', 'styles.panelBeneath', 'styles.panelBeneathHidden'],
+			['styles.panel', 'styles.panelOverlay'],
+			['styles.panel', 'styles.panelOverlay', 'styles.panelOverlayHidden'],
+			['styles.footer'],
+			['styles.footerAction', 'styles.panelBeneath'],
+			['styles.footerAction', 'styles.panelBeneath', 'styles.panelBeneathHidden'],
+			['styles.footerAction', 'styles.panelOverlay'],
+			['styles.footerAction', 'styles.panelOverlay', 'styles.panelOverlayHidden'],
+			['styles.input'],
+			['styles.input', 'styles.inputDisabled'],
+			['styles.sheetBody']
+		]
+	},
+	{
 		// Both modes at once. Object mode reaches `sizeStyles` — the same
 		// wrapper-merge story as `DateInput` — plus the four keys 0.4.x moved off
 		// the inline list. (`statusIconMap`/`statusIconColorMap` are plain string
@@ -2164,12 +2341,17 @@ const CASES = [
 		// correct rather than an under-count.
 		file: 'src/lib/components/date-time-input/date-time-input.stylex.js',
 		upstreamFile: 'DateTimeInput/DateTimeInput.js',
+		//
+		// `timeListbox` arrived with 0.5.0's `timeOptionInterval` popover. It is the
+		// listbox's only style and takes no conditional beside it, so the compiler
+		// folded it to a literal string and `dist/` keeps no object for it.
 		inline: [
 			['styles.icon'],
 			['styles.input'],
 			['styles.input', 'styles.inputDisabled'],
 			['styles.input', 'styles.inputInvalid'],
-			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid']
+			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid'],
+			['styles.timeListbox']
 		]
 	},
 	{
@@ -2350,7 +2532,10 @@ const CASES = [
 			['styles.emptyState'],
 			['styles.sectionHeading'],
 			['styles.itemContent'],
-			['styles.itemMarkColumn']
+			['styles.itemMarkColumn'],
+			['styles.triggerValue'],
+			['styles.triggerValue', 'styles.triggerValueInGroup'],
+			['styles.trigger', 'styles.triggerButtonInGroup']
 		]
 	},
 	{
@@ -2437,17 +2622,20 @@ const CASES = [
 		// `xstyle` as an array, so the call site is in another component entirely —
 		// the same reason `Selector`'s `popover` does.
 		//
-		// The other four keys have no object in `dist/` and are the inline call
-		// sites below. `dropdown` folds even though it sits inside a `mergeProps`
-		// with `themeProps`, because `mergeProps` takes the finished `stylex.props`
-		// result — the compiler had already resolved it.
+		// The other keys have no object in `dist/` and are the inline call sites
+		// below. `dropdown` folds even though it sits inside a `mergeProps` with
+		// `themeProps`, because `mergeProps` takes the finished `stylex.props`
+		// result — the compiler had already resolved it. `groupHeading` joined them
+		// at 0.5.0 with option grouping: it is the heading div's only style and
+		// carries no conditional, so it folded to a literal string too.
 		file: 'src/lib/components/typeahead/base-typeahead.stylex.js',
 		upstreamFile: 'Typeahead/BaseTypeahead.js',
 		inline: [
 			['styles.loadingSpinner'],
 			['styles.dropdown'],
 			['styles.emptyState'],
-			['styles.itemContent']
+			['styles.itemContent'],
+			['styles.groupHeading']
 		]
 	},
 	{
@@ -3405,11 +3593,15 @@ const CASES = [
 	},
 	{
 		// Both modes. The editable div merges `root` with a conditional `disabled`
-		// and an `xstyle`, so both survive; the placeholder overlay and the
-		// measuring span are one call site each.
+		// and an `xstyle`, so both survive; the placeholder overlay, the measuring
+		// span and the token chip's own span are one call site each. `tokenSpan`
+		// arrived at 0.5.0, when upstream moved that span off a hand-written inline
+		// `style` object — the imperative `insertToken` path still writes the same
+		// two declarations by hand, because a node built with `createElement`
+		// cannot carry a compiled class.
 		file: 'src/lib/components/chat/chat-composer-input.stylex.js',
 		upstreamFile: 'Chat/ChatComposerInput.js',
-		inline: [['styles.placeholder'], ['styles.editable']]
+		inline: [['styles.placeholder'], ['styles.editable'], ['styles.tokenSpan']]
 	},
 	{
 		// Both modes. `wrapper` takes the `xstyle`; the bar container and each bar
@@ -3610,20 +3802,22 @@ const CASES = [
 		// object at all: `BottomSheet.js` merges the identical keys at a literal call
 		// site with no `xstyle` and no dynamic index beside them, so the compiler
 		// folded every one into a class string and `dist/` declares no `styles`.
-		// Inline mode only — twelve claims, no object diff, and the two modes
-		// together are what cover the module's nine keys.
+		// Inline mode only — twenty claims, no object diff, and the two modes
+		// together are what cover the module's ten keys.
 		//
-		// The dialog is an eight-entry lookup table keyed
-		// `!!shouldPresent << 2 | !!hasScrim << 1 | !!!hasScrim << 0`. Bits 1 and 0
-		// are exact complements, so four of the eight can never be reached at
-		// runtime — but each is still a merge of our keys in upstream's order, so
-		// all eight are CLAIMED rather than waved through. The filler tolerance at
-		// the foot of the loop only applies to marker cases and this is not one, so
-		// an unclaimed permutation would read as "upstream applies classes we never
-		// produce"; claiming it is both cheaper and stricter.
+		// The dialog is a SIXTEEN-entry lookup table keyed
+		// `!!shouldPresent << 3 | !!hasScrim << 2 | !!(hasScrim && !isOpen &&
+		// isPresented) << 1 | !!!hasScrim << 0`. It was eight before 0.5.0 added
+		// `scrimClosing` as bit 1. Bits 2 and 0 are exact complements, so half of
+		// the sixteen can never be reached at runtime — but each is still a merge
+		// of our keys in upstream's order, so all sixteen are CLAIMED rather than
+		// waved through. The filler tolerance at the foot of the loop only applies
+		// to marker cases and this is not one, so an unclaimed permutation would
+		// read as "upstream applies classes we never produce"; claiming it is both
+		// cheaper and stricter.
 		//
-		// Two of the four keys OVERRIDE a property the base already set rather than
-		// adding one, which is exactly why the order of a combination is
+		// Three of the five keys OVERRIDE a property the base already set rather
+		// than adding one, which is exactly why the order of a combination is
 		// load-bearing:
 		//   • `dialogOpen` replaces `display: none` (x1s85apg) with `display: block`
 		//     (x1lliihq) — one property in, one property out, so the merged string
@@ -3632,9 +3826,14 @@ const CASES = [
 		//     (x1o6l61p / xtdtrs8) with `100%` / `100%` (xh8yej3 / x5yr21d) while
 		//     adding `pointer-events` and `z-index`, so the non-modal strings are
 		//     two classes shorter than "base plus four" would predict.
-		// Neither is a skip: both are the merge working, and reproducing them is the
-		// check. `styles.dialog`'s `border: 'none'` emits no class on either side —
-		// StyleX drops it — so it is simply absent from both, the same way
+		//   • `scrimClosing` replaces the scrim's `::backdrop` timing function
+		//     (x15h3t91, `--ease-standard`) with `linear` (x1cz9k3x), so a
+		//     scrim-plus-closing string is the same length as the scrim's own.
+		//     Against the base alone — the four unreachable no-scrim permutations —
+		//     it has nothing to replace and simply adds x1cz9k3x.
+		// None is a skip: all three are the merge working, and reproducing them is
+		// the check. `styles.dialog`'s `border: 'none'` emits no class on either
+		// side — StyleX drops it — so it is simply absent from both, the same way
 		// `useKeyboardHint`'s `hint` is.
 		//
 		// The positioner is a second, four-entry table keyed
@@ -3650,10 +3849,24 @@ const CASES = [
 			['styles.dialog', 'styles.dialogOpen'],
 			['styles.dialog', 'styles.scrim'],
 			['styles.dialog', 'styles.dialogOpen', 'styles.scrim'],
+			['styles.dialog', 'styles.scrimClosing'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.scrimClosing'],
+			['styles.dialog', 'styles.scrim', 'styles.scrimClosing'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.scrim', 'styles.scrimClosing'],
 			['styles.dialog', 'styles.dialogNonModal'],
 			['styles.dialog', 'styles.dialogOpen', 'styles.dialogNonModal'],
 			['styles.dialog', 'styles.scrim', 'styles.dialogNonModal'],
 			['styles.dialog', 'styles.dialogOpen', 'styles.scrim', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.scrimClosing', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.dialogOpen', 'styles.scrimClosing', 'styles.dialogNonModal'],
+			['styles.dialog', 'styles.scrim', 'styles.scrimClosing', 'styles.dialogNonModal'],
+			[
+				'styles.dialog',
+				'styles.dialogOpen',
+				'styles.scrim',
+				'styles.scrimClosing',
+				'styles.dialogNonModal'
+			],
 			['styles.positioner'],
 			['styles.positioner', 'styles.positionerTop'],
 			['styles.positioner', 'styles.positionerHidden'],
@@ -3686,6 +3899,19 @@ const CASES = [
 			['styles.body'],
 			['styles.body', 'styles.tallKeyboardBody']
 		]
+	},
+	{
+		// Inline mode only, and the smallest case in the file: the edge tint is one
+		// style on one element with nothing beside it, so upstream folded it to a
+		// literal class string and `dist/` declares no `styles` object at all.
+		//
+		// The two mask declarations are one property to CSS and two to StyleX —
+		// `maskImage` and `WebkitMaskImage` hash separately — so the string carries
+		// both, and authoring only the unprefixed one would come up a class short
+		// rather than merely unprefixed.
+		file: 'src/lib/components/bottom-sheet/bottom-sheet-edge-tint.stylex.js',
+		upstreamFile: 'BottomSheet/BottomSheetEdgeTint.js',
+		inline: [['styles.tint']]
 	}
 ];
 
@@ -3747,6 +3973,50 @@ async function compileOursWithCss(relative) {
 		if (rule?.ltr) css.set(className, rule.ltr);
 	}
 	return { code, css };
+}
+
+/**
+ * `constKey -> constVal` for a `stylex.defineConsts` module.
+ *
+ * The plugin reports both on the defining module's metadata. A *consuming*
+ * module compiles to `var(--<constKey>)` and only `processStylexRules` puts the
+ * literal back when the sheet is written — so an oracle reading rules off the
+ * consumer's metadata has to do that substitution itself, or it compares a
+ * `var()` against upstream's already-substituted literal and calls a byte-identical
+ * declaration a mismatch.
+ */
+async function collectConsts(relative) {
+	const filename = path.join(root, relative.replace(/\.js$/, '.ts'));
+	const { metadata } = await transformAsync(readFileSync(filename, 'utf8'), {
+		filename,
+		babelrc: false,
+		configFile: false,
+		plugins: [
+			[typescriptSyntax, { isTSX: false }],
+			[
+				styleXPlugin,
+				{
+					dev: false,
+					runtimeInjection: false,
+					treeshakeCompensation: true,
+					unstable_moduleResolution: { type: 'commonJS', rootDir: root }
+				}
+			]
+		]
+	});
+	const consts = new Map();
+	for (const [, rule] of metadata?.stylex ?? []) {
+		if (rule?.constKey != null && rule?.constVal != null) consts.set(rule.constKey, rule.constVal);
+	}
+	return consts;
+}
+
+/** Put `defineConsts` literals back, the way `processStylexRules` does. */
+function substituteConsts(rule, consts) {
+	if (consts == null || consts.size === 0) return rule;
+	let out = rule;
+	for (const [key, value] of consts) out = out.replaceAll(`var(--${key})`, value);
+	return out;
 }
 
 /** Literal name of an object property, whether bare, quoted, or numeric. */
@@ -4024,14 +4294,16 @@ const upstreamRuleLookup = (ctx) => (className) => ctx.upstreamCss.get(className
  * `defineMarker()` is involved the class *names* cannot agree across the two
  * builds, so the emitted CSS is compared instead.
  */
-function markerRulesForClasses(classNames, lookup, markerClass) {
+function markerRulesForClasses(classNames, lookup, markerClass, consts) {
 	const rules = new Set();
 	for (const className of classNames) {
 		const found = lookup(className);
 		if (found == null || found.length === 0) return null;
 		// Upstream's stylesheet repeats a rule once per priority bucket, so the
 		// distinct texts are what carry meaning, not how many there are.
-		for (const rule of found) rules.add(normaliseRule(rule, className, markerClass));
+		for (const rule of found) {
+			rules.add(normaliseRule(substituteConsts(rule, consts), className, markerClass));
+		}
 	}
 	return rules;
 }
@@ -4062,7 +4334,8 @@ function markerRulesMatch(ourEntry, upstreamEntry, ctx) {
 	const ourRules = markerRulesForClasses(
 		classNamesOfEntry(ourEntry),
 		ourRuleLookup(ctx),
-		ctx.ourMarker
+		ctx.ourMarker,
+		ctx.consts
 	);
 	const upstreamRules = markerRulesForClasses(
 		classNamesOfEntry(upstreamEntry),
@@ -4153,7 +4426,16 @@ for (const testCase of CASES) {
 				ourMarker: markerClassOf(await compileOurs(testCase.marker.file), testCase.marker.name),
 				upstreamMarker: markerClassOf(upstreamMarkerCode, testCase.marker.name)
 			}
-		: null;
+		: testCase.constHashed
+			? {
+					ourCss: compiled.css,
+					upstreamCss,
+					ourMarker: NO_MARKER_CLASS,
+					upstreamMarker: NO_MARKER_CLASS,
+					isConstHashed: true,
+					consts: await collectConsts(testCase.constHashed)
+				}
+			: null;
 
 	for (const [group, entries] of Object.entries(theirs)) {
 		if (skips[group]) {
@@ -4287,7 +4569,8 @@ for (const testCase of CASES) {
 			const ourRules = markerRulesForClasses(
 				classes.split(' '),
 				ourRuleLookup(marker),
-				marker.ourMarker
+				marker.ourMarker,
+				marker.consts
 			);
 			let matched = null;
 			if (ourRules) {
@@ -4324,7 +4607,7 @@ for (const testCase of CASES) {
 	// leftover whose every rule is one we matched is that filler, not a missing
 	// style. A leftover carrying any unverified rule is still a real finding.
 	for (const leftover of upstreamInline) {
-		if (marker) {
+		if (marker && !marker.isConstHashed) {
 			const rules = upstreamInlineRules.get(leftover);
 			if (rules && [...rules].every((rule) => verifiedRules.has(rule))) {
 				markerArtifacts++;

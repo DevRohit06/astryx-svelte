@@ -162,6 +162,12 @@ export default {
 			description: 'Callback fired when the trigger button is clicked.'
 		},
 		{
+			name: 'placement',
+			type: "'below' | 'above' | 'end' | 'start'",
+			description: 'Position placement for the menu popover relative to the trigger button.',
+			default: "'below'"
+		},
+		{
 			name: 'hasChevron',
 			type: 'boolean',
 			description:

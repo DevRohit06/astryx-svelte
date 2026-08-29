@@ -2,10 +2,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { resolveDialogPositionOffsets } from '$lib/components/dialog/dialog.stylex.js';
 import DialogProbe from './fixtures/dialog-probe.svelte';
+import NestedModals from './fixtures/dialog-nested-modals.svelte';
 
 /**
- * Ported from Astryx's `Dialog/Dialog.test.tsx` at v0.3.0: **34 upstream cases,
- * 34 here.** Nothing is dropped.
+ * Ported from Astryx's `Dialog/Dialog.test.tsx` — **40 of its 44 cases at the
+ * 0.5.0 pin.**
+ *
+ * The four not here are two whole describes: `responsive sizing` (3) and
+ * `container padding isolation` (1) — viewport/safe-area clamping and the
+ * container-query padding reset. Both features are ported (`resolveDialogSizing`
+ * and `overlayPaddingReset` are wired through `dialog.stylex.ts`); the cases are
+ * not, and the middle one of the three reads `Dialog.tsx` off disk with
+ * `readFileSync`, which the browser project cannot do. No case outside those two
+ * blocks is missing.
+ *
+ * ## What batch 035 added: the six dismissal cases
+ *
+ * `IME composition` (2) and `nested-modal dismissal` (4) arrived upstream with
+ * the shared layer dismissal stack (#4881) and could not be ported before it,
+ * because the private Escape path they replaced could not pass them: this
+ * `Dialog` owned an element-level `keydown` listener and deferred to
+ * `hasActiveFocusTrapEscape()`, which answers about focus traps and so cannot
+ * see a second *Dialog* stacked above this one — both `nested-modal dismissal`
+ * Escape cases would have closed two modals on one press, and both `cancel`
+ * cases would have dismissed whichever dialog the event was aimed at. The
+ * dialog now registers on `Layer/useLayerDismissal` and the stack decides; the
+ * six cases are ported verbatim.
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
@@ -15,7 +37,7 @@ import DialogProbe from './fixtures/dialog-probe.svelte';
  * though the feature it covers had been. Those five are backfilled below and
  * flagged where they sit. 0.3.0 then added four more — one `position` case for
  * the logical pair and the three-case `resolveDialogPositionOffsets` block —
- * bringing both sides to 34.
+ * bringing both sides to 34 at that pin.
  *
  * ## `DialogPosition` is logical-only as of 0.3.0
  *
@@ -89,7 +111,7 @@ describe('Dialog', () => {
 			props: { props: { isOpen: true, onOpenChange: noop }, text: 'Dialog content' }
 		});
 		await expect.element(screen.getByRole('dialog')).toBeInTheDocument();
-		await expect.element(screen.getByText('Dialog content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Dialog content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('calls showModal when opened', async () => {
@@ -160,6 +182,154 @@ describe('Dialog', () => {
 			dialogIn(screen.container).dispatchEvent(cancelEvent);
 			expect(cancelEvent.defaultPrevented).toBe(true);
 			expect(handleHide).not.toHaveBeenCalled();
+		});
+	});
+
+	describe('IME composition', () => {
+		// A CJK user presses Escape to cancel a half-formed character several times
+		// a sentence. Upstream's note here says jsdom models neither composition
+		// nor the close watcher, so its two cases pin the wiring; this project runs
+		// real Chromium, where the composition events are the real ones and the
+		// `cancel` handler is the real close-request path — the assertions are
+		// upstream's either way.
+		const fieldDialog = (onOpenChange: () => void) =>
+			render(DialogProbe, {
+				props: {
+					props: { isOpen: true, onOpenChange, 'aria-label': 'Filters' },
+					body: 'field'
+				}
+			});
+
+		it('claims the composing Escape instead of letting the browser act', async () => {
+			const onOpenChange = vi.fn();
+			const screen = await fieldDialog(onOpenChange);
+
+			const event = new KeyboardEvent('keydown', {
+				key: 'Escape',
+				bubbles: true,
+				cancelable: true,
+				isComposing: true
+			});
+			screen.getByRole('textbox', { name: 'Search', exact: true }).element().dispatchEvent(event);
+
+			// Unclaimed, this press becomes a close request that arrives at
+			// handleCancel and closes the dialog on the same keystroke.
+			expect(event.defaultPrevented).toBe(true);
+			expect(onOpenChange).not.toHaveBeenCalled();
+		});
+
+		it('ignores a close request that arrives mid-composition', async () => {
+			// The back gesture and the platform close watcher carry no composition
+			// state, so the dialog asks the stack rather than the event.
+			const onOpenChange = vi.fn();
+			const screen = await fieldDialog(onOpenChange);
+			const field = screen.getByRole('textbox', { name: 'Search', exact: true }).element();
+			const dialog = dialogIn(screen.container);
+
+			field.dispatchEvent(new CompositionEvent('compositionstart', { bubbles: true }));
+			const duringComposition = new Event('cancel', { cancelable: true });
+			dialog.dispatchEvent(duringComposition);
+
+			expect(duringComposition.defaultPrevented).toBe(true);
+			expect(onOpenChange).not.toHaveBeenCalled();
+
+			field.dispatchEvent(new CompositionEvent('compositionend', { bubbles: true }));
+			dialog.dispatchEvent(new Event('cancel', { cancelable: true }));
+
+			expect(onOpenChange).toHaveBeenCalledTimes(1);
+			expect(onOpenChange).toHaveBeenCalledWith(false);
+		});
+	});
+
+	describe('nested-modal dismissal', () => {
+		// Upstream's `getDialog` reads `getAllByRole('dialog', {hidden: true})` and
+		// picks by aria-label; here both dialogs come out of the render container,
+		// as everywhere else in this file — see the header's query note.
+		const getDialog = (container: HTMLElement, label: string): HTMLDialogElement => {
+			const el = Array.from(container.querySelectorAll('dialog')).find(
+				(d) => d.getAttribute('aria-label') === label
+			);
+			if (!(el instanceof HTMLDialogElement)) {
+				throw new Error(`expected a <dialog> labelled "${label}"`);
+			}
+			return el;
+		};
+
+		const pressEscape = (target: Element): void => {
+			target.dispatchEvent(
+				new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+			);
+		};
+
+		it('closes only the inner modal, not the outer, on Escape', async () => {
+			const onOuterChange = vi.fn();
+			const onInnerChange = vi.fn();
+
+			const screen = await render(NestedModals, {
+				props: { isInnerOpen: true, onOuterChange, onInnerChange }
+			});
+
+			const outer = getDialog(screen.container, 'Outer');
+			const inner = getDialog(screen.container, 'Inner');
+			expect(outer.contains(inner)).toBe(true);
+
+			pressEscape(inner);
+
+			expect(onInnerChange).toHaveBeenCalledTimes(1);
+			expect(onInnerChange).toHaveBeenCalledWith(false);
+			expect(onOuterChange).not.toHaveBeenCalled();
+		});
+
+		it('closes the outer modal on the next Escape once the inner one is gone', async () => {
+			const onOuterChange = vi.fn();
+			const onInnerChange = vi.fn();
+
+			// Upstream swaps the whole element on `rerender`; `isInnerOpen` is
+			// already the flag that mounts and unmounts the inner modal, so merging
+			// it in does exactly what upstream's second render did.
+			const screen = await render(NestedModals, {
+				props: { isInnerOpen: true, onOuterChange, onInnerChange }
+			});
+			await screen.rerender({ isInnerOpen: false });
+
+			pressEscape(getDialog(screen.container, 'Outer'));
+
+			expect(onOuterChange).toHaveBeenCalledTimes(1);
+			expect(onOuterChange).toHaveBeenCalledWith(false);
+			expect(onInnerChange).not.toHaveBeenCalled();
+		});
+
+		it('closes the top-most modal on a browser-initiated cancel', async () => {
+			const onOuterChange = vi.fn();
+			const onInnerChange = vi.fn();
+
+			const screen = await render(NestedModals, {
+				props: { isInnerOpen: true, onOuterChange, onInnerChange }
+			});
+
+			const cancelEvent = new Event('cancel', { cancelable: true });
+			getDialog(screen.container, 'Inner').dispatchEvent(cancelEvent);
+
+			expect(cancelEvent.defaultPrevented).toBe(true);
+			expect(onInnerChange).toHaveBeenCalledTimes(1);
+			expect(onInnerChange).toHaveBeenCalledWith(false);
+			expect(onOuterChange).not.toHaveBeenCalled();
+		});
+
+		it('leaves a modal that is not top-most open on a browser-initiated cancel', async () => {
+			const onOuterChange = vi.fn();
+			const onInnerChange = vi.fn();
+
+			const screen = await render(NestedModals, {
+				props: { isInnerOpen: true, onOuterChange, onInnerChange }
+			});
+
+			const cancelEvent = new Event('cancel', { cancelable: true });
+			getDialog(screen.container, 'Outer').dispatchEvent(cancelEvent);
+
+			expect(cancelEvent.defaultPrevented).toBe(true);
+			expect(onOuterChange).not.toHaveBeenCalled();
+			expect(onInnerChange).not.toHaveBeenCalled();
 		});
 	});
 
@@ -314,7 +484,7 @@ describe('Dialog', () => {
 				}
 			});
 			const dialog = screen.getByRole('dialog');
-			const heading = screen.getByRole('heading', { name: 'Dialog title' });
+			const heading = screen.getByRole('heading', { name: 'Dialog title', exact: true });
 			const headingEl = heading.element() as HTMLElement;
 			expect(headingEl.id).not.toBe('');
 			await expect.element(dialog).toHaveAttribute('aria-labelledby', headingEl.id);
@@ -416,7 +586,7 @@ describe('Dialog', () => {
 					text: 'Inline content'
 				}
 			});
-			await expect.element(screen.getByText('Inline content')).toBeInTheDocument();
+			await expect.element(screen.getByText('Inline content', { exact: true })).toBeInTheDocument();
 			expect(screen.container.querySelector('dialog')).toBeNull();
 		});
 

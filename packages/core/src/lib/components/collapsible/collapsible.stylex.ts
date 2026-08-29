@@ -24,7 +24,10 @@ const styles = stylex.create({
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		width: '100%',
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		fontFamily: typographyVars['--font-family-body'],
 		fontSize: typeScaleVars['--text-large-size'],
 		fontWeight: fontWeightVars['--font-weight-semibold'],
@@ -41,7 +44,7 @@ const styles = stylex.create({
 	// Disabled trigger — non-interactive, dimmed. `aria-disabled` (not native
 	// `disabled`) blocks activation via the handler while staying perceivable.
 	triggerDisabled: {
-		cursor: 'not-allowed',
+		cursor: 'default',
 		opacity: 0.5
 	},
 	chevron: {

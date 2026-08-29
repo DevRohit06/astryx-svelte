@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Token from '../token/token.svelte';
 	import type { PowerSearchTokenProps } from './types.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { formatFilterValue } from './format-filter-value.js';
 	import { powerSearchTokenValueAttrs } from './power-search-token.stylex.js';
@@ -51,6 +52,7 @@
 
 	const config = useInternalConfig(() => configProp);
 	const t = useTranslator();
+	const locale = useLocale();
 
 	const fieldLabel = $derived(field.label);
 	const resolvedOperatorLabel = $derived(resolveOperatorLabel(operator, t));
@@ -62,7 +64,7 @@
 	);
 
 	const valueStr = $derived(
-		formatFilterValue(config, operator.value, filter.value, adjustedMaxLength, t)
+		formatFilterValue(config, operator.value, filter.value, adjustedMaxLength, t, locale())
 	);
 </script>
 

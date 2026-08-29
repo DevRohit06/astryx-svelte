@@ -23,8 +23,22 @@
 		 * @default false
 		 */
 		isLabelHidden?: boolean;
-		/** URL to navigate to. When provided, renders as an anchor element. */
+		/**
+		 * URL to navigate to. When provided, renders as an anchor element.
+		 *
+		 * Ignored in a `TabList` given an explicit `role="tablist"`: activating a
+		 * tab there swaps a panel in place, so a tab that navigates would be a
+		 * false statement.
+		 */
 		href?: string;
+		/**
+		 * Id of the panel this tab controls, wired up as `aria-controls` where the
+		 * `TabList` speaks the tabs pattern. Put the same id on the panel element.
+		 *
+		 * Has no effect under the navigation pattern, where there is no panel to
+		 * associate — a development warning says so.
+		 */
+		panelId?: string;
 		/** Icon shown when the tab is not selected. */
 		icon?: Snippet;
 		/** Icon shown when the tab is selected. Falls back to `icon` if not provided. */
@@ -38,6 +52,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { EDGE_COMP_ATTR } from '../../internal/edge-compensation.stylex.js';
+	import { useDevWarning } from '../../hooks/use-dev-warning.svelte.js';
 	import { useLinkComponent } from '../link/link-context.svelte.js';
 	import LinkElement from '../link/link-element.svelte';
 	import { useTabListContext } from './tab-list-context.svelte.js';
@@ -69,6 +84,7 @@
 		label,
 		isLabelHidden = false,
 		href,
+		panelId,
 		icon,
 		selectedIcon,
 		endContent,
@@ -85,12 +101,43 @@
 	const isSelected = $derived(tabList().value === value);
 	const size = $derived(tabList().size);
 	const isFill = $derived(tabList().layout === 'fill');
+	const isTabsPattern = $derived(tabList().pattern === 'tabs');
+	const isLink = $derived(href != null && !isTabsPattern);
+	const isTabRole = $derived(isTabsPattern && !isLink);
 	const displayIcon = $derived(isSelected && selectedIcon ? selectedIcon : icon);
 	const hasVisibleLabel = $derived(!isLabelHidden && label !== '');
 
 	function handleSelect(): void {
 		tabList().onChange(value);
 	}
+
+	useDevWarning(
+		'Tab',
+		'href is ignored in a role="tablist" TabList — a tab swaps a panel in ' +
+			'place rather than navigating. Drop the href, or drop the role for the ' +
+			'navigation pattern.',
+		() => isTabRole && href != null
+	);
+
+	// A consumer who wired aria-controls by hand already said which panel this
+	// is, so panelId is the sugar, not the only way in.
+	const controls = $derived(panelId ?? rest['aria-controls']);
+
+	useDevWarning(
+		'Tab',
+		'a tab in a role="tablist" TabList controls nothing: pass panelId with ' +
+			'the id of the panel it opens, so assistive technology can associate ' +
+			'the two.',
+		() => isTabRole && controls == null
+	);
+
+	useDevWarning(
+		'Tab',
+		'panelId does nothing outside a role="tablist" TabList — the navigation ' +
+			'pattern has no panel to associate. Give the TabList role="tablist", ' +
+			'or drop the panelId.',
+		() => !isTabsPattern && panelId != null
+	);
 
 	const theme = $derived(themeProps('tab', { selected: isSelected ? 'selected' : null }));
 	const indicatorTheme = $derived(
@@ -111,7 +158,25 @@
 		...(isLabelHidden ? { 'aria-label': label } : {}),
 		[EDGE_COMP_ATTR]: '',
 		'data-tab-value': value,
-		'aria-current': isSelected ? ('page' as const) : undefined,
+		...(isTabRole
+			? {
+					role: 'tab' as const,
+					'aria-selected': isSelected,
+					// Only when there is a panel to point at: an aria-controls whose
+					// target does not exist is an invalid attribute value, which is a
+					// worse state than saying nothing. The dev warning above asks for
+					// the id instead.
+					'aria-controls': controls
+				}
+			: {
+					// Generic `true` ("the current item within a set"), not `page`: the
+					// strip switches views in place at least as often as it navigates,
+					// and claiming "current page" when no page changed is a false
+					// statement to a screen reader. Stays truthful for the `href` case
+					// too, just less specific. A tab role states this with
+					// aria-selected instead.
+					'aria-current': isSelected ? ('true' as const) : undefined
+				}),
 		// Roving tabindex: the tab strip is a single Tab stop. The selected tab is
 		// the tabbable one; the rest are reachable via arrow keys (handled by
 		// TabList's onkeydown). When no tab is selected, TabList's repair pass
@@ -155,7 +220,7 @@
 	></span>
 {/snippet}
 
-{#if href != null}
+{#if isLink}
 	<LinkElement component={linkResolved.component} props={anchorProps}>
 		{@render tabContent()}
 	</LinkElement>

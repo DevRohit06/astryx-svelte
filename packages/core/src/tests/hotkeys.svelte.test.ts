@@ -4,7 +4,15 @@ import type { Hotkey } from '$lib/hooks/use-hotkeys.svelte.js';
 import Probe from './fixtures/hotkeys-probe.svelte';
 
 /**
- * Ported from Astryx's `hooks/useHotkeys.test.ts`, all twelve cases.
+ * Ported from Astryx's `hooks/useHotkeys.test.ts` — **12 of its 13 cases at the
+ * 0.5.0 pin**.
+ *
+ * Unported: `reads a blank userAgentData.platform as unknown, not as non-Apple`,
+ * added upstream with the guard it covers. It is **not** portable as coverage
+ * debt alone — `hooks/use-hotkeys.svelte.ts` still takes the unguarded branch
+ * when `userAgentData.platform` is the empty string, so the case would fail
+ * against this port as written. The same unguarded shape is in
+ * `components/kbd/kbd-keys.ts`.
  *
  * The platform stubs are upstream's, and they carry over intact for a reason
  * worth stating: they replace `navigator` with a bare `{platform}` object, and

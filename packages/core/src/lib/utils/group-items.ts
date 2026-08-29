@@ -5,8 +5,10 @@ import type { SearchableItem } from '../components/typeahead/types.js';
  * the one Phase 1 utility deferred, because it is typed against `Typeahead`'s
  * `SearchableItem` and had nothing to import until that component landed.
  *
- * Upstream's consumers are `CommandPalette` and the trigger menu, neither of
- * which is ported yet; it is published anyway because `utils/index.ts` does.
+ * Its consumers here are the chat trigger menu and — since 0.5.0 —
+ * `BaseTypeahead`'s grouped dropdown and `usePowerSearchSource`'s field
+ * browser, the pair that introduced `GroupItemsOptions.ungroupedFirst`.
+ * Upstream's `CommandPalette` is not ported.
  */
 
 /**
@@ -16,6 +18,11 @@ import type { SearchableItem } from '../components/typeahead/types.js';
 export interface ItemGroup<T extends SearchableItem = SearchableItem> {
 	heading: string | null;
 	items: T[];
+}
+
+export interface GroupItemsOptions {
+	/** Place ungrouped items before named groups instead of after them. */
+	ungroupedFirst?: boolean;
 }
 
 /**
@@ -49,7 +56,10 @@ export function getItemGroup(item: SearchableItem): string | undefined {
  * // ]
  * ```
  */
-export function groupItems<T extends SearchableItem>(items: T[]): ItemGroup<T>[] {
+export function groupItems<T extends SearchableItem>(
+	items: T[],
+	{ ungroupedFirst = false }: GroupItemsOptions = {}
+): ItemGroup<T>[] {
 	const hasGroups = items.some((item) => getItemGroup(item) != null);
 
 	if (!hasGroups) {
@@ -73,14 +83,12 @@ export function groupItems<T extends SearchableItem>(items: T[]): ItemGroup<T>[]
 		}
 	}
 
-	const result: ItemGroup<T>[] = groupOrder.map((heading) => ({
+	const namedGroups: ItemGroup<T>[] = groupOrder.map((heading) => ({
 		heading,
 		items: groups.get(heading) ?? []
 	}));
+	const ungroupedGroup: ItemGroup<T>[] =
+		ungrouped.length > 0 ? [{ heading: null, items: ungrouped }] : [];
 
-	if (ungrouped.length > 0) {
-		result.push({ heading: null, items: ungrouped });
-	}
-
-	return result;
+	return ungroupedFirst ? [...ungroupedGroup, ...namedGroups] : [...namedGroups, ...ungroupedGroup];
 }

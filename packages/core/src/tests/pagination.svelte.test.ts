@@ -5,11 +5,19 @@ import Pagination, { generatePageRange } from '$lib/components/pagination/pagina
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 
 /**
- * Astryx's `Pagination/Pagination.test.tsx`, ported case for case — 92 upstream
- * cases at 0.3.0 (9 in `describe('generatePageRange')` and 83 in
- * `describe('Pagination')` across its thirteen nested blocks, two of which nest
- * again inside `variant: input`), 92 here, none dropped. There is no
+ * Astryx's `Pagination/Pagination.test.tsx`, ported case for case — **93
+ * upstream cases at the 0.5.0 pin** (9 in `describe('generatePageRange')` and
+ * 84 in `describe('Pagination')` across its thirteen nested blocks, two of
+ * which nest again inside `variant: input`), **92 here**. There is no
  * ref-callback and no `displayName` case in the file, so nothing is React-only.
+ *
+ * **The one that is not here** is `renders the prev/next caret icons without an
+ * extra mirror wrapper span`, in `basic rendering`. It is not a standing drop —
+ * it asserts on rendered DOM shape and transcribes unchanged. It landed
+ * upstream between v0.3.0 and v0.4.1, so it has been missing across three pins;
+ * this header read "92 upstream cases at 0.3.0 … 92 here, none dropped", which
+ * was true only at 0.3.0 and hid the gap through both later re-pins. Upstream's
+ * file is unchanged between v0.4.1 and 0.5.0.
  *
  * 0.3.0 added 28 of those: the prev/next hover-tooltip case in `basic
  * rendering`, the 19 of `variant: input` (11 direct, 6 in `first/last buttons`,
@@ -168,7 +176,7 @@ describe('Pagination', () => {
 				props: { page: 1, onChange: () => {}, totalPages: 5 }
 			});
 			await expect
-				.element(screen.getByRole('navigation', { name: 'Pagination' }))
+				.element(screen.getByRole('navigation', { name: 'Pagination', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -177,7 +185,7 @@ describe('Pagination', () => {
 				props: { page: 1, onChange: () => {}, totalPages: 5, label: 'Results navigation' }
 			});
 			await expect
-				.element(screen.getByRole('navigation', { name: 'Results navigation' }))
+				.element(screen.getByRole('navigation', { name: 'Results navigation', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -186,10 +194,10 @@ describe('Pagination', () => {
 				props: { page: 3, onChange: () => {}, totalPages: 5 }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeInTheDocument();
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to next page' }))
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -200,8 +208,10 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 3, onChange: () => {}, totalPages: 5 }
 			});
-			const prev = screen.getByRole('button', { name: 'Go to previous page' }).element();
-			const next = screen.getByRole('button', { name: 'Go to next page' }).element();
+			const prev = screen
+				.getByRole('button', { name: 'Go to previous page', exact: true })
+				.element();
+			const next = screen.getByRole('button', { name: 'Go to next page', exact: true }).element();
 			const tooltipIds = new Set(tooltipsIn(screen.container).map((el) => el.id));
 			expect(
 				prev
@@ -246,7 +256,7 @@ describe('Pagination', () => {
 			});
 			for (let i = 1; i <= 5; i++) {
 				await expect
-					.element(screen.getByRole('button', { name: `Go to page ${i}` }))
+					.element(screen.getByRole('button', { name: `Go to page ${i}`, exact: true }))
 					.toBeInTheDocument();
 			}
 		});
@@ -256,10 +266,10 @@ describe('Pagination', () => {
 				props: { page: 3, onChange: () => {}, totalPages: 5 }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 3' }))
+				.element(screen.getByRole('button', { name: 'Go to page 3', exact: true }))
 				.toHaveAttribute('aria-current', 'page');
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 1' }))
+				.element(screen.getByRole('button', { name: 'Go to page 1', exact: true }))
 				.not.toHaveAttribute('aria-current');
 		});
 
@@ -322,7 +332,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 3, onChange: () => {}, totalPages: 10, variant: 'compact' as const }
 			});
-			await expect.element(screen.getByText('Page 3 of 10')).toBeInTheDocument();
+			await expect.element(screen.getByText('Page 3 of 10', { exact: true })).toBeInTheDocument();
 		});
 	});
 
@@ -350,7 +360,7 @@ describe('Pagination', () => {
 					variant: 'compact' as const
 				}
 			});
-			await expect.element(screen.getByText('Page 1 of 5')).toBeInTheDocument();
+			await expect.element(screen.getByText('Page 1 of 5', { exact: true })).toBeInTheDocument();
 		});
 
 		it('clamps negative pageSize to 1', async () => {
@@ -363,7 +373,7 @@ describe('Pagination', () => {
 					variant: 'compact' as const
 				}
 			});
-			await expect.element(screen.getByText('Page 1 of 5')).toBeInTheDocument();
+			await expect.element(screen.getByText('Page 1 of 5', { exact: true })).toBeInTheDocument();
 		});
 
 		it('floors fractional pageSize', async () => {
@@ -376,7 +386,7 @@ describe('Pagination', () => {
 					variant: 'compact' as const
 				}
 			});
-			await expect.element(screen.getByText('Page 1 of 25')).toBeInTheDocument();
+			await expect.element(screen.getByText('Page 1 of 25', { exact: true })).toBeInTheDocument();
 		});
 	});
 
@@ -393,7 +403,7 @@ describe('Pagination', () => {
 				props: { page: 3, onChange: () => {}, totalPages: 5, variant: 'dots' as const }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 3' }))
+				.element(screen.getByRole('button', { name: 'Go to page 3', exact: true }))
 				.toHaveAttribute('aria-current', 'page');
 		});
 
@@ -407,13 +417,13 @@ describe('Pagination', () => {
 				props: { page: 2, onChange: () => {}, totalPages: 4, variant: 'dots' as const }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 2' }))
+				.element(screen.getByRole('button', { name: 'Go to page 2', exact: true }))
 				.toHaveAttribute('tabindex', '0');
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 1' }))
+				.element(screen.getByRole('button', { name: 'Go to page 1', exact: true }))
 				.toHaveAttribute('tabindex', '-1');
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 3' }))
+				.element(screen.getByRole('button', { name: 'Go to page 3', exact: true }))
 				.toHaveAttribute('tabindex', '-1');
 		});
 
@@ -422,10 +432,14 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 2, onChange, totalPages: 4, variant: 'dots' as const }
 			});
-			(screen.getByRole('button', { name: 'Go to page 2' }).element() as HTMLElement).focus();
+			(
+				screen.getByRole('button', { name: 'Go to page 2', exact: true }).element() as HTMLElement
+			).focus();
 			await userEvent.keyboard('{ArrowRight}');
 			expect(onChange).toHaveBeenCalledWith(3);
-			await expect.element(screen.getByRole('button', { name: 'Go to page 3' })).toHaveFocus();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to page 3', exact: true }))
+				.toHaveFocus();
 		});
 
 		it('ArrowLeft moves focus to the previous dot and selects it', async () => {
@@ -433,10 +447,14 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 3, onChange, totalPages: 4, variant: 'dots' as const }
 			});
-			(screen.getByRole('button', { name: 'Go to page 3' }).element() as HTMLElement).focus();
+			(
+				screen.getByRole('button', { name: 'Go to page 3', exact: true }).element() as HTMLElement
+			).focus();
 			await userEvent.keyboard('{ArrowLeft}');
 			expect(onChange).toHaveBeenCalledWith(2);
-			await expect.element(screen.getByRole('button', { name: 'Go to page 2' })).toHaveFocus();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to page 2', exact: true }))
+				.toHaveFocus();
 		});
 
 		it('Home selects the first page, End the last', async () => {
@@ -444,17 +462,25 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 3, onChange, totalPages: 5, variant: 'dots' as const }
 			});
-			(screen.getByRole('button', { name: 'Go to page 3' }).element() as HTMLElement).focus();
+			(
+				screen.getByRole('button', { name: 'Go to page 3', exact: true }).element() as HTMLElement
+			).focus();
 			await userEvent.keyboard('{Home}');
 			expect(onChange).toHaveBeenCalledWith(1);
-			await expect.element(screen.getByRole('button', { name: 'Go to page 1' })).toHaveFocus();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to page 1', exact: true }))
+				.toHaveFocus();
 
 			onChange.mockClear();
 			await screen.rerender({ page: 3, onChange, totalPages: 5, variant: 'dots' as const });
-			(screen.getByRole('button', { name: 'Go to page 3' }).element() as HTMLElement).focus();
+			(
+				screen.getByRole('button', { name: 'Go to page 3', exact: true }).element() as HTMLElement
+			).focus();
 			await userEvent.keyboard('{End}');
 			expect(onChange).toHaveBeenCalledWith(5);
-			await expect.element(screen.getByRole('button', { name: 'Go to page 5' })).toHaveFocus();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to page 5', exact: true }))
+				.toHaveFocus();
 		});
 
 		it('wraps from the last dot to the first with ArrowRight', async () => {
@@ -462,10 +488,14 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 4, onChange, totalPages: 4, variant: 'dots' as const }
 			});
-			(screen.getByRole('button', { name: 'Go to page 4' }).element() as HTMLElement).focus();
+			(
+				screen.getByRole('button', { name: 'Go to page 4', exact: true }).element() as HTMLElement
+			).focus();
 			await userEvent.keyboard('{ArrowRight}');
 			expect(onChange).toHaveBeenCalledWith(1);
-			await expect.element(screen.getByRole('button', { name: 'Go to page 1' })).toHaveFocus();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to page 1', exact: true }))
+				.toHaveFocus();
 		});
 
 		it('wraps from the first dot to the last with ArrowLeft', async () => {
@@ -473,10 +503,14 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 1, onChange, totalPages: 4, variant: 'dots' as const }
 			});
-			(screen.getByRole('button', { name: 'Go to page 1' }).element() as HTMLElement).focus();
+			(
+				screen.getByRole('button', { name: 'Go to page 1', exact: true }).element() as HTMLElement
+			).focus();
 			await userEvent.keyboard('{ArrowLeft}');
 			expect(onChange).toHaveBeenCalledWith(4);
-			await expect.element(screen.getByRole('button', { name: 'Go to page 4' })).toHaveFocus();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to page 4', exact: true }))
+				.toHaveFocus();
 		});
 
 		it('does not navigate with arrow keys when disabled', async () => {
@@ -490,7 +524,7 @@ describe('Pagination', () => {
 					isDisabled: true
 				}
 			});
-			const dot = screen.getByRole('button', { name: 'Go to page 2' });
+			const dot = screen.getByRole('button', { name: 'Go to page 2', exact: true });
 			await expect.element(dot).toBeDisabled();
 			(dot.element() as HTMLElement).focus();
 			await userEvent.keyboard('{ArrowRight}');
@@ -504,10 +538,10 @@ describe('Pagination', () => {
 				props: { page: 2, onChange: () => {}, totalPages: 5, variant: 'none' as const }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeInTheDocument();
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to next page' }))
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
 				.toBeInTheDocument();
 			// No page buttons or text indicators
 			expect(
@@ -529,7 +563,7 @@ describe('Pagination', () => {
 					variant: 'input' as const
 				}
 			});
-			const box = screen.getByRole('spinbutton', { name: 'Go to page' });
+			const box = screen.getByRole('spinbutton', { name: 'Go to page', exact: true });
 			await expect.element(box).toBeInTheDocument();
 			await expect.element(box).toHaveValue('3');
 			// Visible leading "Page" label and trailing "/ N" total (10 pages).
@@ -549,7 +583,7 @@ describe('Pagination', () => {
 				'Go to next page',
 				'Go to last page'
 			]) {
-				await expect.element(screen.getByRole('button', { name })).toBeInTheDocument();
+				await expect.element(screen.getByRole('button', { name, exact: true })).toBeInTheDocument();
 			}
 		});
 
@@ -565,7 +599,7 @@ describe('Pagination', () => {
 			});
 			// The box is a NumberInput (a spinbutton) whose min/max clamp entries to
 			// the valid page range without hand-rolled parsing in Pagination.
-			const box = screen.getByRole('spinbutton', { name: 'Go to page' });
+			const box = screen.getByRole('spinbutton', { name: 'Go to page', exact: true });
 			await expect.element(box).toHaveAttribute('aria-valuemin', '1');
 			await expect.element(box).toHaveAttribute('aria-valuemax', '10');
 		});
@@ -691,7 +725,9 @@ describe('Pagination', () => {
 			});
 			// With no known page count there is no range to clamp against, so the
 			// editable box is inert rather than accepting entries it can't resolve.
-			await expect.element(screen.getByRole('spinbutton', { name: 'Go to page' })).toBeDisabled();
+			await expect
+				.element(screen.getByRole('spinbutton', { name: 'Go to page', exact: true }))
+				.toBeDisabled();
 		});
 
 		it('renders the localized "Page" label by default and a custom pageLabel', async () => {
@@ -753,11 +789,13 @@ describe('Pagination', () => {
 				const screen = await render(Pagination, {
 					props: { page: 5, onChange, totalItems: 100, pageSize: 10, variant: 'input' as const }
 				});
-				await userEvent.click(screen.getByRole('button', { name: 'Go to first page' }));
+				await userEvent.click(
+					screen.getByRole('button', { name: 'Go to first page', exact: true })
+				);
 				expect(onChange).toHaveBeenCalledWith(1);
 
 				onChange.mockClear();
-				await userEvent.click(screen.getByRole('button', { name: 'Go to last page' }));
+				await userEvent.click(screen.getByRole('button', { name: 'Go to last page', exact: true }));
 				// 100 items / 10 per page → 10 pages.
 				expect(onChange).toHaveBeenCalledWith(10);
 			});
@@ -773,10 +811,10 @@ describe('Pagination', () => {
 					}
 				});
 				await expect
-					.element(screen.getByRole('button', { name: 'Go to first page' }))
+					.element(screen.getByRole('button', { name: 'Go to first page', exact: true }))
 					.toBeDisabled();
 				await expect
-					.element(screen.getByRole('button', { name: 'Go to last page' }))
+					.element(screen.getByRole('button', { name: 'Go to last page', exact: true }))
 					.not.toBeDisabled();
 
 				await screen.rerender({
@@ -787,10 +825,10 @@ describe('Pagination', () => {
 					variant: 'input' as const
 				});
 				await expect
-					.element(screen.getByRole('button', { name: 'Go to last page' }))
+					.element(screen.getByRole('button', { name: 'Go to last page', exact: true }))
 					.toBeDisabled();
 				await expect
-					.element(screen.getByRole('button', { name: 'Go to first page' }))
+					.element(screen.getByRole('button', { name: 'Go to first page', exact: true }))
 					.not.toBeDisabled();
 			});
 
@@ -809,10 +847,10 @@ describe('Pagination', () => {
 				expect(buttonNamed(screen.container, 'Go to last page')).toBeUndefined();
 				// prev/next still present.
 				await expect
-					.element(screen.getByRole('button', { name: 'Go to previous page' }))
+					.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 					.toBeInTheDocument();
 				await expect
-					.element(screen.getByRole('button', { name: 'Go to next page' }))
+					.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
 					.toBeInTheDocument();
 			});
 
@@ -836,8 +874,10 @@ describe('Pagination', () => {
 				});
 				// Each default double-chevron icon draws two chevron paths in one <path>
 				// ("M...M..."); assert both first and last render an svg with two moves.
-				const first = screen.getByRole('button', { name: 'Go to first page' }).element();
-				const last = screen.getByRole('button', { name: 'Go to last page' }).element();
+				const first = screen
+					.getByRole('button', { name: 'Go to first page', exact: true })
+					.element();
+				const last = screen.getByRole('button', { name: 'Go to last page', exact: true }).element();
 				for (const btn of [first, last]) {
 					const path = btn.querySelector('svg path');
 					expect(path).not.toBeNull();
@@ -884,7 +924,7 @@ describe('Pagination', () => {
 				await expect.element(screen.getByText('/ 10', { exact: true })).toBeInTheDocument();
 				// The box still holds the 1-based page number.
 				await expect
-					.element(screen.getByRole('spinbutton', { name: 'Go to page' }))
+					.element(screen.getByRole('spinbutton', { name: 'Go to page', exact: true }))
 					.toHaveValue('3');
 			});
 
@@ -918,7 +958,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 2, onChange: () => {}, totalPages: 10 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to page 3' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to page 3', exact: true }));
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Page 3 of 10');
 			});
@@ -928,7 +968,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 2, onChange: () => {}, totalPages: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to next page' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to next page', exact: true }));
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Page 3 of 5');
 			});
@@ -938,7 +978,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 1, onChange: () => {}, hasMore: true }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to next page' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to next page', exact: true }));
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Page 2');
 			});
@@ -949,7 +989,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 1, onChange, totalPages: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to page 3' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to page 3', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(3);
 		});
 
@@ -958,7 +998,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 2, onChange, totalPages: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to next page' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to next page', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(3);
 		});
 
@@ -967,7 +1007,9 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 3, onChange, totalPages: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to previous page' }));
+			await userEvent.click(
+				screen.getByRole('button', { name: 'Go to previous page', exact: true })
+			);
 			expect(onChange).toHaveBeenCalledWith(2);
 		});
 
@@ -976,7 +1018,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 1, onChange, totalPages: 5, variant: 'dots' as const }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to page 4' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to page 4', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(4);
 		});
 	});
@@ -987,7 +1029,9 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 1, onChange, totalPages: 20, step: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go forward 5 pages' }));
+			await userEvent.click(
+				screen.getByRole('button', { name: 'Go forward 5 pages', exact: true })
+			);
 			expect(onChange).toHaveBeenCalledWith(6);
 		});
 
@@ -996,7 +1040,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 11, onChange, totalPages: 20, step: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go back 5 pages' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go back 5 pages', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(6);
 		});
 
@@ -1005,7 +1049,9 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 18, onChange, totalPages: 20, step: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go forward 5 pages' }));
+			await userEvent.click(
+				screen.getByRole('button', { name: 'Go forward 5 pages', exact: true })
+			);
 			expect(onChange).toHaveBeenCalledWith(20);
 		});
 
@@ -1014,7 +1060,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 3, onChange, totalPages: 20, step: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go back 5 pages' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go back 5 pages', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(1);
 		});
 
@@ -1023,11 +1069,11 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 5, onChange, totalPages: 20, step: 0 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to next page' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to next page', exact: true }));
 			expect(onChange).toHaveBeenLastCalledWith(6);
 
 			await screen.rerender({ page: 5, onChange, totalPages: 20, step: 2.5 });
-			await userEvent.click(screen.getByRole('button', { name: 'Go to next page' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to next page', exact: true }));
 			expect(onChange).toHaveBeenLastCalledWith(6);
 		});
 
@@ -1043,7 +1089,9 @@ describe('Pagination', () => {
 					step: 5
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go forward 5 pages' }));
+			await userEvent.click(
+				screen.getByRole('button', { name: 'Go forward 5 pages', exact: true })
+			);
 			expect(onChange).toHaveBeenCalledWith(6);
 		});
 
@@ -1052,10 +1100,10 @@ describe('Pagination', () => {
 				props: { page: 5, onChange: () => {}, totalPages: 20, step: 5 }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go forward 5 pages' }))
+				.element(screen.getByRole('button', { name: 'Go forward 5 pages', exact: true }))
 				.toBeInTheDocument();
 			await expect
-				.element(screen.getByRole('button', { name: 'Go back 5 pages' }))
+				.element(screen.getByRole('button', { name: 'Go back 5 pages', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -1064,10 +1112,10 @@ describe('Pagination', () => {
 				props: { page: 5, onChange: () => {}, totalPages: 20, step: 1 }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to next page' }))
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
 				.toBeInTheDocument();
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeInTheDocument();
 		});
 	});
@@ -1082,7 +1130,7 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 1, onChange, changeAction, totalPages: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to next page' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to next page', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(2);
 			expect(changeAction).toHaveBeenCalledWith(2);
 			expect(order).toEqual(['onChange', 'changeAction']);
@@ -1108,7 +1156,7 @@ describe('Pagination', () => {
 
 			// The committed `page` prop stays at 1, but the indicator optimistically
 			// reflects the page being navigated to.
-			await userEvent.click(screen.getByRole('button', { name: 'Go to next page' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Go to next page', exact: true }));
 			expect(changeAction).toHaveBeenCalledWith(2);
 			await vi.waitFor(() => {
 				expect(screen.container.querySelector('nav')).toHaveTextContent('Page 2 of 5');
@@ -1138,7 +1186,7 @@ describe('Pagination', () => {
 				}
 			});
 
-			const next = screen.getByRole('button', { name: 'Go to next page' }).element();
+			const next = screen.getByRole('button', { name: 'Go to next page', exact: true }).element();
 			const nav = screen.container.querySelector('nav')!;
 			// RESTATED: native clicks rather than `userEvent`, for the reason
 			// upstream wraps each in `act` — both must land while the first action
@@ -1167,7 +1215,9 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 2, onChange, changeAction, totalPages: 5 }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Go to previous page' }));
+			await userEvent.click(
+				screen.getByRole('button', { name: 'Go to previous page', exact: true })
+			);
 			expect(onChange).toHaveBeenCalledWith(1);
 			expect(changeAction).toHaveBeenCalledWith(1);
 		});
@@ -1186,7 +1236,11 @@ describe('Pagination', () => {
 			// RESTATED: the next button is `disabled`, and Playwright refuses to
 			// click a disabled element — a native click exercises the component's
 			// own guard instead of the driver's actionability heuristic.
-			(screen.getByRole('button', { name: 'Go to next page' }).element() as HTMLElement).click();
+			(
+				screen
+					.getByRole('button', { name: 'Go to next page', exact: true })
+					.element() as HTMLElement
+			).click();
 			expect(changeAction).not.toHaveBeenCalled();
 		});
 	});
@@ -1197,7 +1251,7 @@ describe('Pagination', () => {
 				props: { page: 1, onChange: () => {}, totalPages: 5 }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeDisabled();
 		});
 
@@ -1205,7 +1259,9 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 5, onChange: () => {}, totalPages: 5 }
 			});
-			await expect.element(screen.getByRole('button', { name: 'Go to next page' })).toBeDisabled();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
+				.toBeDisabled();
 		});
 
 		it('enables both buttons on middle page', async () => {
@@ -1213,10 +1269,10 @@ describe('Pagination', () => {
 				props: { page: 3, onChange: () => {}, totalPages: 5 }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.not.toBeDisabled();
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to next page' }))
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
 				.not.toBeDisabled();
 		});
 
@@ -1225,9 +1281,11 @@ describe('Pagination', () => {
 				props: { page: 1, onChange: () => {}, totalPages: 1 }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeDisabled();
-			await expect.element(screen.getByRole('button', { name: 'Go to next page' })).toBeDisabled();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
+				.toBeDisabled();
 		});
 	});
 
@@ -1237,7 +1295,7 @@ describe('Pagination', () => {
 				props: { page: 1, onChange: () => {}, hasMore: true }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to next page' }))
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
 				.not.toBeDisabled();
 		});
 
@@ -1245,7 +1303,9 @@ describe('Pagination', () => {
 			const screen = await render(Pagination, {
 				props: { page: 3, onChange: () => {}, hasMore: false }
 			});
-			await expect.element(screen.getByRole('button', { name: 'Go to next page' })).toBeDisabled();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
+				.toBeDisabled();
 		});
 
 		it('disables previous on first page with hasMore', async () => {
@@ -1253,7 +1313,7 @@ describe('Pagination', () => {
 				props: { page: 1, onChange: () => {}, hasMore: true }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeDisabled();
 		});
 
@@ -1262,7 +1322,7 @@ describe('Pagination', () => {
 				props: { page: 2, onChange: () => {}, hasMore: true }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.not.toBeDisabled();
 		});
 	});
@@ -1299,11 +1359,15 @@ describe('Pagination', () => {
 				props: { page: 3, onChange: () => {}, totalPages: 5, isDisabled: true }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to previous page' }))
+				.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 				.toBeDisabled();
-			await expect.element(screen.getByRole('button', { name: 'Go to next page' })).toBeDisabled();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
+				.toBeDisabled();
 			// Page buttons should also be disabled
-			await expect.element(screen.getByRole('button', { name: 'Go to page 1' })).toBeDisabled();
+			await expect
+				.element(screen.getByRole('button', { name: 'Go to page 1', exact: true }))
+				.toBeDisabled();
 		});
 
 		it('does not call onChange when disabled', async () => {
@@ -1314,7 +1378,9 @@ describe('Pagination', () => {
 			// RESTATED: disabled buttons can't be clicked — Playwright refuses, so
 			// the click is dispatched natively and the component's guard is what the
 			// case pins.
-			(screen.getByRole('button', { name: 'Go to page 1' }).element() as HTMLElement).click();
+			(
+				screen.getByRole('button', { name: 'Go to page 1', exact: true }).element() as HTMLElement
+			).click();
 			expect(onChange).not.toHaveBeenCalled();
 		});
 	});
@@ -1326,7 +1392,7 @@ describe('Pagination', () => {
 			});
 			// 95 / 10 = 10 pages, should show page 10
 			await expect
-				.element(screen.getByRole('button', { name: 'Go to page 10' }))
+				.element(screen.getByRole('button', { name: 'Go to page 10', exact: true }))
 				.toBeInTheDocument();
 		});
 

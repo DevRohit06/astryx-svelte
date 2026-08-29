@@ -10,11 +10,12 @@ import { cssIn, forcedColorsCssIn } from './forced-colors.js';
 
 /**
  * Astryx's `Switch/Switch.test.tsx`, ported case for case — **50** upstream
- * cases at v0.4.5, **50** of them here, plus one beyond upstream (`supports
+ * cases at the 0.5.0 pin, **50** of them here, plus one beyond upstream (`supports
  * two-way bind:value`) that pins the `$bindable` decision (justified below, and
  * recorded in port/todo.md). **51 `it` in the file.** Nothing is dropped.
  *
- * The count is re-derived at the 0.4.5 pin. It read "**49** … at v0.4.1" and
+ * The count is re-derived at the 0.5.0 pin, where upstream's file stands
+ * unchanged since v0.4.5. It read "**49** … at v0.4.1" and
  * stayed true only until the pin moved: 0.4.x added `drops the label gap when
  * isLabelHidden so the row is only as wide as the track`, which is ported here
  * (restated only in how the second render is driven — see the case).
@@ -209,7 +210,7 @@ describe('Switch', () => {
 			props: { label: 'Enable notifications', value: false, onChange: handleChange }
 		});
 
-		await userEvent.click(screen.getByText('Enable notifications'));
+		await userEvent.click(screen.getByText('Enable notifications', { exact: true }));
 		expect(handleChange).toHaveBeenCalledWith(true, expect.any(Object));
 	});
 
@@ -222,7 +223,9 @@ describe('Switch', () => {
 				onChange: noop
 			}
 		});
-		await expect.element(screen.getByText('Switch to a darker color scheme')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Switch to a darker color scheme', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('associates description with switch via aria-describedby', async () => {
@@ -235,7 +238,9 @@ describe('Switch', () => {
 			}
 		});
 		const control = inputIn(screen.container);
-		const description = screen.getByText('Switch to a darker color scheme').element();
+		const description = screen
+			.getByText('Switch to a darker color scheme', { exact: true })
+			.element();
 		expect(control).toHaveAttribute('aria-describedby', description.id);
 	});
 
@@ -250,7 +255,7 @@ describe('Switch', () => {
 			}
 		});
 
-		const description = screen.getByText('Switch to a darker color scheme');
+		const description = screen.getByText('Switch to a darker color scheme', { exact: true });
 		await userEvent.click(description);
 		expect(handleChange).toHaveBeenCalledWith(true, expect.any(Object));
 
@@ -336,7 +341,7 @@ describe('Switch', () => {
 		const screen = await render(Switch, {
 			props: { label: 'Toggle row', isLabelHidden: true, value: false, onChange: noop }
 		});
-		const label = screen.getByText('Toggle row');
+		const label = screen.getByText('Toggle row', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
 		await expect.element(screen.getByLabelText('Toggle row')).toBeInTheDocument();
@@ -373,7 +378,7 @@ describe('Switch', () => {
 			}
 		});
 		const control = inputIn(screen.container);
-		const description = screen.getByText('Enables sync for this row').element();
+		const description = screen.getByText('Enables sync for this row', { exact: true }).element();
 		expect(description.id).not.toBe('');
 		expect(control.getAttribute('aria-describedby')).toContain(description.id);
 	});
@@ -382,7 +387,7 @@ describe('Switch', () => {
 		const screen = await render(Switch, {
 			props: { label: 'Enable notifications', value: false, onChange: noop }
 		});
-		await expect.element(screen.getByText('Enable notifications')).toBeVisible();
+		await expect.element(screen.getByText('Enable notifications', { exact: true })).toBeVisible();
 	});
 
 	it('renders with labelPosition start (label before switch)', async () => {
@@ -437,7 +442,9 @@ describe('Switch', () => {
 				status: { type: 'error', message: 'Failed to save setting' }
 			}
 		});
-		await expect.element(screen.getByText('Failed to save setting')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Failed to save setting', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('sets aria-invalid when status type is error', async () => {

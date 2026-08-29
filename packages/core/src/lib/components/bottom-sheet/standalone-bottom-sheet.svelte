@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import BottomSheetEdgeTint from './bottom-sheet-edge-tint.svelte';
 	import BottomSheetPanel, { type BottomSheetPanelMotion } from './bottom-sheet-panel.svelte';
 	import type { BottomSheetPanelState } from './bottom-sheet-panel.svelte';
 	import type { StandaloneBottomSheetProps } from './bottom-sheet.svelte';
@@ -7,6 +8,7 @@
 	import { focusPanel } from './focus-panel.js';
 	import { useDevWarning } from '../../hooks/use-dev-warning.svelte.js';
 	import { useScrollLock } from '../../hooks/use-scroll-lock.svelte.js';
+	import { isImeKeyEvent } from '../../utils/ime.js';
 
 	/**
 	 * Ported from the private `StandaloneBottomSheet` in Astryx's
@@ -139,15 +141,28 @@
 	);
 
 	function handleCancel(event: Event): void {
+		// No IME guard here: `cancel` is a plain Event carrying no composition
+		// state, and `handleKeyDown` claims a composing Escape before the browser
+		// can raise the close request that would arrive here.
 		event.preventDefault();
 		dismissOnEscape();
 	}
 
 	function handleKeyDown(event: KeyboardEvent): void {
-		if (event.key === 'Escape') {
-			event.preventDefault();
-			dismissOnEscape();
+		if (event.key !== 'Escape') {
+			return;
 		}
+		// Claim the key before reading it: an unclaimed Escape lets the browser
+		// raise its own close request, which lands on `handleCancel` and dismisses
+		// on the same keypress.
+		event.preventDefault();
+		// An IME fires this keydown to cancel an in-progress composition, ahead of
+		// `compositionend`. It is a composition cancel, not a dismissal command —
+		// see `utils/ime`; `Dialog` and `BottomSheetSwitcher` guard the same way.
+		if (isImeKeyEvent(event)) {
+			return;
+		}
+		dismissOnEscape();
 	}
 
 	function handleClick(event: MouseEvent): void {
@@ -156,7 +171,9 @@
 		}
 	}
 
-	const dialogAttrs = $derived(bottomSheetDialogAttrs(shouldPresent, hasScrim));
+	const dialogAttrs = $derived(
+		bottomSheetDialogAttrs(shouldPresent, hasScrim, !isOpen && isPresented)
+	);
 	const positionerAttrs = bottomSheetPositionerAttrs(false, false);
 </script>
 
@@ -189,4 +206,8 @@
 			onMotionComplete={handleMotionComplete}
 		/>
 	</div>
+	<!-- A modal sheet's `::backdrop` already answers Safari's edge sampler. -->
+	{#if !hasScrim}
+		<BottomSheetEdgeTint />
+	{/if}
 </dialog>

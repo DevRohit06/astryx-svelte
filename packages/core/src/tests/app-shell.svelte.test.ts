@@ -7,9 +7,9 @@ import AppShellI18n from './fixtures/app-shell-i18n.svelte';
 import AppShellMobileProbe from './fixtures/app-shell-mobile-probe.svelte';
 
 /**
- * Ported from Astryx's `AppShell/AppShell.test.tsx`, all **48** cases at
- * v0.4.5. Nothing is dropped. (Re-derived at the 0.4.5 pin, where this header
- * last read v0.4.1: upstream's file has not moved since, so 48 still holds.)
+ * Ported from Astryx's `AppShell/AppShell.test.tsx`, all **48** cases at the
+ * 0.5.0 pin. Nothing is dropped. (Re-derived at the 0.5.0 pin, where this header
+ * last read v0.4.5: upstream's file has not moved since, so 48 still holds.)
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
@@ -730,7 +730,7 @@ describe('AppShell', () => {
 
 		const screen = await render(AppShellFixture, { props: { sideNav: 'test' } });
 
-		const toggle = screen.getByRole('button', { name: 'Open navigation' });
+		const toggle = screen.getByRole('button', { name: 'Open navigation', exact: true });
 		await expect.element(toggle).toHaveAttribute('aria-expanded', 'false');
 
 		(toggle.element() as HTMLElement).focus();
@@ -802,7 +802,7 @@ describe('AppShell', () => {
 			hasId: true
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Open navigation' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Open navigation', exact: true }));
 
 		// `expect.poll` rather than a bare read: upstream's assertion follows a
 		// React re-render that `act()` has already flushed, and the retrying form

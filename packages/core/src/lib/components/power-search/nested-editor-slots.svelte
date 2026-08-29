@@ -37,6 +37,7 @@
 		config: InternalConfig;
 		subFilter: EditablePartialFilter;
 		onChange: (updated: EditablePartialFilter) => void;
+		maxMenuItems?: number;
 		isReadOnly: boolean;
 	}
 
@@ -69,6 +70,7 @@
 		config={a.config}
 		subFilter={a.subFilter}
 		onChange={a.onChange}
+		maxMenuItems={a.maxMenuItems}
 		isReadOnly={a.isReadOnly}
 	/>
 {/snippet}

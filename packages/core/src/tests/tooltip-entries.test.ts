@@ -1,5 +1,7 @@
 /**
- * Ported case-for-case from Astryx's `src/Timestamp/tooltipEntries.test.ts`.
+ * Ported case-for-case from Astryx's `src/Timestamp/tooltipEntries.test.ts` at
+ * the **0.5.0** pin — **45 blocks** (44 plain `it`s plus one three-row
+ * `it.each`), and all 45 are here.
  *
  * These tests must pass under ANY machine timezone. The repo pins TZ neither in
  * the vitest config nor in CI, so a developer machine (e.g. America/New_York)

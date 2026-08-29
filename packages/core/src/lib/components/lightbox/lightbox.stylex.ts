@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { colorVars, spacingVars, typeScaleVars } from '../../styles/tokens.stylex.js';
 import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { overlayPaddingReset } from '../../internal/padding.stylex.js';
 
 const styles = stylex.create({
 	dialog: {
@@ -51,14 +52,21 @@ const styles = stylex.create({
 	imageWrapperZoomable: {
 		cursor: {
 			default: 'zoom-in',
-			'@media (hover: hover)': 'zoom-in'
+			'@media (hover: hover)': 'zoom-in',
+			':is(:disabled,[aria-disabled="true"])': 'default'
 		}
 	},
 	imageWrapperZoomed: {
-		cursor: 'grab'
+		cursor: {
+			default: 'grab',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	imageWrapperDragging: {
-		cursor: 'grabbing'
+		cursor: {
+			default: 'grabbing',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	image: {
 		maxWidth: '100%',
@@ -136,7 +144,9 @@ const dynamicStyles = stylex.create({
 });
 
 export function lightboxDialogAttrs(xstyle?: StyleArg): SvelteStyleAttrs {
-	return sx(styles.dialog, xstyle);
+	// The overlay root is not inside any padded container, so the inherited
+	// container padding vars are reset at its boundary.
+	return sx(styles.dialog, overlayPaddingReset.reset, xstyle);
 }
 
 export function lightboxContainerAttrs(): SvelteStyleAttrs {

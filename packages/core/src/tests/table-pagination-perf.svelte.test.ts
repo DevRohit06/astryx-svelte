@@ -6,7 +6,8 @@ import Probe from './fixtures/table-pagination-probe.svelte';
 
 /**
  * Astryx's `Table/plugins/pagination/useTablePagination-perf.test.tsx`, ported
- * case for case — **3 of 3**, in upstream's order and under its titles. Nothing
+ * case for case — **3 of 3 at the 0.5.0 pin**, in upstream's order and under
+ * its titles. Nothing
  * dropped; all three are **counterparts**, because every assertion in the file
  * is a React render count and React renders have no counterpart here.
  *
@@ -74,7 +75,7 @@ describe('Pagination plugin render performance', () => {
 		const tbody = screen.container.querySelector('tbody');
 
 		// Navigate to page 2
-		await userEvent.click(screen.getByRole('button', { name: 'Go to page 2' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Go to page 2', exact: true }));
 		await expect.element(screen.getByText('Item 6', { exact: true })).toBeInTheDocument();
 
 		// Page 1 rows are gone — they are not in the DOM at all.

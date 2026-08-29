@@ -9,10 +9,29 @@ import baseCss from '$lib/styles/base.css?raw';
 import AspectRatioProbe from './fixtures/aspect-ratio-probe.svelte';
 
 /**
- * Astryx's `AspectRatio/AspectRatio.test.tsx` at the **0.4.5** pin — **26
- * upstream `it` declarations (14 top-level, 7 in `describe('fit')`, 2 in
- * `describe('style merging')`, 3 in `describe('reset.css fit baseline rules')`),
- * 26 here, none dropped.**
+ * Astryx's `AspectRatio/AspectRatio.test.tsx` at the **0.5.0** pin — **28
+ * upstream `it` declarations** (14 top-level, 2 in `describe('responsive
+ * ratio')`, 7 in `describe('fit')`, 2 in `describe('style merging')`, 3 in
+ * `describe('reset.css fit baseline rules')`), **26 here**.
+ *
+ * **The 2 that are not here are the whole `responsive ratio` block**, new at
+ * 0.5.0: `emits the ratio as a class-level declaration, not an inline style`
+ * and `lets a consumer inline style win over the class-level ratio`. They are
+ * portable — `aspect-ratio.svelte` has already made the 0.5.0 move (the ratio
+ * travels as the `--x-aspectRatio` StyleX variable through a class-level
+ * declaration rather than as an inline `style.aspectRatio`), so both transcribe
+ * against a component that behaves the way they assert.
+ *
+ * **One upstream title moved in the same release and is not a gap**: upstream's
+ * `style merging` case `keeps the consumer style and applies the ratio over it`
+ * is now `keeps the consumer style and lets an inline ratio win`. This file
+ * still carries the old title. The rename tracks the mechanism change above —
+ * the ratio no longer wins by being inline, it wins only when the consumer puts
+ * it inline — so the title here should be re-derived along with the two missing
+ * cases rather than renamed on its own.
+ *
+ * (This header read "**26** upstream `it` declarations … 26 here, none dropped"
+ * at the 0.4.5 pin, where 26 was the whole suite.)
  *
  * Upstream has no `displayName` case, no snapshot and no no-JSX construction
  * form, so `ref` is the only React-only surface. What translated — each named
@@ -37,34 +56,34 @@ import AspectRatioProbe from './fixtures/aspect-ratio-probe.svelte';
  *   across two lines. Both differences are absorbed by `['"]` and `\s*`; the
  *   declarations being matched are byte-identical to upstream's.
  *
- * - **`element.style.aspectRatio` is restated in four cases**, because a real
- *   CSS parser is not jsdom's string store — see `serializedRatio` below.
+ * - **The ratio is read off `--x-aspectRatio`**, exactly as upstream's own
+ *   `ratioVar` helper does since 0.5.0 — see the helper below.
  *
  * One case found a real defect in the port, now fixed: *keeps the consumer style
  * and applies the ratio over it*. See the comment there.
  */
 
 /**
- * How this engine serialises `aspect-ratio: <number>`.
+ * The ratio compiles to a class-level `aspect-ratio: var(--x-aspectRatio)`
+ * declaration with the value carried by a CSS variable, so an `xstyle` rule
+ * (including one under `@media`/`@container`) and unlayered consumer CSS can
+ * still win. `--x-aspectRatio` is the debug-mode variable name emitted for the
+ * `aspectRatio` property, and upstream's own `ratioVar` reads exactly this.
  *
- * Upstream asserts `element.style.aspectRatio === String(16 / 9)`, which holds in
- * jsdom because jsdom stores the declaration text it was handed. Chromium parses
- * it: `aspect-ratio: 1.7777777777777777` comes back as `"1.77778 / 1"`, and
- * `aspect-ratio: 1` as `"1 / 1"`. That is the environment, not the port, so the
- * expectation is put through the same serialiser — derived from `String(ratio)`,
- * upstream's own source value, so a component that wrote any other number still
- * fails.
- *
- * The one thing this cannot see is Blink's six-significant-figure rounding: 16/9
- * and 1.777779 serialise alike. Reading the raw attribute does not recover it —
- * Svelte writes the string through the CSSOM, so `getAttribute('style')` comes
- * back already normalised to `aspect-ratio: 1.77778 / 1;`. No assertion available
- * in a real browser is stronger, and the loss is the engine's, not the port's.
+ * Reading the variable is also *stronger* than the inline-style form this file
+ * used before 0.5.0: a custom property is stored verbatim, so Blink's
+ * six-significant-figure serialisation of `aspect-ratio` — under which 16/9 and
+ * 1.777779 were indistinguishable — no longer costs the assertion anything.
  */
-function serializedRatio(ratio: number): string {
-	const probe = document.createElement('div');
-	probe.style.setProperty('aspect-ratio', String(ratio));
-	return probe.style.aspectRatio;
+// `HTMLElement | SVGElement` rather than upstream's bare `HTMLElement`: a
+// Playwright locator's `.element()` is typed for both, where Testing Library's
+// query returns only the former. Both carry `.style`, so the body is upstream's.
+function ratioVar(el: HTMLElement | SVGElement): string {
+	return el.style.getPropertyValue('--x-aspectRatio');
+}
+
+function ratioValue(ratio: number): string {
+	return String(ratio);
 }
 
 describe('AspectRatio', () => {
@@ -74,7 +93,7 @@ describe('AspectRatio', () => {
 		});
 		const element = screen.getByTestId('aspect-ratio').element();
 		await expect.element(screen.getByTestId('aspect-ratio')).toBeInTheDocument();
-		expect(element.style.aspectRatio).toBe(serializedRatio(16 / 9));
+		expect(ratioVar(element)).toBe(ratioValue(16 / 9));
 	});
 
 	it('children fill the container', async () => {
@@ -95,7 +114,7 @@ describe('AspectRatio', () => {
 			props: { rest: { ratio, 'data-testid': 'aspect-ratio' }, text: '16:9' }
 		});
 		const element = screen.getByTestId('aspect-ratio').element();
-		expect(element.style.aspectRatio).toBe(serializedRatio(ratio));
+		expect(ratioVar(element)).toBe(ratioValue(ratio));
 	});
 
 	it('renders with 4:3 ratio', async () => {
@@ -104,7 +123,7 @@ describe('AspectRatio', () => {
 			props: { rest: { ratio, 'data-testid': 'aspect-ratio' }, text: '4:3' }
 		});
 		const element = screen.getByTestId('aspect-ratio').element();
-		expect(element.style.aspectRatio).toBe(serializedRatio(ratio));
+		expect(ratioVar(element)).toBe(ratioValue(ratio));
 	});
 
 	it('renders with 1:1 square ratio', async () => {
@@ -113,7 +132,7 @@ describe('AspectRatio', () => {
 		});
 		const element = screen.getByTestId('aspect-ratio').element();
 		// Upstream's `toBe('1')`; Chromium normalises the square to `1 / 1`.
-		expect(element.style.aspectRatio).toBe(serializedRatio(1));
+		expect(ratioVar(element)).toBe(ratioValue(1));
 	});
 
 	it('renders with 21:9 ultrawide ratio', async () => {
@@ -122,7 +141,7 @@ describe('AspectRatio', () => {
 			props: { rest: { ratio, 'data-testid': 'aspect-ratio' }, text: 'Ultrawide' }
 		});
 		const element = screen.getByTestId('aspect-ratio').element();
-		expect(element.style.aspectRatio).toBe(serializedRatio(ratio));
+		expect(ratioVar(element)).toBe(ratioValue(ratio));
 	});
 
 	it('renders an ellipse that respects the ratio (circle at 1:1)', async () => {
@@ -130,7 +149,7 @@ describe('AspectRatio', () => {
 			props: { rest: { ratio: 1, shape: 'ellipse', 'data-testid': 'aspect-ratio' }, text: 'Circle' }
 		});
 		const element = screen.getByTestId('aspect-ratio').element();
-		expect(element.style.aspectRatio).toBe(serializedRatio(1));
+		expect(ratioVar(element)).toBe(ratioValue(1));
 		expect(element.className).toContain('ellipse');
 	});
 
@@ -143,7 +162,7 @@ describe('AspectRatio', () => {
 		});
 		const element = screen.getByTestId('aspect-ratio').element();
 		// Ratio is preserved — the ellipse does not force 1:1.
-		expect(element.style.aspectRatio).toBe(serializedRatio(16 / 9));
+		expect(ratioVar(element)).toBe(ratioValue(16 / 9));
 		expect(element.className).toContain('ellipse');
 	});
 
@@ -152,7 +171,7 @@ describe('AspectRatio', () => {
 			props: { rest: { ratio: 1, 'data-testid': 'aspect-ratio' }, text: 'Rectangle by default' }
 		});
 		const element = screen.getByTestId('aspect-ratio').element();
-		expect(element.style.aspectRatio).toBe(serializedRatio(1));
+		expect(ratioVar(element)).toBe(ratioValue(1));
 		expect(element.className).toContain('rectangle');
 		// No ellipse border-radius when shape is the default rectangle
 		expect((element as HTMLElement).style.borderRadius).toBe('');
@@ -327,7 +346,7 @@ describe('AspectRatio', () => {
 			});
 			const element = screen.getByTestId('aspect-ratio').element() as HTMLElement;
 			expect(element.style.opacity).toBe('0.5');
-			expect(element.style.aspectRatio).toBe(serializedRatio(16 / 9));
+			expect(ratioVar(element)).toBe(ratioValue(16 / 9));
 		});
 
 		it('keeps a consumer className beside the theme target', async () => {

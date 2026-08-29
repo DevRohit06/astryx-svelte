@@ -1,10 +1,12 @@
 <script lang="ts" module>
+	import type { Locale } from '../../i18n/index.js';
 	import type { EnumItem, FilterValue, OperatorValue } from './types.js';
 
 	export interface PowerSearchTokenValueProps {
 		operatorValue: OperatorValue;
 		filterValue: FilterValue;
 		maxLength: number;
+		locale: Locale;
 	}
 
 	/**
@@ -31,6 +33,7 @@
 </script>
 
 <script lang="ts">
+	import { formatDateAbsoluteCompact } from './format-filter-value.js';
 	import { powerSearchTokenValueAttrs } from './power-search.stylex.js';
 	import { truncateCharacters } from '../../utils/characters.js';
 
@@ -50,13 +53,14 @@
 	 * `Intl.NumberFormat`, so no thousands separators and no `units` suffix;
 	 * decides `string_list`/`enum_list`/`entity_list` overflow on the **sum of
 	 * item lengths** rather than the joined length, so the `, ` separators are not
-	 * counted; formats `date_absolute` with no time fields and **ignores
+	 * counted; formats `date_absolute` through `formatDateAbsoluteCompact` — the
+	 * same provider locale, but no time fields and **still ignoring
 	 * `timezoneID`**; and hard-codes `N items`, `date range`, `1 filter` and
 	 * `N filters` in English where the other reaches for `t()`. All of it
 	 * transcribed; none of it corrected.
 	 */
 
-	const { operatorValue, filterValue, maxLength }: PowerSearchTokenValueProps = $props();
+	const { operatorValue, filterValue, maxLength, locale }: PowerSearchTokenValueProps = $props();
 
 	/**
 	 * `null` where upstream returns `null` — the three cases that render no
@@ -137,12 +141,7 @@
 				return filterValue.value;
 
 			case 'date_absolute': {
-				const date = new Date(filterValue.unixSeconds * 1000);
-				const formatted = new Intl.DateTimeFormat(undefined, {
-					year: 'numeric',
-					month: 'short',
-					day: 'numeric'
-				}).format(date);
+				const formatted = formatDateAbsoluteCompact(filterValue.unixSeconds, locale);
 				return truncateString(formatted, maxLength);
 			}
 

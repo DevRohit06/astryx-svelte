@@ -15,9 +15,10 @@
  * Two adaptations, both consequences of the subpath this port's `theme build`
  * has to import (see build.mjs's header):
  *   - the mocked module is `@astryx-svelte/core/theme/define`, not `./theme`;
- *   - the generator is `generateThemeRulesSplit` + `generateOnMediaCss` (this
- *     port's casing), and the split one is a real export here rather than
- *     something the CLI had to reconstruct.
+ *   - the generator is `generateThemeRulesSplit` + `generateOnMediaCSS`, and the
+ *     split one is a real export here rather than something the CLI had to
+ *     reconstruct. Both carried this port's `…Css` casing until batch 034 closed
+ *     that drift.
  */
 
 import { describe, it, expect, beforeAll, beforeEach, afterEach, vi } from 'vitest';
@@ -26,7 +27,7 @@ import * as path from 'node:path';
 import * as os from 'node:os';
 import {
 	generateThemeRulesSplit as mockGenerateThemeRulesSplit,
-	generateOnMediaCss as mockGenerateOnMediaCss
+	generateOnMediaCSS as mockGenerateOnMediaCSS
 } from '@astryx-svelte/core/theme/define';
 import { ensureCoreBuilt } from '../../../test-utils/ensure-core-built.mjs';
 import { themeBuild } from './build.mjs';
@@ -41,7 +42,7 @@ vi.mock('@astryx-svelte/core/theme/define', async (importActual) => {
 	return {
 		...actual,
 		generateThemeRulesSplit: vi.fn(actual.generateThemeRulesSplit),
-		generateOnMediaCss: vi.fn(actual.generateOnMediaCss)
+		generateOnMediaCSS: vi.fn(actual.generateOnMediaCSS)
 	};
 });
 
@@ -128,7 +129,7 @@ describe('themeBuild() — nothing to build', () => {
 		// Force the generator to emit nothing for this one build (prose defaults
 		// otherwise always ship, so this branch is unreachable with real output).
 		mockGenerateThemeRulesSplit.mockReturnValueOnce({ component: [], prose: [] });
-		mockGenerateOnMediaCss.mockReturnValueOnce('');
+		mockGenerateOnMediaCSS.mockReturnValueOnce('');
 
 		const result = await themeBuild('empty.mjs', {}, { cwd: tmpDir });
 

@@ -118,7 +118,7 @@ export default {
 		},
 		{
 			name: 'headingLevelStart',
-			type: '1 | 2 | 3 | 4 | 5 | 6',
+			type: '6 | 2 | 4 | 1 | 3 | 5',
 			description:
 				'The HTML heading level that markdown # maps to. Shifts all heading levels down to fit the surrounding page hierarchy. Levels exceeding h6 are clamped to h6.',
 			default: '1'
@@ -174,6 +174,12 @@ export default {
 			type: "'gfm'",
 			description:
 				"Opt-in autolinking of bare URLs and emails. 'gfm' applies GitHub-Flavored Markdown autolink-literal rules: bare https?://..., www...., <scheme:url>, <email>, and user@host all become links. Trailing sentence punctuation and unbalanced trailing close-parens are excluded; matches inside code spans, code blocks, existing links, and image alt text are skipped. Default behavior (option unset) is unchanged."
+		},
+		{
+			name: 'components',
+			type: 'Partial<MarkdownComponents>',
+			description:
+				'Custom React component overrides for rendered Markdown elements (code, inlineCode, link, heading, paragraph, image, blockquote, hr, citation).'
 		},
 		{
 			name: 'xstyle',

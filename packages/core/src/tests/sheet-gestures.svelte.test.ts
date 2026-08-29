@@ -4,8 +4,13 @@ import SheetGesturesProbe from './fixtures/sheet-gestures-probe.svelte';
 import { stubMatchMedia } from './stub-match-media.js';
 
 /**
- * Ported from Astryx's `BottomSheet/useSheetGestures.test.ts`, all **45** cases
- * at v0.4.5. Nothing is dropped.
+ * Ported from Astryx's `BottomSheet/useSheetGestures.test.ts` — **45 of its 47
+ * cases at the 0.5.0 pin**.
+ *
+ * The 2 not here are 0.5.0's tap-slop pair in `body overscroll`: `treats a few
+ * pixels of finger drift as a tap, not a drag` and `still promotes once the pull
+ * passes the tap slop`. (The header read "all 45 … nothing is dropped" at the
+ * v0.4.5 pin, where 45 was the whole suite.)
  *
  * Runs in the **client** project, unlike upstream's node suite: the hook is
  * built from `$state` and `$effect`, which need a component context to exist at

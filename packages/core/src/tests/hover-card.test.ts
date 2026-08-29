@@ -5,10 +5,17 @@ import HoverCardParagraph from './fixtures/hover-card-paragraph.svelte';
 
 /**
  * The server-side cases from Astryx's `HoverCard/HoverCard.test.tsx`
- * `SSR / hydration` block. They assert on `renderToString` output, so they
- * belong in the node project against `svelte/server` — the same placement
- * `metadata-list.test.ts` uses. The suite's other cases are in
- * `hover-card.svelte.test.ts`, which also carries the block's full accounting.
+ * `SSR / hydration` block, at the **0.5.0** pin. They assert on
+ * `renderToString` output, so they belong in the node project against
+ * `svelte/server` — the same placement `metadata-list.test.ts` uses.
+ *
+ * The count is the contract, and it is stated against the block rather than the
+ * suite: upstream's `SSR / hydration` block declares **4** cases at this pin,
+ * and **3** are here. The fourth is dropped with its reason below. Upstream's
+ * whole file declares **35** at this pin; the other 31 that are ported live in
+ * `hover-card.svelte.test.ts`, which carries the suite-wide accounting —
+ * including the seven-case `touch` describe that arrived at 0.5.0 with #5248,
+ * now ported there in full.
  *
  * The first two here are ported verbatim. The third is a restatement of
  * upstream's `hydrates a default-open hover card without a mismatch`: only its

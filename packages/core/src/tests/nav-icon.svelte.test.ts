@@ -5,7 +5,7 @@ import NavIcon from '$lib/components/nav-icon/nav-icon.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Astryx's `NavIcon/NavIcon.test.tsx` at **v0.4.5**, ported case for case.
+ * Astryx's `NavIcon/NavIcon.test.tsx` at the **0.5.0** pin, ported case for case.
  *
  * The count is the contract: upstream declares **3** `it` blocks at this pin,
  * and **3** are here. **Nothing is dropped.** Upstream's suite has no

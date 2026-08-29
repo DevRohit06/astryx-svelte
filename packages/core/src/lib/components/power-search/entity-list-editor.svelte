@@ -5,6 +5,7 @@
 		operatorValue: EntityListOperatorValue;
 		filterValue: FilterValue | undefined;
 		onChange: (value: FilterValue) => void;
+		maxMenuItems?: number;
 	}
 </script>
 
@@ -23,7 +24,7 @@
 	 * `Tokenizer.renderItem` takes.
 	 */
 
-	const { operatorValue, filterValue, onChange }: EntityListEditorProps = $props();
+	const { operatorValue, filterValue, onChange, maxMenuItems }: EntityListEditorProps = $props();
 
 	const t = useTranslator();
 
@@ -64,4 +65,5 @@
 	renderItem={operatorValue.renderItem}
 	placeholder={t('@astryx.powersearch.valueEditor.searchPlaceholder')}
 	debounceMs={operatorValue.searchSource ? 150 : 0}
+	{maxMenuItems}
 />

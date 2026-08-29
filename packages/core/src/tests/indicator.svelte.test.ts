@@ -13,7 +13,7 @@ import UseIndicatorProbe from './fixtures/use-indicator-probe.svelte';
 import UseIndicatorThemeProbe from './fixtures/use-indicator-theme-probe.svelte';
 
 /**
- * Astryx's `Indicator/Indicator.test.tsx` at **0.4.5**, which declares **20**
+ * Astryx's `Indicator/Indicator.test.tsx` at the **0.5.0** pin, which declares **20**
  * `it`s — five of them inside `for` loops, so the 20 declarations run as 40
  * cases. **All 20 are here**, in upstream's order, under upstream's titles
  * except where a restatement made the title a lie (named below).

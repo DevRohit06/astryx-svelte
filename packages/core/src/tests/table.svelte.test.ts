@@ -23,15 +23,25 @@ import { dynamic } from './fixtures/table-xstyle.stylex.js';
 import { renderBaseTable, renderTable } from './render-table.js';
 
 /**
- * Ported from Astryx's `Table/Table.test.tsx` — all **121** of its `it` cases,
- * in upstream's order and under upstream's names, with two families renamed
- * because their mechanism changed (below). Nothing is dropped.
+ * Ported from Astryx's `Table/Table.test.tsx` — **121 of its 130 `it` cases at
+ * the 0.5.0 pin**, in upstream's order and under upstream's names, with two
+ * families renamed because their mechanism changed (below).
  *
- * **No case here is deferred with the plugin hooks.** The ten hooks
- * (`useTableSortable`, `useTableSelection`, …) are a later batch and do not
- * exist in this repo, but `Table.test.tsx` never imports one: every plugin in
- * the file is a hand-written object handed to the public `plugins` prop, and
- * that pipeline is fully ported. Checked case by case, not assumed.
+ * The 9 not here: the whole `TableRow styling props` describe (2 — `className`
+ * and `style` on a row, in-table and standalone), the two `isContentSuppressed`
+ * plugin-pipeline cases, the four children-mode section-ownership cases
+ * (`TableHeader`/`TableBody` supply the `thead`/`tbody` and `Table` renders
+ * none of its own) and `capitalize`'s astral-plane case (#4759). Only
+ * `isContentSuppressed` is blocked — that `BodyCellRenderProps` flag has no
+ * counterpart in this port; the other seven are coverage debt against source
+ * that already behaves as they assert.
+ *
+ * **No case here is deferred with the plugin hooks**, and `Table.test.tsx`
+ * imports none of them: every plugin in the file is a hand-written object handed
+ * to the public `plugins` prop, and that pipeline is fully ported. Checked case
+ * by case, not assumed. (The header used to add that the hooks "do not exist in
+ * this repo"; `components/table/plugins/` now holds them, so that reason has
+ * expired — it deferred nothing either way.)
  *
  * **`Table.perf.test.tsx` (11 cases) is not ported, and no counterpart file
  * exists.** This repo ports no perf suite — `src/tests/` has never had one —
@@ -500,7 +510,7 @@ describe('BaseTable', () => {
 				'aria-label': 'Users',
 				'data-analytics': 'tables'
 			});
-			const table = screen.getByRole('table', { name: 'Users' }).element();
+			const table = screen.getByRole('table', { name: 'Users', exact: true }).element();
 			expect(table.id).toBe('users-table');
 			expect(table).toHaveAttribute('data-analytics', 'tables');
 		});

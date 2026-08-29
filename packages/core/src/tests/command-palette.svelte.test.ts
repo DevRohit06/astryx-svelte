@@ -7,10 +7,15 @@ import { createStaticSource } from '$lib/components/typeahead/create-static-sour
 import type { SearchSource, SearchableItem } from '$lib/components/typeahead/types.js';
 
 /**
- * Ported from Astryx's `CommandPalette/CommandPalette.test.tsx`, all 19 `it`
- * cases — 14 top-level plus the five-case `screen reader announcements`
- * describe. 19 upstream, 19 here, none dropped; there is no `displayName` case
- * and no snapshot in the file.
+ * Ported from Astryx's `CommandPalette/CommandPalette.test.tsx` — **19 of its 21
+ * `it` cases at the 0.5.0 pin**: 14 of upstream's 16 top-level cases plus the
+ * whole five-case `screen reader announcements` describe. There is no
+ * `displayName` case and no snapshot in the file.
+ *
+ * The 2 not here are both top-level race guards, portable against source that
+ * already implements them: `discards a search response that resolves after the
+ * palette closed` and `does not move the highlight while typing in the search
+ * input`. (The header read "all 19 … none dropped" while upstream held 21.)
  *
  * Runs in the **client** (real Chromium) project. Upstream's
  * `showModal`/`close` `vi.fn` mock is reproduced exactly as the `Dialog` and
@@ -105,16 +110,16 @@ describe('CommandPalette', () => {
 
 	it('default renders items from searchSource bootstrap', async () => {
 		const screen = await render(Probe, { props: { isOpen: true, searchSource: simpleSource } });
-		await expect.element(screen.getByText('Home')).toBeInTheDocument();
-		await expect.element(screen.getByText('Settings')).toBeInTheDocument();
+		await expect.element(screen.getByText('Home', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Settings', { exact: true })).toBeInTheDocument();
 	});
 
 	it('auto-groups items by auxiliaryData.group', async () => {
 		const screen = await render(Probe, { props: { isOpen: true, searchSource: groupedSource } });
 		// The group headings are `aria-hidden`, so they are read off the DOM rather
 		// than through a text query — the assertion is upstream's either way.
-		await expect.element(screen.getByText('Home')).toBeInTheDocument();
-		await expect.element(screen.getByText('Save')).toBeInTheDocument();
+		await expect.element(screen.getByText('Home', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Save', { exact: true })).toBeInTheDocument();
 		const headings = [...screen.container.querySelectorAll('[role="group"]')].map((group) =>
 			group.getAttribute('aria-label')
 		);
@@ -125,8 +130,8 @@ describe('CommandPalette', () => {
 		const screen = await render(Probe, {
 			props: { isOpen: true, searchSource: simpleSource, renderMode: 'uppercase' }
 		});
-		await expect.element(screen.getByText('HOME')).toBeInTheDocument();
-		await expect.element(screen.getByText('SETTINGS')).toBeInTheDocument();
+		await expect.element(screen.getByText('HOME', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('SETTINGS', { exact: true })).toBeInTheDocument();
 	});
 
 	it('passes isSelected=true to renderItem for the selected value', async () => {
@@ -138,20 +143,20 @@ describe('CommandPalette', () => {
 				renderMode: 'selected'
 			}
 		});
-		await expect.element(screen.getByText('checked-Home')).toBeInTheDocument();
-		await expect.element(screen.getByText('Settings')).toBeInTheDocument();
+		await expect.element(screen.getByText('checked-Home', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Settings', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows emptyBootstrapText when bootstrap returns nothing', async () => {
 		const screen = await render(Probe, {
 			props: { isOpen: true, searchSource: emptySource, emptyBootstrapText: 'Nothing to show' }
 		});
-		await expect.element(screen.getByText('Nothing to show')).toBeInTheDocument();
+		await expect.element(screen.getByText('Nothing to show', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows default emptyBootstrapText when not provided', async () => {
 		const screen = await render(Probe, { props: { isOpen: true, searchSource: emptySource } });
-		await expect.element(screen.getByText('Type to search')).toBeInTheDocument();
+		await expect.element(screen.getByText('Type to search', { exact: true })).toBeInTheDocument();
 	});
 
 	it('calls onOpenChange(false) when Escape is pressed', async () => {
@@ -195,7 +200,7 @@ describe('CommandPalette', () => {
 		await user.fill(input, 'z');
 		await vi.waitFor(() => expect(resolvers).toHaveLength(1));
 		resolvers[0]([]);
-		await expect.element(screen.getByText('No results')).toBeInTheDocument();
+		await expect.element(screen.getByText('No results', { exact: true })).toBeInTheDocument();
 
 		// Second keystroke while already empty: the empty state must remain in the
 		// DOM for the whole pending window — no unmount/remount flash.
@@ -204,7 +209,7 @@ describe('CommandPalette', () => {
 		await vi.waitFor(() => expect(resolvers.length).toBeGreaterThanOrEqual(2));
 		expect(screen.container.textContent).toContain('No results');
 		resolvers[resolvers.length - 1]([]);
-		await expect.element(screen.getByText('No results')).toBeInTheDocument();
+		await expect.element(screen.getByText('No results', { exact: true })).toBeInTheDocument();
 	});
 
 	describe('screen reader announcements', () => {
@@ -213,7 +218,7 @@ describe('CommandPalette', () => {
 		it('announces the result count politely after typing a query', async () => {
 			const user = userEvent.setup();
 			const screen = await render(Probe, { props: { isOpen: true, searchSource: simpleSource } });
-			await expect.element(screen.getByText('Home')).toBeInTheDocument();
+			await expect.element(screen.getByText('Home', { exact: true })).toBeInTheDocument();
 			// "e" matches both Home and Settings.
 			await user.fill(screen.getByRole('combobox').element(), 'e');
 			await vi.waitFor(() => {
@@ -224,7 +229,7 @@ describe('CommandPalette', () => {
 		it('announces the singular form when one item matches', async () => {
 			const user = userEvent.setup();
 			const screen = await render(Probe, { props: { isOpen: true, searchSource: simpleSource } });
-			await expect.element(screen.getByText('Home')).toBeInTheDocument();
+			await expect.element(screen.getByText('Home', { exact: true })).toBeInTheDocument();
 			// "set" matches only Settings. Anchored so it cannot pass on "1 results".
 			await user.fill(screen.getByRole('combobox').element(), 'set');
 			await vi.waitFor(() => {
@@ -235,7 +240,7 @@ describe('CommandPalette', () => {
 		it('announces the empty state with the query when nothing matches', async () => {
 			const user = userEvent.setup();
 			const screen = await render(Probe, { props: { isOpen: true, searchSource: simpleSource } });
-			await expect.element(screen.getByText('Home')).toBeInTheDocument();
+			await expect.element(screen.getByText('Home', { exact: true })).toBeInTheDocument();
 			await user.fill(screen.getByRole('combobox').element(), 'zzz');
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('No results for zzz');
@@ -261,7 +266,7 @@ describe('CommandPalette', () => {
 
 		it('does not announce on initial open (bootstrap)', async () => {
 			const screen = await render(Probe, { props: { isOpen: true, searchSource: simpleSource } });
-			await expect.element(screen.getByText('Home')).toBeInTheDocument();
+			await expect.element(screen.getByText('Home', { exact: true })).toBeInTheDocument();
 			// Let any pending live-region rAF write land before asserting silence.
 			await new Promise((resolve) => setTimeout(resolve, 50));
 			expect(politeRegion()?.textContent ?? '').toBe('');

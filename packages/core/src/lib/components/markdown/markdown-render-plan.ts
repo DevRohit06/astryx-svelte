@@ -32,14 +32,46 @@ import type { MarkdownInlinePlugin, MarkdownSource } from './markdown-types.js';
 // URL sanitization — block dangerous protocols
 // ---------------------------------------------------------------------------
 
-const DANGEROUS_URL_PATTERN = /^(javascript|data|vbscript):/i;
+/**
+ * Upstream's `isSafeUrl` (`Markdown/parser.ts`), predicate for predicate.
+ *
+ * Two things here are load-bearing, and both were wrong on this side until the
+ * 0.5.0 pin was tracked:
+ *
+ * 1. **Control characters are stripped before the scheme is read.** A bare
+ *    `/^javascript:/` never matches `java\u0000script:alert(1)` — the very
+ *    shape browsers tolerate and execute — so the normalisation *is* the guard,
+ *    not tidying ahead of it. This port had only a `trim()`.
+ * 2. **Only `data:text/html` is rejected, not every `data:` URL.** Blocking the
+ *    whole scheme also blocks `data:image/*`, an ordinary inline image that
+ *    renders upstream. Over-blocking is a parity defect like any other.
+ *
+ * This port applies the predicate at render, where upstream applies it in
+ * `parseInline` — upstream never mints the node, we neutralise it. The rendered
+ * output is the same either way.
+ */
+function isSafeUrl(url: string): boolean {
+	// Trim and collapse whitespace/control chars that browsers tolerate but
+	// could bypass a naive prefix check (e.g. 'java\nscript:alert(1)').
+	// eslint-disable-next-line no-control-regex -- control chars are the bypass
+	const normalized = url.replace(/[\x00-\x1f\x7f]/g, '').trim();
+	const lower = normalized.toLowerCase();
+	if (
+		lower.startsWith('javascript:') ||
+		lower.startsWith('vbscript:') ||
+		lower.startsWith('data:text/html')
+	) {
+		return false;
+	}
+	return true;
+}
 
 export function sanitizeUrl(url: string): string | null {
 	const trimmed = url.trim();
 	if (trimmed.length === 0) {
 		return null;
 	}
-	if (DANGEROUS_URL_PATTERN.test(trimmed)) {
+	if (!isSafeUrl(trimmed)) {
 		return null;
 	}
 	return trimmed;

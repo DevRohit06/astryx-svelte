@@ -8,7 +8,6 @@ export default {
 	type: 'function',
 	name: 'useTranslator',
 	displayName: 'useTranslator',
-	group: 'Utilities',
 	keywords: [
 		'i18n',
 		'internationalization',
@@ -32,5 +31,6 @@ export default {
 			"Returns a translator function that resolves keys against the current locale, provider overrides, and the shipped English fallback catalog. Call inside a component; the returned function can be used anywhere within that component's scope."
 	},
 	relatedComponents: ['InternationalizationProvider'],
-	importPath: '@astryx-svelte/core'
+	importPath: '@astryx-svelte/core',
+	category: 'utilities'
 };

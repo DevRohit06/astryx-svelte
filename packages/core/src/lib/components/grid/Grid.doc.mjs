@@ -99,17 +99,17 @@ export default {
 		},
 		{
 			name: 'gap',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description: 'Spacing between all items.'
 		},
 		{
 			name: 'rowGap',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description: 'Row spacing; overrides `gap` for the row axis.'
 		},
 		{
 			name: 'columnGap',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description: 'Column spacing; overrides `gap` for the column axis.'
 		},
 		{

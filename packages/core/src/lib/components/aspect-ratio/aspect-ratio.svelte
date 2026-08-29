@@ -47,22 +47,19 @@
 		...rest
 	}: AspectRatioProps = $props();
 
-	const container = $derived(aspectRatioContainerAttrs(shape, xstyle));
+	const container = $derived(aspectRatioContainerAttrs(shape, ratio, xstyle));
 	const child = $derived(aspectRatioChildAttrs(fit));
 	const theme = $derived(themeProps('aspect-ratio', { shape }));
 
 	/**
-	 * The ratio is the **last** declaration, after the consumer's own `style`.
-	 *
-	 * Upstream merges `{...style, aspectRatio: ratio}`, so the `ratio` prop
-	 * overrides a consumer `aspectRatio` rather than losing to it. Here `style` is
-	 * a string and an inline style resolves by declaration order, so that same
-	 * precedence is this ordering — with the consumer's string ahead of it, a
-	 * consumer `aspect-ratio` silently beat the prop the component exists for.
+	 * At 0.5.0 the ratio stopped being an inline declaration and became a
+	 * class-level one, carried by `dynamicStyles.ratio` through `container.style`
+	 * as a StyleX variable. That is the whole point of the change: an inline
+	 * `aspect-ratio` beats every class, so it could not be made responsive, while
+	 * a compiled declaration in the `astryx-base` layer loses to any unlayered
+	 * consumer rule and to an `xstyle` under `@media`/`@container`.
 	 */
-	const rootStyle = $derived(
-		mergeStyle(container.style, styleProp as string | undefined, `aspect-ratio:${ratio}`)
-	);
+	const rootStyle = $derived(mergeStyle(container.style, styleProp as string | undefined));
 </script>
 
 <div {...rest} {...theme} class={cx(theme.class, container.class, className)} style={rootStyle}>

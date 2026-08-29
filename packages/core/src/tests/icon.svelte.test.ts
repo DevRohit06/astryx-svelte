@@ -8,7 +8,7 @@ import TestIcon from './fixtures/test-icon.svelte';
 import { probe } from './fixtures/xstyle-probe.stylex.js';
 
 /**
- * Astryx's `Icon/Icon.test.tsx`, all 32 cases. `Icon` was ported in the first
+ * Astryx's `Icon/Icon.test.tsx` at the **0.5.0** pin — all **32** of its cases. `Icon` was ported in the first
  * batch and its suite never was; it lands now because 0.1.8's `label` and
  * 0.2.0's `xstyle`/`className`/`style` composition would otherwise be the only
  * untested props on a component every other one renders.

@@ -48,7 +48,8 @@ export default {
 		{
 			name: 'options.onEscape',
 			type: '() => void',
-			description: 'Callback when Escape key is pressed (e.g., close menu).'
+			description:
+				'Callback when Escape key is pressed (e.g., close menu). Supplying it also consumes the key (preventDefault); without it Escape passes through to the surrounding layer.'
 		},
 		{
 			name: 'options.orientation',

@@ -3,7 +3,22 @@ import { render } from 'vitest-browser-svelte';
 import AlertDialog from '$lib/components/alert-dialog/alert-dialog.svelte';
 
 /**
- * Ported from Astryx's `AlertDialog/AlertDialog.test.tsx`, all 12 cases.
+ * Ported from Astryx's `AlertDialog/AlertDialog.test.tsx` — **12 of its 31
+ * cases at the 0.5.0 pin**.
+ *
+ * The 19 not here are four whole describes, none of them blocked on anything:
+ * `keyboard` (5), `focus` (4), `aria` (4, counting its nested `the inline
+ * preview path` pair) and the top-level `useImperativeAlertDialog` (6) that
+ * shares upstream's file. They are portable — nothing in them is React-specific
+ * — and every subject is ported here, so this is standing coverage debt rather
+ * than a translation decision.
+ *
+ * (The header read "all 12 cases … Nothing is dropped" while upstream held 31,
+ * and excused the `useImperativeAlertDialog` cases on the grounds that the hook
+ * "has no test file of its own upstream — so no suite arrives with it either".
+ * There is indeed no `useImperativeAlertDialog.test.tsx`, but its suite is a
+ * top-level describe *inside* `AlertDialog.test.tsx`, so the suite does arrive
+ * with it. The hook itself is ported.)
  *
  * Runs in the **client** (real Chromium) project, alongside `dialog.svelte.test.ts`
  * — `AlertDialog` is a `Dialog`, opened through `<dialog>.showModal()`. Upstream's
@@ -17,10 +32,11 @@ import AlertDialog from '$lib/components/alert-dialog/alert-dialog.svelte';
  * `display: none`, which an accessibility-tree query cannot see. Every assertion
  * is upstream's.
  *
- * Nothing is dropped. The sibling `useImperativeAlertDialog` is now ported
- * (`useImperativeAlertDialog` + `<ImperativeAlertDialogLayer>`), and it has no
- * test file of its own upstream — so no suite arrives with it either. Its
- * counterpart hook's suite is `use-imperative-dialog.svelte.test.ts`.
+ * The sibling `useImperativeAlertDialog` is ported (`useImperativeAlertDialog` +
+ * `<ImperativeAlertDialogLayer>`); its six upstream cases live in this same
+ * upstream file and are among the 19 unported above. `Dialog`'s own
+ * `useImperativeDialog` suite is a different file and is at
+ * `use-imperative-dialog.svelte.test.ts`.
  */
 
 const originalShowModal = HTMLDialogElement.prototype.showModal;

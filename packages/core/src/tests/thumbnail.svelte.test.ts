@@ -68,7 +68,7 @@ describe('Thumbnail', () => {
 		});
 		// The accessible name must be carried by a valid named role (group), not
 		// by a bare aria-label on a generic div (aria-prohibited-attr).
-		const group = screen.getByRole('group', { name: 'photo.png' });
+		const group = screen.getByRole('group', { name: 'photo.png', exact: true });
 		await expect.element(group).toHaveAttribute('data-testid', 'thumb');
 	});
 
@@ -92,13 +92,13 @@ describe('Thumbnail', () => {
 		});
 		// A group role (unlike img) must not hide descendant controls.
 		await expect
-			.element(screen.getByRole('group', { name: 'file.png — Clickable' }))
+			.element(screen.getByRole('group', { name: 'file.png — Clickable', exact: true }))
 			.toBeInTheDocument();
 		await expect
-			.element(screen.getByRole('button', { name: 'Open file.png — Clickable' }))
+			.element(screen.getByRole('button', { name: 'Open file.png — Clickable', exact: true }))
 			.toBeInTheDocument();
 		await expect
-			.element(screen.getByRole('button', { name: 'Remove file.png — Clickable' }))
+			.element(screen.getByRole('button', { name: 'Remove file.png — Clickable', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -151,7 +151,7 @@ describe('Thumbnail', () => {
 	it('calls onRemove when remove button is clicked', async () => {
 		const onRemove = vi.fn();
 		const screen = await render(Thumbnail, { props: { label: 'file.png', onRemove } });
-		await userEvent.click(screen.getByRole('button', { name: 'Remove file.png' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Remove file.png', exact: true }));
 		expect(onRemove).toHaveBeenCalledOnce();
 	});
 
@@ -160,7 +160,7 @@ describe('Thumbnail', () => {
 		const screen = await render(Thumbnail, {
 			props: { src: '/img.jpg', alt: 'Clickable', onclick }
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Open Clickable' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Open Clickable', exact: true }));
 		expect(onclick).toHaveBeenCalledOnce();
 	});
 
@@ -193,7 +193,9 @@ describe('Thumbnail', () => {
 			const view = await render(Thumbnail, {
 				props: { label: 'file.png', onRemove: vi.fn(), showRemoveOn }
 			});
-			const slot = view.getByRole('button', { name: 'Remove file.png' }).element().parentElement!;
+			const slot = view
+				.getByRole('button', { name: 'Remove file.png', exact: true })
+				.element().parentElement!;
 			return { className: slot.className, unmount: view.unmount };
 		};
 
@@ -204,7 +206,7 @@ describe('Thumbnail', () => {
 				props: { label: 'file.png', onRemove: vi.fn(), showRemoveOn: 'hover' }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Remove file.png' }))
+				.element(screen.getByRole('button', { name: 'Remove file.png', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -227,7 +229,7 @@ describe('Thumbnail', () => {
 			const screen = await render(Thumbnail, {
 				props: { label: 'file.png', onRemove, showRemoveOn: 'hover' }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Remove file.png' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Remove file.png', exact: true }));
 			expect(onRemove).toHaveBeenCalledOnce();
 		});
 	});

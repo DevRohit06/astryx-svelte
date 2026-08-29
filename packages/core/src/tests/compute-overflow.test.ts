@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { computeOverflow, type ComputeOverflowInput } from '$lib/hooks/compute-overflow.js';
 
 /**
- * Astryx's `hooks/computeOverflow.test.ts`, all 34 cases, unchanged.
+ * Astryx's `hooks/computeOverflow.test.ts` at the **0.5.0** pin — all **34** of
+ * its cases, unchanged.
  *
  * A `.test.ts` rather than a `.svelte.test.ts`: the module is pure arithmetic
  * with no DOM in it, so it runs in the **server** project rather than booting

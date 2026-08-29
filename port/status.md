@@ -8,40 +8,33 @@
 
 |                           |                                                                          |
 | ------------------------- | ------------------------------------------------------------------------ |
-| Component dirs (ours)     | 99                                                                       |
-| Component dirs (upstream) | 103                                                                      |
+| Component dirs (ours)     | 100                                                                      |
+| Component dirs (upstream) | 104                                                                      |
 | Missing here              | none                                                                     |
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
-| Upstream pin              | `@astryxdesign/core` 0.4.5                                               |
-| Ledger entries            | 32                                                                       |
+| Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
+| Ledger entries            | 39                                                                       |
 
 ## Test parity
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
-| Upstream                 | 256    | 6383           |
-| Ported here              | 250    | 6278           |
-| No counterpart by design | 5      | 69             |
-| **Unported**             | **1**  | **36**         |
+| Upstream                 | 275    | 7039           |
+| Ported here              | 268    | 6965           |
+| No counterpart by design | 7      | 74             |
+| **Unported**             | **0**  | **0**          |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
 `it.each` counts once rather than per row.
 
-<details><summary>Unported upstream suites</summary>
-
-| Suite                              | Cases |
-| ---------------------------------- | ----- |
-| `theme/generateThemeRules.test.ts` | 36    |
-
-</details>
-
 ## Assertion strength
 
 |                                                               | Sites | Files |
 | ------------------------------------------------------------- | ----- | ----- |
-| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 861   | 74    |
+| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 0     | 0     |
+| `getByText` with a string, no `exact`                         | 1     | 1     |
 
 Testing Library matches an accessible name as a whole string; Playwright matches a string
 `name` as a case-insensitive **substring**. Every site above is therefore a ported assertion
@@ -53,7 +46,7 @@ substring-matching on both sides by design and is not counted.
 | Kind                  | Count   |
 | --------------------- | ------- |
 | api-divergence        | 32      |
-| deliberate-divergence | 44      |
-| unported              | 14      |
-| upstream-lag          | 12      |
-| **total**             | **102** |
+| deliberate-divergence | 47      |
+| unported              | 15      |
+| upstream-lag          | 11      |
+| **total**             | **105** |

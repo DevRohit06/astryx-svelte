@@ -62,6 +62,16 @@ dimension when it had several.
       is upstream's discriminator, and a hook's surface is its signature, not a props table.
       `useResizable` is described by _both_ its own `.doc.mjs` (params) and a `components[]` member in
       `Resizable.doc.mjs` (props) — anything merging them has to let the hook branch win.
+- [ ] **If the batch ports a shared mechanism, cost it by who has to _adopt_ it.** A registry, a
+      context, a base class or a hook that other code is supposed to route through is worth nothing
+      until its consumers migrate, and migrating them is a change to every consumer rather than an
+      addition beside them. Batch 035 ported the Layer dismissal stack, its hook, `useTouchTrigger`
+      and the focus-trap migration, had three green agent reports, and was **a fifth done**:
+      upstream has six families registered on that stack and this port had one. Two files made it
+      look otherwise by mentioning the hook in comments anticipating a migration. The check is one
+      command — grep the symbol on both sides and compare the _lists_, not the counts — and the
+      suites that prove the mechanism works are always the last thing portable, because they assert
+      about the collapse rather than about any one consumer.
 - [ ] **Read `port/debts.md` for every unit in scope.**
       `grep -n -A3 "^### .*<Name>" port/debts.md` and `grep -n -B2 "units:.*<Name>" port/debts.md`. A
       deliberate divergence already recorded there is not a bug to fix.

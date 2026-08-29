@@ -5,37 +5,62 @@ import type { Locator, LocatorSelectors } from 'vitest/browser';
 import { createAttachmentKey } from 'svelte/attachments';
 import Calendar from '$lib/components/calendar/calendar.svelte';
 import { calendarNavIconAttrs } from '$lib/components/calendar/calendar.stylex.js';
+import { standaloneShortWeekdayNamesByLocale } from '$lib/components/calendar/standalone-short-weekday-names.generated.js';
 import { defineTheme } from '$lib/theme/define-theme.js';
 import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 import type { DayOfWeekName, ISODateString } from '$lib/utils/date-types.js';
 import { DATE_FORMAT_WITH_WEEKDAY, plainDateFormat } from '$lib/utils/plain-date.js';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
+import CalendarI18n from './fixtures/calendar-i18n.svelte';
 import CalendarRtl from './fixtures/calendar-rtl-fixture.svelte';
 
 /**
- * Ported from Astryx's `Calendar/Calendar.test.tsx` — **all 73 of upstream's
- * 73** at v0.3.0, in upstream's order and with upstream's titles.
+ * Ported from Astryx's `Calendar/Calendar.test.tsx` — **all 86 of its cases at
+ * the 0.5.0 pin**, in upstream's order and with upstream's titles. **Nothing is
+ * dropped.**
  *
- * ## The count, re-derived from the tag (the previous header was wrong)
+ * Two titles differ deliberately, and neither is a dropped case:
  *
- * This header used to read "all 62 cases … Nothing is dropped". Upstream has
- * **73**; the eleven that were absent are now here — the whole `day-cell marker
- * theme state` describe (6) and the whole `theming targets` describe (5). Two
- * translations they need, both already precedented in this repo:
- *
- * - `generateThemeTestCSS` becomes `generateThemeCss`, this port's function of
- *   the same job and shape (as `multi-selector` and `selector` do).
+ * - upstream's `wraps both nav chevrons in the navIcon wrapper` is spelled
+ *   `wraps both nav chevrons in the RTL-mirroring navIcon wrapper` here, and
+ *   says so at the case;
  * - `omits the marker state for non-today cells` is **restated**: upstream
  *   guards its only assertion behind `if (other)`, so it can pass having checked
  *   nothing. See the comment at the case.
  *
- * One title differs deliberately: upstream's `wraps both nav chevrons in the
- * navIcon wrapper` is spelled `wraps both nav chevrons in the RTL-mirroring
- * navIcon wrapper` here, and says so at the case.
+ * `getInitialFocusDate` itself is covered case-for-case by
+ * `get-initial-focus-date.test.ts` (the node project — it is a pure function);
+ * the six cases in the `opens on a month inside the min/max window` describe
+ * below are upstream's own component-level cases over it, not a substitute.
  *
- * Ten of those are 0.2.0's, and they are why `getDayButton` stopped matching
- * exactly: the selection-state cases assert that a selected or in-range day
- * appends a state word to its accessible name.
+ * ## The count, re-derived from the tag (two earlier headers were wrong)
+ *
+ * This header once read "all 62 cases … Nothing is dropped", then "73 of its 86
+ * … The 13 not here are three clusters". Both were true when written and both
+ * went stale. All 86 are now present:
+ *
+ * - the eleven 0.4.x additions — the whole `day-cell marker theme state`
+ *   describe (6) and the whole `theming targets` describe (5);
+ * - the six of 0.5.0's `opens on a month inside the min/max window` describe,
+ *   which needed the source they test: `getInitialFocusDate` is now ported at
+ *   `$lib/components/calendar/get-initial-focus-date.ts` and seeds
+ *   `internalFocusDate`, replacing an unclamped `seedFocusDate()`;
+ * - the five `minRangeSpan`/`maxRangeSpan` clamp cases and the two stand-alone
+ *   short weekday name cases, which were pure test debt against source this
+ *   port already had.
+ *
+ * Two translations those needed, both already precedented in this repo:
+ *
+ * - `generateThemeTestCSS` becomes `generateThemeCss`, this port's function of
+ *   the same job and shape (as `multi-selector` and `selector` do).
+ * - upstream re-renders a whole `<InternationalizationProvider><Calendar /></…>`
+ *   tree to swap locales; `calendar-i18n.svelte` is the fixture that makes the
+ *   provider's snippet `children` expressible, and `rerender` swaps its `locale`
+ *   prop — the provider stores a context *getter*, so the change propagates.
+ *
+ * Ten of the cases here arrived with 0.2.0, and they are why `getDayButton`
+ * stopped matching exactly: the selection-state cases assert that a selected or
+ * in-range day appends a state word to its accessible name.
  *
  * The translations, once each:
  *
@@ -176,7 +201,7 @@ function dayName(day: number, month = 'January', year = 2026): string {
 }
 
 function getButton(screen: Screen, name: string): Locator {
-	return screen.getByRole('button', { name });
+	return screen.getByRole('button', { name, exact: true });
 }
 
 /**
@@ -260,6 +285,47 @@ describe('Calendar', () => {
 		await expect.element(monthLabel(screen, 'Th')).toBeInTheDocument();
 		await expect.element(monthLabel(screen, 'Fr')).toBeInTheDocument();
 		await expect.element(monthLabel(screen, 'Sa')).toBeInTheDocument();
+	});
+
+	it('uses the provider locale for stand-alone short day names', async () => {
+		const localizedNames = standaloneShortWeekdayNamesByLocale.es;
+		const englishNames = standaloneShortWeekdayNamesByLocale.en;
+		expect(localizedNames).not.toEqual(englishNames);
+
+		// Upstream re-renders a whole `<Provider locale><Calendar /></Provider>`
+		// tree; `rerender` here swaps the fixture's `locale` prop, which the
+		// provider's context *getter* republishes — the same observable change.
+		const screen = await render(CalendarI18n, { props: { locale: 'es-ES' } });
+
+		expect(
+			screen
+				.getByRole('columnheader')
+				.elements()
+				.map((el) => el.textContent)
+		).toEqual(localizedNames);
+
+		await screen.rerender({ locale: 'en' });
+		expect(
+			screen
+				.getByRole('columnheader')
+				.elements()
+				.map((el) => el.textContent)
+		).toEqual(englishNames);
+	});
+
+	it('rotates localized day names by numeric weekday index', async () => {
+		const localizedNames = standaloneShortWeekdayNamesByLocale.es;
+
+		const screen = await render(CalendarI18n, {
+			props: { locale: 'es-ES', calendar: { weekStartsOn: 1 } }
+		});
+
+		expect(
+			screen
+				.getByRole('columnheader')
+				.elements()
+				.map((el) => el.textContent)
+		).toEqual([...localizedNames.slice(1), localizedNames[0]]);
 	});
 
 	it('displays correct number of day cells', async () => {
@@ -366,6 +432,65 @@ describe('Calendar', () => {
 		await expect.element(day15).not.toBeDisabled();
 	});
 
+	describe('opens on a month inside the min/max window', () => {
+		// Upstream opens the clock with `vi.useFakeTimers({toFake: ['Date']})`;
+		// this file mocks `Date` alone through a bare `setSystemTime` (see the
+		// header) and the file-level `afterEach` already restores it.
+		beforeEach(() => {
+			vi.setSystemTime(new Date(2026, 7, 21, 12, 0, 0));
+		});
+
+		it('opens on today when today is inside the window', async () => {
+			const screen = await render(Calendar, {
+				props: { min: '2026-01-01', max: '2026-12-31' }
+			});
+
+			await expect.element(monthLabel(screen, 'August 2026')).toBeInTheDocument();
+		});
+
+		it('opens on min when the window is entirely in the future', async () => {
+			const screen = await render(Calendar, {
+				props: { min: '2027-03-04', max: '2027-06-30' }
+			});
+
+			await expect.element(monthLabel(screen, 'March 2027')).toBeInTheDocument();
+			await expect.element(getDayButton(screen, 4, 'March', 2027)).not.toBeDisabled();
+		});
+
+		it('opens on max when the window is entirely in the past', async () => {
+			const screen = await render(Calendar, {
+				props: { min: '2019-01-01', max: '2019-04-30' }
+			});
+
+			await expect.element(monthLabel(screen, 'April 2019')).toBeInTheDocument();
+			await expect.element(getDayButton(screen, 30, 'April', 2019)).not.toBeDisabled();
+		});
+
+		it('keeps max in the last pane in the two-month layout', async () => {
+			const screen = await render(Calendar, {
+				props: { numberOfMonths: 2, min: '2019-01-01', max: '2019-04-30' }
+			});
+
+			await expect.element(monthLabel(screen, 'March 2019 – April 2019')).toBeInTheDocument();
+		});
+
+		it('still honors an explicit focusDate outside the window', async () => {
+			const screen = await render(Calendar, {
+				props: { focusDate: '2026-01-01', min: '2027-03-04', max: '2027-06-30' }
+			});
+
+			await expect.element(monthLabel(screen, 'January 2026')).toBeInTheDocument();
+		});
+
+		it('still opens on the selected value outside the window', async () => {
+			const screen = await render(Calendar, {
+				props: { defaultValue: '2031-07-04', min: '2019-01-01' }
+			});
+
+			await expect.element(monthLabel(screen, 'July 2031')).toBeInTheDocument();
+		});
+	});
+
 	it('respects custom dateConstraints', async () => {
 		// Only allow weekdays
 		const isWeekday = (date: Date) => {
@@ -380,6 +505,109 @@ describe('Calendar', () => {
 		// January 4, 2026 is a Sunday - should be disabled
 		const sunday = getDayButton(screen, 4);
 		await expect.element(sunday).toBeDisabled();
+	});
+
+	it('caps the end date to maxRangeSpan once a start is picked', async () => {
+		const screen = await render(Calendar, {
+			props: { mode: 'range', focusDate: '2026-01-01', maxRangeSpan: 7 }
+		});
+
+		// Before a start is picked every day is selectable.
+		await expect.element(getDayButton(screen, 20)).not.toBeDisabled();
+
+		// Pick Jan 10 as the start. A 7-day window spans Jan 4–16 (start ± 6).
+		await userEvent.click(getDayButton(screen, 10));
+
+		// 6 days after — the edge
+		await expect.element(getDayButton(screen, 16)).not.toBeDisabled();
+		// 7 days after — beyond the cap
+		await expect.element(getDayButton(screen, 17)).toBeDisabled();
+		// 6 days before — symmetric
+		await expect.element(getDayButton(screen, 4)).not.toBeDisabled();
+		// 7 days before — beyond the cap
+		await expect.element(getDayButton(screen, 3)).toBeDisabled();
+	});
+
+	it('enforces minRangeSpan once a start is picked', async () => {
+		const screen = await render(Calendar, {
+			props: { mode: 'range', focusDate: '2026-01-01', minRangeSpan: 3 }
+		});
+
+		// Pick Jan 10. A 3-day minimum forbids ends closer than 2 days away.
+		await userEvent.click(getDayButton(screen, 10));
+
+		// The picked start itself stays enabled — it is the active selection
+		// anchor, not an unreachable end.
+		await expect.element(getDayButton(screen, 10)).not.toBeDisabled();
+		// 1 day apart — too short
+		await expect.element(getDayButton(screen, 11)).toBeDisabled();
+		// 3-day span — allowed
+		await expect.element(getDayButton(screen, 12)).not.toBeDisabled();
+		// 3-day span the other way
+		await expect.element(getDayButton(screen, 8)).not.toBeDisabled();
+		// 2-day span — too short
+		await expect.element(getDayButton(screen, 9)).toBeDisabled();
+	});
+
+	it('clears the in-progress start when the anchor is clicked again', async () => {
+		const handleChange = vi.fn();
+
+		const screen = await render(Calendar, {
+			props: {
+				mode: 'range',
+				focusDate: '2026-01-01',
+				onChange: handleChange,
+				minRangeSpan: 3
+			}
+		});
+
+		// Pick Jan 10 as the start, then click it again.
+		await userEvent.click(getDayButton(screen, 10));
+		await userEvent.click(getDayButton(screen, 10));
+
+		// No zero-length range is committed…
+		expect(handleChange).not.toHaveBeenCalled();
+
+		// …and the start is cleared: the days that minRangeSpan disabled around
+		// the old anchor are selectable again, so a new start can be placed there.
+		await expect.element(getDayButton(screen, 11)).not.toBeDisabled();
+		await expect.element(getDayButton(screen, 9)).not.toBeDisabled();
+	});
+
+	it('does not apply range-span constraints in single mode', async () => {
+		const screen = await render(Calendar, {
+			props: { focusDate: '2026-01-01', maxRangeSpan: 7 }
+		});
+
+		// A picked single date must not disable far-away days.
+		await userEvent.click(getDayButton(screen, 10));
+		await expect.element(getDayButton(screen, 25)).not.toBeDisabled();
+	});
+
+	it('keeps a controlled value that is wider than maxRangeSpan (selection-only)', async () => {
+		// The span constraint governs which days are pickable, not validation of
+		// an already-set value — so a 15-day value under a 7-day cap stays
+		// rendered and is never silently rewritten.
+		const screen = await render(Calendar, {
+			props: {
+				mode: 'range',
+				value: { start: '2026-01-05', end: '2026-01-20' },
+				focusDate: '2026-01-01',
+				maxRangeSpan: 7
+			}
+		});
+
+		// No selection is in progress (both endpoints are set), so no anchor →
+		// every day is pickable and both endpoints render selected.
+		await expect.element(getDayButton(screen, 20)).not.toBeDisabled();
+		expect(getDayButton(screen, 5).element().closest('[role="gridcell"]')).toHaveAttribute(
+			'aria-selected',
+			'true'
+		);
+		expect(getDayButton(screen, 20).element().closest('[role="gridcell"]')).toHaveAttribute(
+			'aria-selected',
+			'true'
+		);
 	});
 
 	// ─── Multi-Month ─────────────────────────────────────────────
@@ -710,7 +938,7 @@ describe('Calendar', () => {
 		it('announces the new month politely when clicking next', async () => {
 			const screen = await render(Calendar, { props: { focusDate: '2026-01-01' } });
 
-			await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Next month', exact: true }));
 
 			await expect.poll(politeRegion).not.toBeNull();
 			await expect.element(politeRegion()!).toHaveTextContent('February 2026');
@@ -719,7 +947,7 @@ describe('Calendar', () => {
 		it('announces the new month politely when clicking previous', async () => {
 			const screen = await render(Calendar, { props: { focusDate: '2026-02-01' } });
 
-			await userEvent.click(screen.getByRole('button', { name: 'Previous month' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Previous month', exact: true }));
 
 			await expect.poll(politeRegion).not.toBeNull();
 			await expect.element(politeRegion()!).toHaveTextContent('January 2026');
@@ -752,7 +980,7 @@ describe('Calendar', () => {
 				props: { numberOfMonths: 2, focusDate: '2026-01-01' }
 			});
 
-			await userEvent.click(screen.getByRole('button', { name: 'Next month' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Next month', exact: true }));
 
 			await expect.poll(politeRegion).not.toBeNull();
 			await expect.element(politeRegion()!).toHaveTextContent('February 2026 – March 2026');

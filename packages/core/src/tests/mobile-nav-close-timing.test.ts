@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { parseShortestDurationMs } from '$lib/components/mobile-nav/close-timing.js';
 
 /**
- * Ported from Astryx's `MobileNav/MobileNavCloseTiming.test.ts`, all **3** cases
- * at v0.4.5 (12 assertions across two `it.each` tables plus one standalone).
- * Nothing is dropped.
+ * Ported from Astryx's `MobileNav/MobileNavCloseTiming.test.ts`, all **3** `it`
+ * blocks at the 0.5.0 pin — 14 collected cases, 8 + 5 rows across two `it.each`
+ * tables plus one standalone. Nothing is dropped. (The header read "12
+ * assertions"; the tables carry 13 rows between them on both sides.)
  *
  * Through the component this helper is only ever reachable via a real browser,
  * which serialises computed `<time>` values in seconds — so `"0.41s"` is the

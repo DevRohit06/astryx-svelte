@@ -35,13 +35,16 @@ const styles = stylex.create({
 		alignItems: 'flex-start'
 	},
 	interactive: {
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		transitionProperty: 'background-color',
 		transitionDuration: durationVars['--duration-fast-min'],
 		transitionTimingFunction: easeVars['--ease-standard'],
 		backgroundColor: {
 			default: 'transparent',
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			},
 			':active': colorVars['--color-overlay-pressed']
@@ -54,7 +57,7 @@ const styles = stylex.create({
 		backgroundColor: colorVars['--color-accent-muted']
 	},
 	disabled: {
-		cursor: 'not-allowed',
+		cursor: 'default',
 		pointerEvents: 'none'
 	},
 	disabledContent: {
@@ -62,7 +65,10 @@ const styles = stylex.create({
 	},
 	invisibleButton: {
 		all: 'unset',
-		cursor: 'inherit',
+		cursor: {
+			default: 'inherit',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		font: 'inherit',
 		color: 'inherit',
 		display: 'flex',
@@ -74,7 +80,10 @@ const styles = stylex.create({
 	},
 	invisibleAnchor: {
 		all: 'unset',
-		cursor: 'inherit',
+		cursor: {
+			default: 'inherit',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		font: 'inherit',
 		color: 'inherit',
 		display: 'flex',
@@ -91,6 +100,25 @@ const styles = stylex.create({
 		flex: 1,
 		minWidth: 0,
 		textAlign: 'start'
+	},
+	// `layout="inline"`: label and description share one line, so the row fits a
+	// fixed-height host such as a Selector trigger inside an InputGroup.
+	inlineContent: {
+		flexDirection: 'row',
+		// Centered, not baseline-aligned: two different font sizes on a shared
+		// baseline make a line box taller than either line, which would push a
+		// fixed-height host (a Selector trigger) a pixel off its size token.
+		alignItems: 'center',
+		columnGap: spacingVars['--spacing-1']
+	},
+	inlineLabel: {
+		flexShrink: 0
+	},
+	// The description yields width first, so the label — the part that identifies
+	// the item — is the last thing to ellipsize.
+	inlineDescription: {
+		flexShrink: 1,
+		minWidth: 0
 	},
 	label: {
 		// Falls back to the primary text token; a parent (e.g. a destructive menu
@@ -156,6 +184,7 @@ const densityStyles = stylex.create({
 });
 
 export type ItemAlign = 'center' | 'start';
+export type ItemLayout = 'stacked' | 'inline';
 export type ItemDensity = keyof typeof densityStyles;
 
 /** Flags that pick the root's conditional styles. */
@@ -203,25 +232,33 @@ function truncateStyle(
 /** The label line, with truncation driven by `labelLines` or a string label. */
 export function itemLabelAttrs(
 	labelLines: number | undefined,
-	isString: boolean
+	isString: boolean,
+	isInline: boolean
 ): SvelteStyleAttrs {
 	return sx(
 		styles.label,
+		isInline && styles.inlineLabel,
 		truncateStyle(labelLines, isString, styles.labelSingleTruncate, styles.labelMultiTruncate),
 		labelLines != null && labelLines > 1 && dynamicStyles.lineClamp(labelLines)
 	);
 }
 
-/** The description line, same truncation rules. */
+/**
+ * The description line, same truncation rules — except that an inline row is one
+ * line by definition, so the description always ellipsizes there. A snippet
+ * description cannot wrap the row open.
+ */
 export function itemDescriptionAttrs(
 	descriptionLines: number | undefined,
-	isString: boolean
+	isString: boolean,
+	isInline: boolean
 ): SvelteStyleAttrs {
 	return sx(
 		styles.description,
+		isInline && styles.inlineDescription,
 		truncateStyle(
 			descriptionLines,
-			isString,
+			isString || isInline,
 			styles.descriptionSingleTruncate,
 			styles.descriptionMultiTruncate
 		),
@@ -230,18 +267,26 @@ export function itemDescriptionAttrs(
 }
 
 /** The middle column when the item is static or has a parent role. */
-export function itemContentAttrs(isDisabled: boolean): SvelteStyleAttrs {
-	return sx(styles.content, isDisabled && styles.disabledContent);
+export function itemContentAttrs(isDisabled: boolean, isInline: boolean): SvelteStyleAttrs {
+	return sx(styles.content, isInline && styles.inlineContent, isDisabled && styles.disabledContent);
 }
 
 /** The invisible `<button>` filling the middle column. */
-export function itemInvisibleButtonAttrs(isDisabled: boolean): SvelteStyleAttrs {
-	return sx(styles.invisibleButton, isDisabled && styles.disabledContent);
+export function itemInvisibleButtonAttrs(isDisabled: boolean, isInline: boolean): SvelteStyleAttrs {
+	return sx(
+		styles.invisibleButton,
+		isInline && styles.inlineContent,
+		isDisabled && styles.disabledContent
+	);
 }
 
 /** The invisible link filling the middle column. */
-export function itemInvisibleAnchorAttrs(isDisabled: boolean): SvelteStyleAttrs {
-	return sx(styles.invisibleAnchor, isDisabled && styles.disabledContent);
+export function itemInvisibleAnchorAttrs(isDisabled: boolean, isInline: boolean): SvelteStyleAttrs {
+	return sx(
+		styles.invisibleAnchor,
+		isInline && styles.inlineContent,
+		isDisabled && styles.disabledContent
+	);
 }
 
 /** The leading slot wrapper. */

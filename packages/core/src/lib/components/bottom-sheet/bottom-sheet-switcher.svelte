@@ -102,6 +102,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { cx, mergeStyle } from '../../internal/sx.js';
+	import BottomSheetEdgeTint from './bottom-sheet-edge-tint.svelte';
 	import {
 		setBottomSheetSwitcherContext,
 		type BottomSheetSwitcherContextValue,
@@ -569,7 +570,9 @@
 		}
 	}
 
-	const dialogAttrs = $derived(bottomSheetDialogAttrs(isFlowVisible, hasScrim, xstyle));
+	const dialogAttrs = $derived(
+		bottomSheetDialogAttrs(isFlowVisible, hasScrim, isFlowVisible && activeSheet == null, xstyle)
+	);
 	const ariaLabel = $derived(
 		(rest['aria-label'] as string | undefined) ??
 			(rest['aria-labelledby'] == null ? activeLabel : undefined)
@@ -590,4 +593,8 @@
 	{@attach focusTrap.attachContainer}
 >
 	{@render children()}
+	<!-- A modal flow's `::backdrop` already answers Safari's edge sampler. -->
+	{#if !hasScrim}
+		<BottomSheetEdgeTint />
+	{/if}
 </dialog>

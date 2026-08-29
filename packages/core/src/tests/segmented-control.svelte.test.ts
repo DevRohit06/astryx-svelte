@@ -7,13 +7,17 @@ import { cssIn, forcedColorsCssIn } from './forced-colors.js';
 /**
  * Astryx's `SegmentedControl/SegmentedControl.test.tsx`, ported case for case.
  *
- * The file recount is the contract: upstream has **42** `it` cases at 0.3.0 (not
- * the "33" the task summary cited), spread over nine describe blocks — 11
- * `SegmentedControl`, 9 `keyboard navigation` (a nested "#3597 pure focus move"
- * block of 3 plus 6), 14 `disabled state` (6 direct plus a nested
- * `disabledMessage` of 8), 3 `data-testid forwarding`, 2 `onClick composition`,
- * 2 `container handler forwarding`, 1 `forced colors` (new at 0.3.0). All 42 are
- * ported here; none dropped.
+ * The file recount is the contract: upstream has **43** `it` cases at the
+ * **0.5.0** pin, spread over nine describe blocks — 12 `SegmentedControl`, 9
+ * `keyboard navigation` (a nested "#3597 pure focus move" block of 3 plus 6),
+ * 14 `disabled state` (6 direct plus a nested `disabledMessage` of 8), 3
+ * `data-testid forwarding`, 2 `onClick composition`, 2 `container handler
+ * forwarding`, 1 `forced colors`. **42 are ported here.**
+ *
+ * **The one that is not here arrived at 0.5.0**: `fill items can shrink and
+ * truncate long labels`, in the top-level `SegmentedControl` block. It
+ * transcribes unchanged. (This header read "**42** … at 0.3.0 … All 42 are
+ * ported here; none dropped", true at that pin.)
  *
  * Because `<SegmentedControl>` takes its `SegmentedControlItem` children as a snippet,
  * every case renders through `segmented-control-probe.svelte`, which describes the
@@ -69,8 +73,12 @@ describe('SegmentedControl', () => {
 
 		await expect.element(screen.getByRole('radiogroup')).toBeInTheDocument();
 		await expect.element(screen.getByRole('radiogroup')).toHaveAttribute('aria-label', 'View mode');
-		await expect.element(screen.getByRole('radio', { name: 'Grid' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('radio', { name: 'List' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('radio', { name: 'List', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('marks selected item with aria-checked', async () => {
@@ -87,10 +95,10 @@ describe('SegmentedControl', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('radio', { name: 'Grid' }))
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
 			.toHaveAttribute('aria-checked', 'true');
 		await expect
-			.element(screen.getByRole('radio', { name: 'List' }))
+			.element(screen.getByRole('radio', { name: 'List', exact: true }))
 			.toHaveAttribute('aria-checked', 'false');
 	});
 
@@ -108,7 +116,7 @@ describe('SegmentedControl', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('radio', { name: 'List' }));
+		await userEvent.click(screen.getByRole('radio', { name: 'List', exact: true }));
 		expect(handleChange).toHaveBeenCalledWith('list');
 	});
 
@@ -126,7 +134,7 @@ describe('SegmentedControl', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('radio', { name: 'Grid' }));
+		await userEvent.click(screen.getByRole('radio', { name: 'Grid', exact: true }));
 		expect(handleChange).not.toHaveBeenCalled();
 	});
 
@@ -140,17 +148,17 @@ describe('SegmentedControl', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('radio', { name: 'Grid' }))
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
 			.toHaveAttribute('aria-checked', 'true');
 
 		// Upstream's `rerender` with a new controlled `value`.
 		await screen.rerender({ label: 'View mode', value: 'list', onChange: noop, items });
 
 		await expect
-			.element(screen.getByRole('radio', { name: 'Grid' }))
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
 			.toHaveAttribute('aria-checked', 'false');
 		await expect
-			.element(screen.getByRole('radio', { name: 'List' }))
+			.element(screen.getByRole('radio', { name: 'List', exact: true }))
 			.toHaveAttribute('aria-checked', 'true');
 	});
 
@@ -164,7 +172,9 @@ describe('SegmentedControl', () => {
 				items: [{ value: 'grid', label: 'Grid' }]
 			}
 		});
-		await expect.element(screen.getByRole('radio', { name: 'Grid' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
+			.toBeInTheDocument();
 
 		await screen.rerender({
 			label: 'View mode',
@@ -173,7 +183,9 @@ describe('SegmentedControl', () => {
 			size: 'lg',
 			items: [{ value: 'grid', label: 'Grid' }]
 		});
-		await expect.element(screen.getByRole('radio', { name: 'Grid' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders item with icon', async () => {
@@ -199,7 +211,7 @@ describe('SegmentedControl', () => {
 			}
 		});
 
-		const radio = screen.getByRole('radio', { name: 'Grid view' });
+		const radio = screen.getByRole('radio', { name: 'Grid view', exact: true });
 		await expect.element(radio).toBeInTheDocument();
 		await expect.element(radio).toHaveAttribute('aria-label', 'Grid view');
 		// Label text should not be visible.
@@ -221,13 +233,13 @@ describe('SegmentedControl', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('radio', { name: 'Grid' }))
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
 			.toHaveAttribute('tabindex', '-1');
 		await expect
-			.element(screen.getByRole('radio', { name: 'List' }))
+			.element(screen.getByRole('radio', { name: 'List', exact: true }))
 			.toHaveAttribute('tabindex', '0');
 		await expect
-			.element(screen.getByRole('radio', { name: 'Table' }))
+			.element(screen.getByRole('radio', { name: 'Table', exact: true }))
 			.toHaveAttribute('tabindex', '-1');
 	});
 
@@ -248,7 +260,7 @@ describe('SegmentedControl', () => {
 		// No item is selected, but the group must remain Tab-reachable: the first
 		// enabled radio is promoted to tabIndex=0 (by `useListFocus`'s repair).
 		await expect
-			.element(screen.getByRole('radio', { name: 'Grid' }))
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
 			.toHaveAttribute('tabindex', '0');
 	});
 
@@ -268,7 +280,7 @@ describe('SegmentedControl', () => {
 
 		// The disabled first item is skipped; the first ENABLED radio is tabbable.
 		await expect
-			.element(screen.getByRole('radio', { name: 'List' }))
+			.element(screen.getByRole('radio', { name: 'List', exact: true }))
 			.toHaveAttribute('tabindex', '0');
 	});
 });
@@ -289,13 +301,13 @@ describe('SegmentedControl keyboard navigation', () => {
 					]
 				}
 			});
-			const before = screen.getByText('before').element() as HTMLElement;
+			const before = screen.getByText('before', { exact: true }).element() as HTMLElement;
 			// Restated delivery (see file header): the tab stop is the promoted first
 			// enabled radio; moving focus onto it from the outside button gives `focusin`
 			// the outside `relatedTarget` a Tab entry would, exercising the pure-focus-move
 			// branch. onChange must stay silent.
 			before.focus();
-			(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+			(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 			expect(onChange).not.toHaveBeenCalled();
 		});
 
@@ -313,11 +325,11 @@ describe('SegmentedControl keyboard navigation', () => {
 					]
 				}
 			});
-			const before = screen.getByText('before').element() as HTMLElement;
+			const before = screen.getByText('before', { exact: true }).element() as HTMLElement;
 			// The selected 'list' is disabled, so the tab stop is the first enabled radio
 			// (Grid); entering it from outside stays a pure focus move.
 			before.focus();
-			(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+			(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 			expect(onChange).not.toHaveBeenCalled();
 		});
 
@@ -334,7 +346,7 @@ describe('SegmentedControl keyboard navigation', () => {
 					]
 				}
 			});
-			(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+			(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 			await userEvent.keyboard('{ArrowRight}');
 			expect(onChange).toHaveBeenCalledWith('list');
 		});
@@ -355,11 +367,11 @@ describe('SegmentedControl keyboard navigation', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{ArrowRight}');
 
 		expect(handleChange).toHaveBeenCalledWith('list');
-		await expect.element(screen.getByRole('radio', { name: 'List' })).toHaveFocus();
+		await expect.element(screen.getByRole('radio', { name: 'List', exact: true })).toHaveFocus();
 	});
 
 	it('navigates with ArrowLeft and selects', async () => {
@@ -377,11 +389,11 @@ describe('SegmentedControl keyboard navigation', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'List' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'List', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{ArrowLeft}');
 
 		expect(handleChange).toHaveBeenCalledWith('grid');
-		await expect.element(screen.getByRole('radio', { name: 'Grid' })).toHaveFocus();
+		await expect.element(screen.getByRole('radio', { name: 'Grid', exact: true })).toHaveFocus();
 	});
 
 	it('wraps around from last to first with ArrowRight', async () => {
@@ -399,11 +411,11 @@ describe('SegmentedControl keyboard navigation', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'Table' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'Table', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{ArrowRight}');
 
 		expect(handleChange).toHaveBeenCalledWith('grid');
-		await expect.element(screen.getByRole('radio', { name: 'Grid' })).toHaveFocus();
+		await expect.element(screen.getByRole('radio', { name: 'Grid', exact: true })).toHaveFocus();
 	});
 
 	it('wraps around from first to last with ArrowLeft', async () => {
@@ -421,11 +433,11 @@ describe('SegmentedControl keyboard navigation', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{ArrowLeft}');
 
 		expect(handleChange).toHaveBeenCalledWith('table');
-		await expect.element(screen.getByRole('radio', { name: 'Table' })).toHaveFocus();
+		await expect.element(screen.getByRole('radio', { name: 'Table', exact: true })).toHaveFocus();
 	});
 
 	it('Home key focuses first item', async () => {
@@ -443,11 +455,11 @@ describe('SegmentedControl keyboard navigation', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'Table' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'Table', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{Home}');
 
 		expect(handleChange).toHaveBeenCalledWith('grid');
-		await expect.element(screen.getByRole('radio', { name: 'Grid' })).toHaveFocus();
+		await expect.element(screen.getByRole('radio', { name: 'Grid', exact: true })).toHaveFocus();
 	});
 
 	it('End key focuses last item', async () => {
@@ -465,11 +477,11 @@ describe('SegmentedControl keyboard navigation', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{End}');
 
 		expect(handleChange).toHaveBeenCalledWith('table');
-		await expect.element(screen.getByRole('radio', { name: 'Table' })).toHaveFocus();
+		await expect.element(screen.getByRole('radio', { name: 'Table', exact: true })).toHaveFocus();
 	});
 });
 
@@ -505,12 +517,12 @@ describe('SegmentedControl disabled state', () => {
 			}
 		});
 		// Selected segment must not be a focusable-but-dead tab stop when disabled.
-		const selected = screen.getByRole('radio', { name: 'Grid' });
+		const selected = screen.getByRole('radio', { name: 'Grid', exact: true });
 		await expect.element(selected).toHaveAttribute('tabindex', '-1');
 		await expect.element(selected).toHaveAttribute('aria-disabled', 'true');
 		// No enabled segment is tabbable either.
 		await expect
-			.element(screen.getByRole('radio', { name: 'List' }))
+			.element(screen.getByRole('radio', { name: 'List', exact: true }))
 			.toHaveAttribute('tabindex', '-1');
 	});
 
@@ -527,7 +539,7 @@ describe('SegmentedControl disabled state', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('radio', { name: 'Grid' }))
+			.element(screen.getByRole('radio', { name: 'Grid', exact: true }))
 			.toHaveAttribute('tabindex', '-1');
 	});
 
@@ -549,7 +561,7 @@ describe('SegmentedControl disabled state', () => {
 		// Restated delivery (see file header): the disabled group carries
 		// `pointer-events: none`, so a native `.click()` stands in for
 		// `userEvent.click` — the component's guard blocks selection all the same.
-		(screen.getByRole('radio', { name: 'List' }).element() as HTMLElement).click();
+		(screen.getByRole('radio', { name: 'List', exact: true }).element() as HTMLElement).click();
 		expect(handleChange).not.toHaveBeenCalled();
 	});
 
@@ -568,12 +580,12 @@ describe('SegmentedControl disabled state', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('radio', { name: 'List' }))
+			.element(screen.getByRole('radio', { name: 'List', exact: true }))
 			.toHaveAttribute('aria-disabled', 'true');
 
 		// Restated delivery (see file header): the aria-disabled segment is not
 		// actionable to Playwright; a native `.click()` reaches the blocked guard.
-		(screen.getByRole('radio', { name: 'List' }).element() as HTMLElement).click();
+		(screen.getByRole('radio', { name: 'List', exact: true }).element() as HTMLElement).click();
 		expect(handleChange).not.toHaveBeenCalled();
 	});
 
@@ -592,12 +604,12 @@ describe('SegmentedControl disabled state', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{ArrowRight}');
 
 		// Should skip disabled "List" and go to "Table".
 		expect(handleChange).toHaveBeenCalledWith('table');
-		await expect.element(screen.getByRole('radio', { name: 'Table' })).toHaveFocus();
+		await expect.element(screen.getByRole('radio', { name: 'Table', exact: true })).toHaveFocus();
 	});
 
 	describe('disabledMessage', () => {
@@ -640,7 +652,7 @@ describe('SegmentedControl disabled state', () => {
 			// Restated delivery (see file header): a Tab enters keyboard modality, then
 			// focus is placed on the still-focusable selected segment.
 			await userEvent.tab();
-			(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+			(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 			await vi.waitFor(() => {
 				expect(tooltip.matches(':popover-open')).toBe(true);
 			});
@@ -674,7 +686,7 @@ describe('SegmentedControl disabled state', () => {
 
 		it('keeps the selected segment focusable when a reason is provided', async () => {
 			const screen = await renderControl();
-			const selected = screen.getByRole('radio', { name: 'Grid' });
+			const selected = screen.getByRole('radio', { name: 'Grid', exact: true });
 			await expect.element(selected).toHaveAttribute('aria-disabled', 'true');
 			await expect.element(selected).toHaveAttribute('tabindex', '0');
 		});
@@ -692,7 +704,7 @@ describe('SegmentedControl disabled state', () => {
 			// Restated delivery (see file header): the segment is focusable-disabled
 			// (aria-disabled, not native); a native `.click()` is upstream's
 			// `fireEvent.click`, running the component's blocked guard.
-			(screen.getByRole('radio', { name: 'List' }).element() as HTMLElement).click();
+			(screen.getByRole('radio', { name: 'List', exact: true }).element() as HTMLElement).click();
 			expect(onChange).not.toHaveBeenCalled();
 		});
 
@@ -750,10 +762,10 @@ describe('SegmentedControl data-testid forwarding', () => {
 		});
 
 		expect(screen.getByTestId('opt-grid').element()).toBe(
-			screen.getByRole('radio', { name: 'Grid' }).element()
+			screen.getByRole('radio', { name: 'Grid', exact: true }).element()
 		);
 		expect(screen.getByTestId('opt-list').element()).toBe(
-			screen.getByRole('radio', { name: 'List' }).element()
+			screen.getByRole('radio', { name: 'List', exact: true }).element()
 		);
 	});
 
@@ -789,7 +801,7 @@ describe('SegmentedControlItem onClick composition', () => {
 		});
 
 		// Upstream's `fireEvent.click`, a plain DOM dispatch.
-		(screen.getByRole('radio', { name: 'List' }).element() as HTMLElement).click();
+		(screen.getByRole('radio', { name: 'List', exact: true }).element() as HTMLElement).click();
 
 		expect(onClick).toHaveBeenCalledTimes(1);
 		expect(onChange).toHaveBeenCalledWith('list');
@@ -806,7 +818,7 @@ describe('SegmentedControlItem onClick composition', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'List' }).element() as HTMLElement).click();
+		(screen.getByRole('radio', { name: 'List', exact: true }).element() as HTMLElement).click();
 
 		expect(onChange).not.toHaveBeenCalled();
 	});
@@ -829,7 +841,7 @@ describe('SegmentedControl container handler forwarding', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{ArrowRight}');
 
 		expect(onKeyDown).toHaveBeenCalled();
@@ -852,7 +864,7 @@ describe('SegmentedControl container handler forwarding', () => {
 			}
 		});
 
-		(screen.getByRole('radio', { name: 'Grid' }).element() as HTMLElement).focus();
+		(screen.getByRole('radio', { name: 'Grid', exact: true }).element() as HTMLElement).focus();
 		await userEvent.keyboard('{ArrowRight}');
 
 		expect(onChange).not.toHaveBeenCalled();

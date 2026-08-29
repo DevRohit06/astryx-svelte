@@ -4,7 +4,7 @@ export { default as Theme } from './theme.svelte';
 // `SyntaxThemeProps`.
 
 export { default as MediaTheme } from './media-theme.svelte';
-export type { MediaThemeProps } from './media-theme.svelte';
+export type { MediaThemeMode, MediaThemeProps } from './media-theme.svelte';
 
 // Upstream publishes the `ThemeContext` object itself alongside its value type
 // (`theme/index.ts` re-exports both from `useTheme.ts`), so ours does too; the
@@ -92,12 +92,17 @@ export {
 	type ResolvedOnMedia
 } from './on-media-tokens.js';
 
+// Upstream's four, exactly. `generateThemeCss` — this port's layered, headered
+// document, which the theme build scripts and the docs build consume — is
+// deliberately NOT here: upstream publishes no such function, and its callers
+// reach it by deep path into `dist/`, which the `exports` map does not expose.
 export {
-	generateOnMediaCss,
-	generateThemeCss,
+	generateOnMediaCSS,
+	generateThemeCSS,
+	generateThemeRules,
 	generateThemeRulesSplit
 } from './generate-theme-rules.js';
-export type { ThemeRulesSplit } from './generate-theme-rules.js';
+export type { ThemeCSSOutput, ThemeRulesSplit } from './generate-theme-rules.js';
 export { parseStyleKey } from './parse-style-key.js';
 
 export { expandMotionScale } from './expand-motion-scale.js';

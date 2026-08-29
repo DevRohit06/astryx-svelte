@@ -7,8 +7,10 @@ import FileInput from '$lib/components/file-input/file-input.svelte';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 
 /**
- * Astryx's `FileInput/FileInput.test.tsx`, ported case for case — **all 58 of
- * upstream's 58**, across 14 `describe` blocks.
+ * Astryx's `FileInput/FileInput.test.tsx`, ported case for case — **all 59 of
+ * upstream's 59 at the 0.5.0 pin**, across its `describe` blocks. (This header
+ * said "**all 58 of upstream's 58** … across 14 `describe` blocks"; upstream
+ * declares 59 in 12 blocks at this pin, and all 59 are here.)
  *
  * The seven that used to be absent have landed: `trigger accessible name` (4),
  * `FileInput statusVariant forwarding` (2), and `announces a validation error
@@ -124,28 +126,28 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Resume', value: null, onChange: noop }
 		});
-		await expect.element(screen.getByText('Resume')).toBeInTheDocument();
+		await expect.element(screen.getByText('Resume', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders default placeholder for single file', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'File', value: null, onChange: noop }
 		});
-		await expect.element(screen.getByText('Choose file')).toBeInTheDocument();
+		await expect.element(screen.getByText('Choose file', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders default placeholder for multiple files', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Files', value: null, onChange: noop, isMultiple: true }
 		});
-		await expect.element(screen.getByText('Choose files')).toBeInTheDocument();
+		await expect.element(screen.getByText('Choose files', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders custom placeholder', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Upload', value: null, onChange: noop, placeholder: 'Drop here' }
 		});
-		await expect.element(screen.getByText('Drop here')).toBeInTheDocument();
+		await expect.element(screen.getByText('Drop here', { exact: true })).toBeInTheDocument();
 	});
 
 	it('displays selected file name', async () => {
@@ -153,7 +155,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Document', value: file, onChange: noop }
 		});
-		await expect.element(screen.getByText('report.pdf')).toBeInTheDocument();
+		await expect.element(screen.getByText('report.pdf', { exact: true })).toBeInTheDocument();
 	});
 
 	it('displays multiple file names', async () => {
@@ -161,7 +163,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Files', value: files, onChange: noop, isMultiple: true }
 		});
-		await expect.element(screen.getByText('a.txt, b.txt')).toBeInTheDocument();
+		await expect.element(screen.getByText('a.txt, b.txt', { exact: true })).toBeInTheDocument();
 	});
 
 	// Counterpart to upstream's `forwards ref to the native input` (`:130`); see
@@ -186,14 +188,14 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Upload', isLabelHidden: true, value: null, onChange: noop }
 		});
-		await expect.element(screen.getByText('Upload')).toBeInTheDocument();
+		await expect.element(screen.getByText('Upload', { exact: true })).toBeInTheDocument();
 	});
 
 	it('conveys required state through the accessible description', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Resume', isRequired: true, value: null, onChange: noop }
 		});
-		const trigger = screen.getByRole('button', { name: 'Resume' });
+		const trigger = screen.getByRole('button', { name: 'Resume', exact: true });
 		// Required is conveyed via a visually hidden "Required" node referenced from
 		// aria-describedby on the focusable trigger — not the hidden file input
 		// (forms-6).
@@ -213,7 +215,7 @@ describe('FileInput', () => {
 				onChange: noop
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Resume' });
+		const trigger = screen.getByRole('button', { name: 'Resume', exact: true });
 		await expect.element(trigger).toHaveAccessibleDescription(/PDF only/);
 		await expect.element(trigger).toHaveAccessibleDescription(/Required/);
 	});
@@ -222,7 +224,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Resume', value: null, onChange: noop }
 		});
-		const trigger = screen.getByRole('button', { name: 'Resume' });
+		const trigger = screen.getByRole('button', { name: 'Resume', exact: true });
 		await expect.element(trigger).not.toHaveAccessibleDescription(/Required/);
 		await expect.element(trigger).not.toHaveAttribute('aria-required');
 	});
@@ -231,7 +233,7 @@ describe('FileInput', () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Resume', description: 'PDF only', value: null, onChange: noop }
 		});
-		const button = screen.getByRole('button', { name: 'Resume' });
+		const button = screen.getByRole('button', { name: 'Resume', exact: true });
 		await expect.element(button).toHaveAttribute('aria-describedby');
 		// The hidden file input no longer carries the describedby/required/invalid.
 		const input = fileInputIn(screen.container);
@@ -244,7 +246,7 @@ describe('FileInput', () => {
 			props: { label: 'Resume', value: null, onChange: noop }
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'Resume' }))
+			.element(screen.getByRole('button', { name: 'Resume', exact: true }))
 			.not.toHaveAttribute('aria-required');
 	});
 
@@ -266,7 +268,7 @@ describe('FileInput', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'Upload' }))
+			.element(screen.getByRole('button', { name: 'Upload', exact: true }))
 			.toHaveAttribute('aria-invalid', 'true');
 	});
 
@@ -275,7 +277,7 @@ describe('FileInput', () => {
 			props: { label: 'Upload', value: null, onChange: noop, status: { type: 'warning' } }
 		});
 		await expect
-			.element(screen.getByRole('button', { name: 'Upload' }))
+			.element(screen.getByRole('button', { name: 'Upload', exact: true }))
 			.not.toHaveAttribute('aria-invalid');
 	});
 
@@ -288,14 +290,14 @@ describe('FileInput', () => {
 				status: { type: 'error', message: 'File too large' }
 			}
 		});
-		await expect.element(screen.getByText('File too large')).toBeInTheDocument();
+		await expect.element(screen.getByText('File too large', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description text', async () => {
 		const screen = await render(FileInput, {
 			props: { label: 'Upload', value: null, onChange: noop, description: 'Max 5MB' }
 		});
-		await expect.element(screen.getByText('Max 5MB')).toBeInTheDocument();
+		await expect.element(screen.getByText('Max 5MB', { exact: true })).toBeInTheDocument();
 	});
 
 	describe('file selection via native input', () => {
@@ -465,7 +467,7 @@ describe('FileInput', () => {
 				props: { label: 'Upload', value: file, onChange: noop }
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Clear Upload' }))
+				.element(screen.getByRole('button', { name: 'Clear Upload', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -473,7 +475,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Upload' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Upload', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
@@ -481,7 +483,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: file, onChange: noop, isDisabled: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Upload' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Upload', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with null when clear is clicked', async () => {
@@ -490,7 +492,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: file, onChange: handleChange }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Upload' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Upload', exact: true }));
 			expect(handleChange).toHaveBeenCalledWith(null);
 		});
 
@@ -499,7 +501,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: file, onChange: noop, isLoading: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Upload' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Upload', exact: true }).query()).toBeNull();
 		});
 	});
 
@@ -509,7 +511,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: handleChange, mode: 'dropzone' }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const file = createFile('dropped.txt', 100);
 			drop(dropzone, [file]);
 			expect(handleChange).toHaveBeenCalledWith(file);
@@ -520,7 +524,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: handleChange }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const file = createFile('dropped.txt', 100);
 			drop(dropzone, [file]);
 			expect(handleChange).not.toHaveBeenCalled();
@@ -537,7 +543,9 @@ describe('FileInput', () => {
 					isDisabled: true
 				}
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const file = createFile('dropped.txt', 100);
 			drop(dropzone, [file]);
 			expect(handleChange).not.toHaveBeenCalled();
@@ -549,7 +557,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const input = fileInputIn(screen.container);
 			// `mockImplementation` rather than `vi.spyOn`'s default call-through:
 			// jsdom's `input.click()` only dispatches an event, but Chromium's opens
@@ -565,7 +575,9 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			const input = fileInputIn(screen.container);
 			const clickSpy = vi.spyOn(input, 'click').mockImplementation(() => {});
 			dropzone.focus();
@@ -580,14 +592,16 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop, mode: 'dropzone' }
 			});
-			await expect.element(screen.getByText('Choose file')).toBeInTheDocument();
+			await expect.element(screen.getByText('Choose file', { exact: true })).toBeInTheDocument();
 		});
 
 		it('keeps the drag-over state while dragging over the dropzone children', async () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: null, onChange: noop, mode: 'dropzone' }
 			});
-			const dropzone = screen.getByRole('button', { name: 'Upload' }).element() as HTMLElement;
+			const dropzone = screen
+				.getByRole('button', { name: 'Upload', exact: true })
+				.element() as HTMLElement;
 			// `await tick()` after each dispatch is upstream's `act()` flush, and it
 			// is load-bearing rather than tidy: Svelte applies a `$state` write in a
 			// microtask, so a *retrying* matcher would pass on its first attempt —
@@ -597,19 +611,19 @@ describe('FileInput', () => {
 			// are.
 			dropzone.dispatchEvent(new DragEvent('dragenter', { bubbles: true, cancelable: true }));
 			await tick();
-			expect(screen.getByText('Drop files here').query()).toBeInTheDocument();
+			expect(screen.getByText('Drop files here', { exact: true }).query()).toBeInTheDocument();
 
 			// Moving from the container onto one of its own children fires a
 			// dragleave on the container with the child as relatedTarget — the
 			// highlight must not flicker off while still inside the dropzone.
 			// (Upstream sets `relatedTarget` after construction because jsdom's
 			// DragEvent init drops it; Chromium honours the init dict.)
-			const child = screen.getByText('Drop files here').element();
+			const child = screen.getByText('Drop files here', { exact: true }).element();
 			dropzone.dispatchEvent(
 				new DragEvent('dragleave', { bubbles: true, cancelable: true, relatedTarget: child })
 			);
 			await tick();
-			expect(screen.getByText('Drop files here').query()).toBeInTheDocument();
+			expect(screen.getByText('Drop files here', { exact: true }).query()).toBeInTheDocument();
 
 			// Actually leaving the dropzone ends the drag-over state.
 			dropzone.dispatchEvent(
@@ -620,8 +634,8 @@ describe('FileInput', () => {
 				})
 			);
 			await tick();
-			expect(screen.getByText('Drop files here').query()).not.toBeInTheDocument();
-			expect(screen.getByText('Choose file').query()).toBeInTheDocument();
+			expect(screen.getByText('Drop files here', { exact: true }).query()).not.toBeInTheDocument();
+			expect(screen.getByText('Choose file', { exact: true }).query()).toBeInTheDocument();
 		});
 
 		it('displays file name in dropzone mode', async () => {
@@ -629,7 +643,7 @@ describe('FileInput', () => {
 			const screen = await render(FileInput, {
 				props: { label: 'Upload', value: file, onChange: noop, mode: 'dropzone' }
 			});
-			await expect.element(screen.getByText('doc.pdf')).toBeInTheDocument();
+			await expect.element(screen.getByText('doc.pdf', { exact: true })).toBeInTheDocument();
 		});
 	});
 

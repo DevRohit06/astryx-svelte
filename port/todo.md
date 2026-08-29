@@ -8,9 +8,13 @@ History lives in [`ledger/`](./ledger). Deviations from upstream live in [`debts
 
 ## Current goal
 
-**Full parity with Astryx `0.4.5`**, across every package except three. Set 2026-08-20, replacing
-"track each upstream release and cut a matching version" — that goal was about staying level with
-upstream's _movement_; this one is about closing the distance that predates it.
+**Full parity with Astryx `0.5.0`**, across every package except three. Set 2026-08-20 against
+`0.4.5`, replacing "track each upstream release and cut a matching version" — that goal was about
+staying level with upstream's _movement_; this one is about closing the distance that predates it.
+Re-targeted 2026-08-25 when the pin moved to `0.5.0` (batch 032), which widened the distance rather
+than closing it: that release brought a new component (`Stepper`), two breaking changes, and the
+largest single-release test delta this port has tracked. The size of it is in
+[`status.md`](./status.md), not here.
 
 Out of scope, by decision: **`lab`, `charts` and `vega`**. Four of `lab`'s components
 (`CodeEditor`, `RichTextEditor`, `ThreeD`, `Sankey`) wrap React-only libraries with no drop-in
@@ -32,13 +36,23 @@ Each front is sequenced so the thing that _catches_ mistakes lands before the th
 them.
 
 1. **The test delta.** The largest and most mechanical front, and the one that protects every
-   other. `status.md` counts the suites with no counterpart at all; suites that exist but fall
-   short state it in their own header (`SideNav`, `Text`, `Center`, `DateInput`, `DropdownMenu`,
-   `Carousel`, `Slider`, `HoverCard` are the largest). Take the whole-suite gaps first — they are
-   contiguous work — starting with `theme/`, then the primitives that never got a suite at all
-   (`Grid`, the `Stack` family, `AspectRatio`, `FieldStatus`, `EmptyState`, `Indicator`,
-   `StatusDot`, `Kbd`, `Badge`, `Blockquote`, `Code`, `Card`, `Skeleton`, `VisuallyHidden`,
-   `IconButton`).
+   other — and the one that keeps proving it protects more than tests. Batch 033 found three of
+   `0.5.0`'s new suites were testing **modules this port did not have** (`scrollbarGutter`,
+   `getInitialFocusDate`, `useCollator`) and a fourth caught three overlays that never reset the
+   container padding. None of that was visible to either style oracle, which read modules and
+   emitted CSS rather than call sites. Treat an unported suite as a possible missing implementation
+   until you have checked, and check with the **kebab-case** name — a camelCase grep against this
+   tree returns a false absence.
+
+   `status.md` counts the suites with no counterpart at all; suites that exist but fall short state
+   it in their own header, and a header that names a suite in order to disclose a gap needs the
+   `UNPORTED:` marker or it is read as coverage instead. What remains of this front is one unit:
+   the four `Layer` dismissal suites, behind the shared dismissal stack. The other,
+   `theme/generateThemeRules.test.ts`, is closed: batch 034 aligned the `generateThemeCSS` API and
+   ported it whole — and found the blocking debt had overstated itself, which is the standing
+   warning about estimating a port from reading two implementations against each other instead of
+   running either.
+
 2. **The published surface.** Settle the Layer/over-export decision as one call at a minor, then
    the `./theme` barrel renames, the `./theme/tokens` subpath keys, `reset.css` at its own subpath,
    and the Tailwind bridge. Every one is an addition to or removal from a shipped API, so they
@@ -58,6 +72,19 @@ them.
    examples. The **icon registry expansion** is the cross-cutting piece here: seven demo debts name
    it as their retirement condition, because upstream's stories use Heroicons the registry has no
    match for.
+
+   On the examples: batch 038 ported the `Stepper` and `Step` blocks, and every icon they reach for
+   already resolves, so they opened no new demo debt. What is left are the blocks for
+   `ComplexSelector`, `ChatDictation`, `AvatarGroup`, `ChatMessageBubble`, `Dialog` and `Selector`.
+   These are ports, not authored demos — the source is
+   `@astryxdesign/cli`'s `assets/templates/blocks/components/<Name>/`, resolved by `exampleFor` in
+   the block's `.doc.mjs`, so the parity rule applies to them exactly as it does to a component.
+
+   **The count of them is not tracked anywhere.** `docs/scripts/generate-content.mjs` prints
+   `examples N ported / M pending` as it runs and then discards it; `status.md` has no row for it.
+   So this front is the one place where progress is described rather than measured, against this
+   file's own rule. Wiring that figure into `status.mjs` is the next piece of work here, and it is
+   small.
 
 ### The release, held
 

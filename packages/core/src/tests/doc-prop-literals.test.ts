@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 /**
  * Astryx's `src/docPropLiterals.test.ts`, ported case for case — **20 upstream
- * `it` declarations at v0.4.5, 20 here**, in upstream's order and under
+ * `it` declarations at the 0.5.0 pin, 20 here**, in upstream's order and under
  * upstream's titles. Nothing dropped, nothing added.
  *
  * A **server** project file (`*.test.ts`), as upstream's is: it reads source and
@@ -101,7 +101,14 @@ const ENUMERATED_IN_PROSE = new Set(['IconName']);
  *
  * **This list is a debt, not an exemption policy.** It carries the class oracle's
  * skip hygiene in both directions: an entry that stops violating fails the run as
- * loudly as a violation that is not listed. It can only shrink. The fix lives in
+ * loudly as a violation that is not listed. It can only shrink **at a fixed
+ * pin** — an upstream release that documents a prop it previously left undocumented
+ * adds a violation nothing here caused, and the list grows by exactly that much.
+ * 0.5.0's documentation PRs (#4315-#4320) did that five times: `MultiSelector`,
+ * `Selector` and `Typeahead`'s `startIcon`, `Toast.onDismiss` and
+ * `Toolbar.dividers`. Each is the same inherited bargain as its already-listed
+ * sibling (`ComplexSelector.startIcon`, `Toast.onHide`, `Section.dividers`), not a
+ * new kind of debt. The fix lives in
  * `docs/scripts/lib/props-types.mjs`'s `renderType` and is recorded in
  * `port/debts.md`; upstream's own `ENUMERATED_IN_PROSE` above is left at its one
  * entry, because widening it would be divergence rather than porting.
@@ -119,12 +126,14 @@ const PORT_DOC_TYPE_DEBT = new Set([
 	'FileInput.status',
 	'Heading.hasTruncateTooltip',
 	'InputGroup.status',
+	'MultiSelector.startIcon',
 	'NumberInput.status',
 	'PowerSearch.onChange',
 	'PowerSearch.startIcon',
 	'PowerSearch.status',
 	'RadioList.status',
 	'Section.dividers',
+	'Selector.startIcon',
 	'Selector.status',
 	'SelectorOption.icon',
 	'SideNavItem.icon',
@@ -138,8 +147,11 @@ const PORT_DOC_TYPE_DEBT = new Set([
 	'TextInput.status',
 	'TimeInput.status',
 	'Timestamp.type',
+	'Toast.onDismiss',
 	'Toast.onHide',
 	'Tokenizer.startIcon',
+	'Toolbar.dividers',
+	'Typeahead.startIcon',
 	'useTableSortable.onSortChange'
 ]);
 

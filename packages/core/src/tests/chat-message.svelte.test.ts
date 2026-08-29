@@ -36,14 +36,14 @@ describe('ChatMessage', () => {
 		const screen = await render(ChatMessageProbe, {
 			props: { sender: 'assistant', text: 'Hello world' }
 		});
-		await expect.element(screen.getByText('Hello world')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello world', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders sender name', async () => {
 		const screen = await render(ChatMessageProbe, {
 			props: { sender: 'assistant', name: 'Navi', text: 'Hi' }
 		});
-		await expect.element(screen.getByText('Navi')).toBeInTheDocument();
+		await expect.element(screen.getByText('Navi', { exact: true })).toBeInTheDocument();
 	});
 
 	it('hides name for system sender', async () => {
@@ -106,7 +106,7 @@ describe('ChatMessageBubble', () => {
 		const screen = await render(ChatMessageProbe, {
 			props: { sender: 'assistant', text: 'Hello world' }
 		});
-		await expect.element(screen.getByText('Hello world')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello world', { exact: true })).toBeInTheDocument();
 	});
 
 	it('applies sender-aware class from context', async () => {
@@ -236,14 +236,14 @@ describe('ChatMessageMetadata', () => {
 		const screen = await render(ChatMessageProbe, {
 			props: { sender: 'assistant', metadata: { timestamp: '2:30 PM' } }
 		});
-		await expect.element(screen.getByText('2:30 PM')).toBeInTheDocument();
+		await expect.element(screen.getByText('2:30 PM', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders footer content', async () => {
 		const screen = await render(ChatMessageProbe, {
 			props: { sender: 'assistant', metadata: { footer: 'Liked' } }
 		});
-		await expect.element(screen.getByText('Liked')).toBeInTheDocument();
+		await expect.element(screen.getByText('Liked', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders status', async () => {
@@ -257,7 +257,7 @@ describe('ChatMessageMetadata', () => {
 		const screen = await render(ChatMessageProbe, {
 			props: { sender: 'user', metadata: { timestamp: '2:30 PM', status: 'read' } }
 		});
-		await expect.element(screen.getByText('2:30 PM')).toBeInTheDocument();
+		await expect.element(screen.getByText('2:30 PM', { exact: true })).toBeInTheDocument();
 		expect(screen.container.querySelector('[aria-label="Message read"]')).not.toBeNull();
 		// Upstream's `getByText('·')` requires an element whose whole text is the
 		// separator — it is a real `<span>`, rendered only when a timestamp sits
@@ -299,7 +299,7 @@ describe('ChatMessageList', () => {
 		const screen = await render(ChatMessageProbe, {
 			props: { sender: 'assistant', listDensity: 'balanced', text: 'Hello' }
 		});
-		await expect.element(screen.getByText('Hello')).toBeInTheDocument();
+		await expect.element(screen.getByText('Hello', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with role="log"', async () => {
@@ -330,7 +330,7 @@ describe('ChatMessageList', () => {
 		const screen = await render(ChatListProbe, {
 			props: { hasChildren: false, emptyStateText: 'No messages yet' }
 		});
-		await expect.element(screen.getByText('No messages yet')).toBeInTheDocument();
+		await expect.element(screen.getByText('No messages yet', { exact: true })).toBeInTheDocument();
 	});
 
 	it('applies density class', async () => {
@@ -362,7 +362,9 @@ describe('ChatSystemMessage', () => {
 		const screen = await render(ChatSystemMessage, {
 			props: { children: 'Conversation started' }
 		});
-		await expect.element(screen.getByText('Conversation started')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Conversation started', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('has role="status"', async () => {
@@ -383,7 +385,7 @@ describe('ChatSystemMessage', () => {
 		const screen = await render(ChatSystemMessage, {
 			props: { children: 'Today', variant: 'divider' }
 		});
-		await expect.element(screen.getByText('Today')).toBeInTheDocument();
+		await expect.element(screen.getByText('Today', { exact: true })).toBeInTheDocument();
 	});
 
 	it('exposes the divider variant label as the separator accessible name', async () => {

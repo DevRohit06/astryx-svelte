@@ -3,7 +3,8 @@ import { render } from 'vitest-browser-svelte';
 import Probe from './fixtures/image-mode-probe.svelte';
 
 /**
- * Ported from Astryx's `hooks/useImageMode.test.ts`, all five cases.
+ * Ported from Astryx's `hooks/useImageMode.test.ts`, all five cases at the 0.5.0
+ * pin.
  *
  * The stubs are upstream's verbatim. Their comment says jsdom has no
  * `fetch`/`createImageBitmap`/`OffscreenCanvas`; a real browser has all three,

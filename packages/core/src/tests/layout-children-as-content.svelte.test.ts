@@ -5,7 +5,7 @@ import LayoutShell from './fixtures/layout-shell.svelte';
 
 /**
  * Astryx's `Layout/__tests__/childrenAsContent.test.tsx`, ported case for case —
- * **4 upstream `it` declarations at v0.4.5, 4 here**, in upstream's order and
+ * **4 upstream `it` declarations at the 0.5.0 pin, 4 here**, in upstream's order and
  * under upstream's titles. Nothing dropped, nothing added.
  *
  * The contract: `<Layout>…</Layout>` treats its children as a shorthand for the
@@ -40,12 +40,12 @@ describe('Layout children-as-content', () => {
 
 	it('renders bare children (no LayoutContent wrapper) too', async () => {
 		const screen = await render(LayoutFixture, { props: { child: 'Bare' } });
-		await expect.element(screen.getByText('Bare')).toBeInTheDocument();
+		await expect.element(screen.getByText('Bare', { exact: true })).toBeInTheDocument();
 	});
 
 	it('lets an explicit content prop win over children', async () => {
 		const screen = await render(LayoutFixture, { props: { content: 'Slot', child: 'Child' } });
-		await expect.element(screen.getByText('Slot')).toBeInTheDocument();
+		await expect.element(screen.getByText('Slot', { exact: true })).toBeInTheDocument();
 		expect(screen.container.textContent).not.toContain('Child');
 	});
 

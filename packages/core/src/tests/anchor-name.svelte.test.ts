@@ -7,7 +7,8 @@ import {
 } from '$lib/components/layer/anchor-name.js';
 
 /**
- * Ported from Astryx's `Layer/anchorName.test.ts`, all fifteen cases, verbatim.
+ * Ported from Astryx's `Layer/anchorName.test.ts`, all fifteen cases at the 0.5.0 pin,
+ * verbatim.
  *
  * The `.svelte.` in the filename is this repo's selector for the browser
  * project, not a claim about Svelte — the module under test is plain TypeScript

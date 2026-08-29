@@ -4,7 +4,7 @@ import { parseOutlineFromMarkdown } from '$lib/components/outline/parse-outline-
 /**
  * Astryx's `Outline/parseOutlineFromMarkdown.test.ts`, ported case for case.
  *
- * Upstream has **12** `it` cases in one describe. All 12 are here, with their
+ * Upstream has **12** `it` cases in one describe at the **0.5.0** pin. All 12 are here, with their
  * assertions unchanged — the helper is pure and transcribed from upstream line
  * for line, so there is nothing to translate. Nothing is dropped.
  *

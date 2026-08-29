@@ -8,6 +8,7 @@
 		operatorOptions: { value: string; label: string }[];
 		onOperatorChange: (operatorKey: string) => void;
 		onPartialFilterChange: (filter: PartialFilter) => void;
+		maxMenuItems?: number;
 		isReadOnly: boolean;
 	}
 </script>
@@ -74,6 +75,7 @@
 		operatorOptions,
 		onOperatorChange,
 		onPartialFilterChange,
+		maxMenuItems,
 		isReadOnly
 	}: NestedEditorProps = $props();
 
@@ -185,6 +187,7 @@
 				config,
 				subFilter: readAtPath(itemPath) ?? sf,
 				onChange: (updated: EditablePartialFilter) => handleUpdate(itemPath, updated),
+				maxMenuItems,
 				isReadOnly
 			}));
 

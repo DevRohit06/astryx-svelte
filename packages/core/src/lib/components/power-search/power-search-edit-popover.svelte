@@ -14,6 +14,8 @@
 		onCancel: () => void;
 		/** Label for the save button. @default 'Apply' */
 		saveButtonLabel?: string;
+		/** Max suggestions in string and entity value typeaheads. */
+		maxMenuItems?: number;
 		/** Whether the filter is read-only. */
 		isReadOnly?: boolean;
 	}
@@ -31,6 +33,7 @@
 	import { isImeKeyEvent } from '../../utils/ime.js';
 	import NestedEditor from './nested-editor.svelte';
 	import {
+		editPopoverChipRowStyle,
 		editPopoverContainerAttrs,
 		editPopoverContentAttrs,
 		editPopoverFieldSelectorAttrs,
@@ -99,6 +102,7 @@
 		onSave,
 		onCancel,
 		saveButtonLabel: saveButtonLabelFromProps,
+		maxMenuItems,
 		isReadOnly = false
 	}: PowerSearchEditPopoverProps = $props();
 
@@ -340,6 +344,7 @@
 					onPartialFilterChange={(filter) => {
 						partialFilter = filter;
 					}}
+					{maxMenuItems}
 					{isReadOnly}
 				/>
 			</VStack>
@@ -349,7 +354,7 @@
 {:else}
 	<div {...editPopoverContainerAttrs()} onkeydown={handleKeyDown}>
 		<div {...editPopoverContentAttrs()}>
-			<HStack gap={2}>
+			<HStack gap={2} xstyle={editPopoverChipRowStyle}>
 				{@render fieldSelector()}
 				{#if showOperatorSelector && operatorOptions.length > 0}
 					<div {...editPopoverOperatorSelectorAttrs()}>
@@ -372,6 +377,7 @@
 							onChange={handleValueChange}
 							onEnter={handleSave}
 							{config}
+							{maxMenuItems}
 							isDisabled={isReadOnly}
 						/>
 					</div>

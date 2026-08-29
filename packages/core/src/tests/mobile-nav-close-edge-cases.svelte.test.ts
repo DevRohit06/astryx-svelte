@@ -6,7 +6,7 @@ import { stubMatchMedia } from './stub-match-media.js';
 
 /**
  * Ported from Astryx's `MobileNav/MobileNavCloseEdgeCases.test.tsx`, **11 of its
- * 12** cases at v0.4.5.
+ * 12** cases at the 0.5.0 pin.
  *
  * **One case has no Svelte analogue and is dropped**: `survives StrictMode
  * double-invoked effects`. `StrictMode` is a React development behaviour —

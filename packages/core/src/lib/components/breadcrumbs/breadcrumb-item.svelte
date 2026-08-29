@@ -106,7 +106,8 @@
 	const ctx = useBreadcrumb();
 	const resolveLink = useLinkComponent();
 	const linkResolved = $derived(resolveLink(as));
-	const isSupporting = $derived(ctx().variant === 'supporting');
+	const variant = $derived(ctx().variant);
+	const isSupporting = $derived(variant === 'supporting');
 
 	const isCurrent = $derived(isCurrentProp === true);
 	const isAutoCandidate = $derived(isCurrentProp == null);
@@ -167,7 +168,10 @@
 		}
 	});
 
-	const theme = themeProps('breadcrumb-item');
+	// The variant selects between style objects on this element, so a theme needs
+	// it as a data attribute here to reach them — the same reason `Breadcrumbs`
+	// reflects it on the nav.
+	const theme = $derived(themeProps('breadcrumb-item', { variant }));
 	const rootAttrs = $derived(breadcrumbItemAttrs(isSupporting, xstyle));
 	const separatorAttrs = breadcrumbSeparatorAttrs();
 	const currentAttrs = $derived(breadcrumbCurrentAttrs(isSupporting));
@@ -227,7 +231,7 @@
 				{attachContent}
 				menu={menu as DropdownMenuOption[] | Snippet}
 				menuSize={resolvedMenuSize}
-				{isSupporting}
+				{variant}
 				isCurrent
 				label={children}
 				children={content}
@@ -242,7 +246,7 @@
 			{attachContent}
 			menu={menu as DropdownMenuOption[] | Snippet}
 			menuSize={resolvedMenuSize}
-			{isSupporting}
+			{variant}
 			label={children}
 			children={content}
 		/>

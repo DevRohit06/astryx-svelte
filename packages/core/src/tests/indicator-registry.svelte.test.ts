@@ -10,7 +10,7 @@ import type { IndicatorName } from '$lib/components/indicator/types.js';
 import BrandStar from './fixtures/brand-star-indicator.svelte';
 
 /**
- * Astryx's `Indicator/indicatorRegistry.test.tsx` at **0.4.5**, which declares
+ * Astryx's `Indicator/indicatorRegistry.test.tsx` at the **0.5.0** pin, which declares
  * **6** `it`s. **All 6 are here**, in upstream's order, under upstream's titles
  * and with upstream's assertions. Nothing dropped.
  *

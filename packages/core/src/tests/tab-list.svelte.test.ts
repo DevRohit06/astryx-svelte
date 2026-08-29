@@ -5,8 +5,14 @@ import TabListFixture from './fixtures/tab-list-fixture.svelte';
 import CustomLink from './fixtures/custom-link.svelte';
 
 /**
- * Ported from Astryx's `TabList/TabList.test.tsx` — all 45 of its `it` cases,
- * nothing dropped. Client (real Chromium) project.
+ * Ported from Astryx's `TabList/TabList.test.tsx`. **46 of its 74 cases at the
+ * 0.5.0 pin.** This suite ported all 45 at 0.4.5; 0.5.0 rewrote two `aria-current`
+ * cases (`"page"` -> `"true"`), added a link-tab counterpart — the three that are
+ * here — and added 28 more across four new describes that are **not yet ported**:
+ * `TabList overflow (scroll)` (16), `ARIA pattern - role="tablist"` (9), `- no
+ * role` (2) and `- any other role` (1). Those cover #5348 and #5349, whose source
+ * half landed in batch 032; the suite is the half still owed.
+ * Client (real Chromium) project.
  *
  * Standing translations:
  *
@@ -87,8 +93,12 @@ describe('TabList', () => {
 		});
 
 		await expect.element(screen.getByRole('navigation')).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument();
-		await expect.element(screen.getByRole('button', { name: 'Settings' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Settings', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('does not set aria-orientation on the nav (invalid for role navigation)', async () => {
@@ -115,16 +125,35 @@ describe('TabList', () => {
 		expect(navIn(screen.container)).not.toHaveAttribute('aria-orientation');
 	});
 
-	it('marks selected tab with aria-current', async () => {
+	it('marks selected tab with a generic aria-current, not "page"', async () => {
 		const screen = await render(TabListFixture, {
 			props: { tabList: { value: 'home', onChange: () => {} }, tabs: homeAndSettings }
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Home' }))
-			.toHaveAttribute('aria-current', 'page');
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
+			.toHaveAttribute('aria-current', 'true');
 		await expect
-			.element(screen.getByRole('button', { name: 'Settings' }))
+			.element(screen.getByRole('button', { name: 'Settings', exact: true }))
+			.not.toHaveAttribute('aria-current');
+	});
+
+	it('marks a selected link tab with the same generic aria-current', async () => {
+		const screen = await render(TabListFixture, {
+			props: {
+				tabList: { value: 'home', onChange: () => {} },
+				tabs: [
+					{ props: { value: 'home', label: 'Home', href: '/home' } },
+					{ props: { value: 'settings', label: 'Settings', href: '/settings' } }
+				]
+			}
+		});
+
+		await expect
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
+			.toHaveAttribute('aria-current', 'true');
+		await expect
+			.element(screen.getByRole('link', { name: 'Settings', exact: true }))
 			.not.toHaveAttribute('aria-current');
 	});
 
@@ -134,7 +163,7 @@ describe('TabList', () => {
 			props: { tabList: { value: 'home', onChange: handleChange }, tabs: homeAndSettings }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Settings' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Settings', exact: true }));
 		expect(handleChange).toHaveBeenCalledWith('settings');
 	});
 
@@ -144,8 +173,8 @@ describe('TabList', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Home' }))
-			.toHaveAttribute('aria-current', 'page');
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
+			.toHaveAttribute('aria-current', 'true');
 
 		await screen.rerender({
 			tabList: { value: 'settings', onChange: () => {} },
@@ -153,11 +182,11 @@ describe('TabList', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Home' }))
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
 			.not.toHaveAttribute('aria-current');
 		await expect
-			.element(screen.getByRole('button', { name: 'Settings' }))
-			.toHaveAttribute('aria-current', 'page');
+			.element(screen.getByRole('button', { name: 'Settings', exact: true }))
+			.toHaveAttribute('aria-current', 'true');
 	});
 
 	it('renders with different sizes', async () => {
@@ -167,13 +196,17 @@ describe('TabList', () => {
 				tabs: [{ props: { value: 'home', label: 'Home' } }]
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
+			.toBeInTheDocument();
 
 		await screen.rerender({
 			tabList: { value: 'home', onChange: () => {}, size: 'lg' },
 			tabs: [{ props: { value: 'home', label: 'Home' } }]
 		});
-		await expect.element(screen.getByRole('button', { name: 'Home' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders tab with icon', async () => {
@@ -200,7 +233,7 @@ describe('TabList', () => {
 			}
 		});
 
-		const tab = screen.getByRole('button', { name: 'Preview' });
+		const tab = screen.getByRole('button', { name: 'Preview', exact: true });
 		await expect.element(tab).toHaveAttribute('aria-label', 'Preview');
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
 		// The visible label is omitted entirely, so "Preview" appears only as the
@@ -221,7 +254,7 @@ describe('TabList', () => {
 			}
 		});
 
-		const tab = screen.getByRole('button', { name: 'Preview' });
+		const tab = screen.getByRole('button', { name: 'Preview', exact: true });
 		await expect.element(tab).toBeInTheDocument();
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();
 		expect((tab.element() as HTMLElement).querySelectorAll(':scope > span').length).toBe(3);
@@ -284,7 +317,9 @@ describe('TabList', () => {
 		});
 
 		// Button children: hoverBg, labelContainer, indicator (no endContent wrapper)
-		const button = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
+		const button = screen
+			.getByRole('button', { name: 'Home', exact: true })
+			.element() as HTMLElement;
 		expect(button.querySelectorAll(':scope > span').length).toBe(3);
 	});
 
@@ -361,7 +396,9 @@ describe('TabList divider gap', () => {
 				]
 			}
 		});
-		const selected = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
+		const selected = screen
+			.getByRole('button', { name: 'Home', exact: true })
+			.element() as HTMLElement;
 		// The indicator span carries the selected marker; the divider must not
 		// drop it (it is repositioned onto the rail, not removed).
 		expect(selected.querySelector('[data-selected="selected"]')).toBeInTheDocument();
@@ -381,13 +418,13 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Home' }))
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
 			.toHaveAttribute('tabindex', '-1');
 		await expect
-			.element(screen.getByRole('button', { name: 'Settings' }))
+			.element(screen.getByRole('button', { name: 'Settings', exact: true }))
 			.toHaveAttribute('tabindex', '0');
 		await expect
-			.element(screen.getByRole('button', { name: 'Profile' }))
+			.element(screen.getByRole('button', { name: 'Profile', exact: true }))
 			.toHaveAttribute('tabindex', '-1');
 	});
 
@@ -397,10 +434,10 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 		});
 
 		await expect
-			.element(screen.getByRole('button', { name: 'Home' }))
+			.element(screen.getByRole('button', { name: 'Home', exact: true }))
 			.toHaveAttribute('tabindex', '0');
 		await expect
-			.element(screen.getByRole('button', { name: 'Settings' }))
+			.element(screen.getByRole('button', { name: 'Settings', exact: true }))
 			.toHaveAttribute('tabindex', '-1');
 	});
 
@@ -409,9 +446,13 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 			props: { tabList: { value: 'home', onChange: () => {} }, tabs: three }
 		});
 
-		const home = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
-		const settings = screen.getByRole('button', { name: 'Settings' }).element() as HTMLElement;
-		const profile = screen.getByRole('button', { name: 'Profile' }).element() as HTMLElement;
+		const home = screen.getByRole('button', { name: 'Home', exact: true }).element() as HTMLElement;
+		const settings = screen
+			.getByRole('button', { name: 'Settings', exact: true })
+			.element() as HTMLElement;
+		const profile = screen
+			.getByRole('button', { name: 'Profile', exact: true })
+			.element() as HTMLElement;
 
 		home.focus();
 		expect(document.activeElement).toBe(home);
@@ -431,8 +472,10 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 			props: { tabList: { value: 'home', onChange: () => {} }, tabs: homeAndSettings }
 		});
 
-		const home = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
-		const settings = screen.getByRole('button', { name: 'Settings' }).element() as HTMLElement;
+		const home = screen.getByRole('button', { name: 'Home', exact: true }).element() as HTMLElement;
+		const settings = screen
+			.getByRole('button', { name: 'Settings', exact: true })
+			.element() as HTMLElement;
 
 		home.focus();
 		await userEvent.keyboard('{ArrowDown}');
@@ -447,9 +490,13 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 			props: { tabList: { value: 'settings', onChange: () => {} }, tabs: three }
 		});
 
-		const home = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
-		const settings = screen.getByRole('button', { name: 'Settings' }).element() as HTMLElement;
-		const profile = screen.getByRole('button', { name: 'Profile' }).element() as HTMLElement;
+		const home = screen.getByRole('button', { name: 'Home', exact: true }).element() as HTMLElement;
+		const settings = screen
+			.getByRole('button', { name: 'Settings', exact: true })
+			.element() as HTMLElement;
+		const profile = screen
+			.getByRole('button', { name: 'Profile', exact: true })
+			.element() as HTMLElement;
 
 		settings.focus();
 
@@ -465,8 +512,10 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 			props: { tabList: { value: 'home', onChange: () => {} }, tabs: three }
 		});
 
-		const home = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
-		const profile = screen.getByRole('button', { name: 'Profile' }).element() as HTMLElement;
+		const home = screen.getByRole('button', { name: 'Home', exact: true }).element() as HTMLElement;
+		const profile = screen
+			.getByRole('button', { name: 'Profile', exact: true })
+			.element() as HTMLElement;
 
 		home.focus();
 		await userEvent.keyboard('{ArrowLeft}');
@@ -488,8 +537,10 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 			}
 		});
 
-		const home = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
-		const profile = screen.getByRole('button', { name: 'Profile' }).element() as HTMLElement;
+		const home = screen.getByRole('button', { name: 'Home', exact: true }).element() as HTMLElement;
+		const profile = screen
+			.getByRole('button', { name: 'Profile', exact: true })
+			.element() as HTMLElement;
 
 		home.focus();
 		await userEvent.keyboard('{ArrowRight}');
@@ -501,7 +552,7 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 			props: { tabList: { value: 'home', onChange: () => {} }, tabs: homeAndSettings }
 		});
 
-		const home = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
+		const home = screen.getByRole('button', { name: 'Home', exact: true }).element() as HTMLElement;
 		home.focus();
 		await userEvent.keyboard('a');
 		expect(document.activeElement).toBe(home);
@@ -513,8 +564,10 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 			props: { tabList: { value: 'home', onChange: () => {}, onkeydown }, tabs: homeAndSettings }
 		});
 
-		const home = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
-		const settings = screen.getByRole('button', { name: 'Settings' }).element() as HTMLElement;
+		const home = screen.getByRole('button', { name: 'Home', exact: true }).element() as HTMLElement;
+		const settings = screen
+			.getByRole('button', { name: 'Settings', exact: true })
+			.element() as HTMLElement;
 
 		home.focus();
 		await userEvent.keyboard('{ArrowRight}');
@@ -535,7 +588,7 @@ describe('TabList keyboard navigation (roving tabindex)', () => {
 			}
 		});
 
-		const home = screen.getByRole('button', { name: 'Home' }).element() as HTMLElement;
+		const home = screen.getByRole('button', { name: 'Home', exact: true }).element() as HTMLElement;
 		home.focus();
 		await userEvent.keyboard('{ArrowRight}');
 
@@ -551,7 +604,7 @@ describe('Tab polymorphic link', () => {
 				tabs: [{ props: { value: 'home', label: 'Home', href: '/home', as: CustomLink } }]
 			}
 		});
-		const link = screen.getByRole('link', { name: 'Home' });
+		const link = screen.getByRole('link', { name: 'Home', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).toHaveAttribute('href', '/home');
 	});
@@ -563,7 +616,7 @@ describe('Tab polymorphic link', () => {
 				tabs: [{ props: { value: 'home', label: 'Home', as: CustomLink } }]
 			}
 		});
-		const button = screen.getByRole('button', { name: 'Home' });
+		const button = screen.getByRole('button', { name: 'Home', exact: true });
 		await expect.element(button).toBeInTheDocument();
 		await expect.element(button).not.toHaveAttribute('data-custom-link');
 	});
@@ -577,7 +630,7 @@ describe('Tab polymorphic link', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Home' }))
+			.element(screen.getByRole('link', { name: 'Home', exact: true }))
 			.toHaveAttribute('data-custom-link');
 	});
 });
@@ -592,7 +645,7 @@ describe('TabMenu', () => {
 	it('renders a trigger button with aria-haspopup and aria-controls', async () => {
 		const screen = await render(TabListFixture, { props: withMenu });
 
-		const trigger = screen.getByRole('button', { name: 'More' });
+		const trigger = screen.getByRole('button', { name: 'More', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-haspopup', 'menu');
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 
@@ -606,21 +659,25 @@ describe('TabMenu', () => {
 
 	it('shows label prop as trigger text when no option is selected', async () => {
 		const screen = await render(TabListFixture, { props: withMenu });
-		await expect.element(screen.getByRole('button', { name: 'More' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'More', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('shows selected option label as trigger text when an option is active', async () => {
 		const screen = await render(TabListFixture, {
 			props: { ...withMenu, tabList: { value: 'analytics', onChange: () => {} } }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Analytics' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Analytics', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('opens dropdown on click and shows menu items', async () => {
 		const showPopover = vi.spyOn(HTMLElement.prototype, 'showPopover');
 		const screen = await render(TabListFixture, { props: withMenu });
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 
 		expect(showPopover).toHaveBeenCalled();
 
@@ -646,7 +703,7 @@ describe('TabMenu', () => {
 			props: { ...withMenu, tabList: { value: 'home', onChange: handleChange } }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 		await userEvent.click(menuItem(screen.container, 'Analytics'));
 		expect(handleChange).toHaveBeenCalledWith('analytics');
 	});
@@ -676,7 +733,7 @@ describe('TabMenu keyboard navigation (roving tabindex)', () => {
 	it('exposes the overflow menu as a single Tab stop (one item tabbable, rest -1)', async () => {
 		const screen = await render(TabListFixture, { props: withMenu });
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 
 		const analytics = menuItem(screen.container, 'Analytics');
 		const reports = menuItem(screen.container, 'Reports');
@@ -692,7 +749,7 @@ describe('TabMenu keyboard navigation (roving tabindex)', () => {
 	it('moves focus between items with ArrowDown and ArrowUp', async () => {
 		const screen = await render(TabListFixture, { props: withMenu });
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 		const menu = menuIn(screen.container);
 		const analytics = menuItem(screen.container, 'Analytics');
 		const reports = menuItem(screen.container, 'Reports');
@@ -711,7 +768,7 @@ describe('TabMenu keyboard navigation (roving tabindex)', () => {
 	it('moves the roving tab stop with arrow navigation', async () => {
 		const screen = await render(TabListFixture, { props: withMenu });
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 		const menu = menuIn(screen.container);
 		const analytics = menuItem(screen.container, 'Analytics');
 		const reports = menuItem(screen.container, 'Reports');
@@ -735,7 +792,7 @@ describe('TabMenu keyboard navigation (roving tabindex)', () => {
 			props: { ...withMenu, menu: { label: 'More', options } }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 		const menu = menuIn(screen.container);
 		const analytics = menuItem(screen.container, 'Analytics');
 		const exportsItem = menuItem(screen.container, 'Exports');
@@ -753,7 +810,7 @@ describe('TabMenu keyboard navigation (roving tabindex)', () => {
 			props: { ...withMenu, tabList: { value: 'home', onChange: handleChange } }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 		const analytics = menuItem(screen.container, 'Analytics');
 		analytics.focus();
 		pressKey(analytics, 'Enter');
@@ -764,7 +821,7 @@ describe('TabMenu keyboard navigation (roving tabindex)', () => {
 	it('closes the menu when Tab is pressed inside it (APG menu-button)', async () => {
 		const screen = await render(TabListFixture, { props: withMenu });
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 		const menu = menuIn(screen.container);
 
 		const hidePopover = vi.spyOn(HTMLElement.prototype, 'hidePopover');
@@ -775,7 +832,7 @@ describe('TabMenu keyboard navigation (roving tabindex)', () => {
 	it('closes the menu when Escape is pressed', async () => {
 		const screen = await render(TabListFixture, { props: withMenu });
 
-		await userEvent.click(screen.getByRole('button', { name: 'More' }));
+		await userEvent.click(screen.getByRole('button', { name: 'More', exact: true }));
 		const menu = menuIn(screen.container);
 
 		const hidePopover = vi.spyOn(HTMLElement.prototype, 'hidePopover');

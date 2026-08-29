@@ -89,13 +89,13 @@ import { loadComponentDoc } from '../../../foundation/discovery/component-loader
 // so `any` is intentional.
 /** @type {any} */ let _defineTheme = null;
 /** @type {any} */ let _generateThemeRulesSplit = null;
-/** @type {any} */ let _generateOnMediaCss = null;
+/** @type {any} */ let _generateOnMediaCSS = null;
 /** @type {any} */ let _coreImportError = null;
 try {
 	const coreTheme = await import('@astryx-svelte/core/theme/define');
 	_defineTheme = coreTheme.defineTheme;
 	_generateThemeRulesSplit = coreTheme.generateThemeRulesSplit;
-	_generateOnMediaCss = coreTheme.generateOnMediaCss;
+	_generateOnMediaCSS = coreTheme.generateOnMediaCSS;
 } catch (e) {
 	// Capture the reason so the theme action can surface a precise, actionable
 	// error. We don't throw here: this module is imported eagerly by the CLI
@@ -1152,8 +1152,8 @@ export async function themeBuild(file, options = {}, { cwd = process.cwd() } = {
 			cssParts.push(`@layer astryx-theme {\n${colorSchemeDecl}${componentScope}\n}`);
 		}
 		// On-media rules (MediaTheme dark/light surface overrides)
-		if (_generateOnMediaCss) {
-			const onMediaCss = _generateOnMediaCss(resolvedTheme);
+		if (_generateOnMediaCSS) {
+			const onMediaCss = _generateOnMediaCSS(resolvedTheme);
 			if (onMediaCss) {
 				cssParts.push(`@layer astryx-theme {\n${onMediaCss}\n}`);
 			}

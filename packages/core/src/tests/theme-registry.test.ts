@@ -8,7 +8,8 @@ import {
 } from '$lib/theme/theme-registry.js';
 
 /**
- * Ported from Astryx's `theme/themeRegistry.test.ts` — all 5 of its `it` cases.
+ * Ported from Astryx's `theme/themeRegistry.test.ts` — all 5 of its `it` cases at
+ * the 0.5.0 pin.
  *
  * A **server** project file (`*.test.ts`), as upstream's is a plain `.test.ts`:
  * the registry is a pure module map with no DOM and no component in it, which

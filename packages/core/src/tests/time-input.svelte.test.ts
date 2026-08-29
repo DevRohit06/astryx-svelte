@@ -10,7 +10,7 @@ import TimeInputI18n from './fixtures/time-input-i18n.svelte';
 
 /**
  * Astryx's `TimeInput/TimeInput.test.tsx`, ported case for case — **44 of
- * upstream's 45** at v0.4.5 (26 directly in `describe('TimeInput')`, 6 in the
+ * upstream's 45** at the **0.5.0** pin (26 directly in `describe('TimeInput')`, 6 in the
  * nested `describe('InputGroup integration')` — the last two of which are the
  * grouped-status/live-region pair — 9 in `describe('disabledMessage')`, 2 in the
  * top-level `describe('TimeInput statusVariant forwarding')` and 2 in
@@ -18,24 +18,26 @@ import TimeInputI18n from './fixtures/time-input-i18n.svelte';
  * no snapshot and no no-JSX construction form in the file, so nothing is
  * React-only except the ref case, which gets a counterpart.
  *
- * ## ONE CASE IS MISSING, and it is blocked on a port defect
+ * ## ONE CASE IS MISSING — its blocker is gone, the case is simply unported
  *
  * **`does not step the time on a composing ArrowUp/ArrowDown (IME)`**
  * (upstream `:45`) is NOT here. It is not droppable — nothing about it is
- * React-only — and it would fail if written, because `time-input.svelte`'s
- * `handleInputKeyDown` (`:445`) has **no `isImeKeyEvent` guard**, where
- * upstream's has carried one since the case landed (`TimeInput.tsx`). An IME
- * candidate window navigates with the arrows, so a CJK user picking a candidate
- * silently steps the time. `utils/ime.ts` is ported and exported here; it is
- * simply not called from this component. Write the case the moment the guard
- * lands — it transcribes from upstream unchanged. The same gap blocks two cases
- * in `date-time-input` and one each in `date-input` and `selector`.
+ * React-only — and it now has no obstacle either.
  *
- * ## The count, re-derived at the v0.4.5 pin
+ * **The stated reason expired.** This section used to read *"it would fail if
+ * written, because `time-input.svelte`'s `handleInputKeyDown` (`:445`) has no
+ * `isImeKeyEvent` guard"*, and named `date-time-input`, `date-input` and
+ * `selector` as blocked on the same defect. `time-input.svelte`'s
+ * `handleInputKeyDown` calls `isImeKeyEvent` now, and so do the keydown
+ * handlers in all three of those components. The case transcribes from upstream
+ * unchanged whenever someone writes it.
+ *
+ * ## The count, re-derived at the 0.5.0 pin
  *
  * This header read "**44** … at v0.4.1, **44 here, none dropped**" and stayed
  * true only until the pin moved: 0.4.x added the IME case above, so the header
- * was hiding a one-case gap.
+ * was hiding a one-case gap. Upstream's file is unchanged between v0.4.5 and
+ * 0.5.0, so the 45 and the block breakdown above carry over intact.
  *
  * ## v0.3.0 → v0.4.1
  *
@@ -162,7 +164,7 @@ describe('TimeInput', () => {
 		const screen = await render(TimeInput, {
 			props: { label: 'Time', onChange: noop }
 		});
-		await expect.element(screen.getByLabelText('Time')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Time', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with placeholder', async () => {
@@ -212,9 +214,9 @@ describe('TimeInput', () => {
 		const screen = await render(TimeInput, {
 			props: { label: 'Time', isLabelHidden: true, onChange: noop }
 		});
-		const label = screen.getByText('Time');
+		const label = screen.getByText('Time', { exact: true });
 		await expect.element(label).toBeInTheDocument();
-		await expect.element(screen.getByLabelText('Time')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Time', { exact: true })).toBeInTheDocument();
 	});
 
 	it('sets aria-required when isRequired is true', async () => {
@@ -235,14 +237,16 @@ describe('TimeInput', () => {
 		const screen = await render(TimeInput, {
 			props: { label: 'Time', value: iso('14:30'), onChange: noop, hasClear: true }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Clear Time' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Clear Time', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('does not show clear button when value is empty', async () => {
 		const screen = await render(TimeInput, {
 			props: { label: 'Time', onChange: noop, hasClear: true }
 		});
-		expect(screen.getByRole('button', { name: 'Clear Time' }).query()).toBeNull();
+		expect(screen.getByRole('button', { name: 'Clear Time', exact: true }).query()).toBeNull();
 	});
 
 	it('calls onChange with undefined when clear button is clicked', async () => {
@@ -251,7 +255,7 @@ describe('TimeInput', () => {
 			props: { label: 'Time', value: iso('14:30'), onChange, hasClear: true }
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Clear Time' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Clear Time', exact: true }));
 		expect(onChange).toHaveBeenCalledWith(undefined);
 	});
 
@@ -326,7 +330,7 @@ describe('TimeInput', () => {
 		changeValue(inputIn(screen.container), '3:45 pm');
 
 		await expect.element(screen.getByRole('alert')).toHaveTextContent('');
-		expect(screen.getByText('Invalid time').query()).toBeNull();
+		expect(screen.getByText('Invalid time', { exact: true }).query()).toBeNull();
 	});
 
 	// New at v0.4.1: the live region's copy is `t('@astryx.timeInput.invalidTime')`
@@ -462,11 +466,13 @@ describe('TimeInput', () => {
 				}
 			});
 
-			const groupLoc = screen.getByRole('group', { name: 'Schedule' });
+			const groupLoc = screen.getByRole('group', { name: 'Schedule', exact: true });
 			await expect.element(groupLoc).toBeInTheDocument();
 			const group = groupLoc.element();
 			const groupLabelID = group.getAttribute('aria-labelledby');
-			const input = screen.getByRole('textbox', { name: 'Schedule Start time' }).element();
+			const input = screen
+				.getByRole('textbox', { name: 'Schedule Start time', exact: true })
+				.element();
 			const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 			expect(labelledByIDs).toHaveLength(2);
@@ -497,7 +503,7 @@ describe('TimeInput', () => {
 				}
 			});
 
-			const inputLoc = screen.getByRole('textbox', { name: 'Schedule Start time' });
+			const inputLoc = screen.getByRole('textbox', { name: 'Schedule Start time', exact: true });
 			await expect.element(inputLoc).toBeInTheDocument();
 			const input = inputLoc.element();
 			const describedByIDs = input.getAttribute('aria-describedby')?.split(' ') ?? [];
@@ -525,9 +531,9 @@ describe('TimeInput', () => {
 				}
 			});
 
-			await expect.element(screen.getByText('Schedule')).toBeInTheDocument();
-			await expect.element(screen.getByText('Start time')).toBeInTheDocument();
-			expect(screen.getByText('Start time').element().tagName).toBe('SPAN');
+			await expect.element(screen.getByText('Schedule', { exact: true })).toBeInTheDocument();
+			await expect.element(screen.getByText('Start time', { exact: true })).toBeInTheDocument();
+			expect(screen.getByText('Start time', { exact: true }).element().tagName).toBe('SPAN');
 			// Restated: scoped to the render container, which is what RTL's
 			// freshly-cleaned `document` amounts to.
 			expect(screen.container.querySelector('label')).toBeNull();
@@ -547,7 +553,9 @@ describe('TimeInput', () => {
 				}
 			});
 
-			await expect.element(screen.getByRole('group', { name: 'Schedule' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('group', { name: 'Schedule', exact: true }))
+				.toBeInTheDocument();
 			// The clock icon remains, but the trailing status icon is suppressed in
 			// grouped mode so the shared InputGroup border/status treatment is not
 			// duplicated.
@@ -580,7 +588,7 @@ describe('TimeInput', () => {
 				}
 			});
 
-			const inputLoc = screen.getByRole('textbox', { name: 'Schedule Start time' });
+			const inputLoc = screen.getByRole('textbox', { name: 'Schedule Start time', exact: true });
 			await expect.element(inputLoc).toBeInTheDocument();
 			const input = inputLoc.element();
 			const describedByIDs = input.getAttribute('aria-describedby')?.split(' ') ?? [];
@@ -667,7 +675,7 @@ describe('TimeInput', () => {
 
 			const tooltip = screen.getByRole('tooltip', { includeHidden: true }).element();
 			await userEvent.tab();
-			await expect.element(screen.getByLabelText('Time')).toHaveFocus();
+			await expect.element(screen.getByLabelText('Time', { exact: true })).toHaveFocus();
 			await vi.waitFor(() => {
 				expect(tooltip.matches(':popover-open')).toBe(true);
 			});
@@ -695,7 +703,7 @@ describe('TimeInput', () => {
 					disabledMessage: 'You need the Editor role'
 				}
 			});
-			const input = screen.getByLabelText('Time');
+			const input = screen.getByLabelText('Time', { exact: true });
 			// Restated: upstream's `not.toBeDisabled()` is jest-dom's, which reads the
 			// *native* disabled state only. vitest-browser's matcher of that name is
 			// Playwright's ARIA computation, which counts `aria-disabled="true"` as
@@ -751,7 +759,7 @@ describe('TimeInput', () => {
 			const screen = await render(TimeInput, {
 				props: { label: 'Time', isDisabled: true }
 			});
-			const input = screen.getByLabelText('Time');
+			const input = screen.getByLabelText('Time', { exact: true });
 			await expect.element(input).toBeDisabled();
 			await expect.element(input).not.toHaveAttribute('aria-disabled');
 		});
@@ -769,7 +777,7 @@ describe('TimeInput', () => {
 			input.focus();
 			input.dispatchEvent(new FocusEvent('focus'));
 			await expect
-				.element(screen.getByLabelText('Time'))
+				.element(screen.getByLabelText('Time', { exact: true }))
 				.toHaveAttribute('placeholder', 'Select a time');
 		});
 	});

@@ -3,7 +3,8 @@ import { __resetForTests, resolve, resolveLocaleChain } from '$lib/i18n/resolve.
 import type { Catalog, MessagesByLocale, Overrides } from '$lib/i18n/types.js';
 
 /**
- * Ported from Astryx's `i18n/__tests__/resolve.test.ts`. `resolve` has no React
+ * Ported from Astryx's `i18n/__tests__/resolve.test.ts`, all **20** of its
+ * `test` cases at the 0.5.0 pin. Nothing is dropped. `resolve` has no React
  * in it, so the suite transfers with only the import paths changed.
  */
 

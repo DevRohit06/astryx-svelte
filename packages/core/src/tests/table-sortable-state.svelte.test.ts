@@ -6,10 +6,16 @@ import Controlled from './fixtures/table-sortable-state-controlled-fixture.svelt
 
 /**
  * Astryx's `Table/plugins/sortable/useTableSortableState.test.tsx`, ported case
- * for case — **19 of 19**, in upstream's order and under its titles (3 default
- * sort, 3 interactive sorting, 1 numeric, 2 comparators, 4 controlled, 1
- * multi-sort, 2 NaN, 1 null/undefined, 1 empty data, 1 applySort). Nothing
- * dropped.
+ * for case — **19 of upstream's 20 at the 0.5.0 pin**, in upstream's order and
+ * under its titles (3 default sort, 3 interactive sorting, 1 numeric, 2
+ * comparators, 4 controlled, 1 multi-sort, 2 NaN, 1 null/undefined, 1 empty
+ * data, 1 applySort).
+ *
+ * **The one that is not here arrived at 0.5.0**: `re-sorts strings when the
+ * provider locale changes`, in the comparators block. It is the collator half
+ * of sorting — that a locale change re-runs the sort rather than keeping the
+ * order computed under the old one. (This header read "**19 of 19** … Nothing
+ * dropped", true at the v0.4.5 pin.)
  *
  * Upstream's `SortableStateTable` and `ControlledWrapper` helpers are the two
  * fixtures under `fixtures/table-sortable-state*.svelte`. Its two `renderHook`

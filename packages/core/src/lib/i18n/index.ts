@@ -3,6 +3,8 @@
  * deliberately small:
  *   - InternationalizationProvider — provider component
  *   - useTranslator                — returns a translator function
+ *   - useLocale                    — returns the provider locale
+ *   - useCollator                  — provider-bound locale-aware comparison
  *   - useDirection                 — returns the ambient text direction
  *   - getLocaleDirection           — server-safe locale → direction helper
  *   - Translator                   — interface for consumer-injected runtimes
@@ -15,6 +17,8 @@ export {
 	type InternationalizationContextValue
 } from './internationalization-context.svelte.js';
 export { useTranslator, type TranslatorFn } from './use-translator.svelte.js';
+export { useLocale } from './use-locale.svelte.js';
+export { useCollator } from './use-collator.svelte.js';
 export { useDirection } from './use-direction.svelte.js';
 export { getLocaleDirection } from './get-locale-direction.js';
 export type { Translator } from './translator.js';

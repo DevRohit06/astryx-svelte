@@ -9,22 +9,57 @@ import { defineTheme } from '$lib/theme/define-theme.js';
 import { generateThemeCss } from '$lib/theme/generate-theme-rules.js';
 
 /**
- * Astryx's `MultiSelector/MultiSelector.test.tsx`, ported case for case — **102
- * upstream cases** across its sixteen describe blocks (the top-level
- * `MultiSelector` and its nested `grouped search`, `result announcements`,
- * `keyboard accessibility`, `announcements`, `disabledMessage` and `form
- * participation`, then the nine top-level `MultiSelector statusVariant
- * forwarding`, `MultiSelector empty-state theme target`, `MultiSelector clear
- * icon theme target`, `MultiSelector indicator (chevron) icon theme target`,
- * `MultiSelector list structure`, `MultiSelector search affordances`,
- * `MultiSelector disabled state theme target`, `MultiSelector dropdown option
- * theme target` and `MultiSelector popup theme target`), 101 here, 1 dropped and
- * named below.
+ * Astryx's `MultiSelector/MultiSelector.test.tsx`, ported case for case — **111
+ * upstream cases at the 0.5.0 pin** across its sixteen describe blocks (the
+ * top-level `MultiSelector` and its nested `grouped search`, `result
+ * announcements`, `keyboard accessibility`, `announcements`, `disabledMessage`
+ * and `form participation`, then the nine top-level `MultiSelector
+ * statusVariant forwarding`, `MultiSelector empty-state theme target`,
+ * `MultiSelector clear icon theme target`, `MultiSelector indicator (chevron)
+ * icon theme target`, `MultiSelector list structure`, `MultiSelector search
+ * affordances`, `MultiSelector disabled state theme target`, `MultiSelector
+ * dropdown option theme target` and `MultiSelector popup theme target`), **101
+ * here** — 1 dropped and 9 unported, all named below.
+ *
+ * Two titles differ and are **not** gaps: upstream's `announces the
+ * empty-results message when nothing matches`, `announces the all-selected
+ * message when select-all selects everything` and `announces the
+ * selection-cleared message when clearing` read an `fr` catalog override, and
+ * are here under the literal English their default catalog produces (`announces
+ * "No results found" …`, `announces "All selected" …`, `announces "Selection
+ * cleared" …`). Same cases, same assertions.
  *
  * DROPPED (1): `has displayName` — `MultiSelector.displayName` is a React
  * component surface with no Svelte counterpart, the same case
  * `collapsible.svelte.test.ts` and `more-menu.svelte.test.ts` drop. There is no
  * ref-callback case in the file, so nothing else is React-only.
+ *
+ * ## The 9 that are unported
+ *
+ * **Six arrived at 0.5.0**, all in the top-level `MultiSelector` block:
+ *
+ * - **Five `formatValue` cases** — `formats the count display with
+ *   formatValue`, `passes selected values and resolved labels to formatValue`,
+ *   `formats the labels display with formatValue`, `ignores formatValue in
+ *   badges display`, and `shows the placeholder rather than calling formatValue
+ *   when empty`. This is a **component** gap: `MultiSelector` here has no
+ *   `formatValue` prop at all, so none of the five has anything to call.
+ * - **`hides a standalone divider from the accessibility tree (#4994)`**, in
+ *   `MultiSelector list structure`. `Selector` and `AvatarGroup` carry the
+ *   sibling of this case, and both are unported there too.
+ *
+ * **Three predate 0.5.0** and have been missing across more than one pin, since
+ * this header stated its count against a stale tag:
+ *
+ * - `does not toggle the highlighted option on a composing Enter (IME)`.
+ *   Portable now — `multi-selector.svelte` calls `isImeKeyEvent` in its keydown
+ *   handler.
+ * - `speaks the result count from a provider catalog (plural)`, in `result
+ *   announcements`.
+ * - `prefers a provider override over the provider catalog`, in
+ *   `announcements`. With the one above it, these two are the provider-catalog
+ *   half of announcements — the part the three renamed cases above deliberately
+ *   read past by asserting the default English instead.
  *
  * Runs in the **client (real Chromium)** project, for the reason
  * `selector.svelte.test.ts` does: the popup opens through the native Popover API
@@ -127,7 +162,7 @@ describe('MultiSelector', () => {
 		const screen = await render(MultiSelector, {
 			props: { label: 'Fruit', options: defaultOptions, value: [], onChange: () => {} }
 		});
-		await expect.element(screen.getByLabelText('Fruit')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Fruit', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders custom option content with renderOption', async () => {
@@ -157,7 +192,7 @@ describe('MultiSelector', () => {
 				placeholder: 'Pick fruits...'
 			}
 		});
-		await expect.element(screen.getByText('Pick fruits...')).toBeInTheDocument();
+		await expect.element(screen.getByText('Pick fruits...', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows count display by default', async () => {
@@ -169,7 +204,7 @@ describe('MultiSelector', () => {
 				onChange: () => {}
 			}
 		});
-		await expect.element(screen.getByText('2 selected')).toBeInTheDocument();
+		await expect.element(screen.getByText('2 selected', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows labels display', async () => {
@@ -182,7 +217,7 @@ describe('MultiSelector', () => {
 				triggerDisplay: 'labels'
 			}
 		});
-		await expect.element(screen.getByText('Apple, Banana')).toBeInTheDocument();
+		await expect.element(screen.getByText('Apple, Banana', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows labels display with overflow', async () => {
@@ -195,7 +230,9 @@ describe('MultiSelector', () => {
 				triggerDisplay: 'labels'
 			}
 		});
-		await expect.element(screen.getByText('Apple, Banana, Orange, +2')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Apple, Banana, Orange, +2', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('opens dropdown on click', async () => {
@@ -316,7 +353,7 @@ describe('MultiSelector', () => {
 			}
 		});
 		await expect.element(screen.getByRole('combobox')).toHaveAttribute('aria-invalid', 'true');
-		await expect.element(screen.getByText('Required')).toBeInTheDocument();
+		await expect.element(screen.getByText('Required', { exact: true })).toBeInTheDocument();
 	});
 
 	it('closes on Escape', async () => {
@@ -417,7 +454,7 @@ describe('MultiSelector', () => {
 		});
 
 		await userEvent.click(screen.getByRole('combobox'));
-		await expect.element(screen.getByText('Select all')).toBeInTheDocument();
+		await expect.element(screen.getByText('Select all', { exact: true })).toBeInTheDocument();
 	});
 
 	it('select-all selects all enabled items', async () => {
@@ -546,7 +583,7 @@ describe('MultiSelector', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		const searchInput = screen.getByRole('combobox');
 		await expect.element(searchInput).toBeInTheDocument();
 		await expect.element(searchInput).toHaveAttribute('aria-autocomplete', 'list');
@@ -563,7 +600,7 @@ describe('MultiSelector', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		await userEvent.fill(screen.getByRole('combobox'), 'app');
 
 		await vi.waitFor(() => {
@@ -601,7 +638,7 @@ describe('MultiSelector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await userEvent.fill(screen.getByRole('combobox'), 'orange');
 
 			await vi.waitFor(() => {
@@ -622,7 +659,7 @@ describe('MultiSelector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await userEvent.fill(screen.getByRole('combobox'), 'berry');
 
 			await vi.waitFor(() => {
@@ -644,7 +681,7 @@ describe('MultiSelector', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		const searchInput = screen.getByRole('combobox');
 		// Filter to Banana and Orange so "last" means last *visible* option.
 		await userEvent.fill(searchInput, 'an');
@@ -673,7 +710,7 @@ describe('MultiSelector', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		// `userEvent.type`, not `fill`: this case is about the caret, and only a
 		// real per-character keystroke sequence leaves it where typing would.
 		const searchInput = screen.getByRole('combobox').element() as HTMLInputElement;
@@ -703,7 +740,7 @@ describe('MultiSelector', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		await userEvent.fill(screen.getByRole('combobox'), 'xyz');
 
 		// Scoped to the listbox, exactly as upstream now scopes it: the polite live
@@ -725,7 +762,7 @@ describe('MultiSelector', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		await userEvent.fill(screen.getByRole('combobox'), 'xyz');
 
 		// role="listbox" only permits option/group children — the visual
@@ -748,7 +785,7 @@ describe('MultiSelector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			// "an" matches Banana and Orange.
 			await userEvent.fill(screen.getByRole('combobox'), 'an');
 			await vi.waitFor(() => {
@@ -766,7 +803,7 @@ describe('MultiSelector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			// "app" matches only Apple. Anchored so it cannot pass on "1 results".
 			await userEvent.fill(screen.getByRole('combobox'), 'app');
 			await vi.waitFor(() => {
@@ -784,7 +821,7 @@ describe('MultiSelector', () => {
 					hasSearch: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			await userEvent.fill(screen.getByRole('combobox'), 'xyz');
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('No results found');
@@ -804,7 +841,7 @@ describe('MultiSelector', () => {
 			// Popover closed: nothing announced.
 			expect(politeRegion()?.textContent ?? '').toBe('');
 			// Open with an empty query: still nothing announced.
-			await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 			expect(politeRegion()?.textContent ?? '').toBe('');
 		});
 	});
@@ -819,7 +856,9 @@ describe('MultiSelector', () => {
 				onChange: () => {}
 			}
 		});
-		await expect.element(screen.getByText('Choose your fruits')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Choose your fruits', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('supports data-testid', async () => {
@@ -887,7 +926,7 @@ describe('MultiSelector', () => {
 		});
 
 		await userEvent.click(screen.getByRole('combobox'));
-		await expect.element(screen.getByText('Check all')).toBeInTheDocument();
+		await expect.element(screen.getByText('Check all', { exact: true })).toBeInTheDocument();
 	});
 
 	it('sorts selected items to top', async () => {
@@ -983,7 +1022,7 @@ describe('MultiSelector', () => {
 					hasClear: true
 				}
 			});
-			const clear = screen.getByRole('button', { name: 'Clear all Fruit' });
+			const clear = screen.getByRole('button', { name: 'Clear all Fruit', exact: true });
 			// RESTATED as above — lowercase attribute name.
 			await expect.element(clear).not.toHaveAttribute('tabindex', '-1');
 		});
@@ -1100,7 +1139,7 @@ describe('MultiSelector', () => {
 					hasClear: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear all Fruit' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear all Fruit', exact: true }));
 			await vi.waitFor(() => {
 				expect(politeRegion()).toHaveTextContent('Selection cleared');
 			});
@@ -1404,7 +1443,7 @@ describe('MultiSelector statusVariant forwarding', () => {
 		});
 		expect(screen.container.querySelector('.astryx-field-status')).toBeNull();
 		const statusButton = screen
-			.getByRole('button', { name: 'Warning details' })
+			.getByRole('button', { name: 'Warning details', exact: true })
 			.element() as HTMLElement;
 		const tooltip = tooltipIn(screen.container);
 		expect(tooltip).toHaveTextContent('Some rows are hidden');
@@ -1427,7 +1466,7 @@ describe('MultiSelector empty-state theme target', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		await userEvent.fill(screen.getByRole('combobox'), 'xyz');
 
 		await vi.waitFor(() => {
@@ -1486,7 +1525,9 @@ describe('MultiSelector clear icon theme target', () => {
 				hasClear: true
 			}
 		});
-		const clear = screen.getByRole('button', { name: 'Clear all Fruit' }).element() as HTMLElement;
+		const clear = screen
+			.getByRole('button', { name: 'Clear all Fruit', exact: true })
+			.element() as HTMLElement;
 		expect(clear.tagName).toBe('BUTTON');
 		// RESTATED only in mechanism: upstream's `fireEvent.click` is a dispatched
 		// click with no pointer sequence, which a native `.click()` is here.
@@ -1553,7 +1594,7 @@ describe('MultiSelector clear icon theme target', () => {
 		expect(css).toContain('.astryx-multi-selector-clear-icon {');
 		expect(css).toContain('width: 12px');
 		expect(css).toContain('height: 12px');
-		expect(css).toContain('.astryx-multi-selector-clear-icon:hover {');
+		expect(css).toContain('.astryx-multi-selector-clear-icon:hover');
 		expect(css).toContain('color: var(--color-icon-primary)');
 	});
 });
@@ -1728,7 +1769,7 @@ describe('MultiSelector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 
 		const search = screen.getByRole('combobox').element() as HTMLElement;
 		// The row is the outer gutter; the input sits inside the rounded field.
@@ -1767,7 +1808,7 @@ describe('MultiSelector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		// The options scroll under the header rather than carrying it away, so the
 		// field stays reachable in a long list.
 		const search = screen.getByRole('combobox').element() as HTMLElement;
@@ -1785,7 +1826,7 @@ describe('MultiSelector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		const search = screen.getByRole('combobox').element() as HTMLElement;
 		// The magnifier leads the search row, as a sibling of the <input>.
 		const wrapper = search.parentElement;
@@ -1805,14 +1846,14 @@ describe('MultiSelector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		const search = screen.getByRole('combobox');
 		await userEvent.fill(search, 'ap');
 		await expect.element(search).toHaveValue('ap');
 
 		// The clear button is TextInput's built-in hasClear affordance; its name is
 		// derived from the field label ("Search options").
-		const clear = screen.getByRole('button', { name: 'Clear Search options' });
+		const clear = screen.getByRole('button', { name: 'Clear Search options', exact: true });
 		await userEvent.click(clear);
 		await expect.element(search).toHaveValue('');
 		await expect.element(search).toHaveFocus();
@@ -1828,7 +1869,7 @@ describe('MultiSelector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		expect(
 			screen.container.querySelector('[aria-label="Clear Search options"]')
 		).not.toBeInTheDocument();
@@ -1844,7 +1885,7 @@ describe('MultiSelector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		await userEvent.click(screen.getByRole('button', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Fruit', exact: true }));
 		const search = screen.getByRole('combobox').element() as HTMLElement;
 		expect(search.tagName).toBe('INPUT');
 		expect(search).toHaveAttribute('aria-autocomplete', 'list');
@@ -1860,7 +1901,7 @@ describe('MultiSelector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Fruit' });
+		const trigger = screen.getByRole('button', { name: 'Fruit', exact: true });
 		await userEvent.click(trigger);
 		const search = screen.getByRole('combobox');
 		await userEvent.fill(search, 'ap');
@@ -1871,7 +1912,7 @@ describe('MultiSelector search affordances', () => {
 		// input's Tab dismisses the popup.
 		await userEvent.keyboard('{Tab}');
 		await expect
-			.element(screen.getByRole('button', { name: 'Clear Search options' }))
+			.element(screen.getByRole('button', { name: 'Clear Search options', exact: true }))
 			.toHaveFocus();
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 	});
@@ -1886,7 +1927,7 @@ describe('MultiSelector search affordances', () => {
 				hasSearch: true
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Fruit' });
+		const trigger = screen.getByRole('button', { name: 'Fruit', exact: true });
 		await userEvent.click(trigger);
 		const search = screen.getByRole('combobox');
 		// Focus moves into the search input on open (via rAF).
@@ -2077,7 +2118,7 @@ describe('MultiSelector popup theme target', () => {
 				onChange: () => {}
 			}
 		});
-		await userEvent.click(screen.getByRole('combobox', { name: 'Fruit' }));
+		await userEvent.click(screen.getByRole('combobox', { name: 'Fruit', exact: true }));
 
 		const popup = screen.container.querySelector('.astryx-multi-selector-popup') as HTMLElement;
 		expect(popup).not.toBeNull();

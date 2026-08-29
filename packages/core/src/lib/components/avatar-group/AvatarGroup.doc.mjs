@@ -39,7 +39,8 @@ export default {
 		bestPractices: [
 			{
 				guidance: true,
-				description: 'Set max to limit visible avatars when the list is long; 3-5 is typical.'
+				description:
+					'Slice the list yourself and pass only the avatars you want visible; 3-5 is typical. The group renders exactly the children it is given and never slices for you.'
 			},
 			{
 				guidance: true,
@@ -53,11 +54,16 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Make avatars interactive with href or onClick to link to profiles. Interactive avatars share a single Tab stop; arrow keys move between them, and the group announces a keyboard hint to assistive tech.'
+					'Make avatars interactive with href or onClick to link to profiles. Interactive avatars share a single Tab stop; arrow keys move between them, and the group announces a keyboard hint to assistive tech. This follows the WAI-ARIA APG roving tabindex technique for managing focus in a composite: https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/#kbd_roving_tabindex'
 			},
 			{
 				guidance: false,
 				description: "Don't nest AvatarGroups; use a single group with all avatars."
+			},
+			{
+				guidance: false,
+				description:
+					"Don't set size on the child avatars. The group's size wins over each child's own size prop, including when the group leaves size at its default, so a child's size is silently ignored inside a group."
 			}
 		],
 		anatomy: [
@@ -84,8 +90,9 @@ export default {
 		},
 		{
 			name: 'size',
-			type: "48 | 'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 32 | 36 | 40 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
-			description: 'Size applied to all avatars via context.',
+			type: "48 | 32 | 'sm' | 'md' | 'lg' | 20 | 'xl' | 'xsm' | 16 | 24 | 36 | 40 | 60 | 64 | 72 | 96 | 128 | 144 | 180",
+			description:
+				"Size applied to all avatars via context. This wins over each child Avatar's own size prop, including when it is left at the default, so set the size here rather than on the children.",
 			default: "'md'"
 		},
 		{

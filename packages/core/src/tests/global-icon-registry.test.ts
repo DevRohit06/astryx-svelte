@@ -13,7 +13,8 @@ import { resetThemes } from '$lib/theme/theme-registry.js';
 import { __resetDevWarnings } from '$lib/utils/dev-warning.js';
 
 /**
- * Astryx's `Icon/globalIconRegistry.test.tsx`, all 18 of its cases.
+ * Astryx's `Icon/globalIconRegistry.test.tsx` at the **0.5.0** pin — all **18**
+ * of its cases.
  *
  * The registry is a pure module with no DOM in it, so this is a **server**
  * project file (`*.test.ts`), which is also the environment that proves the

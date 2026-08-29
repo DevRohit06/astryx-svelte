@@ -149,7 +149,7 @@
 			background-color: transparent;
 		}
 
-		.astryx-top-nav-item.selected:hover {
+		.astryx-top-nav-item.selected:hover:where(:not(:disabled,[aria-disabled="true"])) {
 			background-color: var(--color-overlay-hover);
 		}
 
@@ -170,7 +170,7 @@
 			transition-timing-function: var(--ease-standard);
 		}
 
-		.astryx-pagination-dot:hover {
+		.astryx-pagination-dot:hover:where(:not(:disabled,[aria-disabled="true"])) {
 			background-color: var(--color-accent-muted);
 		}
 
@@ -181,7 +181,7 @@
 			border-radius: var(--radius-full);
 		}
 
-		.astryx-pagination-dot.active:hover {
+		.astryx-pagination-dot.active:hover:where(:not(:disabled,[aria-disabled="true"])) {
 			background-color: var(--color-accent);
 		}
 

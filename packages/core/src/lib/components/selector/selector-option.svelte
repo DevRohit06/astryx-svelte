@@ -16,6 +16,19 @@
 		label: string | Snippet;
 		/** Secondary description text displayed below the label. */
 		description?: string | Snippet;
+		/**
+		 * How the label and description sit together. `stacked` puts the
+		 * description on its own line below the label; `inline` keeps both on one
+		 * line, with the description ellipsizing first.
+		 *
+		 * In a Selector trigger this is the caller's choice and the trigger sizes
+		 * itself to it — one line at the size token, two lines exactly one text
+		 * line taller. Inside an `InputGroup` the row height is pinned by the
+		 * group, so `inline` is forced.
+		 *
+		 * @default 'stacked'
+		 */
+		layout?: 'stacked' | 'inline';
 		/** Additional content to render after the label/description. */
 		endContent?: Snippet;
 		/**
@@ -39,6 +52,7 @@
 	import { cx } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { selectorOptionRootStyle } from './selector-option.stylex.js';
+	import { useSelectorRowLayout } from './selector-row-layout-context.svelte.js';
 
 	/**
 	 * A helper for rendering custom selector options with consistent styling.
@@ -57,11 +71,17 @@
 		icon,
 		label,
 		description,
+		layout,
 		endContent,
 		xstyle,
 		class: className,
 		style: styleProp
 	}: SelectorOptionProps = $props();
+
+	// A height-pinned host (the trigger inside an `InputGroup`) overrides the
+	// caller's choice: the row physically cannot be two lines there.
+	const enforcedLayout = useSelectorRowLayout();
+	const resolvedLayout = $derived(enforcedLayout() === 'inline' ? 'inline' : layout);
 
 	const theme = themeProps('selector-option');
 </script>
@@ -78,6 +98,7 @@
 	startContent={icon ? iconSlot : undefined}
 	{label}
 	{description}
+	layout={resolvedLayout}
 	{endContent}
 	xstyle={[selectorOptionRootStyle, xstyle]}
 	class={cx(theme.class, className)}

@@ -47,7 +47,7 @@
 		/**
 		 * Maximum height; the actual height fits the content. Numbers are pixels,
 		 * strings pass through. Ignored when `variant` is `fullscreen`.
-		 * @default '75vh'
+		 * @default '75dvh'
 		 */
 		maxHeight?: number | string;
 		/**
@@ -83,12 +83,17 @@
 	import { themeProps } from '../../internal/theme-props.js';
 	import { devWarn } from '../../utils/dev-warning.js';
 	import { useScrollLock } from '../../hooks/use-scroll-lock.svelte.js';
-	import { hasActiveFocusTrapEscape } from '../../hooks/use-focus-trap.svelte.js';
-	import { isImeKeyEvent } from '../../utils/ime.js';
+	import LayerDepthProvider from '../layer/layer-depth-provider.svelte';
+	import { useLayerDismissal } from '../layer/use-layer-dismissal.svelte.js';
 	import { spacingStepToToken } from '../../internal/padding.stylex.js';
 	import type { SpacingToken } from '../../internal/container.stylex.js';
 	import { setDialogContext } from './dialog-context.svelte.js';
-	import { dialogAttrs, dialogInlineAttrs, dialogInnerAttrs } from './dialog.stylex.js';
+	import {
+		dialogAttrs,
+		dialogInlineAttrs,
+		dialogInnerAttrs,
+		resolveDialogSizing
+	} from './dialog.stylex.js';
 
 	/**
 	 * A dialog on the native `<dialog>` element, driven imperatively through
@@ -114,7 +119,7 @@
 		isInline = false,
 		onOpenChange,
 		width = 400,
-		maxHeight = '75vh',
+		maxHeight = '75dvh',
 		position,
 		variant = 'standard',
 		purpose = 'info',
@@ -123,7 +128,6 @@
 		xstyle,
 		class: className,
 		style: styleProp,
-		onkeydown: onkeydownProp,
 		...rest
 	}: DialogProps = $props();
 
@@ -137,9 +141,10 @@
 	const allowEscape = $derived(purpose !== 'required');
 	const allowBackdropClick = $derived(purpose === 'info');
 
-	const innerMaxHeight = $derived(
-		isFullscreen ? undefined : typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight
-	);
+	// A standard dialog's resolved surface dimensions: `width` is the *preferred*
+	// width, clamped to the dynamic viewport with a gutter each side. `null` when
+	// fullscreen — that variant sizes itself and ignores both props.
+	const standardSizing = $derived(isFullscreen ? null : resolveDialogSizing(width, maxHeight));
 
 	// Default accessible name: publish a title id through the dialog context so a
 	// `DialogHeader` applies it to its heading (mirroring `AlertDialog`'s explicit
@@ -264,40 +269,55 @@
 	useScrollLock(() => isOpen && !isInline);
 
 	/**
-	 * Escape handling, plus the consumer's own `onkeydown`.
+	 * Join the shared layer dismissal stack. The stack owns the Escape listener
+	 * and routes each press to the top-most layer, so this dialog does not listen
+	 * itself — that is what stops a modal opened from inside another modal (or a
+	 * popover opened inside this one) from closing two layers on one press.
 	 *
-	 * Upstream does not put this in the element's props — it is
-	 * `dialog.addEventListener('keydown', …)` from an effect, precisely so a
-	 * consumer `onKeyDown` arriving through `{...safeProps}` still reaches the
-	 * DOM. Svelte has one `onkeydown` slot per element and the explicit attribute
-	 * wins over the spread, so the two are composed here instead. The order
-	 * reproduces upstream's: React delegates `onKeyDown` to the root container, so
-	 * the dialog's own bubble-phase listener runs *first* and the consumer's after
-	 * — unconditionally, since `preventDefault` does not stop propagation. The
-	 * consumer's call sits outside the `isOpen` guard because upstream installs
-	 * its listener only while open, leaving `onKeyDown` live on a closed dialog.
+	 * A `required` dialog registers as `block`: it must not be dismissed, and the
+	 * press must not fall through and dismiss a layer behind it either.
+	 *
+	 * Inline mode opts out — it renders dialog content in normal flow, with
+	 * nothing layered over anything.
+	 *
+	 * Neither `getContainer` nor `isPresent` is passed, as upstream passes
+	 * neither: the dialog wraps its own content in `LayerDepthProvider`, so
+	 * anything opened from inside it is already deeper than it in the tree, and
+	 * `isOpen` is the same prop the `<dialog>` is driven from, so registration
+	 * cannot lag the DOM.
 	 */
-	function handleKeyDown(event: KeyboardEvent): void {
-		handleEscape(event);
-		onkeydownProp?.(event as KeyboardEvent & { currentTarget: EventTarget & HTMLDialogElement });
-	}
-
-	function handleEscape(event: KeyboardEvent): void {
-		if (!isOpen) return;
-		if (event.key === 'Escape') {
-			// Ignore IME composition-cancel, and defer to any popover/menu layered on
-			// top so a single Escape closes only the top-most layer.
-			if (isImeKeyEvent(event) || hasActiveFocusTrapEscape()) {
-				return;
-			}
-			event.preventDefault();
-			if (allowEscape) onOpenChange(false);
+	const { shouldDismissOnCloseRequest } = useLayerDismissal(() => ({
+		isActive: isOpen,
+		isEnabled: !isInline,
+		escapeBehavior: allowEscape ? 'close' : 'block',
+		onDismiss: () => {
+			onOpenChange(false);
 		}
-	}
+	}));
 
+	/**
+	 * The native `cancel` event is the browser's own close-watcher firing: an
+	 * Android back gesture, or a close request the stack never saw a press for.
+	 * Escape presses the stack owns never arrive here — it `preventDefault()`s
+	 * those, which suppresses the close watcher.
+	 *
+	 * Always `preventDefault` so the browser cannot close a controlled `<dialog>`
+	 * behind our back, then answer the request with the stack's own rules: only
+	 * the top-most layer dismisses, a `required` dialog swallows it, and nothing
+	 * dismisses while an IME composition is in progress.
+	 *
+	 * There is no keydown handler beside it any more. The dialog used to listen
+	 * for Escape itself, guarding on `isImeKeyEvent` and deferring to
+	 * `hasActiveFocusTrapEscape()`; upstream 0.5.0 deleted that whole effect when
+	 * the shared stack landed, and both guards now live in the stack — the IME
+	 * one for every layer at once, the ordering one as depth rather than as a
+	 * question about focus traps specifically. A consumer's own `onkeydown`
+	 * therefore reaches the element through `{...safeRest}` with nothing to
+	 * compose it with.
+	 */
 	function handleCancel(event: Event): void {
 		event.preventDefault();
-		if (hasActiveFocusTrapEscape()) return;
+		if (!shouldDismissOnCloseRequest()) return;
 		if (allowEscape) onOpenChange(false);
 	}
 
@@ -310,10 +330,16 @@
 	}
 
 	const theme = $derived(themeProps('dialog', { variant }));
-	const root = $derived(dialogAttrs({ isOpen, isFullscreen, width, maxHeight, position, xstyle }));
-	const inlineRoot = $derived(dialogInlineAttrs({ isFullscreen, width, maxHeight, xstyle }));
+	const root = $derived(dialogAttrs({ isOpen, isFullscreen, standardSizing, position, xstyle }));
+	const inlineRoot = $derived(dialogInlineAttrs({ isFullscreen, standardSizing, xstyle }));
 	const inner = $derived(
-		dialogInnerAttrs({ useThemeDefault, paddingToken, effectivePadding, maxHeight: innerMaxHeight })
+		dialogInnerAttrs({
+			useThemeDefault,
+			paddingToken,
+			effectivePadding,
+			maxHeight: standardSizing?.maxHeight,
+			isFullscreen
+		})
 	);
 
 	// Strip the native `open` attribute from rest props — passing it to a modal
@@ -338,9 +364,8 @@
 			{...theme}
 			class={cx(theme.class, inlineRoot.class, className)}
 			style={mergeStyle(inlineRoot.style, styleProp as string | undefined)}
-			onkeydown={onkeydownProp as unknown as (e: KeyboardEvent) => void}
 		>
-			{@render innerContent()}
+			<LayerDepthProvider>{@render innerContent()}</LayerDepthProvider>
 		</div>
 	{/if}
 {:else}
@@ -352,11 +377,10 @@
 		style={mergeStyle(root.style, styleProp as string | undefined)}
 		onclick={handleClick}
 		oncancel={handleCancel}
-		onkeydown={handleKeyDown}
 		aria-modal="true"
 		{...purpose === 'required' ? { role: 'alertdialog' } : {}}
 		{@attach syncDefaultLabel}
 	>
-		{@render innerContent()}
+		<LayerDepthProvider>{@render innerContent()}</LayerDepthProvider>
 	</dialog>
 {/if}

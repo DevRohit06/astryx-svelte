@@ -3,7 +3,7 @@ import { expandRadiusScale } from '$lib/theme/expand-radius-scale.js';
 
 /**
  * Astryx's `theme/expandRadiusScale.test.ts`, ported case for case — **6
- * upstream cases at v0.4.5, 6 here**, in upstream's order and under upstream's
+ * upstream cases at the 0.5.0 pin, 6 here**, in upstream's order and under upstream's
  * titles. Nothing dropped, nothing added.
  *
  * A **server** project file (`*.test.ts`), as upstream's is: `expandRadiusScale`

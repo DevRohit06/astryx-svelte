@@ -57,6 +57,11 @@ export default {
 					'Describe media children with `alt`, or `alt=""` when the image is decorative. AspectRatio adds no role and no accessible name of its own, so the child carries the whole accessible description.'
 			},
 			{
+				guidance: true,
+				description:
+					"For a breakpoint-dependent ratio, override the ratio responsively: pass an `aspectRatio` rule via `xstyle` (StyleX), or override `aspect-ratio` from your own unlayered CSS under a `@media`/`@container` rule — component styles live in the `astryx-base` cascade layer, so unlayered consumer CSS wins. Give an `xstyle` rule a `default` branch alongside the conditional one (`{default: 3, '@container ...': '3 / 2'}`) — with only the conditional branch the ratio is unset outside the query and the box collapses."
+			},
+			{
 				guidance: false,
 				description: 'Use for general layout containers; use standard layout components instead.'
 			},
@@ -99,7 +104,8 @@ export default {
 		{
 			name: 'ratio',
 			type: 'number',
-			description: 'Aspect ratio as width/height (e.g. 16/9, 1).',
+			description:
+				'Aspect ratio as width/height (e.g. 16/9, 1). Emitted as a class-level declaration (never inline), so `xstyle` rules or unlayered consumer CSS can override it responsively.',
 			required: true
 		},
 		{

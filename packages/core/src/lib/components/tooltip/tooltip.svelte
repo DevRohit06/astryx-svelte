@@ -1,7 +1,7 @@
 <script lang="ts" module>
 	import type { Snippet } from 'svelte';
 	import type { LayerAlignment, LayerPlacement } from '../layer/use-layer.svelte.js';
-	import type { TooltipFocusTrigger } from './use-tooltip.svelte.js';
+	import type { TooltipFocusTrigger, TooltipTouchTrigger } from './use-tooltip.svelte.js';
 
 	export interface TooltipProps {
 		/**
@@ -65,6 +65,20 @@
 		focusTrigger?: TooltipFocusTrigger;
 
 		/**
+		 * What a tap does on a touch pointer, where there is no hover:
+		 * - `auto`: tap opens the tooltip, unless the trigger performs an action of
+		 *   its own (a button, a link, a form control) — that tap belongs to the
+		 *   control, and a hint about a control the user just operated is noise
+		 * - `tap`: tap always opens the tooltip. This is what an info icon rendered
+		 *   as a button wants: it looks like an action to the DOM, but revealing the
+		 *   tooltip is the only thing it does
+		 * - `none`: touch never opens the tooltip
+		 *
+		 * @default 'auto'
+		 */
+		touchTrigger?: TooltipTouchTrigger;
+
+		/**
 		 * Whether the tooltip is enabled.
 		 * When false, hover/focus triggers are disabled.
 		 *
@@ -93,6 +107,12 @@
 		 * - `true`: force-show the tooltip (hover/focus hide is suppressed)
 		 * - `false`: force-hide the tooltip
 		 * - `undefined`: uncontrolled — hover/focus triggers manage visibility
+		 *
+		 * A controlled tooltip still takes Escape when it is the top-most layer,
+		 * and answers by calling `onOpenChange(false)` without hiding itself —
+		 * closing is your update's decision, exactly as for a controlled Dialog.
+		 * Ignore the call and the tip stays, and so does the press: nothing
+		 * underneath dismisses.
 		 */
 		isOpen?: boolean;
 
@@ -165,6 +185,7 @@
 		delay = 200,
 		hideDelay = 0,
 		focusTrigger = 'auto',
+		touchTrigger = 'auto',
 		isEnabled = true,
 		onOpenChange,
 		hasHoverIndication = 'auto',
@@ -194,6 +215,7 @@
 		delay,
 		hideDelay,
 		focusTrigger,
+		touchTrigger,
 		isEnabled,
 		isOpen,
 		isDefaultOpen,

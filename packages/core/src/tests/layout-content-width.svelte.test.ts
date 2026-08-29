@@ -4,7 +4,7 @@ import LayoutShell from './fixtures/layout-shell.svelte';
 
 /**
  * Astryx's `Layout/__tests__/contentWidth.test.tsx`, ported case for case — **6
- * upstream `it` declarations at v0.4.5, 6 here**, in upstream's order, under
+ * upstream `it` declarations at the 0.5.0 pin, 6 here**, in upstream's order, under
  * upstream's titles and inside upstream's three nested describes. Nothing
  * dropped, nothing added.
  *

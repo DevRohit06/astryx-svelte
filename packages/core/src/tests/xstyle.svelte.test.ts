@@ -27,13 +27,15 @@ function atomics(el: Element): string[] {
 
 describe('xstyle', () => {
 	it('swaps the component class when it overrides a property the component sets', async () => {
-		const plain = (await render(Badge, { props: { label: 'A' } })).getByText('A').element();
+		const plain = (await render(Badge, { props: { label: 'A' } }))
+			.getByText('A', { exact: true })
+			.element();
 		const base = atomics(plain);
 
 		const overridden = (
 			await render(Badge, { props: { label: 'B', xstyle: probe.overridePadding } })
 		)
-			.getByText('B')
+			.getByText('B', { exact: true })
 			.element();
 		const withOverride = atomics(overridden);
 
@@ -48,11 +50,13 @@ describe('xstyle', () => {
 	});
 
 	it('adds a class when it sets a property the component does not', async () => {
-		const plain = (await render(Badge, { props: { label: 'C' } })).getByText('C').element();
+		const plain = (await render(Badge, { props: { label: 'C' } }))
+			.getByText('C', { exact: true })
+			.element();
 		const base = atomics(plain);
 
 		const extended = (await render(Badge, { props: { label: 'D', xstyle: probe.novelMargin } }))
-			.getByText('D')
+			.getByText('D', { exact: true })
 			.element();
 
 		// A non-colliding override adds exactly one class — nothing to dedup.

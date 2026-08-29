@@ -47,11 +47,14 @@ const styles = stylex.create({
 		minWidth: 0
 	},
 	labelInteractive: {
-		cursor: 'pointer'
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	labelHover: {
 		backgroundColor: {
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
 		},
@@ -60,7 +63,7 @@ const styles = stylex.create({
 			// the base secondary colour from `label` (last-wins property merge),
 			// leaving linked citations to inherit the surrounding text colour.
 			default: colorVars['--color-text-secondary'],
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': colorVars['--color-text-primary']
 			}
 		}
@@ -85,7 +88,10 @@ const styles = stylex.create({
 		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	numberInteractive: {
-		cursor: 'pointer'
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		}
 	},
 	numberHover: {
 		backgroundColor: {
@@ -93,7 +99,7 @@ const styles = stylex.create({
 			// hover-only conditional replaces the base accent-muted pill from
 			// `number` on merge, leaving linked badges transparent.
 			default: colorVars['--color-accent-muted'],
-			':hover': {
+			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 				'@media (hover: hover)': colorVars['--color-overlay-hover']
 			}
 		}

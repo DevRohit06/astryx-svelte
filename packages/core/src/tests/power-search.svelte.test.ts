@@ -8,13 +8,48 @@ import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import type { PowerSearchConfig } from '$lib/components/power-search/types.js';
 
 /**
- * Astryx's `PowerSearch/PowerSearch.test.tsx`, ported case for case — **21
- * upstream cases** at v0.3.0: 2 at the top of `describe('PowerSearch')` plus
- * four nested describes (`startIcon` 2, `paste behavior` 2, `disabledMessage` 8,
- * `result count announcements` 5), then the top-level `PowerSearch statusVariant
- * forwarding` (2). **21 here**, in upstream's order and under upstream's
- * describe names. Nothing dropped, nothing added. There is no `displayName`
- * case in the file.
+ * Astryx's `PowerSearch/PowerSearch.test.tsx`, ported case for case — **32
+ * upstream cases at the 0.5.0 pin**, **21 here**, in upstream's order and under
+ * upstream's describe names. There is no `displayName` case in the file.
+ *
+ * The 21 that are here are the whole of upstream's suite as it stood at v0.3.0:
+ * 2 at the top of `describe('PowerSearch')` plus four nested describes
+ * (`startIcon` 2, `paste behavior` 2, `disabledMessage` 8, `result count
+ * announcements` 5), then the top-level `PowerSearch statusVariant forwarding`
+ * (2).
+ *
+ * **The 11 that are not here are three whole describes, all added at 0.5.0**,
+ * and they are one change — menu sizing, capping and grouping:
+ *
+ * - **`maxOperatorMenuItems`** (1) — `caps entity suggestions after selecting a
+ *   field`.
+ * - **`field menu sizing`** (6) — every field shown in a normal list while
+ *   browsing, an extreme list capped at the 1,000-row browsing ceiling, ranked
+ *   results capped while typing, ranked results capped at `maxSearchResults`,
+ *   `maxSearchResults` *not* applied while browsing, and `menuWidth` applied to
+ *   the main field menu.
+ * - **`field menu grouping`** (3) — ungrouped fields rendered before named
+ *   sections, keyboard navigation kept flat across section boundaries, and
+ *   ranked results kept flat while typing.
+ *
+ * The same release put the matching gap in two sibling files:
+ * `power-search-value-editor.svelte.test.ts` (`maxMenuItems`, 3) and
+ * `use-power-search-source.svelte.test.ts` (`typed-result cap` plus two
+ * grouping cases, 4).
+ *
+ * **All eleven are a component gap, not only a test gap.** `power-search.svelte`
+ * declares `menuWidth` and `maxOperatorMenuItems` but reads neither — it carries
+ * a "Two dead props, kept because upstream publishes them" note saying
+ * *"upstream never destructures either"*, and **that reason expired at 0.5.0**:
+ * upstream now destructures both and threads them into the menus
+ * (`PowerSearch.tsx` passes `maxMenuItems={maxOperatorMenuItems}` and
+ * `menuWidth={menuWidth}`). `maxSearchResults` is not declared here at all,
+ * where upstream defaults it and hands it to `usePowerSearchSource`. Wire the
+ * three props through before writing any of the eleven cases.
+ *
+ * (This header read "**21** upstream cases at v0.3.0 … 21 here. Nothing
+ * dropped, nothing added", true at that pin. It said "**17** … 17 here" before
+ * that, which was wrong.)
  *
  * (The previous header said "**17 upstream cases** … **17 here**" and listed
  * only three nested describes. The `startIcon` pair and the whole `PowerSearch

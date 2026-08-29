@@ -10,8 +10,8 @@ import Rtl from './fixtures/dropdown-menu-rtl.svelte';
 
 /**
  * Ported from Astryx's `DropdownMenu/DropdownMenu.test.tsx` — 67 of its 77 cases,
- * re-derived at **v0.4.5** (the file is unchanged since v0.4.1, which is where
- * this header's count last came from), across fourteen of its fifteen describe
+ * re-derived at the **0.5.0** pin (the file is unchanged since v0.4.1, which is
+ * where this header's count last came from), across fourteen of its fifteen describe
  * blocks (the top-level
  * `DropdownMenu`, `light-dismiss race`, `controlled mode`, `items`, `sections`,
  * `dividers`, `theming slots`, `DropdownMenuItem destructive variant`,
@@ -26,7 +26,10 @@ import Rtl from './fixtures/dropdown-menu-rtl.svelte';
  * (nothing in them is React-specific) and predate 0.3.0; the gap is a standing
  * coverage debt, not a translation decision. Also dropped: the top-level
  * `typeahead advances past an item that already starts with the letter` case,
- * which belongs to `useTypeahead` and is deferred with it.
+ * which exercises `useTypeahead`. That hook is now ported
+ * (`hooks/use-typeahead.ts`, with its own suite in `use-typeahead.test.ts`) and
+ * `dropdown-menu.svelte` calls it, so the case is unported coverage rather than
+ * a deferral — the header's "deferred with it" reason had expired.
  *
  * 41 → 67 is 0.4.x's twenty-six additions: seven in `items` (the
  * `hasCloseOnSelect` trio, the no-handler close, and the three keying cases),
@@ -261,7 +264,7 @@ describe('DropdownMenu', () => {
 		const button = screen.getByRole('button', { name: /Actions/ });
 		(button.element() as HTMLElement).focus();
 		(button.element() as HTMLElement).click();
-		await expect.element(screen.getByRole('menuitem', { name: 'Edit' })).toHaveFocus();
+		await expect.element(screen.getByRole('menuitem', { name: 'Edit', exact: true })).toHaveFocus();
 
 		// RESTATED: upstream stubs `requestAnimationFrame` to run synchronously and
 		// blurs the trigger from a `toggle` listener, both jsdom accommodations. Here
@@ -304,7 +307,9 @@ describe('DropdownMenu', () => {
 		(screen.getByRole('button', { name: /Actions/ }).element() as HTMLElement).click();
 		const menu = menuIn(screen.container);
 		menu.dispatchEvent(new KeyboardEvent('keydown', { key: 'd', bubbles: true }));
-		await expect.element(screen.getByRole('menuitem', { name: 'Delete' })).toHaveFocus();
+		await expect
+			.element(screen.getByRole('menuitem', { name: 'Delete', exact: true }))
+			.toHaveFocus();
 	});
 
 	it('calls onClick callback when button is clicked', async () => {
@@ -930,7 +935,7 @@ describe('DropdownMenu button customization', () => {
 describe('DropdownMenu icon-only mode', () => {
 	it('renders icon-only button when icon is set without children', async () => {
 		const screen = await render(IconButton, { props: { iconOnly: true } });
-		const button = screen.getByRole('button', { name: 'More options' });
+		const button = screen.getByRole('button', { name: 'More options', exact: true });
 		// label should be aria-label, not visible text
 		await expect.element(button).toHaveAttribute('aria-label', 'More options');
 		await expect.element(screen.getByTestId('icon')).toBeInTheDocument();

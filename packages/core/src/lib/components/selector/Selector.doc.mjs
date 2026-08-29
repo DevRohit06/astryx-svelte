@@ -33,6 +33,11 @@ export default {
 				className: 'astryx-selector-option'
 			},
 			{
+				className: 'astryx-selector-option-row',
+				visualProps: ['size'],
+				states: ['selected', 'disabled']
+			},
+			{
 				className: 'astryx-selector-search'
 			},
 			{
@@ -162,7 +167,7 @@ export default {
 			name: 'options',
 			type: 'T[]',
 			description:
-				'Array of items: strings, objects with value/label/icon/disabled, dividers ({type: "divider"}), or sections ({type: "section", title, items}).',
+				'Array of items: strings, objects with value/label/description/icon/disabled, dividers ({type: "divider"}), or sections ({type: "section", title, items}).',
 			required: true
 		},
 		{
@@ -274,6 +279,12 @@ export default {
 				'Custom render function for each selectable option in the dropdown. Use this instead of JSX children; dividers and sections are rendered by the selector.'
 		},
 		{
+			name: 'renderValue',
+			type: 'Snippet<[SelectorOptionData]>',
+			description:
+				'Custom render function for the selected option inside the closed trigger. The trigger is sized by padding, so it is the size token for a one-line value (28/32/36) and exactly one text line taller for a two-line one (48/52/56), always on the 4px rhythm, always aligned with the buttons and inputs beside it. Inside an InputGroup the group owns the row height: a SelectorOption folds onto one line and ellipsizes, and any taller node is cut off at the row.'
+		},
+		{
 			name: 'indicatorPosition',
 			type: "'end' | 'start'",
 			description:
@@ -285,6 +296,17 @@ export default {
 			type: 'SizeValue',
 			description:
 				'Width of the field (number = pixels, string used as-is, e.g. "100%"). Sizes the whole field (label, control, and status) so they stay aligned.'
+		},
+		{
+			name: 'startIcon',
+			type: 'IconName | Snippet',
+			description: 'Icon displayed at the start of the selector trigger.'
+		},
+		{
+			name: 'isLoading',
+			type: 'boolean',
+			description: 'Shows a loading spinner in the trigger.',
+			default: 'false'
 		},
 		{
 			name: 'xstyle',

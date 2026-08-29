@@ -11,7 +11,8 @@ import SingleSwitcher from './fixtures/bottom-sheet-switcher-single.svelte';
 import { stubMatchMedia } from './stub-match-media.js';
 
 /**
- * Ported from Astryx's `BottomSheet/BottomSheetSwitcher.test.tsx` at v0.4.5 —
+ * Ported from Astryx's `BottomSheet/BottomSheetSwitcher.test.tsx` at the 0.5.0
+ * pin —
  * **all 24 cases**, none dropped and none added.
  *
  * Runs in the **client** project, in real Chromium, where upstream's is jsdom.

@@ -6,8 +6,8 @@ import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
  * Ported from Astryx's `MoreMenu/MoreMenu.test.tsx` — 21 of its 22 cases,
- * re-derived at **v0.4.5** (the file is unchanged since v0.4.1, which is where
- * this header's count last came from). 16 → 21 is 0.4.x's five additions: the
+ * re-derived at the **0.5.0** pin (the file is unchanged since v0.4.1, which is
+ * where this header's count last came from). 16 → 21 is 0.4.x's five additions: the
  * two `#4477` open-modality cases and the three-case `placement and alignment`
  * block.
  *
@@ -78,7 +78,9 @@ afterEach(() => {
 describe('MoreMenu', () => {
 	it('renders trigger button with default aria-label', async () => {
 		const screen = await render(MoreMenu, { props: { items: defaultItems } });
-		await expect.element(screen.getByRole('button', { name: 'More options' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'More options', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders menu with role="menu"', async () => {
@@ -88,7 +90,7 @@ describe('MoreMenu', () => {
 
 	it('has aria-haspopup and aria-expanded attributes', async () => {
 		const screen = await render(MoreMenu, { props: { items: defaultItems } });
-		const button = screen.getByRole('button', { name: 'More options' });
+		const button = screen.getByRole('button', { name: 'More options', exact: true });
 		await expect.element(button).toHaveAttribute('aria-haspopup', 'menu');
 		await expect.element(button).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -103,7 +105,9 @@ describe('MoreMenu', () => {
 		const showSpy = vi.spyOn(HTMLElement.prototype, 'showPopover');
 		const screen = await render(MoreMenu, { props: { items: defaultItems } });
 
-		(screen.getByRole('button', { name: 'More options' }).element() as HTMLElement).click();
+		(
+			screen.getByRole('button', { name: 'More options', exact: true }).element() as HTMLElement
+		).click();
 		expect(showSpy).toHaveBeenCalled();
 	});
 
@@ -116,7 +120,9 @@ describe('MoreMenu', () => {
 		const screen = await render(MoreMenu, { props: { items } });
 
 		// Open the menu first
-		(screen.getByRole('button', { name: 'More options' }).element() as HTMLElement).click();
+		(
+			screen.getByRole('button', { name: 'More options', exact: true }).element() as HTMLElement
+		).click();
 		// Click the item
 		menuItem(screen.container, 'Edit').click();
 
@@ -128,13 +134,15 @@ describe('MoreMenu', () => {
 		// Button uses aria-disabled (not native disabled) to keep
 		// the button focusable for tooltip access
 		await expect
-			.element(screen.getByRole('button', { name: 'More options' }))
+			.element(screen.getByRole('button', { name: 'More options', exact: true }))
 			.toHaveAttribute('aria-disabled', 'true');
 	});
 
 	it('supports custom label', async () => {
 		const screen = await render(MoreMenu, { props: { items: defaultItems, label: 'Row actions' } });
-		await expect.element(screen.getByRole('button', { name: 'Row actions' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Row actions', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('supports custom icon', async () => {
@@ -161,7 +169,9 @@ describe('MoreMenu', () => {
 		const showSpy = vi.spyOn(HTMLElement.prototype, 'showPopover');
 		const screen = await render(MoreMenu, { props: { items: defaultItems } });
 
-		(screen.getByRole('button', { name: 'More options' }).element() as HTMLElement).click();
+		(
+			screen.getByRole('button', { name: 'More options', exact: true }).element() as HTMLElement
+		).click();
 		expect(showSpy).toHaveBeenCalled();
 	});
 
@@ -185,7 +195,9 @@ describe('MoreMenu', () => {
 		const items = [{ label: 'Edit', onClick: handleEdit, isDisabled: true }];
 		const screen = await render(MoreMenu, { props: { items } });
 
-		(screen.getByRole('button', { name: 'More options' }).element() as HTMLElement).click();
+		(
+			screen.getByRole('button', { name: 'More options', exact: true }).element() as HTMLElement
+		).click();
 		menuItem(screen.container, 'Edit').click();
 
 		expect(handleEdit).not.toHaveBeenCalled();
@@ -205,7 +217,7 @@ describe('MoreMenu', () => {
 
 	it('defaults to ghost variant', async () => {
 		const screen = await render(MoreMenu, { props: { items: defaultItems } });
-		const button = screen.getByRole('button', { name: 'More options' }).element();
+		const button = screen.getByRole('button', { name: 'More options', exact: true }).element();
 		// Ghost variant should render a button element
 		expect(button).toBeInTheDocument();
 		expect(button.tagName).toBe('BUTTON');
@@ -219,7 +231,9 @@ describe('MoreMenu', () => {
 	it('pointer open focuses the menu container, not the first item (#4477)', async () => {
 		const screen = await render(MoreMenu, { props: { items: defaultItems } });
 
-		pointerOpen(screen.getByRole('button', { name: 'More options' }).element() as HTMLElement);
+		pointerOpen(
+			screen.getByRole('button', { name: 'More options', exact: true }).element() as HTMLElement
+		);
 
 		const menu = menuIn(screen.container);
 		await vi.waitFor(() => expect(menu).toHaveFocus());
@@ -229,7 +243,9 @@ describe('MoreMenu', () => {
 	it('first ArrowDown after a pointer open moves focus to the first item (#4477)', async () => {
 		const screen = await render(MoreMenu, { props: { items: defaultItems } });
 
-		pointerOpen(screen.getByRole('button', { name: 'More options' }).element() as HTMLElement);
+		pointerOpen(
+			screen.getByRole('button', { name: 'More options', exact: true }).element() as HTMLElement
+		);
 		const menu = menuIn(screen.container);
 		await vi.waitFor(() => expect(menu).toHaveFocus());
 

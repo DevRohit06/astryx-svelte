@@ -3,8 +3,15 @@ import { render } from 'vitest-browser-svelte';
 import ChatDictationProbe from './fixtures/chat-dictation-probe.svelte';
 
 /**
- * `useChatDictation.test.ts` ported case for case — 18 cases across its two
- * describes, `useSpeechRecognition` (10) and `useChatDictation` (8).
+ * Astryx's `Chat/useChatDictation.test.tsx` ported case for case — **18 of
+ * upstream's 19** at the 0.5.0 pin, across its two describes,
+ * `useSpeechRecognition` and `useChatDictation`.
+ *
+ * The file was `useChatDictation.test.ts` until 0.5.0 renamed it to `.test.tsx`
+ * (upstream's only rename in the release) and added one case with it:
+ * **`uses the provider locale by default and preserves an explicit override`**,
+ * which is not ported. It is not droppable — nothing about it is React-only —
+ * so it is a real gap, not an excused one.
  *
  * `renderHook` becomes the probe fixture; `act()` needs no counterpart, because
  * every one of these state writes happens inside a handler the test calls

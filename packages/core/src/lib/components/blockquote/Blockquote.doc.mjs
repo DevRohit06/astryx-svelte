@@ -20,7 +20,25 @@ export default {
 	},
 	usage: {
 		description:
-			'A styled quotation block with an accent-colored left border and secondary text color. Use to highlight quoted content, testimonials, or excerpts.',
+			'A quotation block with a rule on its inline-start edge and secondary text color. Use to highlight quoted content, testimonials, or excerpts. The rule and padding are logical, so they move to the right edge in right-to-left locales.',
+		anatomy: [
+			{
+				name: 'Rule',
+				required: true,
+				description: 'The border on the inline-start edge, drawn with --color-border-emphasized.'
+			},
+			{
+				name: 'Quotation',
+				required: true,
+				description:
+					'The quoted content, passed as children. Renders inside the <blockquote> element.'
+			},
+			{
+				name: 'Attribution',
+				required: false,
+				description: 'The source, passed as cite. Renders as a <cite> element below the quotation.'
+			}
+		],
 		bestPractices: [
 			{
 				guidance: true,
@@ -32,10 +50,26 @@ export default {
 				description: 'Provide a cite prop when the source of the quote is known.'
 			},
 			{
+				guidance: true,
+				description:
+					'Pass the source through cite rather than typing it into children, so it renders as a semantic <cite> element that assistive technology can distinguish from the quotation.'
+			},
+			{
 				guidance: false,
 				description: 'Use for callout boxes or informational notes; use Banner for those.'
+			},
+			{
+				guidance: false,
+				description:
+					'Wrap the attribution in your own <footer>. A <footer> inside a <blockquote> becomes a contentinfo document landmark, and a page with several quotes then reports several page footers.'
 			}
 		]
+	},
+	playground: {
+		defaults: {
+			children: 'Design is not just what it looks like and feels like. Design is how it works.',
+			cite: 'Steve Jobs'
+		}
 	},
 	props: [
 		{
@@ -47,7 +81,8 @@ export default {
 		{
 			name: 'cite',
 			type: 'Snippet',
-			description: 'Optional attribution for the quote. Rendered in a <footer> with <cite>.'
+			description:
+				'Optional attribution for the quote. Rendered in a <cite> element after the quoted content.'
 		},
 		{
 			name: 'xstyle',

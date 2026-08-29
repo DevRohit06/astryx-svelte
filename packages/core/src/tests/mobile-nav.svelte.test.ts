@@ -3,8 +3,8 @@ import { render } from 'vitest-browser-svelte';
 import MobileNavProbe from './fixtures/mobile-nav-probe.svelte';
 
 /**
- * Ported from Astryx's `MobileNav/MobileNav.test.tsx`, all 16 cases. Nothing is
- * dropped.
+ * Ported from Astryx's `MobileNav/MobileNav.test.tsx`, all 16 cases at the 0.5.0
+ * pin. Nothing is dropped.
  *
  * ## Project
  *

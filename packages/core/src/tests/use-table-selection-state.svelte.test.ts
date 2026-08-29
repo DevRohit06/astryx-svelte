@@ -8,7 +8,7 @@ import FilteredSelectionTable from './fixtures/table-filtered-selection-fixture.
 
 /**
  * Astryx's `Table/plugins/selection/useTableSelectionState.test.tsx`, ported
- * case for case — **13 upstream cases** (7 `useTableSelectionState`, 6
+ * case for case — **13 upstream cases at the 0.5.0 pin** (7 `useTableSelectionState`, 6
  * `useTableSelectionState with filtered data`), **13 here**. Nothing dropped,
  * nothing added.
  *

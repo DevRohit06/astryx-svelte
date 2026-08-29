@@ -26,8 +26,30 @@
 		padding?: SpacingStep;
 		/** Inline (horizontal) padding. Overrides `padding` on the inline axis. */
 		paddingInline?: SpacingStep;
+		/**
+		 * Inline-start padding, using the spacing scale. Logical: the left edge in
+		 * LTR, the right edge in RTL.
+		 * Overrides `paddingInline` and `padding` on that edge only.
+		 */
+		paddingInlineStart?: SpacingStep;
+		/**
+		 * Inline-end padding, using the spacing scale. Logical: the right edge in
+		 * LTR, the left edge in RTL.
+		 * Overrides `paddingInline` and `padding` on that edge only.
+		 */
+		paddingInlineEnd?: SpacingStep;
 		/** Block (vertical) padding. Overrides `padding` on the block axis. */
 		paddingBlock?: SpacingStep;
+		/**
+		 * Block-start (top) padding, using the spacing scale.
+		 * Overrides `paddingBlock` and `padding` on that edge only.
+		 */
+		paddingBlockStart?: SpacingStep;
+		/**
+		 * Block-end (bottom) padding, using the spacing scale.
+		 * Overrides `paddingBlock` and `padding` on that edge only.
+		 */
+		paddingBlockEnd?: SpacingStep;
 		/**
 		 * Render as `inline-flex`, for centring inside a run of text.
 		 * @default false
@@ -53,7 +75,11 @@
 		minHeight,
 		padding,
 		paddingInline,
+		paddingInlineStart,
+		paddingInlineEnd,
 		paddingBlock,
+		paddingBlockStart,
+		paddingBlockEnd,
 		isInline = false,
 		children,
 		class: className,
@@ -62,9 +88,12 @@
 		...rest
 	}: CenterProps = $props();
 
-	// `padding` sets both axes; the per-axis props win on their own axis.
-	const resolvedPaddingInline = $derived(paddingInline ?? padding);
-	const resolvedPaddingBlock = $derived(paddingBlock ?? padding);
+	// Resolve padding to per-edge values. Most specific wins, per edge:
+	// edge prop -> axis prop -> `padding`.
+	const resolvedPaddingInlineStart = $derived(paddingInlineStart ?? paddingInline ?? padding);
+	const resolvedPaddingInlineEnd = $derived(paddingInlineEnd ?? paddingInline ?? padding);
+	const resolvedPaddingBlockStart = $derived(paddingBlockStart ?? paddingBlock ?? padding);
+	const resolvedPaddingBlockEnd = $derived(paddingBlockEnd ?? paddingBlock ?? padding);
 
 	const attrs = $derived(
 		centerAttrs(
@@ -75,8 +104,10 @@
 				height,
 				maxWidth,
 				minHeight,
-				paddingInline: resolvedPaddingInline,
-				paddingBlock: resolvedPaddingBlock
+				paddingInlineStart: resolvedPaddingInlineStart,
+				paddingInlineEnd: resolvedPaddingInlineEnd,
+				paddingBlockStart: resolvedPaddingBlockStart,
+				paddingBlockEnd: resolvedPaddingBlockEnd
 			},
 			xstyle
 		)

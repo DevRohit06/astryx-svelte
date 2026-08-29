@@ -21,7 +21,16 @@
  * scrolled to the wrong offset. Counting locks and keeping one snapshot from
  * the FIRST of them is what makes nesting safe: only the transition through
  * zero touches the body.
+ *
+ * **Pinning the body also hides the document's scrollbar**, so upstream 0.5.0
+ * added `holdScrollbarGutter` to the same through-zero transition: the gutter
+ * that scrollbar occupied is held open for the duration of the lock, or the
+ * page reflows sideways by ~15px the moment an overlay opens. The hold lives in
+ * the snapshot, so it is taken by the FIRST lock and given back by the LAST —
+ * the same invariant the body styles already had.
  */
+
+import { holdScrollbarGutter, type ScrollbarGutterHold } from './scrollbar-gutter.js';
 
 interface ScrollLockSnapshot {
 	scrollX: number;
@@ -31,6 +40,7 @@ interface ScrollLockSnapshot {
 	top: string;
 	left: string;
 	right: string;
+	gutter: ScrollbarGutterHold;
 }
 
 let lockCount = 0;
@@ -60,6 +70,9 @@ export function useScrollLock(isLocked: () => boolean): void {
 			const scrollX = window.scrollX;
 			const scrollY = window.scrollY;
 
+			// Taken before the pinning styles below hide the scrollbar.
+			const gutter = holdScrollbarGutter(body);
+
 			originalBodyState = {
 				scrollX,
 				scrollY,
@@ -67,7 +80,8 @@ export function useScrollLock(isLocked: () => boolean): void {
 				position: body.style.position,
 				top: body.style.top,
 				left: body.style.left,
-				right: body.style.right
+				right: body.style.right,
+				gutter
 			};
 
 			body.style.overflow = 'hidden';
@@ -75,6 +89,8 @@ export function useScrollLock(isLocked: () => boolean): void {
 			body.style.top = `-${scrollY}px`;
 			body.style.left = '0';
 			body.style.right = '0';
+
+			gutter.settle();
 		}
 
 		lockCount += 1;
@@ -94,6 +110,7 @@ export function useScrollLock(isLocked: () => boolean): void {
 			body.style.top = state.top;
 			body.style.left = state.left;
 			body.style.right = state.right;
+			state.gutter.release();
 			window.scrollTo(state.scrollX, state.scrollY);
 		};
 	});

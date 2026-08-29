@@ -5,17 +5,18 @@ import Slider from '$lib/components/slider/slider.svelte';
 import SliderForm from './fixtures/slider-form.svelte';
 
 /**
- * Astryx's `Slider/Slider.test.tsx` at **v0.4.5**, which declares **47 blocks
- * producing 51 cases** (44 `it` + 3 `it.each` whose tables expand to 7 rows).
- * **35 blocks / 39 cases are here** — 32 plain plus all three `it.each` blocks,
- * which pin #5051's thumb inset.
+ * Astryx's `Slider/Slider.test.tsx` at the **0.5.0** pin, where it declares
+ * **47 blocks producing 51 cases** (44 `it` + 3 `it.each` whose tables expand
+ * to 7 rows). **35 blocks / 39 cases are here** — 32 plain plus all three
+ * `it.each` blocks, which pin #5051's thumb inset. Upstream's file is unchanged
+ * between v0.4.2 and 0.5.0, so the twelve named below are the same twelve.
  *
  * This header previously claimed "32 upstream cases … nothing dropped", which
  * was never true of any upstream tag — upstream has had ≥45 since v0.2.0. It
  * then read "47 blocks … 35 are here" at v0.4.2 and mis-attributed its own last
  * absence to "upstream's third `it.each` arm"; all three `it.each` blocks are in
  * fact here in full. The count is a contract against *upstream's* file at the
- * current pin, so it is re-derived at v0.4.5 (upstream has not moved this file
+ * current pin, so it is re-derived at 0.5.0 (upstream has not moved this file
  * since v0.4.2) and the twelve that are missing — all plain `it`, one case
  * each — are named in full:
  *

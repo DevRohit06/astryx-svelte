@@ -4,7 +4,7 @@ import { createAttachmentKey } from 'svelte/attachments';
 import VisuallyHiddenProbe from './fixtures/visually-hidden-probe.svelte';
 
 /**
- * Astryx's `VisuallyHidden/VisuallyHidden.test.tsx` at **v0.4.5**, ported case
+ * Astryx's `VisuallyHidden/VisuallyHidden.test.tsx` at the **0.5.0** pin, ported case
  * for case.
  *
  * The count is the contract: upstream declares **7** `it` blocks at this pin,
@@ -35,26 +35,26 @@ describe('VisuallyHidden', () => {
 	it('renders its children in the accessibility tree', async () => {
 		const screen = await render(VisuallyHiddenProbe, { props: { text: 'Delete incident' } });
 		// Present in the a11y tree (getByText finds it — it is not display:none).
-		await expect.element(screen.getByText('Delete incident')).toBeInTheDocument();
+		await expect.element(screen.getByText('Delete incident', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders a <span> by default', async () => {
 		const screen = await render(VisuallyHiddenProbe, { props: { text: 'Label' } });
-		expect(screen.getByText('Label').element().tagName).toBe('SPAN');
+		expect(screen.getByText('Label', { exact: true }).element().tagName).toBe('SPAN');
 	});
 
 	it('renders a custom element via the `as` prop', async () => {
 		const screen = await render(VisuallyHiddenProbe, {
 			props: { text: 'Moved task to Done', rest: { as: 'div', 'aria-live': 'polite' } }
 		});
-		const el = screen.getByText('Moved task to Done').element();
+		const el = screen.getByText('Moved task to Done', { exact: true }).element();
 		expect(el.tagName).toBe('DIV');
 		expect(el).toHaveAttribute('aria-live', 'polite');
 	});
 
 	it('applies the clip styles that hide it visually', async () => {
 		const screen = await render(VisuallyHiddenProbe, { props: { text: 'Hidden' } });
-		const el = screen.getByText('Hidden').element();
+		const el = screen.getByText('Hidden', { exact: true }).element();
 		// The StyleX class is attached.
 		expect(el.getAttribute('class')).toBeTruthy();
 		// It must NOT be display:none / hidden — it stays in the a11y tree.

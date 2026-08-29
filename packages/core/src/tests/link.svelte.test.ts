@@ -7,8 +7,8 @@ import CustomLink from './fixtures/custom-link.svelte';
 import AnotherLink from './fixtures/another-link.svelte';
 
 /**
- * Astryx's `Link/Link.test.tsx`, ported case for case — 36 upstream cases, 36
- * here. Upstream authors `<Link>…</Link>` markup inline in every case; Svelte
+ * Astryx's `Link/Link.test.tsx`, ported case for case — **36 upstream cases at
+ * the 0.5.0 pin, 36 here**. Upstream authors `<Link>…</Link>` markup inline in every case; Svelte
  * cannot write children in a test, so `link-harness.svelte` renders the `Link`
  * (optionally under a `LinkProvider`) with props and either text or an icon-only
  * child. `CustomLink`/`AnotherLink` are the two `LinkComponentType` helpers
@@ -47,7 +47,9 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test' }, text: 'Click me' }
 		});
-		await expect.element(screen.getByRole('link', { name: 'Click me' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Click me', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders with href attribute', async () => {
@@ -59,14 +61,18 @@ describe('Link', () => {
 
 	it('renders as a button when href is undefined', async () => {
 		const screen = await render(LinkHarness, { props: { props: {}, text: 'Action' } });
-		await expect.element(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Action', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders as a button when href is explicitly undefined', async () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: undefined }, text: 'Action' }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Action' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Action', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('button fallback fires onClick', async () => {
@@ -131,7 +137,9 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test' }, text: 'Body link' }
 		});
-		await expect.element(screen.getByText('Body link')).toHaveClass('astryx-text', 'body');
+		await expect
+			.element(screen.getByText('Body link', { exact: true }))
+			.toHaveClass('astryx-text', 'body');
 	});
 
 	it('forwards type="inherit" so the link adopts the surrounding text type', async () => {
@@ -140,7 +148,7 @@ describe('Link', () => {
 		});
 		// The inner Text renders with the `inherit` type, so font-size/line-height
 		// inherit from the surrounding text rather than imposing the body type.
-		const text = screen.getByText('Inline link');
+		const text = screen.getByText('Inline link', { exact: true });
 		await expect.element(text).toHaveClass('astryx-text', 'inherit');
 		await expect.element(text).not.toHaveClass('body');
 	});
@@ -157,7 +165,7 @@ describe('Link', () => {
 			props: { props: { href: '/test', isDisabled: true }, text: 'Disabled Link' }
 		});
 		// An href-less anchor has no implicit `link` role, so query by text.
-		const link = screen.getByText('Disabled Link').element().closest('a');
+		const link = screen.getByText('Disabled Link', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		expect(link).toHaveAttribute('aria-disabled', 'true');
 		expect(link).toHaveAttribute('tabindex', '-1');
@@ -169,7 +177,7 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test', isDisabled: true }, text: 'Disabled Link' }
 		});
-		const link = screen.getByText('Disabled Link').element().closest('a');
+		const link = screen.getByText('Disabled Link', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		expect(link).not.toHaveAttribute('href');
 	});
@@ -178,7 +186,7 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test', isDisabled: true }, text: 'Disabled Link' }
 		});
-		const link = screen.getByText('Disabled Link').element().closest('a');
+		const link = screen.getByText('Disabled Link', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		// Counterpart to upstream's `fireEvent.click` return value: dispatch the
 		// same cancelable click Playwright's actionability check would refuse to
@@ -224,7 +232,7 @@ describe('Link', () => {
 				text: 'Disabled External'
 			}
 		});
-		const link = screen.getByText('Disabled External').element().closest('a');
+		const link = screen.getByText('Disabled External', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		expect(link).not.toHaveAttribute('target');
 		expect(link).not.toHaveAttribute('rel');
@@ -238,7 +246,7 @@ describe('Link', () => {
 				text: 'Disabled Custom'
 			}
 		});
-		const link = screen.getByText('Disabled Custom').element().closest('a');
+		const link = screen.getByText('Disabled Custom', { exact: true }).element().closest('a');
 		expect(link).not.toBeNull();
 		expect(link).not.toHaveAttribute('data-custom-link');
 		expect(link).not.toHaveAttribute('href');
@@ -261,7 +269,7 @@ describe('Link', () => {
 		// The link's accessible name includes the new-tab hint (the icon is
 		// decorative).
 		await expect
-			.element(screen.getByRole('link', { name: 'Docs (opens in new tab)' }))
+			.element(screen.getByRole('link', { name: 'Docs (opens in new tab)', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -273,7 +281,7 @@ describe('Link', () => {
 			}
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Docs (new window)' }))
+			.element(screen.getByRole('link', { name: 'Docs (new window)', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -281,7 +289,9 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/internal' }, text: 'Internal' }
 		});
-		await expect.element(screen.getByRole('link', { name: 'Internal' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Internal', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders external link with existing rel merged', async () => {
@@ -360,14 +370,16 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/settings', tooltip: 'Configure settings' }, text: 'Settings' }
 		});
-		await expect.element(screen.getByRole('link', { name: 'Settings' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Settings', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders custom component when as is provided', async () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/custom', as: CustomLink }, text: 'Custom Link' }
 		});
-		const link = screen.getByRole('link', { name: 'Custom Link' });
+		const link = screen.getByRole('link', { name: 'Custom Link', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).toHaveAttribute('href', '/custom');
 	});
@@ -377,7 +389,7 @@ describe('Link', () => {
 			props: { provider: CustomLink, props: { href: '/provider' }, text: 'Provider Link' }
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Provider Link' }))
+			.element(screen.getByRole('link', { name: 'Provider Link', exact: true }))
 			.toHaveAttribute('data-custom-link');
 	});
 
@@ -389,7 +401,7 @@ describe('Link', () => {
 				text: 'Override Link'
 			}
 		});
-		const link = screen.getByRole('link', { name: 'Override Link' });
+		const link = screen.getByRole('link', { name: 'Override Link', exact: true });
 		await expect.element(link).toHaveAttribute('data-custom-link');
 		await expect.element(link).not.toHaveAttribute('data-another-link');
 	});
@@ -398,7 +410,7 @@ describe('Link', () => {
 		const screen = await render(LinkHarness, {
 			props: { props: { href: '/test', color: 'secondary' }, text: 'Themed Link' }
 		});
-		const link = screen.getByRole('link', { name: 'Themed Link' }).element();
+		const link = screen.getByRole('link', { name: 'Themed Link', exact: true }).element();
 		expect(link.className).toContain('astryx-link');
 		expect(link.className).toContain('secondary');
 	});

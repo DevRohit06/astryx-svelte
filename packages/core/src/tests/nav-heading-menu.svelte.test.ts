@@ -5,7 +5,7 @@ import NavHeadingMenuFixture from './fixtures/nav-heading-menu-fixture.svelte';
 
 /**
  * Ported from Astryx's `NavMenu/NavHeadingMenu.test.tsx` — all 23 of its `it`
- * cases, nothing dropped. Client (real Chromium) project: every case is focus,
+ * cases at the 0.5.0 pin, nothing dropped. Client (real Chromium) project: every case is focus,
  * click or keyboard work.
  *
  * Standing translations:
@@ -139,7 +139,7 @@ describe('NavHeadingMenuItem', () => {
 		const screen = await render(NavHeadingMenuFixture, {
 			props: { items: [{ label: 'Dashboard', description: 'View metrics' }] }
 		});
-		await expect.element(screen.getByText('View metrics')).toBeInTheDocument();
+		await expect.element(screen.getByText('View metrics', { exact: true })).toBeInTheDocument();
 	});
 
 	it('applies data-testid', async () => {

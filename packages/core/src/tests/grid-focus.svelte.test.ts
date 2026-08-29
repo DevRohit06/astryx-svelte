@@ -4,7 +4,7 @@ import Grid from './fixtures/grid-focus-fixture.svelte';
 
 /**
  * Ported from Astryx's `hooks/useGridFocus.test.tsx`, all **twelve** cases at
- * v0.3.0 across its two describe blocks (8 roving tabindex, 4 RTL
+ * the 0.5.0 pin, across its two describe blocks (8 roving tabindex, 4 RTL
  * auto-detection). Nothing is dropped.
  *
  * (The previous header said "all eight cases" and counted only the first block;

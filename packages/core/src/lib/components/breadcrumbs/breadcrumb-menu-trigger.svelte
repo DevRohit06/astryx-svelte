@@ -3,6 +3,7 @@
 	import type { Attachment } from 'svelte/attachments';
 	import type { DropdownMenuSize } from '../dropdown-menu/dropdown-menu-item.stylex.js';
 	import type { DropdownMenuOption } from '../dropdown-menu/dropdown-menu-types.js';
+	import type { BreadcrumbsVariant } from './breadcrumbs-context.svelte.js';
 
 	/**
 	 * Module-private, exactly as upstream's `BreadcrumbMenuTrigger` is: it lives
@@ -26,7 +27,13 @@
 		label: Snippet | string;
 		menu: DropdownMenuOption[] | Snippet;
 		menuSize: DropdownMenuSize;
-		isSupporting: boolean;
+		/**
+		 * The enclosing trail's variant. The trigger picks its own size styles from
+		 * it *and* reflects it on the `astryx-breadcrumb-item-menu-trigger` theme
+		 * target, which is why it travels as the variant rather than as the
+		 * `isSupporting` boolean it is read as below.
+		 */
+		variant: BreadcrumbsVariant;
 		isCurrent?: boolean;
 	}
 </script>
@@ -69,9 +76,11 @@
 		label,
 		menu,
 		menuSize,
-		isSupporting,
+		variant,
 		isCurrent = false
 	}: BreadcrumbMenuTriggerProps = $props();
+
+	const isSupporting = $derived(variant === 'supporting');
 
 	// Upstream mints one `useId` for the menu and lets `usePopover` mint the
 	// layer's own inside `useLayer`. `$props.id()` may be called once per
@@ -167,7 +176,7 @@
 
 	setDropdownMenuContext(() => ({ closeMenu, menuSize }));
 
-	const triggerTheme = themeProps('breadcrumb-item-menu-trigger');
+	const triggerTheme = $derived(themeProps('breadcrumb-item-menu-trigger', { variant }));
 	const menuTheme = themeProps('breadcrumb-menu');
 	const buttonAttrs = $derived(breadcrumbButtonAttrs(isSupporting));
 	const menuAttrs = breadcrumbMenuAttrs();

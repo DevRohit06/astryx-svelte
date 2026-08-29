@@ -200,7 +200,7 @@ export default {
 			name: 'maxRangeSpan',
 			type: 'number',
 			description:
-				'Maximum days a selected range may span, counting both endpoints (`7` = a 7-day window, start + 6). Once a start is picked, days beyond this distance are disabled so the range cannot stretch past the cap. Rolling window relative to the start — for fixed calendar bounds use `min`/`max`. Constrains selection only; it never rewrites a `value` already wider than the cap (flag that with `status`).'
+				'Maximum days a selected range may span, counting both endpoints (`7` = a 7-day window, start + 6). Once a start is picked, days beyond this distance are disabled so the range cannot stretch past the cap. Rolling window relative to the start; for fixed calendar bounds use `min`/`max`. Constrains selection only; it never rewrites a `value` already wider than the cap (flag that with `status`).'
 		},
 		{
 			name: 'minRangeSpan',
@@ -250,13 +250,13 @@ export default {
 		},
 		{
 			name: 'numberOfMonths',
-			type: '1 | 2',
+			type: '2 | 1',
 			description: 'Number of months in the calendar.',
 			default: '2'
 		},
 		{
 			name: 'weekStartsOn',
-			type: "0 | 1 | 2 | 3 | 4 | 5 | 6 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
+			type: "0 | 6 | 2 | 4 | 1 | 3 | 5 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
 			description:
 				'First day of week in the calendar. A number (0 = Sunday to 6 = Saturday) or a three-letter day name.',
 			default: '0'

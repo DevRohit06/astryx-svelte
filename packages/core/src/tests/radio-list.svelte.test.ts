@@ -5,10 +5,25 @@ import RadioListProbe from './fixtures/radio-list-probe.svelte';
 import { forcedColorsCssIn } from './forced-colors.js';
 
 /**
- * Astryx's `RadioList/RadioList.test.tsx`, ported case for case — 44 upstream
- * cases at 0.3.0 (26 `RadioList`, 5 `focus management`, 8 `disabledMessage`, 3
- * `form participation`, 1 `RadioListItem rest forwarding`, 1 `forced colors`),
- * 44 here.
+ * Astryx's `RadioList/RadioList.test.tsx`, ported case for case — **49 upstream
+ * cases at the 0.5.0 pin**, **44 here**. The 44 are the whole of upstream's
+ * suite as it stood from 0.3.0 through v0.4.5 (26 `RadioList`, 5 `focus
+ * management`, 8 `disabledMessage`, 3 `form participation`, 1 `RadioListItem
+ * rest forwarding`, 1 `forced colors`).
+ *
+ * **The 5 that are not here all arrived at 0.5.0:**
+ *
+ * - **The whole 4-case `radio-list-item theme target` block** — `renders
+ *   astryx-radio-list-item, with its size, on every row`, `carries the selected
+ *   and disabled states a theme keys on`, `rides the painting row element
+ *   (astryx-item), not a bare layout wrapper`, and `keeps the bare default row
+ *   appearance: zeroed padding/radius, no default background`.
+ * - **`calls onChange when clicking the description`**, in the top-level
+ *   `RadioList` block — the description text must be part of the row's click
+ *   target, not inert beside it.
+ *
+ * (This header read "44 upstream cases at 0.3.0 … 44 here", true through
+ * v0.4.5.)
  *
  * Because `<RadioList>` takes its `RadioListItem` children as a snippet, every
  * case renders through `radio-list-probe.svelte`, which describes the items as an
@@ -70,7 +85,7 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Preference')).toBeInTheDocument();
+		await expect.element(screen.getByText('Preference', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders radio items', async () => {
@@ -134,7 +149,7 @@ describe('RadioList', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByLabelText('Option B'));
+		await userEvent.click(screen.getByLabelText('Option B', { exact: true }));
 		expect(handleChange).toHaveBeenCalledTimes(1);
 		expect(handleChange).toHaveBeenCalledWith('b');
 	});
@@ -153,7 +168,7 @@ describe('RadioList', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByText('Option B'));
+		await userEvent.click(screen.getByText('Option B', { exact: true }));
 		expect(handleChange).toHaveBeenCalledWith('b');
 	});
 
@@ -270,7 +285,9 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Please select an option')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Please select an option', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders warning status message', async () => {
@@ -283,7 +300,9 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('This may change later')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('This may change later', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders success status message', async () => {
@@ -296,7 +315,7 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Great choice!')).toBeInTheDocument();
+		await expect.element(screen.getByText('Great choice!', { exact: true })).toBeInTheDocument();
 	});
 
 	it('sets aria-invalid on radiogroup when status is error', async () => {
@@ -371,12 +390,12 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		const label = screen.getByText('Hidden label');
+		const label = screen.getByText('Hidden label', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// The radiogroup is named by the label element via aria-labelledby (not a
 		// duplicated aria-label), so its accessible name is still "Hidden label".
 		await expect
-			.element(screen.getByRole('radiogroup', { name: 'Hidden label' }))
+			.element(screen.getByRole('radiogroup', { name: 'Hidden label', exact: true }))
 			.toBeInTheDocument();
 		await expect.element(screen.getByRole('radiogroup')).toHaveAttribute('aria-labelledby');
 		await expect.element(screen.getByRole('radiogroup')).not.toHaveAttribute('aria-label');
@@ -398,11 +417,11 @@ describe('RadioList', () => {
 		// element — a `<label>` names a single control and can't be associated with a
 		// group. It is rendered as a `<span>` and referenced via aria-labelledby (with
 		// no orphaned htmlFor).
-		const labelEl = screen.getByText('Plan').element();
+		const labelEl = screen.getByText('Plan', { exact: true }).element();
 		expect(labelEl.tagName).toBe('SPAN');
 		expect(labelEl.closest('label')).toBeNull();
 		expect(labelEl).not.toHaveAttribute('for');
-		const group = screen.getByRole('radiogroup', { name: 'Plan' }).element();
+		const group = screen.getByRole('radiogroup', { name: 'Plan', exact: true }).element();
 		expect(group.getAttribute('aria-labelledby')).toBe(labelEl.id);
 	});
 
@@ -415,7 +434,7 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a', description: 'This is option A' }]
 			}
 		});
-		await expect.element(screen.getByText('This is option A')).toBeInTheDocument();
+		await expect.element(screen.getByText('This is option A', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description on the radio list group', async () => {
@@ -428,7 +447,9 @@ describe('RadioList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Choose your preference')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Choose your preference', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('applies horizontal orientation', async () => {
@@ -476,7 +497,9 @@ describe('RadioList', () => {
 					]
 				}
 			});
-			const selected = screen.getByLabelText('Option B').element() as HTMLInputElement;
+			const selected = screen
+				.getByLabelText('Option B', { exact: true })
+				.element() as HTMLInputElement;
 			// A selected value provides a deterministic native tab stop; focusing it
 			// must not be redirected elsewhere.
 			selected.focus();
@@ -498,7 +521,7 @@ describe('RadioList', () => {
 				}
 			});
 			const radios = radiosIn(screen.container);
-			const outside = screen.getByText('before').element() as HTMLButtonElement;
+			const outside = screen.getByText('before', { exact: true }).element() as HTMLButtonElement;
 			outside.focus();
 			// Forward entry: the browser lands on a leading radio; the group keeps the
 			// first radio as the deterministic tab stop.
@@ -526,7 +549,7 @@ describe('RadioList', () => {
 				}
 			});
 			const radios = radiosIn(screen.container);
-			const outside = screen.getByText('after').element() as HTMLButtonElement;
+			const outside = screen.getByText('after', { exact: true }).element() as HTMLButtonElement;
 			outside.focus();
 			// Backward (Shift+Tab) entry: the browser focuses the last radio; the group
 			// keeps it as the deterministic tab stop rather than jumping away.
@@ -572,9 +595,13 @@ describe('RadioList', () => {
 					]
 				}
 			});
-			const outside = screen.getByText('before').element() as HTMLButtonElement;
-			const optionB = screen.getByLabelText('Option B').element() as HTMLInputElement;
-			const optionC = screen.getByLabelText('Option C').element() as HTMLInputElement;
+			const outside = screen.getByText('before', { exact: true }).element() as HTMLButtonElement;
+			const optionB = screen
+				.getByLabelText('Option B', { exact: true })
+				.element() as HTMLInputElement;
+			const optionC = screen
+				.getByLabelText('Option C', { exact: true })
+				.element() as HTMLInputElement;
 			// A middle enabled radio (C) entered from outside is normalized to the first
 			// *enabled* radio (B) — the disabled Option A is skipped.
 			outside.focus();
@@ -681,7 +708,7 @@ describe('RadioList', () => {
 		it('blocks selection while focusable-disabled', async () => {
 			const onChange = vi.fn();
 			const screen = await renderGroup(onChange);
-			const pro = screen.getByLabelText('Pro').element() as HTMLInputElement;
+			const pro = screen.getByLabelText('Pro', { exact: true }).element() as HTMLInputElement;
 			// Restated delivery (see file header): the radio is focusable-disabled
 			// (`aria-disabled`, not native), which Playwright refuses to click. A native
 			// `.click()` is upstream's `fireEvent.click` — it toggles and fires `change`,

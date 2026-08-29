@@ -52,7 +52,7 @@
 	},
 	"devDependencies": {
 		"@astryx-svelte/core": "workspace:*",
-		"@astryxdesign/theme-chocolate": "0.4.5",
+		"@astryxdesign/theme-chocolate": "0.5.0",
 		"prettier": "^3.8.3",
 		"prettier-plugin-svelte": "^4.1.0",
 		"svelte": "^5.56.1",

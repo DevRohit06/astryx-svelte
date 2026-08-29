@@ -6,7 +6,7 @@ import ClickableCardNestedButton from './fixtures/clickable-card-nested-button.s
 
 /**
  * Astryx's `ClickableCard/ClickableCard.test.tsx`, ported case for case — all
- * **11** upstream `it()`s at v0.3.0, 11 here. None dropped: upstream has no
+ * **11** upstream `it()`s at the 0.5.0 pin, 11 here. None dropped: upstream has no
  * `displayName` and no `ref` case.
  *
  * (The previous header said "all 9 upstream `it()`s, 9 here". It was counting
@@ -53,17 +53,19 @@ function renderCard(
 describe('ClickableCard', () => {
 	it('renders children', async () => {
 		const screen = await renderCard({ label: 'Test card', onclick: () => {} }, 'Card content');
-		await expect.element(screen.getByText('Card content')).toBeInTheDocument();
+		await expect.element(screen.getByText('Card content', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders a hidden button for onClick cards', async () => {
 		const screen = await renderCard({ label: 'Test card', onclick: () => {} });
-		await expect.element(screen.getByRole('button', { name: 'Test card' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Test card', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders a hidden link for href cards', async () => {
 		const screen = await renderCard({ label: 'Nav card', href: '/settings' });
-		const link = screen.getByRole('link', { name: 'Nav card' });
+		const link = screen.getByRole('link', { name: 'Nav card', exact: true });
 		await expect.element(link).toBeInTheDocument();
 		await expect.element(link).toHaveAttribute('href', '/settings');
 	});
@@ -73,7 +75,7 @@ describe('ClickableCard', () => {
 		const screen = await renderCard({ label: 'Test card', onclick: handleClick });
 		// Restated in delivery: a bubbling `click` dispatched on the surface `<span>`
 		// so `event.target` is the surface — upstream's `fireEvent.click(getByText())`.
-		const surface = screen.getByText('Content').element() as HTMLElement;
+		const surface = screen.getByText('Content', { exact: true }).element() as HTMLElement;
 		surface.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
@@ -87,7 +89,7 @@ describe('ClickableCard', () => {
 		// Click the nested `<button>` (a real interactive descendant). Its own
 		// handler fires; the bubbled click reaches the card's delegate but bails on
 		// the interactive-ancestor walk, so the card's onclick never fires.
-		const nested = screen.getByText('Nested').element() as HTMLElement;
+		const nested = screen.getByText('Nested', { exact: true }).element() as HTMLElement;
 		nested.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		expect(handleButtonClick).toHaveBeenCalledTimes(1);
 		// Card's onClick should NOT fire because click was on a nested interactive.
@@ -97,7 +99,7 @@ describe('ClickableCard', () => {
 	it('hidden button has correct aria-label', async () => {
 		const screen = await renderCard({ label: 'Settings card', onclick: () => {} });
 		await expect
-			.element(screen.getByRole('button', { name: 'Settings card' }))
+			.element(screen.getByRole('button', { name: 'Settings card', exact: true }))
 			.toHaveAttribute('aria-label', 'Settings card');
 	});
 
@@ -108,14 +110,16 @@ describe('ClickableCard', () => {
 			target: '_blank'
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'External' }))
+			.element(screen.getByRole('link', { name: 'External', exact: true }))
 			.toHaveAttribute('target', '_blank');
 	});
 
 	it('disabled button is disabled', async () => {
 		const handleClick = vi.fn();
 		const screen = await renderCard({ label: 'Disabled', onclick: handleClick, isDisabled: true });
-		await expect.element(screen.getByRole('button', { name: 'Disabled' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Disabled', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('disabled link has aria-disabled', async () => {
@@ -125,7 +129,7 @@ describe('ClickableCard', () => {
 			isDisabled: true
 		});
 		await expect
-			.element(screen.getByRole('link', { name: 'Disabled link' }))
+			.element(screen.getByRole('link', { name: 'Disabled link', exact: true }))
 			.toHaveAttribute('aria-disabled', 'true');
 	});
 

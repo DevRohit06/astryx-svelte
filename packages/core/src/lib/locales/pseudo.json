@@ -530,6 +530,24 @@
   "@astryx.dateInput.invalidDate": {
     "defaultMessage": "⟦Íñṽàłíð ðàţé⟧"
   },
+  "@astryx.dateInput.resetPicking": {
+    "defaultMessage": "⟦Řéšéţ⟧"
+  },
+  "@astryx.dateInput.savePicking": {
+    "defaultMessage": "⟦Šàṽé⟧"
+  },
+  "@astryx.dateInput.doneChoosingMonth": {
+    "defaultMessage": "⟦Ðóñé⟧"
+  },
+  "@astryx.dateInput.chooseMonthYear": {
+    "defaultMessage": "⟦{monthYear}, Çĥóóšé ɱóñţĥ àñð ýéàř⟧"
+  },
+  "@astryx.dateInput.monthWheel": {
+    "defaultMessage": "⟦Ṁóñţĥ⟧"
+  },
+  "@astryx.dateInput.yearWheel": {
+    "defaultMessage": "⟦Ýéàř⟧"
+  },
   "@astryx.dateTimeInput.timeHint12h": {
     "defaultMessage": "⟦é.ĝ., 2:30 ÞṀ⟧"
   },
@@ -538,6 +556,9 @@
   },
   "@astryx.dateTimeInput.timeSuffix": {
     "defaultMessage": "⟦{label} ţíɱé⟧"
+  },
+  "@astryx.dateTimeInput.timeOptionsLabel": {
+    "defaultMessage": "⟦{label} óþţíóñš⟧"
   },
   "@astryx.dateRangeInput.placeholder": {
     "defaultMessage": "⟦Šéłéçţ ðàţé řàñĝé⟧"
@@ -778,6 +799,9 @@
   },
   "@astryx.tableRowExpansion.expandAllRows": {
     "defaultMessage": "⟦Éẋþàñð àłł řóŵš⟧"
+  },
+  "@astryx.stepper.label": {
+    "defaultMessage": "⟦Þřóĝřéšš⟧"
   },
   "@astryx.step.goToStep": {
     "defaultMessage": "⟦Ĝó ţó šţéþ {stepNumber, number}: {label}⟧"

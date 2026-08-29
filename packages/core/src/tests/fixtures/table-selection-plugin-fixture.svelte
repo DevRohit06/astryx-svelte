@@ -26,9 +26,16 @@
 		getIsItemSelectable?: (item: SelectableUser) => boolean;
 		getIsItemEnabled?: (item: SelectableUser) => boolean;
 		getRowLabel?: (item: SelectableUser) => string;
+		/**
+		 * Left `undefined` unless a case sets it, so the plugin's own `?? true`
+		 * default is what the unset cases exercise — upstream's prop is optional in
+		 * exactly the same way.
+		 */
+		hasRowHighlight?: boolean;
 	}
 
-	const { data, getIsItemSelectable, getIsItemEnabled, getRowLabel }: Props = $props();
+	const { data, getIsItemSelectable, getIsItemEnabled, getRowLabel, hasRowHighlight }: Props =
+		$props();
 
 	let selectedKeys = $state(new Set<string>());
 
@@ -58,7 +65,8 @@
 		},
 		getIsItemSelectable,
 		getIsItemEnabled,
-		getRowLabel
+		getRowLabel,
+		hasRowHighlight
 	}));
 
 	const columns: TableColumn<SelectableUser>[] = [

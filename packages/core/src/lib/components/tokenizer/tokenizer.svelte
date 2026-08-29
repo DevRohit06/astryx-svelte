@@ -137,6 +137,8 @@
 		 * @default 10
 		 */
 		maxMenuItems?: number;
+		/** Fixed dropdown width in pixels. Never shrinks below the input width. */
+		menuWidth?: number;
 		/**
 		 * Text shown when no results found.
 		 * @default 'No results found'
@@ -281,6 +283,7 @@
 		placeholder,
 		hasEntriesOnFocus,
 		maxMenuItems,
+		menuWidth,
 		emptySearchResultsText,
 		isDisabled = false,
 		htmlName,
@@ -705,6 +708,7 @@
 			placeholder={value.length === 0 ? placeholder : ''}
 			hasEntriesOnFocus={isAtMax ? false : hasEntriesOnFocus}
 			{maxMenuItems}
+			{menuWidth}
 			{emptySearchResultsText}
 			{isDisabled}
 			isFocusableDisabled={showsDisabledMessage}

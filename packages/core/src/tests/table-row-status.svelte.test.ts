@@ -8,7 +8,8 @@ import type { TableRowStatus } from '$lib/components/table/plugins/row-status/us
 
 /**
  * Ported from Astryx's `Table/plugins/rowStatus/useTableRowStatus.test.tsx` —
- * all **9** of its `it` cases, in upstream's order and under upstream's names.
+ * all **9** of its `it` cases at the 0.5.0 pin, in upstream's order and under
+ * upstream's names.
  * Nothing dropped.
  *
  * ## Standing translations

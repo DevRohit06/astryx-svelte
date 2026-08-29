@@ -46,6 +46,8 @@
 		 * @default 10
 		 */
 		maxMenuItems?: number;
+		/** Fixed dropdown width in pixels. Never shrinks below the anchor width. */
+		menuWidth?: number;
 		/**
 		 * Text shown when no results found.
 		 * @default 'No results found'
@@ -118,6 +120,7 @@
 
 <script lang="ts" generics="T extends SearchableItem">
 	import { getKey } from '../../utils/get-key.js';
+	import { groupItems } from '../../utils/group-items.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
 	// Imported from the module, not the barrel: upstream keeps `isImeKeyEvent`
 	// out of `hooks/index.ts` too, and its consumers reach it directly.
@@ -132,6 +135,7 @@
 	import {
 		baseTypeaheadDropdownAttrs,
 		baseTypeaheadEmptyStateAttrs,
+		baseTypeaheadGroupHeadingAttrs,
 		baseTypeaheadInputAttrs,
 		baseTypeaheadItemAttrs,
 		baseTypeaheadItemContentAttrs,
@@ -161,6 +165,7 @@
 		placeholder: placeholderFromProps,
 		hasEntriesOnFocus = false,
 		maxMenuItems = 10,
+		menuWidth,
 		emptySearchResultsText: emptySearchResultsTextFromProps,
 		isDisabled = false,
 		isFocusableDisabled = false,
@@ -556,12 +561,28 @@
 		};
 	});
 
+	// New at 0.5.0: the dropdown renders `auxiliaryData.group` as named groups,
+	// ungrouped rows first. Upstream numbers the options with a mutable counter
+	// (`flatIndex++`) inside the IIFE it renders them from — a Svelte template
+	// has no such statement position, so the same numbering is precomputed here
+	// and each row carries the index it would have been handed. The counter walks
+	// *render* order, not `results` order, which is upstream's behaviour and
+	// upstream's bug (see `port/debts.md`).
+	const renderGroups = $derived.by(() => {
+		let flatIndex = 0;
+		return groupItems(results, { ungroupedFirst: true }).map((group) => ({
+			heading: group.heading,
+			entries: group.items.map((item) => ({ item, index: flatIndex++ }))
+		}));
+	});
+
 	const inputAttrs = $derived(baseTypeaheadInputAttrs(isDisabled, inputXStyle, xstyle));
 	const loadingAttrs = baseTypeaheadLoadingSpinnerAttrs();
 	const dropdownTheme = themeProps('typeahead-dropdown');
 	const dropdownAttrs = baseTypeaheadDropdownAttrs();
 	const itemContentAttrs = baseTypeaheadItemContentAttrs();
 	const emptyStateAttrs = baseTypeaheadEmptyStateAttrs();
+	const groupHeadingAttrs = baseTypeaheadGroupHeadingAttrs();
 	// New at 0.4.x (#4862): the no-results row became a theme target of its own,
 	// so a theme can restyle it without reaching through the dropdown.
 	const emptyStateTheme = themeProps('typeahead-empty-state');
@@ -621,7 +642,12 @@
 	</span>
 {/if}
 
-<PopoverLayer {popover} placement="below" alignment="start" xstyle={baseTypeaheadPopoverStyle}>
+<PopoverLayer
+	{popover}
+	placement="below"
+	alignment="start"
+	xstyle={baseTypeaheadPopoverStyle(menuWidth)}
+>
 	<div
 		id={listboxId}
 		role="listbox"
@@ -639,37 +665,52 @@
 				{emptySearchResultsText}
 			</div>
 		{:else}
-			{#each results as item, index (getKey(item.id, index))}
-				{@const itemKey = getKey(item.id, index)}
-				{@const isSelected = itemKey === selectedKey}
-				{@const attrs = baseTypeaheadItemAttrs(size, index === highlightedIndex, isSelected)}
-				<!--
-					A `role="option"` div with click + hover handlers, as upstream
-					renders. The keyboard model belongs to the input, which keeps DOM
-					focus and drives selection through `aria-activedescendant`, so the row
-					carries `tabindex="-1"` (it must be focusable-by-click so the blur
-					handler can tell "inside the popover" from a genuine focus-out) and
-					has no key handler of its own.
-				-->
-				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div
-					id={getItemId(index)}
-					role="option"
-					aria-selected={isSelected}
-					tabindex={-1}
-					onclick={() => handleSelect(item)}
-					onmouseenter={() => (highlightedIndex = index)}
-					class={attrs.class}
-					style={attrs.style}
-				>
-					<span class={itemContentAttrs.class} style={itemContentAttrs.style}>
-						{#if renderItem}{@render renderItem(item)}{:else}<TypeaheadItem {item} />{/if}
-					</span>
-					{#if isSelected}
-						<Icon icon="check" size="sm" color="primary" />
-					{/if}
-				</div>
+			{#each renderGroups as group (group.heading)}
+				{#if group.heading == null}
+					{@render options(group.entries)}
+				{:else}
+					<div role="group" aria-label={group.heading}>
+						<div aria-hidden="true" class={groupHeadingAttrs.class} style={groupHeadingAttrs.style}>
+							{group.heading}
+						</div>
+						{@render options(group.entries)}
+					</div>
+				{/if}
 			{/each}
 		{/if}
 	</div>
 </PopoverLayer>
+
+{#snippet options(entries: { item: T; index: number }[])}
+	{#each entries as { item, index } (getKey(item.id, index))}
+		{@const itemKey = getKey(item.id, index)}
+		{@const isSelected = itemKey === selectedKey}
+		{@const attrs = baseTypeaheadItemAttrs(size, index === highlightedIndex, isSelected)}
+		<!--
+			A `role="option"` div with click + hover handlers, as upstream
+			renders. The keyboard model belongs to the input, which keeps DOM
+			focus and drives selection through `aria-activedescendant`, so the row
+			carries `tabindex="-1"` (it must be focusable-by-click so the blur
+			handler can tell "inside the popover" from a genuine focus-out) and
+			has no key handler of its own.
+		-->
+		<!-- svelte-ignore a11y_click_events_have_key_events -->
+		<div
+			id={getItemId(index)}
+			role="option"
+			aria-selected={isSelected}
+			tabindex={-1}
+			onclick={() => handleSelect(item)}
+			onmouseenter={() => (highlightedIndex = index)}
+			class={attrs.class}
+			style={attrs.style}
+		>
+			<span class={itemContentAttrs.class} style={itemContentAttrs.style}>
+				{#if renderItem}{@render renderItem(item)}{:else}<TypeaheadItem {item} />{/if}
+			</span>
+			{#if isSelected}
+				<Icon icon="check" size="sm" color="primary" />
+			{/if}
+		</div>
+	{/each}
+{/snippet}

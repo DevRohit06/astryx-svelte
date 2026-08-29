@@ -106,7 +106,7 @@ export default {
 		},
 		{
 			name: 'gap',
-			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description: 'Gap between items within each slot.',
 			default: '1'
 		},
@@ -121,6 +121,11 @@ export default {
 			type: "'section' | 'transparent' | 'muted'",
 			description: 'Visual variant passed to Section.',
 			default: "'transparent'"
+		},
+		{
+			name: 'dividers',
+			type: 'SectionDivider[]',
+			description: 'Borders/dividers rendered around the toolbar.'
 		},
 		{
 			name: 'xstyle',

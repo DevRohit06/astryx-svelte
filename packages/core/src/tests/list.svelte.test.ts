@@ -4,7 +4,10 @@ import { render } from 'vitest-browser-svelte';
 import ListFixture from './fixtures/list-fixture.svelte';
 
 /**
- * Astryx's `List/List.test.tsx` (52 cases), ported case for case.
+ * Astryx's `List/List.test.tsx` at the **0.5.0** pin, ported case for case —
+ * **50 blocks producing 53 cases** (49 plain `it`s plus one four-row `it.each`),
+ * and all 50 are here. (This header said "(52 cases)", which counted the
+ * `it.each` short by one row.)
  *
  * Every case renders `<List>` with `<ListItem>` children, so all of them go
  * through `list-fixture.svelte`: upstream writes the items as JSX children with
@@ -33,8 +36,8 @@ describe('List', () => {
 		const screen = await render(ListFixture, {
 			props: { items: [{ props: { label: 'Item 1' } }, { props: { label: 'Item 2' } }] }
 		});
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders label and description', async () => {
@@ -43,8 +46,10 @@ describe('List', () => {
 				items: [{ props: { label: 'Settings', description: 'Manage your preferences' } }]
 			}
 		});
-		await expect.element(screen.getByText('Settings')).toBeInTheDocument();
-		await expect.element(screen.getByText('Manage your preferences')).toBeInTheDocument();
+		await expect.element(screen.getByText('Settings', { exact: true })).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Manage your preferences', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('supports data-testid on list', async () => {
@@ -162,7 +167,7 @@ describe('List', () => {
 		const screen = await render(ListFixture, {
 			props: { headerText: 'Team Members', items: [{ props: { label: 'Alice' } }] }
 		});
-		await expect.element(screen.getByText('Team Members')).toBeInTheDocument();
+		await expect.element(screen.getByText('Team Members', { exact: true })).toBeInTheDocument();
 		const ul = screen.container.querySelector('ul');
 		const headerId = ul?.getAttribute('aria-labelledby');
 		expect(headerId).toBeTruthy();
@@ -321,7 +326,7 @@ describe('List', () => {
 				]
 			}
 		});
-		await userEvent.click(screen.getByText('Action'));
+		await userEvent.click(screen.getByText('Action', { exact: true }));
 		expect(buttonClick).toHaveBeenCalledTimes(1);
 		expect(itemClick).not.toHaveBeenCalled();
 	});
@@ -565,7 +570,7 @@ describe('List', () => {
 			props: { items: [{ props: { label: 'Label Only' } }] }
 		});
 		// Should have the label span only (plus possibly wrapper spans)
-		await expect.element(screen.getByText('Label Only')).toBeInTheDocument();
+		await expect.element(screen.getByText('Label Only', { exact: true })).toBeInTheDocument();
 		expect(screen.container.textContent).not.toContain('undefined');
 	});
 
@@ -579,15 +584,15 @@ describe('List', () => {
 		const screen = await render(ListFixture, {
 			props: { items: [{ props: { label: 'Item' }, richDescription: true }] }
 		});
-		await expect.element(screen.getByText('Rich')).toBeInTheDocument();
-		await expect.element(screen.getByText('description')).toBeInTheDocument();
+		await expect.element(screen.getByText('Rich', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('description', { exact: true })).toBeInTheDocument();
 	});
 
 	it('still accepts string description', async () => {
 		const screen = await render(ListFixture, {
 			props: { items: [{ props: { label: 'Item', description: 'Simple text' } }] }
 		});
-		await expect.element(screen.getByText('Simple text')).toBeInTheDocument();
+		await expect.element(screen.getByText('Simple text', { exact: true })).toBeInTheDocument();
 	});
 
 	it('accepts a stringified number as description', async () => {
@@ -597,6 +602,6 @@ describe('List', () => {
 		const screen = await render(ListFixture, {
 			props: { items: [{ props: { label: 'Count', description: '42' } }] }
 		});
-		await expect.element(screen.getByText('42')).toBeInTheDocument();
+		await expect.element(screen.getByText('42', { exact: true })).toBeInTheDocument();
 	});
 });

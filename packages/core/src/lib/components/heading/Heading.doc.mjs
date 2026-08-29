@@ -26,7 +26,7 @@ export default {
 	props: [
 		{
 			name: 'level',
-			type: '1 | 2 | 3 | 4 | 5 | 6',
+			type: '6 | 2 | 4 | 1 | 3 | 5',
 			description:
 				'Heading level. Determines the semantic HTML element (h1-h6) and the visual styling from the theme (unless `type` is set).',
 			required: true
@@ -45,7 +45,7 @@ export default {
 		},
 		{
 			name: 'accessibilityLevel',
-			type: '1 | 2 | 3 | 4 | 5 | 6',
+			type: '6 | 2 | 4 | 1 | 3 | 5',
 			description:
 				'Accessibility level override. When set and different from `level`, applies `aria-level` so the document outline differs from the visual style.'
 		},

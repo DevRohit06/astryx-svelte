@@ -3,8 +3,8 @@ import { render } from 'vitest-browser-svelte';
 import InputGroupProbe from './fixtures/input-group-probe.svelte';
 
 /**
- * Astryx's `InputGroup/InputGroup.test.tsx`, ported case for case — 18 upstream
- * cases, 18 here.
+ * Astryx's `InputGroup/InputGroup.test.tsx`, ported case for case — **18
+ * upstream cases at the 0.5.0 pin, 18 here**.
  *
  * The children are member controls and addons, which a test file cannot author
  * as a Svelte snippet; `input-group-probe.svelte` renders them, selecting the
@@ -37,11 +37,11 @@ describe('InputGroup', () => {
 		// The group is named by the field label via aria-labelledby (not a
 		// duplicated aria-label). The label is rendered as a <span> (not a literal
 		// <label>, which can't name a group) and carries no orphaned htmlFor.
-		const groupLoc = screen.getByRole('group', { name: 'Price' });
+		const groupLoc = screen.getByRole('group', { name: 'Price', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		expect(group).not.toHaveAttribute('aria-label');
-		const label = screen.getByText('Price').element();
+		const label = screen.getByText('Price', { exact: true }).element();
 		expect(label.tagName).toBe('SPAN');
 		expect(label.closest('label')).toBeNull();
 		expect(label).not.toHaveAttribute('for');
@@ -58,14 +58,18 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Price' });
+		const groupLoc = screen.getByRole('group', { name: 'Price', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const describedBy = group.getAttribute('aria-describedby');
 		expect(describedBy).toBeTruthy();
 		expect(describedBy!.split(' ')).toHaveLength(2);
-		expect(describedBy).toContain(screen.getByText('Enter the amount in USD').element().id);
-		expect(describedBy).toContain(screen.getByText('Price is required').element().id);
+		expect(describedBy).toContain(
+			screen.getByText('Enter the amount in USD', { exact: true }).element().id
+		);
+		expect(describedBy).toContain(
+			screen.getByText('Price is required', { exact: true }).element().id
+		);
 	});
 
 	it('labels grouped TextInput from the group and inner input labels', async () => {
@@ -78,12 +82,12 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Price' });
+		const groupLoc = screen.getByRole('group', { name: 'Price', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const input = screen.getByRole('textbox', { name: 'Price Amount' }).element();
+		const input = screen.getByRole('textbox', { name: 'Price Amount', exact: true }).element();
 		const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -103,12 +107,14 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Favorite fruit' });
+		const groupLoc = screen.getByRole('group', { name: 'Favorite fruit', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const input = screen.getByRole('combobox', { name: 'Favorite fruit Selection' }).element();
+		const input = screen
+			.getByRole('combobox', { name: 'Favorite fruit Selection', exact: true })
+			.element();
 		const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -129,12 +135,12 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Budget' });
+		const groupLoc = screen.getByRole('group', { name: 'Budget', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const input = screen.getByRole('spinbutton', { name: 'Budget Amount' }).element();
+		const input = screen.getByRole('spinbutton', { name: 'Budget Amount', exact: true }).element();
 		const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -154,11 +160,11 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Deadline' });
+		const groupLoc = screen.getByRole('group', { name: 'Deadline', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
-		const input = screen.getByRole('combobox', { name: 'Deadline Date' }).element();
+		const input = screen.getByRole('combobox', { name: 'Deadline Date', exact: true }).element();
 		const labelledByIDs = input.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -178,12 +184,14 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Destination' });
+		const groupLoc = screen.getByRole('group', { name: 'Destination', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const trigger = screen.getByRole('combobox', { name: 'Destination Channel' }).element();
+		const trigger = screen
+			.getByRole('combobox', { name: 'Destination Channel', exact: true })
+			.element();
 		const labelledByIDs = trigger.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -203,12 +211,14 @@ describe('InputGroup', () => {
 			}
 		});
 
-		const groupLoc = screen.getByRole('group', { name: 'Destinations' });
+		const groupLoc = screen.getByRole('group', { name: 'Destinations', exact: true });
 		await expect.element(groupLoc).toBeInTheDocument();
 		const group = groupLoc.element();
 		const groupLabelID = group.getAttribute('aria-labelledby');
 		const describedBy = group.getAttribute('aria-describedby');
-		const trigger = screen.getByRole('combobox', { name: 'Destinations Channels' }).element();
+		const trigger = screen
+			.getByRole('combobox', { name: 'Destinations Channels', exact: true })
+			.element();
 		const labelledByIDs = trigger.getAttribute('aria-labelledby')?.split(' ') ?? [];
 
 		expect(labelledByIDs).toHaveLength(2);
@@ -224,9 +234,11 @@ describe('InputGroup', () => {
 			props: { variant: 'date', label: 'Deadline' }
 		});
 
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeInTheDocument();
 		await expect
-			.element(screen.getByRole('combobox', { name: 'Deadline Date' }))
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('combobox', { name: 'Deadline Date', exact: true }))
 			.toHaveAttribute('aria-expanded', 'false');
 	});
 
@@ -234,14 +246,14 @@ describe('InputGroup', () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'plain', label: 'Price' }
 		});
-		await expect.element(screen.getByText('Price')).toBeInTheDocument();
+		await expect.element(screen.getByText('Price', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders addon text', async () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'currency', label: 'Price' }
 		});
-		await expect.element(screen.getByText('$')).toBeInTheDocument();
+		await expect.element(screen.getByText('$', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders the input', async () => {
@@ -255,8 +267,8 @@ describe('InputGroup', () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'url', label: 'Website' }
 		});
-		await expect.element(screen.getByText('https://')).toBeInTheDocument();
-		await expect.element(screen.getByText('.com')).toBeInTheDocument();
+		await expect.element(screen.getByText('https://', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('.com', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByRole('textbox')).toBeInTheDocument();
 	});
 
@@ -271,7 +283,9 @@ describe('InputGroup', () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'plain', label: 'Price', description: 'Enter the price in USD' }
 		});
-		await expect.element(screen.getByText('Enter the price in USD')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Enter the price in USD', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders status message', async () => {
@@ -282,14 +296,16 @@ describe('InputGroup', () => {
 				status: { type: 'error', message: 'Price is required' }
 			}
 		});
-		await expect.element(screen.getByText('Price is required')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Price is required', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders with hidden label', async () => {
 		const screen = await render(InputGroupProbe, {
 			props: { variant: 'plain', label: 'Price', isLabelHidden: true }
 		});
-		await expect.element(screen.getByText('Price')).toBeInTheDocument();
+		await expect.element(screen.getByText('Price', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByRole('group')).toBeInTheDocument();
 	});
 

@@ -347,7 +347,7 @@ describe('DateInput', () => {
 		const screen = await render(DateInput, {
 			props: { label: 'Date', onChange: noop }
 		});
-		const button = screen.getByRole('button', { name: 'Open calendar' });
+		const button = screen.getByRole('button', { name: 'Open calendar', exact: true });
 		await expect.element(button).toBeInTheDocument();
 		await expect.element(button).not.toBeDisabled();
 	});
@@ -356,7 +356,9 @@ describe('DateInput', () => {
 		const screen = await render(DateInput, {
 			props: { label: 'Date', isDisabled: true, onChange: noop }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('does not call onChange while typing invalid input', async () => {
@@ -555,7 +557,9 @@ describe('DateInput', () => {
 			props: { label: 'Date', isLoading: true, onChange: noop }
 		});
 		await expect.element(screen.getByRole('combobox')).toBeDisabled();
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('shows spinner when isLoading is true', async () => {
@@ -753,7 +757,7 @@ describe('DateInput', () => {
 		const screen = await render(DateInput, {
 			props: { label: 'Date', isDisabled: true, onChange: noop }
 		});
-		const button = screen.getByRole('button', { name: 'Open calendar' }).element();
+		const button = screen.getByRole('button', { name: 'Open calendar', exact: true }).element();
 		button.dispatchEvent(new MouseEvent('click', { bubbles: true }));
 		await expect.element(screen.getByRole('combobox')).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -786,21 +790,23 @@ describe('DateInput', () => {
 			const screen = await render(DateInput, {
 				props: { label: 'Date', value: iso('2026-01-15'), onChange: noop, hasClear: true }
 			});
-			await expect.element(screen.getByRole('button', { name: 'Clear Date' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('button', { name: 'Clear Date', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('does not show clear button when value is undefined', async () => {
 			const screen = await render(DateInput, {
 				props: { label: 'Date', onChange: noop, hasClear: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Date' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Date', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when hasClear is false', async () => {
 			const screen = await render(DateInput, {
 				props: { label: 'Date', value: iso('2026-01-15'), onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Date' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Date', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
@@ -813,7 +819,7 @@ describe('DateInput', () => {
 					isDisabled: true
 				}
 			});
-			expect(screen.getByRole('button', { name: 'Clear Date' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Date', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with undefined when clear is clicked', async () => {
@@ -821,7 +827,7 @@ describe('DateInput', () => {
 			const screen = await render(DateInput, {
 				props: { label: 'Date', value: iso('2026-01-15'), onChange, hasClear: true }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Date' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Date', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(undefined);
 		});
 	});
@@ -935,10 +941,12 @@ describe('DateInput', () => {
 				}
 			});
 
-			const groupLoc = screen.getByRole('group', { name: 'Availability' });
+			const groupLoc = screen.getByRole('group', { name: 'Availability', exact: true });
 			await expect.element(groupLoc).toBeInTheDocument();
 			const group = groupLoc.element();
-			const input = screen.getByRole('combobox', { name: 'Availability Date' }).element();
+			const input = screen
+				.getByRole('combobox', { name: 'Availability Date', exact: true })
+				.element();
 
 			// Restated only in scope, as above.
 			expect(screen.container.querySelectorAll('.astryx-field')).toHaveLength(1);
@@ -967,7 +975,7 @@ describe('DateInput', () => {
 				}
 			});
 
-			const inputLoc = screen.getByRole('combobox', { name: 'Availability Date' });
+			const inputLoc = screen.getByRole('combobox', { name: 'Availability Date', exact: true });
 			await expect.element(inputLoc).toBeInTheDocument();
 			const input = inputLoc.element();
 			const tooltip = screen.getByRole('tooltip', { includeHidden: true }).element();
@@ -982,7 +990,9 @@ describe('DateInput', () => {
 			expect(input).toHaveAttribute('aria-disabled', 'true');
 			expect(input.getAttribute('aria-describedby')).toContain(tooltip.id);
 			expect(tooltip).toHaveTextContent('Scheduling is locked');
-			await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+			await expect
+				.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+				.toBeDisabled();
 		});
 	});
 

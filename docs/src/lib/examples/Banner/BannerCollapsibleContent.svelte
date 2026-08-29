@@ -11,7 +11,7 @@
 	title="Configuration changes detected"
 	description="Review the changes before they take effect."
 	isDismissable
-	defaultIsExpanded
+	collapsible={{ defaultIsOpen: true }}
 >
 	{#snippet endContent()}<Button label="Review" variant="secondary" size="sm" />{/snippet}
 	<Stack direction="vertical" gap={2}>

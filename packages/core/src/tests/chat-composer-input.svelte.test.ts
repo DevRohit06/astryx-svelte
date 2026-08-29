@@ -121,7 +121,7 @@ describe('ChatComposerInput', () => {
 	describe('basic rendering', () => {
 		it('renders with placeholder', async () => {
 			const screen = await render(ChatComposerInput, { props: { placeholder: 'Type here...' } });
-			await expect.element(screen.getByText('Type here...')).toBeInTheDocument();
+			await expect.element(screen.getByText('Type here...', { exact: true })).toBeInTheDocument();
 		});
 
 		it('renders with default placeholder', async () => {

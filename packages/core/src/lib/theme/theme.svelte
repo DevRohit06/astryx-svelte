@@ -35,14 +35,14 @@
 	 * costs one map entry and removes the failure.
 	 */
 	// eslint-disable-next-line svelte/prefer-svelte-reactivity
-	const injectedThemes = new Map<string, { style: HTMLStyleElement; count: number }>();
+	const injectedThemes = new Map<string, { styles: HTMLStyleElement[]; count: number }>();
 </script>
 
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { dataAttr } from '../internal/naming.js';
+	import { NAMESPACE, dataAttr } from '../internal/naming.js';
 	import { warnOnce } from '../utils/dev-warning.js';
-	import { generateThemeCss } from './generate-theme-rules.js';
+	import { generateThemeCSS } from './generate-theme-rules.js';
 	import { isNestedTheme, markThemeNested, setThemeContext } from './theme-context.js';
 	import { registerTheme } from './theme-registry.js';
 	import { themeWrapperAttrs } from './theme.stylex.js';
@@ -145,10 +145,12 @@
 	 * `<head>`, once per theme name, removed when the last `<Theme>` using it
 	 * goes away.
 	 *
-	 * Upstream splits the output into a prose half (`@layer reset`) and a
-	 * component half (`@layer astryx-theme`); `generateThemeCss` already emits
-	 * its own layer wrappers and the prose half is the standing Phase 3 debt, so
-	 * this injects what the theme build itself would write.
+	 * Upstream splits the output into a prose half (`@layer reset`, which any
+	 * class-based style beats) and a component half (`@layer astryx-theme`, above
+	 * StyleX so a theme can restyle a component on purpose), and injects each as
+	 * its own `<style>` so the two land in different layers. `generateThemeCSS`
+	 * returns those two blocks unwrapped and this decides the layer, which is the
+	 * split upstream draws between the generator and its callers.
 	 *
 	 * The perf hint is upstream's, with the package names substituted: it names
 	 * *packages* rather than components, so keeping `@astryxdesign/…` verbatim
@@ -171,7 +173,7 @@
 			return () => {
 				existing.count -= 1;
 				if (existing.count === 0) {
-					existing.style.remove();
+					for (const style of existing.styles) style.remove();
 					injectedThemes.delete(themeKey);
 				}
 			};
@@ -192,24 +194,35 @@
 				`defining the theme at runtime.`
 		);
 
-		const css = generateThemeCss(theme);
-		if (!css) return;
+		const { prose, component } = generateThemeCSS(theme);
+		if (!prose && !component) return;
 
-		const style = document.createElement('style');
-		style.setAttribute(dataAttr('theme'), theme.name);
-		// The second marker upstream writes, identifying the instance that
-		// injected this tag.
-		style.setAttribute(dataAttr('id'), uid);
-		style.textContent = css;
-		document.head.appendChild(style);
+		/**
+		 * One `<style>` per layer, as upstream. The `theme` / `theme-prose`
+		 * markers are how a consumer or a test finds each half; the `id` marker is
+		 * upstream's second one, identifying the instance that injected the tag.
+		 */
+		const inject = (marker: string, layer: string, css: string): HTMLStyleElement => {
+			const style = document.createElement('style');
+			style.setAttribute(dataAttr(marker), theme.name);
+			style.setAttribute(dataAttr('id'), uid);
+			style.textContent = `@layer ${layer} {\n${css}\n}`;
+			document.head.appendChild(style);
+			return style;
+		};
 
-		const entry = { style, count: 1 };
+		const styles: HTMLStyleElement[] = [];
+		// Prose first, so the reset layer is declared before the theme layer.
+		if (prose) styles.push(inject('theme-prose', 'reset', prose));
+		if (component) styles.push(inject('theme', `${NAMESPACE}-theme`, component));
+
+		const entry = { styles, count: 1 };
 		injectedThemes.set(themeKey, entry);
 
 		return () => {
 			entry.count -= 1;
 			if (entry.count === 0) {
-				style.remove();
+				for (const style of styles) style.remove();
 				injectedThemes.delete(themeKey);
 			}
 		};

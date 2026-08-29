@@ -12,8 +12,8 @@ import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import DateTimeInputI18n from './fixtures/date-time-input-i18n.svelte';
 
 /**
- * Astryx's `DateTimeInput/DateTimeInput.test.tsx`, ported case for case — **87
- * of upstream's 89** at v0.4.5 (47 directly in `describe('DateTimeInput')`,
+ * Astryx's `DateTimeInput/DateTimeInput.test.tsx`, ported case for case — **89
+ * of upstream's 135** at the 0.5.0 pin (49 directly in `describe('DateTimeInput')`,
  * 5 in `describe('hasClear')`, 1 in `describe('external value changes')`, 7 in
  * `describe('invalid typed input feedback (WCAG 3.3.1)')`, 9 in
  * `describe('disabledMessage')`, 4 in `describe('timeIncrement')`, 3 in
@@ -22,22 +22,31 @@ import DateTimeInputI18n from './fixtures/date-time-input-i18n.svelte';
  * no `displayName` case, no snapshot and no no-JSX construction form, so the
  * only React-only surface is `ref`, which gets a counterpart.
  *
- * ## TWO CASES ARE MISSING, and they are blocked on a port defect
+ * ## v0.5.0 moved the total to 135, and every missing case is one block
+ *
+ * `describe('timeOptionInterval')` (upstream `:949`-`:2032`) is the suite for the
+ * preset-time listbox 0.5.0 added. **The feature itself is ported** — the styles,
+ * the second popover, the combobox ARIA and the keyboard block are all in
+ * `date-time-input.svelte` — but none of its 46 cases is, so the whole surface
+ * ships unexercised on this side. That is the largest single unported block in
+ * this suite and it should be its own unit; nothing else here covers the listbox.
+ *
+ * With that block, 89 + 46 = 135 accounts for every upstream case exactly.
+ *
+ * ## The IME pair: the blocker is gone, and both cases are now here
  *
  * **`does not commit the date on a composing Enter (IME)`** and **`does not step
- * the time on a composing ArrowUp (IME)`** (upstream `:100`, `:119`) are NOT
- * here. They are not droppable — there is nothing React-only about them — and
- * they would fail if written, because `date-time-input.svelte`'s
- * `handleDateKeyDown`/`handleTimeKeyDown` have **no `isImeKeyEvent` guard**,
- * where upstream's have carried one since the cases landed
- * (`DateTimeInput.tsx:752`, `:852`). A CJK user committing an IME candidate with
- * Enter therefore commits the pending date, and the candidate window's arrows
- * step the time. `utils/ime.ts` is ported and exported here; it is simply not
- * called from this component. Write these two the moment the guard lands — they
- * transcribe from upstream unchanged. The same gap blocks one case each in
- * `time-input`, `date-input` and `selector`.
+ * the time on a composing ArrowUp (IME)`** were absent for several batches, and
+ * this header said they "would fail if written" because
+ * `handleDateKeyDown`/`handleTimeKeyDown` carried **no `isImeKeyEvent` guard**.
+ * That reason has expired: the guard is called at `date-time-input.svelte:668`
+ * and `:965`, so both cases transcribe from upstream unchanged and both are
+ * ported above. The sibling claim — that the same gap blocks a case each in
+ * `time-input`, `date-input` and `selector` — has expired too; all three call it
+ * (`time-input.svelte:451`, `date-input/pointer-date-field.svelte:359`,
+ * `selector.svelte:1263`).
  *
- * ## The count, re-derived at the v0.4.5 pin
+ * ## The count, as re-derived at the v0.4.5 pin
  *
  * This header read "**all 83 of upstream's 83** at v0.4.1" and stayed true only
  * until the pin moved: upstream has **89**, so it was hiding a six-case gap.
@@ -291,6 +300,44 @@ describe('DateTimeInput', () => {
 		expect(screen.getByLabelText('Time', exact).query()).toBeNull();
 	});
 
+	it('does not commit the date on a composing Enter (IME)', async () => {
+		const onChange = vi.fn();
+		const screen = await render(DateTimeInput, { props: { label: 'Meeting', onChange } });
+		const dateInput = dateInputIn(screen.container);
+		await changeValue(dateInput, '03/15/2026');
+		onChange.mockClear();
+
+		// The composing keydown (isComposing / legacy keyCode 229) that commits an
+		// IME candidate must not be read as "commit the typed date".
+		await keyDown(dateInput, 'Enter', { isComposing: true });
+		expect(onChange).not.toHaveBeenCalled();
+		await keyDown(dateInput, 'Enter', { keyCode: 229 });
+		expect(onChange).not.toHaveBeenCalled();
+
+		// A real, non-composing Enter still commits.
+		await keyDown(dateInput, 'Enter');
+		expect(onChange).toHaveBeenCalled();
+	});
+
+	it('does not step the time on a composing ArrowUp (IME)', async () => {
+		const onChange = vi.fn();
+		const screen = await render(DateTimeInput, {
+			props: { label: 'Meeting', value: '2026-03-15T14:30' as ISODateTimeString, onChange }
+		});
+		const timeInput = timeInputIn(screen.container);
+
+		// An IME candidate window navigates with the arrows; a composing ArrowUp
+		// must not step the time value.
+		await keyDown(timeInput, 'ArrowUp', { isComposing: true });
+		expect(onChange).not.toHaveBeenCalled();
+		await keyDown(timeInput, 'ArrowUp', { keyCode: 229 });
+		expect(onChange).not.toHaveBeenCalled();
+
+		// A real, non-composing ArrowUp still steps the time by one minute.
+		await keyDown(timeInput, 'ArrowUp');
+		expect(onChange).toHaveBeenCalledWith('2026-03-15T14:31');
+	});
+
 	it('uses an explicit timeLabel when provided', async () => {
 		const screen = await render(DateTimeInput, {
 			props: { label: 'Meeting time', timeLabel: 'Start time', onChange: noop }
@@ -498,7 +545,7 @@ describe('DateTimeInput', () => {
 		const screen = await render(DateTimeInput, {
 			props: { label: 'Meeting', onChange: noop }
 		});
-		const button = screen.getByRole('button', { name: 'Open calendar' });
+		const button = screen.getByRole('button', { name: 'Open calendar', exact: true });
 		await expect.element(button).toBeInTheDocument();
 		await expect.element(button).not.toBeDisabled();
 	});
@@ -507,7 +554,9 @@ describe('DateTimeInput', () => {
 		const screen = await render(DateTimeInput, {
 			props: { label: 'Meeting', isDisabled: true, onChange: noop }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('disables inputs and button when isLoading is true', async () => {
@@ -516,7 +565,9 @@ describe('DateTimeInput', () => {
 		});
 		await expect.element(screen.getByRole('combobox')).toBeDisabled();
 		await expect.element(screen.getByLabelText('Meeting time', exact)).toBeDisabled();
-		await expect.element(screen.getByRole('button', { name: 'Open calendar' })).toBeDisabled();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open calendar', exact: true }))
+			.toBeDisabled();
 	});
 
 	it('sets aria-busy when isLoading is true', async () => {
@@ -731,7 +782,7 @@ describe('DateTimeInput', () => {
 				}
 			});
 			await expect
-				.element(screen.getByRole('button', { name: 'Clear Meeting' }))
+				.element(screen.getByRole('button', { name: 'Clear Meeting', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -739,14 +790,14 @@ describe('DateTimeInput', () => {
 			const screen = await render(DateTimeInput, {
 				props: { label: 'Meeting', onChange: noop, hasClear: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Meeting' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Meeting', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when hasClear is false', async () => {
 			const screen = await render(DateTimeInput, {
 				props: { label: 'Meeting', value: iso('2026-03-15T14:30'), onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Meeting' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Meeting', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
@@ -759,7 +810,7 @@ describe('DateTimeInput', () => {
 					isDisabled: true
 				}
 			});
-			expect(screen.getByRole('button', { name: 'Clear Meeting' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Meeting', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with undefined when clear is clicked', async () => {
@@ -772,7 +823,7 @@ describe('DateTimeInput', () => {
 					hasClear: true
 				}
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Meeting' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Meeting', exact: true }));
 			expect(onChange).toHaveBeenCalledWith(undefined);
 		});
 	});
@@ -1296,7 +1347,7 @@ describe('DateTimeInput', () => {
 			expect(icon).toHaveClass('astryx-icon');
 			expect(icon).toHaveAttribute('data-state', 'collapsed');
 
-			await userEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Open calendar', exact: true }));
 			await vi.waitFor(() => {
 				expect(
 					screen.container.querySelector('.astryx-date-time-input-toggle-icon')

@@ -7,8 +7,9 @@ import { testStyles } from './fixtures/field-status-xstyle.stylex.js';
 
 /**
  * Astryx's `FieldStatus/FieldStatus.test.tsx`, ported case for case — **34**
- * `it` declarations upstream at v0.4.5, **33** of them here. One is dropped, and
- * it is named below.
+ * `it` declarations upstream at the **0.5.0** pin, **33** of them here. One is
+ * dropped, and it is named below. Upstream's file is unchanged between v0.4.5 —
+ * where this header last stated the count — and 0.5.0.
  *
  * `Field/Field.test.tsx` and `Field/FieldLabel.test.tsx` are ported in
  * `field.svelte.test.ts`; neither touches `FieldStatus`'s own markup, so nothing
@@ -65,7 +66,9 @@ describe('FieldStatus', () => {
 		const screen = await render(FieldStatus, {
 			props: { type: 'error', message: 'This field is required' }
 		});
-		await expect.element(screen.getByText('This field is required')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('This field is required', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders the message inside a <div>', async () => {
@@ -341,7 +344,7 @@ describe('FieldStatus', () => {
 			});
 			const el = screen.getByTestId('fs').element();
 			const icon = el.querySelector('[aria-hidden="true"]');
-			const text = screen.getByText('Something went wrong').element();
+			const text = screen.getByText('Something went wrong', { exact: true }).element();
 			expect(icon).toBeInTheDocument();
 			// Icon comes before the message text in document order.
 			expect(icon!.compareDocumentPosition(text) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

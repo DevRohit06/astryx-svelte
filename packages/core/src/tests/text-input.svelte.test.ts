@@ -10,10 +10,10 @@ import TextInputGroupProbe from './fixtures/text-input-group-probe.svelte';
 
 /**
  * Astryx's `TextInput/TextInput.test.tsx`, ported case for case — **all 74 of
- * upstream's 74** at v0.4.5, plus one beyond upstream (`supports two-way
+ * upstream's 74** at the 0.5.0 pin, plus one beyond upstream (`supports two-way
  * bind:value`) that pins the `$bindable` decision. **75 `it` in the file.**
- * Re-derived at the 0.4.5 pin (the header last stated it at v0.4.1); upstream's
- * file has not moved since.
+ * Re-derived at the 0.5.0 pin (the header last stated it at v0.4.5); upstream's
+ * file has not moved since v0.4.1.
  * Sibling of `text-area.svelte.test.ts`, which solved the same translation
  * problems first; this file follows it.
  *
@@ -116,7 +116,7 @@ describe('TextInput', () => {
 		const screen = await render(TextInput, {
 			props: { label: 'Name', value: '', onChange: noop }
 		});
-		await expect.element(screen.getByLabelText('Name')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Name', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with placeholder', async () => {
@@ -207,17 +207,17 @@ describe('TextInput', () => {
 		const screen = await render(TextInput, {
 			props: { label: 'Search', isLabelHidden: true, value: '', onChange: noop }
 		});
-		const label = screen.getByText('Search');
+		const label = screen.getByText('Search', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
-		await expect.element(screen.getByLabelText('Search')).toBeInTheDocument();
+		await expect.element(screen.getByLabelText('Search', { exact: true })).toBeInTheDocument();
 	});
 
 	it('shows label visually by default', async () => {
 		const screen = await render(TextInput, {
 			props: { label: 'Email', value: '', onChange: noop }
 		});
-		const label = screen.getByText('Email');
+		const label = screen.getByText('Email', { exact: true });
 		await expect.element(label).toBeVisible();
 	});
 
@@ -321,7 +321,9 @@ describe('TextInput', () => {
 					status: { type: 'error', message: 'Invalid email address' }
 				}
 			});
-			await expect.element(screen.getByText('Invalid email address')).toBeInTheDocument();
+			await expect
+				.element(screen.getByText('Invalid email address', { exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('has no dangling aria-describedby ids inside InputGroup (WCAG 1.3.1)', async () => {
@@ -387,7 +389,7 @@ describe('TextInput', () => {
 			const describedBy = input.getAttribute('aria-describedby');
 			expect(describedBy).toBeTruthy();
 			// The status message should be reachable via the described-by ID
-			const messageElement = screen.getByText('Invalid email').element();
+			const messageElement = screen.getByText('Invalid email', { exact: true }).element();
 			expect(messageElement).toHaveAttribute('id');
 			expect(describedBy).toContain(messageElement.id);
 		});
@@ -636,21 +638,23 @@ describe('TextInput', () => {
 			const screen = await render(TextInput, {
 				props: { label: 'Name', value: 'hello', onChange: noop, hasClear: true }
 			});
-			await expect.element(screen.getByRole('button', { name: 'Clear Name' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('button', { name: 'Clear Name', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('does not show clear button when value is empty', async () => {
 			const screen = await render(TextInput, {
 				props: { label: 'Name', value: '', onChange: noop, hasClear: true }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Name' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Name', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when hasClear is false', async () => {
 			const screen = await render(TextInput, {
 				props: { label: 'Name', value: 'hello', onChange: noop }
 			});
-			expect(screen.getByRole('button', { name: 'Clear Name' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Name', exact: true }).query()).toBeNull();
 		});
 
 		it('does not show clear button when disabled', async () => {
@@ -663,7 +667,7 @@ describe('TextInput', () => {
 					isDisabled: true
 				}
 			});
-			expect(screen.getByRole('button', { name: 'Clear Name' }).query()).toBeNull();
+			expect(screen.getByRole('button', { name: 'Clear Name', exact: true }).query()).toBeNull();
 		});
 
 		it('calls onChange with empty string when clear is clicked', async () => {
@@ -671,7 +675,7 @@ describe('TextInput', () => {
 			const screen = await render(TextInput, {
 				props: { label: 'Name', value: 'hello', onChange, hasClear: true }
 			});
-			await userEvent.click(screen.getByRole('button', { name: 'Clear Name' }));
+			await userEvent.click(screen.getByRole('button', { name: 'Clear Name', exact: true }));
 			expect(onChange).toHaveBeenCalledWith('', null);
 		});
 	});

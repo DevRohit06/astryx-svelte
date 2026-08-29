@@ -1,5 +1,10 @@
 import * as stylex from '@stylexjs/stylex';
-import { paddingBlockStyles, paddingInlineStyles } from '../../internal/padding.stylex.js';
+import {
+	paddingBlockEndStyles,
+	paddingBlockStartStyles,
+	paddingInlineEndStyles,
+	paddingInlineStartStyles
+} from '../../internal/padding.stylex.js';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import type { SizeValue, SpacingStep } from '../../internal/types.js';
 
@@ -47,11 +52,13 @@ export interface CenterAttrsOptions {
 	maxWidth?: SizeValue;
 	minHeight?: SizeValue;
 	/**
-	 * Already resolved per axis by the component — `padding` sets both, and the
-	 * per-axis prop wins on its own axis, exactly as `Stack` resolves them.
+	 * Already resolved per edge by the component — each is `edge prop ?? axis
+	 * prop ?? padding`, most specific first, exactly as `Stack` resolves them.
 	 */
-	paddingInline?: SpacingStep;
-	paddingBlock?: SpacingStep;
+	paddingInlineStart?: SpacingStep;
+	paddingInlineEnd?: SpacingStep;
+	paddingBlockStart?: SpacingStep;
+	paddingBlockEnd?: SpacingStep;
 }
 
 export function centerAttrs(
@@ -62,8 +69,10 @@ export function centerAttrs(
 		height,
 		maxWidth,
 		minHeight,
-		paddingInline,
-		paddingBlock
+		paddingInlineStart,
+		paddingInlineEnd,
+		paddingBlockStart,
+		paddingBlockEnd
 	}: CenterAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
@@ -73,10 +82,12 @@ export function centerAttrs(
 		(axis === 'both' || axis === 'horizontal') && styles.justifyContentCenter,
 		dynamicStyles.sizing(width ?? null, height ?? null, maxWidth ?? null, minHeight ?? null),
 		// The padding groups are `Layout/padding.stylex`'s, shared with Stack, Card,
-		// LayoutContent and LayoutPanel — upstream imports the same two here rather
+		// LayoutContent and LayoutPanel — upstream imports the same four here rather
 		// than restating them, so no new class is minted for Center.
-		paddingInline != null && paddingInlineStyles[paddingInline],
-		paddingBlock != null && paddingBlockStyles[paddingBlock],
+		paddingInlineStart != null && paddingInlineStartStyles[paddingInlineStart],
+		paddingInlineEnd != null && paddingInlineEndStyles[paddingInlineEnd],
+		paddingBlockStart != null && paddingBlockStartStyles[paddingBlockStart],
+		paddingBlockEnd != null && paddingBlockEndStyles[paddingBlockEnd],
 		xstyle
 	);
 }

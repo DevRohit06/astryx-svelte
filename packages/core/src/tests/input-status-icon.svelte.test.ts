@@ -10,9 +10,17 @@ import TimeInput from '$lib/components/time-input/time-input.svelte';
 import type { FieldStatusVariant } from '$lib/components/field-status/field-status.stylex.js';
 
 /**
- * Ported from Astryx's `hooks/useInputStatusIcon.test.tsx` — **27 upstream runs
- * from its 6 `it(` lines (7 inputs × 3 variants = 21, plus 6 standalone), 27
- * here, nothing dropped**, in upstream's order and with its assertions intact.
+ * Ported from Astryx's `hooks/useInputStatusIcon.test.tsx` — **6 of its 7 `it(`
+ * lines at the 0.5.0 pin, 27 collected runs against upstream's 28** (7 inputs ×
+ * 3 variants = 21, plus 2 from the `['attached','tooltip']` loop, plus 4
+ * standalone here where upstream has 5), in upstream's order and with its
+ * assertions intact.
+ *
+ * Unported: `useInputStatusIcon — no dangling aria-describedby (WCAG 1.3.1)` →
+ * `keeps the tooltip status button interactive inside a non-interactive trailing
+ * slot`. It is portable and would pass — `use-input-status-icon.stylex.ts`
+ * already sets the `pointerEvents: 'auto'` escape hatch it asserts. (The header
+ * read "27 upstream runs from its 6 `it(` lines … nothing dropped".)
  *
  * Client (real Chromium) project, and it has to be: the tooltip variant's
  * `aria-describedby` target is a popover element that `useLayer` attaches with

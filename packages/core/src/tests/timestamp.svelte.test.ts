@@ -257,7 +257,7 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: twoHoursAgo, format: 'relative' }
 		});
-		await expect.element(screen.getByText('2 hours ago')).toBeInTheDocument();
+		await expect.element(screen.getByText('2 hours ago', { exact: true })).toBeInTheDocument();
 	});
 
 	it('does not round a tier up past its own boundary', async () => {
@@ -266,17 +266,17 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: Date.now() / 1000 - 3599, format: 'relative' }
 		});
-		await expect.element(screen.getByText('59 minutes ago')).toBeInTheDocument();
+		await expect.element(screen.getByText('59 minutes ago', { exact: true })).toBeInTheDocument();
 
 		await screen.rerender({ value: Date.now() / 1000 - 86399, format: 'relative' });
-		await expect.element(screen.getByText('23 hours ago')).toBeInTheDocument();
+		await expect.element(screen.getByText('23 hours ago', { exact: true })).toBeInTheDocument();
 
 		await screen.rerender({ value: Date.now() / 1000 - 2591999, format: 'relative' });
-		await expect.element(screen.getByText('29 days ago')).toBeInTheDocument();
+		await expect.element(screen.getByText('29 days ago', { exact: true })).toBeInTheDocument();
 
 		// Same guarantee on the future side.
 		await screen.rerender({ value: Date.now() / 1000 + 3599, format: 'relative' });
-		await expect.element(screen.getByText('in 59 minutes')).toBeInTheDocument();
+		await expect.element(screen.getByText('in 59 minutes', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders "now" for very recent times', async () => {
@@ -284,7 +284,7 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: fiveSecondsAgo, format: 'relative' }
 		});
-		await expect.element(screen.getByText('now')).toBeInTheDocument();
+		await expect.element(screen.getByText('now', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders "now" for the current instant (not a future phrase)', async () => {
@@ -295,7 +295,7 @@ describe('Timestamp', () => {
 			props: { value: Date.now() / 1000, format: 'relative' }
 		});
 		expect(screen.container.textContent).not.toMatch(/^in /);
-		await expect.element(screen.getByText('now')).toBeInTheDocument();
+		await expect.element(screen.getByText('now', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders "now" for a value a hair in the future (clock skew)', async () => {
@@ -307,7 +307,7 @@ describe('Timestamp', () => {
 			props: { value: aHairInTheFuture, format: 'relative' }
 		});
 		expect(screen.container.textContent).not.toMatch(/^in /);
-		await expect.element(screen.getByText('now')).toBeInTheDocument();
+		await expect.element(screen.getByText('now', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders "yesterday" for times ~1 day ago', async () => {
@@ -315,7 +315,7 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: yesterday, format: 'relative' }
 		});
-		await expect.element(screen.getByText('yesterday')).toBeInTheDocument();
+		await expect.element(screen.getByText('yesterday', { exact: true })).toBeInTheDocument();
 	});
 
 	// --- relative_short format ---
@@ -325,29 +325,29 @@ describe('Timestamp', () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 - 5, format: 'relative_short' }
 			});
-			await expect.element(screen.getByText('now')).toBeInTheDocument();
+			await expect.element(screen.getByText('now', { exact: true })).toBeInTheDocument();
 		});
 
 		it('abbreviates each past tier (s/m/h/d/mo/y)', async () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 - 30, format: 'relative_short' }
 			});
-			await expect.element(screen.getByText('30s ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('30s ago', { exact: true })).toBeInTheDocument();
 
 			await screen.rerender({ value: Date.now() / 1000 - 5 * 60, format: 'relative_short' });
-			await expect.element(screen.getByText('5m ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('5m ago', { exact: true })).toBeInTheDocument();
 
 			await screen.rerender({ value: Date.now() / 1000 - 2 * 3600, format: 'relative_short' });
-			await expect.element(screen.getByText('2h ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('2h ago', { exact: true })).toBeInTheDocument();
 
 			await screen.rerender({ value: Date.now() / 1000 - 3 * 86400, format: 'relative_short' });
-			await expect.element(screen.getByText('3d ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('3d ago', { exact: true })).toBeInTheDocument();
 
 			await screen.rerender({ value: Date.now() / 1000 - 90 * 86400, format: 'relative_short' });
-			await expect.element(screen.getByText('3mo ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('3mo ago', { exact: true })).toBeInTheDocument();
 
 			await screen.rerender({ value: Date.now() / 1000 - 730 * 86400, format: 'relative_short' });
-			await expect.element(screen.getByText('2y ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('2y ago', { exact: true })).toBeInTheDocument();
 		});
 
 		it('uses "mo" for months so it never collides with "m" (minutes)', async () => {
@@ -356,48 +356,48 @@ describe('Timestamp', () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 - 45 * 86400, format: 'relative_short' }
 			});
-			await expect.element(screen.getByText('1mo ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('1mo ago', { exact: true })).toBeInTheDocument();
 		});
 
 		it('renders a single day as "1d ago" (no "yesterday" idiom in short form)', async () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 - 100000, format: 'relative_short' }
 			});
-			await expect.element(screen.getByText('1d ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('1d ago', { exact: true })).toBeInTheDocument();
 		});
 
 		it('renders future times with the "in" prefix and abbreviated units', async () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 + 5 * 60, format: 'relative_short' }
 			});
-			await expect.element(screen.getByText('in 5m')).toBeInTheDocument();
+			await expect.element(screen.getByText('in 5m', { exact: true })).toBeInTheDocument();
 
 			await screen.rerender({ value: Date.now() / 1000 + 2 * 3600, format: 'relative_short' });
-			await expect.element(screen.getByText('in 2h')).toBeInTheDocument();
+			await expect.element(screen.getByText('in 2h', { exact: true })).toBeInTheDocument();
 		});
 
 		it('does not round a tier up past its own boundary', async () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 - 3599, format: 'relative_short' }
 			});
-			await expect.element(screen.getByText('59m ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('59m ago', { exact: true })).toBeInTheDocument();
 
 			await screen.rerender({ value: Date.now() / 1000 - 86399, format: 'relative_short' });
-			await expect.element(screen.getByText('23h ago')).toBeInTheDocument();
+			await expect.element(screen.getByText('23h ago', { exact: true })).toBeInTheDocument();
 		});
 
 		it('treats a hair in the future as "now" (clock skew)', async () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 + 2, format: 'relative_short' }
 			});
-			await expect.element(screen.getByText('now')).toBeInTheDocument();
+			await expect.element(screen.getByText('now', { exact: true })).toBeInTheDocument();
 		});
 
 		it('keeps the full absolute date as the accessible name', async () => {
 			const screen = await render(Timestamp, {
 				props: { value: Date.now() / 1000 - 2 * 3600, format: 'relative_short' }
 			});
-			const el = screen.getByText('2h ago').element();
+			const el = screen.getByText('2h ago', { exact: true }).element();
 			// Same a11y contract as the long relative form: the visible short label
 			// is backed by the full absolute date for screen readers.
 			expect(el).toHaveAttribute('aria-label');
@@ -505,7 +505,7 @@ describe('Timestamp', () => {
 	it('auto format uses relative for recent times', async () => {
 		const oneHourAgo = Date.now() / 1000 - 3600;
 		const screen = await render(Timestamp, { props: { value: oneHourAgo, format: 'auto' } });
-		await expect.element(screen.getByText('1 hour ago')).toBeInTheDocument();
+		await expect.element(screen.getByText('1 hour ago', { exact: true })).toBeInTheDocument();
 	});
 
 	it('auto format uses date_time for old times', async () => {
@@ -606,12 +606,12 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: now - 5, format: 'relative', isLive: true }
 		});
-		await expect.element(screen.getByText('now')).toBeInTheDocument();
+		await expect.element(screen.getByText('now', { exact: true })).toBeInTheDocument();
 
 		// No `act()` counterpart is needed: the interval's `$state` write flushes
 		// on its own and `expect.element` retries until the text lands.
 		vi.advanceTimersByTime(30_000);
-		await expect.element(screen.getByText('35 seconds ago')).toBeInTheDocument();
+		await expect.element(screen.getByText('35 seconds ago', { exact: true })).toBeInTheDocument();
 	});
 
 	// --- Ref ---
@@ -651,7 +651,7 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: oneHourFromNow, format: 'relative' }
 		});
-		await expect.element(screen.getByText('in 1 hour')).toBeInTheDocument();
+		await expect.element(screen.getByText('in 1 hour', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders "now" for a value a few seconds in the future (clock skew)', async () => {
@@ -664,7 +664,7 @@ describe('Timestamp', () => {
 			props: { value: twentySecondsFromNow, format: 'relative' }
 		});
 		expect(screen.container.textContent).not.toMatch(/^in /);
-		await expect.element(screen.getByText('now')).toBeInTheDocument();
+		await expect.element(screen.getByText('now', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders a genuine near-future time beyond the skew tolerance', async () => {
@@ -673,7 +673,7 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: fortyFiveSecondsFromNow, format: 'relative' }
 		});
-		await expect.element(screen.getByText('in a few seconds')).toBeInTheDocument();
+		await expect.element(screen.getByText('in a few seconds', { exact: true })).toBeInTheDocument();
 	});
 
 	// --- Long-ago relative ---
@@ -683,7 +683,7 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: threeMonthsAgo, format: 'relative' }
 		});
-		await expect.element(screen.getByText('3 months ago')).toBeInTheDocument();
+		await expect.element(screen.getByText('3 months ago', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders years ago for dates older than 365 days', async () => {
@@ -691,7 +691,7 @@ describe('Timestamp', () => {
 		const screen = await render(Timestamp, {
 			props: { value: twoYearsAgo, format: 'relative' }
 		});
-		await expect.element(screen.getByText('2 years ago')).toBeInTheDocument();
+		await expect.element(screen.getByText('2 years ago', { exact: true })).toBeInTheDocument();
 	});
 
 	// --- Auto threshold ---

@@ -1,0 +1,463 @@
+---
+seq: 032
+title: Batch 32 — upstream 0.5.0
+upstream: 0.5.0
+date: 2026-08-25
+units: [neutral-theme, Layout/padding, Layout/container, disabled-interaction-sweep]
+upstream-prs: [4881, 5255, 5323, 5247, 5352]
+---
+
+## Scope
+
+Tracking `@astryxdesign/*` 0.4.5 -> 0.5.0. The jump swallows 0.4.6 and 0.4.7, which this port
+never pinned.
+
+Measured before any porting (`git diff v0.4.5..v0.5.0`, and `node scripts/status.mjs` with the
+reference clone checked out at `v0.5.0`):
+
+| Dimension                                  | Delta                                             |
+| ------------------------------------------ | ------------------------------------------------- |
+| `packages/core/src` files changed           | 354 (+28,913 / -1,801)                            |
+| Component dirs upstream                     | 103 -> 104                                        |
+| Component dirs added                        | `Stepper` (promoted out of `lab`)                 |
+| Component dirs removed / renamed            | none                                              |
+| Component dirs touched                      | 79                                                |
+| Upstream test suites                        | 256 -> 275                                        |
+| Upstream declared cases                     | 6383 -> 7041 (+658)                               |
+| — in suites with no counterpart here        | 21 suites / 367 cases                             |
+| — of which arrived as new upstream files    | 20 files / 323 cases                              |
+| — added inside suites that already existed  | +335 cases, across 59 suites                      |
+| Class-oracle mismatches after the re-pin    | 0 -> 427                                          |
+| Barrel additions                            | `Stepper`, `MediaThemeMode`                       |
+
+Two changes upstream calls breaking:
+
+- **`Banner`**: the disclosure axis collapses onto one `collapsible: boolean | CollapsibleConfig`
+  prop backed by the shared `useCollapsible` hook; `defaultIsExpanded` is removed (#5255).
+- **`Layer`**: every overlay's own Escape listener is replaced by one shared dismissal stack
+  (`useLayerDismissal`), with an `escapeBehavior` of `close` | `block`, IME-composition guards, and
+  top-most resolved from tree nesting rather than DOM containment (#4881).
+
+## Units
+
+### `neutral` theme — the error red fails AA (landed)
+
+Upstream moved the saturated error stop one tonal step, `#e33f4a` -> `#c9303a`: the old stop pairs
+with its white label at 4.14:1, and a 12px/500 label wants AA's 4.5 rather than the 3:1 large-text
+allowance. Three declarations (`badge`, `statusdot`, `progressbar`), in **both** copies of the file
+— `packages/themes/neutral/src/` and the CLI's bundled template. `--shadow-inset-error` keeps
+`#e33f4a4D`; upstream did not move it.
+
+The file header's "pass WCAG AA (5.6–9.6 contrast)" was a false claim on our side too, and is
+replaced rather than re-ranged.
+
+Theme oracle: 3 -> 0.
+
+### `Layout/padding` + `Layout/container` — the overlay padding boundary (#5352, #5208) (landed)
+
+`padding.stylex.ts` gains six per-edge groups (`paddingInlineStart/End`,
+`containerPaddingInlineStart/EndVar`, `paddingBlockStart/End`) and `overlayPaddingReset`, and the
+propagation variable is renamed `--astryx-section-padding` -> `--_section-padding-propagated`.
+
+The rename is the load-bearing part. The public token is the *theme's* section padding, set once at
+the theme root; the propagated one is *an ancestor `Section`'s* padding. An overlay leaves its
+parent's visual box while staying its DOM descendant, so it has to drop the inherited value at its
+boundary without dropping the theme's — impossible while both live under one name.
+`container.stylex.ts` now reads the propagated name ahead of the public one, so a propagated value
+still wins for nested sections.
+
+Class oracle: 427 -> 341 (the two modules' own 26, plus 60 downstream of the section chain).
+
+### The disabled-interaction sweep (#5323, #5247) (landed)
+
+The single largest share of the drift, and one coherent unit rather than 71 small ones:
+
+- Every `cursor` in core carries `':is(:disabled,[aria-disabled="true"])': 'default'` — 71 upstream
+  files.
+- Every `cursor: 'not-allowed'` becomes `'default'` — 36 files. Upstream's reasoning: a disabled
+  control sealed behind `pointer-events: none` shows whatever its ancestor shows, so one cursor
+  everywhere beats a stronger one that can only be painted on half of them.
+- Every self-`:hover` takes the zero-specificity guard
+  `':hover:where(:not(:disabled,[aria-disabled="true"]))'` — 46 files. `:where()` contributes no
+  specificity, so existing overrides weigh what they weighed before.
+- `reset.css`: `:where(:disabled)` becomes `:where(:disabled, [aria-disabled='true'])`.
+- `theme/generateThemeRules.ts`: a themed `:hover` gets the same guard spliced in, with any
+  pseudo-element kept last (`HOVER_DISABLED_GUARD`, +88 lines, +8 cases).
+
+Applied here as one mechanical pass over `src/lib/**/*.ts`, then verified by the oracle rather
+than by review — 148 declarations in 70 files (104 cursors made conditional, 44 `not-allowed` ->
+`default`), 84 hover keys in 41 files, plus `base.css` and `generate-theme-rules.ts`.
+
+Two shapes needed care. `stylex.when.ancestor(':hover')` is an **ancestor** hover, not a self-hover;
+upstream left all 23 of its own untouched and so did we (27 here). And a pseudo-ELEMENT has to end
+the selector, so `':hover::after'` takes the guard spliced in before the `::after` rather than
+appended — `guardHoverPseudo` does the same splice for themed rules.
+
+`generate-theme-rules.ts` also picked up upstream's second change in the same file: `paddingTop` and
+`paddingBottom` now normalise to `paddingBlockStart`/`paddingBlockEnd` and join the container
+expansion. `paddingLeft`/`paddingRight` deliberately do not — they are direction-relative, and the
+expansion's tokens are consumed by logical properties, so mapping them would move the padding to the
+opposite edge in RTL.
+
+Upstream keeps the sweep from rotting with two lint rules (`@astryx/no-hover-on-disabled` and its
+cursor counterpart) and a Chromium sweep over every story. Neither exists here; the oracle is what
+catches a regression, and only for a module it already covers.
+
+Class oracle: 341 -> 103.
+
+### `Stepper` / `Step` — DONE
+
+New component dir, promoted out of `lab`. Nine files, its own `stepper.markers.stylex.ts` (upstream
+names that file `stepper.stylex.ts`, which is taken here by Stepper's own styles), and the upstream
+suite ported whole — none dropped. Its `indicator` prop is declared as the spelled-out union rather
+than the `StepIndicatorPreset` alias: the docs emitter reads this package's compiled `.d.ts`, so an
+alias would publish the type *name* and hide the legal values, which is exactly what
+`doc-prop-literals.test.ts` (#1645) exists to catch. Upstream's hand-authored doc spells the same
+union out. That defect shipped and was caught by the doc regeneration, not by review.
+
+`theming-targets.test.ts` skips a component directory that has **no `.doc.mjs`** rather than
+failing it, so Stepper's five theme targets were guarded by nothing until `emit-core-docs` ran.
+
+### `DateInput` touch surface — DONE (source), suite mostly not
+
+Nine new source files and the surface switch in `date-input.svelte` (`useMediaQuery('(pointer:
+coarse)')`), with the old implementation moved verbatim into `pointer-date-field.svelte`. The
+`tokens.stylex.ts` it introduces is this port's first `stylex.defineConsts` and is what forced both
+oracles to learn const hashing (above).
+
+Its suite is the batch's largest at 134 cases and **36 are ported** — `monthGeometry` and the
+definition-level CSS checks, all executed. The other 98 are DOM cases needing a harness (per-test
+`matchMedia` stub, a `clientWidth` prototype shadow, fake timers past `SCROLL_QUIET_MS`) that means
+something different in real Chromium than in jsdom; writing them blind would have been a false
+green. Named in the suite header.
+
+### `Layer` — one dismissal stack (#4881) — not started
+
+The batch's deepest change, and now its largest remaining one. `useLayerDismissal` + `layerStack.ts`
++ `LayerDepthContext` + `useTouchTrigger` replace every overlay's own Escape listener. 4 new
+upstream suites, 52 cases. It also blocks four documented-but-undeclared props — `touchTrigger` on
+`Tooltip`, `HoverCard` and both their hooks — because `useTouchTrigger` is what backs them.
+
+### `Banner` — `collapsible` (#5255) — not started
+
+`defaultIsExpanded` removed; the axis becomes `boolean | CollapsibleConfig` over the shared
+`useCollapsible` hook.
+
+### Remaining, by size
+
+`Layer`'s dismissal stack (the big one), `Banner`'s `collapsible`, `TabList` (scrolling strip +
+`role="tablist"`, #5348/#5349), `MultiSelector`, `Table` plugins, `Markdown` source ranges and
+heading ids, `useMergedRefs`, `i18n/useCollator`, `hooks/scrollbarGutter`,
+`BottomSheet/BottomSheetEdgeTint`, `Calendar/getInitialFocusDate`, and the CLI's `v0.5.0` codemod
+directory and theme-targets API.
+
+Three documented props remain undeclared outside the `Layer` four: `Section`'s five per-edge padding
+props (the same 0.5.0 family closed here for `Stack`/`Center`, and the maps it needs already exist),
+`ChatMessageList.align` and `MultiSelector.formatValue`. The emitter names them on every run, so
+they cannot rot quietly.
+
+## Oracle bookkeeping
+
+The 0.4.5 baseline was **measured**, not assumed: the 0.4.5 tarball was unpacked over
+`packages/core/node_modules/@astryxdesign/core` and the oracle re-run — 1635 style keys, 0 skipped,
+**0 mismatches**. Everything below is 0.5.0 drift.
+
+| Stage                                   | Class oracle | Theme oracle |
+| --------------------------------------- | ------------ | ------------ |
+| After the re-pin                        | 427          | 3            |
+| After `neutral` error red               | 427          | **0**        |
+| After `Layout/padding` + `container`    | 341          | 0            |
+| After the disabled-cursor sweep         | 173          | 0            |
+| After the hover-guard sweep             | 103          | 0            |
+| After the four parallel component units | 47           | 0            |
+| After `Item`, `Selector`, `PowerSearch` | 42           | 0            |
+| After the eight closing component units | 2            | 0            |
+| After `MediaTheme` + `BaseTypeahead`    | **0**        | 0            |
+
+The skip list is still empty, and this bump needed no entries: nothing in it is a case of the
+tarball lagging source. Both class-oracle totals moved for real work — style keys and inline call
+sites both rose as the 0.5.0 surfaces landed, and every rise was checked against the tree-shake
+trap below rather than assumed.
+
+### Both oracles learned `stylex.defineConsts`
+
+`DateInput/tokens.stylex.ts` is the first `defineConsts` in either tree, and it broke an assumption
+both oracles were built on.
+
+Under `unstable_moduleResolution: {type: 'commonJS'}` the plugin never reads the defining module, so
+a *consumer* compiles to `var(--<constKey>)` where the key is
+``hash(`${packageName}:${pathFromPackageRoot}//${exportName}.${key}`)``. `processStylexRules` puts the
+literal back only when the sheet is written. So a const-derived rule ends up with a **byte-identical
+declaration** on both sides and a class name that can never agree — ours hashes
+`@astryx-svelte/core:src/lib/components/date-input/tokens.stylex.ts`, upstream's
+`@astryxdesign/core:src/DateInput/tokens.stylex.ts`. Nine rules were affected.
+
+This is the same standing a `defineMarker` class already has, and both oracles now treat it that
+way rather than carrying nine permanent skips:
+
+- **Class oracle** — a case may declare `constHashed: '<defining module>'`. It rides the existing
+  marker comparison (which diffs emitted CSS with the rule's own class blinded) and additionally
+  substitutes `constKey -> constVal` from the defining module's metadata, exactly as
+  `processStylexRules` does. It is deliberately denied the marker path's lookup-table filler
+  tolerance: that exists for a marker's 2^n conditional permutations, and waving leftovers through
+  here would hide a genuinely unclaimed call site.
+- **CSS oracle** — leftovers pair by declaration, but **only where exactly one unmatched rule on
+  each side carries that declaration**. An ambiguous declaration stays a finding, so the pairing
+  cannot launder a real difference into a rename. The count is reported in the summary line beside
+  the marker shapes.
+
+### The oracle a static reader cannot be
+
+`compare-upstream-classes.mjs` reads modules statically, so a `stylex.create` **function style** is
+invisible to it. Three real 0.5.0 defects lived in exactly that blind spot and were found only by
+`compare-upstream-css.mjs` or by reading the tag diff:
+
+- `AspectRatio`'s ratio moved from an inline style to a class-level `aspect-ratio: var(--x)`
+  declaration — the whole point being that an inline style beats every class and so can never be
+  made responsive, while a compiled declaration in `astryx-base` loses to any unlayered consumer
+  rule. Nine assertions in our suite still read `element.style.aspectRatio`; upstream's own suite
+  switched to reading the variable, which is strictly stronger (a custom property is stored
+  verbatim, escaping Blink's six-significant-figure serialisation of `aspect-ratio`).
+- `Dialog`'s `sizing` signature and its missing `overlayPaddingReset.reset`.
+- `Typeahead`'s `menuWidth`, documented here but implemented nowhere, driving `popoverCustomWidth`.
+
+`compare-upstream-classes.mjs` is this batch's merge hazard: three of the four parallel units needed
+to edit it, and its inline claim lists are hand-maintained. It survived, but a fourth concurrent
+editor would not have.
+
+## The props delta, as the docs generator measures it
+
+`pnpm -F docs generate` reads upstream's `.doc.mjs` against our built `dist/**/*.d.ts`, so it states
+the API gap without anyone assembling a list: **38 documented rows across 22 entries** that core does
+not declare, and 221 documented components against upstream's 229.
+
+    Banner: collapsible                    Section: paddingInline, paddingInline{Start,End},
+    Center: paddingInline{Start,End},               paddingBlock{Start,End}
+            paddingBlock{Start,End}        SelectorOption: layout
+    ChatMessageList: align                 Stack/HStack/VStack: paddingInline{Start,End},
+    DateTimeInput: timeOptionInterval                           paddingBlock{Start,End}
+    HoverCard/useHoverCard: touchTrigger   Tab: panelId
+    Item: layout                           TabList: overflow
+    MultiSelector: formatValue             useTableSelection: hasRowHighlight
+    PowerSearch: maxSearchResults          Tokenizer: menuWidth
+    Tooltip/useTooltip: touchTrigger       BaseTypeahead: menuWidth
+    MediaTheme: fallback
+
+The `padding*Start`/`padding*End` rows across `Center`, `Section` and the `Stack` family are the
+consumer half of the six new `padding.stylex.ts` groups — the modules landed, the props have not.
+
+## What the audits caught
+
+<!-- astryx-parity, astryx-idiom, astryx-test-parity, astryx-surface -->
+
+### `Item` — `layout="inline"` (landed)
+
+`layout?: 'stacked' | 'inline'` with the `inlineContent` / `inlineLabel` / `inlineDescription` trio.
+`isInline` is `layout === 'inline' && description != null` — with nothing to inline the layout falls
+back to stacked — and an inline row is one line by definition, so its description always ellipsizes
+even when it is a snippet rather than a string.
+
+This unit is where the tree-shaking rule below came from: the three style keys were added, the
+oracle went on reporting them `absent`, and the total "style keys checked" did not move. Nothing
+referenced them, so StyleX had compiled them away.
+
+### `Banner` — `collapsible` (#5255) (landed)
+
+`defaultIsExpanded` removed; the axis is `boolean | CollapsibleConfig` over the shared
+`useCollapsible` hook. The one subtlety, verified against upstream line-for-line rather than
+inferred: the config is passed with `defaultIsOpen: config.defaultIsOpen ?? false`, overriding the
+hook's own open-by-default so Banner keeps its historical closed start.
+
+The suite is 49 of upstream's 52 at v0.5.0 (was 45 of 47 at v0.4.5). The delta is not a simple +5:
+upstream **removed** three cases and added eight. The eighth is dropped here — it passes
+`children={false}`, and a Svelte `Snippet` cannot be `false`.
+
+### `BottomSheet` family (landed)
+
+`BottomSheetEdgeTint` ported as a new internal component (upstream keeps it out of its own
+`index.ts`, so it stays unpublished here), the panel's uniform-edge and floated-handle work
+(#5305, #5222), the exit curve and `scrimClosing` (#5326), `overlayPaddingReset` applied at the
+sheet root (#5208/#5231), and the IME guard on the standalone sheet (#5322) — `preventDefault()`
+first so the browser raises no close request of its own, then the early return.
+
+`useSheetGestures`'s `DRAG_PROMOTION_SLOP` came with it: shipping #5326's curve without its
+tap-slop half would have landed the visual change and not the fix behind it.
+
+### `Item` — `layout="inline"` (landed)
+
+`layout?: 'stacked' | 'inline'` with the `inlineContent` / `inlineLabel` / `inlineDescription` trio.
+`isInline` is `layout === 'inline' && description != null` — with nothing to inline the layout falls
+back to stacked — and an inline row is one line by definition, so its description always ellipsizes
+even when it is a snippet rather than a string.
+
+This unit is where the tree-shaking rule below came from: the three style keys were added, the
+oracle went on reporting them `absent`, and the total "style keys checked" did not move. Nothing
+referenced them, so StyleX had compiled them away.
+
+### `Selector` — the trigger is sized by padding (landed)
+
+`height` on the size styles becomes `minHeight` + a `paddingBlock` of
+`calc((token - --spacing-5 - 2 * --border-width) / 2)`, and `triggerContainer` pins its line-height
+to `--spacing-5` so the line box is a known quantity. That is what lets a two-line value (the
+`Item.layout="inline"` row above) grow the trigger onto 48/52/56 instead of clipping. New
+`triggerInGroup` zeroes both inside an `InputGroup`, where the group owns the row height.
+
+### `PowerSearch` — the edit popover fits a narrow viewport (#4768/#4761) (landed)
+
+`containerType: 'inline-size'` on the container plus a `chipRow` group whose `flexWrap` flips at
+`@container (max-width: 399px)` — a container query, not a viewport one, so the rows track the width
+the popover actually got. `maxWidth: '100%'` on the three selector slots so a long translated
+operator label truncates instead of pushing the row wider.
+
+### `TabList` — the scrolling strip and the tabs pattern (#5348, #5349) (landed)
+
+The strip becomes an inner element (`themeProps('tab-strip')`) inside the wrapper, which is a `<div>`
+under `role="tablist"` and a `<nav>` landmark otherwise. `overflow: 'auto' | 'scroll' | 'visible'`,
+edge fades, two `aria-hidden` `tabindex="-1"` arrows, reveal-on-mount and reveal-on-`value`-change.
+`Tab` gains `panelId`, and under the asserted role emits `role="tab"` + `aria-selected` +
+`aria-controls`, with `aria-current` moving from `'page'` to `'true'`.
+
+`role` is deliberately **not** re-declared on `TabListProps`. Upstream restates it purely to carry a
+doc comment; `BaseProps` already publishes it here as Svelte's `AriaRole | null`, and re-declaring as
+`AriaRole` would narrow this port's published type and drift the generated doc row. Verified against
+the emitted `TabList.doc.mjs`, which already reads `AriaRole | null` with upstream's 0.5.0 prose.
+
+Class oracle: 10 -> 0.
+
+The suite's header was a **false contract** the moment the pin moved: it claimed all 45 cases, and
+upstream's file is 74 at 0.5.0. Three are ported here (the two rewritten `aria-current` cases and
+the new link-tab counterpart, which is what the `'page'` -> `'true'` change breaks); the header now
+states 46 of 74 and names the four unported describes rather than leaving the old number standing.
+
+### `Spinner` — the ring stops being a canvas (landed)
+
+0.5.0 replaces the `<canvas>` ring with an `<svg>` and two `<circle>`s, which deletes this port's
+`getComputedStyle` colour-carrier hack outright: the paint path needed a JS-readable token value,
+and the cascade now supplies it. `SPREAD`/`START_POINT` give way to `ARC_FRACTION = 0.375` —
+upstream's own note is that the canvas ring swept 135°, not the 270° its constant's comment claimed.
+
+Upstream's `syncRotationPhase` batching (a module-level `Set` plus one rAF, pinning
+`animation.startTime = 0` so every ring on the page turns in phase) is ported as an attachment in
+`<script module>`. It reads no reactive state, so it runs once per element the way React's stable
+ref callback does, and the `Set` is deliberately not a `SvelteSet`: a reactive set would make each
+mount invalidate the others, which is the opposite of batching.
+
+Class oracle: 3 -> 0.
+
+### `Breadcrumbs` — the current crumb is not colour alone (#4605) (landed)
+
+`current.fontWeight` moves from `'inherit'` to `--font-weight-semibold`. Two things came with it that
+were ours, not upstream's: `buttonReset`'s blanket `padding: 0` was also killing `link`'s
+`paddingBlock`, so a button crumb rendered 20px against its sibling links' 28px, and the variant now
+reaches both theme targets as `data-variant`.
+
+Class oracle: 7 -> 0.
+
+## Rules promoted
+
+- `CLAUDE.md` § StyleX constraints — a `stylex.create` key nothing references is compiled away, so
+  the oracle reports it `absent` and its key total does not move; wire the key through its `*Attrs`
+  helper and `.svelte` call site in the same change.
+
+## The gate
+
+Every stage green. What was run, and what it said:
+
+| Stage                               | Result                                        |
+| ----------------------------------- | --------------------------------------------- |
+| `pnpm -r build`                     | clean                                         |
+| `pnpm -r check`                     | 0 errors, 34 warnings (1820 files)            |
+| prettier / eslint / `lint:root`     | clean                                         |
+| core server project                 | 61 files, 1407 cases, 0 failed                |
+| core client project (real Chromium) | 201/201 files, 5243 cases, 0 failed           |
+| **class oracle**                    | 1810 keys, 599 inline sites, **0 mismatches** |
+| **CSS oracle**                      | **0 mismatches**                              |
+| pseudo-locale                       | current                                       |
+| all 8 theme packages                | oracles green, mismatch 0 each                |
+| `@astryx-svelte/cli`                | 114 files, 2104 cases, themes bundle current  |
+| `emit-core-docs --check`            | 224 docs, all current                         |
+
+### Two things the gate caught that review had not
+
+**The client runner deadlocks on a cold Vite cache.** `run-client-tests.mjs` launches four chunks at
+a time; on the first full run three of the first four never printed a header and held their slots
+until the 30-minute stage timeout killed everything, while chunks 5-17 all passed. It is not a test
+defect — chunk 2 runs clean in isolation (12 files, 323 cases), and so does every file in it. The
+log shows `ENOENT`, repeated `Port … is in use` and `Forced re-optimization of dependencies` at the
+start: four browsers racing a Vite optimize cache that the immediately preceding `pnpm -r build` had
+emptied. Re-run warm, the whole suite passes. CLAUDE.md's warning about concurrent client-project
+processes fighting over `.svelte-kit` applies to the runner's **own** concurrency, not just to two
+people running it at once.
+
+**Piping the gate hides its exit code.** `pnpm verify 2>&1 | tail -80` returns `tail`'s status, so a
+run that failed 3 of 7 stages read as a pass. Redirect to a file instead. This is the same hazard
+the `pnpm verify` docstring records for `&&`-chained stages, reached from the other direction.
+
+Three failures found by running the stages rather than by review, each from the version bump rather
+than from a code change:
+
+- **`derivedVarRegistry` gained a `number-input` entry** at 0.5.0 (`padding` -> `container`,
+  `borderRadius` -> `--_field-radius`). Missing it made `butter`'s theme oracle emit raw
+  `padding-block`/`padding-inline` where upstream emits container tokens — and only `butter` sets
+  padding on that component, so exactly one of eight theme packages caught it.
+- **Three documented theming targets had no `themeProps` literal** — the CLI's registry test.
+  `selector-option-row` (#5179) is ported; `date-time-input-time-listbox` and
+  `-time-option` belong to the unported `timeOptionInterval` combobox and are now an explicit,
+  self-retiring deferral in that test, with hygiene in both directions: an entry that stops being
+  orphaned fails the run.
+- The four client-suite assertions that pinned an unguarded themed `:hover` selector, covered above.
+
+## Debts opened
+
+- `TabList`'s stranger-in-the-strip warning cannot see a `role` attribute flip
+- `useMergedRefs` (#5267) has no Svelte counterpart
+- `BottomSheet`'s scrim-closing condition is a parameter, not a call-site expression
+
+**`port/debts.md` has a `## Retired` section and `scripts/status.mjs` stops counting at it.** Three
+entries were appended to the end of the file — below that heading — and silently did not count;
+`status.md`'s total did not move, which is the only reason it was caught. The two entries this batch
+retired had also been *deleted* rather than moved into that section, which is where the file's own
+preamble says closed entries belong. Both are fixed: the new three sit above the heading, the
+retired two below it with their heads rewritten to `retires: retired at 0.5.0`.
+
+## What the version bump did to two hygiene lists
+
+Both are lists whose stated rule is that they may only shrink, and both legitimately grew — because
+upstream **documented props it had previously left undocumented** (#4315-#4320). The violation is
+not ours and there is nothing to fix in our tree; the list is the only place it can be recorded.
+
+- `doc-prop-literals.test.ts`'s `PORT_DOC_TYPE_DEBT` gained five: `MultiSelector`, `Selector` and
+  `Typeahead`'s `startIcon`, `Toast.onDismiss`, `Toolbar.dividers`. Each is the same inherited
+  `IconName | Snippet` / named-union bargain as its already-listed sibling. The header now states
+  that the shrink-only rule holds **at a fixed pin**, which is the thing that was actually true all
+  along.
+- `derived-var-registry.test.ts`'s `VARS_WITHOUT_DERIVED_MAPPING` gained
+  `--_input-clear-hit-inset` and `--_input-clear-hit-content` — the clear button's coarse-pointer
+  hit target, the same `::after`-overlay shape as the already-listed `--_thumbnail-hit-inset`.
+
+Neither failure was visible until `emit-core-docs` re-ran against the new pin, which is the argument
+for running it early in a tracking batch rather than at the end.
+
+## Debts retired
+
+Two `upstream-lag` entries closed themselves at 0.5.0, both verified against the pinned tarball's
+`src/**/*.doc.mjs` rather than assumed:
+
+- **Batch 5's doc omissions** — upstream now documents `NumberInput.onKeyDown` and
+  `CodeBlock.highlightMode`. Our re-emitted docs carry both (the generator maps the handler to
+  Svelte's lowercase `onkeydown` and keeps upstream's description).
+- **Upstream doc gap: `defaultIndex` and `hasAutoPlay` are absent from `Lightbox.doc.mjs`** — both
+  are documented now.
+
+Three that did **not** retire, checked rather than carried forward:
+
+- `Spinner`/`Kbd`/`Code` still document less than their source ships — `Spinner`'s `size="xl"`,
+  `Kbd`'s `plus`, `Code`'s `color`/`size` are all still absent from upstream's tables.
+- Upstream's `AspectRatio` comments in the Gallery templates are still stale: 0.5.0 rewrote
+  `mixed-gallery`'s hero comment for the new responsive override but left "AspectRatio exposes no
+  objectFit or radius props" intact in all four.
+
+## Generated docs
+
+`pnpm -F docs emit-core-docs` after the re-pin: **64 of 221 `.doc.mjs` changed**. That is the whole
+0.5.0 prose delta, and it is why the two debts above could be checked from our own tree.

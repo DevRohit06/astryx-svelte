@@ -59,12 +59,12 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Mark the current page with isSelected — it sets aria-current="page", so the current destination is announced rather than carried by color alone.'
+					'Mark the current page with isSelected: it sets aria-current="page", so the current destination is announced rather than carried by color alone.'
 			},
 			{
 				guidance: true,
 				description:
-					'SideNav renders a navigation landmark, and a collapsible item follows the WAI-ARIA APG Disclosure pattern (https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): the toggle carries aria-expanded and aria-controls, and the group it owns is inert while collapsed. Keep item labels short — they are the accessible name in both expanded and icon-only modes.'
+					'SideNav renders a navigation landmark, and a collapsible item follows the WAI-ARIA APG Disclosure pattern (https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/): the toggle carries aria-expanded and aria-controls, and the group it owns is inert while collapsed. Keep item labels short; they are the accessible name in both expanded and icon-only modes.'
 			},
 			{
 				guidance: true,

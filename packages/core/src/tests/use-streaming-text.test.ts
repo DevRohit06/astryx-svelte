@@ -3,10 +3,10 @@ import { snapToGraphemeBoundary } from '$lib/hooks/use-streaming-text.svelte.js'
 
 /**
  * The `snapToGraphemeBoundary` half of Astryx's `hooks/useStreamingText.test.ts`
- * at **v0.4.5** — its second `describe`, all 3 cases, titles and assertions
- * unchanged. The 11 cases of the `useStreamingText` describe live next door in
- * `use-streaming-text.svelte.test.ts`; between the two files upstream's 14 are
- * all present.
+ * at the **0.5.0** pin — its second `describe`, all 3 cases, titles and
+ * assertions unchanged. The 11 cases of the `useStreamingText` describe live
+ * next door in `use-streaming-text.svelte.test.ts`; upstream declares **14** at
+ * this pin and between the two files all 14 are present, nothing dropped.
  *
  * ## Why the file splits where it does
  *

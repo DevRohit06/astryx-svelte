@@ -1,5 +1,10 @@
 import * as stylex from '@stylexjs/stylex';
-import { paddingBlockStyles, paddingInlineStyles } from '../../internal/padding.stylex.js';
+import {
+	paddingBlockEndStyles,
+	paddingBlockStartStyles,
+	paddingInlineEndStyles,
+	paddingInlineStartStyles
+} from '../../internal/padding.stylex.js';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import type { SpacingStep } from '../../internal/types.js';
 import { spacingVars } from '../../styles/tokens.stylex.js';
@@ -170,8 +175,15 @@ export function stack({ crossAlign, direction, gap, mainAlign, wrap }: StackOpti
 }
 
 export interface StackAttrsOptions extends StackOptions {
-	paddingInline?: SpacingStep;
-	paddingBlock?: SpacingStep;
+	/**
+	 * The four padding edges, already resolved by the component — each is
+	 * `edge prop ?? axis prop ?? padding`, most specific first, exactly as
+	 * upstream's `Stack.tsx` resolves them before the `stylex.props` call.
+	 */
+	paddingInlineStart?: SpacingStep;
+	paddingInlineEnd?: SpacingStep;
+	paddingBlockStart?: SpacingStep;
+	paddingBlockEnd?: SpacingStep;
 	isScrollable?: boolean;
 }
 
@@ -188,16 +200,20 @@ export function stackAttrs(
 		mainAlign,
 		gap,
 		wrap,
-		paddingInline,
-		paddingBlock,
+		paddingInlineStart,
+		paddingInlineEnd,
+		paddingBlockStart,
+		paddingBlockEnd,
 		isScrollable
 	}: StackAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
 	return sx(
 		...stack({ direction, crossAlign, mainAlign, gap, wrap }),
-		paddingInline != null && paddingInlineStyles[paddingInline],
-		paddingBlock != null && paddingBlockStyles[paddingBlock],
+		paddingInlineStart != null && paddingInlineStartStyles[paddingInlineStart],
+		paddingInlineEnd != null && paddingInlineEndStyles[paddingInlineEnd],
+		paddingBlockStart != null && paddingBlockStartStyles[paddingBlockStart],
+		paddingBlockEnd != null && paddingBlockEndStyles[paddingBlockEnd],
 		isScrollable && overflowStyles.scrollable,
 		xstyle
 	);

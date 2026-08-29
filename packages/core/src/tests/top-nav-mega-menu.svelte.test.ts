@@ -8,7 +8,7 @@ import { expectSharedFocusRing } from './shared-focus-ring.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMegaMenu.test.tsx` — **all 39 of its `it`
- * cases** at v0.4.5, across all nine of its describes (`default mode`, `popup
+ * cases** at the 0.5.0 pin, across all nine of its describes (`default mode`, `popup
  * semantics`, `hover/click guard`, `dismissal`, `keyboard`, `mobile-bar mode`,
  * `drawer mode`, `TopNavMegaMenuItem`, `drawer focus ring`). Nothing dropped.
  * Client (real Chromium) project.
@@ -76,7 +76,9 @@ describe('TopNavMegaMenu — default mode', () => {
 				items: [{ title: 'Analytics', href: '/analytics' }]
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Products' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Products', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('trigger has aria-haspopup and aria-expanded attributes', async () => {
@@ -86,7 +88,7 @@ describe('TopNavMegaMenu — default mode', () => {
 				items: [{ title: 'Analytics', href: '/analytics' }]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-haspopup', 'true');
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -101,7 +103,9 @@ describe('TopNavMegaMenu — default mode', () => {
 				]
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Products' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Products', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders with featured content', async () => {
@@ -112,12 +116,16 @@ describe('TopNavMegaMenu — default mode', () => {
 				featured: { text: 'Featured content', testid: 'featured' }
 			}
 		});
-		await expect.element(screen.getByRole('button', { name: 'Products' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Products', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders without items or featured', async () => {
 		const screen = await render(MegaMenu, { props: { menu: { label: 'Empty' } } });
-		await expect.element(screen.getByRole('button', { name: 'Empty' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Empty', exact: true }))
+			.toBeInTheDocument();
 	});
 });
 
@@ -163,7 +171,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		const triggerLoc = screen.getByRole('button', { name: 'Products' });
+		const triggerLoc = screen.getByRole('button', { name: 'Products', exact: true });
 		await expect.element(triggerLoc).toHaveAttribute('aria-expanded', 'false');
 		const trigger = triggerLoc.element();
 
@@ -178,7 +186,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 		await expect.element(triggerLoc).toHaveAttribute('aria-expanded', 'true');
 		// The referenced element is the popup that contains the panel content.
 		expect(popup).toContainElement(
-			screen.getByRole('group', { name: 'Products', includeHidden: true }).element()
+			screen.getByRole('group', { name: 'Products', exact: true, includeHidden: true }).element()
 		);
 	});
 
@@ -190,7 +198,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		openPanel(screen.getByRole('button', { name: 'Products' }).element());
+		openPanel(screen.getByRole('button', { name: 'Products', exact: true }).element());
 
 		// Focus stays on the trigger while the panel is open, so a modal dialog
 		// wrapper would tell assistive tech the focused control is inert.
@@ -209,7 +217,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		openPanel(screen.getByRole('button', { name: 'Products' }).element());
+		openPanel(screen.getByRole('button', { name: 'Products', exact: true }).element());
 
 		// Per the WAI-ARIA APG, mega menu panels of navigation links must not use
 		// the menu role (reserved for action menus with menuitem children).
@@ -225,10 +233,10 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		openPanel(screen.getByRole('button', { name: 'Products' }).element());
+		openPanel(screen.getByRole('button', { name: 'Products', exact: true }).element());
 
 		await expect
-			.element(screen.getByRole('group', { name: 'Products', includeHidden: true }))
+			.element(screen.getByRole('group', { name: 'Products', exact: true, includeHidden: true }))
 			.toBeInTheDocument();
 	});
 
@@ -243,7 +251,7 @@ describe('TopNavMegaMenu — popup semantics', () => {
 			}
 		});
 
-		openPanel(screen.getByRole('button', { name: 'Products' }).element());
+		openPanel(screen.getByRole('button', { name: 'Products', exact: true }).element());
 
 		await expect
 			.element(screen.getByRole('link', { name: /Analytics/, includeHidden: true }))
@@ -272,7 +280,7 @@ async function renderMenu() {
 			items: [{ title: 'Analytics', href: '/analytics' }]
 		}
 	});
-	return { screen, trigger: screen.getByRole('button', { name: 'Products' }) };
+	return { screen, trigger: screen.getByRole('button', { name: 'Products', exact: true }) };
 }
 
 /**
@@ -312,6 +320,35 @@ function click(element: Element): void {
  */
 function mouse(element: Element, type: 'mouseenter' | 'mouseleave'): void {
 	element.dispatchEvent(new MouseEvent(type));
+}
+
+/**
+ * Upstream's `screen.getByText(text)` where the text is a bare text node beside
+ * a sibling element.
+ *
+ * Testing Library's default text matcher reads an element's **own** text nodes
+ * (`getNodeText`), not its subtree. A Playwright locator compares the whole
+ * subtree text, so neither of its modes is upstream's assertion here: without
+ * `{exact: true}` it substring-matches and is *weaker*, and with it the compared
+ * string is `'Analytics Track behavior'` and it is simply a *different* question.
+ * Drawer mode renders `{title}` directly inside the content `<div>`, with the
+ * description as a `<span>` next to it — identical to upstream's markup — so the
+ * own-text equality is asserted against the nodes, as `tree-list` and `side-nav`
+ * already do for the same reason.
+ */
+function withOwnText(container: HTMLElement, text: string): HTMLElement {
+	const found = Array.from(container.querySelectorAll<HTMLElement>('*')).filter(
+		(el) =>
+			Array.from(el.childNodes)
+				.filter((n) => n.nodeType === Node.TEXT_NODE)
+				.map((n) => n.textContent ?? '')
+				.join('')
+				.trim() === text
+	);
+	if (found.length !== 1) {
+		throw new Error(`expected one element whose own text is "${text}", found ${found.length}`);
+	}
+	return found[0];
 }
 
 /** Upstream's `act(() => vi.advanceTimersByTime(ms))`, on the real clock. */
@@ -493,8 +530,8 @@ describe('TopNavMegaMenu — hover/click guard (default mode)', () => {
 			}
 		});
 
-		const products = screen.getByRole('button', { name: 'Products' });
-		const solutions = screen.getByRole('button', { name: 'Solutions' });
+		const products = screen.getByRole('button', { name: 'Products', exact: true });
+		const solutions = screen.getByRole('button', { name: 'Solutions', exact: true });
 
 		click(products.element());
 		await expect.element(products).toHaveAttribute('aria-expanded', 'true');
@@ -688,7 +725,7 @@ describe('TopNavMegaMenu — drawer mode', () => {
 				items: [{ title: 'Analytics', href: '/analytics' }]
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await expect.element(trigger).toBeInTheDocument();
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -705,14 +742,14 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 
 		await userEvent.click(trigger);
 
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
-		await expect.element(screen.getByText('Analytics')).toBeInTheDocument();
-		await expect.element(screen.getByText('Reports')).toBeInTheDocument();
+		await expect.element(screen.getByText('Analytics', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Reports', { exact: true })).toBeInTheDocument();
 	});
 
 	it('collapses when trigger is clicked again', async () => {
@@ -724,7 +761,7 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		const trigger = screen.getByRole('button', { name: 'Products' });
+		const trigger = screen.getByRole('button', { name: 'Products', exact: true });
 		await userEvent.click(trigger);
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 		await userEvent.click(trigger);
@@ -740,10 +777,11 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
-		await expect.element(screen.getByText('Analytics')).toBeInTheDocument();
-		await expect.element(screen.getByText('Track behavior')).toBeInTheDocument();
+		// `withOwnText` is upstream's matcher, not a locator — see its docstring.
+		expect(withOwnText(screen.container, 'Analytics')).toBeInTheDocument();
+		await expect.element(screen.getByText('Track behavior', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders items as links when href is provided', async () => {
@@ -755,9 +793,9 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
-		const link = screen.getByRole('link', { name: 'Analytics' });
+		const link = screen.getByRole('link', { name: 'Analytics', exact: true });
 		await expect.element(link).toHaveAttribute('href', '/analytics');
 	});
 
@@ -772,8 +810,8 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Tools' }));
-		await userEvent.click(screen.getByRole('button', { name: 'Export' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Tools', exact: true }));
+		await userEvent.click(screen.getByRole('button', { name: 'Export', exact: true }));
 
 		expect(handleClick).toHaveBeenCalledTimes(1);
 	});
@@ -788,9 +826,11 @@ describe('TopNavMegaMenu — drawer mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('button', { name: 'Products' }));
+		await userEvent.click(screen.getByRole('button', { name: 'Products', exact: true }));
 
-		await expect.element(screen.getByText('Featured: New AI Tools')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Featured: New AI Tools', { exact: true }))
+			.toBeInTheDocument();
 	});
 });
 
@@ -810,8 +850,8 @@ describe('TopNavMegaMenuItem', () => {
 		const screen = await render(TopNavMegaMenuItem, {
 			props: { title: 'Analytics', description: 'Track behavior', href: '/analytics' }
 		});
-		await expect.element(screen.getByText('Analytics')).toBeInTheDocument();
-		await expect.element(screen.getByText('Track behavior')).toBeInTheDocument();
+		await expect.element(screen.getByText('Analytics', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Track behavior', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as a drawer item in drawer context', async () => {
@@ -843,7 +883,7 @@ describe('TopNavMegaMenu — drawer focus ring', () => {
 				items: [{ title: 'Analytics', href: '/analytics' }]
 			}
 		});
-		expectSharedFocusRing(screen.getByRole('button', { name: 'Products' }).element());
+		expectSharedFocusRing(screen.getByRole('button', { name: 'Products', exact: true }).element());
 	});
 
 	it('draws the shared ring on a drawer item', async () => {

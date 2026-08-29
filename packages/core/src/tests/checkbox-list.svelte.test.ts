@@ -4,7 +4,7 @@ import { render } from 'vitest-browser-svelte';
 import CheckboxListFixture from './fixtures/checkbox-list-fixture.svelte';
 
 /**
- * Astryx's `CheckboxList/CheckboxList.test.tsx` at v0.3.0, ported case for case
+ * Astryx's `CheckboxList/CheckboxList.test.tsx` at the 0.5.0 pin, ported case for case
  * — **51 upstream cases, 51 here**. Nothing dropped, nothing added.
  *
  * By block: `CheckboxList` 25 (20, plus the nested five-case
@@ -102,7 +102,7 @@ describe('CheckboxList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Preferences')).toBeInTheDocument();
+		await expect.element(screen.getByText('Preferences', { exact: true })).toBeInTheDocument();
 	});
 
 	it('wraps items in a group named by the label (forms audit: group role)', async () => {
@@ -118,9 +118,9 @@ describe('CheckboxList', () => {
 		// from the field label (via aria-labelledby). The label is rendered as a
 		// <span> (not a literal <label>, which can't name a group) with no
 		// orphaned htmlFor.
-		const group = screen.getByRole('group', { name: 'Preferences' });
+		const group = screen.getByRole('group', { name: 'Preferences', exact: true });
 		await expect.element(group).toBeInTheDocument();
-		const label = screen.getByText('Preferences').element();
+		const label = screen.getByText('Preferences', { exact: true }).element();
 		expect(label.tagName).toBe('SPAN');
 		expect(label.closest('label')).toBeNull();
 		expect(label).not.toHaveAttribute('for');
@@ -176,7 +176,7 @@ describe('CheckboxList', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Option B' }));
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Option B', exact: true }));
 		expect(handleChange).toHaveBeenCalledTimes(1);
 		// Appended, never sorted.
 		expect(handleChange).toHaveBeenCalledWith(['a', 'b']);
@@ -196,7 +196,7 @@ describe('CheckboxList', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Option A' }));
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Option A', exact: true }));
 		expect(handleChange).toHaveBeenCalledWith(['b']);
 	});
 
@@ -218,7 +218,7 @@ describe('CheckboxList', () => {
 		// The row is a pointer-only click surface (no invisible row button — the
 		// checkbox is the option's only tab stop). Click the row's label area,
 		// where the composed onClick fires — not the inner checkbox.
-		expect(screen.getByRole('button', { name: 'Option B' }).query()).toBeNull();
+		expect(screen.getByRole('button', { name: 'Option B', exact: true }).query()).toBeNull();
 		// The text also exists in the checkbox's visually hidden <label>; target
 		// the row's label <span> to click the row surface.
 		await userEvent.click(labelSpanIn(screen.container, 'Option B'));
@@ -309,7 +309,7 @@ describe('CheckboxList', () => {
 			await userEvent.tab();
 			// The focused control is the checkbox itself, so its accessible name
 			// and checked state are what assistive tech announces on focus.
-			const checkboxA = screen.getByRole('checkbox', { name: 'Option A' });
+			const checkboxA = screen.getByRole('checkbox', { name: 'Option A', exact: true });
 			await expect.element(checkboxA).toHaveFocus();
 			await expect.element(checkboxA).toBeChecked();
 			await userEvent.keyboard(' ');
@@ -414,7 +414,9 @@ describe('CheckboxList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Select at least one')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Select at least one', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders description on items', async () => {
@@ -426,7 +428,7 @@ describe('CheckboxList', () => {
 				items: [{ label: 'Option A', value: 'a', description: 'This is option A' }]
 			}
 		});
-		await expect.element(screen.getByText('This is option A')).toBeInTheDocument();
+		await expect.element(screen.getByText('This is option A', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders description on the checkbox list group', async () => {
@@ -439,7 +441,9 @@ describe('CheckboxList', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByText('Choose your preferences')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Choose your preferences', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('supports data-testid on CheckboxList', async () => {
@@ -526,7 +530,7 @@ describe('CheckboxList', () => {
 		expect(checkboxesIn(screen.container)).toHaveLength(3);
 
 		// Select all triggers its own handler
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Select all' }));
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Select all', exact: true }));
 		expect(handleSelectAll).toHaveBeenCalledWith(true);
 		expect(handleCheck).not.toHaveBeenCalled();
 	});
@@ -542,7 +546,7 @@ describe('CheckboxListItem standalone mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Accept terms' }));
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Accept terms', exact: true }));
 		expect(handleCheck).toHaveBeenCalledWith(true);
 	});
 
@@ -594,7 +598,7 @@ describe('CheckboxListItem standalone mode', () => {
 			}
 		});
 
-		await userEvent.click(screen.getByRole('checkbox', { name: 'Partial' }));
+		await userEvent.click(screen.getByRole('checkbox', { name: 'Partial', exact: true }));
 		expect(handleCheck).toHaveBeenCalledWith(true);
 	});
 });
@@ -609,7 +613,9 @@ describe('CheckboxListItem accessible name', () => {
 				items: [{ label: 'Option A', value: 'a' }]
 			}
 		});
-		await expect.element(screen.getByRole('checkbox', { name: 'Option A' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('checkbox', { name: 'Option A', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('names the checkbox from aria-label when the label is a snippet', async () => {
@@ -623,7 +629,9 @@ describe('CheckboxListItem accessible name', () => {
 					items: [{ label: '', richLabel: true, 'aria-label': 'Pro plan', value: 'pro' }]
 				}
 			});
-			await expect.element(screen.getByRole('checkbox', { name: 'Pro plan' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('checkbox', { name: 'Pro plan', exact: true }))
+				.toBeInTheDocument();
 			// A named checkbox needs no dev guidance.
 			expect(warnSpy).not.toHaveBeenCalled();
 		} finally {
@@ -643,7 +651,9 @@ describe('CheckboxListItem accessible name', () => {
 				}
 			});
 			// Falls back to the generic name, and tells the developer how to fix it.
-			await expect.element(screen.getByRole('checkbox', { name: 'Checkbox' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('checkbox', { name: 'Checkbox', exact: true }))
+				.toBeInTheDocument();
 			expect(warnSpy).toHaveBeenCalledTimes(1);
 			expect(String(warnSpy.mock.calls[0]?.[0])).toContain('aria-label');
 
@@ -833,7 +843,7 @@ describe('CheckboxListItem ARIA props', () => {
 		// ...but aria-label names the checkbox control, not the row.
 		expect(item).not.toHaveAttribute('aria-label');
 		await expect
-			.element(screen.getByRole('checkbox', { name: 'custom label' }))
+			.element(screen.getByRole('checkbox', { name: 'custom label', exact: true }))
 			.toBeInTheDocument();
 	});
 

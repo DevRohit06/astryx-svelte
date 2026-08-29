@@ -1,7 +1,8 @@
 import { vi } from 'vitest';
 
 /**
- * Ported from Astryx's `__tests__/stubMatchMedia.ts`.
+ * Ported from Astryx's `__tests__/stubMatchMedia.ts` at the 0.5.0 pin. This is
+ * the shared helper, not a suite, so no case count applies to it.
  *
  * A query-aware `window.matchMedia` stub. The usual stub answers every query
  * with one boolean:

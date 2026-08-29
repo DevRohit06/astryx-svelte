@@ -5,7 +5,8 @@ import Fixture from './fixtures/theme-show-toast.svelte';
 import type { ToastOptions } from '$lib/components/toast/types.js';
 
 /**
- * Ported from Astryx's `Toast/useToast.test.tsx`, all 4 cases, in order.
+ * Ported from Astryx's `Toast/useToast.test.tsx`, all 4 cases at the 0.5.0 pin,
+ * in order.
  *
  * The suite was **deferred at batch 7** because every case drives theme-mode
  * resolution through `<Theme>` + `defineTheme` + a `matchMedia` mock, and
@@ -112,7 +113,7 @@ describe('useToast fallback viewport theme mode', () => {
 		const screen = await render(Fixture, {
 			props: { theme: testTheme, mode: 'light', options: NO_AUTO_HIDE }
 		});
-		(screen.getByText('Trigger').element() as HTMLElement).click();
+		(screen.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
 
 		await expect
 			.poll(() => fallbackContainer()?.querySelector('[data-astryx-media]'))
@@ -141,7 +142,7 @@ describe('useToast fallback viewport theme mode', () => {
 				triggerLabel: 'Trigger System'
 			}
 		});
-		(screen.getByText('Trigger System').element() as HTMLElement).click();
+		(screen.getByText('Trigger System', { exact: true }).element() as HTMLElement).click();
 
 		await expect
 			.poll(() => fallbackContainer()?.querySelectorAll('[data-astryx-media]').length ?? 0)
@@ -164,7 +165,7 @@ describe('useToast fallback viewport theme mode', () => {
 				triggerLabel: 'Trigger Mirror'
 			}
 		});
-		(screen.getByText('Trigger Mirror').element() as HTMLElement).click();
+		(screen.getByText('Trigger Mirror', { exact: true }).element() as HTMLElement).click();
 
 		await expect.poll(() => fallbackContainer()?.getAttribute('data-theme')).toBe('dark');
 		expect(fallbackContainer()!.getAttribute('data-astryx-theme')).toBe('test');
@@ -207,7 +208,7 @@ describe('useToast LayerProvider path', () => {
 				hasViewport: true
 			}
 		});
-		(screen.getByText('Trigger Provider').element() as HTMLElement).click();
+		(screen.getByText('Trigger Provider', { exact: true }).element() as HTMLElement).click();
 
 		await expect.poll(() => newestMediaAttr(screen.container)).toBe('dark');
 	});

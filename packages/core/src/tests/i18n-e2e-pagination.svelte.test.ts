@@ -5,7 +5,8 @@ import PaginationI18n from './fixtures/pagination-i18n.svelte';
 import pseudoCatalog from '$lib/locales/pseudo.json' with { type: 'json' };
 
 /**
- * Ported from Astryx's `i18n/__tests__/e2e-pagination.test.tsx` at **v0.4.5**,
+ * Ported from Astryx's `i18n/__tests__/e2e-pagination.test.tsx` at the **0.5.0**
+ * pin,
  * which declares **5** `test` cases in one
  * `describe('Pagination × i18n — end to end')`. **5 here**, in upstream's order,
  * with upstream's titles and assertions. **None dropped, none restated.**
@@ -59,15 +60,15 @@ describe('Pagination × i18n — end to end', () => {
 
 		// The nav landmark uses the default label "Pagination"
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Pagination' }))
+			.element(screen.getByRole('navigation', { name: 'Pagination', exact: true }))
 			.toBeInTheDocument();
 
 		// Prev/Next buttons carry English aria-labels
 		await expect
-			.element(screen.getByRole('button', { name: 'Go to previous page' }))
+			.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 			.toBeInTheDocument();
 		await expect
-			.element(screen.getByRole('button', { name: 'Go to next page' }))
+			.element(screen.getByRole('button', { name: 'Go to next page', exact: true }))
 			.toBeInTheDocument();
 
 		// The visible count text is "11–20 of 100"
@@ -117,14 +118,16 @@ describe('Pagination × i18n — end to end', () => {
 		});
 
 		// Overridden key: French
-		await expect.element(screen.getByRole('button', { name: 'Suivant' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Suivant', exact: true }))
+			.toBeInTheDocument();
 
 		// NON-overridden keys fall through to English (fr has no other catalog)
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Pagination' }))
+			.element(screen.getByRole('navigation', { name: 'Pagination', exact: true }))
 			.toBeInTheDocument();
 		await expect
-			.element(screen.getByRole('button', { name: 'Go to previous page' }))
+			.element(screen.getByRole('button', { name: 'Go to previous page', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -150,14 +153,18 @@ describe('Pagination × i18n — end to end', () => {
 		});
 
 		// next: from pt-BR
-		await expect.element(screen.getByRole('button', { name: 'Próxima (BR)' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Próxima (BR)', exact: true }))
+			.toBeInTheDocument();
 
 		// previous: from pt (fallback pt-BR → pt)
-		await expect.element(screen.getByRole('button', { name: 'Anterior' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Anterior', exact: true }))
+			.toBeInTheDocument();
 
 		// label: neither pt-BR nor pt has it — falls back to en
 		await expect
-			.element(screen.getByRole('navigation', { name: 'Pagination' }))
+			.element(screen.getByRole('navigation', { name: 'Pagination', exact: true }))
 			.toBeInTheDocument();
 	});
 

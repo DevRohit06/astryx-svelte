@@ -6,7 +6,7 @@
 
 	/**
 	 * Stand-in for upstream's
-	 * `renderHook(() => usePowerSearchSource(useInternalConfig(config)))`.
+	 * `renderHook(() => usePowerSearchSource(useInternalConfig(config), max))`.
 	 *
 	 * `usePowerSearchSource` calls `useTranslator()`, which reads Svelte context
 	 * and so must run during a component's init — hence a probe rather than a
@@ -28,12 +28,21 @@
 	 */
 	interface Props {
 		config: PowerSearchConfig;
+		/**
+		 * Uncapped by default so the suite exercises matching and ranking rather
+		 * than the typed-result cap, which has its own cases. Upstream's
+		 * `createSource` helper defaults the same way.
+		 */
+		maxTypedResults?: number;
 	}
 
-	const { config }: Props = $props();
+	const { config, maxTypedResults = Number.POSITIVE_INFINITY }: Props = $props();
 
 	const internal = useInternalConfig(() => config);
 
 	// Named `result`, after `renderHook`'s `result.current`.
-	export const result: SearchSource<PowerSearchItem> = usePowerSearchSource(() => internal);
+	export const result: SearchSource<PowerSearchItem> = usePowerSearchSource(
+		() => internal,
+		() => maxTypedResults
+	);
 </script>

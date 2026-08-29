@@ -26,12 +26,15 @@ const styles = stylex.create({
 			default: 'transparent',
 			':focus': colorVars['--color-overlay-hover']
 		},
-		cursor: 'pointer',
+		cursor: {
+			default: 'pointer',
+			':is(:disabled,[aria-disabled="true"])': 'default'
+		},
 		outline: 'none'
 	},
 	disabled: {
 		opacity: 0.5,
-		cursor: 'not-allowed'
+		cursor: 'default'
 	},
 	// Placement of the marker within the row. The indicator draws its own box
 	// (size, fill, border) — these are only the rules the MENU owns: where the

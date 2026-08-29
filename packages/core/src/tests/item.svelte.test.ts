@@ -8,10 +8,18 @@ import ItemProbe from './fixtures/item-probe.svelte';
 import ItemDelegating from './fixtures/item-delegating.svelte';
 
 /**
- * Astryx's `Item/Item.test.tsx` at v0.3.0 — **45 upstream cases, 45 here**,
- * ported case for case with nothing dropped. (The header previously said "37";
- * it was wrong on 0.2.0 too, where both sides had 40. Re-derived by enumerating
- * `git show v0.3.0:packages/core/src/Item/Item.test.tsx`.)
+ * Astryx's `Item/Item.test.tsx` at the **0.5.0** pin — **48 upstream cases, 45
+ * here**, ported case for case. (This header read "**45** upstream cases, 45
+ * here … nothing dropped" at the v0.3.0 pin, where 45 was the whole suite. It
+ * said "37" before that, which was wrong on 0.2.0 too, where both sides had 40.)
+ *
+ * **The 3 that are not here all arrived at 0.5.0**, and all three cover the
+ * `layout="inline"` branch: `puts the label and description in one row when
+ * layout is inline`, `ellipsizes a ReactNode description when layout is
+ * inline`, and `ignores inline layout when there is no description`. This is a
+ * test gap only — `item.svelte` implements the branch (`layout` defaults to
+ * `'stacked'`, and `isInline` requires a `description`), and its StyleX trio is
+ * wired through, so all three transcribe from upstream unchanged.
  *
  * Upstream's `marker`/`startContent`/`endContent` are `ReactNode` props and its
  * `label`/`description` are `ReactNode` too; here they are Svelte snippets (and
@@ -41,15 +49,17 @@ describe('Item', () => {
 
 	it('renders label text', async () => {
 		const screen = await render(Item, { props: { label: 'Contact Name' } });
-		await expect.element(screen.getByText('Contact Name')).toBeInTheDocument();
+		await expect.element(screen.getByText('Contact Name', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders label and description', async () => {
 		const screen = await render(Item, {
 			props: { label: 'Settings', description: 'Manage your preferences' }
 		});
-		await expect.element(screen.getByText('Settings')).toBeInTheDocument();
-		await expect.element(screen.getByText('Manage your preferences')).toBeInTheDocument();
+		await expect.element(screen.getByText('Settings', { exact: true })).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Manage your preferences', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('renders marker', async () => {
@@ -102,8 +112,8 @@ describe('Item', () => {
 		});
 		await expect.element(screen.getByTestId('marker')).toBeInTheDocument();
 		await expect.element(screen.getByTestId('start')).toBeInTheDocument();
-		await expect.element(screen.getByText('Label')).toBeInTheDocument();
-		await expect.element(screen.getByText('Description')).toBeInTheDocument();
+		await expect.element(screen.getByText('Label', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Description', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByTestId('end')).toBeInTheDocument();
 	});
 
@@ -180,7 +190,7 @@ describe('Item', () => {
 				rest: { label: 'Item', onclick: itemClick }
 			}
 		});
-		await userEvent.click(screen.getByText('Action'));
+		await userEvent.click(screen.getByText('Action', { exact: true }));
 		expect(buttonClick).toHaveBeenCalledTimes(1);
 		expect(itemClick).not.toHaveBeenCalled();
 	});
@@ -194,7 +204,7 @@ describe('Item', () => {
 				rest: { label: 'Item', onclick: itemClick }
 			}
 		});
-		await userEvent.click(screen.getByText('Open'));
+		await userEvent.click(screen.getByText('Open', { exact: true }));
 		expect(buttonClick).toHaveBeenCalledTimes(1);
 		expect(itemClick).not.toHaveBeenCalled();
 	});
@@ -244,7 +254,7 @@ describe('Item', () => {
 		const onToggle = vi.fn();
 		const screen = await render(ItemDelegating, { props: { onToggle } });
 		// Clicking the label (row surface) is forwarded to the checkbox.
-		await userEvent.click(screen.getByText('Row'));
+		await userEvent.click(screen.getByText('Row', { exact: true }));
 		expect(onToggle).toHaveBeenCalledTimes(1);
 	});
 
@@ -473,21 +483,21 @@ describe('Item', () => {
 
 	it('does not render description when not provided', async () => {
 		const screen = await render(Item, { props: { label: 'Label Only' } });
-		await expect.element(screen.getByText('Label Only')).toBeInTheDocument();
-		expect(screen.getByText('undefined').query()).toBeNull();
+		await expect.element(screen.getByText('Label Only', { exact: true })).toBeInTheDocument();
+		expect(screen.getByText('undefined', { exact: true }).query()).toBeNull();
 	});
 
 	it('accepts ReactNode as description', async () => {
 		const screen = await render(ItemProbe, {
 			props: { richDescription: true, rest: { label: 'Item' } }
 		});
-		await expect.element(screen.getByText('Rich')).toBeInTheDocument();
-		await expect.element(screen.getByText('description')).toBeInTheDocument();
+		await expect.element(screen.getByText('Rich', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('description', { exact: true })).toBeInTheDocument();
 	});
 
 	it('accepts ReactNode as label', async () => {
 		const screen = await render(ItemProbe, { props: { richLabel: true } });
-		await expect.element(screen.getByText('Alice')).toBeInTheDocument();
+		await expect.element(screen.getByText('Alice', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByText(/commented/)).toBeInTheDocument();
 	});
 });

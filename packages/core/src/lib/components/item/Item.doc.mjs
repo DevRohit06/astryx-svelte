@@ -179,6 +179,13 @@ export default {
 			description: 'Max lines before description truncates with ellipsis.'
 		},
 		{
+			name: 'layout',
+			type: "'inline' | 'stacked'",
+			description:
+				'How the label and description sit together. stacked puts the description on its own line below the label; inline keeps both on one line, description ellipsizing first, so the row fits a fixed-height host.',
+			default: "'stacked'"
+		},
+		{
 			name: 'onclick',
 			type: '(event: MouseEvent) => void',
 			description: 'Click handler. Makes the item clickable with button semantics.'

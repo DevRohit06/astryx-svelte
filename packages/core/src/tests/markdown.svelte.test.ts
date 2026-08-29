@@ -8,9 +8,25 @@ import MarkdownInlinePlugins from './fixtures/markdown-inline-plugins.svelte';
 import type { MarkdownPluginSpec } from './fixtures/markdown-inline-plugins.svelte';
 
 /**
- * Astryx's `Markdown/Markdown.test.tsx` (62 cases at 0.3.0), ported case for
- * case. Nothing is dropped; every upstream `it` has a counterpart here, in
- * upstream's order and under upstream's name.
+ * Astryx's `Markdown/Markdown.test.tsx` at the **0.5.0** pin, where it declares
+ * **67** cases; **62** are here, in upstream's order and under upstream's
+ * names.
+ *
+ * **The 5 that are not here are one block, `describe('heading ids')`** —
+ * generated `id` attributes on headings, numeric-suffix disambiguation of
+ * duplicate headings, ids matching `parseOutlineFromMarkdown` for the same
+ * source, the generated id reaching a custom heading component, and headings
+ * nested inside blockquotes getting no id. The block landed upstream between
+ * v0.3.0 — where this header last stated its count — and v0.4.5; upstream's
+ * file is unchanged between v0.4.5 and 0.5.0. This is a **component** gap, not
+ * only a test gap: `markdown.svelte` emits no `id` on a heading at all, so none
+ * of the five has anything to assert against. `parse-outline-from-markdown.test.ts`
+ * is ported in full, so the id-*derivation* half of the contract already has a
+ * home here — what is missing is the renderer putting the derived id on the
+ * element.
+ *
+ * (This header read "(62 cases at 0.3.0) … Nothing is dropped; every upstream
+ * `it` has a counterpart here", true only at 0.3.0.)
  *
  * Five things read differently, each commented where it appears:
  *
@@ -58,8 +74,8 @@ describe('Markdown', () => {
 
 	it('renders headings', async () => {
 		const screen = await render(Markdown, { props: { children: '# Heading 1\n\n## Heading 2' } });
-		expect(screen.getByText('Heading 1').element().tagName).toBe('H1');
-		expect(screen.getByText('Heading 2').element().tagName).toBe('H2');
+		expect(screen.getByText('Heading 1', { exact: true }).element().tagName).toBe('H1');
+		expect(screen.getByText('Heading 2', { exact: true }).element().tagName).toBe('H2');
 	});
 
 	it('renders paragraphs as block <div> (never <p>) for composition safety', async () => {
@@ -69,15 +85,15 @@ describe('Markdown', () => {
 		// trap that a <p> would impose. role="paragraph" re-exposes the paragraph
 		// role to assistive tech without the <p> hazard. Consumers who want a real
 		// <p> element can pass `components={{paragraph: 'p'}}`.
-		const para = screen.getByText('Hello world').element();
+		const para = screen.getByText('Hello world', { exact: true }).element();
 		expect(para.tagName).toBe('DIV');
 		expect(para).toHaveAttribute('role', 'paragraph');
 	});
 
 	it('renders the astryx-markdown-paragraph theme target on each paragraph', async () => {
 		const screen = await render(Markdown, { props: { children: 'First para\n\nSecond para' } });
-		const first = screen.getByText('First para').element();
-		const second = screen.getByText('Second para').element();
+		const first = screen.getByText('First para', { exact: true }).element();
+		const second = screen.getByText('Second para', { exact: true }).element();
 		// Stable theme-target class lets a theme adjust the inter-paragraph gap
 		// (marginBlockStart/marginBlockEnd) via defineTheme without reaching for
 		// fragile descendant selectors or global spacing tokens.
@@ -130,17 +146,17 @@ describe('Markdown', () => {
 			const screen = await render(Markdown, { props: { children: 'Hello world' } });
 			// Default density is reflected so themes can tune spacing per density.
 			await expect
-				.element(screen.getByText('Hello world'))
+				.element(screen.getByText('Hello world', { exact: true }))
 				.toHaveAttribute('data-density', 'default');
 			await screen.rerender({ density: 'compact', children: 'Hello world' });
 			await expect
-				.element(screen.getByText('Hello world'))
+				.element(screen.getByText('Hello world', { exact: true }))
 				.toHaveAttribute('data-density', 'compact');
 		});
 
 		it('reflects the heading level on the heading target as data-level', async () => {
 			const screen = await render(Markdown, { props: { children: '## Section' } });
-			const heading = screen.getByText('Section').element();
+			const heading = screen.getByText('Section', { exact: true }).element();
 			expect(heading.className).toContain('astryx-markdown-heading');
 			expect(heading).toHaveAttribute('data-level', '2');
 		});
@@ -164,8 +180,8 @@ describe('Markdown', () => {
 		expect(screen.container.firstElementChild?.tagName).toBe('SPAN');
 		await expect.element(screen.getByRole('document')).not.toBeInTheDocument();
 		expect(screen.container.querySelector('p')).toBeNull();
-		expect(screen.getByText('code').element().tagName).toBe('CODE');
-		expect(screen.getByText('bold').element().tagName).toBe('STRONG');
+		expect(screen.getByText('code', { exact: true }).element().tagName).toBe('CODE');
+		expect(screen.getByText('bold', { exact: true }).element().tagName).toBe('STRONG');
 	});
 
 	it('renders links with inline display', async () => {
@@ -173,29 +189,29 @@ describe('Markdown', () => {
 			props: { display: 'inline', children: '[docs](/docs)' }
 		});
 
-		const link = screen.getByText('docs').element();
+		const link = screen.getByText('docs', { exact: true }).element();
 		expect(link.tagName).toBe('A');
 		expect(link.getAttribute('href')).toBe('/docs');
 	});
 
 	it('renders bold text', async () => {
 		const screen = await render(Markdown, { props: { children: '**bold text**' } });
-		expect(screen.getByText('bold text').element().tagName).toBe('STRONG');
+		expect(screen.getByText('bold text', { exact: true }).element().tagName).toBe('STRONG');
 	});
 
 	it('renders italic text', async () => {
 		const screen = await render(Markdown, { props: { children: '*italic text*' } });
-		expect(screen.getByText('italic text').element().tagName).toBe('EM');
+		expect(screen.getByText('italic text', { exact: true }).element().tagName).toBe('EM');
 	});
 
 	it('renders strikethrough text', async () => {
 		const screen = await render(Markdown, { props: { children: '~~struck~~' } });
-		expect(screen.getByText('struck').element().tagName).toBe('DEL');
+		expect(screen.getByText('struck', { exact: true }).element().tagName).toBe('DEL');
 	});
 
 	it('renders inline code with Code', async () => {
 		const screen = await render(Markdown, { props: { children: 'Use `code` here' } });
-		expect(screen.getByText('code').element().tagName).toBe('CODE');
+		expect(screen.getByText('code', { exact: true }).element().tagName).toBe('CODE');
 	});
 
 	it('renders code blocks with CodeBlock', async () => {
@@ -207,14 +223,14 @@ describe('Markdown', () => {
 
 	it('renders links with correct href', async () => {
 		const screen = await render(Markdown, { props: { children: '[click](https://example.com)' } });
-		const link = screen.getByText('click').element();
+		const link = screen.getByText('click', { exact: true }).element();
 		expect(link.tagName).toBe('A');
 		expect(link.getAttribute('href')).toBe('https://example.com');
 	});
 
 	it('adds target="_blank" to external links', async () => {
 		const screen = await render(Markdown, { props: { children: '[ext](https://example.com)' } });
-		const link = screen.getByText('ext').element();
+		const link = screen.getByText('ext', { exact: true }).element();
 		expect(link.getAttribute('target')).toBe('_blank');
 		expect(link.getAttribute('rel')).toBe('noopener noreferrer');
 	});
@@ -226,7 +242,7 @@ describe('Markdown', () => {
 		const screen = await render(Markdown, {
 			props: { children: 'See [the docs][docs] here.\n\n[docs]: https://example.com/docs\n' }
 		});
-		const link = screen.getByText('the docs').element();
+		const link = screen.getByText('the docs', { exact: true }).element();
 		expect(link.tagName).toBe('A');
 		expect(link.getAttribute('href')).toBe('https://example.com/docs');
 		// The definition line must not leak into the rendered output.
@@ -237,14 +253,14 @@ describe('Markdown', () => {
 		const screen = await render(Markdown, {
 			props: { children: 'See [the docs].\n\n[the docs]: /docs' }
 		});
-		const link = screen.getByText('the docs').element();
+		const link = screen.getByText('the docs', { exact: true }).element();
 		expect(link.tagName).toBe('A');
 		expect(link.getAttribute('href')).toBe('/docs');
 	});
 
 	it('does not add target="_blank" to relative links', async () => {
 		const screen = await render(Markdown, { props: { children: '[internal](/page)' } });
-		const link = screen.getByText('internal').element();
+		const link = screen.getByText('internal', { exact: true }).element();
 		expect(link.getAttribute('target')).toBeNull();
 	});
 
@@ -262,7 +278,7 @@ describe('Markdown', () => {
 		document.addEventListener('click', cancelDefault, true);
 		try {
 			screen
-				.getByText('click me')
+				.getByText('click me', { exact: true })
 				.element()
 				.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 		} finally {
@@ -395,7 +411,7 @@ describe('Markdown', () => {
 		const screen = await render(Markdown, {
 			props: { headingLevelStart: 3, children: '# Heading 1' }
 		});
-		expect(screen.getByText('Heading 1').element().tagName).toBe('H3');
+		expect(screen.getByText('Heading 1', { exact: true }).element().tagName).toBe('H3');
 	});
 
 	it('shows streaming cursor when isStreaming is true', async () => {

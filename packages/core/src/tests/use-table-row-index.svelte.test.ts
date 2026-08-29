@@ -4,7 +4,7 @@ import Harness, { type RowIndexRow } from './fixtures/table-row-index-fixture.sv
 
 /**
  * Astryx's `Table/plugins/rowIndex/useTableRowIndex.test.tsx`, ported case for
- * case — **9 upstream cases, 9 here**. Nothing dropped, nothing added.
+ * case — **9 upstream cases at the 0.5.0 pin, 9 here**. Nothing dropped, nothing added.
  *
  * Upstream's `Harness` becomes `fixtures/table-row-index-fixture.svelte`, since
  * a hook must run during a component's init. It is a transcription: the same

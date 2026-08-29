@@ -16,10 +16,10 @@ import { forcedColorsCssIn } from './forced-colors.js';
 
 /**
  * Astryx's `CheckboxInput/CheckboxInput.test.tsx`, ported case for case — **42**
- * upstream cases at v0.4.5 (24 `CheckboxInput`, 8 `disabledMessage`, 5 `form
+ * upstream cases at the 0.5.0 pin (24 `CheckboxInput`, 8 `disabledMessage`, 5 `form
  * participation`, 2 `forced colors`, 3 `focus ring ownership`), **42** here.
- * Nothing added, nothing dropped. Re-derived at the 0.4.5 pin (the header last
- * stated it at v0.4.1); upstream's file has not moved since.
+ * Nothing added, nothing dropped. Re-derived at the 0.5.0 pin (the header last
+ * stated it at v0.4.5); upstream's file has not moved since v0.4.1.
  *
  * ## v0.3.0 → v0.4.1
  *
@@ -196,7 +196,7 @@ describe('CheckboxInput', () => {
 			props: { label: 'Accept terms', value: false, onChange: handleChange }
 		});
 
-		await userEvent.click(screen.getByText('Accept terms'));
+		await userEvent.click(screen.getByText('Accept terms', { exact: true }));
 		expect(handleChange).toHaveBeenCalledWith(true, expect.any(Object));
 	});
 
@@ -209,7 +209,9 @@ describe('CheckboxInput', () => {
 				onChange: noop
 			}
 		});
-		await expect.element(screen.getByText('Receive weekly updates')).toBeInTheDocument();
+		await expect
+			.element(screen.getByText('Receive weekly updates', { exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('associates description with checkbox via aria-describedby', async () => {
@@ -222,7 +224,7 @@ describe('CheckboxInput', () => {
 			}
 		});
 		const checkbox = inputIn(screen.container);
-		const description = screen.getByText('Receive weekly updates').element();
+		const description = screen.getByText('Receive weekly updates', { exact: true }).element();
 		expect(checkbox).toHaveAttribute('aria-describedby', description.id);
 	});
 
@@ -237,7 +239,7 @@ describe('CheckboxInput', () => {
 			}
 		});
 
-		const description = screen.getByText('Receive weekly updates');
+		const description = screen.getByText('Receive weekly updates', { exact: true });
 		await userEvent.click(description);
 		expect(handleChange).toHaveBeenCalledWith(true, expect.any(Object));
 
@@ -368,7 +370,7 @@ describe('CheckboxInput', () => {
 		const screen = await render(CheckboxInput, {
 			props: { label: 'Select row', isLabelHidden: true, value: false, onChange: noop }
 		});
-		const label = screen.getByText('Select row');
+		const label = screen.getByText('Select row', { exact: true });
 		await expect.element(label).toBeInTheDocument();
 		// Label should still be accessible
 		await expect.element(screen.getByLabelText('Select row')).toBeInTheDocument();
@@ -385,7 +387,9 @@ describe('CheckboxInput', () => {
 			}
 		});
 		const checkbox = inputIn(screen.container);
-		const description = screen.getByText('Selects this row for bulk actions').element();
+		const description = screen
+			.getByText('Selects this row for bulk actions', { exact: true })
+			.element();
 		expect(description.id).not.toBe('');
 		expect(checkbox.getAttribute('aria-describedby')).toContain(description.id);
 	});
@@ -394,7 +398,7 @@ describe('CheckboxInput', () => {
 		const screen = await render(CheckboxInput, {
 			props: { label: 'Accept terms', value: false, onChange: noop }
 		});
-		await expect.element(screen.getByText('Accept terms')).toBeVisible();
+		await expect.element(screen.getByText('Accept terms', { exact: true })).toBeVisible();
 	});
 
 	it('sets aria-busy when loading', async () => {
@@ -445,7 +449,7 @@ describe('CheckboxInput', () => {
 				status: { type: 'error', message: 'Required field' }
 			}
 		});
-		await expect.element(screen.getByText('Required field')).toBeInTheDocument();
+		await expect.element(screen.getByText('Required field', { exact: true })).toBeInTheDocument();
 		await expect.element(screen.getByRole('checkbox')).toHaveAttribute('aria-invalid', 'true');
 	});
 

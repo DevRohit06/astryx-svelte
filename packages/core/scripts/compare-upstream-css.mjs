@@ -167,10 +167,59 @@ for (const [shape, count] of markerOurs) {
 	if (theirs < count) findings.push(`marker-scoped rule invented (${count - theirs}×): ${shape}`);
 }
 
+// --- 2b. `defineConsts` renames pair by declaration -------------------------
+// A `stylex.defineConsts` consumer compiles to `var(--<constKey>)`, and the key
+// is hashed from the DEFINING module's package name and path. The atomic class
+// is hashed from that text, and `processStylexRules` only substitutes the
+// literal back when the sheet is written — so a const-derived rule ends up with
+// a byte-identical declaration on both sides and a class name that cannot ever
+// agree: ours hashes `@astryx-svelte/core:src/lib/components/date-input/…`,
+// upstream's `@astryxdesign/core:src/DateInput/…`. Same standing as a
+// `defineMarker` class, and paired the same way.
+//
+// The pairing is deliberately narrow: it fires only where exactly ONE unmatched
+// rule on each side carries that declaration. A declaration with two unmatched
+// rules on either side is ambiguous, so it stays a finding rather than being
+// absorbed — this cannot quietly launder a real difference into a rename.
+const declarationOf = (rule) => rule.slice(rule.indexOf('{'));
+const byDeclaration = (names, lookup) => {
+	const map = new Map();
+	for (const name of names) {
+		const key = declarationOf(lookup(name));
+		if (!map.has(key)) map.set(key, []);
+		map.get(key).push(name);
+	}
+	return map;
+};
+
+const constPaired = new Set();
+{
+	const up = byDeclaration(
+		upstreamOnly.filter((n) => !isMarkerScoped(upstream.classes.get(n))),
+		(n) => upstream.classes.get(n)
+	);
+	const mine = byDeclaration(
+		oursOnly.filter((n) => !isMarkerScoped(ours.classes.get(n))),
+		(n) => ours.classes.get(n)
+	);
+	for (const [declaration, upNames] of up) {
+		const ourNames = mine.get(declaration);
+		if (upNames.length === 1 && ourNames?.length === 1) {
+			constPaired.add(upNames[0]);
+			constPaired.add(ourNames[0]);
+		}
+	}
+}
+const constPairedCount = constPaired.size / 2;
+
 // --- 3. everything else must be a named skip, and every skip must still hit -
 const skipByClass = new Map(SKIP.map((entry) => [entry.class, entry]));
-const plainUpstreamOnly = upstreamOnly.filter((n) => !isMarkerScoped(upstream.classes.get(n)));
-const plainOursOnly = oursOnly.filter((n) => !isMarkerScoped(ours.classes.get(n)));
+const plainUpstreamOnly = upstreamOnly.filter(
+	(n) => !isMarkerScoped(upstream.classes.get(n)) && !constPaired.has(n)
+);
+const plainOursOnly = oursOnly.filter(
+	(n) => !isMarkerScoped(ours.classes.get(n)) && !constPaired.has(n)
+);
 
 for (const name of plainUpstreamOnly) {
 	const skip = skipByClass.get(name);
@@ -223,7 +272,8 @@ for (const [shape, count] of othersOurs) {
 console.log(`compiled ${fileCount} modules into ${rules.length} rules`);
 console.log(
 	`${shared.length} classes shared with upstream, ` +
-		`${markerUp.size} marker-scoped shapes paired, ${SKIP.length} skips`
+		`${markerUp.size} marker-scoped shapes paired, ` +
+		`${constPairedCount} const-hashed rules paired, ${SKIP.length} skips`
 );
 
 if (findings.length > 0) {

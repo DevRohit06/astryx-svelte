@@ -23,9 +23,18 @@ import { spacingVars, typeScaleVars } from '../../styles/tokens.stylex.js';
  * `operatorSelector` is used at two nesting depths — the top-level operator slot
  * and, inside `NestedEditor`, wrapped by `nestedRootLabel`.
  */
+// Below the popover layer's 400px floor the chip rows collapse from one line to
+// wrapped lines. A container query, not a viewport one, so the rows track the
+// width the popover actually got (upstream #4761).
+const CHIP_ROW_COLLAPSE = '@container (max-width: 399px)';
+
 const styles = stylex.create({
 	container: {
-		overflow: 'hidden'
+		overflow: 'hidden',
+		containerType: 'inline-size'
+	},
+	chipRow: {
+		flexWrap: { default: 'nowrap', [CHIP_ROW_COLLAPSE]: 'wrap' }
 	},
 	content: {
 		padding: spacingVars['--spacing-4']
@@ -41,7 +50,10 @@ const styles = stylex.create({
 	},
 	operatorSelector: {
 		flexGrow: 1,
-		flexShrink: 0
+		flexShrink: 0,
+		// Long translated operator labels truncate in the Selector trigger instead
+		// of pushing the row wider than the popover (upstream #4761).
+		maxWidth: '100%'
 	},
 	valueEditor: {
 		flexGrow: 2,
@@ -53,11 +65,13 @@ const styles = stylex.create({
 	},
 	nestedFieldSelector: {
 		flexShrink: 0,
-		width: 200
+		width: 200,
+		maxWidth: '100%'
 	},
 	nestedOperatorSelector: {
 		flexShrink: 0,
-		width: 180
+		width: 180,
+		maxWidth: '100%'
 	},
 	nestedRow: {
 		width: '100%'
@@ -70,6 +84,13 @@ const styles = stylex.create({
 });
 
 /** The popover's outermost `<div>`, which also carries the key handler. */
+/**
+ * The chip row inside the popover content, and the nested sub-filter row. Both
+ * wrap rather than overflow once the popover is narrower than its 400px floor.
+ * Passed through `HStack`'s `xstyle`, so it is the raw style rather than attrs.
+ */
+export const editPopoverChipRowStyle = styles.chipRow;
+
 export function editPopoverContainerAttrs(): SvelteStyleAttrs {
 	return sx(styles.container);
 }

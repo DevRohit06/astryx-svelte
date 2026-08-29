@@ -72,6 +72,11 @@ export default {
 			{
 				guidance: true,
 				description:
+					'In children mode, put every row inside TableHeader, TableBody, or TableFooter. <table> cannot contain a <tr> directly: the HTML parser inserts an implied <tbody> for server-rendered markup and React does not on the client, so unwrapped rows mismatch on hydration.'
+			},
+			{
+				guidance: true,
+				description:
 					'Set explicit width on every column using proportional() or pixel(). proportional(1) gives equal flex distribution with a 120px minimum that prevents columns from collapsing on narrow viewports. Omitting width skips the minimum.'
 			},
 			{
@@ -243,7 +248,7 @@ export default {
 			name: 'children',
 			type: 'Snippet',
 			description:
-				'Children mode: render TableRow/TableCell directly instead of using data-driven rendering.'
+				'Children mode: compose the table yourself from TableHeader / TableBody / TableFooter, each holding TableRow and TableCell, instead of using data-driven rendering. The children are passed straight to the <table>, so the section is yours to supply — a TableRow placed directly in Table emits <table><tr>, which is invalid HTML and mismatches on hydration (the parser inserts an implied <tbody> for server-rendered markup; React does not on the client). Data-driven mode renders the sections for you.'
 		},
 		{
 			name: 'xstyle',

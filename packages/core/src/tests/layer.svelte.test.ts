@@ -11,10 +11,12 @@ import HostingHarness from './fixtures/layer-hosting-harness.svelte';
 import RelocatingHarness from './fixtures/layer-relocating-harness.svelte';
 
 /**
- * Ported from Astryx's `Layer/useLayer.test.tsx` at **v0.4.5** — **all 32 of its
- * `it` blocks / 43 cases** (two `it.each` tables expand to 11 rows between
- * them), plus one beyond-upstream case documented at its own site. **33 `it` in
- * the file, 44 cases.**
+ * Ported from Astryx's `Layer/useLayer.test.tsx` at the **0.5.0** pin — **all 32
+ * of its `it` blocks / 43 cases** (31 plain `it` plus one `it.each` table of 12
+ * rows), plus one beyond-upstream case documented at its own site. **33 `it` in
+ * the file, 44 cases.** (The parenthetical read "two `it.each` tables expand to
+ * 11 rows between them"; there is one table of 12, on both sides. The totals it
+ * fed were right regardless.)
  *
  * The header has now stated a wrong count three times: "all twenty-nine cases"
  * (0.4.1 minus `describe('offset')`, naming none of the five it was short), a
@@ -99,7 +101,7 @@ function fallbacksOf(el: HTMLElement): string[] {
 
 async function openContext(props: Record<string, unknown> = {}): Promise<HTMLElement> {
 	const screen = await render(ContextHarness, { props });
-	await screen.getByRole('button', { name: 'trigger' }).click();
+	await screen.getByRole('button', { name: 'trigger', exact: true }).click();
 	return popoverIn(screen.container);
 }
 
@@ -349,7 +351,7 @@ describe('useLayer context positioning', () => {
 			const first = await render(ContextHarness, {
 				props: { placement: 'below', alignment: 'start' }
 			});
-			await first.getByRole('button', { name: 'trigger' }).click();
+			await first.getByRole('button', { name: 'trigger', exact: true }).click();
 			const ltr = popoverIn(first.container).style.getPropertyValue('position-area');
 			await first.unmount();
 
@@ -361,7 +363,7 @@ describe('useLayer context positioning', () => {
 					triggerStyle: 'direction:rtl'
 				}
 			});
-			await second.getByRole('button', { name: 'trigger' }).click();
+			await second.getByRole('button', { name: 'trigger', exact: true }).click();
 			const rtl = popoverIn(second.container).style.getPropertyValue('position-area');
 
 			// The unique position-anchor id differs per render; the placement
@@ -501,7 +503,7 @@ describe('useLayer context positioning', () => {
 
 	it('fixed mode emits no anchor-positioning styles', async () => {
 		const screen = await render(FixedHarness, { props: { x: 10, y: 20 } });
-		await screen.getByRole('button', { name: 'opener' }).click();
+		await screen.getByRole('button', { name: 'opener', exact: true }).click();
 
 		const style = styleOf(screen.container.querySelector('[popover]'));
 		expect(style).not.toContain('position-area');
@@ -554,10 +556,12 @@ describe('useLayer context hosting', () => {
 
 	it('keeps the final layer inline when the JSX position is safe', async () => {
 		const screen = await render(HostingHarness);
-		await screen.getByRole('button', { name: 'Trigger' }).click();
+		await screen.getByRole('button', { name: 'Trigger', exact: true }).click();
 
 		const layer = await vi.waitFor(() => popoverIn(screen.container));
-		const following = screen.getByRole('button', { name: 'Following control' }).element();
+		const following = screen
+			.getByRole('button', { name: 'Following control', exact: true })
+			.element();
 		expect(layer.parentElement).toBe(screen.container.firstElementChild);
 		expect(layer.nextElementSibling).toBe(following);
 		expect(screen.container.querySelector('template')).not.toBeNull();
@@ -570,8 +574,8 @@ describe('useLayer context hosting', () => {
 		const screen = await render(HostingHarness, {
 			props: { unsafe: true, direction: 'rtl', writingMode: 'vertical-rl' }
 		});
-		const trigger = screen.getByRole('button', { name: 'Trigger' }).element();
-		await screen.getByRole('button', { name: 'Trigger' }).click();
+		const trigger = screen.getByRole('button', { name: 'Trigger', exact: true }).element();
+		await screen.getByRole('button', { name: 'Trigger', exact: true }).click();
 
 		const layer = await vi.waitFor(() => popoverIn(screen.container));
 		const host = screen.container.querySelector('[data-testid="host"]');
@@ -589,7 +593,7 @@ describe('useLayer context hosting', () => {
 		const screen = await render(HostingHarness, {
 			props: { unsafe: true, themeColor: 'rgb(1, 2, 3)' }
 		});
-		await screen.getByRole('button', { name: 'Trigger' }).click();
+		await screen.getByRole('button', { name: 'Trigger', exact: true }).click();
 
 		const layer = await vi.waitFor(() => popoverIn(screen.container));
 		const host = screen.container.querySelector('[data-testid="host"]') as HTMLElement;
@@ -618,7 +622,7 @@ describe('useLayer context hosting', () => {
 		const screen = await render(HostingHarness, {
 			props: { unsafe: true, direction: 'rtl', writingMode: 'vertical-rl' }
 		});
-		await screen.getByRole('button', { name: 'Trigger' }).click();
+		await screen.getByRole('button', { name: 'Trigger', exact: true }).click();
 
 		await vi.waitFor(() => {
 			expect(getComputedStyle(popoverIn(screen.container)).direction).toBe('rtl');
@@ -663,7 +667,7 @@ describe('useLayer context hosting', () => {
 		const screen = await render(RelocatingHarness, {
 			props: { unsafe: true, lazyMount: true, onShow }
 		});
-		await screen.getByRole('button', { name: 'Trigger' }).click();
+		await screen.getByRole('button', { name: 'Trigger', exact: true }).click();
 
 		await vi.waitFor(() => {
 			expect(popoverIn(screen.container).getAttribute('data-open')).toBe('true');
@@ -698,7 +702,7 @@ describe('useLayer context hosting', () => {
 	 */
 	it('leaves a corrected-out layer actually showing, not merely mounted', async () => {
 		const screen = await render(HostingHarness, { props: { unsafe: true } });
-		await screen.getByRole('button', { name: 'Trigger' }).click();
+		await screen.getByRole('button', { name: 'Trigger', exact: true }).click();
 
 		const layer = await vi.waitFor(() => popoverIn(screen.container));
 		await vi.waitFor(() => {

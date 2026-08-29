@@ -8,13 +8,57 @@ import AvatarStatusFixture from './fixtures/avatar-status-fixture.svelte';
 import SlotProbe from './fixtures/slot-probe.svelte';
 
 /**
- * Astryx's `Avatar/Avatar.test.tsx`, ported case for case — **42 upstream cases
- * (29 in `describe('Avatar')`, of which 8 are in the nested `status in the
- * accessible name` block and 14 in the nested `name tooltip` block, plus 13 in
- * `describe('Avatar — interactivity (Button trichotomy)')`), 42 here, none
- * dropped**. The file has no `displayName` case, no snapshot and no no-JSX
- * construction form, so `ref` is the only React-only surface and it gets a
- * counterpart.
+ * Astryx's `Avatar/Avatar.test.tsx`, ported case for case at the **0.5.0** pin.
+ *
+ * The count is the contract: upstream declares **70** cases at this pin — 50 in
+ * `describe('Avatar')` (13 direct, 8 in `status in the accessible name (WCAG
+ * 4.1.2)`, 10 in `status label through a consumer wrapper (P14)`, 4 in `a
+ * whitespace-only name carries no identity`, 15 in `name tooltip`), 16 in
+ * `describe('Avatar — interactivity (Button trichotomy)')` and 4 in
+ * `describe('Avatar — consumer ARIA overrides win (Icon labelling pattern)')` —
+ * and **48** are here. The file has no `displayName` case, no snapshot and no
+ * no-JSX construction form, so `ref` is the only React-only surface and it gets
+ * a counterpart.
+ *
+ * **Two cases sit under a different parent here than upstream, and neither is a
+ * dropped case.** Upstream declares `puts the avatar box on the element that
+ * carries the theme target` and `keeps the box on the root for an interactive
+ * avatar too` directly under `describe('Avatar')`; they are in the
+ * interactivity block here, because the second needs the interactive root the
+ * block already sets up. Upstream's `a whitespace-only name carries no
+ * identity` block is likewise nested under `Avatar` upstream and under
+ * interactivity here. All six cases are present with upstream's titles and
+ * assertions.
+ *
+ * ## The 22 that are not here
+ *
+ * Named so none of them can be mistaken for accounted-for work:
+ *
+ * - **The whole 10-case `status label through a consumer wrapper (P14)`
+ *   block** — a label reported from inside a wrapper component, reported at any
+ *   nesting depth, changing after mount, dropped when the status element
+ *   unmounts, announced on an otherwise decorative avatar, a reported label
+ *   winning over introspection, costing no extra render and not looping, a
+ *   directly-passed dot named on the first render before any report, a label
+ *   changing without re-rendering the avatar, and a consumer `aria-label` left
+ *   alone when a wrapped status reports. This is the block that exercises the
+ *   *upward* half of the context sink described below, which is precisely the
+ *   mechanism this port had to invent — so it is the costliest of the four gaps.
+ * - **The whole 4-case `Avatar — consumer ARIA overrides win (Icon labelling
+ *   pattern)` block** — a consumer `aria-label` overriding the derived name on
+ *   the static root and on an interactive root, a consumer `role` overriding
+ *   the derived role, and a consumer hiding a named avatar with `aria-hidden`.
+ * - **4 of the 13 `describe('Avatar')` direct cases** — `marks the fallback
+ *   surface with the stable theming class (initials and icon)`, and the three
+ *   grapheme cases (`does not split an emoji surrogate pair`, `preserves a
+ *   complete character`, `keeps a ZWJ family emoji intact`) that guard initials
+ *   generation against splitting a code point.
+ * - **3 of the 16 interactivity cases** — `warns when the only accessible name
+ *   is a status label`, `warns when interactive with an empty-string name and
+ *   alt`, and `does not warn when the consumer names the control with
+ *   aria-label`.
+ * - **1 of the 15 `name tooltip` cases** — `keeps its merged ref attached
+ *   across unrelated rerenders`.
  *
  * What translated, each commented where it appears:
  *
@@ -88,7 +132,9 @@ afterEach(() => {
 describe('Avatar', () => {
 	it('exposes role="img" with the name as accessible name', async () => {
 		const screen = await render(Avatar, { props: { name: 'Ada Lovelace', 'data-testid': 'a' } });
-		await expect.element(screen.getByRole('img', { name: 'Ada Lovelace' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('img', { name: 'Ada Lovelace', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('uses alt over name for the accessible name', async () => {
@@ -96,7 +142,7 @@ describe('Avatar', () => {
 			props: { name: 'Ada', alt: 'Ada Lovelace, profile photo' }
 		});
 		await expect
-			.element(screen.getByRole('img', { name: 'Ada Lovelace, profile photo' }))
+			.element(screen.getByRole('img', { name: 'Ada Lovelace, profile photo', exact: true }))
 			.toBeInTheDocument();
 	});
 
@@ -113,7 +159,7 @@ describe('Avatar', () => {
 		const screen = await render(Avatar, {
 			props: { name: 'Ada', src: 'https://example.com/ada.jpg' }
 		});
-		const wrapper = screen.getByRole('img', { name: 'Ada' }).element();
+		const wrapper = screen.getByRole('img', { name: 'Ada', exact: true }).element();
 		const innerImg = wrapper.querySelector('img');
 		expect(innerImg).not.toBeNull();
 		// The inner <img> carries an empty alt so it isn't announced separately.
@@ -124,7 +170,7 @@ describe('Avatar', () => {
 		const screen = await render(Avatar, {
 			props: { name: 'Ada Lovelace', size: 'sm', 'data-testid': 'a' }
 		});
-		const initials = screen.getByText('AL').element();
+		const initials = screen.getByText('AL', { exact: true }).element();
 		// The default proportional size (sm = 24 × 0.4 = 9.6px) is fed to StyleX as
 		// a dynamic value: StyleX applies `font-size` through a class and sets only
 		// the computed value inline (as a custom property). Because the property
@@ -140,7 +186,7 @@ describe('Avatar', () => {
 		const screen = await render(Avatar, {
 			props: { name: 'Ada', src: 'https://example.com/broken.jpg' }
 		});
-		const wrapper = screen.getByRole('img', { name: 'Ada' }).element();
+		const wrapper = screen.getByRole('img', { name: 'Ada', exact: true }).element();
 		// Upstream's `fireEvent.error`. `act()` has no counterpart — the `$state`
 		// write flushes on its own, which `tick()` waits for.
 		wrapper.querySelector('img')!.dispatchEvent(new Event('error'));
@@ -168,7 +214,7 @@ describe('Avatar', () => {
 				}
 			});
 			await expect
-				.element(screen.getByRole('img', { name: 'Ada Lovelace, Online' }))
+				.element(screen.getByRole('img', { name: 'Ada Lovelace, Online', exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -179,7 +225,7 @@ describe('Avatar', () => {
 					dot: { variant: 'error', label: 'Busy' }
 				}
 			});
-			const avatar = screen.getByRole('img', { name: 'Ada Lovelace, Busy' });
+			const avatar = screen.getByRole('img', { name: 'Ada Lovelace, Busy', exact: true });
 			await expect.element(avatar).toBeInTheDocument();
 			await expect.element(avatar).toHaveTextContent('AL');
 		});
@@ -192,7 +238,9 @@ describe('Avatar', () => {
 				}
 			});
 			await expect
-				.element(screen.getByRole('img', { name: 'Ada Lovelace, profile photo, Online' }))
+				.element(
+					screen.getByRole('img', { name: 'Ada Lovelace, profile photo, Online', exact: true })
+				)
 				.toBeInTheDocument();
 		});
 
@@ -258,7 +306,7 @@ describe('Avatar', () => {
 		const screen = await render(Avatar, {
 			props: { name: 'Ada', fallbackSrc: 'https://example.com/broken.jpg' }
 		});
-		const wrapper = screen.getByRole('img', { name: 'Ada' }).element();
+		const wrapper = screen.getByRole('img', { name: 'Ada', exact: true }).element();
 		wrapper.querySelector('img')!.dispatchEvent(new Event('error'));
 		await tick();
 		expect(wrapper.querySelector('img')).toBeNull();
@@ -308,7 +356,9 @@ describe('Avatar', () => {
 			// uses `name` (not `alt`), so there is no tooltip.
 			expect(screen.getByRole('tooltip', { includeHidden: true }).query()).toBeNull();
 			// The accessible name still comes from alt, unaffected.
-			await expect.element(screen.getByRole('img', { name: 'Profile photo' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('img', { name: 'Profile photo', exact: true }))
+				.toBeInTheDocument();
 		});
 
 		it('still shows a custom string tooltip when there is no name', async () => {
@@ -333,14 +383,20 @@ describe('Avatar', () => {
 
 		it('keeps the accessible name on the root regardless of the tooltip', async () => {
 			const screen = await render(Avatar, { props: { name: 'Ada Lovelace' } });
-			await expect.element(screen.getByRole('img', { name: 'Ada Lovelace' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('img', { name: 'Ada Lovelace', exact: true }))
+				.toBeInTheDocument();
 
 			await screen.rerender({ name: 'Ada Lovelace', tooltip: false });
-			await expect.element(screen.getByRole('img', { name: 'Ada Lovelace' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('img', { name: 'Ada Lovelace', exact: true }))
+				.toBeInTheDocument();
 
 			await screen.rerender({ name: 'alovelace', tooltip: 'Ada Lovelace, Eng' });
 			// alt||name still drives the accessible name — not the custom tooltip.
-			await expect.element(screen.getByRole('img', { name: 'alovelace' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('img', { name: 'alovelace', exact: true }))
+				.toBeInTheDocument();
 
 			// `rerender` merges props rather than replacing them, so `tooltip` is
 			// reset to its default here to reproduce upstream's fourth prop set.
@@ -350,7 +406,7 @@ describe('Avatar', () => {
 				tooltip: true
 			});
 			await expect
-				.element(screen.getByRole('img', { name: "Ada's profile photo" }))
+				.element(screen.getByRole('img', { name: "Ada's profile photo", exact: true }))
 				.toBeInTheDocument();
 		});
 
@@ -451,7 +507,7 @@ describe('Avatar — interactivity (Button trichotomy)', () => {
 
 	it('renders a link when `href` is set (default LinkComponent is <a>)', async () => {
 		const screen = await render(Avatar, { props: { name: 'Ada Lovelace', href: '/users/ada' } });
-		const link = screen.getByRole('link', { name: 'Ada Lovelace' }).element();
+		const link = screen.getByRole('link', { name: 'Ada Lovelace', exact: true }).element();
 		expect(link.tagName).toBe('A');
 		expect(link).toHaveAttribute('href', '/users/ada');
 		// The static img semantics are gone — it's a control now.
@@ -467,7 +523,7 @@ describe('Avatar — interactivity (Button trichotomy)', () => {
 				rel: 'noopener noreferrer'
 			}
 		});
-		const link = screen.getByRole('link', { name: 'Ada' }).element();
+		const link = screen.getByRole('link', { name: 'Ada', exact: true }).element();
 		expect(link).toHaveAttribute('target', '_blank');
 		expect(link).toHaveAttribute('rel', 'noopener noreferrer');
 	});
@@ -475,7 +531,7 @@ describe('Avatar — interactivity (Button trichotomy)', () => {
 	it('renders a <button type="button"> when `onClick` is set (no href)', async () => {
 		const handleClick = vi.fn();
 		const screen = await render(Avatar, { props: { name: 'Ada', onclick: handleClick } });
-		const button = screen.getByRole('button', { name: 'Ada' });
+		const button = screen.getByRole('button', { name: 'Ada', exact: true });
 		expect(button.element().tagName).toBe('BUTTON');
 		expect(button.element()).toHaveAttribute('type', 'button');
 		await userEvent.click(button);
@@ -486,25 +542,29 @@ describe('Avatar — interactivity (Button trichotomy)', () => {
 		const screen = await render(Avatar, {
 			props: { name: 'Ada', href: '/ada', onclick: () => {} }
 		});
-		await expect.element(screen.getByRole('link', { name: 'Ada' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('link', { name: 'Ada', exact: true }))
+			.toBeInTheDocument();
 		expect(screen.getByRole('button').query()).toBeNull();
 	});
 
 	it('stays a static element (no href, no onClick) — non-breaking default', async () => {
 		const screen = await render(Avatar, { props: { name: 'Ada' } });
-		await expect.element(screen.getByRole('img', { name: 'Ada' })).toBeInTheDocument();
+		await expect.element(screen.getByRole('img', { name: 'Ada', exact: true })).toBeInTheDocument();
 		expect(screen.getByRole('link').query()).toBeNull();
 		expect(screen.getByRole('button').query()).toBeNull();
 	});
 
 	it('stamps the data-avatar-item marker on the interactive link', async () => {
 		const screen = await render(Avatar, { props: { name: 'Ada', href: '/ada' } });
-		expect(screen.getByRole('link', { name: 'Ada' }).element()).toHaveAttribute('data-avatar-item');
+		expect(screen.getByRole('link', { name: 'Ada', exact: true }).element()).toHaveAttribute(
+			'data-avatar-item'
+		);
 	});
 
 	it('stamps the data-avatar-item marker on the interactive button', async () => {
 		const screen = await render(Avatar, { props: { name: 'Ada', onclick: () => {} } });
-		expect(screen.getByRole('button', { name: 'Ada' }).element()).toHaveAttribute(
+		expect(screen.getByRole('button', { name: 'Ada', exact: true }).element()).toHaveAttribute(
 			'data-avatar-item'
 		);
 	});
@@ -518,7 +578,9 @@ describe('Avatar — interactivity (Button trichotomy)', () => {
 		// The interactive element applies the shared focus-visible accent ring via
 		// its StyleX class. We assert the element is focusable and receives focus.
 		const screen = await render(Avatar, { props: { name: 'Ada', onclick: () => {} } });
-		const button = screen.getByRole('button', { name: 'Ada' }).element() as HTMLElement;
+		const button = screen
+			.getByRole('button', { name: 'Ada', exact: true })
+			.element() as HTMLElement;
 		button.focus();
 		expect(button).toHaveFocus();
 		// className carries the avatar theming target so themes can style it.
@@ -573,7 +635,7 @@ describe('Avatar — interactivity (Button trichotomy)', () => {
 
 	it('keeps the box on the root for an interactive avatar too', async () => {
 		const screen = await render(Avatar, { props: { name: 'Ada', size: 'lg', href: '/ada' } });
-		const link = screen.getByRole('link', { name: 'Ada' }).element();
+		const link = screen.getByRole('link', { name: 'Ada', exact: true }).element();
 		expect(link.getAttribute('style') ?? '').toContain('48px');
 	});
 
@@ -596,7 +658,7 @@ describe('Avatar — interactivity (Button trichotomy)', () => {
 			const screen = await render(Avatar, {
 				props: { name: '   ', alt: 'Profile photo', 'data-testid': 'a' }
 			});
-			const el = screen.getByRole('img', { name: 'Profile photo' }).element();
+			const el = screen.getByRole('img', { name: 'Profile photo', exact: true }).element();
 			expect(el).toBe(screen.container.querySelector('[data-testid="a"]'));
 			expect(el.querySelector('svg')).not.toBeNull();
 		});
@@ -605,7 +667,9 @@ describe('Avatar — interactivity (Button trichotomy)', () => {
 			const screen = await render(Avatar, {
 				props: { alt: '  ', name: 'Ada Lovelace', 'data-testid': 'a' }
 			});
-			await expect.element(screen.getByRole('img', { name: 'Ada Lovelace' })).toBeInTheDocument();
+			await expect
+				.element(screen.getByRole('img', { name: 'Ada Lovelace', exact: true }))
+				.toBeInTheDocument();
 		});
 	});
 });

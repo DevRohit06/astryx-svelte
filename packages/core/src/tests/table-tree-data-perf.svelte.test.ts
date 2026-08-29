@@ -10,7 +10,8 @@ import { renderTable } from './render-table.js';
 
 /**
  * Ported from Astryx's `Table/plugins/tree/useTableTreeData-perf.test.tsx` —
- * all **3** of its `it` cases, in upstream's order and under upstream's names.
+ * all **3** of its `it` cases at the 0.5.0 pin, in upstream's order and under
+ * upstream's names.
  * Nothing dropped.
  *
  * ## Why one case is a counterpart rather than a translation

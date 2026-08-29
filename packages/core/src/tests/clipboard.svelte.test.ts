@@ -5,7 +5,7 @@ import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import type { UseClipboardOptions } from '$lib/hooks/use-clipboard.svelte.js';
 
 /**
- * Ported from Astryx's `hooks/useClipboard.test.tsx` at **v0.4.5**, which
+ * Ported from Astryx's `hooks/useClipboard.test.tsx` at the **0.5.0** pin, which
  * declares **8** `it` cases in one `describe('useClipboard')`. **8 here**, in
  * upstream's order, with upstream's titles and assertions. **None dropped.**
  *

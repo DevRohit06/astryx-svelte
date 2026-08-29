@@ -5,8 +5,19 @@ import Stack from '$lib/components/stack/stack.svelte';
 import StackProbe from './fixtures/stack-probe.svelte';
 
 /**
- * Astryx's `Stack/Stack.test.tsx` at the **0.4.5** pin — upstream declares
- * **30** `it`s and **30** are here. Nothing is dropped.
+ * Astryx's `Stack/Stack.test.tsx` at the **0.5.0** pin — upstream declares
+ * **38** `it`s and **all 38** are here. Nothing is dropped, nothing added.
+ *
+ * (This header read "**38** … and **30** are here" while the per-edge padding
+ * block added at 0.5.0 was unported. That was a **component** gap, not only a
+ * test gap: `Stack` did not accept `paddingInlineStart`, `paddingInlineEnd`,
+ * `paddingBlockStart` or `paddingBlockEnd`, while `Stack.doc.mjs` — generated
+ * against the 0.5.0 prose — already documented all four, so the docs advertised
+ * props the component silently ignored. The props are ported and the block with
+ * them. `Center` gained the identical block in the same release and closed it
+ * the same way; see `center.svelte.test.ts`. Before that the header read
+ * "**30** … and **30** are here" at the 0.4.5 pin, where 30 was the whole
+ * suite.)
  *
  * Four translations, none of them a dropped case:
  *
@@ -47,6 +58,25 @@ function renderStack(
 	return render(StackProbe, { props: { component: Stack, rest, ...children } });
 }
 
+/**
+ * The functional class output, as an order-insensitive set. Upstream's helper
+ * verbatim, and it earns its keep here for the same reason: StyleX's dev
+ * runtime also emits readable debug classes naming the style object a
+ * declaration came from (`padding__paddingBlockStyles.2`), and those record
+ * provenance rather than applied CSS — they survive even when the declaration
+ * they name loses a merge. The port's root also carries `themeProps`' marker
+ * class, but both sides of every comparison below render the same theme inputs,
+ * so it cancels rather than needing a filter of its own.
+ */
+function classSet(el: Element): Set<string> {
+	return new Set(
+		el.className
+			.split(' ')
+			.filter(Boolean)
+			.filter((c) => !c.includes('__') && !c.includes('.'))
+	);
+}
+
 describe('Stack', () => {
 	it('defaults to vertical direction', async () => {
 		const screen = await renderStack({ 'data-testid': 'stack' }, { items: ['Item 1', 'Item 2'] });
@@ -55,8 +85,8 @@ describe('Stack', () => {
 
 	it('renders children correctly', async () => {
 		const screen = await renderStack({ direction: 'vertical' }, { items: ['Item 1', 'Item 2'] });
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders as div by default', async () => {
@@ -107,7 +137,7 @@ describe('Stack', () => {
 			{ direction: 'vertical', gap: 4 },
 			{ items: ['Item 1', 'Item 2'] }
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with hAlign prop', async () => {
@@ -117,7 +147,7 @@ describe('Stack', () => {
 				items: ['Item 1']
 			}
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with vAlign prop', async () => {
@@ -127,7 +157,7 @@ describe('Stack', () => {
 				items: ['Item 1']
 			}
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders with wrap prop', async () => {
@@ -135,7 +165,7 @@ describe('Stack', () => {
 			{ direction: 'vertical', wrap: 'wrap' },
 			{ items: ['Item 1', 'Item 2'] }
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders horizontal with hAlign and vAlign', async () => {
@@ -143,8 +173,8 @@ describe('Stack', () => {
 			{ direction: 'horizontal', hAlign: 'between', vAlign: 'center' },
 			{ items: ['Item 1', 'Item 2'] }
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('renders vertical with hAlign and vAlign', async () => {
@@ -152,8 +182,8 @@ describe('Stack', () => {
 			{ direction: 'vertical', hAlign: 'center', vAlign: 'between' },
 			{ items: ['Item 1', 'Item 2'] }
 		);
-		await expect.element(screen.getByText('Item 1')).toBeInTheDocument();
-		await expect.element(screen.getByText('Item 2')).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 1', { exact: true })).toBeInTheDocument();
+		await expect.element(screen.getByText('Item 2', { exact: true })).toBeInTheDocument();
 	});
 
 	it('forwards ref correctly', async () => {
@@ -315,5 +345,114 @@ describe('Stack', () => {
 		await screen.rerender({ rest: { isScrollable: true, 'data-testid': 'stack' } });
 		const withScroll = screen.getByTestId('stack').element().className;
 		expect(withScroll).not.toBe(withoutScroll);
+	});
+	it('applies a class when paddingBlockStart is set on its own', async () => {
+		const screen = await renderStack({ 'data-testid': 'stack' }, { items: ['Content'] });
+		const baseline = screen.getByTestId('stack').element().className;
+		await screen.rerender({ rest: { paddingBlockStart: 2, 'data-testid': 'stack' } });
+		expect(screen.getByTestId('stack').element().className).not.toBe(baseline);
+	});
+
+	it('lets paddingBlockStart/paddingBlockEnd override only their own edge', async () => {
+		const screen = await renderStack(
+			{ padding: 4, paddingBlockStart: 2, 'data-testid': 'stack' },
+			{ items: ['Content'] }
+		);
+		const perEdge = classSet(screen.getByTestId('stack').element());
+		await screen.rerender({
+			rest: {
+				paddingInline: 4,
+				paddingBlockStart: 2,
+				paddingBlockEnd: 4,
+				'data-testid': 'stack'
+			}
+		});
+		expect(perEdge).toEqual(classSet(screen.getByTestId('stack').element()));
+	});
+
+	it('gives paddingBlockEnd precedence over paddingBlock', async () => {
+		const screen = await renderStack(
+			{ paddingBlock: 6, paddingBlockEnd: 0, 'data-testid': 'stack' },
+			{ items: ['Content'] }
+		);
+		const overridden = classSet(screen.getByTestId('stack').element());
+		await screen.rerender({
+			rest: { paddingBlockStart: 6, paddingBlockEnd: 0, 'data-testid': 'stack' }
+		});
+		expect(overridden).toEqual(classSet(screen.getByTestId('stack').element()));
+	});
+
+	it('leaves padding/paddingBlock output unchanged when no edge prop is set', async () => {
+		const screen = await renderStack(
+			{ padding: 3, 'data-testid': 'stack' },
+			{ items: ['Content'] }
+		);
+		const uniform = classSet(screen.getByTestId('stack').element());
+		await screen.rerender({
+			rest: { paddingInline: 3, paddingBlock: 3, 'data-testid': 'stack' }
+		});
+		expect(uniform).toEqual(classSet(screen.getByTestId('stack').element()));
+	});
+
+	it('applies a class when paddingInlineStart is set on its own', async () => {
+		const screen = await renderStack({ 'data-testid': 'stack' }, { items: ['Content'] });
+		const baseline = screen.getByTestId('stack').element().className;
+		await screen.rerender({ rest: { paddingInlineStart: 2, 'data-testid': 'stack' } });
+		expect(screen.getByTestId('stack').element().className).not.toBe(baseline);
+	});
+
+	it('lets paddingInlineStart/paddingInlineEnd override only their own edge', async () => {
+		const screen = await renderStack(
+			{ padding: 4, paddingInlineStart: 2, 'data-testid': 'stack' },
+			{ items: ['Content'] }
+		);
+		const perEdge = classSet(screen.getByTestId('stack').element());
+		await screen.rerender({
+			rest: {
+				paddingInlineStart: 2,
+				paddingInlineEnd: 4,
+				paddingBlock: 4,
+				'data-testid': 'stack'
+			}
+		});
+		expect(perEdge).toEqual(classSet(screen.getByTestId('stack').element()));
+	});
+
+	it('gives paddingInlineEnd precedence over paddingInline', async () => {
+		const screen = await renderStack(
+			{ paddingInline: 6, paddingInlineEnd: 0, 'data-testid': 'stack' },
+			{ items: ['Content'] }
+		);
+		const overridden = classSet(screen.getByTestId('stack').element());
+		await screen.rerender({
+			rest: { paddingInlineStart: 6, paddingInlineEnd: 0, 'data-testid': 'stack' }
+		});
+		expect(overridden).toEqual(classSet(screen.getByTestId('stack').element()));
+	});
+
+	it('resolves all four edges independently', async () => {
+		// One prop per edge, each a different step: the four-edge spelling and the
+		// shorthand-plus-overrides spelling must agree.
+		const screen = await renderStack(
+			{
+				paddingInlineStart: 1,
+				paddingInlineEnd: 2,
+				paddingBlockStart: 3,
+				paddingBlockEnd: 4,
+				'data-testid': 'stack'
+			},
+			{ items: ['Content'] }
+		);
+		const explicit = classSet(screen.getByTestId('stack').element());
+		await screen.rerender({
+			rest: {
+				padding: 4,
+				paddingInlineStart: 1,
+				paddingInlineEnd: 2,
+				paddingBlockStart: 3,
+				'data-testid': 'stack'
+			}
+		});
+		expect(explicit).toEqual(classSet(screen.getByTestId('stack').element()));
 	});
 });

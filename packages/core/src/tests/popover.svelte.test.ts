@@ -4,9 +4,14 @@ import Popover from './fixtures/popover-fixture.svelte';
 import PopoverInDialog from './fixtures/popover-in-dialog.svelte';
 
 /**
- * Ported from Astryx's `Popover/Popover.test.tsx` at v0.3.0: **23 upstream cases,
- * 23 here**, across its three describe blocks (`Popover`, `dismiss controls`,
- * `focus restoration`). Nothing is dropped and nothing is skipped.
+ * Ported from Astryx's `Popover/Popover.test.tsx` — **23 of its 24 cases at the
+ * 0.5.0 pin**, across its three describe blocks (`Popover`, `dismiss controls`,
+ * `focus restoration`).
+ *
+ * Unported: `dismiss controls` → `dismisses on Escape pressed inside a
+ * roving-focus list`, which 0.5.0 added. Nothing is skipped. (The header read
+ * "23 upstream cases, 23 here … nothing is dropped" at the v0.3.0 pin, where 23
+ * was the whole suite.)
  *
  * (Through the previous revision, case #21 — the host-`Dialog` Escape
  * fall-through — was an `it.skip` with an **empty body**: present and counted,
@@ -59,24 +64,26 @@ describe('Popover', () => {
 		const screen = await render(Popover, {
 			props: { label: 'Test popover', triggerLabel: 'Open' }
 		});
-		await expect.element(screen.getByRole('button', { name: 'Open' })).toBeInTheDocument();
+		await expect
+			.element(screen.getByRole('button', { name: 'Open', exact: true }))
+			.toBeInTheDocument();
 	});
 
 	it('sets aria-haspopup on trigger', async () => {
 		const screen = await render(Popover, { props: { label: 'Test', triggerLabel: 'Trigger' } });
-		const trigger = screen.getByRole('button', { name: 'Trigger' });
+		const trigger = screen.getByRole('button', { name: 'Trigger', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-haspopup', 'dialog');
 	});
 
 	it('sets aria-expanded=false initially', async () => {
 		const screen = await render(Popover, { props: { label: 'Test', triggerLabel: 'Trigger' } });
-		const trigger = screen.getByRole('button', { name: 'Trigger' });
+		const trigger = screen.getByRole('button', { name: 'Trigger', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 	});
 
 	it('opens on click and updates aria-expanded', async () => {
 		const screen = await render(Popover, { props: { label: 'Test', triggerLabel: 'Open' } });
-		const trigger = screen.getByRole('button', { name: 'Open' });
+		const trigger = screen.getByRole('button', { name: 'Open', exact: true });
 		(trigger.element() as HTMLElement).click();
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 	});
@@ -102,7 +109,7 @@ describe('Popover', () => {
 				triggerLabel: 'Open'
 			}
 		});
-		const trigger = screen.getByRole('button', { name: 'Open' });
+		const trigger = screen.getByRole('button', { name: 'Open', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-haspopup', 'true');
 		expect(screen.container.querySelector('[role="dialog"]')).not.toBeInTheDocument();
 		expect(screen.container.querySelector('[role="menu"]')).toHaveAttribute(
@@ -131,7 +138,7 @@ describe('Popover', () => {
 		const screen = await render(Popover, {
 			props: { label: 'Test', onOpenChange, triggerLabel: 'Open' }
 		});
-		(screen.getByRole('button', { name: 'Open' }).element() as HTMLElement).click();
+		(screen.getByRole('button', { name: 'Open', exact: true }).element() as HTMLElement).click();
 		await vi.waitFor(() => {
 			expect(onOpenChange).toHaveBeenCalledWith(true);
 		});
@@ -142,7 +149,7 @@ describe('Popover', () => {
 		const screen = await render(Popover, {
 			props: { label: 'Test', isEnabled: false, onOpenChange, triggerLabel: 'Open' }
 		});
-		(screen.getByRole('button', { name: 'Open' }).element() as HTMLElement).click();
+		(screen.getByRole('button', { name: 'Open', exact: true }).element() as HTMLElement).click();
 		await new Promise((resolve) => setTimeout(resolve, 50));
 		expect(onOpenChange).not.toHaveBeenCalled();
 	});
@@ -158,7 +165,7 @@ describe('Popover', () => {
 		const screen = await render(Popover, {
 			props: { label: 'Sibling', triggerVariant: 'anchor-ref', triggerLabel: 'Anchor' }
 		});
-		const anchor = screen.getByRole('button', { name: 'Anchor' });
+		const anchor = screen.getByRole('button', { name: 'Anchor', exact: true });
 		await expect.element(anchor).toHaveAttribute('aria-haspopup', 'dialog');
 		await expect.element(anchor).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -167,7 +174,7 @@ describe('Popover', () => {
 		const screen = await render(Popover, {
 			props: { label: 'Test', triggerVariant: 'nested', triggerLabel: 'Nested button' }
 		});
-		const button = screen.getByRole('button', { name: 'Nested button' });
+		const button = screen.getByRole('button', { name: 'Nested button', exact: true });
 		await expect.element(button).toHaveAttribute('aria-haspopup', 'dialog');
 		await expect.element(button).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -176,7 +183,7 @@ describe('Popover', () => {
 		const screen = await render(Popover, {
 			props: { label: 'Test', triggerVariant: 'role-button', triggerLabel: 'Custom trigger' }
 		});
-		const trigger = screen.getByRole('button', { name: 'Custom trigger' });
+		const trigger = screen.getByRole('button', { name: 'Custom trigger', exact: true });
 		await expect.element(trigger).toHaveAttribute('aria-haspopup', 'dialog');
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
 	});
@@ -185,7 +192,7 @@ describe('Popover', () => {
 		const screen = await render(Popover, {
 			props: { label: 'Test', triggerVariant: 'role-button', triggerLabel: 'Custom trigger' }
 		});
-		const trigger = screen.getByRole('button', { name: 'Custom trigger' });
+		const trigger = screen.getByRole('button', { name: 'Custom trigger', exact: true });
 		(trigger.element() as HTMLElement).click();
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 	});
@@ -194,7 +201,7 @@ describe('Popover', () => {
 		const screen = await render(Popover, {
 			props: { label: 'Test', triggerVariant: 'role-button', triggerLabel: 'Custom trigger' }
 		});
-		const trigger = screen.getByRole('button', { name: 'Custom trigger' });
+		const trigger = screen.getByRole('button', { name: 'Custom trigger', exact: true });
 		trigger.element().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 		await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 	});
@@ -215,7 +222,7 @@ describe('Popover', () => {
 	describe('dismiss controls', () => {
 		it('dismisses on Escape by default', async () => {
 			const screen = await render(Popover, { props: { label: 'Test', triggerLabel: 'Open' } });
-			const trigger = screen.getByRole('button', { name: 'Open' });
+			const trigger = screen.getByRole('button', { name: 'Open', exact: true });
 			(trigger.element() as HTMLElement).click();
 			await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 
@@ -232,7 +239,7 @@ describe('Popover', () => {
 					triggerLabel: 'Open'
 				}
 			});
-			const trigger = screen.getByRole('button', { name: 'Open' });
+			const trigger = screen.getByRole('button', { name: 'Open', exact: true });
 			(trigger.element() as HTMLElement).click();
 			await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 
@@ -246,7 +253,7 @@ describe('Popover', () => {
 			const screen = await render(Popover, {
 				props: { label: 'Test', hasLightDismiss: false, triggerLabel: 'Open' }
 			});
-			const trigger = screen.getByRole('button', { name: 'Open' });
+			const trigger = screen.getByRole('button', { name: 'Open', exact: true });
 			(trigger.element() as HTMLElement).click();
 			await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
 
@@ -256,14 +263,14 @@ describe('Popover', () => {
 
 		it('switches to popover="manual" when hasLightDismiss is false', async () => {
 			const auto = await render(Popover, { props: { label: 'Test', triggerLabel: 'Open' } });
-			(auto.getByRole('button', { name: 'Open' }).element() as HTMLElement).click();
+			(auto.getByRole('button', { name: 'Open', exact: true }).element() as HTMLElement).click();
 			expect(auto.container.querySelector('[popover]')).toHaveAttribute('popover', 'auto');
 			auto.unmount();
 
 			const manual = await render(Popover, {
 				props: { label: 'Test', hasLightDismiss: false, triggerLabel: 'Open' }
 			});
-			(manual.getByRole('button', { name: 'Open' }).element() as HTMLElement).click();
+			(manual.getByRole('button', { name: 'Open', exact: true }).element() as HTMLElement).click();
 			expect(manual.container.querySelector('[popover]')).toHaveAttribute('popover', 'manual');
 		});
 
@@ -272,10 +279,12 @@ describe('Popover', () => {
 		it('lets Escape fall through to a host Dialog when fully opted out', async () => {
 			const onDialogOpenChange = vi.fn();
 			const screen = await render(PopoverInDialog, { props: { onDialogOpenChange } });
-			const trigger = screen.getByRole('button', { name: 'Open tip' }).element() as HTMLElement;
+			const trigger = screen
+				.getByRole('button', { name: 'Open tip', exact: true })
+				.element() as HTMLElement;
 			trigger.click();
 			await expect
-				.element(screen.getByRole('button', { name: 'Open tip' }))
+				.element(screen.getByRole('button', { name: 'Open tip', exact: true }))
 				.toHaveAttribute('aria-expanded', 'true');
 
 			// The Dialog listens for Escape on the dialog element, so fire from a
@@ -298,13 +307,15 @@ describe('Popover', () => {
 					triggerLabel: 'Open'
 				}
 			});
-			const trigger = screen.getByRole('button', { name: 'Open' }).element() as HTMLElement;
+			const trigger = screen
+				.getByRole('button', { name: 'Open', exact: true })
+				.element() as HTMLElement;
 			trigger.focus();
 			expect(trigger).toHaveFocus();
 
 			trigger.click();
 			await expect
-				.element(screen.getByRole('button', { name: 'Open' }))
+				.element(screen.getByRole('button', { name: 'Open', exact: true }))
 				.toHaveAttribute('aria-expanded', 'true');
 
 			// Move focus into the open popover, as a keyboard user would.
@@ -314,7 +325,7 @@ describe('Popover', () => {
 
 			escape(document);
 			await expect
-				.element(screen.getByRole('button', { name: 'Open' }))
+				.element(screen.getByRole('button', { name: 'Open', exact: true }))
 				.toHaveAttribute('aria-expanded', 'false');
 			await vi.waitFor(() => {
 				expect(document.activeElement).toBe(trigger);
@@ -330,12 +341,14 @@ describe('Popover', () => {
 					triggerLabel: 'Open'
 				}
 			});
-			const trigger = screen.getByRole('button', { name: 'Open' }).element() as HTMLElement;
+			const trigger = screen
+				.getByRole('button', { name: 'Open', exact: true })
+				.element() as HTMLElement;
 			trigger.focus();
 
 			trigger.click();
 			await expect
-				.element(screen.getByRole('button', { name: 'Open' }))
+				.element(screen.getByRole('button', { name: 'Open', exact: true }))
 				.toHaveAttribute('aria-expanded', 'true');
 
 			const inside = screen.getByTestId('inside-content').element();
@@ -351,7 +364,7 @@ describe('Popover', () => {
 			popoverEl!.dispatchEvent(toggleEvent);
 
 			await expect
-				.element(screen.getByRole('button', { name: 'Open' }))
+				.element(screen.getByRole('button', { name: 'Open', exact: true }))
 				.toHaveAttribute('aria-expanded', 'false');
 			await vi.waitFor(() => {
 				expect(document.activeElement).toBe(trigger);

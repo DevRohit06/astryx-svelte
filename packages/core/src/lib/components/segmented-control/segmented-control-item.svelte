@@ -22,7 +22,8 @@
 	import { useSegmentedControlContext } from './segmented-control-context.svelte.js';
 	import {
 		segmentedControlIconAttrs,
-		segmentedControlItemAttrs
+		segmentedControlItemAttrs,
+		segmentedControlLabelTextAttrs
 	} from './segmented-control-item.stylex.js';
 
 	/**
@@ -63,6 +64,7 @@
 		segmentedControlItemAttrs({ size, isSelected, isItemDisabled, isFill })
 	);
 	const iconAttrs = $derived(segmentedControlIconAttrs(size));
+	const labelTextAttrs = segmentedControlLabelTextAttrs();
 
 	// Consumer-first: a consumer `onclick` can `preventDefault()` to opt out of
 	// selection; otherwise selection proceeds when enabled and not already selected.
@@ -94,5 +96,6 @@
 	{#if icon}
 		<span class={iconAttrs.class} style={iconAttrs.style}>{@render icon()}</span>
 	{/if}
-	{#if !isLabelHidden}<span>{label}</span>{/if}
+	{#if !isLabelHidden}<span class={labelTextAttrs.class} style={labelTextAttrs.style}>{label}</span
+		>{/if}
 </button>

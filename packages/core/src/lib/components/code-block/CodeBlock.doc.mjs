@@ -208,6 +208,12 @@ export default {
 				'Per-instance syntax theme override. Shorthand for wrapping the block in <SyntaxTheme theme={...}>. Accepts a preset from @astryx-svelte/core/theme/syntax or a theme created with defineSyntaxTheme(). Defaults to the nearest SyntaxTheme ancestor or the theme-level syntax colors.'
 		},
 		{
+			name: 'highlightMode',
+			type: "'auto' | 'ranges' | 'spans'",
+			description: 'Syntax highlighting rendering mode.',
+			default: "'auto'"
+		},
+		{
 			name: 'isCollapsible',
 			type: 'boolean',
 			description:

@@ -4,11 +4,22 @@ import { render } from 'vitest-browser-svelte';
 import SelectionTable, {
 	type SelectableUser
 } from './fixtures/table-selection-plugin-fixture.svelte';
+import { selectedBgColor } from '$lib/components/table/plugins/selection/selection.stylex.js';
 
 /**
  * Astryx's `Table/plugins/selection/useTableSelection.test.tsx`, ported case for
- * case — **14 upstream cases at v0.3.0, 13 here, 1 dropped and named below.**
- * Nothing added.
+ * case — **19 upstream cases at the 0.5.0 pin, 18 here**: 1 dropped and named
+ * below. Nothing added.
+ *
+ * (This header read "**19 … 13 here**: 1 dropped, 5 unported" while the whole
+ * `hasRowHighlight` describe added at 0.5.0 was missing. That was a **plugin**
+ * gap, not only a test gap: nothing under `components/table/` implemented
+ * `hasRowHighlight`, so `transformBodyRow` painted a selected row's background
+ * unconditionally and the flag had no off-branch to assert — while
+ * `useTableSelection.doc.mjs`, generated against the 0.5.0 prose, already
+ * documented the prop. The config option is ported and the 5 cases with it.
+ * Before that the header read "**14 upstream cases at v0.3.0, 13 here, 1
+ * dropped** … Nothing added", true through v0.4.5.)
  *
  * ## The count, re-derived from the tag (the previous header was wrong)
  *
@@ -192,5 +203,78 @@ describe('useTableSelection', () => {
 		const headerRow = screen.getByRole('row').nth(0);
 		const headers = headerRow.getByRole('columnheader').elements();
 		expect(headers).toHaveLength(3);
+	});
+	describe('hasRowHighlight', () => {
+		// Upstream reads `colorVars['--color-accent-muted']` in the test file. The
+		// port's plugin exports that same token reference as `selectedBgColor`, so
+		// importing it asserts against the one constant the component writes rather
+		// than restating the token.
+
+		it('paints a checked row with the accent wash by default', async () => {
+			const screen = await render(SelectionTable, { props: { data: selectableUsers } });
+
+			await userEvent.click(screen.getByLabelText('Select row', exact).elements()[0]);
+
+			await expect.element(screen.getByRole('row').nth(1)).toHaveAttribute('aria-selected', 'true');
+			const row = screen.getByRole('row').elements()[1] as HTMLElement;
+			expect(row.style.backgroundColor).toBe(selectedBgColor);
+		});
+
+		it('leaves the row background alone when hasRowHighlight is false', async () => {
+			const screen = await render(SelectionTable, {
+				props: { data: selectableUsers, hasRowHighlight: false }
+			});
+
+			await userEvent.click(screen.getByLabelText('Select row', exact).elements()[0]);
+
+			// The wash is opt-out; the semantics are not.
+			await expect.element(screen.getByRole('row').nth(1)).toHaveAttribute('aria-selected', 'true');
+			const row = screen.getByRole('row').elements()[1] as HTMLElement;
+			expect(row.style.backgroundColor).toBe('');
+		});
+
+		it('clears an already-painted row when the flag flips to false', async () => {
+			const screen = await render(SelectionTable, { props: { data: selectableUsers } });
+
+			await userEvent.click(screen.getByLabelText('Select row', exact).elements()[0]);
+			await expect.element(screen.getByRole('row').nth(1)).toHaveAttribute('aria-selected', 'true');
+			expect((screen.getByRole('row').elements()[1] as HTMLElement).style.backgroundColor).toBe(
+				selectedBgColor
+			);
+
+			await screen.rerender({ data: selectableUsers, hasRowHighlight: false });
+
+			await expect.element(screen.getByRole('row').nth(1)).toHaveAttribute('aria-selected', 'true');
+			const row = screen.getByRole('row').elements()[1] as HTMLElement;
+			expect(row.style.backgroundColor).toBe('');
+		});
+
+		it('repaints an already-checked row when the flag flips back to true', async () => {
+			const screen = await render(SelectionTable, {
+				props: { data: selectableUsers, hasRowHighlight: false }
+			});
+
+			await userEvent.click(screen.getByLabelText('Select row', exact).elements()[0]);
+			await expect.element(screen.getByRole('row').nth(1)).toHaveAttribute('aria-selected', 'true');
+
+			await screen.rerender({ data: selectableUsers, hasRowHighlight: true });
+
+			const row = screen.getByRole('row').elements()[1] as HTMLElement;
+			expect(row.style.backgroundColor).toBe(selectedBgColor);
+		});
+
+		it('never paints unchecked rows in either mode', async () => {
+			const screen = await render(SelectionTable, { props: { data: selectableUsers } });
+
+			await userEvent.click(screen.getByLabelText('Select row', exact).elements()[0]);
+			await expect.element(screen.getByRole('row').nth(1)).toHaveAttribute('aria-selected', 'true');
+			expect((screen.getByRole('row').elements()[2] as HTMLElement).style.backgroundColor).toBe('');
+			expect(screen.getByRole('row').elements()[2]).not.toHaveAttribute('aria-selected');
+
+			await screen.rerender({ data: selectableUsers, hasRowHighlight: false });
+
+			await expect.element(screen.getByRole('row').nth(2)).not.toHaveAttribute('aria-selected');
+			expect((screen.getByRole('row').elements()[2] as HTMLElement).style.backgroundColor).toBe('');
+		});
 	});
 });

@@ -6,9 +6,10 @@ import Fixture from './fixtures/overflow-list-fixture.svelte';
 import type { OverflowItemData } from './fixtures/overflow-list-fixture.svelte';
 
 /**
- * Ported from Astryx's `OverflowList/OverflowList.test.tsx`, all nineteen `it`
- * cases bar the `displayName` one — eighteen here. (Counting the `describe`s in
- * would give a bigger number; the ledger is the `it` count.) The four
+ * Ported from Astryx's `OverflowList/OverflowList.test.tsx` at the 0.5.0 pin,
+ * all nineteen `it` cases bar the `displayName` one — eighteen here. (Counting
+ * the `describe`s in would give a bigger number; the ledger is the `it` count.)
+ * The four
  * `maxVisibleItems`/`maxRows` cases arrived with 0.1.9's bounded multi-row
  * wrapping.
  *
@@ -40,7 +41,7 @@ import type { OverflowItemData } from './fixtures/overflow-list-fixture.svelte';
  *   a callback ran.
  * - **`exposes a displayName for devtools` is dropped.** Svelte components have
  *   no `displayName` surface. Recorded, with the rest of the port's `displayName`
- *   drops, in port/todo.md.
+ *   drops, in port/debts.md.
  *
  * The API shape differs from upstream (`items` + snippets, not compositional
  * children) — see the component's port note; every upstream child becomes an
