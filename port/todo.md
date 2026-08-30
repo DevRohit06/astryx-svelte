@@ -80,11 +80,15 @@ them.
    `@astryxdesign/cli`'s `assets/templates/blocks/components/<Name>/`, resolved by `exampleFor` in
    the block's `.doc.mjs`, so the parity rule applies to them exactly as it does to a component.
 
-   **The count of them is not tracked anywhere.** `docs/scripts/generate-content.mjs` prints
-   `examples N ported / M pending` as it runs and then discards it; `status.md` has no row for it.
-   So this front is the one place where progress is described rather than measured, against this
-   file's own rule. Wiring that figure into `status.mjs` is the next piece of work here, and it is
-   small.
+   Batch 039 put the examples figure in [`status.md`](./status.md), where it belongs — it had been
+   printed by the generator on every run and discarded, leaving this front the only one measured in
+   prose. `status.mjs` calls the generator for it rather than recomputing the rule, because the
+   tally counts only blocks whose target is a documented entry and that set is not the barrel's
+   export list.
+
+   **One figure is still discarded the same way:** `templates N ported / M pending`, from the same
+   generator run and the same front. Identical defect, identical fix, deliberately left out of 039
+   so that batch's scope kept meaning something.
 
 ### The release, held
 

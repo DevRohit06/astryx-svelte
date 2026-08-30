@@ -1772,6 +1772,28 @@ export async function reconcile({ quiet = false } = {}) {
 	return { surface, propsIndex, entries, unported, totalUpstream, drift };
 }
 
+/**
+ * The example-block tally, for `scripts/status.mjs`.
+ *
+ * Lives here rather than in `status.mjs` because the interesting half of the
+ * calculation is *which targets count*, and that set is not derivable from
+ * committed source. A block is only pending when its target is a **documented
+ * entry**, and the documented set is not the barrel's export list:
+ * `useMediaQuery` is a hook, absent from `src/lib/index.ts`, and present in the
+ * registry. Reimplementing the rule against the barrel reports one pending
+ * block fewer than exists, which is the exact failure the metric is meant to
+ * prevent.
+ *
+ * Returns counts only — the registry itself is `generate`'s business.
+ */
+export async function exampleCounts({ quiet = true } = {}) {
+	const { entries } = await reconcile({ quiet });
+	const { portedCount, pendingCount } = await buildExampleRegistry(
+		new Set(entries.map((e) => e.name))
+	);
+	return { ported: portedCount, pending: pendingCount };
+}
+
 export async function generate({ quiet = false } = {}) {
 	/** @type {(...args: unknown[]) => void} */
 	const log = quiet ? () => {} : (...args) => console.log(...args);
