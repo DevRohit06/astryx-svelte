@@ -11,6 +11,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineProps, focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Extensible colour map for `Token`.
@@ -78,14 +79,7 @@ const styles = stylex.create({
 		},
 		transitionProperty: 'background-image',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		backgroundImage: {
-			default: null,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
-			},
-			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	disabled: {
 		cursor: 'default',
@@ -222,6 +216,11 @@ export function tokenRootAttrs(
 		sizeStyles[size],
 		colorStyles[color],
 		interactive && styles.interactive,
+		// Upstream 0.5.1 moved the hover/pressed overlay out of `styles.interactive`
+		// into the shared module, so a press reliably overrides a hover. Applied
+		// under the same gate: upstream's two call sites are both interactive
+		// branches and apply it unconditionally there.
+		interactive && interactionOverlayStyles.backgroundImage,
 		focusWithin && focusOutlineStyles.focusWithin,
 		isDisabled && styles.disabled,
 		xstyle

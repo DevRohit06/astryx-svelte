@@ -150,6 +150,25 @@ const CASES = [
 		upstreamFile: 'utils/focusOutline.stylex.js'
 	},
 	{
+		// The shared hover/pressed overlay, new at upstream 0.5.1. It exists so a
+		// press reliably overrides a hover: the enabled guard sits outside the
+		// individual states, which gives hover and `:active` the same generated
+		// specificity, and StyleX's own pseudo-state ordering then emits `:active`
+		// last. The bare `:active` branch is the touch fallback, where
+		// `(hover: hover)` never matches.
+		//
+		// Twenty components upstream apply these keys at their call sites, having
+		// dropped equivalent per-component `backgroundImage` rules from their own
+		// style groups — so this module's arrival is a *migration*, and each
+		// consumer that has not yet adopted it shows up as our group carrying
+		// classes upstream's no longer does.
+		//
+		// The group keeps upstream's `interactionOverlayStyles` name, so the diff
+		// needs no rename — only the filename differs, kebab-case per this port.
+		file: 'src/lib/utils/interaction-overlay.stylex.js',
+		upstreamFile: 'utils/interactionOverlay.stylex.js'
+	},
+	{
 		// The indicator layer, new at upstream 0.4.0. Three components draw the
 		// stateful control visuals — the checkbox box, the radio circle, the mark
 		// on a chosen option — that CheckboxInput, RadioListItem and the selection

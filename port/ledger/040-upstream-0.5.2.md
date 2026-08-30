@@ -82,6 +82,28 @@ Same family as the camelCase-against-a-kebab-case-tree false absence: an assumpt
 of a name, applied silently, failing safe-looking. **Count the matches against the expected total,
 never the rewrites against nothing.**
 
+## The interactionOverlay migration, and its verified pattern
+
+`utils/interactionOverlay.stylex.ts` is ported and **proven**: registering it with the class
+oracle took the style-key total 1,815 → 1,818 and it reports **zero mismatches**, so the
+transcription compiles byte-identical to upstream's published output.
+
+It is a *migration*, not an addition. Upstream removed the equivalent per-component
+`backgroundImage` rules from twenty components' own style groups and applies the shared keys at
+each call site instead. So every consumer that has not yet adopted it shows up in the oracle as
+**our group carrying classes upstream's no longer does** — which is what most of the spread across
+`button`, `outline`, `item`, `token`, `step`, `side-nav-*`, `top-nav-*`, `tree-list-item`,
+`avatar-group-overflow`, `selector` and `number-input` is measuring.
+
+The pattern, established and verified on `token` (125 → 124 mismatches, and `token` left the list):
+
+1. Delete the `backgroundImage` block from the component's own interactive style key.
+2. Import `interactionOverlayStyles` from `../../utils/interaction-overlay.stylex.js`.
+3. Apply `interactionOverlayStyles.backgroundImage` at the call site, under the same gate the
+   component already uses for its interactive styles.
+
+**Nineteen consumers remain**, and they are mechanical from here.
+
 ## Still to do
 
 - Port the nine modules above.
