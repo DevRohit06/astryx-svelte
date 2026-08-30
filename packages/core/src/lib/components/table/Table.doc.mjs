@@ -25,9 +25,6 @@ export default {
 	theming: {
 		targets: [
 			{
-				className: 'astryx-base-table'
-			},
-			{
 				className: 'astryx-table'
 			},
 			{
@@ -52,6 +49,10 @@ export default {
 			{
 				className: 'astryx-table-header-cell',
 				visualProps: ['density']
+			},
+			{
+				className: 'astryx-base-table',
+				deprecatedFor: 'table'
 			}
 		]
 	},
@@ -248,7 +249,7 @@ export default {
 			name: 'children',
 			type: 'Snippet',
 			description:
-				'Children mode: compose the table yourself from TableHeader / TableBody / TableFooter, each holding TableRow and TableCell, instead of using data-driven rendering. The children are passed straight to the <table>, so the section is yours to supply — a TableRow placed directly in Table emits <table><tr>, which is invalid HTML and mismatches on hydration (the parser inserts an implied <tbody> for server-rendered markup; React does not on the client). Data-driven mode renders the sections for you.'
+				'Children mode: compose the table yourself from TableHeader / TableBody / TableFooter, each holding TableRow and TableCell, instead of using data-driven rendering. The children are passed straight to the <table>, so the section is yours to supply. A TableRow placed directly in Table emits <table><tr>, which is invalid HTML and mismatches on hydration (the parser inserts an implied <tbody> for server-rendered markup; React does not on the client). Data-driven mode renders the sections for you.'
 		},
 		{
 			name: 'xstyle',

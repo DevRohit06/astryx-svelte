@@ -25,11 +25,11 @@ export default {
 		targets: [
 			{
 				className: 'astryx-avatar-group',
-				visualProps: ['size']
+				visualProps: ['size', 'shape']
 			},
 			{
 				className: 'astryx-avatar-group-overflow',
-				visualProps: ['size']
+				visualProps: ['size', 'shape']
 			}
 		]
 	},
@@ -94,6 +94,13 @@ export default {
 			description:
 				"Size applied to all avatars via context. This wins over each child Avatar's own size prop, including when it is left at the default, so set the size here rather than on the children.",
 			default: "'md'"
+		},
+		{
+			name: 'shape',
+			type: "'circle' | 'rounded' | 'square'",
+			description:
+				'Shape applied to all avatars via context, overriding each avatar\'s own shape prop. Also applied to AvatarGroupOverflow\'s "+N" indicator.',
+			default: "'circle'"
 		},
 		{
 			name: 'ref',

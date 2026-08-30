@@ -23,7 +23,11 @@ export default {
 	theming: {
 		targets: [
 			{
-				className: 'astryx-hovercard'
+				className: 'astryx-hover-card'
+			},
+			{
+				className: 'astryx-hovercard',
+				deprecatedFor: 'hover-card'
 			}
 		],
 		vars: [

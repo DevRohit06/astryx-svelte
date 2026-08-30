@@ -18,7 +18,7 @@ export default {
 		'datechooser'
 	],
 	group: 'DateInput',
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -254,6 +254,13 @@ export default {
 			description:
 				"How the committed date value is displayed. Named values are reused from Timestamp's format vocabulary: 'date' shows 'Mar 21, 2026', 'date_long' shows 'March 21, 2026', 'date_weekday' shows 'Wed, Mar 21, 2026', 'system_date' shows '2026-03-21'. A function receives the ISO value and returns a custom string. Applies only to the committed value, never to text being typed.",
 			default: "'date_long'"
+		},
+		{
+			name: 'nativePicker',
+			type: "'touch' | 'always' | 'never'",
+			description:
+				"Which surface draws the date picker. 'touch' (the default) hands a touch device to the browser/OS: the field becomes an input type=date and the platform draws the picker (the iOS wheel, the Android calendar dialog); 'always' does that wherever the browser supports input type=date; 'never' keeps Astryx's own pickers everywhere (the bottom-sheet picker on a finger, the calendar popover on a mouse). Use 'never' for a field that needs weekStartsOn, numberOfMonths or dateConstraints, none of which a native picker can express. format and placeholder still apply in native mode; min and max are forwarded, but a native picker may not show them (on iOS an out-of-range date can be selected and is refused on commit rather than greyed out).",
+			default: "'touch'"
 		},
 		{
 			name: 'width',

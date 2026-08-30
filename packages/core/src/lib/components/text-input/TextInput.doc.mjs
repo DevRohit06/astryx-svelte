@@ -19,7 +19,7 @@ export default {
 		'adornment',
 		'validation'
 	],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{

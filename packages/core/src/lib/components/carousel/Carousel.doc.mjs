@@ -24,6 +24,10 @@ export default {
 		targets: [
 			{
 				className: 'astryx-carousel'
+			},
+			{
+				className: 'astryx-carousel-scroller',
+				visualProps: ['gap', 'padding', 'snap', 'edgeFade']
 			}
 		]
 	},
@@ -45,6 +49,11 @@ export default {
 				guidance: true,
 				description:
 					'Always provide an aria-label that describes what the carousel contains, like "Featured products" or "Team members".'
+			},
+			{
+				guidance: true,
+				description:
+					'Carousel implements the WAI-ARIA APG carousel pattern (https://www.w3.org/WAI/ARIA/apg/patterns/carousel/) without auto-rotation: the region is labelled and carries aria-roledescription="carousel", each item is a group named "Slide N of M", and the scroll container is a tab stop so keyboard users can pan it with the arrow keys.'
 			},
 			{
 				guidance: true,

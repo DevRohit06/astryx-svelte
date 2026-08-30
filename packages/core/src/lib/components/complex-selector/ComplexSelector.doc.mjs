@@ -10,7 +10,7 @@ export default {
 	displayName: 'Complex Selector',
 	keywords: ['selector', 'picker', 'popover', 'dialog', 'custom', 'rich', 'matrix', 'grid'],
 	group: 'Selector',
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -174,6 +174,12 @@ export default {
 			type: 'ComplexSelectorHandle | null',
 			description:
 				'Imperative handle for programmatic control. Exposes open(), close(), toggle(), and isOpen().'
+		},
+		{
+			name: 'onOpenChange',
+			type: '(isOpen: boolean) => void',
+			description:
+				'Called whenever the surface opens or closes, however it happened — trigger, keyboard, light dismiss, Escape, close(), or the imperative handle.'
 		},
 		{
 			name: 'contentXstyle',

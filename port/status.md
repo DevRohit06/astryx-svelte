@@ -13,21 +13,35 @@
 | Missing here              | none                                                                     |
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
-| Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
-| Ledger entries            | 40                                                                       |
+| Upstream pin              | `@astryxdesign/core` 0.5.2                                               |
+| Ledger entries            | 41                                                                       |
 
 ## Test parity
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
-| Upstream                 | 275    | 7039           |
-| Ported here              | 268    | 6965           |
+| Upstream                 | 283    | 7521           |
+| Ported here              | 269    | 7355           |
 | No counterpart by design | 7      | 74             |
-| **Unported**             | **0**  | **0**          |
+| **Unported**             | **7**  | **92**         |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
 `it.each` counts once rather than per row.
+
+<details><summary>Unported upstream suites</summary>
+
+| Suite                                       | Cases |
+| ------------------------------------------- | ----- |
+| `DateTimeInput/DateTimeInputTouch.test.tsx` | 39    |
+| `DateInput/NativeDateField.test.tsx`        | 34    |
+| `NumberInput/numberInputCommit.test.ts`     | 6     |
+| `NumberInput/numberParser.test.ts`          | 4     |
+| `utils/isApplePlatform.test.ts`             | 4     |
+| `NumberInput/numberParser.docblock.test.ts` | 3     |
+| `Typeahead/TypeaheadItem.test.tsx`          | 2     |
+
+</details>
 
 ## Assertion strength
 

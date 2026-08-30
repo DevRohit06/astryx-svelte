@@ -9,7 +9,7 @@ export default {
 	name: 'Slider',
 	displayName: 'Slider',
 	keywords: ['slider', 'range', 'slidebar', 'trackbar', 'scrubber', 'knob', 'thumb', 'rangeslider'],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{

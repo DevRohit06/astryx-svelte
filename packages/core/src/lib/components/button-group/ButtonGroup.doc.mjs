@@ -56,12 +56,12 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Name the group for what its buttons act on. The label is the group’s accessible name and a screen reader reads it before each member.'
+					"Name the group for what its buttons act on. The label is the group's accessible name and a screen reader reads it before each member."
 			},
 			{
 				guidance: true,
 				description:
-					'Keep the group a single Tab stop. Arrow keys move between members along the orientation, Home/End jump to the ends, and disabled members are skipped — the WAI-ARIA APG roving tabindex technique: https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/#kbd_roving_tabindex'
+					'Keep the group a single Tab stop. Arrow keys move between members along the orientation, Home/End jump to the ends, and disabled members are skipped. This is the WAI-ARIA APG roving tabindex technique: https://www.w3.org/WAI/ARIA/apg/practices/keyboard-interface/#kbd_roving_tabindex'
 			},
 			{
 				guidance: false,

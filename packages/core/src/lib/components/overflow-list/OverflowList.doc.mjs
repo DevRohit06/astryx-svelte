@@ -40,6 +40,11 @@ export default {
 			{
 				guidance: true,
 				description:
+					'When the row already has its own menu, use onOverflowChange to feed the collapsed items into it instead of adding a second anchor with overflowRenderer.'
+			},
+			{
+				guidance: true,
+				description:
 					'Set minVisibleItems to keep key items visible, and maxVisibleItems to cap the row at a fixed count regardless of available width.'
 			},
 			{
@@ -71,6 +76,12 @@ export default {
 			type: 'Snippet<[OverflowItem<T>[]]>',
 			description:
 				'Render function for the overflow indicator. Receives the list of hidden items (each with child and index). Only called when items are overflowing.'
+		},
+		{
+			name: 'onOverflowChange',
+			type: '(overflowItems: OverflowItem[]) => void',
+			description:
+				'Called whenever the collapsed set changes: with the collapsed items once something collapses, and with an empty array once the row widens back out. Membership and order changes report even when the count stays the same; unrelated re-renders and callback identity changes do not. Silent while nothing overflows, including on mount. Use stable React keys for dynamic items.'
 		},
 		{
 			name: 'gap',

@@ -9,7 +9,7 @@ export default {
 	name: 'FileInput',
 	displayName: 'File Input',
 	keywords: ['fileinput', 'file', 'upload', 'drag', 'drop', 'dropzone', 'attachment', 'browse'],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{

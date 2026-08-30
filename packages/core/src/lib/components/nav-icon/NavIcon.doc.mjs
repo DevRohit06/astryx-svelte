@@ -15,7 +15,11 @@ export default {
 	theming: {
 		targets: [
 			{
-				className: 'astryx-navicon'
+				className: 'astryx-nav-icon'
+			},
+			{
+				className: 'astryx-navicon',
+				deprecatedFor: 'nav-icon'
 			}
 		]
 	},

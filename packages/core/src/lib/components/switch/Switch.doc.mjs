@@ -9,7 +9,7 @@ export default {
 	name: 'Switch',
 	displayName: 'Switch',
 	keywords: ['switch', 'toggle', 'onoff', 'flipswitch', 'boolean', 'toggleswitch'],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -25,6 +25,9 @@ export default {
 			{
 				className: 'astryx-switch-field',
 				visualProps: ['labelPosition', 'labelSpacing']
+			},
+			{
+				className: 'astryx-switch-label'
 			}
 		]
 	},

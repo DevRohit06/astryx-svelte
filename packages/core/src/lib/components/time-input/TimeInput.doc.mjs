@@ -20,7 +20,7 @@ export default {
 		'timefield',
 		'schedule'
 	],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{

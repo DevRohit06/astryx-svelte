@@ -10,7 +10,7 @@ export default {
 	displayName: 'Checkbox Input',
 	keywords: ['checkbox', 'check', 'toggle', 'tick', 'indeterminate', 'boolean', 'tristate'],
 	group: 'Checkbox',
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -27,6 +27,9 @@ export default {
 				visualProps: ['size'],
 				states: ['checked', 'disabled'],
 				deprecatedFor: 'checkbox-indicator'
+			},
+			{
+				className: 'astryx-checkbox-label'
 			}
 		]
 	},

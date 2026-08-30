@@ -28,19 +28,38 @@ export default {
 				visualProps: ['color']
 			},
 			{
-				className: 'astryx-codeblock',
+				className: 'astryx-code-block',
 				visualProps: ['size', 'language', 'container']
 			},
 			{
-				className: 'astryx-codeblock-header',
+				className: 'astryx-code-block-header',
 				visualProps: ['size', 'language', 'container']
 			},
 			{
-				className: 'astryx-codeblock-title',
+				className: 'astryx-code-block-title',
 				visualProps: ['size', 'language']
 			},
 			{
-				className: 'astryx-codeblock-copy-button'
+				className: 'astryx-code-block-copy-button'
+			},
+			{
+				className: 'astryx-codeblock',
+				visualProps: ['size', 'language', 'container'],
+				deprecatedFor: 'code-block'
+			},
+			{
+				className: 'astryx-codeblock-header',
+				visualProps: ['size', 'language', 'container'],
+				deprecatedFor: 'code-block-header'
+			},
+			{
+				className: 'astryx-codeblock-title',
+				visualProps: ['size', 'language'],
+				deprecatedFor: 'code-block-title'
+			},
+			{
+				className: 'astryx-codeblock-copy-button',
+				deprecatedFor: 'code-block-copy-button'
 			}
 		],
 		vars: [

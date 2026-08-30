@@ -27,7 +27,7 @@ export default {
 		targets: [
 			{
 				className: 'astryx-button',
-				visualProps: ['size', 'variant']
+				visualProps: ['size', 'variant', 'elevation']
 			}
 		],
 		vars: [

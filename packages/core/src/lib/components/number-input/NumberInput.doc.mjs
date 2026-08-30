@@ -19,7 +19,7 @@ export default {
 		'quantity',
 		'numberpicker'
 	],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -43,6 +43,11 @@ export default {
 		description:
 			'A form input for numeric values with built-in validation, min/max constraints, and step controls. Use NumberInput for quantities, measurements, percentages, and similar inputs.',
 		bestPractices: [
+			{
+				guidance: true,
+				description:
+					"Let people paste formatted numbers: a pasted 1,234,234,234 is read under the field's locale and commits as 1234234234 on blur. Typing is never intercepted."
+			},
 			{
 				guidance: true,
 				description: 'Set min, max, and step to guide users toward valid values.'
@@ -115,7 +120,8 @@ export default {
 		{
 			name: 'onChange',
 			type: '((value: number) => void) | ((value: number | null) => void)',
-			description: 'Callback fired when input value changes (only on valid input).',
+			description:
+				'Callback fired when a valid text edit commits on blur or Enter, or when a step or clear control changes the value.',
 			required: true
 		},
 		{
@@ -204,12 +210,12 @@ export default {
 		{
 			name: 'min',
 			type: 'number | null',
-			description: 'Minimum value allowed.'
+			description: 'Minimum value allowed. A smaller entry commits at this value on blur or Enter.'
 		},
 		{
 			name: 'max',
 			type: 'number | null',
-			description: 'Maximum value allowed.'
+			description: 'Maximum value allowed. A larger entry commits at this value on blur or Enter.'
 		},
 		{
 			name: 'step',

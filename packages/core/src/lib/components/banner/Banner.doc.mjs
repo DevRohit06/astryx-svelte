@@ -181,6 +181,12 @@ export default {
 				'Called when the dismiss button is clicked; banner hides itself regardless of whether this is provided.'
 		},
 		{
+			name: 'dismissLabel',
+			type: 'string',
+			description:
+				'Accessible name and visible tooltip for the dismiss button (pass it already translated). Defaults to "Dismiss <title>" for a string title, so stacked banners are distinguishable; set it when the title is a ReactNode.'
+		},
+		{
 			name: 'endContent',
 			type: 'Snippet',
 			description:

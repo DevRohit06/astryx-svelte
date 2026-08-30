@@ -19,7 +19,7 @@ export default {
 		'schedule'
 	],
 	group: 'DateInput',
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -206,7 +206,7 @@ export default {
 			name: 'minRangeSpan',
 			type: 'number',
 			description:
-				'Minimum days a selected range must span, counting both endpoints (`2` forbids a single-day range). Once a start is picked, days closer than this are disabled. Defaults to 1 (same-day start and end allowed).'
+				'Minimum days a selected range must span, counting both endpoints (`2` forbids a single-day range). Once a start is picked, days closer than this are disabled. Clicking the start again commits a one-day range when allowed, or cancels the in-progress selection when the minimum is longer. Defaults to 1 (same-day start and end allowed).'
 		},
 		{
 			name: 'presets',

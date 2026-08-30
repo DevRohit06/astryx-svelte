@@ -9,7 +9,7 @@ export default {
 	name: 'FieldStatus',
 	displayName: 'Field Status',
 	group: 'Field',
-	category: 'Data Input',
+	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	theming: {
 		targets: [

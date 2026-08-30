@@ -10,7 +10,7 @@ export default {
 	displayName: 'Input Group',
 	keywords: ['inputgroup', 'addon', 'prefix', 'suffix', 'connected', 'grouped', 'input'],
 	group: 'Field',
-	category: 'Data Input',
+	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	theming: {
 		targets: [
