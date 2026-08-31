@@ -11,6 +11,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMegaMenuItem.tsx` styles.
@@ -36,13 +37,6 @@ const styles = stylex.create({
 		transitionProperty: 'background-color',
 		transitionDuration: durationVars['--duration-fast'],
 		transitionTimingFunction: easeVars['--ease-standard'],
-		backgroundColor: {
-			default: 'transparent',
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': colorVars['--color-overlay-hover']
-			},
-			':active': colorVars['--color-overlay-pressed']
-		},
 		border: 'none',
 		color: 'inherit',
 		fontFamily: 'inherit',
@@ -113,7 +107,12 @@ const styles = stylex.create({
 
 /** The desktop card. */
 export function megaMenuItemAttrs(xstyle?: StyleArg): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(styles.desktop, xstyle);
+	return focusOutlineProps.focusVisible(
+		styles.desktop,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
+		xstyle
+	);
 }
 
 /** The 40px icon tile on the desktop card. */

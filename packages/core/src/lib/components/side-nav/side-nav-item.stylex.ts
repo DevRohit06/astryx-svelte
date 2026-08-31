@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { navItemStyles, type NavItemSize } from '../nav-item/nav-item.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 import {
 	colorVars,
 	durationVars,
@@ -115,15 +116,7 @@ const styles = stylex.create({
 			default: 'pointer',
 			':is(:disabled,[aria-disabled="true"])': 'default'
 		},
-		borderRadius: radiusVars['--radius-element'],
-		':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-			'@media (hover: hover)': {
-				backgroundColor: colorVars['--color-overlay-hover']
-			}
-		},
-		':active': {
-			backgroundColor: colorVars['--color-overlay-pressed']
-		}
+		borderRadius: radiusVars['--radius-element']
 	},
 	// Primary action element inside the split-action row (link or button).
 	// Flex:1 so it fills remaining space, giving a wide click target.
@@ -272,7 +265,11 @@ export const sideNavItemChevronExpandedStyle = styles.expandChevronExpanded;
 
 /** The chevron as its own button, in the split-action row. */
 export function sideNavItemExpandToggleAttrs(): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(styles.expandToggle);
+	return focusOutlineProps.focusVisible(
+		styles.expandToggle,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor
+	);
 }
 
 /** The primary link/button in the split-action row. */

@@ -3,7 +3,7 @@
 	import type { HTMLAttributes } from 'svelte/elements';
 	import type { BaseProps } from '../../base-props.js';
 	import type { LinkComponentType } from '../link/types.js';
-	import type { AvatarSize } from './avatar.stylex.js';
+	import type { AvatarShape, AvatarSize } from './avatar.stylex.js';
 
 	export interface AvatarProps extends BaseProps<HTMLDivElement> {
 		/** Accessible name and hover text. Falls back to `name`. */
@@ -21,6 +21,14 @@
 		 * @default 'md'
 		 */
 		size?: AvatarSize;
+		/**
+		 * Shape variant of the avatar.
+		 * - 'circle': Full circle (default)
+		 * - 'rounded': Rounded square
+		 * - 'square': Sharp square
+		 * @default 'circle'
+		 */
+		shape?: AvatarShape;
 		src?: string;
 		/**
 		 * Corner content — typically an `AvatarStatusDot`.
@@ -108,6 +116,7 @@
 		fallbackSrc,
 		name,
 		size = 'md',
+		shape = 'circle',
 		src,
 		status,
 		tooltip = true,
@@ -171,6 +180,10 @@
 	// A group sets the size for every avatar inside it, overriding the prop.
 	const group = useAvatarGroup();
 	const resolvedSize = $derived(group?.().size ?? size);
+	// Upstream reads the group's `shape` here too (`avatarGroup?.shape ?? shape`).
+	// `AvatarGroup` has no `shape` prop in this port yet, so nothing can override
+	// it; the read lands with that prop, in `avatar-group/`.
+	const resolvedShape = $derived(shape);
 	const numericSize = $derived(resolveSize(resolvedSize));
 
 	setAvatarSizeContext(() => numericSize);
@@ -243,6 +256,7 @@
 		avatarWrapperAttrs(
 			{
 				size: numericSize,
+				shape: resolvedShape,
 				groupOverlap: group?.().overlap ?? null,
 				isInteractive
 			},
@@ -260,8 +274,8 @@
 	const image = avatarImageAttrs();
 	const initials = $derived(avatarInitialsAttrs(numericSize));
 	const icon = avatarIconAttrs();
-	const statusAttrs = $derived(avatarStatusAttrs(numericSize));
-	const theme = $derived(themeProps('avatar', { size: resolvedSize }));
+	const statusAttrs = $derived(avatarStatusAttrs(numericSize, resolvedShape));
+	const theme = $derived(themeProps('avatar', { size: resolvedSize, shape: resolvedShape }));
 	// The fallback surface (initials + default icon) is its own theme target as
 	// of upstream 0.4.1, replacing the `--_avatar-fallback-*` derived vars: a
 	// theme sets background, color and weight on `avatar-fallback`, and per-size

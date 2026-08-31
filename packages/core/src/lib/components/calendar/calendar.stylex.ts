@@ -12,6 +12,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `Calendar/styles.ts`, which — unusually for this port —
@@ -62,6 +63,10 @@ export const calendarStyles = stylex.create({
 	},
 	monthsContainer: {
 		display: 'flex',
+		// Wraps rather than overflowing: two months side by side need ~488px, so
+		// an unwrapped row scrolls the document sideways below that and puts the
+		// next-month button off-viewport (WCAG 1.4.10). Above 488px nothing moves.
+		flexWrap: 'wrap',
 		gap: spacingVars['--spacing-4']
 	},
 	srOnly: {
@@ -212,7 +217,7 @@ export const dayCellStyles = stylex.create({
 		display: 'flex',
 		alignItems: 'center',
 		justifyContent: 'center',
-		borderRadius: '50%',
+		borderRadius: radiusVars['--radius-full'],
 		borderWidth: 0,
 		borderStyle: 'none',
 		cursor: {
@@ -279,13 +284,7 @@ export const dayCellTheme = stylex.create({
 	// Day button - default state
 	day: {
 		color: colorVars['--color-text-primary'],
-		backgroundColor: 'transparent',
-		backgroundImage: {
-			default: null,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
-			}
-		}
+		backgroundColor: 'transparent'
 	},
 
 	// Outside days (adjacent months)
@@ -305,13 +304,21 @@ export const dayCellTheme = stylex.create({
 
 	// Selected state (single selection or range endpoints)
 	daySelected: {
-		backgroundColor: colorVars['--color-accent'],
-		color: colorVars['--color-on-accent'],
-		backgroundImage: {
-			default: null,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
-			}
+		// Forced colors (Windows High Contrast) strips the accent fill, which
+		// leaves the selected date looking exactly like every other day.
+		// Highlight/HighlightText is the platform convention for a selected
+		// control (WCAG 1.4.11), and `forced-color-adjust: none` is required
+		// because this is a <button>: the UA otherwise keeps the native
+		// ButtonFace surface and ignores the authored fill, the same trap
+		// ToggleButton documents.
+		forcedColorAdjust: 'none',
+		backgroundColor: {
+			default: colorVars['--color-accent'],
+			'@media (forced-colors: active)': 'Highlight'
+		},
+		color: {
+			default: colorVars['--color-on-accent'],
+			'@media (forced-colors: active)': 'HighlightText'
 		}
 	},
 
@@ -465,6 +472,8 @@ export function dayButtonAttrs(state: {
 	return focusOutlineProps.focusVisible(
 		dayCellStyles.day,
 		dayCellTheme.day,
+		// Upstream 0.5.1 moved the day cell's hover overlay into the shared module.
+		interactionOverlayStyles.backgroundImage,
 		state.isOutside && dayCellStyles.dayOutside,
 		state.isOutside && dayCellTheme.dayOutside,
 		todayPlain && dayCellStyles.dayToday,

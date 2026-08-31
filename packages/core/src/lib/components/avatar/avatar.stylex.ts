@@ -28,6 +28,9 @@ type AvatarNumericSize = 16 | 20 | 24 | 32 | 36 | 40 | 48 | 60 | 64 | 72 | 96 | 
 /** Avatar size — a named size or a specific pixel value. */
 export type AvatarSize = AvatarNamedSize | AvatarNumericSize;
 
+/** Avatar shape options. */
+export type AvatarShape = 'circle' | 'rounded' | 'square';
+
 /** Resolves named sizes to their numeric pixel values. */
 export function resolveSize(size: AvatarSize): number {
 	if (typeof size === 'number') {
@@ -72,6 +75,25 @@ const CIRCLE_EDGE_OFFSET_RATIO = (1 - 1 / Math.SQRT2) / 2;
  */
 const INITIALS_FONT_SIZE_RATIO = 0.4;
 
+// Sets one local custom property rather than `borderRadius` directly, so every
+// clipping/ring surface that needs the shape's radius (the wrapper, the
+// interactive focus ring, the content div that actually clips via
+// `overflow: hidden`, and AvatarGroupOverflow's "+N" indicator) reads the same
+// value instead of each hardcoding its own borderRadius independently. A theme
+// override only has to reach this one property, not fight the per-surface
+// StyleX class order to change the shape everywhere at once.
+export const shapeStyles = stylex.create({
+	circle: {
+		'--_avatar-radius': radiusVars['--radius-full']
+	},
+	rounded: {
+		'--_avatar-radius': radiusVars['--radius-element']
+	},
+	square: {
+		'--_avatar-radius': radiusVars['--radius-none']
+	}
+});
+
 /**
  * Base styles for the avatar.
  *
@@ -85,7 +107,11 @@ const styles = stylex.create({
 		// The wrapper carries the avatar's box as well as its radius, so a theme
 		// rule on the `.astryx-avatar` target reaches both: the size the `size`
 		// visual prop selects on is set here, and the content below fills it.
-		borderRadius: radiusVars['--radius-full']
+		//
+		// Reads the shape variant's `--_avatar-radius` (set by `shapeStyles`
+		// above) rather than a hardcoded value, so `shape` actually changes the
+		// wrapper's own radius instead of only the content div's clip.
+		borderRadius: 'var(--_avatar-radius)'
 	},
 	content: {
 		display: 'flex',
@@ -93,7 +119,11 @@ const styles = stylex.create({
 		justifyContent: 'center',
 		width: '100%',
 		height: '100%',
-		borderRadius: radiusVars['--radius-full'],
+		// The content div is the one that actually clips (via overflow: hidden
+		// below), so it needs its own border-radius matching the wrapper's. It
+		// inherits `--_avatar-radius` from the wrapper, since custom properties
+		// cascade to descendants even though border-radius itself does not.
+		borderRadius: 'var(--_avatar-radius)',
 		overflow: 'hidden',
 		userSelect: 'none'
 	},
@@ -142,8 +172,9 @@ const styles = stylex.create({
 			default: 'pointer',
 			':is(:disabled,[aria-disabled="true"])': 'default'
 		},
-		// Match the avatar's circular shape so the focus ring hugs it.
-		borderRadius: radiusVars['--radius-full']
+		// Match the avatar's shape (via `--_avatar-radius`) so the focus ring hugs
+		// it, whichever shape variant is in effect.
+		borderRadius: 'var(--_avatar-radius)'
 	}
 });
 
@@ -160,7 +191,7 @@ const dynamicStyles = stylex.create({
 	fontSize: (size: number) => ({
 		fontSize: `${size * INITIALS_FONT_SIZE_RATIO}px`
 	}),
-	statusPosition: (size: number) => ({
+	statusPositionCircle: (size: number) => ({
 		bottom: size * CIRCLE_EDGE_OFFSET_RATIO,
 		insetInlineEnd: size * CIRCLE_EDGE_OFFSET_RATIO,
 		// `insetInlineEnd` anchors to the right edge in LTR / left in RTL, so the
@@ -169,14 +200,24 @@ const dynamicStyles = stylex.create({
 			default: 'translate(50%, 50%)',
 			':is([dir="rtl"] *)': 'translate(-50%, 50%)'
 		}
-	})
+	}),
+	statusPositionCorner: {
+		bottom: 0,
+		insetInlineEnd: 0,
+		// Same RTL mirroring as statusPositionCircle above: insetInlineEnd anchors
+		// to the right edge in LTR / left in RTL, so the outward push must flip
+		// sign too.
+		transform: {
+			default: 'translate(25%, 25%)',
+			':is([dir="rtl"] *)': 'translate(-25%, 25%)'
+		}
+	}
 });
 
 const BORDER_WIDTH = 2;
 
 const groupStyles = stylex.create({
 	ring: {
-		borderRadius: radiusVars['--radius-full'],
 		borderWidth: BORDER_WIDTH,
 		borderStyle: 'solid',
 		borderColor: colorVars['--color-background-surface'],
@@ -204,6 +245,8 @@ export interface AvatarWrapperAttrsOptions {
 	 * avatar, rather than growing a wrapper around a fixed-size circle (#5030).
 	 */
 	size: number;
+	/** The resolved shape variant, which declares `--_avatar-radius`. */
+	shape: AvatarShape;
 	/** The group's overlap in pixels, or null outside a group. */
 	groupOverlap: number | null;
 	/** Whether the root renders as an `<a>`/`<button>` rather than a `<div>`. */
@@ -227,7 +270,7 @@ export interface AvatarWrapperAttrsOptions {
  * reason the element swap is invisible to layout.
  */
 export function avatarWrapperAttrs(
-	{ size, groupOverlap, isInteractive }: AvatarWrapperAttrsOptions,
+	{ size, shape, groupOverlap, isInteractive }: AvatarWrapperAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
@@ -237,6 +280,7 @@ export function avatarWrapperAttrs(
 		groupOverlap != null && groupStyles.ring,
 		groupOverlap != null && groupStyles.overlap,
 		groupOverlap != null && groupDynamicStyles.overlap(-groupOverlap),
+		shapeStyles[shape],
 		xstyle
 	);
 }
@@ -264,7 +308,16 @@ export function avatarIconAttrs(): SvelteStyleAttrs {
 	return sx(styles.fallback);
 }
 
-/** The status slot, pinned to the circle's edge along the 45° diagonal. */
-export function avatarStatusAttrs(size: number): SvelteStyleAttrs {
-	return sx(styles.status, dynamicStyles.statusPosition(size));
+/**
+ * The status slot. On a circle it is pinned to the edge along the 45° diagonal;
+ * on a rounded or square avatar the diagonal misses the corner, so it sits on
+ * the corner itself.
+ */
+export function avatarStatusAttrs(size: number, shape: AvatarShape): SvelteStyleAttrs {
+	return sx(
+		styles.status,
+		shape === 'circle'
+			? dynamicStyles.statusPositionCircle(size)
+			: dynamicStyles.statusPositionCorner
+	);
 }

@@ -21,6 +21,7 @@ import {
 	easeVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 import { rtlStyles } from '../../utils/rtl.stylex.js';
 import { dateInputTouchSizes, dateInputTouchGeometry } from './tokens.stylex.js';
 import type { DateInputSize } from './date-input.stylex.js';
@@ -63,18 +64,15 @@ const SWAP_DURATION = durationVars['--duration-fast'];
 const sizeStyles = stylex.create({
 	sm: {
 		height: sizeVars['--size-element-sm'],
-		minWidth: 180,
-		minBlockSize: { default: null, '@media (pointer: coarse)': TOUCH_TARGET }
+		minWidth: 180
 	},
 	md: {
 		height: sizeVars['--size-element-md'],
-		minWidth: 180,
-		minBlockSize: { default: null, '@media (pointer: coarse)': TOUCH_TARGET }
+		minWidth: 180
 	},
 	lg: {
 		height: sizeVars['--size-element-lg'],
-		minWidth: 180,
-		minBlockSize: { default: null, '@media (pointer: coarse)': TOUCH_TARGET }
+		minWidth: 180
 	}
 });
 
@@ -212,6 +210,34 @@ const styles = stylex.create({
 		display: 'inline-flex'
 	},
 	/**
+	 * Reset, past the arrows. It fades on their timing for their reason: the
+	 * plate starts below the header, so the two of them are what the layer
+	 * above cannot cover, and they have to leave together.
+	 */
+	headerReset: {
+		display: 'flex',
+		alignItems: 'center',
+		transitionProperty: 'opacity, visibility',
+		transitionDuration: SWAP_DURATION,
+		transitionTimingFunction: 'linear',
+		'@media (prefers-reduced-motion: reduce)': {
+			transitionDuration: '0.01s'
+		}
+	},
+	headerResetHidden: {
+		visibility: 'hidden',
+		opacity: 0,
+		pointerEvents: 'none'
+	},
+	/**
+	 * The same 44px floor the arrows take. `Button`'s `sm` is 32px, which is
+	 * fine beside a mouse and short of what every other target in this sheet
+	 * honours.
+	 */
+	resetButton: {
+		minBlockSize: { default: null, '@media (pointer: coarse)': TOUCH_TARGET }
+	},
+	/**
 	 * The month and year, and the toggle into the wheels. Leading, so it reads
 	 * first and sits on the same line as the day grid below it.
 	 */
@@ -227,14 +253,7 @@ const styles = stylex.create({
 		borderWidth: 0,
 		borderStyle: 'none',
 		borderRadius: radiusVars['--radius-element'],
-		backgroundColor: {
-			default: 'transparent',
-			'@media (hover: hover)': {
-				default: 'transparent',
-				':hover:where(:not(:disabled,[aria-disabled="true"]))': colorVars['--color-overlay-hover']
-			},
-			':active': colorVars['--color-overlay-pressed']
-		},
+		backgroundColor: 'transparent',
 		color: colorVars['--color-text-primary'],
 		fontSize: typeScaleVars['--text-large-size'],
 		fontWeight: fontWeightVars['--font-weight-semibold'],
@@ -242,10 +261,20 @@ const styles = stylex.create({
 			default: 'pointer',
 			':is(:disabled,[aria-disabled="true"])': 'default'
 		},
-		whiteSpace: 'nowrap'
+		whiteSpace: 'nowrap',
+		// The header now ends with Reset, so the title is the part that gives:
+		// it ellipses rather than pushing the corner off a narrow screen.
+		minInlineSize: 0,
+		overflow: 'hidden'
+	},
+	titleText: {
+		minInlineSize: 0,
+		overflow: 'hidden',
+		textOverflow: 'ellipsis'
 	},
 	titleChevron: {
 		display: 'inline-flex',
+		flexShrink: 0,
 		// The one part of the swap that keeps `--ease-standard`, because it is
 		// the one part that travels: a rotation has a distance to cover, and
 		// fast-out-slow-in is what that curve is for. Same duration as the
@@ -374,15 +403,14 @@ const styles = stylex.create({
 	},
 	/**
 	 * One footer action. Both occupy the same cell, and the wheels' one is a
-	 * layer over the calendar's pair exactly as the panels above are. The row
+	 * layer over the calendar's, exactly as the panels above are. The row
 	 * never changes height either way.
 	 */
 	footerAction: {
 		gridArea: '1 / 1',
-		// Side by side and equal: the calendar's cell holds Reset and Save, the
-		// wheels' holds one button.
-		display: 'flex',
-		gap: spacingVars['--spacing-2']
+		// One button per surface, filling the row: Save on the calendar, Done on
+		// the wheels.
+		display: 'flex'
 	},
 	sheetBody: {
 		// One inset on every edge. The block-start is the exception and has to
@@ -470,9 +498,31 @@ export function touchMonthArrowIconAttrs(): SvelteStyleAttrs {
 	return sx(styles.monthArrowIcon, rtlStyles.mirror);
 }
 
+/** The Reset corner, past the arrows and hidden with them on the wheels. */
+export function touchHeaderResetAttrs(isWheelOpen: boolean): SvelteStyleAttrs {
+	return sx(styles.headerReset, isWheelOpen && styles.headerResetHidden);
+}
+
+/**
+ * Passed through to `Button`'s `xstyle`, so it is a style *argument* rather
+ * than finished attributes — the button merges it after its own.
+ */
+export function touchResetButtonXstyle(): StyleArg {
+	return styles.resetButton;
+}
+
 /** The month/year button that toggles the wheels. */
 export function touchTitleAttrs(): SvelteStyleAttrs {
-	return sx(styles.title, focusOutlineStyles.focusVisible);
+	return sx(
+		styles.title,
+		interactionOverlayStyles.backgroundColor,
+		focusOutlineStyles.focusVisible
+	);
+}
+
+/** The label inside the title button — the part that ellipses. */
+export function touchTitleTextAttrs(): SvelteStyleAttrs {
+	return sx(styles.titleText);
 }
 
 /**

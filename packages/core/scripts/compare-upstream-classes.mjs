@@ -304,9 +304,17 @@ const CASES = [
 		// upstream's did not. Upstream's source and its published `dist/` agreed
 		// with each other, so this was ours to fix, not a lag. `rotation` now
 		// writes `'0%'`/`'100%'` and the key is checked.
+		//
+		// The arc circle joins the ring as a claimed literal at 0.5.1, which made
+		// the ring's geometry themeable: its call site is `styles.circle` merged
+		// with `styles.arc` and nothing dynamic beside them, so upstream folded it
+		// and `dist/` keeps neither key. The track circle next to it indexes
+		// `trackOpacityStyles[shade]`, so `styles.circle` and `styles.track` do
+		// survive as objects and are checked in object mode — the same key is
+		// covered both ways, which is what proves the two circles agree.
 		file: 'src/lib/components/spinner/spinner.stylex.js',
 		upstreamFile: 'Spinner/Spinner.js',
-		inline: [['styles.ring']]
+		inline: [['styles.ring'], ['styles.circle', 'styles.arc']]
 	},
 	{
 		file: 'src/lib/components/visually-hidden/visually-hidden.stylex.js',
@@ -1515,28 +1523,26 @@ const CASES = [
 	},
 	{
 		// Both modes at once. The region's `stylex.props(styles.viewport,
-		// posStyle)` picks `posStyle` from a four-way position conditional, so the
-		// compiler could not fold it and left `viewport` and the four position
-		// keys live in `dist/` as an object — object mode covers those five.
+		// styles.viewportInlineSpan, posStyle)` picks `posStyle` from a four-way
+		// position conditional, so the compiler could not fold it and left
+		// `viewport`, `viewportInlineSpan` and the four position keys live in
+		// `dist/` as an object.
 		//
 		// `viewport`'s `border: 'none'` and `background: 'none'` emit no class on
 		// either side (StyleX drops them, the same way `useKeyboardHint`'s `hint`
 		// border drops), so they are simply absent from both hash sets and the
 		// object diff has nothing to compare for them.
 		//
-		// The two wrapper keys have no object in `dist/`: the per-toast wrapper is
-		// a two-entry lookup table keyed by `!!isExiting << 0`, and the inner
-		// overflow clip is a single literal class string. Those are the three
-		// inline call sites. `toastWrapperExiting` narrows `gridTemplateRows` and
-		// `paddingBlockEnd`, so it replaces the wrapper's `1fr` and `--spacing-3`
-		// classes rather than joining them.
+		// At 0.5.1 the per-toast wrapper joined them: it picks a slide direction
+		// and a gap style from `isReversed` beside the `isExiting &&` conditional,
+		// so `toastWrapper`, `toastWrapperFromTop`/`FromBottom`,
+		// `toastWrapperGap`/`GapReversed` and `toastWrapperExiting` are all object
+		// keys too — object mode covers twelve keys here. **Only
+		// `toastWrapperInner` is still folded**, to one literal class string, and
+		// it is the module's single inline call site.
 		file: 'src/lib/components/toast/toast-viewport.stylex.js',
 		upstreamFile: 'Toast/ToastViewport.js',
-		inline: [
-			['styles.toastWrapper'],
-			['styles.toastWrapper', 'styles.toastWrapperExiting'],
-			['styles.toastWrapperInner']
-		]
+		inline: [['styles.toastWrapperInner']]
 	},
 	{
 		// Both modes at once. Upstream declares Lightbox's styles inline in the
@@ -2281,8 +2287,11 @@ const CASES = [
 		inline: [
 			['styles.surface'],
 			['styles.header'],
+			['styles.titleText'],
 			['styles.monthArrows'],
 			['styles.monthArrows', 'styles.monthArrowsHidden'],
+			['styles.headerReset'],
+			['styles.headerReset', 'styles.headerResetHidden'],
 			['styles.weekdays'],
 			['styles.weekdays', 'styles.weekdaysHidden'],
 			['styles.weekday'],

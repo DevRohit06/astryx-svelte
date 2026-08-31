@@ -1242,7 +1242,11 @@ export type {
 	AspectRatioFit,
 	AspectRatioShape
 } from './components/aspect-ratio/aspect-ratio.stylex.js';
-export { resolveSize, type AvatarSize } from './components/avatar/avatar.stylex.js';
+export {
+	resolveSize,
+	type AvatarShape,
+	type AvatarSize
+} from './components/avatar/avatar.stylex.js';
 export {
 	useAvatarGroup,
 	type AvatarGroupContextValue

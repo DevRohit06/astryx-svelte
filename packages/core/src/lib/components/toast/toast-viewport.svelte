@@ -356,9 +356,9 @@
 
 <div
 	bind:this={viewportEl}
-	role="region"
-	aria-label={t('@astryx.toast.viewport')}
-	tabindex="-1"
+	role={hasToasts ? 'region' : undefined}
+	aria-label={hasToasts ? t('@astryx.toast.viewport') : undefined}
+	tabindex={hasToasts ? -1 : undefined}
 	popover={isTopLayer ? 'manual' : undefined}
 	class={viewport.class}
 	style={mergeStyle(viewport.style, insetStyle)}
@@ -368,7 +368,7 @@
 		{@const type = options.type ?? 'info'}
 		{@const isAutoHide = options.isAutoHide ?? (type === 'error' ? false : true)}
 		{@const isExiting = exitingIds.has(entry.id)}
-		{@const wrapper = toastWrapperAttrs(isExiting)}
+		{@const wrapper = toastWrapperAttrs(position, isExiting)}
 		<div
 			data-toast-id={entry.id}
 			class={wrapper.class}

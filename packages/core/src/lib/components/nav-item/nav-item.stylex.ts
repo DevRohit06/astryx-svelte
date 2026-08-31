@@ -68,15 +68,7 @@ export const navItemStyles = stylex.create({
 		fontWeight: fontWeightVars['--font-weight-normal'],
 		lineHeight: typeScaleVars['--text-label-leading'],
 		textAlign: 'start',
-		boxSizing: 'border-box',
-		':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-			'@media (hover: hover)': {
-				backgroundColor: colorVars['--color-overlay-hover']
-			}
-		},
-		':active': {
-			backgroundColor: colorVars['--color-overlay-pressed']
-		}
+		boxSizing: 'border-box'
 	},
 
 	/** Selected/active page indicator — deemphasized background, medium weight */

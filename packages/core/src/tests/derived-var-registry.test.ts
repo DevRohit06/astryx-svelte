@@ -307,7 +307,16 @@ const VARS_WITHOUT_DERIVED_MAPPING = new Set([
 	// onto boxShadow — setting one through a derived entry would clobber the
 	// other.
 	'--_card-elevation',
-	'--_card-ring'
+	'--_card-ring',
+	// The spinner's ring is drawn as an SVG circle, so none of its four vars is
+	// a CSS property of the element carrying the theme target: `width` and
+	// `borderWidth` would name a box the ring is not, and a `color` mapping
+	// would take the label's text color with it. They are public vars a theme
+	// sets directly under a size- or shade-variant key.
+	'--spinner-diameter',
+	'--spinner-stroke-width',
+	'--spinner-color',
+	'--spinner-track-color'
 ]);
 
 // ---------------------------------------------------------------------------

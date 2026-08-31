@@ -5,7 +5,6 @@ import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex
 import {
 	colorVars,
 	fontWeightVars,
-	radiusVars,
 	spacingVars,
 	typeScaleVars,
 	typographyVars
@@ -28,7 +27,11 @@ const styles = stylex.create({
 		display: 'inline-flex',
 		alignItems: 'center',
 		justifyContent: 'center',
-		borderRadius: radiusVars['--radius-full'],
+		// Reads the shape variant's `--_avatar-radius` (set via `shapeStyles`,
+		// shared with Avatar) so the overflow indicator matches the group's
+		// shape instead of always staying a circle. New at upstream 0.5.1,
+		// alongside Avatar's `shape` prop which is what defines the variable.
+		borderRadius: 'var(--_avatar-radius)',
 		// Use opaque background to prevent avatar bleed-through
 		backgroundColor: colorVars['--color-background-surface'],
 		color: colorVars['--color-text-secondary'],

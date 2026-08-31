@@ -28,15 +28,20 @@ import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
  * takes the `xstyle`. There is no `groupStyles.inGroup` composition: like
  * `DateRangeInput`, this component never reads the `InputGroup` context.
  *
- * `dateWrapper` and `timeWrapper` are byte-identical (`flex: 1; flexBasis: 0`)
- * and so compile to the same two classes. Upstream declares both anyway, and so
- * does this port: `dist/` carries both keys, and collapsing them to one would
- * leave the other unaccounted for in object mode.
+ * `dateWrapper` and `timeWrapper` are byte-identical declarations and so
+ * compile to the same classes. Upstream declares both anyway, and so does this
+ * port: `dist/` carries both keys, and collapsing them to one would leave the
+ * other unaccounted for in object mode.
  */
+
+// Two 196px segments plus the 8px gap fit at exactly 400px. Below that,
+// flex wrapping moves each growing segment onto its own full-width row.
+const HORIZONTAL_SEGMENT_BASIS = 196;
 
 const styles = stylex.create({
 	row: {
 		display: 'flex',
+		flexWrap: 'wrap',
 		gap: spacingVars['--spacing-2']
 	},
 	iconButton: {
@@ -93,11 +98,13 @@ const styles = stylex.create({
 	},
 	dateWrapper: {
 		flex: 1,
-		flexBasis: 0
+		flexBasis: HORIZONTAL_SEGMENT_BASIS,
+		minWidth: 0
 	},
 	timeWrapper: {
 		flex: 1,
-		flexBasis: 0
+		flexBasis: HORIZONTAL_SEGMENT_BASIS,
+		minWidth: 0
 	},
 	// Preset-time list. Paddings and states mirror BaseTypeahead's dropdown and
 	// Selector's options so every list in the system reads the same.

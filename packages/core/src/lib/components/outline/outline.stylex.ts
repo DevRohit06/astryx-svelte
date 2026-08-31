@@ -10,6 +10,7 @@ import {
 	fontWeightVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `Outline/Outline.tsx` styles.
@@ -103,12 +104,8 @@ const styles = stylex.create({
 		lineHeight: typeScaleVars['--text-body-leading'],
 		':hover:where(:not(:disabled,[aria-disabled="true"]))': {
 			'@media (hover: hover)': {
-				backgroundColor: colorVars['--color-overlay-hover'],
 				color: colorVars['--color-text-primary']
 			}
-		},
-		':active': {
-			backgroundColor: colorVars['--color-overlay-pressed']
 		}
 	},
 	activeLink: {
@@ -182,6 +179,9 @@ export function outlineLinkAttrs(
 ): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
 		styles.link,
+		// Upstream 0.5.1 moved the hover/pressed background into the shared module,
+		// leaving only the color change on the component's own hover block.
+		interactionOverlayStyles.backgroundColor,
 		densityStyles[density],
 		getIndentStyle(level),
 		isActive && styles.activeLink,
