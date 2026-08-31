@@ -21,13 +21,21 @@
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 283    | 7509           |
-| Ported here              | 276    | 7435           |
+| Ported here              | 275    | 7380           |
 | No counterpart by design | 7      | 74             |
-| **Unported**             | **0**  | **0**          |
+| **Unported**             | **1**  | **55**         |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
 `it.each` counts once rather than per row.
+
+<details><summary>Unported upstream suites</summary>
+
+| Suite                          | Cases |
+| ------------------------------ | ----- |
+| `Toast/ToastViewport.test.tsx` | 55    |
+
+</details>
 
 ## Assertion strength
 

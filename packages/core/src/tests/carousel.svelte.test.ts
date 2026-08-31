@@ -3,15 +3,29 @@ import { render } from 'vitest-browser-svelte';
 import CarouselFixture from './fixtures/carousel-fixture.svelte';
 
 /**
- * Ported from Astryx's `Carousel/Carousel.test.tsx` — **16 of its 23 cases at the
- * 0.5.0 pin**.
+ * Ported from Astryx's `Carousel/Carousel.test.tsx` — **18 of its 37 cases at the
+ * 0.5.2 pin**.
  *
  * The 8 originally ported cases were the ones outside upstream's two nested
  * `describe`s; 0.3.0's `hasLoop` (4) and `handleRef` (4) groups are ported here
- * in full, which is what took the count to 16. Still unported, both whole
- * describes and both predating 0.5.0: the 3 `slide semantics` cases (per-slide
- * `role="group"`, `aria-roledescription="slide"` and positional names) and the 4
- * `Shift + wheel horizontal scroll` cases.
+ * in full, which took the count to 16, and the two scroller-theme-target cases
+ * 0.5.1 added take it to 18.
+ *
+ * ## The count, re-derived at the 0.5.2 pin
+ *
+ * The header read "**16 of its 23 cases at the 0.5.0 pin**" and stayed true only
+ * until the pin moved: 0.5.1 added a 14-case `keyboard focus at the edges`
+ * describe, taking upstream from 23 to 37. Two of those fourteen are the theme
+ * cases ported at the bottom of this file; the other **twelve are unported**,
+ * and so is the feature they cover — the Effect that hands keyboard focus to the
+ * opposite nav button when the edge disables the one in use. `carousel.svelte`
+ * has no counterpart to it at all, so there is nothing here for those cases to
+ * assert against.
+ *
+ * Also still unported, both whole describes and both predating 0.5.0: the 3
+ * `slide semantics` cases (per-slide `role="group"`,
+ * `aria-roledescription="slide"` and positional names) and the 4 `Shift + wheel
+ * horizontal scroll` cases. 3 + 4 + 12 = the 19 this file does not carry.
  *
  * Every case goes through `carousel-fixture.svelte`: the port takes `items` plus
  * an `item` snippet where upstream takes children and wraps each with
@@ -303,5 +317,38 @@ describe('Carousel', () => {
 			// Uses scrollBy (contained to the carousel), never scrollIntoView.
 			expect(scrollBy.mock.calls[0][0]).toHaveProperty('left');
 		});
+	});
+
+	// Upstream keeps these two at the end of its `keyboard focus at the edges`
+	// describe — the block that arrived in the same release — but they are about
+	// the scroller's theme target and nothing else, so they sit at the top level
+	// here rather than under a describe named for a feature this port does not
+	// have. Both are ported verbatim.
+	it('reflects the scroll container as a theme target carrying its style-driving props', async () => {
+		const screen = await render(CarouselFixture, {
+			props: {
+				props: { gap: 2, padding: 3, hasSnap: true, 'aria-label': 'Gallery' },
+				items: [{ text: 'Item 1' }]
+			}
+		});
+		const scroller = getScroller(screen.container);
+		expect(scroller).toHaveClass('astryx-carousel-scroller');
+		expect(scroller).toHaveAttribute('data-gap', '2');
+		expect(scroller).toHaveAttribute('data-padding', '3');
+		expect(scroller).toHaveAttribute('data-snap', 'snap');
+		expect(scroller).toHaveAttribute('data-edge-fade', 'edge-fade');
+	});
+
+	it('omits the opt-out attributes a theme should not see', async () => {
+		const screen = await render(CarouselFixture, {
+			props: {
+				props: { hasEdgeFade: false, 'aria-label': 'Gallery' },
+				items: [{ text: 'Item 1' }]
+			}
+		});
+		const scroller = getScroller(screen.container);
+		expect(scroller).not.toHaveAttribute('data-edge-fade');
+		expect(scroller).not.toHaveAttribute('data-snap');
+		expect(scroller).not.toHaveAttribute('data-padding');
 	});
 });

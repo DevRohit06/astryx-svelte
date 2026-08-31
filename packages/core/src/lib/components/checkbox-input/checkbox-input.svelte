@@ -307,6 +307,14 @@
 	const indicatorSlotAttrs = checkboxIndicatorSlotAttrs();
 	const labelWrapperAttrs = checkboxLabelWrapperAttrs();
 
+	// A checkbox's label shares a row with its control, unlike a form field's
+	// label above its input. Naming the label rather than the arrangement means a
+	// theme asks for the thing it wants, and the component that actually knows
+	// what this is says so. It arrives at `FieldLabel` as `class` and composes
+	// onto the `astryx-field-label` every label carries — the label itself never
+	// names its own placement, so nothing can set this untruthfully.
+	const labelTheme = themeProps('checkbox-label');
+
 	// The checkbox visual is a component the theme resolves, not markup this file
 	// owns — so it carries its own `checkbox-indicator` theme target, its own
 	// state colours and its own size ramp. Resolved once and read reactively, so
@@ -423,6 +431,7 @@
 		</div>
 		<div class={labelWrapperAttrs.class} style={labelWrapperAttrs.style}>
 			<FieldLabel
+				{...labelTheme}
 				{label}
 				inputID={id}
 				{isLabelHidden}

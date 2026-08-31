@@ -9,7 +9,6 @@ import {
 } from '../../styles/tokens.stylex.js';
 
 /** Ported from Astryx's `CommandPalette/CommandPaletteItem.tsx` styles. */
-const HOVER_HOVER = '@media (hover: hover)';
 import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 const styles = stylex.create({
@@ -34,16 +33,6 @@ const styles = stylex.create({
 		outline: 'none',
 		userSelect: 'none'
 	},
-	itemHover: {
-		':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-			[HOVER_HOVER]: {
-				backgroundColor: colorVars['--color-overlay-hover']
-			}
-		},
-		':active': {
-			backgroundColor: colorVars['--color-overlay-pressed']
-		}
-	},
 	itemHighlighted: {
 		backgroundColor: colorVars['--color-overlay-hover']
 	},
@@ -67,7 +56,6 @@ export function commandPaletteItemAttrs(
 		styles.item,
 		// Upstream 0.5.1: hover/pressed background moved to the shared module.
 		!isDisabled && interactionOverlayStyles.backgroundColor,
-		!isDisabled && styles.itemHover,
 		isHighlighted && styles.itemHighlighted,
 		isSelected && styles.itemSelected,
 		isDisabled && styles.itemDisabled,

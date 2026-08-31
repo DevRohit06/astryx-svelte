@@ -15,11 +15,15 @@ import { FOCUS_OUTLINE_PARTS } from '$lib/utils/focus-outline.stylex.js';
 import { forcedColorsCssIn } from './forced-colors.js';
 
 /**
- * Astryx's `CheckboxInput/CheckboxInput.test.tsx`, ported case for case — **42**
- * upstream cases at the 0.5.0 pin (24 `CheckboxInput`, 8 `disabledMessage`, 5 `form
- * participation`, 2 `forced colors`, 3 `focus ring ownership`), **42** here.
- * Nothing added, nothing dropped. Re-derived at the 0.5.0 pin (the header last
- * stated it at v0.4.5); upstream's file has not moved since v0.4.1.
+ * Astryx's `CheckboxInput/CheckboxInput.test.tsx`, ported case for case — **43**
+ * upstream cases at the 0.5.2 pin (24 `CheckboxInput`, 8 `disabledMessage`, 5 `form
+ * participation`, 2 `forced colors`, 3 `focus ring ownership`, 1 `label theme
+ * target`), **43** here. Nothing added, nothing dropped.
+ *
+ * Re-derived at the 0.5.2 pin. The header read "**42** … at the 0.5.0 pin" and
+ * stayed true only until the pin moved: 0.5.1 gave the control its own
+ * `astryx-checkbox-label` target and added the one-case `label theme target`
+ * describe for it, ported at the bottom of this file.
  *
  * ## v0.3.0 → v0.4.1
  *
@@ -796,5 +800,20 @@ describe('focus ring ownership (WCAG 2.4.7)', () => {
 		// same correction). Same event the handler would see from a user.
 		input.blur();
 		expect(indicatorOf(screen.container).style.outlineStyle).toBe('');
+	});
+});
+
+describe('label theme target', () => {
+	it('names its own label so a theme can style it apart from a field label', async () => {
+		// The control knows this label shares a row with it; the label does not.
+		// Both classes land on the one element, so a theme reaches every label
+		// through `astryx-field-label` and only this kind through
+		// `astryx-checkbox-label`.
+		const screen = await render(CheckboxInput, {
+			props: { label: 'Notify me', value: false, onChange: noop }
+		});
+		const label = screen.getByText('Notify me', { exact: true }).element().closest('label');
+		expect(label).toHaveClass('astryx-field-label');
+		expect(label).toHaveClass('astryx-checkbox-label');
 	});
 });

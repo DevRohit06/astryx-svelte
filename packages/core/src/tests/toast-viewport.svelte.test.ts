@@ -7,8 +7,24 @@ import { __resetLiveRegionsForTest, type AnnouncePoliteness } from '$lib/hooks/u
 import type { ToastOptions } from '$lib/components/toast/types.js';
 
 /**
- * Ported from Astryx's `Toast/ToastViewport.test.tsx` at the 0.5.0 pin — **13
- * upstream cases, 13 here**, in order. Nothing is dropped. Two cases are restated, each
+ * Ported from Astryx's `Toast/ToastViewport.test.tsx` at the **0.5.2** pin —
+ * upstream declares **55**, and **14** are here.
+ *
+ * **The count moved 13 -> 55 with the pin.** 0.5.1 added swipe dismissal and
+ * rewrote the viewport's geometry, and the bulk of the 41 not here is its
+ * `describe('Toast swipe dismissal')` block, which fires pen pointer events at
+ * the `[data-type]` card and asserts on the `--_toast-swipe-*` custom
+ * properties. `use-toast-gesture.ts` is ported and writes exactly those
+ * properties on exactly that element, so the block is portable — it is not
+ * done, not blocked.
+ *
+ * UNPORTED: Toast/ToastViewport.test.tsx (the swipe-dismissal block and the
+ * viewport geometry cases added at 0.5.1)
+ *
+ * The region-ARIA pair at the end is upstream's own 0.5.1 split: the landmark is
+ * now gated on there being something to announce, so an empty viewport exposes
+ * no region at all. Ours asserted the region unconditionally and timed out
+ * against the gate — the header's count had expired along with its assumptions. Two cases are restated, each
  * for the reason given above it: "pauses the auto-hide timer while the window is
  * blurred", and (new in 0.3.0) "announces exactly once at dispatch".
  *
@@ -297,8 +313,20 @@ describe('Toast blur timer pause', () => {
 });
 
 describe('ToastViewport region ARIA', () => {
-	it('exposes the notifications region without a prohibited aria-modal', async () => {
-		const screen = await renderViewport([{}]);
+	// Upstream 0.5.1 gated the landmark on there being something to announce, and
+	// split this into two cases: an empty viewport exposes no region at all, and the
+	// region that appears with a toast still must not declare aria-modal.
+	it('does not expose an empty notifications landmark', async () => {
+		const screen = await renderViewport([{ options: INFO_A, triggerLabel: 'Trigger A' }]);
+		expect(screen.getByRole('region', { name: 'Notifications', exact: true }).query()).toBeNull();
+	});
+
+	it('exposes the notifications region without a prohibited aria-modal when a toast is visible', async () => {
+		const screen = await renderViewport([{ options: INFO_A, triggerLabel: 'Trigger A' }]);
+		const trigger = screen.getByText('Trigger A', { exact: true }).element() as HTMLElement;
+		trigger.click();
+		await tick();
+
 		const region = screen.getByRole('region', { name: 'Notifications', exact: true });
 		// aria-modal is only valid on role="dialog"/"alertdialog"; a region must
 		// not declare it (axe: aria-allowed-attr).

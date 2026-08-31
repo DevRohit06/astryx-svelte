@@ -296,6 +296,13 @@ const VARS_WITHOUT_DERIVED_MAPPING = new Set([
 	// touch area would set the var rather than reach the pseudo-element.
 	'--_input-clear-hit-inset',
 	'--_input-clear-hit-content',
+	// Placement and swipe lifecycle values are private Toast behavior. A theme
+	// author controls the surface transform/opacity as a whole, not these values.
+	'--_toast-slide-y',
+	'--_toast-swipe-y',
+	'--_toast-swipe-exit-y',
+	'--_toast-swipe-opacity',
+	'--_toast-swipe-scale',
 	// Indentation and row-spacing metrics: --tree-list-indent is the authorable
 	// step, --_tree-indent the per-row distance TreeListItem computes from it.
 	// --tree-list-row-gap is applied as half a padding-block on each row wrapper,
@@ -309,6 +316,10 @@ const VARS_WITHOUT_DERIVED_MAPPING = new Set([
 	// other.
 	'--_card-elevation',
 	'--_card-ring',
+	// The colour inside that composed ring, for a variant only a theme knows.
+	// It is one component of one shadow in the list, so no standard property
+	// maps onto it either — a theme sets it beside the fill it has to contrast.
+	'--selectable-card-ring-color',
 	// The spinner's ring is drawn as an SVG circle, so none of its four vars is
 	// a CSS property of the element carrying the theme target: `width` and
 	// `borderWidth` would name a box the ring is not, and a `color` mapping

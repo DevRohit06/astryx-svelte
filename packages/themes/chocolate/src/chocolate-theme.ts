@@ -35,7 +35,7 @@ const chocolateSyntax = defineSyntaxTheme({
 		tag: ['#8c3a3a', '#d47a7a'],
 		attribute: ['#8C5927', '#d4a06a'],
 		property: ['#3a7c6b', '#70c4b0'],
-		punctuation: ['#B88859', '#6b5540'],
+		punctuation: ['#9e622e', '#cb884d'], // 4.84:1 / 6.12:1
 		background: ['#FFFCF7', '#1c1610']
 	}
 });

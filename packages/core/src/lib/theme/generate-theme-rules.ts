@@ -1,5 +1,6 @@
 import { NAMESPACE, cssVar, dataAttr, stableClassName } from '../internal/naming.js';
 import { getDerivedVars } from './derived-var-registry.js';
+import { dataTokenDefaults } from './domain-tokens/data-tokens.js';
 import { parseStyleKey } from './parse-style-key.js';
 import {
 	resolveTokenValue,
@@ -25,6 +26,7 @@ import {
 const THEME_ATTR = dataAttr('theme');
 const THEME_SCOPE_TO = `[${THEME_ATTR}]`;
 const THEME_LAYER = `${NAMESPACE}-theme`;
+const BASE_LAYER = `${NAMESPACE}-base`;
 
 /** `[data-astryx-media="dark"]` — what `<MediaTheme>` writes. */
 function mediaSelector(surface: 'dark' | 'light'): string {
@@ -678,6 +680,28 @@ export interface ThemeCSSOutput {
 }
 
 /**
+ * The `--color-data-*` defaults as one unscoped `:root` block — upstream's
+ * `generateDataTokenDefaultsCSS()`.
+ *
+ * Core tokens reach CSS once, at `:root`, from StyleX's `defineVars` output in
+ * `@layer astryx-base`; a theme's own scope block then carries only the tokens
+ * that theme overrides, which is why a nested theme inherits its parent's
+ * override instead of shadowing it. Data tokens are not StyleX vars, so nothing
+ * declares them — this is their equivalent, and callers put it in
+ * `@layer astryx-base` so a theme's override wins by layer rather than by
+ * specificity. Seeding it per theme scope instead re-declares the default
+ * inside every nested theme, which is the shadowing this shape avoids.
+ *
+ * @internal Not exported from `@astryx-svelte/core/theme`, as upstream does not
+ * export its counterpart: `<Theme>` is the only runtime caller, and the theme
+ * build formats the same block from the public `dataTokenDefaults` — which is
+ * why {@link generateThemeCss} calls this rather than re-deriving it.
+ */
+export function generateDataTokenDefaultsCSS(): string {
+	return `:root {\n${indent(declarations(dataTokenDefaults))}\n}`;
+}
+
+/**
  * A theme's two `@scope` blocks, **without** layer wrappers — upstream's
  * `generateThemeCSS(theme)`, and the shape `<Theme>` consumes.
  *
@@ -735,6 +759,14 @@ export function generateThemeCss(theme: DefinedTheme): string {
 			`@scope (${scopeSelector}) to (${THEME_SCOPE_TO}) {\n` + `${indent(prose.join('\n\n'))}\n}`;
 		parts.push('@layer reset {', indent(proseScoped), '}', '');
 	}
+
+	// The data-token defaults are theme-independent and go in `@layer
+	// astryx-base`, below the theme's own overrides. After the reset block and
+	// before the theme block, as upstream's build orders it: a layer's position
+	// is fixed by where it is *first declared*, so emitting this anywhere else
+	// would invert `reset < astryx-base < astryx-theme` for a consumer who
+	// imports this stylesheet on its own.
+	parts.push(`@layer ${BASE_LAYER} {`, indent(generateDataTokenDefaultsCSS()), '}', '');
 
 	parts.push(`@layer ${THEME_LAYER} {`, indent(scoped), '}');
 

@@ -348,6 +348,17 @@
 
 	const theme = themeProps('carousel');
 	const rootAttrs = $derived(carouselRootAttrs(xstyle));
+	// The scroller is the box a theme actually paints — gap, inline padding, snap
+	// and the edge fade all live on it, so it names itself and reflects those four
+	// as its own variant classes and `data-*` attributes.
+	const scrollerTheme = $derived(
+		themeProps('carousel-scroller', {
+			gap,
+			padding,
+			snap: hasSnap ? 'snap' : null,
+			edgeFade: hasEdgeFade ? 'edge-fade' : null
+		})
+	);
 	const scrollerAttrs = $derived(carouselScrollerAttrs(gap, padding, hasSnap, fade));
 	const itemAttrs = carouselItemAttrs();
 	const startPill = $derived(carouselButtonPillAttrs('start', !canScrollStart));
@@ -397,7 +408,8 @@
 		{@attach overflow.attach}
 		tabindex="0"
 		onwheel={handleWheel}
-		class={scrollerAttrs.class}
+		{...scrollerTheme}
+		class={cx(scrollerTheme.class, scrollerAttrs.class)}
 		style={scrollerAttrs.style}
 	>
 		{#each items as value, index (index)}

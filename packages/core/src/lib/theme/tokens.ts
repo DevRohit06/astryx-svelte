@@ -28,8 +28,13 @@ import {
  * plain Node throws, and `define-theme.ts` is on the theme build's plain-Node
  * import path. See the note at that file's head.
  *
- * Upstream also folds in its `domainTokens/` (data-viz) group, which this port
- * does not ship.
+ * Upstream also folds in its whole `domainTokens/` group — syntax *and* data-viz
+ * — and this port folds in neither, so `useTheme().token('--color-syntax-…')`
+ * and `--color-data-…` both come back empty here where upstream resolves them.
+ * That is one gap over both halves, recorded against the group in
+ * `port/ledger/009-batch-8.md`, and it is independent of the CSS those tokens
+ * emit: `--color-syntax-*` reaches a document from a theme's `syntax` preset and
+ * `--color-data-*` from `generateDataTokenDefaultsCSS`, neither through this map.
  *
  * It **used to omit `borderDefaults`** — which it ships and publishes a
  * `BorderVarName` type for — and this port recorded that as an upstream bug
