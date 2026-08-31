@@ -13,6 +13,7 @@ import {
 	typographyVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `ComplexSelector/ComplexSelector.tsx`, where the styles
@@ -140,13 +141,6 @@ const styles = stylex.create({
 		width: 'auto',
 		borderWidth: 0,
 		backgroundColor: 'transparent',
-		backgroundImage: {
-			default: null,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
-			},
-			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		},
 		boxShadow: {
 			default: 'none',
 			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
@@ -207,6 +201,9 @@ export function complexSelectorTriggerContainerAttrs(
 		styles.triggerContainer,
 		styles[size],
 		variant === 'ghost' && styles.triggerGhost,
+		// Upstream 0.5.1 moved the ghost trigger's hover/pressed overlay into the
+		// shared module, under the same `ghost` gate and in upstream's position.
+		variant === 'ghost' && interactionOverlayStyles.backgroundImage,
 		variant === 'ghost' && isDisabled && styles.triggerGhostDisabled,
 		// The ring belongs to the wrapper (the focusable `<button>` sits inside
 		// it), but it must still be a KEYBOARD ring: `:focus-within` matched a

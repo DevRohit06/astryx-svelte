@@ -102,7 +102,43 @@ The pattern, established and verified on `token` (125 → 124 mismatches, and `t
 3. Apply `interactionOverlayStyles.backgroundImage` at the call site, under the same gate the
    component already uses for its interactive styles.
 
-**Nineteen consumers remain**, and they are mechanical from here.
+### The oracle names the set; the consumer list does not
+
+Forty-two of our `.stylex.ts` files reference `--color-overlay-hover`, and upstream has twenty
+adopters — but the set that actually needs migrating is **neither**. Migrating a component upstream
+did not migrate would be inventing, so the set was derived from the oracle instead: the keys where
+we emit the `backgroundImage` hash (`kKwaWg`) and upstream no longer does. That is **12 keys across
+8 modules**, and it is the whole job.
+
+Done, each verified by re-running the oracle:
+
+| module | keys | mismatches |
+| --- | --- | --- |
+| `token` | `interactive` | 125 → 124 |
+| `button` | four `variants.*` | 124 → 120 |
+| `selector`, `multi-selector`, `complex-selector` | `triggerGhost` | 120 → 117 |
+| `tree-list-item`, `number-input`, `avatar-group-overflow` | 3 keys | 117 → 114 |
+
+`avatar-group-overflow` takes `backgroundImageOnNeutral` — it paints a neutral fill the overlays
+layer onto — where the other seven take `backgroundImage`. Placement follows upstream's call-site
+order in each case, which matters because StyleX is last-wins: the overlay goes before
+`disabled`/`ariaDisabled` so those still override it.
+
+`calendar`'s two `dayCellTheme` keys are the remainder of the twelve and are not yet done.
+
+**A scripted import insertion broke a file, and the oracle caught it, not review.** Anchoring on
+"the last line starting with `import `" put the new statement *inside* a multi-line import in
+`number-input`, which is a Babel parse error rather than a subtle defect — but it is the same
+class as the `[a-z-]+` pin miss above: a shape assumption about source text, applied by script,
+across files that do not all share the shape.
+
+## Two remainders that are not overlay work
+
+- `avatar-group-overflow styles.base` differs in exactly one property hash (`kaIpWk`), unrelated to
+  the migration.
+- `number-input` has four **inline call-site** entries where upstream "has no matching call site"
+  and lists nothing — upstream's stepper button is object mode where ours folds to a literal
+  string. That is the object-vs-inline question `astryx-oracle` owns, not a style defect.
 
 ## Still to do
 

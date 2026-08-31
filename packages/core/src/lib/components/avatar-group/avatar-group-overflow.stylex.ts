@@ -1,6 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import type { StyleArg, SvelteStyleAttrs } from '../../internal/sx.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 import {
 	colorVars,
 	fontWeightVars,
@@ -54,15 +55,7 @@ const styles = stylex.create({
 		},
 		// Reset the UA button's block padding only; the inline padding from `base`
 		// provides the pill's breathing room and must be preserved.
-		paddingBlock: 0,
-		// Interactive overlay states layered on top via backgroundImage
-		backgroundImage: {
-			default: `linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
-			},
-			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
-		}
+		paddingBlock: 0
 	},
 	overlap: {
 		// Matches Avatar's own overlap rule: the first item in the row must not be
@@ -112,6 +105,9 @@ export function avatarGroupOverflowAttrs(
 	return focusOutlineProps.focusVisible(
 		styles.base,
 		isInteractive && styles.button,
+		// Upstream 0.5.1 moved the hover/pressed overlay into the shared module.
+		// `OnNeutral`: this button paints a neutral fill the overlays layer onto.
+		isInteractive && interactionOverlayStyles.backgroundImageOnNeutral,
 		styles.overlap,
 		dynamicStyles.size(numericSize),
 		dynamicStyles.fontSize(numericSize),
