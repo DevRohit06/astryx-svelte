@@ -99,13 +99,15 @@ import CalendarRtl from './fixtures/calendar-rtl-fixture.svelte';
  * to what is asserted:
  *
  * - **Day lookups build the accessible name instead of hard-coding en-US.**
- *   `plainDateFormat` uses `new Intl.DateTimeFormat(undefined, …)` — the
- *   *runtime* default locale — and this Chromium reports en-GB, so upstream's
- *   `/January\s+15,\s+2026/` matches nothing against "Thursday, 15 January
- *   2026". `getDayButton` keeps upstream's role+name lookup and computes the
- *   name with the component's own formatter. Nothing is weakened by that: the
- *   label's *content* is not what any case asserts, and the one case that cares
- *   about the label proves navigation ignores it.
+ *   `plainDateFormat` used to format with `new Intl.DateTimeFormat(undefined,
+ *   …)` — the *runtime* default locale — and this Chromium reports en-GB, so
+ *   upstream's `/January\s+15,\s+2026/` matched nothing against "Thursday, 15
+ *   January 2026". The helper now takes a locale and defaults it to `'en'`, so
+ *   upstream's literals would hold; `getDayButton` still keeps upstream's
+ *   role+name lookup and computes the name with the component's own formatter,
+ *   which additionally survives a provider locale. Nothing is weakened by that:
+ *   the label's *content* is not what any case asserts, and the one case that
+ *   cares about the label proves navigation ignores it.
  * - **Month-label text queries are scoped to the render container.**
  *   `render()`'s query helpers are bound to `baseElement`, i.e. `document.body`,
  *   which also holds the announce live region — so after a navigation
@@ -124,9 +126,9 @@ import CalendarRtl from './fixtures/calendar-rtl-fixture.svelte';
  *   own `useGridFocus` and therefore its own roving tab stop. That is upstream's
  *   structure (one `MonthGrid`, one hook), so no case here asserts a single tab
  *   stop.
- * - The month header still comes from the runtime default locale; "January 2026"
- *   happens to render identically in en-US and en-GB, so upstream's literals
- *   stand as written.
+ * - The month header reads in the provider locale, defaulted to `'en'`;
+ *   "January 2026" is what `'en'` renders, so upstream's literals stand as
+ *   written.
  */
 
 afterEach(() => {

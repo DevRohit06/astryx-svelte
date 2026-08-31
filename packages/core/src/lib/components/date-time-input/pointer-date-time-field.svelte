@@ -67,6 +67,7 @@
 		plainDateToISO
 	} from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
 	import { isFocusDetached } from '../../utils/focus-return.js';
 	import Calendar from '../calendar/calendar.svelte';
@@ -164,6 +165,7 @@
 	});
 
 	const t = useTranslator();
+	const locale = useLocale();
 	// Speaks arrow-key stepping results through the persistent live regions:
 	// stepping programmatically rewrites a plain textbox's value, which screen
 	// readers do not announce on their own (WCAG 4.1.2).
@@ -293,14 +295,14 @@
 		}
 		const d = valueParts.date;
 		return d && /^\d{4}-\d{2}-\d{2}$/.test(d)
-			? plainDateFormat(plainDateFromISO(d), DATE_FORMAT_LONG)
+			? plainDateFormat(plainDateFromISO(d), DATE_FORMAT_LONG, locale())
 			: '';
 	});
 
 	const isDateInputValid = $derived(
 		datePendingInput === null || !datePendingInput.trim()
 			? true
-			: parseDateInput(datePendingInput) !== null
+			: parseDateInput(datePendingInput, locale()) !== null
 	);
 
 	// --- Time input state ---
@@ -455,7 +457,7 @@
 		const text = (e.target as HTMLInputElement).value;
 		datePendingInput = text;
 
-		const parsed = parseDateInput(text);
+		const parsed = parseDateInput(text, locale());
 		if (
 			parsed &&
 			plainDateToISO(parsed) !== valueParts.date &&
@@ -481,7 +483,7 @@
 			return;
 		}
 
-		const parsed = parseDateInput(datePendingInput);
+		const parsed = parseDateInput(datePendingInput, locale());
 		if (parsed && !constraints.isDateDisabled(parsed)) {
 			const parsedISO = plainDateToISO(parsed);
 			if (parsedISO !== valueParts.date) {

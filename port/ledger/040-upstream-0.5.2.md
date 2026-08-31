@@ -166,6 +166,45 @@ Nothing failed. The only reason it was caught is that the call sites were writte
 before the keys were removed. Any migration that moves a declaration from a component to a shared
 module needs its own check that the consumer adopts it; the oracle structurally cannot supply one.
 
+## The locale never reached date formatting, on any surface
+
+A ported case found it: under `<InternationalizationProvider locale="de-DE">` our DOM read
+`March 21, 2026` where upstream reads `21. März 2026`.
+
+The cause was a signature that had quietly dropped a parameter. Upstream's `plainDateFormat(pd,
+options, locale)` and `formatSharedDate(pd, format, locale = 'en')` are two and three arguments
+here, so the locale never reached `Intl.DateTimeFormat` and it fell back to the runtime default.
+`date-parser.ts`'s `isLocaleDayFirst`/`parseDateInput` had the identical gap. **An
+`InternationalizationProvider` locale was therefore inert on every DateInput surface**, and the
+Gregorian calendar default upstream added in the same commit was missing too.
+
+Threaded through 16 call sites across 12 files. Twenty further cases became portable and are ported:
+`plain-date.test.ts` is 87 of 87 (it previously had no header at all), `date-parser.test.ts` 38 of
+38.
+
+**Two test stubs were deleted as part of the fix, and that is the part worth remembering.** The
+DateInput suites each substituted `Intl.DateTimeFormat` so an omitted locale resolved to `en-US`.
+With the locale threaded they are inert — but kept, they would hold 173 cases green *if the locale
+argument were ever dropped again*. A stub that survives the defect it was written around is hiding
+it, not testing it.
+
+`formatInstant` has the same shape and is being fixed separately; upstream makes its locale a
+**required** third positional argument, so it is a positional shift rather than an additive one.
+
+## A stale count reads exactly like a defect
+
+`date-input-touch.test.ts` failed two cases: `expected [ …(4) ] to have a length of 3`. It looked
+like the touch-field port had added a stray transition.
+
+It had not. Our `touch-date-field.stylex.ts` matches upstream's transition counts exactly — 4 linear
+timing functions and 6 `SWAP_DURATION` — and upstream's own suite asserts 4 and 6. Ours still
+asserted 3 and 5, the numbers from the 0.5.0 pin. The assertion was doing its job; the contract it
+was checking had expired.
+
+This is the cheapest possible illustration of why a version bump invalidates every header and every
+count: the failure is indistinguishable from a real regression until you check upstream, and the
+instinct on a red test is to change the implementation.
+
 ## Still to do
 
 - Port the nine modules above.

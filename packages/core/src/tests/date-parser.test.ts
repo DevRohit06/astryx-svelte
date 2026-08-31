@@ -7,8 +7,20 @@
  * SYNC: When dateParser.ts changes, update tests to match new behavior
  */
 
-import { describe, it, expect } from 'vitest';
-import { parseDateInput } from '$lib/utils/date-parser.js';
+/**
+ * Astryx's `utils/dateParser.test.ts`, ported case for case — all 38 of
+ * upstream's 38 at the **v0.5.2** pin. Nothing is dropped and nothing is added.
+ *
+ * Server (node): the parser is a pure function over a string.
+ *
+ * The five locale cases could not be transcribed until `parseDateInput` and
+ * `isLocaleDayFirst` took upstream's `locale` argument — without it the host
+ * locale decided the ambiguous `3/4/2026` order, so an assertion pinning
+ * month-first passed or failed on which machine ran it.
+ */
+
+import { describe, it, expect, vi } from 'vitest';
+import { isLocaleDayFirst, parseDateInput } from '$lib/utils/date-parser.js';
 
 describe('parseDateInput', () => {
 	describe('ISO format (YYYY-MM-DD)', () => {
@@ -272,6 +284,61 @@ describe('parseDateInput', () => {
 		it('validates day/month ranges', () => {
 			expect(parseDateInput('0/15/2026')).toBeNull();
 			expect(parseDateInput('15/0/2026')).toBeNull();
+		});
+	});
+
+	describe('ambiguous numeric formats follow the passed locale (#5074)', () => {
+		// Both numbers are <= 12, so the day/month order is genuinely ambiguous
+		// and resolved by isLocaleDayFirst(locale) rather than the host locale.
+		it('defaults ambiguous input to English month-first order', () => {
+			expect(parseDateInput('3/4/2026')).toEqual({
+				year: 2026,
+				month: 3,
+				day: 4
+			});
+		});
+
+		it('reads month-first for en-US', () => {
+			expect(parseDateInput('3/4/2026', 'en-US')).toEqual({
+				year: 2026,
+				month: 3,
+				day: 4
+			});
+		});
+
+		it('reads day-first for es-ES', () => {
+			expect(parseDateInput('3/4/2026', 'es-ES')).toEqual({
+				year: 2026,
+				month: 4,
+				day: 3
+			});
+		});
+	});
+
+	describe('isLocaleDayFirst', () => {
+		it('defaults to English month-first order', () => {
+			expect(isLocaleDayFirst()).toBe(false);
+		});
+
+		it('requests Gregorian calendar data for locale ordering', () => {
+			const OriginalDateTimeFormat = globalThis.Intl.DateTimeFormat;
+			const dateTimeFormatSpy = vi
+				.spyOn(globalThis.Intl, 'DateTimeFormat')
+				.mockImplementation(function DateTimeFormat(
+					locale?: Intl.LocalesArgument,
+					options?: Intl.DateTimeFormatOptions
+				) {
+					return new OriginalDateTimeFormat(locale, options);
+				} as unknown as typeof Intl.DateTimeFormat);
+
+			try {
+				isLocaleDayFirst('en-US-u-ca-buddhist');
+				expect(dateTimeFormatSpy).toHaveBeenCalledWith('en-US-u-ca-buddhist', {
+					calendar: 'gregory'
+				});
+			} finally {
+				dateTimeFormatSpy.mockRestore();
+			}
 		});
 	});
 

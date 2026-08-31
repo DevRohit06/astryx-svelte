@@ -520,7 +520,7 @@ describe('DateInput — scroll CSS (definition-level)', () => {
 		expect(styles.match(/transitionTimingFunction: easeVars\['--ease-standard'\]/g)).toHaveLength(
 			1
 		);
-		expect(styles.match(/transitionTimingFunction: 'linear'/g)).toHaveLength(3);
+		expect(styles.match(/transitionTimingFunction: 'linear'/g)).toHaveLength(4);
 	});
 
 	/**
@@ -531,9 +531,9 @@ describe('DateInput — scroll CSS (definition-level)', () => {
 	it('runs the whole swap on one duration', () => {
 		const source = read(TOUCH);
 		const styles = source.slice(source.indexOf('const styles = stylex.create('));
-		// The arrows, the weekday row, the layer beneath, the layer above, and
-		// the chevron.
-		expect(styles.match(/transitionDuration: SWAP_DURATION/g)).toHaveLength(5);
+		// The arrows, Reset, the weekday row, the layer beneath, the layer above,
+		// and the chevron.
+		expect(styles.match(/transitionDuration: SWAP_DURATION/g)).toHaveLength(6);
 		// And no leftover hand-rolled timing beside them.
 		expect(styles).not.toContain('PANEL_FADE_MS');
 		expect(source).toContain("const SWAP_DURATION = durationVars['--duration-fast']");

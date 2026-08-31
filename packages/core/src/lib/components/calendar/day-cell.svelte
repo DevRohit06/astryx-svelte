@@ -51,6 +51,7 @@
 	import { themeProps } from '../../internal/theme-props.js';
 	import { cx } from '../../internal/sx.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import { DATE_FORMAT_WITH_WEEKDAY, plainDateFormat } from '../../utils/plain-date.js';
 	import {
 		computeDayCellState,
@@ -80,6 +81,7 @@
 	}: DayCellProps = $props();
 
 	const t = useTranslator();
+	const locale = useLocale();
 
 	const state = $derived(
 		computeDayCellState({
@@ -101,7 +103,7 @@
 	// by the cell's background alone (WCAG 1.3.1). A range still being picked
 	// (rangeStart === rangeEnd) reads as "range start" only; a completed one-day
 	// range reads as both start and end.
-	const dateLabel = $derived(plainDateFormat(day.date, DATE_FORMAT_WITH_WEEKDAY));
+	const dateLabel = $derived(plainDateFormat(day.date, DATE_FORMAT_WITH_WEEKDAY, locale()));
 	const dayLabel = $derived(
 		state.isSelected
 			? t('@astryx.calendar.daySelected', { date: dateLabel })

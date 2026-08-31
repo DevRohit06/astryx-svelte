@@ -20,29 +20,20 @@
 
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
-| Upstream                 | 283    | 7521           |
-| Ported here              | 274    | 7374           |
+| Upstream                 | 283    | 7509           |
+| Ported here              | 276    | 7435           |
 | No counterpart by design | 7      | 74             |
-| **Unported**             | **2**  | **73**         |
+| **Unported**             | **0**  | **0**          |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
 `it.each` counts once rather than per row.
 
-<details><summary>Unported upstream suites</summary>
-
-| Suite                                       | Cases |
-| ------------------------------------------- | ----- |
-| `DateTimeInput/DateTimeInputTouch.test.tsx` | 39    |
-| `DateInput/NativeDateField.test.tsx`        | 34    |
-
-</details>
-
 ## Assertion strength
 
 |                                                               | Sites | Files |
 | ------------------------------------------------------------- | ----- | ----- |
-| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 0     | 0     |
+| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 2     | 1     |
 | `getByText` with a string, no `exact`                         | 1     | 1     |
 
 Testing Library matches an accessible name as a whole string; Playwright matches a string

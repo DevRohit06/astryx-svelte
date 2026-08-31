@@ -99,7 +99,7 @@ export default {
 		},
 		{
 			name: 'listStyle',
-			type: "'none' | 'decimal' | 'disc' | 'circle'",
+			type: "'circle' | 'none' | 'decimal' | 'disc'",
 			description: "List marker style. 'decimal' renders an <ol> element instead of <ul>.",
 			default: "'none'"
 		},

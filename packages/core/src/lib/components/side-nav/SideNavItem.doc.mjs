@@ -81,7 +81,7 @@ export default {
 		},
 		{
 			name: 'actions',
-			type: 'string | Snippet',
+			type: 'Snippet',
 			description:
 				'Row-level secondary controls (icon buttons, menus) rendered as siblings of the primary element at the trailing edge of the row — after the expand/collapse toggle, before any nested children in DOM and focus order. Each control owns its accessible name and behavior. Controls inherit the row control size through SizeContext, so an unsized icon button matches the built-in expand/collapse toggle; an explicit size still wins. Hidden while the SideNav rail is collapsed. Use endContent for passive content (badges, counts); use actions for anything interactive.'
 		},

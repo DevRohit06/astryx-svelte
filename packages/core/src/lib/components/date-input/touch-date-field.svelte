@@ -19,6 +19,7 @@
 		plainDateToday
 	} from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import { useCalendarConstraints } from '../calendar/use-calendar-constraints.svelte.js';
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
 	import InputStatusIcon from '../../hooks/input-status-icon.svelte';
@@ -134,6 +135,7 @@
 	}: DateInputProps = $props();
 
 	const t = useTranslator();
+	const locale = useLocale();
 	const isEffectivelyRequired = useResolvedRequired({
 		isRequired: () => isRequired,
 		isOptional: () => isOptional
@@ -267,12 +269,17 @@
 		Array.from({ length: 7 }, (_, offset) =>
 			plainDateFormat(
 				{ year: 1970, month: 1, day: 4 + ((weekStartsOn + offset) % 7) },
-				DATE_FORMAT_WEEKDAY_ONLY
+				DATE_FORMAT_WEEKDAY_ONLY,
+				locale()
 			)
 		)
 	);
 	const monthYearLabel = $derived(
-		plainDateFormat({ year: parts.year, month: parts.month, day: 1 }, DATE_FORMAT_MONTH_YEAR)
+		plainDateFormat(
+			{ year: parts.year, month: parts.month, day: 1 },
+			DATE_FORMAT_MONTH_YEAR,
+			locale()
+		)
 	);
 
 	// Formats the committed value only. A function format is called with the ISO
@@ -285,7 +292,7 @@
 		}
 		return typeof format === 'function'
 			? format(current)
-			: formatSharedDate(plainDateFromISO(current), format);
+			: formatSharedDate(plainDateFromISO(current), format, locale());
 	});
 
 	function fireChange(newValue: ISODateString | undefined): void {

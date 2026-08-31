@@ -19,6 +19,7 @@
 
 <script lang="ts">
 	import { DATE_FORMAT_MONTH_ONLY, plainDateFormat } from '../../utils/plain-date.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import Wheel, { type WheelOption } from './wheel.svelte';
 	import { fromMonthIndex, toMonthIndex } from './month-geometry.js';
 	import { monthYearWheelsAttrs } from './month-year-wheels.stylex.js';
@@ -44,6 +45,7 @@
 		isActive = true
 	}: MonthYearWheelsProps = $props();
 
+	const locale = useLocale();
 	const parts = $derived(fromMonthIndex(monthIndex));
 
 	// Day 15 of a fixed year: no timezone can push it into an adjacent month
@@ -51,13 +53,13 @@
 	//
 	// `plainDateFormat` rather than a raw `Intl.DateTimeFormat`, which the
 	// shared lint rule forbids and which would duplicate the format vocabulary
-	// besides. It resolves the locale itself, so there is nothing here for the
-	// memo to depend on — the same is true of Calendar's own month labels, and
-	// is why this list is constant for the life of the component. (Upstream's
-	// `useMemo(…, [])`; a plain module-free constant here, computed once at
-	// init for the same reason.)
-	const monthNames = Array.from({ length: 12 }, (_, index) =>
-		plainDateFormat({ year: 2021, month: index + 1, day: 15 }, DATE_FORMAT_MONTH_ONLY)
+	// besides. Recompute when the provider locale changes so the wheel labels
+	// stay in sync with the field and calendar — upstream's `useMemo(…,
+	// [locale])`, and a `$derived` here for the same reason.
+	const monthNames = $derived(
+		Array.from({ length: 12 }, (_, index) =>
+			plainDateFormat({ year: 2021, month: index + 1, day: 15 }, DATE_FORMAT_MONTH_ONLY, locale())
+		)
 	);
 
 	// Months outside the range stay on the wheel rather than vanishing: a list

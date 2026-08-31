@@ -132,7 +132,21 @@ const invented = ours.filter((o) => !theirsCanon.has(canon(o)));
 // that is precisely what does.
 const testCase =
 	/(?<![\w.`])(?:it|test)(?:\.(?:each|skip|only|todo|fails|concurrent|for))?\s*\(|(?<![\w.`])(?:it|test)\.(?:each|for)\s*`/g;
-const countCases = (file) => (readFileSync(file, 'utf8').match(testCase) ?? []).length;
+const withoutCommentLines = (text) =>
+	text
+		.split('\n')
+		.filter((line) => !/^\s*(?:\/\/|\*|\/\*)/.test(line))
+		.join('\n');
+
+// Comments are stripped before counting. The lookbehind above rejects a
+// BACKTICK before `it`, which catches this repo's own prose — but upstream's
+// comments are not house-styled to backtick their identifiers, and a bare word
+// followed by a paren reads as a declaration. `Timestamp.test.tsx` says
+// "invalid on it (axe aria-allowed-attr, critical)" in a `//` comment, and it
+// counted upstream as 78 where it declares 77. Stripping is the general fix;
+// another lookbehind would only postpone the next spelling (batch 040).
+const countCases = (file) =>
+	(withoutCommentLines(readFileSync(file, 'utf8')).match(testCase) ?? []).length;
 
 /** Every `*.test.ts`/`*.test.tsx` under `dir`, recursively, as absolute paths. */
 function testFiles(dir) {
@@ -262,12 +276,6 @@ const sumCases = (list) => list.reduce((a, t) => a + t.cases, 0);
 // backtick-quoted `it` — so the rule is worth stating once: a metric over
 // source has to skip prose, because the file most likely to discuss a
 // construct is the file that uses it most carefully.
-const withoutCommentLines = (text) =>
-	text
-		.split('\n')
-		.filter((line) => !/^\s*(?:\/\/|\*|\/\*)/.test(line))
-		.join('\n');
-
 const NAME_STRING = /getBy(?:Role|LabelText)\([^)]*name:\s*'/g;
 const TEXT_STRING = /getByText\(\s*'/g;
 // A site is strengthened either by an inline `{exact: true}` or by the hoisted

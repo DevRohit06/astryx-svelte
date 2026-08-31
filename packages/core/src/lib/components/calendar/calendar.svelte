@@ -146,6 +146,7 @@
 	import { cx, mergeStyle } from '../../internal/sx.js';
 	import { themeProps } from '../../internal/theme-props.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import { normalizeDayOfWeek, type PlainDate } from '../../utils/date-types.js';
 	import {
 		DATE_FORMAT_MONTH_YEAR,
@@ -206,6 +207,7 @@
 	}: CalendarProps = $props();
 
 	const t = useTranslator();
+	const locale = useLocale();
 
 	// Normalize `weekStartsOn` (number or three-letter day name) to a numeric
 	// DayOfWeek so all downstream date math keeps working with an index.
@@ -292,9 +294,11 @@
 
 	const monthYearLabel = $derived.by(() => {
 		if (numberOfMonths === 1) {
-			return plainDateFormat(visibleMonths[0], DATE_FORMAT_MONTH_YEAR);
+			return plainDateFormat(visibleMonths[0], DATE_FORMAT_MONTH_YEAR, locale());
 		}
-		return visibleMonths.map((m) => plainDateFormat(m, DATE_FORMAT_MONTH_YEAR)).join(' – ');
+		return visibleMonths
+			.map((m) => plainDateFormat(m, DATE_FORMAT_MONTH_YEAR, locale()))
+			.join(' – ');
 	});
 
 	let monthsContainer = $state<HTMLDivElement | null>(null);
@@ -468,7 +472,7 @@
 				rangeSelectionStart = iso;
 				announce(
 					t('@astryx.calendar.rangeStartAnnounce', {
-						date: plainDateFormat(date, DATE_FORMAT_WITH_WEEKDAY)
+						date: plainDateFormat(date, DATE_FORMAT_WITH_WEEKDAY, locale())
 					})
 				);
 			} else {
@@ -485,7 +489,7 @@
 					rangeSelectionStart = null;
 					announce(
 						t('@astryx.calendar.rangeClearedAnnounce', {
-							date: plainDateFormat(date, DATE_FORMAT_WITH_WEEKDAY)
+							date: plainDateFormat(date, DATE_FORMAT_WITH_WEEKDAY, locale())
 						})
 					);
 					return;
@@ -511,8 +515,8 @@
 				// swapped {start, end} above even for a reverse pick).
 				announce(
 					t('@astryx.calendar.rangeCompleteAnnounce', {
-						start: plainDateFormat(plainDateFromISO(start), DATE_FORMAT_WITH_WEEKDAY),
-						end: plainDateFormat(plainDateFromISO(end), DATE_FORMAT_WITH_WEEKDAY)
+						start: plainDateFormat(plainDateFromISO(start), DATE_FORMAT_WITH_WEEKDAY, locale()),
+						end: plainDateFormat(plainDateFromISO(end), DATE_FORMAT_WITH_WEEKDAY, locale())
 					})
 				);
 			}

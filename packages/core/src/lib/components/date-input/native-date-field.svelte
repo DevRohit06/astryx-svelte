@@ -10,6 +10,7 @@
 	import { parseDateInput } from '../../utils/date-parser.js';
 	import { formatSharedDate, plainDateFromISO, plainDateToISO } from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import { useMediaQuery } from '../../hooks/use-media-query.svelte.js';
 	import { useCalendarConstraints } from '../calendar/use-calendar-constraints.svelte.js';
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
@@ -90,6 +91,7 @@
 	}: DateInputProps = $props();
 
 	const t = useTranslator();
+	const locale = useLocale();
 	const isEffectivelyRequired = useResolvedRequired({
 		isRequired: () => isRequired,
 		isOptional: () => isOptional
@@ -188,7 +190,7 @@
 	function formatValue(iso: ISODateString): string {
 		return typeof format === 'function'
 			? format(iso)
-			: formatSharedDate(plainDateFromISO(iso), format);
+			: formatSharedDate(plainDateFromISO(iso), format, locale());
 	}
 
 	// This field paints the closed control's text itself, which is what keeps
@@ -222,7 +224,7 @@
 			return;
 		}
 
-		const parsed = parseDateInput(newValue);
+		const parsed = parseDateInput(newValue, locale());
 		if (!parsed) {
 			return;
 		}

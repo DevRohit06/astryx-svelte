@@ -1,3 +1,4 @@
+import type { Locale } from '../i18n/types.js';
 import { type PlainDate, plainDateCreate, plainDateFromDate } from './plain-date.js';
 
 /**
@@ -7,11 +8,13 @@ import { type PlainDate, plainDateCreate, plainDateFromDate } from './plain-date
 export { plainDateFromISO as parseISO, plainDateToISO as dateToISO } from './plain-date.js';
 
 /**
- * Detects if the user's locale uses day-first date format (DD/MM/YYYY).
+ * Detects if the locale uses day-first date format (DD/MM/YYYY).
  * US and a few others use month-first (MM/DD/YYYY).
  */
-export function isLocaleDayFirst(): boolean {
-	const parts = new Intl.DateTimeFormat().formatToParts(new Date(2000, 0, 15));
+export function isLocaleDayFirst(locale: Locale = 'en'): boolean {
+	const parts = new Intl.DateTimeFormat(locale, {
+		calendar: 'gregory'
+	}).formatToParts(new Date(2000, 0, 15));
 	const dayIndex = parts.findIndex((p) => p.type === 'day');
 	const monthIndex = parts.findIndex((p) => p.type === 'month');
 	return dayIndex < monthIndex;
@@ -20,18 +23,15 @@ export function isLocaleDayFirst(): boolean {
 /**
  * Parses user input into a PlainDate.
  *
- * Supports:
- * - ISO format: "2026-01-25"
- * - Full month names: "January 25, 2026", "25 January 2026"
- * - Full month names without year: "January 25", "25 January" (defaults to current year)
- * - Numeric formats: "1/25/2026", "25/1/2026" (locale-aware with heuristics)
- * - Numeric formats without year: "1/25", "25/1" (defaults to current year)
- *
- * For ambiguous numeric formats (both numbers ≤ 12), uses locale preference.
+ * Supports ISO dates, English month names, and ASCII numeric dates with or
+ * without a year. For ambiguous ASCII numeric input where both fields are at
+ * most 12, `locale` selects month-first versus day-first order. It does not
+ * localize month-name parsing, accept non-ASCII digits, or provide a general
+ * locale-aware parser.
  *
  * @returns PlainDate if valid, null if unparseable
  */
-export function parseDateInput(input: string): PlainDate | null {
+export function parseDateInput(input: string, locale: Locale = 'en'): PlainDate | null {
 	const trimmed = input.trim();
 	if (!trimmed) {
 		return null;
@@ -96,14 +96,14 @@ export function parseDateInput(input: string): PlainDate | null {
 		if (sep1 !== sep2) {
 			return null;
 		}
-		return parseNumericDate(+first, +second, +year);
+		return parseNumericDate(+first, +second, +year, locale);
 	}
 
 	// 5. Try numeric formats WITHOUT year (defaults to current year)
 	const numericNoYearMatch = trimmed.match(/^(\d{1,2})[-/.](\d{1,2})$/);
 	if (numericNoYearMatch) {
 		const [, first, second] = numericNoYearMatch;
-		return parseNumericDate(+first, +second, currentYear);
+		return parseNumericDate(+first, +second, currentYear, locale);
 	}
 
 	// 6. Fall back to native Date parsing for other formats.
@@ -129,7 +129,12 @@ export function parseDateInput(input: string): PlainDate | null {
 	return null;
 }
 
-function parseNumericDate(first: number, second: number, year: number): PlainDate | null {
+function parseNumericDate(
+	first: number,
+	second: number,
+	year: number,
+	locale: Locale
+): PlainDate | null {
 	let day: number;
 	let month: number;
 
@@ -142,7 +147,7 @@ function parseNumericDate(first: number, second: number, year: number): PlainDat
 	} else if (first > 12 && second > 12) {
 		return null;
 	} else {
-		if (isLocaleDayFirst()) {
+		if (isLocaleDayFirst(locale)) {
 			day = first;
 			month = second;
 		} else {

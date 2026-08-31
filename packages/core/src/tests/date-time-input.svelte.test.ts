@@ -1,4 +1,4 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import { tick } from 'svelte';
@@ -158,27 +158,28 @@ import DateTimeInputI18n from './fixtures/date-time-input-i18n.svelte';
  *   `getByLabelText('Time')` would match `"Meeting time"` and upstream's
  *   `queryByLabelText('Time')` case would invert.
  *
- * Two environment stubs upstream has no need for, both in the same category as
- * its own `showPopover` shim — the browser reports the *real* machine where
- * jsdom reports Node's defaults:
+ * One environment stub upstream has no need for, in the same category as its
+ * own `showPopover` shim — the browser reports the *real* machine where jsdom
+ * reports Node's defaults:
  *
- * 1. **`Intl.DateTimeFormat`'s default locale is pinned to `en-US`.** Both this
- *    port and upstream format with `new Intl.DateTimeFormat(undefined, …)`
- *    (`plain-date.ts:230`, upstream `utils/plainDate.ts:258`), so the rendered
- *    date follows whatever locale the runtime reports. Upstream's Node/jsdom
- *    says `en-US` and its assertions are written as `"March 15, 2026"`;
- *    headless Chromium inherits the host OS locale and renders
- *    `"15 March 2026"` here. Pinning the default reproduces upstream's
- *    environment and keeps its literals verbatim. It also pins
- *    `isLocaleDayFirst()` (`date-parser.ts:13`), which reads the same default.
- * 2. **A `tick()` after every synthetic `input`/`keydown`.** RTL's `fireEvent`
- *    flushes React before it returns; a raw `dispatchEvent` does not flush
- *    Svelte, so two events fired back to back land in one batch. `reverts date
- *    input on blur when input is invalid` is the case that needs it: the
- *    display value leaves and returns to the same string within one batch, so
- *    Svelte's `set_value` sees no change and never repairs the DOM value the
- *    test wrote by hand. Real typing flushes between keystrokes, which is why
- *    this is a test artifact and not a port defect.
+ * - **A `tick()` after every synthetic `input`/`keydown`.** RTL's `fireEvent`
+ *   flushes React before it returns; a raw `dispatchEvent` does not flush
+ *   Svelte, so two events fired back to back land in one batch. `reverts date
+ *   input on blur when input is invalid` is the case that needs it: the
+ *   display value leaves and returns to the same string within one batch, so
+ *   Svelte's `set_value` sees no change and never repairs the DOM value the
+ *   test wrote by hand. Real typing flushes between keystrokes, which is why
+ *   this is a test artifact and not a port defect.
+ *
+ * A second stub is gone. This file used to substitute `Intl.DateTimeFormat` so
+ * an omitted locale resolved to `en-US`, because `plainDateFormat` formatted
+ * with `new Intl.DateTimeFormat(undefined, …)` and `isLocaleDayFirst()` read
+ * the same host default — upstream's `"March 15, 2026"` rendered as
+ * `"15 March 2026"` under a Chromium reporting `en-GB` or `en-IN`. Both helpers
+ * now take upstream's `locale` argument, defaulted to `'en'` exactly as
+ * `useLocale()` is, so the rendered date no longer depends on the host and the
+ * stub has nothing to do. Deleting it rather than leaving it inert is what lets
+ * this file fail if the locale argument is ever dropped again.
  */
 
 const noop = (): void => {};
@@ -247,33 +248,6 @@ function describedText(el: HTMLElement): string {
 		.map((id) => document.getElementById(id)?.textContent ?? '')
 		.join(' ');
 }
-
-// See the file header: upstream's assertions are written for Node's `en-US`
-// default, which headless Chromium does not share.
-const RealDateTimeFormat = Intl.DateTimeFormat;
-
-beforeAll(() => {
-	const Pinned = function (
-		locales?: Intl.LocalesArgument,
-		options?: Intl.DateTimeFormatOptions
-	): Intl.DateTimeFormat {
-		return new RealDateTimeFormat(locales ?? 'en-US', options);
-	} as unknown as typeof Intl.DateTimeFormat;
-	Pinned.supportedLocalesOf = RealDateTimeFormat.supportedLocalesOf;
-	Object.defineProperty(Intl, 'DateTimeFormat', {
-		value: Pinned,
-		configurable: true,
-		writable: true
-	});
-});
-
-afterAll(() => {
-	Object.defineProperty(Intl, 'DateTimeFormat', {
-		value: RealDateTimeFormat,
-		configurable: true,
-		writable: true
-	});
-});
 
 afterEach(() => {
 	vi.useRealTimers();

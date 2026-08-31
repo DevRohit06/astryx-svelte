@@ -26,7 +26,7 @@ import TypeaheadItem from '$lib/components/typeahead/typeahead-item.svelte';
  */
 describe('TypeaheadItem', () => {
 	it('forwards pass-through props to the item element', async () => {
-		const screen = render(TypeaheadItem, {
+		const screen = await render(TypeaheadItem, {
 			props: {
 				item: { id: '1', label: 'Alice' },
 				'aria-label': 'Alice, engineer',
@@ -42,7 +42,7 @@ describe('TypeaheadItem', () => {
 	});
 
 	it('merges a caller className with its own classes', async () => {
-		const screen = render(TypeaheadItem, {
+		const screen = await render(TypeaheadItem, {
 			props: {
 				item: { id: '1', label: 'Alice' },
 				class: 'caller-class',

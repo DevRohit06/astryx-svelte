@@ -10,6 +10,7 @@
 		ISODateString
 	} from '../../utils/date-types.js';
 	import type { DateRangeInputSize } from './date-range-input.stylex.js';
+	import type { Locale } from '../../i18n/types.js';
 
 	// Upstream re-exports `DateRange` from `DateRangeInput.tsx` as well as from
 	// `Calendar`; both name the same declaration in `utils/dateTypes`. Not
@@ -177,7 +178,7 @@
 	 * The year is dropped from both endpoints only when the range sits entirely
 	 * within the *current* year, so a historical range stays unambiguous.
 	 */
-	function formatRangeDisplay(range: DateRange | null): string {
+	function formatRangeDisplay(range: DateRange | null, locale: Locale): string {
 		if (!range) {
 			return '';
 		}
@@ -187,7 +188,7 @@
 		const sameYear = start.year === end.year && start.year === currentYear;
 
 		const fmt = sameYear ? DATE_FORMAT_SHORT : DATE_FORMAT_SHORT_WITH_YEAR;
-		return `${plainDateFormat(start, fmt)} – ${plainDateFormat(end, fmt)}`;
+		return `${plainDateFormat(start, fmt, locale)} – ${plainDateFormat(end, fmt, locale)}`;
 	}
 
 	function isRangeEqual(a: DateRange | null, b: DateRange | null): boolean {
@@ -215,6 +216,7 @@
 		plainDateToday
 	} from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import { stableClassName } from '../../internal/naming.js';
 	import Calendar from '../calendar/calendar.svelte';
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
@@ -299,6 +301,7 @@
 	});
 
 	const t = useTranslator();
+	const locale = useLocale();
 	const placeholder = $derived(placeholderFromProps ?? t('@astryx.dateRangeInput.placeholder'));
 	const resolveSize = useSize();
 	const size = $derived(resolveSize(sizeProp, 'md'));
@@ -351,7 +354,7 @@
 			.join(' ') || undefined
 	);
 
-	const displayValue = $derived(formatRangeDisplay(optimistic.current));
+	const displayValue = $derived(formatRangeDisplay(optimistic.current, locale()));
 
 	const popover = usePopover(() => ({
 		id: popoverID,
