@@ -137,7 +137,13 @@ export function megaMenuItemDescriptionAttrs(): SvelteStyleAttrs {
 
 /** The drawer row — shared nav item plus the indent and top alignment. */
 export function megaMenuItemDrawerAttrs(xstyle?: StyleArg): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(navItemStyles.item, styles.drawerItem, xstyle);
+	return focusOutlineProps.focusVisible(
+		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
+		styles.drawerItem,
+		xstyle
+	);
 }
 
 /** The 32px icon tile on the drawer row. */

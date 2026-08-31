@@ -417,12 +417,18 @@
 	// component's own conditionals. `readonly` selects no style key — the point of
 	// the state is that it is NOT dimmed.
 	const theme = $derived(
-		themeProps('textarea', {
-			size,
-			status: status?.type ?? null,
-			disabled: isDisabled ? 'disabled' : null,
-			readonly: isReadOnly ? 'readonly' : null
-		})
+		themeProps(
+			'text-area',
+			{
+				size,
+				status: status?.type ?? null,
+				disabled: isDisabled ? 'disabled' : null,
+				readonly: isReadOnly ? 'readonly' : null
+			},
+			// `textarea` ran the compound name together; themes styling it keep
+			// working until the next major.
+			{ legacyNames: ['textarea'] }
+		)
 	);
 	const wrapperAttrs = $derived(textAreaWrapperAttrs(status?.type, isDisabled, xstyle));
 	const areaAttrs = $derived(

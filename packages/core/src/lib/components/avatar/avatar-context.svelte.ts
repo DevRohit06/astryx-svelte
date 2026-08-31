@@ -1,5 +1,5 @@
 import { Context } from '../../internal/context.js';
-import type { AvatarSize } from './avatar.stylex.js';
+import type { AvatarShape, AvatarSize } from './avatar.stylex.js';
 
 /**
  * The two contexts the Avatar family passes down, ported from Astryx's
@@ -62,6 +62,8 @@ export function useAvatarStatusLabelSink(): (label: string | undefined) => void 
 
 export interface AvatarGroupContextValue {
 	size: AvatarSize;
+	/** Overrides each avatar's own `shape`, so a group stays visually uniform. */
+	shape: AvatarShape;
 	/** Pixels each avatar pulls back over its predecessor. */
 	overlap: number;
 	numericSize: number;

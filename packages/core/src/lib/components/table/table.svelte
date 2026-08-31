@@ -68,7 +68,6 @@
 	import { setTableContext } from './table-context.svelte.js';
 	import { tableBaseStyle } from './table-scroll-wrapper.stylex.js';
 	import { useBaseTablePlugins } from './use-base-table-plugins.svelte.js';
-	import { themeProps } from '../../internal/theme-props.js';
 	import type { TableRenderProps } from './table-types.js';
 
 	/**
@@ -123,21 +122,13 @@
 
 	// Table-level styling plugin (just adds font/color to <table>).
 	//
-	// Upstream also appends `themeProps('table').className` to the `<table>`'s
-	// class here. That is a *second* stable class on an element `BaseTable`
-	// already stamps `astryx-base-table` on, and it is the plugin's whole
-	// non-style job — so the port keeps it, written as the class merge the
-	// pipeline's htmlProps carry.
+	// The `astryx-table` class itself comes from `BaseTable`, which renders the
+	// `<table>` element and now names it `table` (with `base-table` as its legacy
+	// name). Adding it here too would put the token on twice.
 	const tablePlugin: TablePlugin<T> = {
 		transformTable(props: TableRenderProps): TableRenderProps {
-			const existingClass = (props.htmlProps.class as string | undefined) ?? '';
-			const tableClass = themeProps('table').class;
 			return {
 				...props,
-				htmlProps: {
-					...props.htmlProps,
-					class: existingClass ? `${existingClass} ${tableClass}` : tableClass
-				},
 				xstyle: [...props.xstyle, tableBaseStyle]
 			};
 		}

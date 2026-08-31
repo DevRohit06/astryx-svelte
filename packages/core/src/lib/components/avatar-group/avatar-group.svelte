@@ -1,12 +1,19 @@
 <script lang="ts" module>
 	import type { Snippet } from 'svelte';
 	import type { BaseProps } from '../../base-props.js';
-	import type { AvatarSize } from '../avatar/avatar.stylex.js';
+	import type { AvatarShape, AvatarSize } from '../avatar/avatar.stylex.js';
 
 	export interface AvatarGroupProps extends BaseProps<HTMLDivElement> {
 		children: Snippet;
 		/** Applied to every avatar inside, overriding their own `size`. @default 'md' */
 		size?: AvatarSize;
+		/**
+		 * Applied to every avatar inside, overriding their own `shape`, so a group
+		 * stays visually uniform. Also applied to the `AvatarGroupOverflow` "+N"
+		 * indicator, so it matches the group.
+		 * @default 'circle'
+		 */
+		shape?: AvatarShape;
 	}
 </script>
 
@@ -30,6 +37,7 @@
 	const {
 		children,
 		size = 'md',
+		shape = 'circle',
 		'aria-label': ariaLabelProp,
 		'aria-describedby': ariaDescribedByProp,
 		onkeydown: onkeydownProp,
@@ -43,10 +51,10 @@
 	const numericSize = $derived(resolveSize(size));
 	const overlap = $derived(resolveOverlap(numericSize));
 
-	setAvatarGroupContext(() => ({ size, overlap, numericSize }));
+	setAvatarGroupContext(() => ({ size, shape, overlap, numericSize }));
 
 	const attrs = $derived(avatarGroupAttrs(xstyle));
-	const theme = $derived(themeProps('avatar-group', { size }));
+	const theme = $derived(themeProps('avatar-group', { size, shape }));
 
 	const t = useTranslator();
 	const ariaLabel = $derived(ariaLabelProp ?? t('@astryx.avatarGroup.label'));

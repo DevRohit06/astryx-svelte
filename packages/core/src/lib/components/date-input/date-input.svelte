@@ -34,6 +34,17 @@
 	>;
 
 	/**
+	 * When DateInput hands date picking to the browser/OS instead of its own
+	 * surfaces.
+	 *
+	 * - `'touch'`: native on touch devices (coarse pointer), Astryx's calendar
+	 *   popover on mouse-driven ones
+	 * - `'always'`: native wherever the browser supports `<input type="date">`
+	 * - `'never'`: Astryx's own pickers everywhere
+	 */
+	export type DateInputNativePicker = 'touch' | 'always' | 'never';
+
+	/**
 	 * `onchange` and `defaultValue` are the only omissions, matching upstream.
 	 *
 	 * Upstream spreads `...rest` onto the **wrapper `<div>`**, not the `<input>` —
@@ -187,11 +198,46 @@
 		 * ```
 		 */
 		format?: DateInputFormat | ((value: ISODateString) => string);
+
+		/**
+		 * When date picking is handed to the browser/OS instead of Astryx's own
+		 * surfaces: the field becomes an `<input type="date">` and the platform
+		 * draws the picker — the iOS wheel, the Android calendar dialog — with the
+		 * OS's own hit areas, momentum scrolling, locale and accessibility
+		 * settings.
+		 *
+		 * - `'touch'` (default): native on touch devices (coarse pointer), the text
+		 *   field and calendar popover on mouse-driven ones
+		 * - `'always'`: native wherever the browser supports `<input type="date">`
+		 * - `'never'`: Astryx's own pickers everywhere — the touch picker on a
+		 *   finger, the calendar popover on a mouse
+		 *
+		 * `format` and `placeholder` still apply in native mode: DateInput paints
+		 * the closed field's text itself, over the control. `numberOfMonths` and
+		 * `weekStartsOn` do not — they describe a calendar grid the native picker
+		 * does not have — so a field that needs either should pass `'never'`.
+		 *
+		 * `min` and `max` are forwarded, but note that a native picker may not
+		 * *show* them: on iOS they are constraint-validation flags rather than
+		 * clamps, so an out-of-range date can be selected and is refused on commit
+		 * (announced to assistive technology) rather than being greyed out in the
+		 * picker. `dateConstraints` is enforced the same way, on commit, and is
+		 * reason enough to prefer `'never'` on a field that uses it.
+		 *
+		 * @default 'touch'
+		 * @example
+		 * ```svelte
+		 * <!-- Astryx's own touch picker instead of the platform's -->
+		 * <DateInput label="Event date" value={date} onChange={setDate} nativePicker="never" />
+		 * ```
+		 */
+		nativePicker?: DateInputNativePicker;
 	}
 </script>
 
 <script lang="ts">
 	import { useMediaQuery } from '../../hooks/use-media-query.svelte.js';
+	import NativeDateField from './native-date-field.svelte';
 	import PointerDateField from './pointer-date-field.svelte';
 	import TouchDateField from './touch-date-field.svelte';
 
@@ -219,13 +265,15 @@
 	 *
 	 * With a mouse or trackpad this is a text input you can type into, with a
 	 * calendar in a popover — unchanged, and still the surface every existing
-	 * consumer gets. With a finger it is a picker built for one: a bottom sheet
+	 * consumer gets. With a finger it is the platform's own picker by default,
+	 * or — with `nativePicker="never"` — a picker built for one: a bottom sheet
 	 * holding one month per screen, swiped sideways, with month and year wheels
 	 * behind the header title for the far jumps swiping is bad at.
 	 *
-	 * The props are identical either way — this is one component with two
-	 * surfaces, not two components — so nothing at the call site changes, and a
-	 * date typed on a laptop and a date thumbed on a phone are the same value.
+	 * The props are identical whichever surface renders — this is one component
+	 * with three surfaces, not three components — so nothing at the call site
+	 * changes, and a date typed on a laptop and a date thumbed on a phone are the
+	 * same value.
 	 *
 	 * ## Why a runtime switch and not CSS
 	 *
@@ -259,9 +307,17 @@
 	const props: DateInputProps = $props();
 
 	const isTouch = useMediaQuery(() => TOUCH_POINTER_QUERY);
+	const nativePicker = $derived(props.nativePicker ?? 'touch');
+	// The platform's picker, where the consumer asked for it — see the
+	// `nativePicker` prop for what that trades away.
+	const usesNativePicker = $derived(
+		nativePicker === 'always' || (nativePicker === 'touch' && isTouch.matches)
+	);
 </script>
 
-{#if isTouch.matches}
+{#if usesNativePicker}
+	<NativeDateField {...props} />
+{:else if isTouch.matches}
 	<TouchDateField {...props} />
 {:else}
 	<PointerDateField {...props} />

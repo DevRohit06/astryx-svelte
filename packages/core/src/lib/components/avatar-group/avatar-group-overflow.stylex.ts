@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex';
 import type { StyleArg, SvelteStyleAttrs } from '../../internal/sx.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
 import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
+import { shapeStyles, type AvatarShape } from '../avatar/avatar.stylex.js';
 import {
 	colorVars,
 	fontWeightVars,
@@ -97,12 +98,14 @@ const dynamicStyles = stylex.create({
 export interface AvatarGroupOverflowAttrsOptions {
 	numericSize: number;
 	overlap: number;
+	/** The group's shape variant, which is what declares `--_avatar-radius`. */
+	shape: AvatarShape;
 	/** Renders as a `<button>`, which adds the pointer, hover and focus states. */
 	isInteractive: boolean;
 }
 
 export function avatarGroupOverflowAttrs(
-	{ numericSize, overlap, isInteractive }: AvatarGroupOverflowAttrsOptions,
+	{ numericSize, overlap, shape, isInteractive }: AvatarGroupOverflowAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
@@ -115,6 +118,12 @@ export function avatarGroupOverflowAttrs(
 		dynamicStyles.size(numericSize),
 		dynamicStyles.fontSize(numericSize),
 		dynamicStyles.overlap(-overlap),
+		// `base` reads `--_avatar-radius`, and nothing else on this element declares
+		// it: the group root does not set it and a sibling Avatar sets it only on its
+		// own wrapper, so without this the "+N" chip resolves an invalid
+		// `border-radius` and renders square at every shape. Shared with Avatar so
+		// the chip is the same shape as the faces it follows.
+		shapeStyles[shape],
 		xstyle
 	);
 }

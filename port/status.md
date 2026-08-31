@@ -21,9 +21,9 @@
 |                          | Suites | Declared cases |
 | ------------------------ | ------ | -------------- |
 | Upstream                 | 283    | 7521           |
-| Ported here              | 269    | 7355           |
+| Ported here              | 274    | 7374           |
 | No counterpart by design | 7      | 74             |
-| **Unported**             | **7**  | **92**         |
+| **Unported**             | **2**  | **73**         |
 
 A ported suite may still be short of upstream; that shortfall is stated in the suite’s own
 header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an
@@ -35,11 +35,6 @@ header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarati
 | ------------------------------------------- | ----- |
 | `DateTimeInput/DateTimeInputTouch.test.tsx` | 39    |
 | `DateInput/NativeDateField.test.tsx`        | 34    |
-| `NumberInput/numberInputCommit.test.ts`     | 6     |
-| `NumberInput/numberParser.test.ts`          | 4     |
-| `utils/isApplePlatform.test.ts`             | 4     |
-| `NumberInput/numberParser.docblock.test.ts` | 3     |
-| `Typeahead/TypeaheadItem.test.tsx`          | 2     |
 
 </details>
 
@@ -73,6 +68,7 @@ this port does not document are not counted as pending.
 | --------------------- | ------- |
 | api-divergence        | 32      |
 | deliberate-divergence | 47      |
+| divergence            | 1       |
 | unported              | 15      |
 | upstream-lag          | 11      |
-| **total**             | **105** |
+| **total**             | **106** |

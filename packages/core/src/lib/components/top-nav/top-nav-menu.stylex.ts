@@ -11,6 +11,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMenu.tsx` styles.
@@ -256,7 +257,12 @@ export function topNavMenuDrawerSectionAttrs(): SvelteStyleAttrs {
 
 /** The drawer-mode disclosure header — a nav item that also justifies apart. */
 export function topNavMenuDrawerHeaderAttrs(): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(navItemStyles.item, drawerStyles.header);
+	return focusOutlineProps.focusVisible(
+		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
+		drawerStyles.header
+	);
 }
 
 /** The drawer header's chevron, rotated while expanded. Also an `Icon` `xstyle` (#4838). */
@@ -276,7 +282,12 @@ export function topNavMenuDrawerItemsInnerAttrs(): SvelteStyleAttrs {
 
 /** A drawer-mode row — the shared nav item plus this menu's indent. */
 export function topNavMenuDrawerItemAttrs(): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(navItemStyles.item, drawerStyles.item);
+	return focusOutlineProps.focusVisible(
+		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
+		drawerStyles.item
+	);
 }
 
 /** The 20px icon slot on a drawer row. */

@@ -10,6 +10,7 @@ import {
 
 /** Ported from Astryx's `CommandPalette/CommandPaletteItem.tsx` styles. */
 const HOVER_HOVER = '@media (hover: hover)';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 const styles = stylex.create({
 	item: {
@@ -64,6 +65,8 @@ export function commandPaletteItemAttrs(
 ): SvelteStyleAttrs {
 	return sx(
 		styles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		!isDisabled && interactionOverlayStyles.backgroundColor,
 		!isDisabled && styles.itemHover,
 		isHighlighted && styles.itemHighlighted,
 		isSelected && styles.itemSelected,

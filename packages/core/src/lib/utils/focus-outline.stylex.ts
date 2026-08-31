@@ -125,6 +125,49 @@ export const focusOutlineStyles = stylex.create({
 		},
 		outlineOffset: { default: '0', ':has(:focus-visible)': FOCUS_OUTLINE_OFFSET }
 	},
+	/**
+	 * Rings the wrapper when its **first child** takes keyboard focus, rather than
+	 * any descendant. A split control whose row contains several tab stops lights
+	 * the whole row *on top of* the focused control's own ring: two outlines for
+	 * one tab stop. Scoping to `> :first-child` keeps the ring the primary's, and
+	 * leaves every sibling control ringing itself.
+	 *
+	 * The wrapper owns the coupling: the primary has to be its first child, and
+	 * the wrapper must not be a tab stop (its own `:focus-visible` would never
+	 * match). Pair it with `focusOutlineStyles.suppressed` on the primary.
+	 */
+	focusWithinFirstChild: {
+		outlineWidth: {
+			default: '0',
+			':has(> :first-child:focus-visible)': focusOutlineLonghands.outlineWidth
+		},
+		outlineStyle: {
+			default: 'none',
+			':has(> :first-child:focus-visible)': focusOutlineLonghands.outlineStyle
+		},
+		outlineColor: {
+			default: null,
+			':has(> :first-child:focus-visible)': focusOutlineLonghands.outlineColor
+		},
+		outlineOffset: {
+			default: '0',
+			':has(> :first-child:focus-visible)': FOCUS_OUTLINE_OFFSET
+		}
+	},
+	/**
+	 * Draws no ring, and keeps the UA's own off — for an element whose ring an
+	 * ancestor paints.
+	 *
+	 * The reset is not optional. Every other style here suppresses the browser
+	 * default through its `default` branch, so dropping the ring from a control
+	 * drops that suppression with it, and a bare `<a>` or `<button>` goes back to
+	 * the UA focus ring — painted *inside* the ancestor's.
+	 */
+	suppressed: {
+		outlineWidth: '0',
+		outlineStyle: 'none',
+		outlineOffset: '0'
+	},
 	publishFocusVisibleVars: {
 		'--_focus-outline': {
 			default: 'none',
@@ -171,6 +214,8 @@ function makeFocusOutlineProps(style: StyleArg) {
 export const focusOutlineProps = {
 	focusVisible: makeFocusOutlineProps(focusOutlineStyles.focusVisible),
 	focusWithin: makeFocusOutlineProps(focusOutlineStyles.focusWithin),
+	focusWithinFirstChild: makeFocusOutlineProps(focusOutlineStyles.focusWithinFirstChild),
+	suppressed: makeFocusOutlineProps(focusOutlineStyles.suppressed),
 	publishFocusVisibleVars: makeFocusOutlineProps(focusOutlineStyles.publishFocusVisibleVars),
 	focusWithinOrPublished: makeFocusOutlineProps(focusOutlineStyles.focusWithinOrPublished)
 } as const;

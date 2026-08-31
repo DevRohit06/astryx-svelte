@@ -226,6 +226,7 @@ async function discoverComponents(): Promise<ComponentInfo[]> {
 // ---------------------------------------------------------------------------
 
 const DIR_TO_REGISTRY_KEY: Record<string, string> = {
+	avatar: 'avatar',
 	banner: 'banner',
 	button: 'button',
 	card: 'card',
@@ -234,13 +235,13 @@ const DIR_TO_REGISTRY_KEY: Record<string, string> = {
 	dialog: 'dialog',
 	'dropdown-menu': 'dropdown-menu',
 	field: 'field',
-	'hover-card': 'hovercard',
+	'hover-card': 'hover-card',
 	'number-input': 'number-input',
 	popover: 'popover',
-	'progress-bar': 'progressbar-mark',
+	'progress-bar': 'progress-bar-mark',
 	section: 'section',
 	'segmented-control': 'segmented-control',
-	'text-area': 'textarea'
+	'text-area': 'text-area'
 };
 
 /**

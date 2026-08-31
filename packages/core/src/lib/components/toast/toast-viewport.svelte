@@ -21,7 +21,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import Toast from './toast.svelte';
+	import ToastSurface from './toast-surface.svelte';
 	import { setToastContext, type ToastContextValue } from './toast-context.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
@@ -350,6 +350,11 @@
 
 	const viewport = $derived(toastViewportAttrs(position));
 	const wrapperInner = toastWrapperInnerAttrs();
+
+	// A stack anchored to the top edge leaves upward, so its swipe-to-dismiss
+	// direction is inverted. Upstream derives the same flag for the wrapper's
+	// stacking styles, which `toastWrapperAttrs` resolves from `position` itself.
+	const isReversed = $derived(position === 'topEnd' || position === 'topStart');
 </script>
 
 {@render children?.()}
@@ -382,14 +387,16 @@
 				: undefined}
 		>
 			<div class={wrapperInner.class} style={wrapperInner.style}>
-				<Toast
+				<ToastSurface
 					{type}
 					body={options.body}
 					endContent={options.endContent}
 					{isAutoHide}
 					autoHideDuration={options.autoHideDuration ?? 5000}
 					{isExiting}
+					gestureDirection={isReversed ? -1 : 1}
 					onDismiss={(reason) => removeToast(entry.id, reason)}
+					renderContent={options.renderContent}
 				/>
 			</div>
 		</div>

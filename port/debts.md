@@ -7,6 +7,27 @@ known debt?" with one grep. Bodies are carried verbatim from `port/todo.md`; whe
 re-verified against the tree while this file was assembled, the finding is appended as a
 `> **Re-verified …**` note rather than folded into the original text.
 
+### `NativeDateField` drops `changeAction` from its rest spread, where upstream leaks it
+
+- **units:** DateInput, NativeDateField
+- **kind:** divergence
+- **retires:** when upstream destructures `changeAction` in `NativeDateField`
+
+Upstream's `NativeDateField` destructure omits `changeAction`, so it falls into `...rest` and is
+spread onto the wrapper `<div>` — verified in both source and the published `dist/`. In React that
+is a dev warning and nothing renders.
+
+In Svelte it is not harmless. A function in a spread becomes `setAttribute('changeaction',
+String(fn))`, which puts the function's own source text into the DOM. So the faithful transcription
+produces a visibly different document from upstream's, and the divergence is the only way to match
+what upstream _renders_.
+
+`changeAction` is destructured out as `_changeAction` with a comment naming it as upstream's leak.
+Nothing else changes: this surface has no optimistic path either way — upstream reads `isLoading`
+alone. Contrast `nativePicker`, which is deliberately **not** intercepted: no upstream surface
+destructures it and it is a string, so `nativepicker="touch"` on the wrapper is byte-identical to
+what React renders. That is parity, not a leak.
+
 ### `BlogCoverArt` is not ported, so a non-release post with no `coverImage` has no cover
 
 - **units:** BlogCoverArt

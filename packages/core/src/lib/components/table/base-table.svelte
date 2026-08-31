@@ -222,7 +222,9 @@
 		)
 	);
 
-	const theme = themeProps('base-table');
+	// `base-table` was a second root on the same `<table>` element that `table`
+	// names; themes styling it keep working until the next major.
+	const theme = themeProps('table', undefined, { legacyNames: ['base-table'] });
 	const attrs = $derived(baseTableAttrs(tableRenderProps.xstyle, xstyle));
 	const labelRow = headerLabelRowAttrs();
 

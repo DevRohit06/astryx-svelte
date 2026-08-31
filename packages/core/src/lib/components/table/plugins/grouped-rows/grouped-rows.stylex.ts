@@ -27,15 +27,31 @@ const styles = stylex.create({
 	},
 	headerCell: {
 		paddingBlock: spacingVars['--spacing-2'],
-		// No inline start padding so the chevron aligns with the table's leading
-		// edge (Ernest review #1).
-		paddingInlineStart: spacingVars['--spacing-1'],
+		// The start gutter lives on `headerInner` instead, so that it travels with
+		// the heading when the heading pins. Left here, the heading would sit one
+		// gutter in at rest and jump flush the moment it stuck.
+		paddingInlineStart: 0,
 		paddingInlineEnd: spacingVars['--spacing-3']
 	},
+	// The cell spans every column, so on a table scrolled sideways the heading
+	// would slide out of view while the columns it names stay pinned. Sticking
+	// the inner span to the start edge keeps the chevron and the label together
+	// and on screen.
 	headerInner: {
 		display: 'flex',
 		alignItems: 'center',
-		gap: spacingVars['--spacing-1']
+		gap: spacingVars['--spacing-1'],
+		insetInlineStart: 0,
+		position: 'sticky',
+		// No inline start padding on the cell, so the chevron aligns with the
+		// table's leading edge (Ernest review #1).
+		paddingInlineStart: spacingVars['--spacing-1']
+	},
+	// Applied alongside `headerInner` when using the built-in default heading. A
+	// custom `renderGroupHeader` may need the full column width, so the
+	// shrink-wrap is opt-in rather than unconditional.
+	headerInnerFitContent: {
+		width: 'fit-content'
 	},
 	// Standalone chevron button with no heavy chrome (transparent, borderless,
 	// zero padding) so the icon sits flush with the start of the table
@@ -97,8 +113,10 @@ export function groupHeaderCellAttrs(): SvelteStyleAttrs {
 	return sx(styles.headerCell);
 }
 
-export function groupHeaderInnerAttrs(): SvelteStyleAttrs {
-	return sx(styles.headerInner);
+export function groupHeaderInnerAttrs(hasCustomHeader: boolean): SvelteStyleAttrs {
+	// The shrink-wrap is opt-in: a custom `renderGroupHeader` may need the full
+	// column width, so only the built-in heading takes it.
+	return sx(styles.headerInner, !hasCustomHeader && styles.headerInnerFitContent);
 }
 
 export function groupChevronAttrs(): SvelteStyleAttrs {

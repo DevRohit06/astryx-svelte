@@ -24,9 +24,11 @@ import {
  *
  * The `:has(.astryx-nav-icon)` selector on `paddingInlineStart` is what lets a
  * `NavIcon` logo sit flush against the bar's edge while a bare image keeps its
- * inset — it reads the stable class `themeProps('navicon')` stamps. The key is
- * one of upstream's eight genuinely de-hyphenated target names, so the selector
- * only matches spelled exactly that way.
+ * inset — it reads the stable class `themeProps('nav-icon')` stamps. Upstream
+ * deprecated the run-together `navicon` onto this name, and `NavIcon` still emits
+ * the old class beside it, but the selector matches only the spelling written
+ * here — it is compiled into the atomic class, so a different spelling is a
+ * different rule.
  */
 const styles = stylex.create({
 	root: {

@@ -50,6 +50,7 @@ export interface DerivedVarEntry {
  * property.
  */
 export const derivedVarRegistry: Record<string, DerivedVarEntry[]> = {
+	avatar: [{ property: 'borderRadius', vars: ['--_avatar-radius'] }],
 	banner: [{ property: 'borderRadius', vars: ['--_banner-radius'] }],
 	button: [{ property: 'borderRadius', vars: ['--_button-radius'] }],
 	card: [
@@ -73,7 +74,7 @@ export const derivedVarRegistry: Record<string, DerivedVarEntry[]> = {
 		{ property: 'padding', vars: ['--_dropdown-menu-padding'] }
 	],
 	field: [{ property: 'borderRadius', vars: ['--_field-radius'] }],
-	hovercard: [{ property: 'borderRadius', vars: ['--_hovercard-radius'] }],
+	'hover-card': [{ property: 'borderRadius', vars: ['--_hovercard-radius'] }],
 	'number-input': [
 		{ property: 'padding', expand: 'container' },
 		{ property: 'borderRadius', vars: ['--_field-radius'] }
@@ -85,7 +86,7 @@ export const derivedVarRegistry: Record<string, DerivedVarEntry[]> = {
 	// outranks the component atomics — in a source build that compiles StyleX
 	// without `useCSSLayers` the atomics are unlayered and beat every theme rule,
 	// leaving no way to resize the tick but an unlayered `!important`.
-	'progressbar-mark': [
+	'progress-bar-mark': [
 		{ property: 'width', vars: ['--_progressbar-mark-width'], replaces: true },
 		{ property: 'height', vars: ['--_progressbar-mark-height'], replaces: true }
 	],
@@ -97,7 +98,7 @@ export const derivedVarRegistry: Record<string, DerivedVarEntry[]> = {
 	// `replaces`, because the wrapper must stay flush at `padding: 0` so the
 	// native resize grip keeps its true-corner position — the inset is applied by
 	// the `<textarea>` inside it, which reads the var.
-	textarea: [
+	'text-area': [
 		{
 			property: 'paddingInline',
 			vars: ['--_textarea-inline-padding'],
@@ -106,7 +107,26 @@ export const derivedVarRegistry: Record<string, DerivedVarEntry[]> = {
 	]
 };
 
+/**
+ * Deprecated component keys → the key that superseded them.
+ *
+ * A renamed target keeps emitting its old class, so a theme written against the
+ * old key still selects the element. Without this the rule would land but its
+ * derived vars would not expand, and the half that travels through a var (a
+ * hover card's radius, a text area's inline padding) would silently do nothing.
+ * Drop these with the classes, in the next major.
+ */
+const DEPRECATED_REGISTRY_KEYS: Record<string, string> = {
+	hovercard: 'hover-card',
+	'progressbar-mark': 'progress-bar-mark',
+	textarea: 'text-area'
+};
+
 /** Derived var entries for a component + CSS property, in priority order. */
 export function getDerivedVars(component: string, property: string): DerivedVarEntry[] {
-	return (derivedVarRegistry[component] ?? []).filter((e) => e.property === property);
+	const renamedTo = DEPRECATED_REGISTRY_KEYS[component];
+	const entries =
+		derivedVarRegistry[component] ?? (renamedTo ? derivedVarRegistry[renamedTo] : undefined);
+	if (!entries) return [];
+	return entries.filter((e) => e.property === property);
 }

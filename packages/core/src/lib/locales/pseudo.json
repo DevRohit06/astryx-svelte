@@ -572,6 +572,39 @@
   "@astryx.dateTimeInput.dialogLabel": {
     "defaultMessage": "⟦Çĥóóšé ðàţé⟧"
   },
+  "@astryx.dateTimeInput.pickerMode": {
+    "defaultMessage": "⟦Ðàţé/ţíɱé šéçţíóñ⟧"
+  },
+  "@astryx.dateTimeInput.dateTab": {
+    "defaultMessage": "⟦Ðàţé⟧"
+  },
+  "@astryx.dateTimeInput.timeTab": {
+    "defaultMessage": "⟦Ţíɱé⟧"
+  },
+  "@astryx.dateTimeInput.openTimePicker": {
+    "defaultMessage": "⟦Óþéñ {label}⟧"
+  },
+  "@astryx.dateTimeInput.saveDatePicking": {
+    "defaultMessage": "⟦Šàṽé ðàţé⟧"
+  },
+  "@astryx.dateTimeInput.hourWheel": {
+    "defaultMessage": "⟦Ĥóúř⟧"
+  },
+  "@astryx.dateTimeInput.minuteWheel": {
+    "defaultMessage": "⟦Ṁíñúţé⟧"
+  },
+  "@astryx.dateTimeInput.secondWheel": {
+    "defaultMessage": "⟦Šéçóñð⟧"
+  },
+  "@astryx.dateTimeInput.meridiemWheel": {
+    "defaultMessage": "⟦ÀṀ/ÞṀ⟧"
+  },
+  "@astryx.dateTimeInput.meridiemAM": {
+    "defaultMessage": "⟦ÀṀ⟧"
+  },
+  "@astryx.dateTimeInput.meridiemPM": {
+    "defaultMessage": "⟦ÞṀ⟧"
+  },
   "@astryx.link.newTab": {
     "defaultMessage": "⟦(óþéñš íñ ñéŵ ţàƀ)⟧"
   },

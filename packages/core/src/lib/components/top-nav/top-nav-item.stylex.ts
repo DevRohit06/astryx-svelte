@@ -70,6 +70,8 @@ export function topNavItemDrawerAttrs(
 ): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
 		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
 		navItemStyles[size],
 		isSelected && navItemStyles.selected,
 		isDisabled && navItemStyles.disabled,

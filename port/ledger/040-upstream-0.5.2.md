@@ -140,6 +140,32 @@ across files that do not all share the shape.
   and lists nothing — upstream's stepper button is object mode where ours folds to a literal
   string. That is the object-vs-inline question `astryx-oracle` owns, not a style defect.
 
+## The test delta is the largest remaining front, and it is measured
+
+**74 upstream suites changed their case count** between 0.5.0 and 0.5.2. A stated count is a
+contract against upstream's file at the *current* pin, so the bump invalidated every one of those
+headers — and a header that overstates coverage makes a real gap look accounted for, which is the
+failure this repo has already paid for twice.
+
+The big movers: `SideNav` 144 → 186, `Toast/ToastViewport` 13 → 55, `NumberInput` 117 → 142,
+`OverflowList` 19 → 34, `Carousel` 23 → 37, `Layer/useLayer` 32 → 46, `Selector` 144 → 158,
+`ComplexSelector` 12 → 21, `HoverCard` 35 → 44. Roughly 400 genuinely new upstream cases sit behind
+those numbers.
+
+Whole suites with no counterpart are counted in `status.md` and are down from 7 to 5 (92 → 86
+cases): `isApplePlatform` (4) and `TypeaheadItem` (2) are ported, and three of the remaining five
+are behind modules this batch is still porting.
+
+## A green oracle is not a finished migration
+
+Worth stating plainly because it nearly shipped that way. The class oracle compares style **keys**.
+Removing a component's own hover rules satisfies it whether or not anything applies the shared style
+in their place — so six modules briefly had *no hover at all* and a completely clean oracle run.
+
+Nothing failed. The only reason it was caught is that the call sites were written down as pending
+before the keys were removed. Any migration that moves a declaration from a component to a shared
+module needs its own check that the consumer adopts it; the oracle structurally cannot supply one.
+
 ## Still to do
 
 - Port the nine modules above.

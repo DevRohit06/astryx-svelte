@@ -1337,6 +1337,29 @@ const CASES = [
 		// local `stylex.props`, so the compiler could not fold the merge. `srOnly`
 		// is the one inline call site — the visually-hidden `<input>` applies it via
 		// `stylex.props`, so the compiler resolved it into a literal class string.
+		//
+		// **`styles.selected` reports `ours: (absent)` and that is a defect in the
+		// component, not a mode problem — do not reach for a skip.** The key is
+		// declared in `selectable-card.stylex.ts` and is byte-identical to
+		// upstream's: compiled with the key referenced it emits exactly
+		// `{kVAM5u: 'xad5do', '--_card-ring': 'xr9ms2c'}`, the pair upstream ships.
+		// It is absent because *nothing in the module reads it* —
+		// `selectedStyleForVariant` is missing upstream's
+		// `case 'default': case 'transparent': case 'muted': return styles.selected;`
+		// head, so every one of those three variants falls through to `default:` and
+		// gets `selectedUnknown` instead. `treeshakeCompensation` then drops the
+		// unreferenced key, which is the documented "a `stylex.create` key nothing
+		// references is compiled away" shape and reads exactly like the oracle
+		// failing to re-read the file.
+		//
+		// `selectedUnknown` itself is correct and upstream has it too — the bug is
+		// only that it now catches three variants upstream routes to `selected`,
+		// `default` among them. Its ring still lands on accent (`interactive`
+		// publishes `--selectable-card-ring-color: --color-accent` on the same
+		// element), but it sets no `borderColor`, so a selected default,
+		// transparent or muted card keeps an unaccented border where upstream tints
+		// it. Restoring the three switch cases fixes the key and this entry
+		// together.
 		file: 'src/lib/components/selectable-card/selectable-card.stylex.js',
 		upstreamFile: 'SelectableCard/SelectableCard.js',
 		inline: [['styles.srOnly']]
@@ -2060,7 +2083,8 @@ const CASES = [
 		// `styles`/`sizeStyles`, so ours need no rename.
 		//
 		// Object mode reaches only what `dist/` still carries: a `styles` object
-		// holding `wrapper`, `wrapperWithNumberSteppers` and `incrementIcon`, plus
+		// holding `wrapper`, `wrapperWithNumberSteppers`, `numberStepperButton`,
+		// `numberStepperButtonDisabled`, `decrementButton` and `incrementIcon`, plus
 		// all three `sizeStyles` keys. The first two and the size keys ride the
 		// wrapper's one runtime `stylex.props`, which merges the shared
 		// `inputWrapperStyles` / `inputStatus*Styles` groups, a dynamic
@@ -2078,26 +2102,40 @@ const CASES = [
 		// we: `dist/` declares the object, and dropping the key would leave object
 		// mode one key short.
 		//
-		// The other eight `styles` keys have no object in `dist/` at all — and this
-		// is the case worth naming, because the six stepper declarations added by
-		// #4896 look like function styles and are not. Each is applied at exactly one
-		// call site with a statically known combination, so StyleX folded every one
-		// into a literal class string: the `<input>` compiles to a four-entry lookup
-		// table keyed by `!!isDisabled << 1 | !!!isInputValid << 0`, `units` and
-		// `numberSteppers` to one string each, and the two stepper buttons to a
-		// two-entry table apiece (enabled/disabled, with `decrementButton` folded
-		// into the second pair). Ten inline call sites, all listed below — an
-		// `inline:` list, not a skip. `grep -n 'className:'` on the compiled file
-		// counts the fold sites directly and is the check to run before reaching for
-		// a skip.
+		// The other five `styles` keys have no object in `dist/` at all. Each is
+		// applied at exactly one call site with a statically known combination, so
+		// StyleX folded every one into a literal class string: the `<input>`
+		// compiles to a four-entry lookup table keyed by
+		// `!!isDisabled << 1 | !!!isInputValid << 0`, and `units` and
+		// `numberSteppers` to one string each. Six inline call sites, all listed
+		// below — an `inline:` list, not a skip. `grep -n 'className:'` on the
+		// compiled file counts the fold sites directly and is the check to run
+		// before reaching for a skip.
+		//
+		// **The three stepper keys crossed inline → object at upstream 0.5.2, and
+		// their four claims are deleted rather than repaired.** #4896 declared them
+		// as folding pairs — a two-entry table per button, keyed on
+		// enabled/disabled, with `decrementButton` in the second pair — and both
+		// buttons folded because the compiler could read the whole merge. The
+		// interactionOverlay migration ended that: each button now reads
+		// `stylex.props(styles.numberStepperButton,
+		// interactionOverlayStyles.backgroundImage, …)`, and a `stylex.props` call
+		// whose args reach across a module boundary is a runtime merge the compiler
+		// cannot fold, so `dist/` carries all three keys as `$$css` objects and
+		// emits no literal for either button. Same mechanism as
+		// `focusOutlineProps.focusVisible(a, b)` on the `side-nav-*` pairs. Object
+		// mode above diffs all three; `numberInputStepperButtonAttrs` makes the same
+		// call in upstream's order — base, overlay, `decrementButton`,
+		// `numberStepperButtonDisabled`. Note that `numberStepperButtonDisabled` keeps its
+		// own `backgroundImage` (`kKwaWg: x18o3ruo`) on both sides — the shared
+		// overlay is the *enabled* affordance and the disabled key overrides it,
+		// which is why this key was not stripped by the migration.
 		//
 		// Order is load-bearing on the two invalid branches: `inputInvalid` narrows
 		// `color` only, so it *replaces* `input`'s `x1tgivj0` with `xv1l7n4` rather
 		// than joining it, the same merge `TextArea`'s `counterError` relies on.
 		// `inputDisabled` narrows `cursor`, which `input` never sets, so it simply
-		// joins as `x1h6gzvc`. The stepper pairs are the same shape:
-		// `numberStepperButtonDisabled` replaces the button's `color` and
-		// `backgroundImage` and joins its `cursor`.
+		// joins as `x1h6gzvc`.
 		//
 		// `input` and `inputDisabled` are byte-identical to `TextInput`'s — upstream
 		// restates them rather than sharing — so the same classes are checked twice
@@ -2114,11 +2152,7 @@ const CASES = [
 			['styles.input', 'styles.inputDisabled'],
 			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid'],
 			['styles.units'],
-			['styles.numberSteppers'],
-			['styles.numberStepperButton'],
-			['styles.numberStepperButton', 'styles.numberStepperButtonDisabled'],
-			['styles.numberStepperButton', 'styles.decrementButton'],
-			['styles.numberStepperButton', 'styles.decrementButton', 'styles.numberStepperButtonDisabled']
+			['styles.numberSteppers']
 		]
 	},
 	{
@@ -2226,6 +2260,52 @@ const CASES = [
 			['styles.input', 'styles.inputDisabled'],
 			['styles.input', 'styles.inputInvalid'],
 			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid']
+		]
+	},
+	{
+		// 0.5.1's OS-picker date surface, the third `DateInput` renders. Both modes
+		// at once, and the split is the same one `DateInput` itself shows: object
+		// mode reaches `sizeStyles` (all three ride the wrapper's one runtime
+		// `stylex.props`, which also merges the shared `inputWrapperStyles` /
+		// `inputStatus*Styles` groups, a dynamic `sizeStyles[size]` index,
+		// `groupStyles.inGroup` and an `xstyle` spread), `styles.wrapper` with it,
+		// and `iconButton`/`iconButtonDisabled` because the toggle composes the
+		// imported `focusOutlineStyles.focusVisible`.
+		//
+		// The rest are the thirteen inline call sites below. Two lookup tables and
+		// a constant:
+		//
+		// - `styles.slot` is a lone constant call site.
+		// - The `<input>`'s eight are all distinct. `inputTextHidden` and
+		//   `inputInvalid` each narrow `color`, so each *replaces* `input`'s
+		//   `x1tgivj0` rather than joining it — and when both apply, `inputInvalid`
+		//   wins the colour while `inputTextHidden`'s `-webkit-text-fill-color`
+		//   survives beside it. Order is therefore load-bearing on six of the eight.
+		// - The overlay's eight collapse to FOUR, and that is the compiler agreeing
+		//   with the component rather than an under-count. `overlayValue` /
+		//   `overlayPlaceholder` is an either-or and `inputInvalid` narrows the same
+		//   `color` both of them set — to `overlayPlaceholder`'s own value — so
+		//   every `inputInvalid` arm merges into the matching placeholder arm and
+		//   only the value/placeholder × disabled square survives. `upstreamInline`
+		//   is a Set, so a fifth claim would find the string already deleted and
+		//   report a spurious "upstream has no matching call site"; the same shape
+		//   `MonthScroller`'s `puckSelected` has above.
+		file: 'src/lib/components/date-input/native-date-field.stylex.js',
+		upstreamFile: 'DateInput/NativeDateField.js',
+		inline: [
+			['styles.slot'],
+			['styles.input'],
+			['styles.input', 'styles.inputTextHidden'],
+			['styles.input', 'styles.inputDisabled'],
+			['styles.input', 'styles.inputTextHidden', 'styles.inputDisabled'],
+			['styles.input', 'styles.inputInvalid'],
+			['styles.input', 'styles.inputTextHidden', 'styles.inputInvalid'],
+			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid'],
+			['styles.input', 'styles.inputTextHidden', 'styles.inputDisabled', 'styles.inputInvalid'],
+			['styles.overlay', 'styles.overlayPlaceholder'],
+			['styles.overlay', 'styles.overlayValue'],
+			['styles.overlay', 'styles.overlayPlaceholder', 'styles.inputDisabled'],
+			['styles.overlay', 'styles.overlayValue', 'styles.inputDisabled']
 		]
 	},
 	{
@@ -2380,6 +2460,65 @@ const CASES = [
 			['styles.input', 'styles.inputInvalid'],
 			['styles.input', 'styles.inputDisabled', 'styles.inputInvalid'],
 			['styles.timeListbox']
+		]
+	},
+	{
+		// 0.5.2's coarse-pointer date+time surface. It consumes
+		// `date-input/tokens.stylex.ts` — the sheet's geometry is `DateInput`'s, so
+		// the two pickers share one set of consts — which makes the const-derived
+		// classes path-hashed and unable to match upstream's by name; `constHashed`
+		// compares the emitted CSS instead. See its note at the head of this file.
+		//
+		// Both modes at once. Object mode reaches the ten keys `dist/` still
+		// carries plus all three `sizeStyles`, and every one of them is a
+		// composition the compiler could not fold: `touchRow` merges an `xstyle`
+		// spread; `touchDateWrapper`/`touchTimeWrapper` ride a runtime
+		// `stylex.props` that also merges the shared `inputWrapperStyles` /
+		// `inputStatus*Styles` groups and a dynamic `sizeStyles[size]` index;
+		// `iconButton`/`iconButtonDisabled` and `touchTitle` compose the imported
+		// `focusOutlineStyles.focusVisible`; `touchArrowIcon` composes the imported
+		// `rtlStyles.mirror`; and `touchArrow`/`touchArrowUnavailable`/
+		// `touchResetButton` are handed to `IconButton`/`Button` as an `xstyle`
+		// prop rather than resolved at a call site at all.
+		//
+		// The sixteen inline sites below are what is left, and three pairs of them
+		// merge rather than accumulate:
+		//
+		// - `touchPanelStack`/`touchDateSurfaceStack`, `touchPanel`/
+		//   `touchDateSurface` and `touchPanelHidden`/`touchDateSurfaceHidden` are
+		//   byte-identical restatements — upstream declares each twice, once for
+		//   the Date/Time panel swap and once for the calendar/wheels swap inside
+		//   the Date panel — so each pair compiles to ONE class string.
+		//   `upstreamInline` is a Set, so claiming both members would find the
+		//   string already deleted and report a spurious "upstream has no matching
+		//   call site"; the `touchPanel*` spelling is claimed and the
+		//   `touchDateSurface*` trio rides it. A divergence in the unclaimed three
+		//   changes the rule they emit, which `compare-upstream-css.mjs` sees.
+		// - Both closed `<input>`s pass the same three keys in the same order, so
+		//   upstream emits two strings rather than four — the arrangement
+		//   `DateTimeInput`'s own four-entry table already has.
+		// - `touchFooter` is applied at three call sites and `touchDateSurface` at
+		//   two, which is one string each for the same reason.
+		file: 'src/lib/components/date-time-input/touch-date-time-field.stylex.js',
+		upstreamFile: 'DateTimeInput/TouchDateTimeField.js',
+		constHashed: 'src/lib/components/date-input/tokens.stylex.js',
+		inline: [
+			['styles.touchSheetBody'],
+			['styles.touchSurface'],
+			['styles.touchPanelStack'],
+			['styles.touchPanel'],
+			['styles.touchPanel', 'styles.touchPanelHidden'],
+			['styles.touchHeader'],
+			['styles.touchTitleText'],
+			['styles.touchHeaderActions'],
+			['styles.touchHeaderActions', 'styles.touchHeaderActionsHidden'],
+			['styles.touchWeekdays'],
+			['styles.touchWeekday'],
+			['styles.touchWheelSpacer'],
+			['styles.touchTimeWheels'],
+			['styles.touchFooter'],
+			['styles.input', 'styles.touchInput'],
+			['styles.input', 'styles.touchInput', 'styles.inputDisabled']
 		]
 	},
 	{
@@ -3084,9 +3223,25 @@ const CASES = [
 		// runtime function the compiler cannot fold. Same mechanism as the three
 		// `side-nav-heading` pairs above. Their inline claims are deleted rather
 		// than repaired — there is no literal left upstream to match.
+		//
+		// **`styles.actions` is claimed as of the 0.5.1 `actions` port.** 0.5.x
+		// gives `SideNavItem` an `actions` slot — row-level secondary controls
+		// rendered as siblings of the primary element at the trailing edge, after
+		// the expand toggle — and with it a key upstream folds at one call site
+		// (`flexShrink: 0`, `display: flex`, `alignItems: center`,
+		// `gap: --spacing-1`, `pointerEvents: 'auto'`, i.e.
+		// `x2lah0s x78zum5 x6s0dn4 xzye2dw x67bb7w`). The `pointerEvents` is the
+		// load-bearing half: a disabled row's `navItemStyles.disabled` sets
+		// `pointer-events: none` on the wrapper and the slot opts back in, because
+		// it is passthrough and each control owns its own disabled state. The entry
+		// deliberately waited for the prop: until `SideNavItemProps` carried
+		// `actions` the key did not exist here to claim, and writing it early would
+		// have cost two mismatches to say what one already said (the claim would
+		// report "absent from our module" *and* leave the string unclaimed).
 		inline: [
 			['styles.label'],
 			['styles.endContent'],
+			['styles.actions'],
 			['styles.childrenCollapsible'],
 			['styles.childrenCollapsible', 'styles.childrenCollapsed'],
 			['styles.childrenInner'],
@@ -3300,11 +3455,42 @@ const CASES = [
 		//
 		// `styles.chevron` — the button, not the glyph — is untouched and stays an
 		// inline claim.
+		//
+		// **`headerCell` and `headerInner` FAIL against 0.5.2, and that is a real
+		// finding rather than a stale claim — do not repair it here.** Both still
+		// fold upstream, so the mode and the two entries below are right; the class
+		// sets differ because upstream changed the declarations and this module has
+		// not followed. `useTableGroupedRows.tsx` at 0.5.2 makes the group heading
+		// survive a sideways scroll: `headerCell.paddingInlineStart` drops to `0`
+		// (`x1c1uobl`, ours still emits `--spacing-1`'s `x1vsv5vr`) and the gutter
+		// moves onto `headerInner`, which also gains `position: 'sticky'` and
+		// `insetInlineStart: 0` so the chevron and label stay pinned while the cell
+		// spans every column. The comment upstream spells out why the gutter had to
+		// travel: left on the cell, the heading would sit one gutter in at rest and
+		// jump flush the moment it stuck.
+		//
+		// That same change adds a key we do not have, `headerInnerFitContent`
+		// (`width: 'fit-content'`, `xeq5yr9`), applied beside `headerInner` only on
+		// the built-in heading branch — a custom `renderGroupHeader` may want the
+		// full column width, so the shrink-wrap is opt-in. `dist/` therefore folds
+		// `headerInner` into a two-entry lookup table keyed by
+		// `!!!renderGroupHeader << 0`, and the unclaimed index-1 string is the third
+		// "classes we never produce" line.
+		//
+		// **When `grouped-rows.stylex.ts` catches up, this list needs a fourth
+		// entry** — `['styles.headerInner', 'styles.headerInnerFitContent']` — and
+		// `group-header-cell.svelte` has to apply the new key on its no-snippet
+		// branch, and the claim below now names it — the key landed with the 0.5.2
+		// port of upstream's sticky group heading.
 		file: 'src/lib/components/table/plugins/grouped-rows/grouped-rows.stylex.js',
 		upstreamFile: 'Table/plugins/groupedRows/useTableGroupedRows.js',
 		inline: [
 			['styles.headerCell'],
 			['styles.headerInner'],
+			// The built-in heading shrink-wraps; a custom `renderGroupHeader` may need
+			// the full column width, so `headerInnerFitContent` rides beside
+			// `headerInner` on one branch only and the compiler folds both strings.
+			['styles.headerInner', 'styles.headerInnerFitContent'],
 			['styles.chevron'],
 			['styles.label'],
 			['styles.count']

@@ -13,6 +13,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavMegaMenu.tsx` styles.
@@ -263,7 +264,12 @@ export function megaMenuDrawerSectionAttrs(): SvelteStyleAttrs {
 
 /** The drawer-mode disclosure header. */
 export function megaMenuDrawerHeaderAttrs(): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(navItemStyles.item, styles.drawerHeader);
+	return focusOutlineProps.focusVisible(
+		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
+		styles.drawerHeader
+	);
 }
 
 /** The drawer header's chevron, rotated while expanded. Also an `Icon` `xstyle` (#4838). */

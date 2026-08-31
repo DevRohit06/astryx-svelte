@@ -65,7 +65,7 @@ export function hoverCardSurfaceXstyle(placement: LayerPlacement): StyleArg {
 /**
  * The inner padding wrapper `renderHoverCard` puts around its children. It is
  * also the element that carries the hover/focus handlers and the
- * `.astryx-hovercard` theme class — unlike `Tooltip`, which themes the layer
+ * `.astryx-hover-card` theme class — unlike `Tooltip`, which themes the layer
  * container itself.
  */
 export function hoverCardContentAttrs(): SvelteStyleAttrs {

@@ -6,6 +6,10 @@ import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
 
 const styles = stylex.create({
 	interactive: {
+		// Declared here, on the element that carries the `astryx-selectable-card`
+		// target, so a theme has something to override — the ring for a variant
+		// only the theme knows about reads it (see `selectedUnknown`).
+		'--selectable-card-ring-color': colorVars['--color-accent'],
 		position: 'relative',
 		cursor: {
 			default: 'pointer',
@@ -104,11 +108,22 @@ const styles = stylex.create({
 	selectedYellow: {
 		borderColor: colorVars['--color-border-yellow'],
 		'--_card-ring': `inset 0 0 0 2px ${colorVars['--color-border-yellow']}`
+	},
+	// A theme may add a card variant this module has never heard of. It still has
+	// to look selected, so its ring reads the published variable instead of a
+	// colour this file would have to know.
+	selectedUnknown: {
+		'--_card-ring': 'inset 0 0 0 2px var(--selectable-card-ring-color)'
 	}
 });
 
 function selectedStyleForVariant(variant: CardVariant) {
 	switch (variant) {
+		// The three variants with no colour of their own take the accent ring.
+		case 'default':
+		case 'transparent':
+		case 'muted':
+			return styles.selected;
 		case 'blue':
 			return styles.selectedBlue;
 		case 'cyan':
@@ -129,8 +144,10 @@ function selectedStyleForVariant(variant: CardVariant) {
 			return styles.selectedTeal;
 		case 'yellow':
 			return styles.selectedYellow;
+		// `CardVariant` is open — a theme can add a variant this switch has never
+		// seen, and it still has to look selected.
 		default:
-			return styles.selected;
+			return styles.selectedUnknown;
 	}
 }
 

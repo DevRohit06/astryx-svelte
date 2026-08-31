@@ -177,13 +177,11 @@
 	);
 	const isDecorative = $derived(!accessibleName);
 
-	// A group sets the size for every avatar inside it, overriding the prop.
+	// A group sets the size *and* the shape for every avatar inside it, overriding
+	// both props — a facepile stays uniform whatever its members ask for.
 	const group = useAvatarGroup();
 	const resolvedSize = $derived(group?.().size ?? size);
-	// Upstream reads the group's `shape` here too (`avatarGroup?.shape ?? shape`).
-	// `AvatarGroup` has no `shape` prop in this port yet, so nothing can override
-	// it; the read lands with that prop, in `avatar-group/`.
-	const resolvedShape = $derived(shape);
+	const resolvedShape = $derived(group?.().shape ?? shape);
 	const numericSize = $derived(resolveSize(resolvedSize));
 
 	setAvatarSizeContext(() => numericSize);

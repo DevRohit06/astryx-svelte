@@ -10,10 +10,24 @@ import NumberInputGroupProbe from './fixtures/number-input-group-probe.svelte';
 
 /**
  * Astryx's `NumberInput/NumberInput.test.tsx`, ported case for case. Upstream at
- * the **0.5.0** pin declares **117** blocks producing **122 cases** — 116 `it(`s
- * plus one `it.each` with six rows — and **113** are here.
+ * the **0.5.2** pin declares **142** blocks, and **113** are here.
  *
- * **The 4 blocks (9 cases) that are not here:**
+ * **The count moved 117 → 142 with the pin, and four ported cases changed
+ * meaning rather than merely being outnumbered.** 0.5.1 rewrote NumberInput's
+ * commit policy: typing no longer emits, and a value commits on blur or Enter.
+ * The four `onChange validation` cases below were transcribed against the old
+ * per-keystroke behaviour, so they asserted `toHaveBeenCalledWith(4)` on the way
+ * to `42`. They are re-derived here against upstream's current bodies — the
+ * first is upstream's own rename, from `calls onChange with valid number when
+ * typing` to `commits a valid number on blur`.
+ *
+ * This is the standing hazard about a header that states a count: it was a
+ * contract against upstream's file at 0.5.0, and the pin move made it false
+ * without changing a line of this file. An earlier version of this header also
+ * asserted that "the typing cases port unchanged", which is exactly the
+ * assumption 0.5.1 invalidated.
+ *
+ * **The 4 blocks (9 cases) that were already not here before the bump:**
  *
  * - **`does not step or commit on a composing keydown (IME)`**, added at
  *   v0.4.5. This one has been missing across two re-pins, because the header
@@ -441,7 +455,7 @@ describe('NumberInput', () => {
 	});
 
 	describe('onChange validation', () => {
-		it('calls onChange with valid number when typing', async () => {
+		it('commits a valid number on blur', async () => {
 			const handleChange = vi.fn();
 			const screen = await render(NumberInput, {
 				props: { label: 'Quantity', value: null, onChange: handleChange }
@@ -450,8 +464,10 @@ describe('NumberInput', () => {
 			const input = screen.getByRole('spinbutton');
 			await userEvent.click(input);
 			await userEvent.type(input, '42');
+			expect(handleChange).not.toHaveBeenCalled();
 
-			expect(handleChange).toHaveBeenCalledWith(4);
+			await userEvent.tab();
+			expect(handleChange).toHaveBeenCalledTimes(1);
 			expect(handleChange).toHaveBeenCalledWith(42);
 		});
 
@@ -465,9 +481,7 @@ describe('NumberInput', () => {
 			await userEvent.click(input);
 			await userEvent.type(input, '10');
 
-			// 1 is valid (<=5), but 10 is not
-			expect(handleChange).toHaveBeenCalledWith(1);
-			expect(handleChange).not.toHaveBeenCalledWith(10);
+			expect(handleChange).not.toHaveBeenCalled();
 		});
 
 		it('does not call onChange when value is below min', async () => {
@@ -494,9 +508,7 @@ describe('NumberInput', () => {
 			await userEvent.click(input);
 			await userEvent.type(input, '3.5');
 
-			// 3 is valid, but 3.5 is not
-			expect(handleChange).toHaveBeenCalledWith(3);
-			expect(handleChange).not.toHaveBeenCalledWith(3.5);
+			expect(handleChange).not.toHaveBeenCalled();
 		});
 
 		it('calls onChange for decimal when isIntegerOnly is false', async () => {
@@ -508,7 +520,9 @@ describe('NumberInput', () => {
 			const input = screen.getByRole('spinbutton');
 			await userEvent.click(input);
 			await userEvent.type(input, '3.5');
+			expect(handleChange).not.toHaveBeenCalled();
 
+			await userEvent.tab();
 			expect(handleChange).toHaveBeenCalledWith(3.5);
 		});
 	});

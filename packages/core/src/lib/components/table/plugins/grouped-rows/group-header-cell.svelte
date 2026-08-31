@@ -39,7 +39,7 @@
 	const t = useTranslator();
 
 	const cellAttrs = groupHeaderCellAttrs();
-	const innerAttrs = groupHeaderInnerAttrs();
+	const innerAttrs = $derived(groupHeaderInnerAttrs(renderGroupHeader != null));
 	const chevronAttrs = groupChevronAttrs();
 	const labelAttrs = groupLabelAttrs();
 	const countAttrs = groupCountAttrs();

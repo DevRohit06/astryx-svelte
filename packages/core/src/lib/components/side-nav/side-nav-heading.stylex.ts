@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { navItemStyles } from '../nav-item/nav-item.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 import {
 	colorVars,
 	fontWeightVars,
@@ -255,13 +256,21 @@ export function sideNavHeadingCollapsedRootAttrs(xstyle: StyleArg): SvelteStyleA
 
 /** The collapsed heading as a link — the shared nav item, centred. */
 export function sideNavHeadingCollapsedLinkAttrs(xstyle: StyleArg): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(navItemStyles.item, styles.rootCollapsed, xstyle);
+	return focusOutlineProps.focusVisible(
+		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
+		styles.rootCollapsed,
+		xstyle
+	);
 }
 
 /** The collapsed heading as a menu trigger. */
 export function sideNavHeadingCollapsedTriggerAttrs(xstyle: StyleArg): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
 		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
 		styles.rootCollapsed,
 		styles.menuTrigger,
 		xstyle

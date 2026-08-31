@@ -32,6 +32,35 @@ const enterFullscreen = stylex.keyframes({
 	to: { opacity: 1 }
 });
 
+// Fullscreen safe-area padding, new at upstream 0.5.1: it now follows writing
+// direction and defers to an explicitly themed padding. The inline insets swap
+// under RTL because `safe-area-inset-left/right` are physical — the notch does
+// not move when the writing direction does.
+const dialogFullscreenSafeAreaBlockStartPadding = `var(--astryx-dialog-padding-block-start, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-top, 0px))))`;
+const dialogFullscreenSafeAreaBlockEndPadding = `var(--astryx-dialog-padding-block-end, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-bottom, 0px))))`;
+const dialogFullscreenSafeAreaInlineStartPaddingLtr = `var(--astryx-dialog-padding-inline-start, var(--astryx-dialog-padding-inline, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-left, 0px)))))`;
+const dialogFullscreenSafeAreaInlineStartPaddingRtl = `var(--astryx-dialog-padding-inline-start, var(--astryx-dialog-padding-inline, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-right, 0px)))))`;
+const dialogFullscreenSafeAreaInlineEndPaddingLtr = `var(--astryx-dialog-padding-inline-end, var(--astryx-dialog-padding-inline, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-right, 0px)))))`;
+const dialogFullscreenSafeAreaInlineEndPaddingRtl = `var(--astryx-dialog-padding-inline-end, var(--astryx-dialog-padding-inline, var(--astryx-dialog-padding, max(${spacingVars['--spacing-4']}, env(safe-area-inset-left, 0px)))))`;
+
+/**
+ * The same six values as a contract, for the suite that asserts the fullscreen
+ * padding follows writing direction. Module-public and barrel-absent, exactly as
+ * upstream leaves it — only `Dialog` and its test read it.
+ */
+export const dialogFullscreenSafeAreaPaddingContract = {
+	blockStart: dialogFullscreenSafeAreaBlockStartPadding,
+	blockEnd: dialogFullscreenSafeAreaBlockEndPadding,
+	inlineStart: {
+		ltr: dialogFullscreenSafeAreaInlineStartPaddingLtr,
+		rtl: dialogFullscreenSafeAreaInlineStartPaddingRtl
+	},
+	inlineEnd: {
+		ltr: dialogFullscreenSafeAreaInlineEndPaddingLtr,
+		rtl: dialogFullscreenSafeAreaInlineEndPaddingRtl
+	}
+} as const;
+
 const styles = stylex.create({
 	dialog: {
 		position: 'fixed',
@@ -88,11 +117,16 @@ const styles = stylex.create({
 		}
 	},
 	fullscreenSafeArea: {
-		paddingBlockStart: 'max(var(--container-padding-block-start), env(safe-area-inset-top, 0px))',
-		paddingBlockEnd: 'max(var(--container-padding-block-end), env(safe-area-inset-bottom, 0px))',
-		paddingInlineStart:
-			'max(var(--container-padding-inline-start), env(safe-area-inset-left, 0px))',
-		paddingInlineEnd: 'max(var(--container-padding-inline-end), env(safe-area-inset-right, 0px))'
+		paddingBlockStart: dialogFullscreenSafeAreaBlockStartPadding,
+		paddingBlockEnd: dialogFullscreenSafeAreaBlockEndPadding,
+		paddingInlineStart: {
+			default: dialogFullscreenSafeAreaInlineStartPaddingLtr,
+			':is([dir="rtl"] *)': dialogFullscreenSafeAreaInlineStartPaddingRtl
+		},
+		paddingInlineEnd: {
+			default: dialogFullscreenSafeAreaInlineEndPaddingLtr,
+			':is([dir="rtl"] *)': dialogFullscreenSafeAreaInlineEndPaddingRtl
+		}
 	},
 	inner: {
 		display: 'flex',

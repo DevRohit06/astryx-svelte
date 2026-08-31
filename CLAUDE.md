@@ -183,6 +183,17 @@ does a skip whose key _starts_ matching — the list cannot rot. The published t
 but **can lag upstream's source** (Icon's px→rem move is the standing example): follow the source and
 record a self-retiring skip.
 
+**A green class oracle is not a finished migration.** The oracle compares style _keys_. When
+upstream moves a declaration out of a component into a shared module — `interactionOverlay` at
+0.5.1, applied at twenty call sites — deleting the component's own rules satisfies it whether or not
+anything applies the shared style in their place. Six modules were briefly left with **no hover or
+pressed state at all** and a completely clean oracle run; nothing failed, and the only reason it was
+caught is that the call sites had been written down as pending before the keys were removed. Any
+change that relocates a declaration needs its own check that the consumer adopts it, because the
+oracle structurally cannot supply one. Related: derive the set to migrate **from the oracle**, not
+from a consumer list — upstream had twenty adopters and forty-two of our modules referenced the same
+token, and the set that actually needed changing was neither (batch 040).
+
 ## StyleX constraints
 
 - StyleX may only be imported from `.ts` / `.stylex.ts` modules, never from a `.svelte` file. The

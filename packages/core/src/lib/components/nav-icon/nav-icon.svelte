@@ -32,7 +32,9 @@
 	const { icon, xstyle, class: className, style: styleProp, ...rest }: NavIconProps = $props();
 
 	const attrs = $derived(navIconAttrs(xstyle));
-	const theme = themeProps('navicon');
+	// `navicon` ran the compound name together; themes styling it keep working
+	// until the next major.
+	const theme = themeProps('nav-icon', undefined, { legacyNames: ['navicon'] });
 </script>
 
 <span

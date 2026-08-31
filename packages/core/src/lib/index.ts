@@ -433,6 +433,7 @@ export type {
 export type { CardProps } from './components/card/card.svelte';
 export type {
 	DateInputFormat,
+	DateInputNativePicker,
 	DateInputProps,
 	DateInputStatus,
 	DateInputStatusType
@@ -1178,7 +1179,9 @@ export type {
 	ToastDismissReason,
 	ToastOptions,
 	ToastDismissFn,
-	ShowToastFn
+	ShowToastFn,
+	ToastContentRenderProps,
+	ToastContentRenderFn
 } from './components/toast/types.js';
 export type { ToggleButtonProps } from './components/toggle-button/toggle-button.svelte';
 export type {
