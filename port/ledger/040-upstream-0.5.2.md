@@ -7,10 +7,16 @@ units: [pin, docs prose, oracle re-baseline]
 upstream-prs: []
 ---
 
-## Status: IN PROGRESS
+## Status: gate green, front not closed
 
-The mechanical half is done and the scope below is measured, not estimated. The porting work it
-names is not done. Nothing here should be read as a completed batch.
+`pnpm verify` passes all seven stages. Class oracle **0 mismatches** (from 125), CSS oracle matches
+upstream, all eight theme oracles pass, `svelte-check` 0 errors, every one of upstream's 283 suites
+has a counterpart.
+
+What is **not** done is the case-level test delta: 74 upstream suites grew, and roughly 400 new
+cases sit in suites that exist here but fall short. Those shortfalls are stated in each suite's own
+header, which is the contract — but many of those headers still state their count against 0.5.0.
+See "Still to do".
 
 ## Scope, measured against the tags
 
@@ -216,10 +222,47 @@ instinct on a red test is to change the implementation.
 - Check whether the tarball lags source for anything new.
 - 0.5.2's category rename (Data Input → Form Controls) reaches the docs registries and the CLI.
 
+## Five gate runs, five failures, five different checks
+
+The most transferable thing in this batch is not any one fix. It is that every gate run surfaced
+exactly one real failure, and **each was caught by a check the others were structurally blind to**:
+
+| check | found | why nothing else could |
+| --- | --- | --- |
+| `derived-var-registry` guard | six new public CSS vars undocumented | the oracles compare values, not documentation |
+| CSS oracle | an invented rule we emit and upstream does not | the class oracle iterates *upstream's* keys, so a key only we have is invisible to it |
+| browser suite | upstream gated the toast landmark on having something to announce | no static check renders a DOM |
+| theme oracles | contrast fixes in four themes, 56 missing tokens in all eight | core's oracles do not read the theme packages |
+| CLI docs/implementation cross-check | five documented theme targets no component emits | docs and components were each internally consistent; only a check crossing between them sees it |
+
+Add to that the two neither oracle can see at all: a per-file **adoption count** against upstream
+found seven modules with no hover state, and a ported **assertion** found the provider locale never
+reaching the DOM.
+
+A green oracle means one axis is clean. It never means the port is.
+
+## Two ways of reading the wrong source
+
+Both nearly produced a confident wrong answer.
+
+`node_modules/.ignored/@astryxdesign/theme-chocolate` still carried the **0.5.0** punctuation value,
+identical to ours. Reading it would have confirmed we were right; the published `dist/` and
+upstream's git tag both disagreed.
+
+And a rough scan for orphaned theme targets produced three false leads — targets already emitted
+through `usePopover`'s `surfaceTarget:` option, which the scan's looser matching could not see. They
+were labelled approximate and verified before acting, which is the only reason they were not
+"fixed" into duplicates.
+
 ## Rules promoted
 
-Pending — this batch is not closed.
+- `CLAUDE.md` § The fidelity oracles — a green class oracle is not a finished migration; derive a
+  migration set from the oracle rather than from a consumer list.
+- `scripts/status.mjs` — `countCases` strips comments before counting. The lookbehind rejected a
+  backtick before `it`, which catches this repo's prose but not upstream's; `Timestamp.test.tsx`
+  read as 78 where it declares 77, and the fix removed 12 phantom cases from each side.
 
 ## Debts opened
 
-Pending.
+- `NativeDateField` drops `changeAction` from its rest spread where upstream leaks it. In React that
+  is a dev warning; in Svelte a function in a spread stringifies its source into the DOM.

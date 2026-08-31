@@ -36,7 +36,20 @@ Each front is sequenced so the thing that _catches_ mistakes lands before the th
 them.
 
 1. **The test delta.** The largest and most mechanical front, and the one that protects every
-   other — and the one that keeps proving it protects more than tests. Batch 033 found three of
+   other — and the one that keeps proving it protects more than tests.
+
+   **At the 0.5.2 pin this front changed shape.** Every upstream suite now has a counterpart —
+   `status.md`'s "no counterpart" row is the design-decision one, and whole-suite absence is gone.
+   What is left is _case-level_: 74 upstream suites grew with the release, and roughly 400 new cases
+   sit in suites that exist here and fall short. The big ones are `SideNav` 144 → 186,
+   `ToastViewport` 13 → 55 (its swipe-dismissal block, which is portable — `use-toast-gesture.ts`
+   writes exactly the properties those cases assert on), `NumberInput` 117 → 142, `OverflowList`
+   19 → 34, `Carousel` 23 → 37. Carousel's is the one with a feature behind it: 12 of its new cases
+   cover keyboard focus at the scroll edges, and `carousel.svelte` has no counterpart for it at all.
+
+   Many headers still state their count against **0.5.0**. A stated count is a contract against
+   upstream's file at the _current_ pin, so those are false until re-derived — and a false header
+   makes a real gap look accounted for. Batch 033 found three of
    `0.5.0`'s new suites were testing **modules this port did not have** (`scrollbarGutter`,
    `getInitialFocusDate`, `useCollator`) and a fourth caught three overlays that never reset the
    container padding. None of that was visible to either style oracle, which read modules and
