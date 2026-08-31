@@ -14,7 +14,7 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.0                                               |
-| Ledger entries            | 39                                                                       |
+| Ledger entries            | 40                                                                       |
 
 ## Test parity
 
@@ -40,6 +40,18 @@ Testing Library matches an accessible name as a whole string; Playwright matches
 `name` as a case-insensitive **substring**. Every site above is therefore a ported assertion
 weaker than the one it ports, admitting names upstream’s would reject. A regex `name` is
 substring-matching on both sides by design and is not counted.
+
+## Docs examples
+
+|             | Blocks |
+| ----------- | ------ |
+| Ported      | 645    |
+| **Pending** | **9**  |
+
+Upstream ships these as CLI block templates; a docs example is a transcription of one, so
+the parity rule covers them as it covers a component. Counted per block **and target** — a
+block with `alsoExampleFor` is one row per component it illustrates. Blocks whose target
+this port does not document are not counted as pending.
 
 ## Debts
 

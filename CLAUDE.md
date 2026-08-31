@@ -34,6 +34,15 @@ upstream analysis: research, not spec, so verify it against source before trusti
 what stopped "100 / 100" surviving three batches after upstream moved to 101, in a file that ended up
 telling readers not to trust its own numbers.
 
+**A count another script already computes is not tracked until `status.mjs` renders it — and
+`status.mjs` must _call_ that script, never recompute its rule.** `generate-content.mjs` printed
+`examples N ported / M pending` on every run and discarded it, so that front was measured in prose
+for as long as it existed. Reimplementing the tally is where it goes wrong: the count is filtered to
+blocks whose target is a **documented entry**, and that set is not the barrel's export list —
+`useMediaQuery` is a hook, absent from `src/lib/index.ts`, present in the registry. Walking the
+blocks alone reports 13 pending, filtering off the barrel reports 8, and the answer is 9. Both wrong
+implementations look obviously right (batch 039).
+
 Batches open with the `start-batch` skill and close with `close-batch`, which runs the audit agents
 below and carries the **promotion rule**: a lesson that constrains future work moves into this file
 or an agent's file, in the same commit — never left stranded in a ledger entry or a research file.

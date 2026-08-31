@@ -28,6 +28,7 @@
 
 import { readFileSync, readdirSync, writeFileSync, existsSync } from 'node:fs';
 import path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { runStage, lastLine } from './lib/run-stage.mjs';
 
 const full = process.argv.includes('--full');
@@ -350,6 +351,41 @@ const ledger = existsSync('port/ledger')
 			.sort()
 	: [];
 
+// --- Docs example blocks ---------------------------------------------------
+//
+// Upstream's CLI ships one block template per documented example, and the docs
+// site renders a Svelte transcription of each from
+// `docs/src/lib/examples/<Target>/<Block>.svelte`. `generate-content.mjs` has
+// always computed this pair as it runs and then thrown it away, so the docs
+// examples were the one front this port measured in prose — against
+// `port/todo.md`'s own rule, and in the file whose whole purpose is that a
+// count cannot rot.
+//
+// Derived by calling the generator rather than reimplemented here, because the
+// rule for *which* blocks count is not derivable from committed source: a
+// block is pending only when its target is a documented entry, and that set is
+// not the barrel's export list. See `exampleCounts` for the case that proves
+// it.
+//
+// This is the first input to this script that is not the committed tree, so it
+// degrades rather than throws: the generator reads core's built `dist/`, which
+// `pnpm verify` and CI's `lib` job both produce before this stage but a bare
+// `node scripts/status.mjs` on a clean checkout does not. A degraded run writes
+// a different file and so fails the drift gate — the same bargain the Surface
+// section already makes with the upstream clone, and the reason CI clones it.
+//
+// The missing input is tested for by name rather than caught, so that the only
+// thing which degrades is the one condition that is expected to. A bare
+// `try/catch` here would swallow a genuine fault in the generator too and
+// render the same reassuring sentence — failing safe while hiding, which is
+// the shape batch 037's never-matching regex had.
+/** @type {{ported: number, pending: number} | null} */
+let examples = null;
+if (existsSync(path.join(root, 'packages/core/dist/index.d.ts'))) {
+	const generator = pathToFileURL(path.join(root, 'docs/scripts/generate-content.mjs')).href;
+	examples = await (await import(generator)).exampleCounts();
+}
+
 // --- The gates (--full only) -----------------------------------------------
 
 const gates = [];
@@ -472,6 +508,31 @@ push(
 	'substring-matching on both sides by design and is not counted.',
 	''
 );
+
+push('## Docs examples', '');
+if (examples) {
+	push(
+		...table([
+			['', 'Blocks'],
+			['Ported', String(examples.ported)],
+			['**Pending**', `**${examples.pending}**`]
+		]),
+		''
+	);
+	push(
+		'Upstream ships these as CLI block templates; a docs example is a transcription of one, so',
+		'the parity rule covers them as it covers a component. Counted per block **and target** — a',
+		'block with `alsoExampleFor` is one row per component it illustrates. Blocks whose target',
+		'this port does not document are not counted as pending.',
+		''
+	);
+} else {
+	push(
+		'Not derivable in this run: the count comes from the docs generator, which reads core’s',
+		'built `dist/`. Run `pnpm -r build` first.',
+		''
+	);
+}
 
 push('## Debts', '');
 const debtRows = [['Kind', 'Count']];
