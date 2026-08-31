@@ -8,13 +8,16 @@ History lives in [`ledger/`](./ledger). Deviations from upstream live in [`debts
 
 ## Current goal
 
-**Full parity with Astryx `0.5.0`**, across every package except three. Set 2026-08-20 against
+**Full parity with Astryx `0.5.2`**, across every package except three. Set 2026-08-20 against
 `0.4.5`, replacing "track each upstream release and cut a matching version" — that goal was about
 staying level with upstream's _movement_; this one is about closing the distance that predates it.
-Re-targeted 2026-08-25 when the pin moved to `0.5.0` (batch 032), which widened the distance rather
-than closing it: that release brought a new component (`Stepper`), two breaking changes, and the
-largest single-release test delta this port has tracked. The size of it is in
-[`status.md`](./status.md), not here.
+**Re-target it in the same batch the pin moves**: a goal naming a version this port no longer
+tracks is the same defect as a suite header stating a count against the wrong tag, and it went
+unnoticed for a whole release. Moved to `0.5.0` on 2026-08-25 (batch 032) and to `0.5.2` on
+2026-08-31 (batch 040, which took `0.5.1` and `0.5.2` in one pass). Each move widened the distance
+rather than closing it — `0.5.0` brought a new component (`Stepper`), two breaking changes, and the
+largest single-release test delta this port has tracked; `0.5.2` left the surface whole and moved
+what remains into the _cases_. The size of it is in [`status.md`](./status.md), not here.
 
 Out of scope, by decision: **`lab`, `charts` and `vega`**. Four of `lab`'s components
 (`CodeEditor`, `RichTextEditor`, `ThreeD`, `Sankey`) wrap React-only libraries with no drop-in
@@ -38,10 +41,14 @@ them.
 1. **The test delta.** The largest and most mechanical front, and the one that protects every
    other — and the one that keeps proving it protects more than tests.
 
-   **At the 0.5.2 pin this front changed shape.** Every upstream suite now has a counterpart —
-   `status.md`'s "no counterpart" row is the design-decision one, and whole-suite absence is gone.
-   What is left is _case-level_: 74 upstream suites grew with the release, and roughly 400 new cases
-   sit in suites that exist here and fall short. The big ones are `SideNav` 144 → 186,
+   **At the 0.5.2 pin this front changed shape.** Every upstream suite has a counterpart file now,
+   and what is left is mostly _case-level_. `status.md` still shows one suite unported, and that is
+   the `UNPORTED:` marker working as designed rather than a missing file: `ToastViewport`'s header
+   discloses its swipe-dismissal gap, so the whole upstream suite counts against us until the block
+   lands. It overstates the work, which is the direction that front is supposed to fail in.
+
+   74 upstream suites grew with the release, and roughly 400 new cases sit in suites that exist
+   here and fall short. The big ones are `SideNav` 144 → 186,
    `ToastViewport` 13 → 55 (its swipe-dismissal block, which is portable — `use-toast-gesture.ts`
    writes exactly the properties those cases assert on), `NumberInput` 117 → 142, `OverflowList`
    19 → 34, `Carousel` 23 → 37. Carousel's is the one with a feature behind it: 12 of its new cases
@@ -59,12 +66,13 @@ them.
 
    `status.md` counts the suites with no counterpart at all; suites that exist but fall short state
    it in their own header, and a header that names a suite in order to disclose a gap needs the
-   `UNPORTED:` marker or it is read as coverage instead. What remains of this front is one unit:
-   the four `Layer` dismissal suites, behind the shared dismissal stack. The other,
-   `theme/generateThemeRules.test.ts`, is closed: batch 034 aligned the `generateThemeCSS` API and
-   ported it whole — and found the blocking debt had overstated itself, which is the standing
+   `UNPORTED:` marker or it is read as coverage instead. The two units this paragraph used to name
+   are both closed: the four `Layer` dismissal suites landed behind the shared dismissal stack, and
+   `theme/generateThemeRules.test.ts` closed in batch 034, which aligned the `generateThemeCSS` API
+   and ported it whole — and found the blocking debt had overstated itself. That is the standing
    warning about estimating a port from reading two implementations against each other instead of
-   running either.
+   running either. What is left whole-suite is `ToastViewport`'s block above; everything else on
+   this front is case-level, plus Carousel's unimplemented edge-focus feature.
 
 2. **The published surface.** Settle the Layer/over-export decision as one call at a minor, then
    the `./theme` barrel renames, the `./theme/tokens` subpath keys, `reset.css` at its own subpath,
