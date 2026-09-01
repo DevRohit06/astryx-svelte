@@ -7,6 +7,7 @@ import Harness from './fixtures/toast-viewport-harness.svelte';
 import EndContentHarness from './fixtures/toast-swipe-end-content.svelte';
 import RenderContentHarness from './fixtures/toast-render-content.svelte';
 import NestedViewports from './fixtures/toast-nested-viewports.svelte';
+import TwoViewports from './fixtures/toast-two-viewports.svelte';
 import Toast from '$lib/components/toast/toast.svelte';
 import EffectDispatch from './fixtures/toast-effect-dispatch.svelte';
 import { __resetLiveRegionsForTest, type AnnouncePoliteness } from '$lib/hooks/use-announce.js';
@@ -281,6 +282,41 @@ function getToastCardByText(text: string): HTMLElement {
 	throw new Error(`Toast card for ${text} not found`);
 }
 
+/**
+ * Every notifications landmark, in DOM order. The placement cases render two
+ * viewports at once and index into them, which a `getByRole` locator cannot do
+ * without resolving to a strict-mode violation first.
+ */
+function notificationRegions(): HTMLElement[] {
+	return [...document.querySelectorAll<HTMLElement>('[role="region"][aria-label="Notifications"]')];
+}
+
+/** The visible text of each toast card inside `region`, in DOM order. */
+function cardTextsIn(region: HTMLElement): string[] {
+	return [...region.querySelectorAll<HTMLElement>('[data-type]')].map((card) =>
+		(card.textContent ?? '').replace(/\s+/g, ' ').trim()
+	);
+}
+
+/**
+ * Upstream asserts `getComputedStyle(viewport).width).not.toBe('100%')`, which
+ * is jsdom echoing the declaration back. Chromium resolves `width` to pixels, so
+ * that assertion can never fail here — and the two spellings it distinguishes
+ * (`inset-inline: 0` versus `width: 100%`) resolve to the *same* used width, so
+ * there is no computed value that tells them apart.
+ *
+ * What the declaration is guarding is observable, though: `width: 100%` beside
+ * the viewport's own inline padding is what overflows, which is why upstream
+ * asserts `box-sizing: border-box` in the same breath. So the restatement checks
+ * the consequence — the landmark spans the inline axis and does not exceed it.
+ */
+function expectSpansInlineAxisWithoutOverflowing(viewport: HTMLElement): void {
+	const available = document.documentElement.clientWidth;
+	expect(getComputedStyle(viewport).boxSizing).toBe('border-box');
+	expect(viewport.getBoundingClientRect().width).toBeLessThanOrEqual(available);
+	expect(viewport.getBoundingClientRect().width).toBeGreaterThan(available / 2);
+}
+
 function toastIds(): string[] {
 	return [...document.querySelectorAll('[data-toast-id]')].map(
 		(node) => node.getAttribute('data-toast-id') as string
@@ -340,6 +376,102 @@ afterEach(() => {
 	__resetLiveRegionsForTest();
 });
 
+
+describe('ToastViewport placement', () => {
+	async function renderPlacement({
+		position,
+		triggerLabel = 'Trigger',
+		body = 'Placed'
+	}: { position?: ToastPosition; triggerLabel?: string; body?: string } = {}) {
+		const screen = await render(Harness, {
+			props: { triggers: [{ options: { body, isAutoHide: false }, triggerLabel }], position }
+		});
+		(screen.getByText(triggerLabel, { exact: true }).element() as HTMLElement).click();
+		await tick();
+		return { screen, viewport: notificationRegions()[0] };
+	}
+
+	it('defaults to bottomEnd with an end-aligned full-inline viewport', async () => {
+		const { viewport } = await renderPlacement();
+
+		expect(getComputedStyle(viewport).bottom).toBe('0px');
+		expect(getComputedStyle(viewport).alignItems).toBe('flex-end');
+		expectSpansInlineAxisWithoutOverflowing(viewport);
+	});
+
+	it('maps explicit top and bottom placements to their configured edge', async () => {
+		const top = await renderPlacement({ position: 'topEnd' });
+		expect(getComputedStyle(top.viewport).top).toBe('0px');
+		expect(getComputedStyle(top.viewport).alignItems).toBe('flex-end');
+		expect(getComputedStyle(top.viewport).flexDirection).toBe('column-reverse');
+		top.screen.unmount();
+
+		const bottom = await renderPlacement({
+			position: 'bottomStart',
+			triggerLabel: 'Bottom trigger',
+			body: 'Bottom start'
+		});
+		expect(getComputedStyle(bottom.viewport).bottom).toBe('0px');
+		expect(getComputedStyle(bottom.viewport).alignItems).toBe('flex-start');
+		bottom.screen.unmount();
+	});
+});
+
+it('keeps newest toasts nearest the configured edge in wide stacks', async () => {
+	const screen = await render(TwoViewports);
+	for (const label of [
+		'Bottom first',
+		'Bottom second',
+		'Bottom third',
+		'Top first',
+		'Top second',
+		'Top third'
+	]) {
+		(screen.getByText(label, { exact: true }).element() as HTMLElement).click();
+		await tick();
+	}
+
+	const [bottom, top] = notificationRegions();
+	expect(getComputedStyle(bottom).flexDirection).toBe('column');
+	expect(cardTextsIn(bottom)).toEqual(['Bottom first', 'Bottom second', 'Bottom third']);
+	expect(getComputedStyle(top).flexDirection).toBe('column-reverse');
+	expect(cardTextsIn(top)).toEqual(['Top first', 'Top second', 'Top third']);
+});
+
+describe('ToastViewport visible limit', () => {
+	async function renderMany(maxVisible?: number) {
+		const screen = await render(Harness, {
+			props: {
+				triggers: [
+					{ options: { body: 'One', isAutoHide: false }, triggerLabel: 'One' },
+					{ options: { body: 'Two', isAutoHide: false }, triggerLabel: 'Two' },
+					{ options: { body: 'Three', isAutoHide: false }, triggerLabel: 'Three' }
+				],
+				maxVisible
+			}
+		});
+		for (const label of ['One', 'Two', 'Three']) {
+			(screen.getByText(label, { exact: true }).element() as HTMLElement).click();
+		}
+		await tick();
+		return { screen, viewport: notificationRegions()[0] };
+	}
+
+	it('keeps the five-toast default and supports an explicit one-visible cap', async () => {
+		const all = await renderMany();
+		expect(
+			all.viewport.querySelectorAll('button[aria-label="Dismiss notification"]')
+		).toHaveLength(3);
+		all.screen.unmount();
+
+		const capped = await renderMany(1);
+		expect(
+			capped.viewport.querySelectorAll('button[aria-label="Dismiss notification"]')
+		).toHaveLength(1);
+		expect(capped.viewport.textContent).toContain('Three');
+		capped.screen.unmount();
+	});
+});
 describe('ToastViewport keyboard reach + focus', () => {
 	it('F6 moves focus into the newest toast', async () => {
 		const screen = await renderViewport([{ options: INFO_A, triggerLabel: 'Trigger A' }]);
