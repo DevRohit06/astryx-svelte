@@ -13,6 +13,22 @@ import { ssrFixturePlugin } from './scripts/ssr-fixture-plugin.mjs';
 const stylex = stylexPlugin as unknown as (options?: Record<string, unknown>) => PluginOption;
 
 export default defineConfig({
+	/**
+	 * One optimizer cache per process when the chunked client runner asks for it.
+	 *
+	 * Vitest's browser mode re-optimizes dependencies on **every** run — the
+	 * cache is never reused, so "warm it first" cannot help. What the shared
+	 * `node_modules/.vite` gives you instead is several concurrent chunks
+	 * writing `.vite-temp` and renaming it into place at once, which is the same
+	 * `EPERM: operation not permitted, rename` collision CLAUDE.md documents for
+	 * two vitest processes started by hand. Three of four chunks would stall
+	 * without ever printing a header and hold their slots until the stage's
+	 * 30-minute timeout killed the run.
+	 *
+	 * Isolating the directory costs disk and no CPU, since each process was
+	 * going to re-optimize regardless. `run-client-tests.mjs` sets it.
+	 */
+	cacheDir: process.env.CLIENT_CHUNK_CACHE_DIR || undefined,
 	plugins: [
 		ssrFixturePlugin(),
 		// StyleX compiles `stylex.create`/`defineVars` out of .stylex.ts modules

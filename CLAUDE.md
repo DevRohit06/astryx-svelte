@@ -102,17 +102,27 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   It reads as a catastrophic regression rather than as contention, and it cost
 #   a full 30-minute gate run to a background agent that was running the suite
 #   at the same time. Same rule for `pnpm verify`, which runs this.
-#   **The same contention bites a cold Vite cache**, which `pnpm -r build` leaves
-#   behind — so every `pnpm verify` run has one. Four chunks launching at once all
-#   found the cache missing, all started `Forced re-optimization of dependencies`,
-#   and three of the four never printed a header and held their slots until the
-#   30-minute stage timeout killed the run, while every later chunk passed. It
-#   reads as a catastrophic regression and is contention; each stalled chunk
-#   passes in isolation. `run-client-tests.mjs` now runs its **first chunk alone**
-#   to warm the cache before starting the pool — this was an instruction to warm
-#   it by hand, and it cost a second gate run in batch 041 to the one thing an
-#   instruction cannot do. Driving vitest directly (`test:unit`, or a bare
-#   `--project=client`) still has no such guard.
+#   **The same contention bites the runner's own pool, and warming does not fix
+#   it.** Four chunks launching at once all print `Forced re-optimization of
+#   dependencies`, and three of the four then never print a header — they hold
+#   their slots until the 30-minute stage timeout kills the run, while every
+#   later chunk passes. It reads as a catastrophic regression and is contention;
+#   each stalled chunk passes in isolation. The cause is **not** a cold cache:
+#   vitest's browser mode re-optimizes on *every* run, so the cache is never
+#   reused and "warm it first" is a no-op — batch 041 shipped that fix on that
+#   wrong diagnosis and batch 042's gate failed the same way, with chunk 1 having
+#   warmed alone and the very next process re-optimizing anyway. What actually
+#   collides is several processes writing `node_modules/.vite-temp` and renaming
+#   it into place at once — the `EPERM: rename` failure above, from inside one
+#   command. `run-client-tests.mjs` now gives each chunk its own `cacheDir`
+#   (`vite.config.ts` reads `CLIENT_CHUNK_CACHE_DIR`). Driving vitest directly
+#   still shares one cache, so two hand-started runs collide exactly as before.
+#   **Isolation moved a cost rather than removing one**, and the concurrency cap
+#   came down from 4 to 2 with it: the old cap assumed one shared optimizer, and
+#   four concurrent ones starve the box. A starved chunk does not crash — the
+#   page stops answering, `userEvent.click` lands on nothing, and a dozen
+#   unrelated cases report as assertion failures that all pass in isolation.
+#   That is the shape to recognise before believing a chunk found a regression.
 #   The client project cannot be run in one process: it dies partway through with
 #   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
 #   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a

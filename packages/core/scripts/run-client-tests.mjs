@@ -73,30 +73,34 @@ const RETRIES = Number(process.env.CLIENT_CHUNK_RETRIES ?? 2);
  * How many chunks run at once.
  *
  * Chunks were already independent by construction — each is a fresh process
- * with its own browser and its own Vite server, which is the whole reason the
- * chunking exists — so running several at a time needs no isolation work. It
- * was sequential only because it was written that way.
+ * with its own browser, its own Vite server and (since the collision described
+ * on `runChunk`) its own optimizer cache — so running several at a time needs no
+ * isolation work.
  *
- * The default is derived from the host rather than fixed, and capped at 4. The
- * binding constraint is memory, not cores: a chunk is one headless Chromium
- * plus one Vite dev server, ~1 GB together, and the smallest GitHub Codespace
- * is **2 cores / 4 GB** — GitHub's own docs said 8 GB until that was reported
- * and corrected (github/docs#28019), so 8 is the number to distrust here.
- * `cpus - 1` leaves a core for the parent and whatever else shares the box; the
- * floor of 2 is what makes a 2-core Codespace faster than it is today rather
- * than identical to it, and 2 × ~1 GB still fits in 4 GB; the cap of 4 keeps
- * peak memory near 4 GB, which is why it must not be raised on core count
- * alone. On a 16-core runner more would be possible, but a chunk that dies from
- * CPU starvation costs a retry and a confusing log, and the wall-clock
- * difference past 4 is small next to that.
+ * **The cap is 2, and it used to be 4.** The old number was chosen when every
+ * chunk shared one optimizer cache, so only the first paid to build it. Isolating
+ * the caches removed a collision that stalled three of four chunks into the
+ * stage's 30-minute timeout, but it moved that cost onto every chunk: four
+ * concurrent full dependency optimizations starve this box, and a starved chunk
+ * does not crash — `userEvent.click` lands on a page that is not answering yet,
+ * handlers never fire, and a dozen unrelated cases report as assertion failures.
+ * Measured at the 042 close, twice each: at 4, chunk 3 fails reproducibly with
+ * checkbox and chat clicks that never arrive, and all of its files pass in
+ * isolation; at 2, 18/18 chunks and 5,499 cases pass.
  *
- * `CLIENT_CHUNK_CONCURRENCY=1` restores the old strictly-serial behaviour,
- * which is what to reach for when bisecting a crash — interleaved output makes
- * that harder, and serial output is streamed live where concurrent output is
- * buffered per chunk.
+ * That measurement is from **one machine**, so the number is conservative rather
+ * than derived. `CLIENT_CHUNK_CONCURRENCY` raises it where there is headroom —
+ * the binding constraint is memory, not cores: a chunk is a headless Chromium, a
+ * Vite dev server and now an optimizer, and the smallest GitHub Codespace is
+ * 2 cores / 4 GB (GitHub's own docs said 8 GB until github/docs#28019 corrected
+ * it, so 8 is the number to distrust here).
+ *
+ * `CLIENT_CHUNK_CONCURRENCY=1` restores strictly-serial behaviour, which is what
+ * to reach for when bisecting a crash — interleaved output makes that harder, and
+ * serial output is streamed live where concurrent output is buffered per chunk.
  */
 const CONCURRENCY = Number(
-	process.env.CLIENT_CHUNK_CONCURRENCY ?? Math.max(2, Math.min(4, os.cpus().length - 1))
+	process.env.CLIENT_CHUNK_CONCURRENCY ?? Math.max(1, Math.min(2, os.cpus().length - 1))
 );
 
 /**
@@ -154,13 +158,27 @@ const retried = [];
  * still keeps a CI log alive: a block lands every time a chunk completes, which
  * is the property the streaming was there for.
  *
+ * Each chunk gets its **own** Vite optimizer cache. Vitest's browser mode
+ * re-optimizes on every run, so the shared `node_modules/.vite` buys nothing and
+ * costs a collision: several chunks write `.vite-temp` and rename it into place
+ * at once, which is the `EPERM: rename` failure CLAUDE.md documents for two
+ * hand-started vitest processes. Isolating it costs disk and no CPU. See
+ * `vite.config.ts`, which reads the variable.
+ *
  * @param {string[]} args
  * @param {boolean} stream
+ * @param {number} index
  * @returns {Promise<{code: number | null, output: string}>}
  */
-function runChunk(args, stream) {
+function runChunk(args, stream, index) {
 	return new Promise((resolve) => {
-		const child = spawn(process.execPath, args, { cwd: CORE });
+		const child = spawn(process.execPath, args, {
+			cwd: CORE,
+			env: {
+				...process.env,
+				CLIENT_CHUNK_CACHE_DIR: path.join(CORE, 'node_modules', `.vite-chunk-${index}`)
+			}
+		});
 		let output = '';
 		child.stdout.on('data', (data) => {
 			output += data;
@@ -214,7 +232,7 @@ async function settleChunk(index, chunk) {
 			retries.push(`${label} (×${attempt})`);
 		}
 
-		const result = await runChunk(args, serial);
+		const result = await runChunk(args, serial, index);
 		code = result.code;
 		output = result.output;
 		plain = stripAnsi(result.output);
@@ -270,32 +288,6 @@ console.log(
 		: `  running up to ${CONCURRENCY} chunks at a time on ${os.cpus().length} core(s)` +
 				', first one alone to warm the Vite cache\n'
 );
-
-/**
- * The first chunk runs **alone**, and only then does the pool start.
- *
- * On a cold Vite optimizer cache — which `pnpm -r build` leaves behind, so every
- * `pnpm verify` run has one — four chunks launching at once all discover the
- * cache is missing and all start `Forced re-optimization of dependencies`
- * against the same directory. Three of the four then never print a header and
- * hold their slots until the stage's 30-minute timeout kills the whole run,
- * while every later chunk passes: it looks like a catastrophic regression and is
- * contention. Each stalled chunk passes in isolation.
- *
- * This was a documented instruction to warm the cache by hand before gating
- * after a build, and it cost a gate run in batch 041 to the one thing an
- * instruction cannot do, which is be remembered. One chunk populates the cache
- * for every process after it, so the fix is to spend the first chunk's
- * parallelism on it — a chunk's wall clock in the good case, against a 30-minute
- * timeout in the bad one.
- *
- * Serial mode already has this property, and a single-chunk run has nothing to
- * race.
- */
-if (!serial && chunks.length > 1) {
-	const index = cursor++;
-	results[index] = await settleChunk(index, chunks[index]);
-}
 
 await Promise.all(Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, worker));
 
