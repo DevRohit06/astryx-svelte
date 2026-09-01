@@ -5,6 +5,7 @@ import { tick } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import Harness from './fixtures/toast-viewport-harness.svelte';
 import EndContentHarness from './fixtures/toast-swipe-end-content.svelte';
+import RenderContentHarness from './fixtures/toast-render-content.svelte';
 import EffectDispatch from './fixtures/toast-effect-dispatch.svelte';
 import { __resetLiveRegionsForTest, type AnnouncePoliteness } from '$lib/hooks/use-announce.js';
 import type { ToastOptions, ToastPosition } from '$lib/components/toast/types.js';
@@ -260,6 +261,19 @@ function getVisualToastByText(text: string): HTMLElement {
 		if (node.textContent?.includes(text)) return node;
 	}
 	throw new Error(`Toast visual for ${text} not found`);
+}
+
+/**
+ * Upstream's `screen.getByText(text).closest('.astryx-toast')`, with the same
+ * ambiguity removed as `getVisualToastByText` above — the live-region copy of
+ * the text has no `.astryx-toast` ancestor, but a page-wide text query still
+ * finds it first.
+ */
+function getToastCardByText(text: string): HTMLElement {
+	for (const node of document.querySelectorAll<HTMLElement>('.astryx-toast')) {
+		if (node.textContent?.includes(text)) return node;
+	}
+	throw new Error(`Toast card for ${text} not found`);
 }
 
 function toastIds(): string[] {
@@ -650,6 +664,145 @@ describe('toast timer lifecycle (#3589)', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+
+	describe('renderContent', () => {
+		it('replaces the default layout for that toast', async () => {
+			const screen = await render(RenderContentHarness, { props: { variant: 'custom' } });
+			(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+			await tick();
+
+			await expect.element(screen.getByTestId('custom-content')).toHaveTextContent('Toast A');
+		});
+
+		it('keeps the default translated and themeable dismiss Button unchanged', async () => {
+			const onHide = vi.fn();
+			const screen = await renderViewport([
+				{ options: { body: 'Plain', isAutoHide: false, onHide }, triggerLabel: 'Show' }
+			]);
+			(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+			await tick();
+
+			const toast = getToastCardByText('Plain');
+			const dismissButton = toast.querySelector<HTMLElement>(
+				'button[aria-label="Dismiss notification"]'
+			) as HTMLElement;
+			expect(dismissButton).toHaveClass('astryx-button');
+
+			dismissButton.click();
+			expect(onHide).toHaveBeenCalledTimes(1);
+			expect(onHide).toHaveBeenCalledWith('manual');
+		});
+
+		it('dismisses exactly once from a composed custom Button and reports manual', async () => {
+			const onHide = vi.fn();
+			const screen = await render(RenderContentHarness, {
+				props: { variant: 'custom', onHide }
+			});
+			(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+			await tick();
+
+			const dismissButton = screen
+				.getByTestId('custom-content')
+				.getByRole('button', { name: 'Dismiss custom toast', exact: true })
+				.element() as HTMLElement;
+			expect(dismissButton).toHaveClass('astryx-button');
+
+			dismissButton.click();
+			expect(onHide).toHaveBeenCalledTimes(1);
+			expect(onHide).toHaveBeenCalledWith('manual');
+		});
+
+		it('lets the dismiss callback travel through nested components', async () => {
+			const onHide = vi.fn();
+			const screen = await render(RenderContentHarness, {
+				props: { variant: 'nested', onHide }
+			});
+			(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+			await tick();
+
+			(
+				screen.getByRole('button', { name: 'Nested dismiss', exact: true }).element() as HTMLElement
+			).click();
+
+			expect(onHide).toHaveBeenCalledTimes(1);
+			expect(onHide).toHaveBeenCalledWith('manual');
+		});
+
+		it('does not inject a dismiss control into custom content', async () => {
+			const screen = await render(RenderContentHarness, { props: { variant: 'controlFree' } });
+			(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+			await tick();
+
+			const content = screen.getByTestId('control-free-content').element() as HTMLElement;
+			expect(content).toHaveTextContent('Control-free');
+			const toast = content.closest('.astryx-toast');
+			expect(toast).not.toBeNull();
+			expect((toast as HTMLElement).querySelector('button')).toBeNull();
+		});
+
+		it('leaves a toast that did not ask for custom content alone', async () => {
+			const screen = await render(RenderContentHarness, {
+				props: { variant: 'custom', withPlainTrigger: true }
+			});
+			(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+			(screen.getByText('Plain', { exact: true }).element() as HTMLElement).click();
+			await tick();
+
+			const plain = getToastCardByText('Toast B');
+			expect(plain.querySelector('button[aria-label="Dismiss notification"]')).toBeInTheDocument();
+			expect(plain.querySelector('[data-testid="custom-content"]')).toBeNull();
+		});
+
+		it('hands endContent to the layout rather than dropping it', async () => {
+			const screen = await render(RenderContentHarness, {
+				props: { variant: 'custom', withEndContent: true }
+			});
+			(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+			await tick();
+
+			await expect
+				.element(
+					screen.getByTestId('custom-content').getByRole('button', { name: 'Undo', exact: true })
+				)
+				.toBeInTheDocument();
+		});
+
+		it('still auto-dismisses and exposes its resolved timing', async () => {
+			vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+			try {
+				const onHide = vi.fn();
+				const screen = await render(RenderContentHarness, {
+					props: { variant: 'timing', onHide }
+				});
+				(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+				await tick();
+
+				// Upstream captures these in a closure array; the snippet puts them on
+				// the element instead — see the fixture.
+				const layout = document.querySelector('[data-auto-hide]') as HTMLElement;
+				expect(layout.dataset.autoHide).toBe('true');
+				expect(layout.dataset.duration).toBe('3000');
+
+				vi.advanceTimersByTime(3000);
+				expect(onHide).toHaveBeenCalledWith('auto');
+			} finally {
+				vi.useRealTimers();
+			}
+		});
+
+		it('keeps announcing through the live region', async () => {
+			const recorded = recordAnnouncements();
+			try {
+				const screen = await render(RenderContentHarness, { props: { variant: 'custom' } });
+				(screen.getByText('Show', { exact: true }).element() as HTMLElement).click();
+				await settleAnnouncements();
+
+				expect(recorded.calls).toContainEqual(['Toast A', 'polite']);
+			} finally {
+				recorded.stop();
+			}
+		});
 	});
 });
 
