@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-neutral",
-	"version": "0.4.5",
+	"version": "0.5.2",
 	"description": "Neutral theme for astryx-svelte — the default Astryx look.",
 	"license": "MIT",
 	"repository": {

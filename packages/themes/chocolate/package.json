@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-chocolate",
-	"version": "0.4.5",
+	"version": "0.5.2",
 	"description": "Chocolate theme for astryx-svelte — rich, cozy browns with Fraunces headings.",
 	"license": "MIT",
 	"repository": {

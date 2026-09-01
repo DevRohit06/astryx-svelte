@@ -1,6 +1,6 @@
 {
 	"name": "@astryx-svelte/theme-matcha",
-	"version": "0.4.5",
+	"version": "0.5.2",
 	"description": "Matcha theme for astryx-svelte — earthy greens with a calm, organic feel.",
 	"license": "MIT",
 	"repository": {

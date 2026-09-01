@@ -9,6 +9,69 @@ release the port makes on its own has no number of its own to take. 0.3.1 is the
 ports Astryx 0.3.0, exactly as 0.3.0 did, and changes only things upstream has no counterpart for.
 Each entry states its parity target for that reason.
 
+## 0.5.2
+
+Ports Astryx `0.5.2`.
+
+**Three upstream releases in one.** `0.4.5` was the last tag here, so this entry covers `0.5.0`,
+`0.5.1` and `0.5.2` together — 363 files changed under `packages/core/src/lib`, +21,328 / −3,269.
+Upstream's own surface moved only once in that span: `Stepper` was promoted out of `lab` at `0.5.0`,
+and `0.5.1` and `0.5.2` added no component directories at all.
+
+### Two upstream breaking changes
+
+- **`Banner`** collapses its disclosure axis onto one `collapsible: boolean | CollapsibleConfig`
+  prop backed by the shared `useCollapsible` hook. `defaultIsExpanded` is **removed** (upstream
+  #5255).
+- **`Layer`** replaces every overlay's own Escape listener with one shared dismissal stack. Overlays
+  take an `escapeBehavior` of `close` or `block`, guard IME composition, and resolve "topmost" from
+  tree nesting rather than DOM containment (upstream #4881). Six families register on the stack.
+
+### `Stepper`
+
+A new component, promoted out of `lab` upstream. Horizontal and vertical orientations, a `Step` per
+entry, and per-step content. A `children` passed to an inactive `Step` must be a conditional
+_snippet_ rather than an `{#if}` inside the tag: the vertical connector geometry is driven by
+`children != null`, so a wrapper around an empty slot grows a segment on every inactive step.
+
+### The touch date picker
+
+`DateInput` and `DateTimeInput` gain Astryx's own touch surface — a bottom sheet with a virtualized
+month scroller and scroll-snapped month/year wheels — and it reaches npm for the first time in this
+release. `nativePicker` selects it: `'touch'` (the default) hands a coarse pointer to the platform
+picker, `'never'` always draws Astryx's own, `'always'` always defers to the platform. Selection is
+on the **primary pointer alone**, so a tablet gets the thumb picker and a touchscreen laptop keeps
+the typable field.
+
+`NativeDateField` arrives with it, and `Icon` moves from px to rem.
+
+### Themes
+
+The theme CSS API is aligned to upstream's shape, and all eight theme packages ship at this version:
+butter, chocolate, gothic, liquid-glass, matcha, neutral, stone and y2k.
+
+### Fixed in this port
+
+- **The touch calendar opened three months early.** `MonthScroller` positioned its scrollport from a
+  pre-effect, so the write landed before the DOM it measures against existed and the browser clamped
+  it to 0; `scroll-snap-type: mandatory` then pulled the scroller to the first mounted pane. Opened
+  on August it showed May. It also reached the wheels, which derive from the same month index, so a
+  wheel commit could read the wrong year.
+- **`ToastViewport` logged a Svelte `derived_inert` warning on every dismissal**, in production
+  builds as well as development, because a handler on a detached node read state belonging to the
+  block it had just destroyed.
+- **`Toast` adopts `MediaTheme mode="auto"`** with a fallback, so its surface no longer paints
+  unreadable text under a themed parent.
+
+### Parity
+
+Every upstream component directory has a counterpart here, and nothing is exported that upstream
+does not export. Four upstream _features_ are known-absent and recorded in `port/debts.md`:
+`Markdown`'s `sourceRanges`, `MultiSelector.formatValue`, `Icon`'s namespaced names, and two of
+upstream's module-augmentation seams. `lab`, `charts` and `vega` remain out of scope by decision.
+
+The test-parity worklist is measured rather than described, in `port/status.md`.
+
 ## 0.4.5
 
 Ports Astryx `0.4.5`.
