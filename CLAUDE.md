@@ -325,6 +325,21 @@ reproduce. Such a file says so at the top and mutation-checks its fixes.
   explicitly, in upstream's documented order — `{...rest}` beside an explicit handler for the same
   event is one object literal, and the last key silently wins. `ComplexSelector` shipped with a
   consumer's `onclick` discarded exactly this way (`port/ledger/026-selector-family.md`).
+- **A handler that can destroy its own block must not read that block's state at event time.**
+  React attaches nearly every handler at the **root container**, so events from an unmounted subtree
+  are unreachable and its handler simply stops running. Svelte attaches non-delegated handlers — and
+  **every spread handler**, whatever the event name — to the node itself, and a detached node keeps
+  them. So `on…={isExiting ? handler : undefined}` is not a conditional _attachment_: the ternary is
+  evaluated when the event fires, and if the handler has since destroyed the `{#each}` branch that
+  owns `isExiting`, that read is of an orphaned derived. `ToastViewport` did exactly this, and the
+  card's `opacity`/`transform` transitions — which end on the same frame as the wrapper's
+  `grid-template-rows` and bubble to the now-detached node — re-entered it twice per dismissal.
+  Svelte's `derived_inert` warning is **not dev-gated**, so it reached consumers' consoles in
+  production builds. Put the guard inside the handler and read a **source** (`exitingIds.has(id)`),
+  never a `{@const}`, a `$derived` or a prop of the block being destroyed. The same asymmetry
+  reaches pointer capture: removing a capturing element fires `lostpointercapture` _at that element_,
+  so a spread `onlostpointercapture` runs on the detached node and needs an "am I still attached?"
+  guard (batch 042).
 - **A React node prop gated on state translates to a conditional _snippet_, never an `{#if}` inside
   the tag.** Upstream writes `{active === N && (…)}` for a `children`/slot prop, which hands the
   component a falsy child so nothing renders. A snippet passed by slot is always defined, so an

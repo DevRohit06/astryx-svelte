@@ -68,7 +68,7 @@ interface GestureState {
 	dismissThreshold: number;
 }
 
-export interface UseToastGestureOptions {
+interface UseToastGestureOptions {
 	direction: ToastGestureDirection;
 	enabled: boolean;
 	canPauseTimer: boolean;
@@ -83,7 +83,7 @@ export interface UseToastGestureOptions {
  * Spread on the toast card: upstream's `bindings`, plus the attachment that
  * stands in for its `rootRef` and owns the non-passive touch listeners.
  */
-export interface ToastGestureBindings {
+interface ToastGestureBindings {
 	onpointerdown: (event: PointerEvent) => void;
 	onpointermove: (event: PointerEvent) => void;
 	onpointerup: (event: PointerEvent) => void;
@@ -252,7 +252,17 @@ export function useToastGesture(options: () => UseToastGestureOptions): ToastGes
 	}
 
 	function handlePointerCancel(event: PointerEvent): void {
-		if (event.pointerType === 'pen' && gesture?.pointerId === event.pointerId) {
+		// `root != null` is the "am I still attached?" flag, and it is load-bearing
+		// on the `lostpointercapture` path. Per the Pointer Events spec, removing a
+		// capturing element from the document releases capture and fires
+		// `lostpointercapture` **at that element** — and Svelte leaves a spread
+		// handler attached to the detached node, where upstream's delegated
+		// `onLostPointerCapture` is simply unreachable. Without the guard, a toast
+		// unmounted mid-pen-drag (a `maxVisible` eviction, or a `uniqueID`
+		// overwrite) reads `options()` off a destroyed component and resumes a
+		// timer whose teardown has already run — scheduling a `setTimeout` that
+		// outlives the toast.
+		if (root != null && event.pointerType === 'pen' && gesture?.pointerId === event.pointerId) {
 			resetGesture(true);
 		}
 	}

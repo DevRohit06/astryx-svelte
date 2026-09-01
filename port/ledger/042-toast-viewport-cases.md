@@ -107,21 +107,109 @@ established that our two gap classes are byte-identical to upstream's, which is 
 
 ## What the audits caught
 
-Not run, and this is a claim rather than an omission. `astryx-parity`, `astryx-idiom` and
-`astryx-surface` audit props, styles, elements, exports and the React→Svelte translation; nothing
-under `src/lib` changed in this batch, so none has a subject. `astryx-test-parity` is the one that
-applies and its contract — a suite as long as the one it ports, or naming its absences — is now
-derived by `status.mjs` on every run: `Toast/ToastViewport.test.tsx` is off the short list, which is
-the finding it would have reported.
+All four ran. Three of them found something, and one found a defect that was shipping.
+
+### `astryx-parity` — Toast never adopted `mode="auto"`
+
+Upstream #5299 replaced Toast's *guessed* media side with a **measurement** of the painted surface:
+`<MediaTheme mode="auto" fallback={fallbackMediaMode}>`. This port had taken the provider half —
+`useAutoMediaMode` is ported with its 10 cases green, and `MediaTheme` accepts `mode="auto"` and
+`fallback` — and left the consumer half behind, passing the fallback value as the mode. Toast is
+upstream's **only** `mode="auto"` call site, so the hook was ported and nothing called it.
+
+That is the `interactionOverlay` failure from batch 040, exactly: a relocated declaration whose
+consumer never adopted it, invisible to the class oracle because no style key moved. It is also
+invisible to the 55/55 suite — neither upstream's cases nor ours assert `data-astryx-media` on a
+toast. Batch 042's own pre-flight checked three subjects and not this one.
+
+The visible consequence is upstream's own `brandToastTheme` story: a cream `#FFF4D6` toast surface,
+where measurement resolves `light` (dark text) and the guess resolves `dark` — light text on cream,
+the ~1.25:1 case `useAutoMediaMode`'s header says it exists to prevent. `'off'` was unreachable here
+too, so the toast always wrote `data-astryx-media` where upstream can omit it.
+
+**Fixed.** `toast-surface.svelte` now passes `mode="auto" fallback={fallbackMediaMode}`, and
+`toast.svelte`'s JSDoc — still the pre-#5299 sentence — was re-synced with upstream's.
+
+Two smaller ones, both fixed: `UseToastGestureOptions` and `ToastGestureBindings` were `export`ed
+where upstream keeps them module-private (nothing imported them), and the `Snippet`-body
+announcement gap that `toastText`'s own comment had been asking to have recorded since it was
+written is now an entry in `port/debts.md`.
+
+### `astryx-idiom` — a warning that reached production, and a timer that outlived its component
+
+`ontransitionend={isExiting ? handler : undefined}` is not a conditional *attachment*. Svelte
+evaluates the ternary when the event fires, so it re-read a `{@const}` derived owned by the
+`{#each}` branch that `handleExited` had just destroyed. The card's `opacity` and `transform`
+transitions finish on the same frame as the wrapper's `grid-template-rows` and bubble to the
+now-detached node — whose listener Svelte leaves attached — so it happened **twice per dismissal**.
+React never sees those events at all: it delegates `transitionend` at the root container, which a
+detached subtree cannot reach.
+
+`derived_inert` is **not dev-gated**. Every consumer app was logging it twice for every toast a user
+dismissed. The stale `true` was absorbed by luck rather than design.
+
+The same asymmetry produced a second defect: removing a capturing element fires
+`lostpointercapture` *at that element*, and a spread handler is never delegated, so a toast
+unmounted mid-pen-drag read `options()` off a destroyed component and resumed a timer whose teardown
+had already run — a `setTimeout` scheduled 3.8s past unmount, measured.
+
+**Both fixed**, and the general rule promoted to `CLAUDE.md`.
+
+### `astryx-test-parity` — 55/55 is real, and six assertions were weaker than they read
+
+The verdict was that every upstream case has a counterpart on the same subject, no case is skipped
+or loosened, and every string `name` carries `exact: true`. But six restatements were weaker than
+the case they stood for, and two individual assertions could not fail at all. All six are fixed:
+
+| what was weak | now |
+| --- | --- |
+| the file header still declared four blocks unported that the file contains | rewritten; three other stale claims in it went too |
+| `expectSpansInlineAxisWithoutOverflowing` blind to `width: 100%` — the one declaration upstream names | asserts the declaration directly, as the same case already did for `100lvh`/`100dvh` |
+| the `0fr` collapse target asserted nowhere (a collapse to `0.5fr` would pass) | asserts the exiting rule's declaration while it applies |
+| reduced motion: `rulesMatching` flattens the `@media` away, so moving `0.01ms` into the default would pass | searches the reduced-motion block's own text |
+| `scale(0.98)`/`transform-origin` scanned only the two root elements | scans the wrapper and every descendant, as upstream's file read covers |
+| case 13 drove both transform variables, so the declaration's `var()` fallbacks were never exercised | reads the resting matrix first |
+
+Two more it raised are addressed rather than fixed: the bare `vi.useFakeTimers()` that contradicted
+the header's own rule now passes `toFake`, and the double-click exit case regained the `await tick()`
+that makes its copied comment true. The one it flagged as ceremonial — the runtime half of the
+`expectTypeOf` case — stays, because `expect.requireAssertions` requires *something*, and the
+comment now says which half has the teeth.
+
+### `astryx-surface` — the surface held, and the sweep measured a front
+
+It confirmed what both batches claimed: zero files changed under `packages/core/src/lib`, in any
+`package.json`, in `packages/themes` or in `packages/cli` across `190034b..HEAD`. And it checked the
+tarball rather than trusting the rule — `npm pack --dry-run` emits 3096 files, none matching
+`tests/`, `.test.`, `.spec.` or `fixtures/`, so the new fixtures cannot ship. Two independent
+mechanisms hold them out, `svelte-package` reading only `src/lib` and `package.json`'s `files`
+denylist. It also noticed that the lint rule protecting that invariant matches
+`*.{test,spec}.{js,ts}` only, so a fixture `.svelte` misfiled under `src/lib` would pass both —
+latent, since every fixture is placed correctly.
+
+Then it did the thing `port/debts.md`'s "`./theme` barrel drift" entry explicitly asks for: measure
+this front rather than trust a figure typed into the entry. Both surfaces were enumerated with the
+TypeScript compiler API over all 119 of upstream's entry points, so a name published only on
+`./Layer` is not mistaken for an over-export here.
+
+None of it is batch 042's to fix — front 2 sequences the surface as one call at a minor, and mixing
+breaking export changes into a test batch is exactly what that sequencing exists to prevent. The
+worklist is written into `port/todo.md` under that front, and the four findings that are **not**
+surface policy — a missing `Markdown` feature, an unimplemented `MultiSelector` prop our own docs
+advertise, `Icon` rejecting namespaced names upstream accepts, and two missing augmentation seams
+whose unions drifted with them — are written up separately, because each reads as a missing export
+and is really a missing feature.
 
 ## Findings recorded rather than fixed
 
-- **`derived_inert` on a Toast's natural exit.** Svelte logs _"Reading a derived belonging to a
-  now-destroyed effect"_ twice when a toast unmounts at the end of its real collapse transition.
-  Recorded in `port/todo.md` with its reproduction. It is the idiom axis rather than the parity one,
-  and it surfaced only because this batch wrote the first case that lets the transition finish
-  instead of synthesising `transitionend` — which is itself the argument for porting the cases that
-  exercise real browser behaviour.
+The `derived_inert` warning was first recorded here and then **fixed** — see the idiom audit above.
+It is worth keeping the sequence: it was found by writing the first case that lets a transition
+finish on its own, recorded as a lead because chasing it would have ballooned the batch, and closed
+once an audit could be pointed at it. Porting cases that exercise real browser behaviour is what
+produced it.
+
+What stays recorded rather than fixed is the surface worklist, in `port/todo.md` under front 2 and
+under its own heading for the four items that are missing features rather than missing exports.
 
 ## Rules promoted
 
@@ -129,8 +217,19 @@ the finding it would have reported.
   value; wait for the element's animations before asserting about a resting style.
 - `CLAUDE.md` § Testing — when a jsdom-only assertion is restated, its **scope** has to be restated
   with it; a page-wide scan standing in for a one-file source read answers a different question.
+- `CLAUDE.md` § Conventions — a handler that can destroy its own block must not read that block's
+  state at event time. React delegates at the root container so an unmounted subtree's events are
+  unreachable; Svelte attaches non-delegated **and spread** handlers to the node, which keeps them
+  after detachment. This is the rule the shipped `derived_inert` warning came from.
 
 ## Debts opened
 
-- None. Every divergence in this batch is a restated assertion, explained at its site, and no
-  component behaviour changed.
+- **A Toast with a `Snippet` body is not announced through the singleton live regions.** Not opened
+  by this batch's work — `toastText`'s own doc comment had been asking to be recorded since it was
+  written, and `astryx-parity` found the comment. Upstream flattens a `ReactNode` body to text and
+  announces it; a snippet is an opaque function with no children tree to walk and no way to read its
+  text without rendering it, which would run consumer code twice and move the announcement off the
+  dispatch path that makes it exactly-once.
+
+Two component changes landed, and neither is a divergence: `mode="auto"` **closes** one against
+upstream, and the two idiom fixes remove defects with no upstream counterpart.

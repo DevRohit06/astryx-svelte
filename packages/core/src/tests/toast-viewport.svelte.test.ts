@@ -21,21 +21,18 @@ import type { ToastViewportProps } from '$lib/components/toast/toast-viewport.sv
  * short of it is measured in `port/status.md`'s case delta, from the `PORTS:`
  * marker above — this header states no count, per CLAUDE.md.
  *
- * Still without a counterpart: the four viewport geometry and motion blocks
- * 0.5.1 added — `Toast responsive layout`, `ToastViewport placement`,
- * `ToastViewport visible limit` and `Toast native motion contract`. Every one of
- * their subjects exists here (`position`, `maxVisible`, `inset` and the exit
- * transition are all ported), so they are unwritten rather than blocked. They
- * are also the four that assert on **computed styles**, which jsdom echoes back
- * as the declaration and Chromium resolves — so each will need its assertions
- * restated against resolved values rather than transcribed.
+ * Every upstream block has a counterpart, including the four 0.5.1 added that
+ * assert on **computed styles** — `Toast responsive layout`, `ToastViewport
+ * placement`, `ToastViewport visible limit` and `Toast native motion contract`.
+ * jsdom echoes a computed style back as the declaration and Chromium resolves
+ * it, so those four are the ones whose assertions are *resolved* rather than
+ * transcribed; see `resolves()` below.
  *
  * The region-ARIA pair at the end is upstream's own 0.5.1 split: the landmark is
  * now gated on there being something to announce, so an empty viewport exposes
  * no region at all. Ours asserted the region unconditionally and timed out
- * against the gate. Two cases are restated, each for the reason given above it:
- * "pauses the auto-hide timer while the window is blurred", and (new in 0.3.0)
- * "announces exactly once at dispatch".
+ * against the gate. Many cases are restated rather than transcribed — every one
+ * says so at its site, and the reasons cluster into the sections below.
  *
  * ## Swipe dismissal: real pointer and touch events
  *
@@ -55,8 +52,7 @@ import type { ToastViewportProps } from '$lib/components/toast/toast-viewport.sv
  * upstream's `not.toContain('translateX')` — which cannot fail here — is
  * restated as a read of the matrix's own horizontal translation.
  *
- * The sibling `Toast/useToast.test.tsx` (4 cases) still lives in
- * `use-toast.svelte.test.ts`.
+ * The sibling `Toast/useToast.test.tsx` still lives in `use-toast.svelte.test.ts`.
  *
  * ## Announcements: the sink is observed, not a mocked module
  *
@@ -322,6 +318,12 @@ function expectSpansInlineAxisWithoutOverflowing(viewport: HTMLElement): void {
 	expect(getComputedStyle(viewport).boxSizing).toBe('border-box');
 	expect(viewport.getBoundingClientRect().width).toBeLessThanOrEqual(available);
 	expect(viewport.getBoundingClientRect().width).toBeGreaterThan(available / 2);
+	// The bounds above cannot see the declaration upstream names: with
+	// `box-sizing: border-box` and `inset-inline: 0`, a declared `width: 100%`
+	// resolves to exactly the same used width, so both bounds still hold. The
+	// declaration is checked directly instead, the same way this suite checks
+	// for `100lvh`/`100dvh`.
+	expect(someRuleFor([viewport], 'width: 100%')).toBe(false);
 }
 
 /**
@@ -434,6 +436,18 @@ function rulesMatching(element: HTMLElement): string[] {
 		}
 	}
 	return out;
+}
+
+/**
+ * The text of every `@media (prefers-reduced-motion: reduce)` block on the page,
+ * whole. `rulesMatching` deliberately flattens at-rules away, which is right for
+ * "does this rule apply to this element" and wrong for "is this value *inside*
+ * the reduced-motion block" — the pairing is what upstream's source read pins.
+ */
+function reducedMotionRules(): string[] {
+	return [...allCssRuleTexts()].filter((rule) =>
+		rule.startsWith('@media (prefers-reduced-motion: reduce)')
+	);
 }
 
 /** Whether any rule applying to one of `elements` contains `text`. */
@@ -1011,7 +1025,11 @@ describe('toast timer lifecycle (#3589)', () => {
 			.element() as HTMLElement;
 		dismiss.click();
 		// The toast stays mounted during its exit transition; a second click
-		// lands on the same still-mounted button.
+		// lands on the same still-mounted button. Upstream wraps each click in its
+		// own `act()`, so the exit state is applied between them — the `await tick()`
+		// is what makes that true here rather than firing both into one batch,
+		// where the second click would land before anything had re-rendered.
+		await tick();
 		dismiss.click();
 		await tick();
 		expect(onHide).toHaveBeenCalledTimes(1);
@@ -1218,6 +1236,13 @@ describe('Toast native motion contract', () => {
 		// two roles. That is what the declaration is for, and a matrix read proves
 		// it where a string match only describes it. It has to run after the entry
 		// transition, which is itself a translateY — see `settleEntry`.
+		// At rest both variables are unset, so the declaration's own fallbacks
+		// (`0px` and `1`) are what render — upstream pins them in its string match,
+		// and driving the variables is the one path that never exercises them.
+		const resting = new DOMMatrix(getComputedStyle(visualToast).transform);
+		expect(resting.m42).toBe(0);
+		expect(resting.a).toBe(1);
+
 		visualToast.style.setProperty('--_toast-swipe-y', '10px');
 		visualToast.style.setProperty('--_toast-swipe-scale', '0.5');
 		// `transform` is itself in `transition-property`, so driving the variables
@@ -1270,8 +1295,14 @@ describe('Toast native motion contract', () => {
 		// wrapper's each shorten to 0.01ms under reduced motion rather than
 		// dropping to 0s, which would never fire the `transitionend` the exit is
 		// driven by.
-		expect(rulesMatching(visualToast).some((rule) => rule.includes('0.01ms'))).toBe(true);
-		expect(rulesMatching(wrapper).some((rule) => rule.includes('0.01ms'))).toBe(true);
+		// `rulesMatching` flattens away the enclosing at-rule, so it would pass on a
+		// `0.01ms` that had been moved into the *default* — which is the regression
+		// this case is named after. The pairing is what upstream pins, so the media
+		// block's own text is what is searched.
+		expect(reducedMotionRules().some((rule) => rule.includes('0.01ms'))).toBe(true);
+		for (const part of parts) {
+			expect(rulesMatching(part).some((rule) => rule.includes('0.01ms'))).toBe(true);
+		}
 		expect(someRuleFor(parts, 'transition-duration: 0s')).toBe(false);
 	});
 
@@ -1296,8 +1327,11 @@ describe('Toast native motion contract', () => {
 		// that actually apply to the toast rather than the whole sheet — another
 		// component does use `scale(0.98)`, so an unscoped scan answers the wrong
 		// question.
+		// Upstream reads the whole of `Toast.tsx`, which covers every element the
+		// toast renders — so the scan takes the card, the wrapper and every
+		// descendant, not just the two roots. `toast.stylex.ts` styles four more.
 		const settled = await renderMotionToast('bottomEnd', 'Motion scan');
-		const parts = [settled.visualToast, settled.wrapper];
+		const parts = [settled.wrapper, ...settled.wrapper.querySelectorAll<HTMLElement>('*')];
 		expect(someRuleFor(parts, 'scale(0.98)')).toBe(false);
 		expect(someRuleFor(parts, 'transform-origin')).toBe(false);
 		settled.screen.unmount();
@@ -1375,6 +1409,12 @@ describe('Toast native motion contract', () => {
 			.getAnimations()
 			.map((animation) => (animation as CSSTransition).transitionProperty);
 		expect(collapsing).toContain('grid-template-rows');
+		// Upstream reads back `grid-template-rows: 0fr`, and that value is worth
+		// keeping: a collapse to `0.5fr` animates just as well and the animation
+		// check alone would pass. The exiting rule is where the declaration lives,
+		// and it applies to this wrapper only while it is exiting — which is
+		// exactly now.
+		expect(someRuleFor([wrapper], 'grid-template-rows: 0fr')).toBe(true);
 
 		// And upstream's `completeExit(id)` has no counterpart to fire: it exists
 		// because jsdom runs no transitions, so the `transitionend` the viewport
@@ -1615,7 +1655,7 @@ describe('Toast swipe dismissal', () => {
 	});
 
 	it('resets safely on pointercancel and resumes the auto-hide timer', async () => {
-		vi.useFakeTimers();
+		vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
 		try {
 			const { visualToast, onHide } = await renderSwipeToast({
 				body: 'Swipe toast',

@@ -180,9 +180,11 @@
 	}));
 
 	const isError = $derived(type === 'error');
-	// Determine media mode: inverted surface is always dark in light mode,
-	// always light in dark mode. Error toast is always on a dark surface.
-	const mediaMode = $derived(isError || themeMode.current === 'light' ? 'dark' : 'light');
+	// The surface's media side is **measured**, not assumed — a theme can define
+	// `--color-background-inverted` as anything, including a colour whose
+	// contrast makes the assumed side unreadable. This is only the value
+	// `mode="auto"` falls back to before the measurement lands.
+	const fallbackMediaMode = $derived(isError || themeMode.current === 'light' ? 'dark' : 'light');
 
 	const theme = $derived(themeProps('toast', { type }));
 	const root = $derived(toastRootAttrs(isError, isExiting));
@@ -215,7 +217,7 @@
 	class={cx(theme.class, root.class)}
 	style={root.style}
 >
-	<MediaTheme mode={mediaMode}>
+	<MediaTheme mode="auto" fallback={fallbackMediaMode}>
 		{#if renderContent}
 			{@render renderContent({
 				body,

@@ -40,6 +40,27 @@ import type { ToastOptions } from '$lib/components/toast/types.js';
  * `rerender({ mode })` on one fixture. And upstream's bare `window.matchMedia =`
  * assignment becomes `vi.stubGlobal`, restored in `afterEach`, because a real
  * browser page is shared with every other suite.
+ *
+ * ## `data-astryx-media` is measured, not derived, and the stub cannot reach it
+ *
+ * The two `theme mode` cases below predate `MediaTheme mode="auto"`. A toast used
+ * to *guess* its media side from the resolved theme mode, so an assertion on
+ * `[data-astryx-media]` was an assertion about that guess and a `matchMedia` stub
+ * decided it. Upstream #5299 replaced the guess with a measurement of the painted
+ * surface, and batch 042 adopted it — `toast-surface.svelte` now passes
+ * `mode="auto" fallback={…}`.
+ *
+ * `vi.stubGlobal('matchMedia', …)` changes what *JavaScript* reads and nothing
+ * about what Chromium paints: CSS `@media (prefers-color-scheme)` still answers
+ * from the real browser, which is light. So a stubbed "OS prefers dark" now
+ * disagrees with the surface, and the measurement wins — correctly, since the
+ * measurement is what the user sees. That is the whole point of the change: the
+ * old guess would have painted light text on a light-mode inverted surface.
+ *
+ * Each case says which value it expects and why. The measurement itself is
+ * covered by `auto-media-mode.test.ts`; what stays this suite's subject is the
+ * fallback viewport — that it exists, mirrors the root's theme attributes, and
+ * dismisses cleanly.
  */
 
 const testTheme = defineTheme({ name: 'test', tokens: {} });
@@ -121,10 +142,11 @@ describe('useToast fallback viewport theme mode', () => {
 			.poll(() => fallbackContainer()?.querySelector('[data-astryx-media]'))
 			.not.toBeNull();
 
-		// App mode is light, so the toast's inverted surface must be dark — if the
-		// fallback fell back to OS preference (dark) instead, this would be 'light'
-		// and the toast's text/icon would compute the same colour as its own
-		// background (the invisible-toast bug).
+		// App mode is light, so the inverted surface paints dark and the
+		// measurement reads it as dark. Under the pre-`auto` guess this assertion
+		// tested that the fallback viewport resolved the *app* mode rather than the
+		// OS preference; it now tests that the painted surface agrees, which is the
+		// stronger of the two and the one the invisible-toast bug turns on.
 		expect(newestMediaAttr(fallbackContainer()!)).toBe('dark');
 	});
 
@@ -150,10 +172,17 @@ describe('useToast fallback viewport theme mode', () => {
 			.poll(() => fallbackContainer()?.querySelectorAll('[data-astryx-media]').length ?? 0)
 			.toBeGreaterThan(countBefore);
 
-		// mode="system" removes data-theme from <html>, so the attribute fallback
-		// has nothing to read and OS preference (dark) resolves the mode — leaving
-		// the inverted surface light.
-		expect(newestMediaAttr(fallbackContainer()!)).toBe('light');
+		// `mode="system"` removes `data-theme` from `<html>`, so nothing pins the
+		// theme and CSS falls to `prefers-color-scheme` — which, in this browser,
+		// is *light*, whatever the `matchMedia` stub tells JavaScript. The surface
+		// therefore paints light-mode inverted (dark) and the measurement reads
+		// 'dark'.
+		//
+		// This case asserted 'light' before batch 042, derived from the stub. That
+		// value was the guess, and the guess was wrong about the pixels: a toast
+		// rendered with `mode="dark"` over a dark surface is the invisible-toast
+		// bug in the other direction. See the header.
+		expect(newestMediaAttr(fallbackContainer()!)).toBe('dark');
 	});
 
 	it('mirrors <html data-theme> and data-astryx-theme onto the fallback container', async () => {

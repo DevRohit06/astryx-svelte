@@ -692,6 +692,25 @@ the string form reads wrong
 
 A toast is shown _imperatively_ — the caller hands content to `showToast()` as an option value, so unlike `Tooltip`/`HoverCard` there is no markup position to capture and the string branch is reachable. Same forced-snippet-translation family as `Popover`/`OverflowList`. Not exported under a public name (`ToastContent` is internal): upstream's counterpart is React's own `ReactNode`, so publishing an alias would invent API
 
+### A Toast with a `Snippet` body is not announced through the singleton live regions
+
+- **units:** Toast, ToastViewport
+- **kind:** unported
+- **retires:** never, unless a way to read a snippet's text without rendering it appears
+
+Upstream flattens the body's `ReactNode` tree to plain text with a recursive `getNodeText`
+(`ToastViewport.tsx:140-158`), walking `children` through every element, and announces the result at
+dispatch. `toastText` in `toast-viewport.svelte` is one line by comparison, and the difference is a
+limit rather than a simplification: `ToastContent` is `string | Snippet` (the entry above), and a
+snippet is an opaque function. There is no children tree to walk and no way to obtain its text
+without _rendering_ it, which would run consumer code a second time and move the announcement off
+the dispatch path that makes it exactly-once.
+
+So a string body is announced through the singleton regions and a snippet body is not — it falls
+back to the toast's own born-with-content region, which is what this port did before 0.3.0. No
+regression, but the 0.3.0 gain does not reach a snippet body. Found by `astryx-parity` in batch 042;
+the function's own doc comment had said it belonged here since it was written.
+
 ### Toast's mode resolution reads the root attribute a microtask later than upstream
 
 - **units:** Toast, internal/theme-mode.svelte.ts

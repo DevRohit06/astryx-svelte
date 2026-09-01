@@ -84,6 +84,40 @@ them.
    the `./theme` barrel renames, the `./theme/tokens` subpath keys, `reset.css` at its own subpath,
    and the Tailwind bridge. Every one is an addition to or removal from a shipped API, so they
    belong together rather than dribbled across patches.
+
+   **`astryx-surface` measured this front in batch 042**, enumerating both sides with the TypeScript
+   compiler API over all 119 of upstream's entry points rather than by grepping barrels — so a name
+   published only on `./Layer` is not mistaken for an over-export here. `port/debts.md`'s "`./theme`
+   barrel drift" entry asks for exactly this measurement instead of a figure typed into it. The
+   worklist it produced:
+
+   - [ ] **Over-exports outside every debt clause and the head rule.** `resolveTokenValue` (upstream
+         declares the identical function without `export` — the `normalizeDayOfWeek` case),
+         `getPositionTryFallbacks`, `MetadataListContextValue`, `UseIndicatorFocusRingReturn` and
+         `UseIndicatorFocusRingOptions`, the five `onMediaTokens` names (`defaultOnDarkTokens`,
+         `defaultOnLightTokens`, `resolveOnMedia`, `OnMediaOverrides`, `ResolvedOnMedia` — upstream
+         publishes `generateOnMediaCSS` as the consumer-facing door and nothing behind it), and the
+         three `*IndicatorProps` aliases for a type upstream already publishes as `IndicatorProps<F>`.
+         `FormLayoutContextValue` is the weakest of them: `setFormLayoutContext` cannot be called
+         without naming it, so either keep it under the head rule or make the context value inline
+         as upstream does
+   - [ ] **Theme barrel names absent from every barrel here**, beyond the two renames already
+         recorded: `HeadingTag`, `CoreTokenName`, `TokenName`, and `isDefinedTheme` — the last a
+         _function_, so a runtime capability rather than a type
+   - [ ] **Theme package manifests.** All eight are missing `"sideEffects": false`, which all seven
+         upstream ones carry; verify against a real bundle before choosing `false` over an explicit
+         `["**/*.css"]`, since we ship a `./theme.css` subpath. And our `.`/`./tokens` split is the
+         inversion of upstream's `.`/`./built`: the symbol sets on `.` match name for name, so
+         nothing is unreachable, but a consumer following upstream's docs to `/built` gets nothing.
+         Record the inversion or add the subpath
+   - [ ] **Retire the `tailwind-theme.css` debt** — its `retires:` condition was met by `ea4c84f`;
+         `packages/core/package.json` ships the subpath and the file is in the tarball, while the
+         entry still says "nothing here corresponds"
+   - [ ] A latent hole, not a defect today: the lint rule keeping tests out of `src/lib` matches
+         `*.{test,spec}.{js,ts}` only, so a fixture `.svelte` misfiled under `src/lib` would be
+         caught by neither it nor `package.json`'s `files` denylist. Every fixture is correctly
+         placed; the rule is narrower than the invariant it protects
+
 3. **`@astryx-svelte/build`.** Upstream's `build` package is seven files of framework-agnostic
    JavaScript — a PostCSS plugin, a Babel config and a Vite plugin — and it ships on the stable
    release train at `0.4.5`, unlike the canary packages. The only piece needing translation rather
@@ -125,6 +159,34 @@ and a release is a checkpoint on the way rather than the destination. `0.4.2` wa
 and never tagged, which is why the `0.4.5` changelog entry opens by saying so.
 
 ## Open work
+
+### Missing implementation found by the batch-042 surface sweep
+
+Each of these reads as a missing _export_, and is really a missing _feature_ — the type is absent
+because the thing it types is. None was recorded before; none is a surface-policy call.
+
+- [ ] **`Markdown`'s `sourceRanges` is not ported at all.** Upstream's
+      `parseMarkdown(source, {sourceRanges: true})` stamps every top-level block with `{start, end}`
+      character offsets (`parser.ts` — the field, and `stampSourceRanges`), and publishes
+      `SourceRange` from the root. Our `BlockNode` has no `range` and `ParseOptions` no
+      `sourceRanges`. A 0.5.x feature batch 040's pin move did not catch
+- [ ] **`MultiSelector.formatValue` is documented here and unimplemented.** Upstream declares
+      `formatValue?: (items: MultiSelectorSelectedItem[]) => string`, destructures it and calls it
+      twice; ours has no occurrence of the name. `MultiSelector.doc.mjs` documents it anyway — the
+      emitter's fallback for an unresolvable prop absorbed it, the same mechanism `debts.md`'s "22
+      documented props resolve to no declaration in core" entry describes, except this one is a real
+      gap rather than a translation. That entry's count is understated by at least one
+- [ ] **`Icon` rejects namespaced names that upstream accepts.** `icon` is typed
+      `IconName | IconType` where upstream's is `IconType | IconName | NamespacedIconName`, so
+      `<Icon icon="richtext:bold" />` is a type error here and legal upstream — even though
+      `registerIcons` already takes the key at runtime. Needs `NamespacedIconName` declared and
+      published
+- [ ] **Two of upstream's sixteen module-augmentation seams are missing**, and the union drifted with
+      each. `CardVariantMap` is absent and `CardVariant` is a **closed** union where upstream's is
+      `keyof CardVariantMap` — so a theme cannot add a variant, which
+      `selectable-card.stylex.ts` carries a comment asserting it can. `CustomTextTypes` is absent and
+      `TextType` is `BuiltinTextType | (string & {})`, which accepts any string where upstream
+      accepts only registered ones
 
 ### Core / build
 

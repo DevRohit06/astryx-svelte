@@ -195,6 +195,6 @@ this port does not document are not counted as pending.
 | api-divergence        | 32      |
 | deliberate-divergence | 47      |
 | divergence            | 1       |
-| unported              | 15      |
+| unported              | 16      |
 | upstream-lag          | 11      |
-| **total**             | **106** |
+| **total**             | **107** |
