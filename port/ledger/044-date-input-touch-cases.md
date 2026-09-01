@@ -3,15 +3,17 @@ seq: 044
 title: Batch 44 — the DateInput touch surface, case for case
 upstream: 0.5.2
 date: 2026-09-02
-units: [DateInputTouch.test.tsx]
+units: [DateInputTouch.test.tsx, MonthScroller]
 upstream-prs: []
 ---
 
 ## Scope
 
 Front 1's largest single gap: `DateInput/DateInputTouch.test.tsx`, 101 cases short at the batch's
-start and the biggest row in the delta table. No component is written or changed — every
-`date-input/` module was already ported — so this is test work end to end.
+start and the biggest row in the delta table. It was scoped as test work end to end — every
+`date-input/` module was already ported — and it did not stay that way: the cases found a defect in
+`MonthScroller`, so one component changed after all. That is the batch working as intended rather
+than scope creep.
 
 Upstream's suite is 136 cases across nine `describe` blocks. Thirty-five already lived in
 `date-input-touch.test.ts` (server project): the pure month arithmetic and the definition-level
@@ -61,33 +63,37 @@ so it reads correct throughout a travel that has not committed; and a fixed quie
 passes in isolation and fails in a full run, which makes any wait measured in milliseconds a flake
 with a threshold rather than a fix.
 
-## The finding
+## The finding, and the fix
 
-**Five cases cannot be made to pass, and the reason is not the harness.** Full detail is in
-`port/debts.md`; the short form is that the calendar opens three months early — exactly `OVERSCAN`
-— and a wheel commits a row it is only passing, with the year wheel observed sitting on row 1 of
-2024–2028 while selecting row 1, having been parked on row 2 a moment earlier.
+Five cases would not pass, and the reason was a real defect in this port — found by porting them to
+a real browser, and invisible to upstream's own suite by construction.
 
-Every piece of code involved is character-for-character upstream's: the initial
-`scrollOffsetForRow(initial - min, size, rtl)` and its `hasPositioned` latch, `Wheel`'s
-`Math.round(scrollTop / size)` commit and disabled-row bounce, `MonthYearWheels`'
-`toMonthIndex(parts.year, nextMonth)`, and `handleVisibleMonthChange`'s `isWheelOpen` guard. The
-suspected cause is one thing seen twice: both the scroller and the wheels position themselves from
-layout the `BottomSheet` entry animation has not finished producing, and both latch it.
+**`MonthScroller` positioned itself before the DOM it measures against.** Upstream does it in a
+`useLayoutEffect`, which runs _after_ React commits the DOM, so the spacer already carries the width
+that same render gave it. This port used `$effect.pre`, which runs _before_ Svelte patches the DOM —
+so the spacer still had its previous width, zero on the pass that matters, and the browser clamped
+`scrollLeft` to 0. The scroller did not stay there: the panes mount an instant later at
+`centerRow ± OVERSCAN`, and `scroll-snap-type: mandatory` pulls the scrollport to the nearest snap
+area, which is the **first mounted pane**. The calendar opened exactly `OVERSCAN` months early —
+three, whenever the window was not already clamped at row 0 — and looked deliberate rather than
+broken.
 
-It was nearly dismissed twice, which is the part worth keeping. All five pass alone and pass with
-their own block alone; only a full-file run reproduces them, which is the same shape as a starved
-chunk. It is not that shape underneath: the assertions are stable and repeatable at the _wrong_
-value rather than flaky between values, the header is not still moving when it is read, and the
-document holds exactly one dialog, one scroller and one title at the moment of failure — so the two
-cheap explanations, a race and a stale render, are both ruled out by measurement rather than by
-argument.
+It reached the wheels one step removed: they derive from `monthIndex`, so a scroller on the wrong
+pane fed a wrong month back and a wheel commit read the wrong year. That is why
+`the year wheel keeps the month` failed beside the two month cases, and why moving one effect closed
+all five.
 
-Upstream cannot see any of it. jsdom neither lays out nor scrolls, so its scroller never travels,
-its wheels never re-settle, and its pane size is a constant `withLayout` supplies. These five are
-the cases written to catch this class of thing, so a port of them that passed by not scrolling would
-be worth nothing — which is why they are left unported with the evidence rather than adjusted until
-green.
+**Three wrong turns before it, all recorded in `port/debts.md`.** A race against the `BottomSheet`
+entry animation; a stale render from an earlier case, ruled out by counting one dialog, one scroller
+and one title at the moment of failure; and an off-by-overscan in the report path, ruled out by
+reading `onVisibleMonthChange(min + row)` and finding it absolute. What settled it was lining the two
+failures up and seeing the same constant — three rows, and three is the overscan. The number had
+been in the failure text from the first run.
+
+**The signature is the part worth carrying forward.** All five pass in isolation and pass with their
+own `describe` block alone; only a full-file run reproduced them. This repo teaches that shape as
+contention, and it was not — the wrong values were stable and repeatable rather than flaky between
+values, which is the distinguishing test and is cheap to apply.
 
 ## Oracle bookkeeping
 
@@ -95,8 +101,10 @@ None. No `.stylex.ts` module changed and no oracle skip moved.
 
 ## What the audits caught
 
-Nothing was run. `astryx-parity`, `astryx-idiom` and `astryx-surface` take a component as their
-subject and no component changed; the published surface is byte-identical to 043's.
+Nothing was run, and one of them should be. `astryx-idiom` owns exactly the axis this batch's fix
+sits on — effect timing, and a context or effect that reads at the wrong moment — and it would have
+had `MonthScroller`'s pre-effect in scope from the first day the component landed. The published
+surface is unchanged, so `astryx-surface` and `astryx-parity` have nothing new to see;
 `astryx-test-parity` is the agent whose job this batch is, and the work was done directly.
 
 ## Rules promoted
@@ -106,10 +114,13 @@ subject and no component changed; the published surface is byte-identical to 043
   this batch adds is the counter-example, recorded in `port/debts.md`: five cases with exactly that
   signature that are **not** contention. The distinguishing test is whether the wrong value is
   stable and repeatable, and it is cheap.
+- `CLAUDE.md` § Conventions — `useLayoutEffect` is ``, not `.pre`, whenever it writes
+  to the DOM the same render creates. The defect this batch fixed, stated as the rule that would
+  have prevented it.
 - `scripts/status.mjs` — `NAME_EXACT` now accepts the hoisted `...exact` form that `TEXT_EXACT`
   already did. Written at the regex, next to the comment that catalogues this exact miscount.
 
 ## Debts opened
 
-- _`DateInput`'s touch surface positions itself from a measurement the sheet has not settled_
+- _`MonthScroller` positioned itself before the DOM it measures against — fixed_
 - _`DateInputTouch.test.tsx` repeats five cases verbatim_

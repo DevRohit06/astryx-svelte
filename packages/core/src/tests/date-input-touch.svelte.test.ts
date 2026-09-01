@@ -1398,9 +1398,7 @@ describe('DateInput — month/year wheels', () => {
 	}
 
 	const ONE_YEAR = { min: iso('2026-01-01'), max: iso('2026-12-31') };
-	// Upstream's `FIVE_YEARS` is used only by cases the note at the foot of this
-	// block leaves unported, so it is not declared — an unused constant would be
-	// the one trace of them that lint, rather than a reader, has to explain.
+	const FIVE_YEARS = { min: iso('2024-01-01'), max: iso('2028-12-31') };
 
 	async function renderAndOpen(props: Record<string, unknown> = {}): Promise<void> {
 		await render(ControlledDateInput, { props: { initial: iso('2026-03-21'), ...props } });
@@ -1461,57 +1459,117 @@ describe('DateInput — month/year wheels', () => {
 		await vi.waitFor(() => expect(title()).toHaveTextContent('September 2026'));
 	});
 
-	/**
-	 * **Five cases are not ported, and the reason is a finding rather than a
-	 * limitation of the harness.** All five reproduce only in a full-file run —
-	 * each passes alone and passes with this block alone — and all five have the
-	 * same shape: a measurement latched while the bottom sheet is still animating
-	 * in.
-	 *
-	 * **The calendar opens on the wrong month.** `Reset empties the field and
-	 * brings the calendar home` and `clears without moving when the current month
-	 * is out of range` fail on their *first* assertion, before touching anything:
-	 * opened on August 2026 the header reads **May 2026**, opened on May 2027 it
-	 * reads **February 2027**. Three months early, which is exactly `OVERSCAN`.
-	 * The header is stable at the wrong month, not still moving — the wait in
-	 * `openPicker` holds until it stops changing across a frame — and there is
-	 * exactly one dialog, one scroller and one title in the document at the time,
-	 * so it is not a stale render from an earlier case. `MonthScroller` positions
-	 * itself once, from `.pre`, guarded by `hasPositioned` so a later
-	 * resize cannot yank the user back; if that runs against a `paneSize` the
-	 * sheet has not finished animating to, the latch keeps the wrong offset.
-	 *
-	 * **A wheel commits a row it is only passing.** `ignores the calendar echo
-	 * while the wheels are steering it`, `holds the month when the hidden calendar
-	 * is re-snapped on reveal` and `the year wheel keeps the month` read January
-	 * 2025, January 2025 and December 2025 where 2026, 2026 and March 2025 are
-	 * expected. Instrumented, the year wheel sits on row 1 of 2024-2028 and
-	 * selects row 1, having been parked on row 2 with the header reading 2026
-	 * immediately before the tap. The wait before the tap is for both wheels to be
-	 * *parked* — scroll position agreeing with the selected row, the predicate
-	 * `Wheel`s own park effect uses.
-	 *
-	 * **None of it is a port divergence.** `MonthScroller`s initial
-	 * `scrollOffsetForRow(initial - min, size, rtl)` and its `hasPositioned`
-	 * latch, `Wheel`s `Math.round(scrollTop / size)` commit and disabled-row
-	 * bounce, `MonthYearWheels` `toMonthIndex(parts.year, nextMonth)`, and
-	 * `handleVisibleMonthChange`s `isWheelOpen` guard are each
-	 * character-for-character upstream’s. Upstream cannot observe any of this,
-	 * because jsdom neither lays out nor scrolls: its scroller never travels, its
-	 * wheels never re-settle, and its pane size is a constant the test supplies.
-	 * **These are the cases written to catch exactly this, so a port of them that
-	 * passed by not scrolling would be worth nothing.**
-	 *
-	 * They stay unported until the behaviour is understood, because the honest
-	 * options are to fix a defect or to prove the harness wrong, and neither is a
-	 * test change. Recorded in `port/debts.md`.
-	 */
+	it('the year wheel keeps the month', async () => {
+		await renderAndOpen(FIVE_YEARS);
+		await openWheels();
+		await click(wheelRow('Year', '2025'));
+		await vi.waitFor(() => expect(title()).toHaveTextContent('March 2025'));
+	});
+
+	it('Reset empties the field and brings the calendar home', async () => {
+		const onChange = vi.fn();
+		// Today is 15 March 2026 in these tests; open on a month away from it.
+		await renderAndOpen({
+			initial: iso('2026-08-21'),
+			onChange,
+			min: iso('2026-01-01'),
+			max: iso('2026-12-31')
+		});
+		expect(title()).toHaveTextContent('August 2026');
+
+		await click(button('Reset'));
+		expect(onChange).toHaveBeenCalledWith(undefined);
+		expect(field()).toHaveValue('');
+		// Clearing the date and leaving the calendar on the month of the date you
+		// just cleared is a half-finished action.
+		await vi.waitFor(() => expect(title()).toHaveTextContent('March 2026'));
+		// And it does not dismiss — the sheet is still there to pick again.
+		expect(field()).toHaveAttribute('aria-expanded', 'true');
+	});
+
+	it('clears without moving when the current month is out of range', async () => {
+		const onChange = vi.fn();
+		await renderAndOpen({
+			initial: iso('2027-05-10'),
+			onChange,
+			min: iso('2027-01-01'),
+			max: iso('2027-12-31')
+		});
+		expect(title()).toHaveTextContent('May 2027');
+
+		await click(button('Reset'));
+		expect(onChange).toHaveBeenCalledWith(undefined);
+		expect(field()).toHaveValue('');
+		expect(title()).toHaveTextContent('May 2027');
+	});
 
 	/**
 	 * The wheels are a detour to reach a far month, not a mode. Reopening into
 	 * them would answer a question the user has not asked yet, and hide the dates
 	 * they came back for behind another tap.
 	 */
+	/**
+	 * A wheel commit steers the hidden calendar, and the calendar reports the
+	 * month it lands on. Taking that report back while the wheels are open closes
+	 * a cycle: commit -> echo -> the echo moves the wheel selected row -> the
+	 * wheel is repositioned -> that scroll reads as another commit.
+	 *
+	 * Whether it converges comes down to how precisely a browser says "scrolling
+	 * stopped". Chrome has scrollend and settles at once; iOS below Safari 26 has
+	 * none, and its momentum runs on after the finger lifts, so each lap committed
+	 * the next month along and the month climbed on its own.
+	 */
+	it('ignores the calendar echo while the wheels are steering it', async () => {
+		await renderAndOpen(FIVE_YEARS);
+		await openWheels();
+		await click(wheelRow('Month', 'January'));
+		await vi.waitFor(() => expect(title()).toHaveTextContent('January 2026'));
+
+		// The calendar, scrolling to January behind the wheels, reports each month
+		// it passes. None of it may move the month the wheels just set.
+		const scroller = monthScroller();
+		scroller.style.scrollSnapType = 'none';
+		const pane = scroller.clientWidth;
+		for (const row of [5, 6, 7, 8]) {
+			await scrollTo(scroller, row * pane);
+		}
+		expect(title()).toHaveTextContent('January 2026');
+	});
+
+	/**
+	 * The reveal case, reported from a device. A wheel commit steers the calendar
+	 * while it is hidden, and visibility: hidden keeps the layout box but does not
+	 * guarantee the scroll position survives: iOS re-snaps on reveal, firing a
+	 * scroll exactly as the wheels close and reports start being trusted again.
+	 */
+	it('holds the month when the hidden calendar is re-snapped on reveal', async () => {
+		await renderAndOpen(FIVE_YEARS);
+		await openWheels();
+		await click(wheelRow('Month', 'January'));
+		await vi.waitFor(() => expect(title()).toHaveTextContent('January 2026'));
+
+		// iOS moves the hidden scroller off the pane it was steered to.
+		const scroller = monthScroller();
+		scroller.style.scrollSnapType = 'none';
+		const pane = scroller.clientWidth;
+		scroller.scrollLeft += 4 * pane;
+
+		// Back to the dates. The stray position must not become the month, and the
+		// calendar must be put back on the pane the month names.
+		const scrollToSpy = vi.spyOn(Element.prototype, 'scrollTo').mockImplementation(() => {});
+		await click(title());
+		await settleSwap();
+		scroller.dispatchEvent(new Event('scroll', { bubbles: true }));
+		await frame();
+		await frame();
+		expect(title()).toHaveTextContent('January 2026');
+
+		// January 2026 is row 24 of a range that starts in January 2024.
+		await vi.waitFor(() =>
+			expect(scrollToSpy).toHaveBeenCalledWith(expect.objectContaining({ left: 24 * pane }))
+		);
+	});
+
 	it('always reopens on the calendar, whatever was showing last time', async () => {
 		await renderAndOpen();
 		await openWheels();
@@ -1676,7 +1734,7 @@ describe('DateInput — month/year wheels', () => {
 	/**
 	 * **Upstream repeats five cases verbatim** and they are ported once.
 	 *
-	 * `the year wheel keeps the month`, `is a single tab stop driven by the arrow
+	 * 'the year wheel keeps the month', `is a single tab stop driven by the arrow
 	 * keys`, `will not commit a row outside min/max`, `bounds the year wheel to
 	 * the reachable range` and `the title is what closes them again` each appear
 	 * twice in `DateInputTouch.test.tsx` — once at the head of this block and

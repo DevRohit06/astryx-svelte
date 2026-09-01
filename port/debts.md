@@ -1757,77 +1757,43 @@ does — its core `build` is `babel + tsc + css + umd` and produces no app at al
 `theme-neutral` takes core as a **peer** dependency. Nothing in this repo now reaches from core
 into a package that builds after it.
 
-### `DateInput`'s touch surface positions itself from a measurement the sheet has not settled
+### `MonthScroller` positioned itself before the DOM it measures against — fixed
 
-- **units:** DateInput, MonthScroller, Wheel, MonthYearWheels
-- **kind:** suspected-upstream-bug
-- **retires:** when the calendar opens on its own month and a wheel commits only the row it rests
-  on, under load, in a real browser — at which point the five cases named below are ported
+- **units:** DateInput, MonthScroller
+- **kind:** port-defect-fixed
+- **retires:** retired by the fix; kept as the account of how it was found
 
-Found by porting `DateInput/DateInputTouch.test.tsx`'s DOM half to real Chromium (batch 044). Five
-of upstream's cases cannot be made to pass, and the reason is not the harness.
+**Fixed in batch 044.** Recorded rather than deleted, because the diagnosis took three wrong turns
+and the shape is worth keeping.
 
-**The calendar opens three months early.** Opened on August 2026 the header reads May 2026; opened
-on May 2027 it reads February 2027. Three months is exactly `OVERSCAN`. The header is _stable_ at
-the wrong month rather than still arriving — the wait holds until it stops changing across a frame
-— and the document holds exactly one dialog, one scroller and one title, so it is not a stale
-render from an earlier case.
+Upstream positions the month scroller in a `useLayoutEffect`, which runs **after** React commits the
+DOM — so when it writes `scrollLeft`, the spacer already carries the width that same render gave it.
+This port used `$effect.pre`, which runs **before** Svelte patches the DOM. The spacer therefore
+still had its previous width — zero, on the pass that matters — and the browser clamped the write to 0.
 
-**A wheel commits a row it is only passing.** Tapping January reads January 2025; tapping 2025 on
-the year wheel reads December 2025. Instrumented at the moment of failure the year wheel sits on
-row 1 of 2024–2028 and selects row 1, having been parked on row 2 with the header reading 2026
-immediately before the tap. The tap is gated on both wheels being _parked_ — scroll position
-agreeing with the selected row, which is the predicate `Wheel`'s own park effect uses.
+The scroller did not stay at 0, which is what made it look deliberate rather than broken. The panes
+mount an instant later at `centerRow ± OVERSCAN`, and `scroll-snap-type: mandatory` pulls the
+scrollport to the nearest snap area — the **first mounted pane**. So the touch calendar opened
+exactly `OVERSCAN` months early: three, every time the window was not already clamped at row 0.
+Opened on August it showed May; opened on May 2027 it showed February.
 
-**One suspected cause.** `MonthScroller` positions once from `$effect.pre`, latched by
-`hasPositioned` so a later resize cannot yank the user back, and `Wheel` parks and commits against
-`itemBlockSize()`. Both read layout that the `BottomSheet` entry animation has not finished
-producing. A latch taken against an intermediate size stays wrong; a wheel repositioned against one
-re-settles onto a neighbour.
+It reached the wheels too, one step removed. The wheels derive from `monthIndex`, so a scroller on
+the wrong pane fed a wrong month back and a wheel commit then read the wrong year — which is why
+`the year wheel keeps the month` failed beside the two month cases, and why one fix closed all five.
 
-**Two refinements, from measuring rather than reasoning.**
+**How it was nearly missed.** All five cases pass in isolation and pass with their own block alone;
+only a full-file run reproduced them, which is the signature this repo teaches you to read as
+contention. Three explanations were adopted and dropped before the right one: a race against the
+`BottomSheet` entry animation; a stale render from an earlier case, ruled out by counting one
+dialog, one scroller and one title at the moment of failure; and an off-by-overscan in the report
+path, ruled out by reading `onVisibleMonthChange(min + row)`, which is absolute. What settled it was
+lining the two failures up and seeing the same constant — three rows, and three is the overscan.
 
-_The error is exactly `OVERSCAN`._ Both month failures are three rows early — row 7 reported as 4,
-row 4 reported as 1 — and three is the overscan. Three rows early is precisely
-`paneWindow(centerRow, …).start` whenever the window is not clamped at zero, so what gets reported
-is the **first mounted pane** rather than the one under the scrollport. That also explains why the
-cases already passing never saw it: they open on a three-month range where `centerRow - overscan`
-clamps to 0, and the window start _is_ the right answer. The report path itself is sound —
-`onVisibleMonthChange(min + row)` is an absolute index — so what is wrong is the offset the scroller
-is sitting at when the report fires, not the arithmetic on it.
-
-_It is a race, not a constant._ The same assertion, re-added as a diagnostic and run against the
-full file after the five cases were removed, **passes** — with the scroller on the right pane. So
-the defect is a lost race rather than an off-by-overscan, and the five cases are not merely slow to
-observe it: the 90 that remain are green partly _because_ those five are gone, since they were the
-heaviest in the file. Re-adding them is therefore not the obvious next step; finding what loses the
-race is. `MonthScroller`'s own scroll-listener comment describes a neighbouring hazard in the same
-terms — a listener attached while the width is still zero reporting row 0 for any scroll — which is
-the place to start.
-
-**It is not a port divergence.** `scrollOffsetForRow(initial - min, size, rtl)` and the
-`hasPositioned` guard, `Math.round(scrollTop / size)` with its disabled-row bounce,
-`toMonthIndex(parts.year, nextMonth)`, and `handleVisibleMonthChange`'s `isWheelOpen` guard are each
-character-for-character upstream's. Upstream cannot observe any of it: jsdom neither lays out nor
-scrolls, so its scroller never travels, its wheels never re-settle, and its pane size is a constant
-the test supplies through `withLayout`. The five cases exist to catch exactly this class of thing,
-which is why a port of them that passed by not scrolling would be worth nothing.
-
-**Load-sensitive**, which is the last piece of evidence and the reason it was nearly dismissed
-twice: every one of the five passes alone, and passes with its own `describe` block alone. Only a
-full-file run reproduces them. That is the same shape as a starved test chunk and it is not the same
-cause — the assertions are stable and repeatable at the wrong value, not flaky between values.
-
-The five, all in `packages/core/src/tests/date-input-touch.svelte.test.ts` and named in a note
-there:
-
-| upstream case                                                      | reads         | expects      |
-| ------------------------------------------------------------------ | ------------- | ------------ |
-| `Reset empties the field and brings the calendar home`             | May 2026      | August 2026  |
-| `clears without moving when the current month is out of range`     | February 2027 | May 2027     |
-| `ignores the calendar echo while the wheels are steering it`       | January 2025  | January 2026 |
-| `holds the month when the hidden calendar is re-snapped on reveal` | January 2025  | January 2026 |
-| `the year wheel keeps the month`                                   | December 2025 | March 2025   |
+**The counterpart is not the one that shares a name.** `$effect.pre` reads like the counterpart of a
+layout effect, and it is the right home for the _measurement_ above it, which genuinely must run
+before paint. Positioning against DOM that the same update is about to create needs `$effect`, which
+runs after the patch and before paint — which is what `useLayoutEffect` actually means. Any port of
+a `useLayoutEffect` that _writes_ to the DOM it depends on has this hazard.
 
 ### `DateInputTouch.test.tsx` repeats five cases verbatim
 

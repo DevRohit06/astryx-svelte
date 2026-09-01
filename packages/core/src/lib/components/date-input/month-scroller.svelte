@@ -150,10 +150,32 @@
 		return () => observer.disconnect();
 	});
 
-	// Land on the initial month before the first paint. Runs once the width is
-	// known; `hasPositioned` keeps a later resize from yanking the user back.
+	/**
+	 * Land on the initial month before the first paint. Runs once the width is
+	 * known; `hasPositioned` keeps a later resize from yanking the user back.
+	 *
+	 * **A post-effect, where the measurement above is a pre-effect, and the
+	 * difference is the whole bug this once had.** Upstream is `useLayoutEffect`
+	 * for both, and a layout effect runs *after* React has committed the DOM —
+	 * so by the time it writes `scrollLeft`, the spacer already carries the width
+	 * the same render gave it. `$effect.pre` is not that: it runs *before* Svelte
+	 * patches the DOM, so the spacer still had its previous width — zero, on the
+	 * pass that matters — and the browser clamped the write to 0.
+	 *
+	 * What made it invisible is that the scroller does not stay at 0. The panes
+	 * mount an instant later at rows `centerRow ± OVERSCAN`, and
+	 * `scroll-snap-type: mandatory` pulls the scrollport to the nearest snap
+	 * area, which is the *first mounted pane*. So the calendar opened exactly
+	 * `OVERSCAN` months early — three, every time the window is not clamped at
+	 * row 0 — and looked deliberate rather than broken. It is the same failure
+	 * the scroll listener below already warns about from the other direction.
+	 *
+	 * `$effect` runs after the DOM is patched and before paint, which is what
+	 * `useLayoutEffect` means. The measurement stays in `$effect.pre`, where
+	 * reading layout genuinely belongs.
+	 */
 	let hasPositioned = false;
-	$effect.pre(() => {
+	$effect(() => {
 		const node = scroller;
 		const size = paneSize;
 		const initial = initialMonthIndex;

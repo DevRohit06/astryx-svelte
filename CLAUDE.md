@@ -368,6 +368,18 @@ reproduce. Such a file says so at the top and mutation-checks its fixes.
   reaches pointer capture: removing a capturing element fires `lostpointercapture` _at that element_,
   so a spread `onlostpointercapture` runs on the detached node and needs an "am I still attached?"
   guard (batch 042).
+- **`useLayoutEffect` is `$effect`, not `$effect.pre`, whenever it _writes_ to the DOM the same
+  render creates.** React's layout effect runs **after** the commit, so the node it touches already
+  has the size and children that render gave it. `$effect.pre` runs **before** Svelte patches the
+  DOM — the node still carries its previous state. `MonthScroller` positioned its scrollport from a
+  pre-effect, so on the pass that mattered the spacer's width was still 0, the browser clamped
+  `scrollLeft` to 0, and `scroll-snap-type: mandatory` then pulled the scroller to the first mounted
+  pane. The touch calendar opened exactly `OVERSCAN` months early — three, every time the pane
+  window was not already clamped at row 0 — and looked deliberate rather than broken. Measuring
+  belongs in `$effect.pre`; positioning against what the update is about to render does not, and the
+  two sat four lines apart under one comment claiming a pre-effect was the counterpart of both.
+  Upstream's own suite cannot catch this class at all: jsdom neither lays out nor scrolls, so the
+  clamp never happens there (batch 044).
 - **A React node prop gated on state translates to a conditional _snippet_, never an `{#if}` inside
   the tag.** Upstream writes `{active === N && (…)}` for a `children`/slot prop, which hands the
   component a falsy child so nothing renders. A snippet passed by slot is always defined, so an

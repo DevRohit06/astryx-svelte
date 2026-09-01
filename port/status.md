@@ -45,8 +45,8 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 |                            | Cases          |
 | -------------------------- | -------------- |
 | Upstream, in ported suites | 7369           |
-| Declared here              | 6515           |
-| **Short**                  | **858**        |
+| Declared here              | 6520           |
+| **Short**                  | **853**        |
 | Over, across 4 groups      | +4             |
 | Beyond upstream            | 96 in 20 files |
 
@@ -81,7 +81,6 @@ per connected group.
 | `Center/Center.test.tsx`                                                                                                                                                                 | 24       | 13   | 11    |
 | `ContextMenu/ContextMenu.test.tsx`                                                                                                                                                       | 44       | 33   | 11    |
 | `DateInput/DateInput.test.tsx`                                                                                                                                                           | 95       | 84   | 11    |
-| `DateInput/DateInputTouch.test.tsx`                                                                                                                                                      | 136      | 125  | 11    |
 | `DropdownMenu/DropdownMenu.test.tsx`                                                                                                                                                     | 79       | 68   | 11    |
 | `PowerSearch/PowerSearch.test.tsx`                                                                                                                                                       | 32       | 21   | 11    |
 | `HoverCard/HoverCard.test.tsx`                                                                                                                                                           | 44       | 34   | 10    |
@@ -100,6 +99,7 @@ per connected group.
 | `Dialog/Dialog.test.tsx`                                                                                                                                                                 | 47       | 40   | 7     |
 | `TopNav/TopNavMenu.test.tsx`                                                                                                                                                             | 21       | 14   | 7     |
 | `Card/Card.test.tsx`                                                                                                                                                                     | 11       | 5    | 6     |
+| `DateInput/DateInputTouch.test.tsx`                                                                                                                                                      | 136      | 130  | 6     |
 | `Table/plugins/selection/useTableSelection.test.tsx`                                                                                                                                     | 24       | 18   | 6     |
 | `BottomSheet/BottomSheetPanel.test.tsx`                                                                                                                                                  | 12       | 7    | 5     |
 | `Calendar/Calendar.test.tsx`                                                                                                                                                             | 91       | 86   | 5     |
