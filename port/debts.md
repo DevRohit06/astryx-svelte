@@ -1785,6 +1785,26 @@ agreeing with the selected row, which is the predicate `Wheel`'s own park effect
 producing. A latch taken against an intermediate size stays wrong; a wheel repositioned against one
 re-settles onto a neighbour.
 
+**Two refinements, from measuring rather than reasoning.**
+
+_The error is exactly `OVERSCAN`._ Both month failures are three rows early — row 7 reported as 4,
+row 4 reported as 1 — and three is the overscan. Three rows early is precisely
+`paneWindow(centerRow, …).start` whenever the window is not clamped at zero, so what gets reported
+is the **first mounted pane** rather than the one under the scrollport. That also explains why the
+cases already passing never saw it: they open on a three-month range where `centerRow - overscan`
+clamps to 0, and the window start _is_ the right answer. The report path itself is sound —
+`onVisibleMonthChange(min + row)` is an absolute index — so what is wrong is the offset the scroller
+is sitting at when the report fires, not the arithmetic on it.
+
+_It is a race, not a constant._ The same assertion, re-added as a diagnostic and run against the
+full file after the five cases were removed, **passes** — with the scroller on the right pane. So
+the defect is a lost race rather than an off-by-overscan, and the five cases are not merely slow to
+observe it: the 90 that remain are green partly _because_ those five are gone, since they were the
+heaviest in the file. Re-adding them is therefore not the obvious next step; finding what loses the
+race is. `MonthScroller`'s own scroll-listener comment describes a neighbouring hazard in the same
+terms — a listener attached while the width is still zero reporting row 0 for any scroll — which is
+the place to start.
+
 **It is not a port divergence.** `scrollOffsetForRow(initial - min, size, rtl)` and the
 `hasPositioned` guard, `Math.round(scrollTop / size)` with its disabled-row bounce,
 `toMonthIndex(parts.year, nextMonth)`, and `handleVisibleMonthChange`'s `isWheelOpen` guard are each
