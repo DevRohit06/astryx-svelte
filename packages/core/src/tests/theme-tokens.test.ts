@@ -1,3 +1,5 @@
+/** PORTS: theme/tokens.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { defineTheme, type DefinedTheme } from '$lib/theme/define-theme.js';
 import { resolveThemeToken, resolveThemeTokens, tokenVar, tokenVars } from '$lib/theme/tokens.js';

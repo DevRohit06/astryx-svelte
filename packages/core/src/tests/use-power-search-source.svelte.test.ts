@@ -1,3 +1,5 @@
+/** PORTS: PowerSearch/usePowerSearchSource.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import PowerSearchSourceProbe from './fixtures/power-search-source-probe.svelte';

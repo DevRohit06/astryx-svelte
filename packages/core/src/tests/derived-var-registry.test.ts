@@ -1,3 +1,5 @@
+/** PORTS: theme/derivedVarRegistry.test.ts */
+
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';

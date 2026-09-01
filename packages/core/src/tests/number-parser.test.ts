@@ -1,3 +1,5 @@
+/** PORTS: NumberInput/numberParser.test.ts */
+
 import { describe, it, expect } from 'vitest';
 import {
 	formatEditableNumber,

@@ -1,3 +1,5 @@
+/** PORTS: theme/hct.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { hctToHex, hexToHct, hexWithAlpha, tonalPalette } from '$lib/theme/hct.js';
 

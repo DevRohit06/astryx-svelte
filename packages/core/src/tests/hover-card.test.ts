@@ -1,3 +1,5 @@
+/** PORTS: HoverCard/HoverCard.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'svelte/server';
 import HoverCard from './fixtures/hover-card-fixture.svelte';

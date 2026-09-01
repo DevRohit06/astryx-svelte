@@ -1,3 +1,5 @@
+/** NO-UPSTREAM: coverage beyond upstream — the header below says why. */
+
 /**
  * Coverage with **no upstream analogue**: upstream has no chunked test runner,
  * so no ported suite can reach this. It is here because the thing it guards can

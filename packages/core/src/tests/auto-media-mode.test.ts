@@ -1,3 +1,5 @@
+/** PORTS: hooks/useAutoMediaMode.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { pickMediaMode } from '$lib/hooks/use-auto-media-mode.svelte.js';
 import { parseColor } from '$lib/utils/color.js';

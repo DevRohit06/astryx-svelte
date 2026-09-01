@@ -1,3 +1,5 @@
+/** PORTS: Avatar/AvatarStatusDot.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { AvatarSize } from '$lib/components/avatar/avatar.stylex.js';

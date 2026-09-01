@@ -1,3 +1,5 @@
+/** PORTS: HoverCard/HoverCard.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import HoverCard from './fixtures/hover-card-fixture.svelte';

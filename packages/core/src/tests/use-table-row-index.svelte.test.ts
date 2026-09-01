@@ -1,3 +1,5 @@
+/** PORTS: Table/plugins/rowIndex/useTableRowIndex.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Harness, { type RowIndexRow } from './fixtures/table-row-index-fixture.svelte';

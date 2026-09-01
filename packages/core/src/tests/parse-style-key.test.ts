@@ -1,3 +1,5 @@
+/** PORTS: utils/parseStyleKey.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { parseStyleKey } from '$lib/theme/parse-style-key.js';
 

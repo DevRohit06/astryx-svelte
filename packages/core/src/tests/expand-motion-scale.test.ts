@@ -1,3 +1,5 @@
+/** PORTS: theme/expandMotionScale.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { expandMotionScale } from '$lib/theme/expand-motion-scale.js';
 

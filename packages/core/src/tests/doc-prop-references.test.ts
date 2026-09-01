@@ -1,3 +1,5 @@
+/** PORTS: docPropReferences.test.ts */
+
 import { readdirSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';

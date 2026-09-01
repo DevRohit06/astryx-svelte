@@ -1,3 +1,5 @@
+/** PORTS: SelectableCard/SelectableCard.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import SelectableCard from '$lib/components/selectable-card/selectable-card.svelte';

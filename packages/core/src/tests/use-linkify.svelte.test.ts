@@ -1,3 +1,5 @@
+/** PORTS: Link/useLinkify.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { LinkifySegment, UseLinkifyOptions } from '$lib/components/link/use-linkify.js';

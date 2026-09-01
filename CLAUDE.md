@@ -224,10 +224,22 @@ _probe_ fixture that runs the hooks and renders their result (a handler-returnin
 via instance `export const`, reachable through `render(...).component`). `act()` has no counterpart —
 a `$state` write flushes on its own and `expect.element` retries.
 
-Upstream suites are ported **case for case**; the count is the contract. Any dropped case is named in
-the file with its reason. **One file ports one upstream suite** — `theme.test.ts` covered fragments
-of six at once, so no count in it could be stated against any of them and the contract applied to
-not a single case; 22 already-ported cases read as unported until they were split out (batch 030).
+Upstream suites are ported **case for case**, and every file says which one it ports: a
+`PORTS: <upstream/path.test.tsx>` line in the header, or `NO-UPSTREAM:` where there is nothing
+upstream to port. `status.mjs` reads nothing else — a file with neither marker, or one naming a
+suite the current pin does not have, **fails the gate**. Any dropped case is still named in the
+file with its reason; what the header no longer states is a _number_. The shortfall against
+upstream is arithmetic over the markers and lives in `port/status.md`'s case delta, because a
+header's count is a contract against upstream's file at the pin and a version bump falsifies every
+one of them at once — when this rule landed, 203 of these files still named the `0.5.0` pin against
+a tree at `0.5.2`.
+
+**One file ports one upstream suite** — `theme.test.ts` covered fragments of six at once, so no
+count in it could be stated against any of them and the contract applied to not a single case; 22
+already-ported cases read as unported until they were split out (batch 030). A few files legitimately
+fold a family (five `Chat` message suites over one fixture) and a few suites are split across two
+files; both declare every edge, and the delta is computed per connected group so neither
+double-counts.
 
 **`getByRole(role, {name: 'X'})` is not the same assertion here as upstream.** Testing Library
 matches an accessible name as a **whole string**; the browser project's locators are Playwright's,
@@ -238,23 +250,25 @@ icon-only-control case still passed with the icon's `aria-hidden` removed and th
 regex `name` is substring-matching on both sides by construction and needs nothing. `status.md`
 counts the sites that still lack it.
 
-**The count is a contract against upstream's file at the _current pin_, so a version bump
-invalidates every header that states one** — re-derive them in the same batch, and diff the test
-delta as scope rather than as follow-up (`track-upstream` step 5b). Four headers were false at
-0.4.2, each making a real gap look accounted for, and the two Layer defects that shipped were
-exactly what the unported cases existed to catch. A dropped case's stated reason expires too:
-`button-group` carried "`DropdownMenu` is not ported" for three batches after it was.
+**A version bump is still scope, not follow-up** — diff the test delta as part of the batch that
+moves the pin (`track-upstream` step 5b). What changed is that the delta is now measured rather
+than re-typed: `status.md` recomputes every suite's shortfall from the markers on each run, so a
+bump can no longer leave a gap looking accounted for the way four false headers did at 0.4.2, where
+the two Layer defects that shipped were exactly what the unported cases existed to catch. A dropped
+case's stated _reason_ still expires and nothing checks it: `button-group` carried "`DropdownMenu`
+is not ported" for three batches after it was.
 
-**A header that names an upstream suite in order to say it is _not_ ported is read as coverage.**
-`status.mjs` attributes a suite to any file under `src/tests/` that names it — deliberately
-generous, because a false "covered" is visible the moment someone opens the file. So a header
-written to be honest about a gap closes it on paper instead: `scroll-lock.svelte.test.ts` said
-"0.5.0 also added a whole `hooks/scrollbarGutter.test.ts` beside this suite, which has no ported
-counterpart at all", and that sentence subtracted eight cases from the delta rather than adding
-them. Write `UNPORTED: <upstream/path.test.tsx>` in the header **alongside** the prose; the marker
-is what `status.mjs` reads, and it errs safe — one left behind after the suite lands overstates
-the work remaining rather than hiding it. This is the second occurrence, which is why the marker
-already existed: `layout.svelte.test.ts` understated its gap by 34 cases the same way (batch 033).
+**Attribution is declared because inferring it failed in both directions.** It used to be read off
+a file naming an upstream suite anywhere in its text, or sharing its kebab-cased basename. So a
+header written to be _honest_ about a gap closed it on paper — `scroll-lock.svelte.test.ts`'s
+sentence about `hooks/scrollbarGutter.test.ts` subtracted eight cases from the delta rather than
+adding them, and `layout.svelte.test.ts` understated its gap by 34 the same way (batch 033). An
+`UNPORTED:` marker was added to subtract those back, and it worked only where someone remembered
+it: at 0.5.2 three suites still read as covered because a file mentioned them to say they were not
+ported (`Heading` 24 cases, `theme/MediaTheme.dom` 8, `BottomSheetEdgeTint` 10) and a fourth
+because an SSR-only companion file shared its stem (`useResizable` 29). A declaration cannot be
+forgotten, because nothing else grants coverage — the failure mode is structurally gone rather
+than patched (batch 041).
 
 **The compiled StyleX sheet is on a browser-test page twice.** Vite's dev server injects it for
 the module graph `setup-stylex.ts` imports, and that setup file then appends its own `<style>` so

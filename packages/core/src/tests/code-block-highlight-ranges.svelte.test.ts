@@ -1,3 +1,5 @@
+/** PORTS: CodeBlock/highlightRanges.test.ts */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyHighlightRangesChunked } from '$lib/components/code-block/highlight-ranges.js';
 import type { TokenLine } from '$lib/components/code-block/tokenizer.js';

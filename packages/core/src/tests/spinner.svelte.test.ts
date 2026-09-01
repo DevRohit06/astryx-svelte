@@ -1,3 +1,5 @@
+/** PORTS: Spinner/Spinner.test.tsx */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Spinner from '$lib/components/spinner/spinner.svelte';

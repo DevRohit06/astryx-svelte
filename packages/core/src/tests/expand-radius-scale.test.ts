@@ -1,3 +1,5 @@
+/** PORTS: theme/expandRadiusScale.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { expandRadiusScale } from '$lib/theme/expand-radius-scale.js';
 

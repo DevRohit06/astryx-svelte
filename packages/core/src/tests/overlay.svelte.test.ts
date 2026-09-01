@@ -1,3 +1,5 @@
+/** PORTS: Overlay/Overlay.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import OverlayFixture from './fixtures/overlay-fixture.svelte';

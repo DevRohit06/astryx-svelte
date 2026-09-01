@@ -1,3 +1,5 @@
+/** PORTS: hooks/useScrollLock.test.ts */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from 'vitest-browser-svelte';
 import Probe from './fixtures/scroll-lock-probe.svelte';

@@ -1,3 +1,5 @@
+/** NO-UPSTREAM: coverage beyond upstream — the header below says why. */
+
 /**
  * Coverage with **no upstream analogue**: `@astryxdesign/core` ships prebuilt
  * CSS and has no Vite preset to test. This one exists because the two settings

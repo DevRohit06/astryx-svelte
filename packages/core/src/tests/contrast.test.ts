@@ -1,3 +1,5 @@
+/** PORTS: theme/contrast.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { compositeOver, contrastRatio, relativeLuminance } from '$lib/theme/contrast.js';
 import { parseColor } from '$lib/utils/color.js';

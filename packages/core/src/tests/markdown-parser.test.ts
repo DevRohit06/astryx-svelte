@@ -1,3 +1,5 @@
+/** PORTS: Markdown/parser.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { parseInline, parseMarkdown, type InlineNode } from '$lib/components/markdown/parser.js';
 

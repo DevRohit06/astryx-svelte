@@ -1,3 +1,5 @@
+/** PORTS: Text/Text.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Text from '$lib/components/text/text.svelte';

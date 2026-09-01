@@ -1,3 +1,5 @@
+/** PORTS: Timestamp/tooltipEntries.test.ts */
+
 /**
  * Ported case-for-case from Astryx's `src/Timestamp/tooltipEntries.test.ts` at
  * the **0.5.2** pin — **45 blocks** (44 plain `it`s plus one three-row

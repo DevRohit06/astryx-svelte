@@ -1,3 +1,5 @@
+/** PORTS: Layout/__tests__/contentWidth.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import LayoutShell from './fixtures/layout-shell.svelte';

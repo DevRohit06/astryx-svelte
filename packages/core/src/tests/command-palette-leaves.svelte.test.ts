@@ -1,3 +1,9 @@
+/**
+ * PORTS: CommandPalette/CommandPaletteFooter.test.tsx
+ * PORTS: CommandPalette/CommandPaletteGroup.test.tsx
+ * PORTS: CommandPalette/CommandPaletteList.test.tsx
+ */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Slots from './fixtures/command-palette-slots.svelte';

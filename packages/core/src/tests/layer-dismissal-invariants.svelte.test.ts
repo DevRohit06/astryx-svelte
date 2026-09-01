@@ -1,3 +1,5 @@
+/** PORTS: Layer/layerDismissalInvariants.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushSync } from 'svelte';
 import { render } from 'vitest-browser-svelte';

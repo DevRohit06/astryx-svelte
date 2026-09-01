@@ -1,3 +1,5 @@
+/** PORTS: PowerSearch/formatFilterValue.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { formatFilterValue } from '$lib/components/power-search/format-filter-value.js';
 import type { TranslatorFn } from '$lib/i18n/index.js';

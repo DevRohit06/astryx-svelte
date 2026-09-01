@@ -1,3 +1,5 @@
+/** PORTS: utils/focusReturn.test.ts */
+
 import { afterEach, describe, expect, it } from 'vitest';
 import { isFocusDetached } from '$lib/utils/focus-return.js';
 

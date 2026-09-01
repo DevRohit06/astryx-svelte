@@ -1,3 +1,5 @@
+/** PORTS: PowerSearch/usePowerSearchConfig.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { createPowerSearchConfig } from '$lib/components/power-search/use-power-search-config.svelte.js';
 import type { InferData } from '$lib/components/power-search/use-power-search-config.svelte.js';

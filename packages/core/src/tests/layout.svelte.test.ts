@@ -1,3 +1,8 @@
+/**
+ * PORTS: Layout/Layout.test.tsx
+ * PORTS: Layout/__tests__/edgeCompensation.test.tsx
+ */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createAttachmentKey } from 'svelte/attachments';

@@ -1,3 +1,5 @@
+/** PORTS: Chat/ChatComposerInput.test.tsx */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAttachmentKey } from 'svelte/attachments';
 import { render } from 'vitest-browser-svelte';

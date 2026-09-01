@@ -1,3 +1,5 @@
+/** PORTS: hooks/useTypeahead.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useTypeahead } from '$lib/hooks/use-typeahead.js';
 

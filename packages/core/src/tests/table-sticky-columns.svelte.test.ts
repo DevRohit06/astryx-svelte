@@ -1,3 +1,5 @@
+/** PORTS: Table/plugins/stickyColumns/useTableStickyColumns.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Harness from './fixtures/table-sticky-columns-fixture.svelte';

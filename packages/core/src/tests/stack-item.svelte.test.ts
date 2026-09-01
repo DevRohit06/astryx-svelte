@@ -1,3 +1,5 @@
+/** PORTS: Stack/StackItem.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { createAttachmentKey } from 'svelte/attachments';
 import { render } from 'vitest-browser-svelte';

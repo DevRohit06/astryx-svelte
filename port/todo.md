@@ -41,38 +41,42 @@ them.
 1. **The test delta.** The largest and most mechanical front, and the one that protects every
    other — and the one that keeps proving it protects more than tests.
 
-   **At the 0.5.2 pin this front changed shape.** Every upstream suite has a counterpart file now,
-   and what is left is mostly _case-level_. `status.md` still shows one suite unported, and that is
-   the `UNPORTED:` marker working as designed rather than a missing file: `ToastViewport`'s header
-   discloses its swipe-dismissal gap, so the whole upstream suite counts against us until the block
-   lands. It overstates the work, which is the direction that front is supposed to fail in.
+   **At the 0.5.2 pin this front is case-level, and since batch 041 it is measured.** Every file
+   under `src/tests/` declares the upstream suite it ports, so `status.md` carries both halves: the
+   suites nothing ports at all, and the per-suite shortfall of the ones that do. Work the case-delta
+   table top-down; it is the worklist, and it going to zero is what finishing this front means.
 
-   74 upstream suites grew with the release, and roughly 400 new cases sit in suites that exist
-   here and fall short. The big ones are `SideNav` 144 → 186,
-   `ToastViewport` 13 → 55 (its swipe-dismissal block, which is portable — `use-toast-gesture.ts`
-   writes exactly the properties those cases assert on), `NumberInput` 117 → 142, `OverflowList`
-   19 → 34, `Carousel` 23 → 37. Carousel's is the one with a feature behind it: 12 of its new cases
-   cover keyboard focus at the scroll edges, and `carousel.svelte` has no counterpart for it at all.
+   Two things in it are not just cases. `Carousel`'s new keyboard-focus cases have a feature behind
+   them — `carousel.svelte` has no counterpart for focus at the scroll edges. And `ToastViewport`'s
+   swipe-dismissal block is portable today: `use-toast-gesture.ts` is ported and writes exactly the
+   properties those cases assert on.
 
-   Many headers still state their count against **0.5.0**. A stated count is a contract against
-   upstream's file at the _current_ pin, so those are false until re-derived — and a false header
-   makes a real gap look accounted for. Batch 033 found three of
-   `0.5.0`'s new suites were testing **modules this port did not have** (`scrollbarGutter`,
-   `getInitialFocusDate`, `useCollator`) and a fourth caught three overlays that never reset the
-   container padding. None of that was visible to either style oracle, which read modules and
-   emitted CSS rather than call sites. Treat an unported suite as a possible missing implementation
-   until you have checked, and check with the **kebab-case** name — a camelCase grep against this
-   tree returns a false absence.
+   Batch 033 found three of `0.5.0`'s new suites were testing **modules this port did not have**
+   (`scrollbarGutter`, `getInitialFocusDate`, `useCollator`) and a fourth caught three overlays that
+   never reset the container padding. None of that was visible to either style oracle, which read
+   modules and emitted CSS rather than call sites. Treat an unported suite as a possible missing
+   implementation until you have checked, and check with the **kebab-case** name — a camelCase grep
+   against this tree returns a false absence.
 
-   `status.md` counts the suites with no counterpart at all; suites that exist but fall short state
-   it in their own header, and a header that names a suite in order to disclose a gap needs the
-   `UNPORTED:` marker or it is read as coverage instead. The two units this paragraph used to name
-   are both closed: the four `Layer` dismissal suites landed behind the shared dismissal stack, and
-   `theme/generateThemeRules.test.ts` closed in batch 034, which aligned the `generateThemeCSS` API
-   and ported it whole — and found the blocking debt had overstated itself. That is the standing
-   warning about estimating a port from reading two implementations against each other instead of
-   running either. What is left whole-suite is `ToastViewport`'s block above; everything else on
-   this front is case-level, plus Carousel's unimplemented edge-focus feature.
+   The two units this front used to name are both closed: the four `Layer` dismissal suites landed
+   behind the shared dismissal stack, and `theme/generateThemeRules.test.ts` closed in batch 034,
+   which aligned the `generateThemeCSS` API and ported it whole — and found the blocking debt had
+   overstated itself. That is the standing warning about estimating a port from reading two
+   implementations against each other instead of running either.
+
+   - [ ] **Strip the stated case counts out of the suite headers.** Most still state one against the
+         `0.5.0` pin while the tree is at `0.5.2`, so they are false, and since batch 041 they are
+         also redundant — `status.md` derives the same numbers from the `PORTS:` markers on every
+         run. Nothing reads them, which is why they were left standing rather than rewritten
+         mechanically: the surrounding prose names which cases were dropped and why, and that is
+         worth keeping. A header keeps the reasons and loses the arithmetic.
+         `grep -l '0\.5\.0.* pin' packages/core/src/tests/*.ts` is the worklist.
+   - [ ] **`FieldStatus` is ported twice.** `form-and-metadata.svelte.test.ts` and
+         `field-status.svelte.test.ts` carry the same seven describe blocks; the second adds
+         `field-status-icon theme target` and is the fuller one. Split the first into `FormLayout`
+         and `MetadataList` files, per one file / one suite, and drop the duplicate block. Found by
+         the declared attribution in batch 041 — the group reads as _over_ upstream's count, which
+         is the shape a duplicate makes.
 
 2. **The published surface.** Settle the Layer/over-export decision as one call at a minor, then
    the `./theme` barrel renames, the `./theme/tokens` subpath keys, `reset.css` at its own subpath,

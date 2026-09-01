@@ -1,3 +1,5 @@
+/** PORTS: hooks/useFocusTrapEscapeShim.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { hasActiveFocusTrapEscape } from '$lib/hooks/use-focus-trap.svelte.js';

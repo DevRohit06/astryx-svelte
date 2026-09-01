@@ -1,3 +1,5 @@
+/** PORTS: Dialog/DialogHeader.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import DialogHeader from '$lib/components/dialog/dialog-header.svelte';

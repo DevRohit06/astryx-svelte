@@ -1,3 +1,5 @@
+/** PORTS: theme/defineTheme.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { expandMotionScale } from '$lib/theme/expand-motion-scale.js';
 import { defineTheme } from '$lib/theme/define-theme.js';

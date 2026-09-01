@@ -1,3 +1,5 @@
+/** PORTS: i18n/__tests__/e2e-pagination.test.tsx */
+
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Pagination from '$lib/components/pagination/pagination.svelte';

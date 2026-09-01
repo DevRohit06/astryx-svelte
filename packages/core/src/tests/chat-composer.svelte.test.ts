@@ -1,3 +1,5 @@
+/** PORTS: Chat/ChatComposer.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { ChatComposerElevation } from '$lib/components/chat/chat-composer.svelte';

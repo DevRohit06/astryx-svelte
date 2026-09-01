@@ -1,3 +1,5 @@
+/** PORTS: Layer/layerHost.test.ts */
+
 import { afterEach, describe, expect, it } from 'vitest';
 import { resolveLayerPortalTarget } from '$lib/components/layer/layer-host.js';
 

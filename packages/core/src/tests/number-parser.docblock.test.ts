@@ -1,3 +1,5 @@
+/** PORTS: NumberInput/numberParser.docblock.test.ts */
+
 import { describe, it, expect } from 'vitest';
 import { parseLocaleNumber } from '$lib/components/number-input/number-parser.js';
 // Upstream imports its own source with Vite's `?raw`; ours does the same, and

@@ -1,3 +1,5 @@
+/** NO-UPSTREAM: coverage beyond upstream — the header below says why. */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'svelte/server';
 import CodeBlock from '$lib/components/code-block/code-block.svelte';

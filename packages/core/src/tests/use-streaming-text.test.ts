@@ -1,3 +1,5 @@
+/** PORTS: hooks/useStreamingText.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { snapToGraphemeBoundary } from '$lib/hooks/use-streaming-text.svelte.js';
 

@@ -1,3 +1,5 @@
+/** PORTS: InteractiveRoleContext/InteractiveRoleContext.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type {

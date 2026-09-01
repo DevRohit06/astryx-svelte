@@ -1,3 +1,5 @@
+/** PORTS: NumberInput/NumberInput.test.tsx */
+
 import { tick } from 'svelte';
 import { describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';

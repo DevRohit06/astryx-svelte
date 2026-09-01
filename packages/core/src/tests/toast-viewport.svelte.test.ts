@@ -1,3 +1,5 @@
+/** PORTS: Toast/ToastViewport.test.tsx */
+
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { tick } from 'svelte';
 import { render } from 'vitest-browser-svelte';
@@ -18,8 +20,8 @@ import type { ToastOptions } from '$lib/components/toast/types.js';
  * properties on exactly that element, so the block is portable — it is not
  * done, not blocked.
  *
- * UNPORTED: Toast/ToastViewport.test.tsx (the swipe-dismissal block and the
- * viewport geometry cases added at 0.5.1)
+ * What is missing is the swipe-dismissal block and the viewport geometry cases
+ * 0.5.1 added; `port/status.md`'s case delta carries the size of it.
  *
  * The region-ARIA pair at the end is upstream's own 0.5.1 split: the landmark is
  * now gated on there being something to announce, so an empty viewport exposes

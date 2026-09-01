@@ -1,3 +1,5 @@
+/** PORTS: utils/isApplePlatform.test.ts */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { isApplePlatform } from '$lib/utils/is-apple-platform.js';
 

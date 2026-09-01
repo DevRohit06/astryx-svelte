@@ -1,3 +1,11 @@
+/**
+ * PORTS: Chat/ChatMessage.test.tsx
+ * PORTS: Chat/ChatMessageBubble.test.tsx
+ * PORTS: Chat/ChatMessageMetadata.test.tsx
+ * PORTS: Chat/ChatMessageList.test.tsx
+ * PORTS: Chat/ChatSystemMessage.test.tsx
+ */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ChatMessageBubble from '$lib/components/chat/chat-message-bubble.svelte';

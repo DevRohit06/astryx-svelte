@@ -1,3 +1,5 @@
+/** PORTS: Table/plugins/rowExpansion/useTableRowExpansion.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Harness, { multiColumns } from './fixtures/table-row-expansion-fixture.svelte';

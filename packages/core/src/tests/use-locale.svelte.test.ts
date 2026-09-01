@@ -1,3 +1,5 @@
+/** PORTS: i18n/__tests__/useLocale.test.tsx */
+
 import { flushSync } from 'svelte';
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-svelte';

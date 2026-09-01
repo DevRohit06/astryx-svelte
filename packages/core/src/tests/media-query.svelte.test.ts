@@ -1,3 +1,5 @@
+/** PORTS: hooks/useMediaQuery.test.ts */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Probe from './fixtures/media-query-probe.svelte';

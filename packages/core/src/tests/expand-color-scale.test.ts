@@ -1,3 +1,5 @@
+/** PORTS: theme/expandColorScale.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { ensureContrastTone, expandColorScale } from '$lib/theme/expand-color-scale.js';
 import { compositeOver, contrastRatio } from '$lib/theme/contrast.js';

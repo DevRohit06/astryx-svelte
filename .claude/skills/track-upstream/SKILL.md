@@ -74,11 +74,14 @@ as transcribed and routed. **An added test _file_ is the loudest signal** — `u
 arrived new with 21 cases for a hook this port rewrote from scratch in the same batch, and nothing
 flagged that no suite existed on this side.
 
-Then **re-derive every suite header's count against the new tag**. A header saying "all N cases,
-nothing dropped" is a contract against upstream's file _at the current pin_, so a version bump
-invalidates it even when nothing local changed. Four headers were false at 0.4.2 — `side-nav`
-("all 99 … at v0.3.0"), `layer` ("all twenty-nine"), `slider` ("32 … nothing dropped", never true
-of any tag) and `hover-card` — and each one made a real gap look accounted for.
+Then **run `node scripts/status.mjs` and read the case delta**. Since batch 041 the shortfall is
+derived from the `PORTS:` markers rather than restated in each header, so the bump's real cost
+appears in one table instead of having to be re-typed 283 times — and a suite upstream renamed or
+deleted fails the run outright, because some file is still declaring it. Four headers were false
+at 0.4.2 for want of this — `side-nav` ("all 99 … at v0.3.0"), `layer` ("all twenty-nine"),
+`slider` ("32 … nothing dropped", never true of any tag) and `hover-card` — and each one made a
+real gap look accounted for. A **new** upstream suite still needs a decision from you: a file that
+ports it, or a `NO_TEST_COUNTERPART` entry with the reason.
 
 ## 6. Check whether the tarball lags the source
 

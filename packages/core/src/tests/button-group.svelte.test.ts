@@ -1,3 +1,5 @@
+/** PORTS: ButtonGroup/ButtonGroup.test.tsx */
+
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { createAttachmentKey } from 'svelte/attachments';

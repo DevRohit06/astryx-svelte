@@ -1,3 +1,5 @@
+/** PORTS: Layout/overlayPaddingReset.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 // Upstream reads `padding.stylex.ts` with `node:fs` and `__dirname`; the browser

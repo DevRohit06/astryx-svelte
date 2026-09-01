@@ -1,3 +1,5 @@
+/** PORTS: hooks/useHotkeys.test.ts */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { Hotkey } from '$lib/hooks/use-hotkeys.svelte.js';

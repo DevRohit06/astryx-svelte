@@ -1,3 +1,5 @@
+/** PORTS: Icon/globalIconRegistry.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Snippet } from 'svelte';
 import { defaultIcons } from '$lib/components/icon/default-icons.svelte';

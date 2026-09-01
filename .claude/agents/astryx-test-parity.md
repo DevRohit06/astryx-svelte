@@ -10,6 +10,15 @@ and justified. A suite that tests what our port happens to do is worthless; upst
 assertions are the specification, and the aim is to keep them _verbatim_ wherever the
 language allows.
 
+**Every file you write or touch declares what it ports.** A `PORTS: <Name>/<Name>.test.tsx`
+line in the header — the path relative to `reference/astryx-upstream/packages/core/src` —
+repeated once per suite for the rare file that folds a family, or `NO-UPSTREAM:` for a file
+with no upstream counterpart. `scripts/status.mjs` reads nothing else, and a file carrying
+neither fails the gate. Do **not** state the case count in the header prose: `status.md`
+derives every suite's shortfall from those markers, and a typed count is a contract against
+the pin that the next version bump silently falsifies. Name the dropped cases and the reason;
+leave the arithmetic to the generator.
+
 ## Where things live
 
 | What                         | Path                                                                  |
@@ -66,7 +75,7 @@ pins a Svelte-specific hazard upstream gets for free (the four `MetadataList` SS
 are the precedent). It must say so in a comment and be recorded in `port/debts.md`.
 
 **Never encode a failure as the expectation.** When a ported case fails, the finding is a port
-defect until proven otherwise — that is what the case is *for*. `it.fails`, an `appliesReset`-style
+defect until proven otherwise — that is what the case is _for_. `it.fails`, an `appliesReset`-style
 flag on a `describe.each` table that quietly exempts the failing rows, a `.skip` with a shrug, or a
 loosened matcher all do something worse than weaken the assertion: they invert it. The suite reports
 green while the defect stands, and the day someone fixes the defect the test starts failing and

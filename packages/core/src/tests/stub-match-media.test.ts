@@ -1,3 +1,5 @@
+/** PORTS: __tests__/stubMatchMedia.test.ts */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { stubMatchMedia } from './stub-match-media.js';
 

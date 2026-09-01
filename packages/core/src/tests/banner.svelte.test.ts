@@ -1,3 +1,5 @@
+/** PORTS: Banner/Banner.test.tsx */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';

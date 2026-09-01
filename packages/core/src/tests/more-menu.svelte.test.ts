@@ -1,3 +1,5 @@
+/** PORTS: MoreMenu/MoreMenu.test.tsx */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import DropdownMenu from '$lib/components/dropdown-menu/dropdown-menu.svelte';

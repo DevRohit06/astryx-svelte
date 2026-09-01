@@ -1,3 +1,5 @@
+/** PORTS: utils/timeParser.test.ts */
+
 /**
  * @file timeParser.test.ts
  * @input Uses vitest, timeParser utilities
