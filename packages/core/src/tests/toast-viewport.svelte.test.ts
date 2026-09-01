@@ -233,8 +233,11 @@ function horizontalDriftOf(element: HTMLElement): number {
 	return transform === 'none' ? 0 : new DOMMatrix(transform).m41;
 }
 
-function renderViewport(triggers: { options?: ToastOptions; triggerLabel?: string }[]) {
-	return render(Harness, { props: { triggers } });
+function renderViewport(
+	triggers: { options?: ToastOptions; triggerLabel?: string }[],
+	position?: ToastPosition
+) {
+	return render(Harness, { props: { triggers, position } });
 }
 
 // Fire the transition-end that ToastViewport listens for to unmount an exiting
@@ -317,6 +320,122 @@ function expectSpansInlineAxisWithoutOverflowing(viewport: HTMLElement): void {
 	expect(viewport.getBoundingClientRect().width).toBeGreaterThan(available / 2);
 }
 
+/**
+ * Waits for a toast's entry to finish.
+ *
+ * A toast enters with a real CSS transition here, and `@starting-style` supplies
+ * its start state — `grid-template-rows: 0fr` and `padding-block-end: 0` on the
+ * wrapper, plus the `--_toast-slide-y` offset on the card. Read synchronously
+ * after mount, `getComputedStyle` therefore reports the *starting* values: the
+ * inter-toast gap is still 0 and the card still carries `translateY(8px)`.
+ *
+ * jsdom implements neither transitions nor `@starting-style`, so upstream's
+ * cases read the settled values immediately and never had to wait. Every case
+ * here that reads a transitioned property waits first, or it is asserting about
+ * the entry animation while claiming to assert about the resting style.
+ */
+async function settleEntry(element: HTMLElement): Promise<void> {
+	const animations = element.getAnimations({ subtree: true });
+	await Promise.all(animations.map((animation) => animation.finished.catch(() => undefined)));
+}
+
+/** Upstream's `getToastWrapperByText`: the `[data-toast-id]` around a card. */
+function getToastWrapperByText(text: string): HTMLElement {
+	const wrapper = getVisualToastByText(text).closest('[data-toast-id]');
+	if (!(wrapper instanceof HTMLElement)) throw new Error(`Toast wrapper for ${text} not found`);
+	return wrapper;
+}
+
+/**
+ * What a declaration *resolves to* in a given element's context.
+ *
+ * The motion and layout blocks read computed styles that upstream asserts as
+ * literal token expressions — `'var(--duration-fast)'`,
+ * `'var(--spacing-2)'`, `'calc(var(--text-body-size) * var(--text-body-leading))'`.
+ * That is jsdom echoing the declaration back; Chromium substitutes and computes,
+ * so every one of those assertions would fail here for a reason that is about
+ * the environment rather than the styles.
+ *
+ * Transcribing the resolved pixel value instead would pin the *token's* value —
+ * a theme change would fail the toast's suite. So the expression is resolved the
+ * same way the browser resolves the real one: a probe element inheriting from
+ * the same host, carrying the same declaration. The assertion then reads
+ * "computes to whatever `var(--duration-fast)` computes to here", which is
+ * upstream's assertion evaluated rather than restated.
+ *
+ * `host` is where the probe is appended, and therefore what it inherits from.
+ * For a percentage or any other value resolved against the containing block,
+ * pass the element's *parent* so the probe shares its containing block.
+ */
+function resolves(host: HTMLElement, property: string, expression: string): string {
+	const probe = document.createElement('div');
+	probe.style.setProperty(property, expression);
+	host.appendChild(probe);
+	const value = getComputedStyle(probe).getPropertyValue(property);
+	probe.remove();
+	return value;
+}
+
+/**
+ * Every CSS rule text on the page, de-duplicated.
+ *
+ * Three upstream cases assert on the *source text* of `Toast.tsx` /
+ * `ToastViewport.tsx` through `readFileSync`, which a browser-project test
+ * cannot do. The compiled sheet is the better subject anyway: it is what ships,
+ * where the source is one input to it.
+ *
+ * The walk descends into grouping rules because this port's output sits inside
+ * `@layer` blocks, and de-duplicates by rule text because the sheet is on the
+ * page twice — Vite injects it for the module graph and `setup-stylex.ts`
+ * appends its own copy. Both hazards are documented in CLAUDE.md.
+ */
+function allCssRuleTexts(): Set<string> {
+	const seen = new Set<string>();
+	const walk = (rules: CSSRuleList): void => {
+		for (const rule of rules) {
+			seen.add(rule.cssText);
+			const nested = (rule as CSSGroupingRule).cssRules;
+			if (nested) walk(nested);
+		}
+	};
+	for (const sheet of document.styleSheets) {
+		try {
+			walk(sheet.cssRules);
+		} catch {
+			// A cross-origin sheet throws on access; none of ours is one.
+		}
+	}
+	return seen;
+}
+
+/**
+ * The compiled rules that actually apply to `element`.
+ *
+ * Scoping matters: upstream's source-text assertions name one file, and a
+ * page-wide scan of the sheet answers a different question. `scale(0.98)`
+ * appears in this repo's CSS — some other component uses it — so an unscoped
+ * `not.toContain` fails for a reason that has nothing to do with Toast.
+ */
+function rulesMatching(element: HTMLElement): string[] {
+	const out: string[] = [];
+	for (const text of allCssRuleTexts()) {
+		const brace = text.indexOf('{');
+		if (brace < 0) continue;
+		const selector = text.slice(0, brace).trim();
+		if (!selector || selector.startsWith('@')) continue;
+		try {
+			if (element.matches(selector)) out.push(text);
+		} catch {
+			// Not a selector this element can be matched against.
+		}
+	}
+	return out;
+}
+
+/** Whether any rule applying to one of `elements` contains `text`. */
+function someRuleFor(elements: HTMLElement[], text: string): boolean {
+	return elements.some((element) => rulesMatching(element).some((rule) => rule.includes(text)));
+}
 function toastIds(): string[] {
 	return [...document.querySelectorAll('[data-toast-id]')].map(
 		(node) => node.getAttribute('data-toast-id') as string
@@ -952,6 +1071,206 @@ describe('toast timer lifecycle (#3589)', () => {
 	});
 });
 
+describe('Toast native motion contract', () => {
+	async function renderMotionToast(position: ToastPosition, body = `Motion ${position}`) {
+		const screen = await render(Harness, {
+			props: {
+				triggers: [{ options: { body, isAutoHide: false }, triggerLabel: `Show ${position}` }],
+				position,
+				maxVisible: 3
+			}
+		});
+		(screen.getByText(`Show ${position}`, { exact: true }).element() as HTMLElement).click();
+		await tick();
+		await settleEntry(getToastWrapperByText(body));
+		return {
+			screen,
+			visualToast: getVisualToastByText(body),
+			wrapper: getToastWrapperByText(body)
+		};
+	}
+
+	it('uses tokenized transform and wrapper timing, with reduced motion kept eventful', async () => {
+		const { visualToast, wrapper } = await renderMotionToast('bottomEnd');
+		const toastStyle = getComputedStyle(visualToast);
+		const wrapperStyle = getComputedStyle(wrapper);
+		const collapsible = wrapper.firstElementChild as HTMLElement;
+
+		// Upstream reads the declaration back as the literal
+		// `translateY(var(--_toast-swipe-y, 0px)) scale(var(--_toast-swipe-scale, 1))`.
+		// Chromium resolves a transform to a matrix, so the tokens are checked by
+		// driving them: the card must answer to both custom properties, in those
+		// two roles. That is what the declaration is for, and a matrix read proves
+		// it where a string match only describes it. It has to run after the entry
+		// transition, which is itself a translateY — see `settleEntry`.
+		visualToast.style.setProperty('--_toast-swipe-y', '10px');
+		visualToast.style.setProperty('--_toast-swipe-scale', '0.5');
+		// `transform` is itself in `transition-property`, so driving the variables
+		// starts a transition and a synchronous read still returns the old matrix.
+		await settleEntry(visualToast);
+		const driven = new DOMMatrix(getComputedStyle(visualToast).transform);
+		expect(driven.m42).toBe(10);
+		expect(driven.a).toBe(0.5);
+		expect(driven.m41).toBe(0);
+		visualToast.style.removeProperty('--_toast-swipe-y');
+		visualToast.style.removeProperty('--_toast-swipe-scale');
+
+		expect(toastStyle.transitionProperty).toBe('opacity, transform');
+		expect(toastStyle.transitionDuration).toBe(
+			resolves(visualToast, 'transition-duration', 'var(--duration-fast)')
+		);
+		expect(toastStyle.transitionTimingFunction).toBe(
+			resolves(visualToast, 'transition-timing-function', 'var(--ease-standard)')
+		);
+
+		expect(wrapperStyle.transitionProperty).toBe('grid-template-rows, padding');
+		expect(wrapperStyle.transitionDuration).toBe(
+			resolves(wrapper, 'transition-duration', 'var(--duration-fast)')
+		);
+		expect(wrapperStyle.transitionTimingFunction).toBe(
+			resolves(wrapper, 'transition-timing-function', 'var(--ease-standard)')
+		);
+		// A percentage resolves against the containing block, so the probe has to
+		// be the wrapper's sibling rather than its child.
+		expect(wrapperStyle.width).toBe(
+			resolves(wrapper.parentElement as HTMLElement, 'width', '100%')
+		);
+		expect(wrapperStyle.maxWidth).toBe('400px');
+		expect(wrapperStyle.minWidth).toBe('0px');
+		expect(getComputedStyle(collapsible).minHeight).toBe('0px');
+		expect(getComputedStyle(collapsible).overflow).toBe('hidden');
+	});
+
+	it('keeps reduced motion transitions eventful for exit cleanup', async () => {
+		// Upstream reads `Toast.tsx` and `ToastViewport.tsx` and asserts each
+		// contains `'@media (prefers-reduced-motion: reduce)': '0.01ms'`. A browser
+		// test cannot read a file, and the compiled sheet is the better subject
+		// anyway — it is what ships. The property is the same one: reduced motion
+		// shortens the transition rather than removing it, because the exit is
+		// driven by `transitionend` and a `0s` transition never fires one.
+		const { visualToast, wrapper } = await renderMotionToast('bottomEnd');
+		const parts = [visualToast, wrapper];
+
+		// Both sides of upstream's pair: the card's own transition and the
+		// wrapper's each shorten to 0.01ms under reduced motion rather than
+		// dropping to 0s, which would never fire the `transitionend` the exit is
+		// driven by.
+		expect(rulesMatching(visualToast).some((rule) => rule.includes('0.01ms'))).toBe(true);
+		expect(rulesMatching(wrapper).some((rule) => rule.includes('0.01ms'))).toBe(true);
+		expect(someRuleFor(parts, 'transition-duration: 0s')).toBe(false);
+	});
+
+	it('slides from the top or bottom edge without adding corner or scale motion', async () => {
+		const bottom = await renderMotionToast('bottomEnd');
+		// `--_toast-slide-y` is a custom property, whose computed value is a token
+		// stream rather than a length — Chromium may hand back either the
+		// substituted value or the `calc()` unevaluated. Both sides are resolved
+		// through the same probe so the comparison is of lengths.
+		expect(resolves(bottom.wrapper, 'margin-top', 'var(--_toast-slide-y)')).toBe(
+			resolves(bottom.wrapper, 'margin-top', 'var(--spacing-2)')
+		);
+		bottom.screen.unmount();
+
+		const top = await renderMotionToast('topStart');
+		expect(resolves(top.wrapper, 'margin-top', 'var(--_toast-slide-y)')).toBe(
+			resolves(top.wrapper, 'margin-top', 'calc(-1 * var(--spacing-2))')
+		);
+		top.screen.unmount();
+
+		// Upstream's two `not.toContain` reads of `Toast.tsx`, against the rules
+		// that actually apply to the toast rather than the whole sheet — another
+		// component does use `scale(0.98)`, so an unscoped scan answers the wrong
+		// question.
+		const settled = await renderMotionToast('bottomEnd', 'Motion scan');
+		const parts = [settled.visualToast, settled.wrapper];
+		expect(someRuleFor(parts, 'scale(0.98)')).toBe(false);
+		expect(someRuleFor(parts, 'transform-origin')).toBe(false);
+		settled.screen.unmount();
+	});
+
+	it('uses an 8px inter-Toast gap without adding space at the viewport edge', async () => {
+		const bottom = await renderViewport([
+			{ options: INFO_A, triggerLabel: 'Show A' },
+			{ options: INFO_B, triggerLabel: 'Show B' }
+		]);
+		(bottom.getByText('Show A', { exact: true }).element() as HTMLElement).click();
+		(bottom.getByText('Show B', { exact: true }).element() as HTMLElement).click();
+		await tick();
+
+		const viewport = notificationRegions()[0];
+		const wrappers = [...viewport.querySelectorAll<HTMLElement>('[data-toast-id]')];
+		await Promise.all(wrappers.map(settleEntry));
+		expect(getComputedStyle(wrappers[0]).paddingBottom).toBe(
+			resolves(wrappers[0], 'padding-bottom', 'var(--spacing-2)')
+		);
+		expect(getComputedStyle(wrappers[1]).paddingBottom).toBe('0px');
+		// Upstream's literal is `max(var(--spacing-4), env(safe-area-inset-right, 0px))`.
+		// A headless Chromium reports no safe-area inset, so the `max()` resolves to
+		// the spacing token — which the probe resolves the same way, keeping the
+		// assertion about the declaration rather than about a pixel count.
+		expect(getComputedStyle(viewport).paddingInlineEnd).toBe(
+			resolves(
+				viewport,
+				'padding-inline-end',
+				'max(var(--spacing-4), env(safe-area-inset-right, 0px))'
+			)
+		);
+		bottom.unmount();
+
+		const top = await renderViewport(
+			[
+				{ options: INFO_A, triggerLabel: 'Top A' },
+				{ options: INFO_B, triggerLabel: 'Top B' }
+			],
+			'topEnd'
+		);
+		(top.getByText('Top A', { exact: true }).element() as HTMLElement).click();
+		(top.getByText('Top B', { exact: true }).element() as HTMLElement).click();
+		await tick();
+
+		const topWrappers = [
+			...notificationRegions()[0].querySelectorAll<HTMLElement>('[data-toast-id]')
+		];
+		await Promise.all(topWrappers.map(settleEntry));
+		expect(getComputedStyle(topWrappers[0]).paddingBottom).toBe('0px');
+		expect(getComputedStyle(topWrappers[1]).paddingBottom).toBe(
+			resolves(topWrappers[1], 'padding-bottom', 'var(--spacing-2)')
+		);
+		top.unmount();
+	});
+
+	it('collapses a dismissed Toast before unmounting it', async () => {
+		const { wrapper } = await renderMotionToast('bottomEnd');
+		const id = wrapper.getAttribute('data-toast-id') as string;
+
+		(wrapper.querySelector('button[aria-label="Dismiss notification"]') as HTMLElement).click();
+		await tick();
+
+		// Upstream reads back the two declarations `0fr` and `0px` and calls that
+		// the collapse. Chromium runs the transition, so the same claim is made of
+		// the thing itself: the wrapper is still mounted, it is *animating* its
+		// grid track and its padding, and only once those finish is it gone. That
+		// is what "collapses before unmounting" means, and it is stronger than the
+		// pair of declarations — a wrapper removed on the same frame would satisfy
+		// upstream's assertions and fail these. Only the grid track animates: this
+		// toast is the stack's only child, so `:last-child` has already zeroed its
+		// padding and there is nothing there to transition.
+		expect(wrapper).toBeInTheDocument();
+		const collapsing = wrapper
+			.getAnimations()
+			.map((animation) => (animation as CSSTransition).transitionProperty);
+		expect(collapsing).toContain('grid-template-rows');
+
+		// And upstream's `completeExit(id)` has no counterpart to fire: it exists
+		// because jsdom runs no transitions, so the `transitionend` the viewport
+		// unmounts on had to be synthesised. Here the real one arrives on its own —
+		// which is why the collapsed values cannot be read after the fact either,
+		// the wrapper being gone by then.
+		await settleEntry(wrapper);
+		await tick();
+		expect(document.querySelector(`[data-toast-id="${id}"]`)).toBeNull();
+	});
+});
 describe('Toast swipe dismissal', () => {
 	beforeEach(() => {
 		stubPointerCapture();

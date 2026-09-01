@@ -45,8 +45,8 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 |                            | Cases          |
 | -------------------------- | -------------- |
 | Upstream, in ported suites | 7369           |
-| Declared here              | 6416           |
-| **Short**                  | **957**        |
+| Declared here              | 6421           |
+| **Short**                  | **952**        |
 | Over, across 4 groups      | +4             |
 | Beyond upstream            | 90 in 20 files |
 
@@ -89,7 +89,6 @@ per connected group.
 | `theme/expandColorScale.test.ts`                                                                                                                                                         | 36       | 26   | 10    |
 | `ComplexSelector/ComplexSelector.test.tsx`                                                                                                                                               | 21       | 12   | 9     |
 | `Section/Section.test.tsx`                                                                                                                                                               | 29       | 20   | 9     |
-| `Toast/ToastViewport.test.tsx`                                                                                                                                                           | 55       | 46   | 9     |
 | `AvatarGroup/AvatarGroup.test.tsx`                                                                                                                                                       | 33       | 25   | 8     |
 | `CodeBlock/CodeBlock.test.tsx`                                                                                                                                                           | 24       | 16   | 8     |
 | `Markdown/Markdown.test.tsx`                                                                                                                                                             | 70       | 62   | 8     |
@@ -117,6 +116,7 @@ per connected group.
 | `MetadataList/MetadataList.test.tsx`                                                                                                                                                     | 20       | 16   | 4     |
 | `Overlay/Overlay.test.tsx`                                                                                                                                                               | 29       | 25   | 4     |
 | `theme/Theme.test.tsx`                                                                                                                                                                   | 15       | 11   | 4     |
+| `Toast/ToastViewport.test.tsx`                                                                                                                                                           | 55       | 51   | 4     |
 | `Blockquote/Blockquote.test.tsx`                                                                                                                                                         | 11       | 8    | 3     |
 | `hooks/useListFocus.test.tsx`                                                                                                                                                            | 34       | 31   | 3     |
 | `Item/Item.test.tsx`                                                                                                                                                                     | 48       | 45   | 3     |
