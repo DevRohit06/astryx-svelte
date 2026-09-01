@@ -1,6 +1,6 @@
 /** PORTS: Toast/ToastViewport.test.tsx */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, expectTypeOf, vi, beforeEach, afterEach } from 'vitest';
 import { tick } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import Harness from './fixtures/toast-viewport-harness.svelte';
@@ -8,10 +8,13 @@ import EndContentHarness from './fixtures/toast-swipe-end-content.svelte';
 import RenderContentHarness from './fixtures/toast-render-content.svelte';
 import NestedViewports from './fixtures/toast-nested-viewports.svelte';
 import TwoViewports from './fixtures/toast-two-viewports.svelte';
+import LongBody from './fixtures/toast-long-body.svelte';
 import Toast from '$lib/components/toast/toast.svelte';
 import EffectDispatch from './fixtures/toast-effect-dispatch.svelte';
 import { __resetLiveRegionsForTest, type AnnouncePoliteness } from '$lib/hooks/use-announce.js';
 import type { ToastOptions, ToastPosition } from '$lib/components/toast/types.js';
+import type { ToastProps } from '$lib/components/toast/toast.svelte';
+import type { ToastViewportProps } from '$lib/components/toast/toast-viewport.svelte';
 
 /**
  * Ported from Astryx's `Toast/ToastViewport.test.tsx`. What is here and what is
@@ -129,6 +132,7 @@ const INFO_A: ToastOptions = { body: 'Toast A' };
 const INFO_B: ToastOptions = { body: 'Toast B' };
 const AUTO_TOAST: ToastOptions = { body: 'Auto toast', autoHideDuration: 3000 };
 const SWIPE_TOAST: ToastOptions = { body: 'Swipe toast', isAutoHide: false };
+const LONG_TOAST_BODY = 'Arbeitsbereichsbenachrichtigungseinstellungen gespeichert';
 
 /**
  * Pointer capture, stubbed on the prototype for the swipe block.
@@ -495,6 +499,117 @@ afterEach(() => {
 	__resetLiveRegionsForTest();
 });
 
+describe('Toast responsive layout', () => {
+	it('keeps placement on ToastViewport rather than exposing a non-positioning Toast prop', async () => {
+		expectTypeOf<ToastProps>().not.toHaveProperty('position');
+		expectTypeOf<ToastViewportProps>().toHaveProperty('position');
+
+		// `expectTypeOf` compiles to nothing, and this project runs with
+		// `expect.requireAssertions` — a case that asserts nothing at runtime
+		// fails. The type half above is still checked, by `svelte-check` in the
+		// gate; what follows is the same claim made of the rendered output, which
+		// is what the title is really about. `ToastProps` is a closed list with no
+		// rest spread, so a `position` handed to a `Toast` reaches nothing at all.
+		const stray = {
+			type: 'info',
+			body: 'Placed',
+			isAutoHide: false,
+			autoHideDuration: 5000,
+			onDismiss: () => {},
+			position: 'topEnd'
+		} as unknown as ToastProps;
+		await render(Toast, { props: stray });
+		const card = getVisualToastByText('Placed');
+		expect(card.hasAttribute('position')).toBe(false);
+		expect(card.closest('[data-toast-id]')).toBeNull();
+
+		// The viewport's `position` is the one that places the stack.
+		const placed = await renderViewport([{ options: INFO_A }], 'topEnd');
+		(placed.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
+		await tick();
+		expect(getComputedStyle(notificationRegions()[0]).top).toBe('0px');
+	});
+
+	it('keeps real trailing controls on the first line while long body text wraps', async () => {
+		const screen = await render(LongBody, { props: { body: LONG_TOAST_BODY } });
+		(screen.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
+		await tick();
+
+		const toast = getVisualToastByText(LONG_TOAST_BODY);
+		await settleEntry(toast);
+		const mediaWrapper = toast.firstElementChild as HTMLElement;
+		const layoutRow = mediaWrapper.firstElementChild as HTMLElement;
+		const body = [...layoutRow.querySelectorAll<HTMLElement>('*')].find(
+			(node) => node.textContent === LONG_TOAST_BODY
+		) as HTMLElement;
+		const endArea = body.nextElementSibling as HTMLElement;
+		const actionControl = endArea.firstElementChild as HTMLElement;
+		const dismissControl = endArea.querySelector<HTMLElement>(
+			'button[aria-label="Dismiss notification"]'
+		) as HTMLElement;
+
+		expect(getComputedStyle(layoutRow).flexWrap).toBe('nowrap');
+		expect(getComputedStyle(layoutRow).alignItems).toBe('flex-start');
+		expect(getComputedStyle(body).minWidth).toBe('0px');
+		expect(getComputedStyle(body).overflowWrap).toBe('anywhere');
+		expect(getComputedStyle(endArea).alignItems).toBe('center');
+		expect(getComputedStyle(endArea).height).toBe(
+			resolves(endArea, 'height', 'calc(var(--text-body-size) * var(--text-body-leading))')
+		);
+		expect(getComputedStyle(actionControl).height).toBe(
+			resolves(actionControl, 'height', 'var(--size-element-lg)')
+		);
+		expect(getComputedStyle(dismissControl).height).toBe(
+			resolves(dismissControl, 'height', 'var(--size-element-sm)')
+		);
+	});
+
+	it('uses the viewport as the inline constraint for edge placements', async () => {
+		const screen = await renderViewport([{ options: INFO_A }]);
+		(screen.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
+		await tick();
+
+		const viewport = notificationRegions()[0];
+		const style = getComputedStyle(viewport);
+
+		// Upstream reads `ToastViewport.tsx` and asserts it does not contain
+		// `100lvh - 100dvh`, a viewport-unit trick for the mobile URL bar that
+		// would move the toast stack as the bar shows and hides. Against the
+		// compiled rules instead, scoped to the landmark's own — see `rulesMatching`.
+		expect(someRuleFor([viewport], '100lvh')).toBe(false);
+		expect(someRuleFor([viewport], '100dvh')).toBe(false);
+		expect(style.boxSizing).toBe('border-box');
+		expectSpansInlineAxisWithoutOverflowing(viewport);
+		expect(style.paddingInlineEnd).not.toBe('0px');
+		// Upstream's `'0'` is jsdom echoing the declaration; Chromium computes a
+		// used length.
+		expect(style.insetInlineStart).toBe('0px');
+		expect(style.insetInlineEnd).toBe('0px');
+	});
+
+	it('preserves custom start and end insets in LTR and RTL without forcing full width', async () => {
+		for (const dir of ['ltr', 'rtl'] as const) {
+			const screen = await render(LongBody, {
+				props: { body: 'Inset toast', inset: { bottom: 24, start: 24, end: 40 } }
+			});
+			document.documentElement.dir = dir;
+			(screen.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
+			await tick();
+
+			const viewport = notificationRegions()[0];
+			// Inline styles, so these read the same on both sides.
+			expect(viewport.style.bottom).toBe('24px');
+			expect(viewport.style.insetInlineStart).toBe('24px');
+			expect(viewport.style.insetInlineEnd).toBe('40px');
+			expect(viewport.getBoundingClientRect().width).toBeLessThan(
+				document.documentElement.clientWidth
+			);
+
+			screen.unmount();
+			document.documentElement.dir = '';
+		}
+	});
+});
 describe('ToastViewport placement', () => {
 	async function renderPlacement({
 		position,

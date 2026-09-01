@@ -45,8 +45,8 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 |                            | Cases          |
 | -------------------------- | -------------- |
 | Upstream, in ported suites | 7369           |
-| Declared here              | 6421           |
-| **Short**                  | **952**        |
+| Declared here              | 6425           |
+| **Short**                  | **948**        |
 | Over, across 4 groups      | +4             |
 | Beyond upstream            | 90 in 20 files |
 
@@ -57,7 +57,7 @@ every one of them at once. Cases with no upstream analogue are counted apart, ne
 a suite. Where one file ports several suites, or several files one suite, the shortfall is
 per connected group.
 
-<details><summary>Suites short of upstream (101)</summary>
+<details><summary>Suites short of upstream (100)</summary>
 
 | Suite                                                                                                                                                                                    | Upstream | Here | Short |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---- | ----- |
@@ -116,7 +116,6 @@ per connected group.
 | `MetadataList/MetadataList.test.tsx`                                                                                                                                                     | 20       | 16   | 4     |
 | `Overlay/Overlay.test.tsx`                                                                                                                                                               | 29       | 25   | 4     |
 | `theme/Theme.test.tsx`                                                                                                                                                                   | 15       | 11   | 4     |
-| `Toast/ToastViewport.test.tsx`                                                                                                                                                           | 55       | 51   | 4     |
 | `Blockquote/Blockquote.test.tsx`                                                                                                                                                         | 11       | 8    | 3     |
 | `hooks/useListFocus.test.tsx`                                                                                                                                                            | 34       | 31   | 3     |
 | `Item/Item.test.tsx`                                                                                                                                                                     | 48       | 45   | 3     |
