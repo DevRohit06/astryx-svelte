@@ -199,8 +199,8 @@ deviation, not a task.
       `transitionend`; that is why it was never seen before batch 042. It is a warning, not a
       failure, and the suite passes — but it is the idiom axis (`astryx-idiom`), not the parity one,
       and a stale read on teardown is exactly the shape that axis exists to catch. Start at
-      `toast-viewport.svelte`'s `ontransitionend` → `handleExited`, and at the `{@const wrapper =
-toastWrapperAttrs(...)}` inside the keyed `{#each}`
+      `toast-viewport.svelte`'s `ontransitionend` handler and the `handleExited` it calls, then at
+      the `toastWrapperAttrs` const inside the keyed `{#each}`
 - [ ] a11y parity checks on every `aria-*`, `role` and live region
 - [ ] SSR render with JS disabled, no hydration warnings
 
