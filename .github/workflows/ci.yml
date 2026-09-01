@@ -98,6 +98,12 @@ jobs:
         run: |
           pin=$(node -p "require('./packages/core/package.json').devDependencies['@astryxdesign/core']")
           git clone --depth 1 --branch "v$pin" https://github.com/facebook/astryx.git reference/astryx-upstream
+          # The same rename CLAUDE.md requires of a developer, for the same
+          # reason and now for a second one: upstream tracks its own CLAUDE.md,
+          # so every fresh clone restores it, and `status.mjs` fails the gate
+          # while it is there. Renaming here keeps that check universal instead
+          # of excusing the one environment that clones on every run.
+          mv -f reference/astryx-upstream/CLAUDE.md reference/astryx-upstream/UPSTREAM-CLAUDE.md
 
       # See the job comment: needed for status.mjs's test-collection stage,
       # not for running the browser suite itself.
