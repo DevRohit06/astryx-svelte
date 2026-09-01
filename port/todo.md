@@ -191,6 +191,16 @@ deviation, not a task.
       count is the contract, and `status.md`'s case delta is where it is now kept. A new file
       declares `PORTS:`; a new upstream suite nothing ports needs either that or a
       `NO_TEST_COUNTERPART` entry, or the run fails
+- [ ] **`derived_inert` on a Toast's natural exit.** Svelte logs _"Reading a derived belonging to a
+      now-destroyed effect may result in stale values"_ — twice — when a toast unmounts at the end
+      of its real collapse transition. Reproduce with
+      `toast-viewport.svelte.test.ts`'s `collapses a dismissed Toast before unmounting it`, which is
+      the first case to let the transition finish on its own rather than synthesising
+      `transitionend`; that is why it was never seen before batch 042. It is a warning, not a
+      failure, and the suite passes — but it is the idiom axis (`astryx-idiom`), not the parity one,
+      and a stale read on teardown is exactly the shape that axis exists to catch. Start at
+      `toast-viewport.svelte`'s `ontransitionend` → `handleExited`, and at the `{@const wrapper =
+    toastWrapperAttrs(...)}` inside the keyed `{#each}`
 - [ ] a11y parity checks on every `aria-*`, `role` and live region
 - [ ] SSR render with JS disabled, no hydration warnings
 

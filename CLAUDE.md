@@ -274,6 +274,25 @@ because an SSR-only companion file shared its stem (`useResizable` 29). A declar
 forgotten, because nothing else grants coverage — the failure mode is structurally gone rather
 than patched (batch 041).
 
+**A computed style read straight after mount is the `@starting-style` value, not the resting one.**
+jsdom has no transitions and no `@starting-style`, so an upstream case reads settled values
+immediately and carries no wait — port it verbatim and it asserts about the _entry animation_. Two
+stacked toasts read `padding-bottom: 0` where upstream asserts an 8px gap, and since our compiled
+CSS is byte-identical to upstream's for both classes involved, the conclusion on offer was that
+upstream ships a dead `:last-child` rule; it was the entry state. The card's
+`matrix(1, 0, 0, 1, 0, 8)` is the entry slide for the same reason, not a swipe throw. Await the
+element's animations (`getAnimations({subtree: true})`, then their `finished`) before reading
+anything transitioned — including after _driving_ a custom property, when the property being driven
+is itself in `transition-property` (batch 042).
+
+**Restating a jsdom-only assertion means restating its _scope_, not just its subject.** Upstream's
+`readFileSync` guards name one source file; the compiled sheet is the better subject here — it is
+what ships — but a page-wide scan of it answers a different question, and
+`expect(someRuleContains('scale(0.98)')).toBe(false)` fails on an unrelated component that uses it.
+Narrow to the rules that actually apply to the element under test. Related: `expectTypeOf` compiles
+to nothing, so a type-only upstream case fails `expect.requireAssertions` — keep the type half and
+make the same claim of the rendered output (batch 042).
+
 **The compiled StyleX sheet is on a browser-test page twice.** Vite's dev server injects it for
 the module graph `setup-stylex.ts` imports, and that setup file then appends its own `<style>` so
 the sheet is complete whatever the suite imports. A suite counting rules out of
