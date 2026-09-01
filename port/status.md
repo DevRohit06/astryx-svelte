@@ -14,7 +14,7 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.2                                               |
-| Ledger entries            | 43                                                                       |
+| Ledger entries            | 44                                                                       |
 
 ## Test parity
 
@@ -48,7 +48,7 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 | Declared here              | 6425           |
 | **Short**                  | **948**        |
 | Over, across 4 groups      | +4             |
-| Beyond upstream            | 90 in 20 files |
+| Beyond upstream            | 94 in 20 files |
 
 A ported suite may still fall short of the one it ports. That shortfall is the front’s
 worklist, and it is measured here rather than restated in each suite’s header — a header’s

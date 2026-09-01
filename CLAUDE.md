@@ -102,10 +102,28 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   It reads as a catastrophic regression rather than as contention, and it cost
 #   a full 30-minute gate run to a background agent that was running the suite
 #   at the same time. Same rule for `pnpm verify`, which runs this.
+#   **The run you collide with may be one nobody is watching.** `child.on('close')`
+#   was the only thing that ever resolved a chunk, so a chunk whose browser died
+#   *without* closing its vitest process never resolved — the run hung instead of
+#   failing, silently, for as long as the machine stayed up. Two such trees, six
+#   vitest processes and six headless shells between them, were found alive 16 and
+#   7 hours after the runs that spawned them, still holding this project while a
+#   later gate ran against it; that gate's failure was then written up as a memory
+#   regression in a commit both orphans predate. Nothing had killed them because
+#   nothing *could*: the "30-minute stage timeout" this file used to cite does not
+#   exist — CI caps the job at 45 minutes and locally there is no cap at all — and
+#   believing in it is why no one looked. The runner now takes a liveness-keyed
+#   lock (`node_modules/.client-run.lock`; `CLIENT_CHUNK_NO_LOCK=1` overrides) and
+#   kills any chunk that has not exited within `CLIENT_CHUNK_TIMEOUT_MS` (12 min),
+#   classifying it as a drop and re-running it **once**, since a wedge costs the
+#   whole timeout per attempt where a drop costs seconds. Before believing any
+#   diagnosis of this symptom, check for a live run — it has now been misread four
+#   times: as a cold cache, as free isolation, as a memory regression, and only
+#   then as the unbounded chunk it was.
 #   **The same contention bites the runner's own pool, and warming does not fix
 #   it.** Four chunks launching at once all print `Forced re-optimization of
 #   dependencies`, and three of the four then never print a header — they hold
-#   their slots until the 30-minute stage timeout kills the run, while every
+#   their slots indefinitely (see above — nothing kills them), while every
 #   later chunk passes. It reads as a catastrophic regression and is contention;
 #   each stalled chunk passes in isolation. The cause is **not** a cold cache:
 #   vitest's browser mode re-optimizes on *every* run, so the cache is never
@@ -126,7 +144,7 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   The client project cannot be run in one process: it dies partway through with
 #   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
 #   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a
-#   different file each time. `scripts/run-client-tests.mjs` runs it in batches of 20
+#   different file each time. `scripts/run-client-tests.mjs` runs it in batches of 12
 #   (`CLIENT_CHUNK_SIZE` overrides) and reconciles files-run against files-on-disk, so
 #   a chunk that collected nothing fails the run instead of shrinking the total. This
 #   is what `core`'s `test` script and CI both use; a bare `--project=client` over every

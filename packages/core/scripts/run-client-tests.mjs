@@ -79,8 +79,11 @@ const RETRIES = Number(process.env.CLIENT_CHUNK_RETRIES ?? 2);
  *
  * **The cap is 2, and it used to be 4.** The old number was chosen when every
  * chunk shared one optimizer cache, so only the first paid to build it. Isolating
- * the caches removed a collision that stalled three of four chunks into the
- * stage's 30-minute timeout, but it moved that cost onto every chunk: four
+ * the caches removed a collision that stalled three of four chunks indefinitely
+ * — this said "into the stage's 30-minute timeout", and there is no such timeout:
+ * CI caps the *job* at 45 minutes and locally nothing capped anything at all.
+ * Believing otherwise is why a hung run was assumed to have been cleaned up. It
+ * moved that cost onto every chunk, though: four
  * concurrent full dependency optimizations starve this box, and a starved chunk
  * does not crash — `userEvent.click` lands on a page that is not answering yet,
  * handlers never fire, and a dozen unrelated cases report as assertion failures.
@@ -95,15 +98,23 @@ const RETRIES = Number(process.env.CLIENT_CHUNK_RETRIES ?? 2);
  * 2 cores / 4 GB (GitHub's own docs said 8 GB until github/docs#28019 corrected
  * it, so 8 is the number to distrust here).
  *
- * **The isolated cache is a memory trade and it has been seen to lose.** Each
- * chunk now holds its own dependency graph where they used to share one, and a
- * `pnpm verify` on an already-loaded box died with `memory allocation of 34816
- * bytes failed` and a `0xC0000409` chunk crash, having passed 18/18 standalone
- * on the same commit minutes earlier. That is the shape to watch for on a small
- * runner: not assertion failures but a chunk vanishing, browsers dropping, and
- * retries that do not help. If CI shows it, `CLIENT_CHUNK_CONCURRENCY=1` is the
+ * **The isolated cache is a memory trade**, and one `pnpm verify` was blamed on
+ * it wrongly. That run died with `memory allocation of 34816 bytes failed` and a
+ * `0xC0000409` chunk crash, having passed 18/18 standalone on the same commit
+ * minutes earlier, and the note here used to read "it has been seen to lose."
+ * It had not: two orphaned runs were alive on this project at the time, holding
+ * six vitest processes and six headless shells between them, and **both started
+ * before the commit that isolated the caches**. The memory was gone before that
+ * change was in the picture. `TIMEOUT_MS` exists so that condition cannot recur.
+ *
+ * The trade is still real and unmeasured — each chunk holds its own dependency
+ * graph where they used to share one — so the shape to watch for on a small
+ * runner is a chunk vanishing, browsers dropping, and retries that do not help,
+ * *after* confirming no other run is live. `CLIENT_CHUNK_CONCURRENCY=1` is the
  * lever, and sharing the cache again — accepting the rename collision — is the
- * fallback.
+ * fallback. Check for orphans first: this symptom has now been misdiagnosed four
+ * times, as a cold cache, as free isolation, as a memory regression, and only
+ * then as the unbounded chunk it was.
  *
  * `CLIENT_CHUNK_CONCURRENCY=1` restores strictly-serial behaviour, which is what
  * to reach for when bisecting a crash — interleaved output makes that harder, and
@@ -134,6 +145,60 @@ if (files.length === 0) {
 	// file list is indistinguishable from a passing run everywhere downstream.
 	console.error(`No *.svelte.test.ts files under ${TESTS}. The test layout has moved.`);
 	process.exit(1);
+}
+
+/**
+ * One client run on this project at a time, enforced rather than documented.
+ *
+ * CLAUDE.md has warned since batch 029 that two vitest processes on this project
+ * collide at project init, and the warning has been read as being about two runs
+ * *started deliberately*. It is not: a run that hangs stays live and holds the
+ * project, so the second run is the one you meant to start. That is what
+ * happened here — a `pnpm verify` collided with two forgotten runs, failed, and
+ * was written up as a memory regression in an unrelated commit.
+ *
+ * A lock turns that into one line at start-up instead of a bad diagnosis an hour
+ * later. It is keyed on liveness, not existence, so a hard kill leaves nothing to
+ * clean up by hand; `CLIENT_CHUNK_NO_LOCK=1` overrides it for the rare case of
+ * two genuinely separate checkouts sharing one `node_modules`.
+ */
+const LOCK = path.join(CORE, 'node_modules', '.client-run.lock');
+
+/** `kill(pid, 0)` probes without signalling: ESRCH is gone, EPERM is alive-but-not-ours. */
+function isAlive(pid) {
+	try {
+		process.kill(pid, 0);
+		return true;
+	} catch (error) {
+		return error.code === 'EPERM';
+	}
+}
+
+if (!process.env.CLIENT_CHUNK_NO_LOCK) {
+	let held = null;
+	try {
+		held = JSON.parse(fs.readFileSync(LOCK, 'utf8'));
+	} catch {
+		// No lock, or one written by a crash mid-write. Either way it holds nothing.
+	}
+	if (held && isAlive(held.pid)) {
+		console.error(
+			`\nAnother client run is already live on this project.\n` +
+				`  pid ${held.pid}, started ${held.started}\n\n` +
+				`Two vitest processes on this project collide at project init, and the\n` +
+				`resulting failures look like a broken suite rather than contention. Wait\n` +
+				`for it, or kill that process tree, then run again.\n`
+		);
+		process.exit(1);
+	}
+	fs.writeFileSync(LOCK, JSON.stringify({ pid: process.pid, started: new Date().toISOString() }));
+	process.on('exit', () => {
+		try {
+			fs.rmSync(LOCK, { force: true });
+		} catch {
+			// Best effort: a lock left behind is reclaimed by the liveness check above.
+		}
+	});
 }
 
 const chunks = [];
@@ -180,16 +245,100 @@ const retried = [];
  * @param {number} index
  * @returns {Promise<{code: number | null, output: string}>}
  */
+/**
+ * How long one chunk may run before the runner kills it and calls it a drop.
+ *
+ * **Nothing bounded a chunk before this, and two runs proved it matters.** A
+ * chunk whose browser dies without closing its vitest process leaves that
+ * process alive with nothing to do; `child.on('close')` therefore never fires,
+ * the pool slot is never returned, and the run hangs *forever* rather than
+ * failing. Two such trees — 18 processes and 1.05 GB between them, six vitest
+ * processes and six headless shells — were found alive 16 and 7 hours after the
+ * runs that spawned them, and both were still holding this project while a
+ * later `pnpm verify` ran against it. That verify failed, and the failure was
+ * read as a memory regression in the isolated-cache change; the orphans both
+ * predate that commit. The lesson is the one this repo keeps relearning about
+ * concurrent vitest on this project, arriving from a direction nobody was
+ * watching: a hung run does not announce itself, so it has to be made
+ * impossible rather than noticed.
+ *
+ * Twelve minutes is ~6× the slowest observed chunk (12 files, ~2 min including
+ * browser launch and dependency optimization). `CLIENT_CHUNK_TIMEOUT_MS`
+ * overrides it — raise it on a slow runner rather than removing the bound.
+ */
+const TIMEOUT_MS = Number(process.env.CLIENT_CHUNK_TIMEOUT_MS ?? 12 * 60 * 1000);
+
+/**
+ * How many times a chunk that *wedged* is re-run — one, not `RETRIES`.
+ *
+ * A drop is cheap to retry: it fails in seconds, and the doubled drop on release
+ * run 31407711720 is why `RETRIES` is 2. A hang costs the **whole timeout** every
+ * attempt, so the same allowance buys 36 minutes of a runner sitting still — past
+ * CI's 45-minute job cap, which would kill the job before it reported anything.
+ * There is also no evidence a re-run hang succeeds, where a re-run drop
+ * demonstrably does. One hedge, then the chunk is a failure with a name.
+ */
+const TIMEOUT_RETRIES = 1;
+
+/**
+ * Every chunk process currently alive, so a runner that is itself interrupted
+ * can take its children with it. Without this, Ctrl-C at the wrong moment
+ * orphans exactly what `TIMEOUT_MS` exists to prevent.
+ *
+ * @type {Set<import('node:child_process').ChildProcess>}
+ */
+const live = new Set();
+
+/**
+ * Kill a chunk **and its descendants**. `child.kill()` is not enough: the
+ * headless shell is Playwright's child, not ours, and on Windows a signal to
+ * the parent does not propagate — which is precisely how six `chrome-headless-
+ * shell.exe` processes outlived the runs that launched them. `taskkill /T`
+ * walks the tree there; elsewhere the child is spawned into its own process
+ * group and the group is signalled.
+ *
+ * @param {import('node:child_process').ChildProcess} child
+ */
+function killTree(child) {
+	if (child.pid == null || child.exitCode != null) return;
+	if (process.platform === 'win32') {
+		spawn('taskkill', ['/pid', String(child.pid), '/t', '/f'], { stdio: 'ignore' });
+	} else {
+		try {
+			process.kill(-child.pid, 'SIGKILL');
+		} catch {
+			child.kill('SIGKILL');
+		}
+	}
+}
+
+for (const signal of ['SIGINT', 'SIGTERM']) {
+	process.on(signal, () => {
+		for (const child of live) killTree(child);
+		process.exit(1);
+	});
+}
+
 function runChunk(args, stream, index) {
 	return new Promise((resolve) => {
 		const child = spawn(process.execPath, args, {
 			cwd: CORE,
+			// Its own process group, so `killTree` can signal the browser too. Inert
+			// on Windows, where `taskkill /T` does that job instead.
+			detached: process.platform !== 'win32',
 			env: {
 				...process.env,
 				CLIENT_CHUNK_CACHE_DIR: path.join(CORE, 'node_modules', `.vite-chunk-${index}`)
 			}
 		});
+		live.add(child);
 		let output = '';
+		let timedOut = false;
+		const timer = setTimeout(() => {
+			timedOut = true;
+			output += `\n  killed after ${Math.round(TIMEOUT_MS / 1000)}s with no exit — treated as a drop.\n`;
+			killTree(child);
+		}, TIMEOUT_MS);
 		child.stdout.on('data', (data) => {
 			output += data;
 			if (stream) process.stdout.write(data);
@@ -198,7 +347,11 @@ function runChunk(args, stream, index) {
 			output += data;
 			if (stream) process.stderr.write(data);
 		});
-		child.on('close', (code) => resolve({ code, output }));
+		child.on('close', (code) => {
+			clearTimeout(timer);
+			live.delete(child);
+			resolve({ code, output, timedOut });
+		});
 	});
 }
 
@@ -232,11 +385,13 @@ async function settleChunk(index, chunk) {
 
 	if (serial) process.stdout.write(banner);
 
-	let code, plain, fileLine, caseLine, output;
+	let code, plain, fileLine, caseLine, output, timedOut;
+	let timeouts = 0;
 
 	for (let attempt = 0; attempt <= RETRIES; attempt++) {
 		if (attempt > 0) {
-			const note = `\n  ${label} lost its browser, not a case — retry ${attempt} of ${RETRIES}.\n\n`;
+			const what = timedOut ? 'wedged with no exit' : 'lost its browser';
+			const note = `\n  ${label} ${what}, not a case — retry ${attempt} of ${RETRIES}.\n\n`;
 			if (serial) process.stdout.write(note);
 			else banner += note;
 			retries.push(`${label} (×${attempt})`);
@@ -245,6 +400,7 @@ async function settleChunk(index, chunk) {
 		const result = await runChunk(args, serial, index);
 		code = result.code;
 		output = result.output;
+		timedOut = result.timedOut;
 		plain = stripAnsi(result.output);
 		fileLine = plain.match(/Test Files\s+(\d+) passed\s+\((\d+)\)/);
 		caseLine = plain.match(/Tests\s+(\d+) passed\s+\((\d+)\)/);
@@ -252,13 +408,17 @@ async function settleChunk(index, chunk) {
 		const ok = code === 0 && fileLine && caseLine;
 		// Stop on success, and stop immediately on a *real* failure — a chunk
 		// that failed a case is never re-run, however many attempts are left.
-		if (ok || !isInfrastructureFailure(plain)) break;
+		if (ok || !isInfrastructureFailure(plain, { timedOut })) break;
+		// A wedge gets one hedge, not `RETRIES` of them — see `TIMEOUT_RETRIES`.
+		if (timedOut && ++timeouts > TIMEOUT_RETRIES) break;
 	}
 
 	const ok = code === 0 && fileLine && caseLine;
 	const verdict = ok
 		? `  ${label} ok — ${fileLine[1]} files, ${caseLine[1]} cases\n`
-		: `  ${label} FAILED (exit ${code})\n`;
+		: // A killed chunk exits with a signal and no code, so `exit null` would be
+			// the whole report of a twelve-minute hang. Name the timeout instead.
+			`  ${label} FAILED (${timedOut ? `no exit within ${Math.round(TIMEOUT_MS / 1000)}s` : `exit ${code}`})\n`;
 
 	// Concurrent: the whole chunk lands as one block now that it is finished, so
 	// its output is contiguous and attributable. Serial already streamed it.

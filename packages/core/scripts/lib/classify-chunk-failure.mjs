@@ -26,16 +26,30 @@
  * never retried, including when it also lost its browser — the failed case is
  * the more important fact, and re-running it would be re-rolling a real result.
  *
+ * A **timeout** is the same class arriving with no message at all: the chunk
+ * printed nothing further and never exited, so there is no error text to match
+ * on. The caller passes it as a flag rather than deciding for itself, so that
+ * the zero-failed-tests rule above governs a hang exactly as it governs a drop —
+ * a chunk that reported a failed case and *then* wedged is still a real result.
+ *
  * @param {string} output  the chunk's combined stdout+stderr, ANSI stripped
+ * @param {{timedOut?: boolean}} [options]  `timedOut` when the runner killed it
  * @returns {boolean}
  */
-export function isInfrastructureFailure(output) {
+export function isInfrastructureFailure(output, { timedOut = false } = {}) {
 	if (/Tests\s+\d+ failed/.test(output)) return false;
+	if (timedOut) return true;
 	return (
 		/Failed to fetch dynamically imported module/.test(output) ||
 		/Cannot connect to the iframe/.test(output) ||
 		/wrapDynamicImport/.test(output) ||
 		/Browser connection was closed/.test(output) ||
-		/browserType\.launch/.test(output)
+		/browserType\.launch/.test(output) ||
+		// The browser never answered the handshake, so the chunk ran **no tests at
+		// all** — `Tests  no tests`, twelve files collected and zero executed. Near
+		// neighbours of `Browser connection was closed` above, but a distinct
+		// string, and missing it failed a gate on 12 innocent files (batch 043).
+		// The list is patterns observed in real runs; each addition needs one.
+		/Failed to connect to the browser session/.test(output)
 	);
 }
