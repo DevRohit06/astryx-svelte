@@ -95,6 +95,16 @@ const RETRIES = Number(process.env.CLIENT_CHUNK_RETRIES ?? 2);
  * 2 cores / 4 GB (GitHub's own docs said 8 GB until github/docs#28019 corrected
  * it, so 8 is the number to distrust here).
  *
+ * **The isolated cache is a memory trade and it has been seen to lose.** Each
+ * chunk now holds its own dependency graph where they used to share one, and a
+ * `pnpm verify` on an already-loaded box died with `memory allocation of 34816
+ * bytes failed` and a `0xC0000409` chunk crash, having passed 18/18 standalone
+ * on the same commit minutes earlier. That is the shape to watch for on a small
+ * runner: not assertion failures but a chunk vanishing, browsers dropping, and
+ * retries that do not help. If CI shows it, `CLIENT_CHUNK_CONCURRENCY=1` is the
+ * lever, and sharing the cache again — accepting the rename collision — is the
+ * fallback.
+ *
  * `CLIENT_CHUNK_CONCURRENCY=1` restores strictly-serial behaviour, which is what
  * to reach for when bisecting a crash — interleaved output makes that harder, and
  * serial output is streamed live where concurrent output is buffered per chunk.
@@ -286,7 +296,7 @@ console.log(
 	serial
 		? '  running chunks serially (CLIENT_CHUNK_CONCURRENCY=1)\n'
 		: `  running up to ${CONCURRENCY} chunks at a time on ${os.cpus().length} core(s)` +
-				', first one alone to warm the Vite cache\n'
+				', each with its own optimizer cache\n'
 );
 
 await Promise.all(Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, worker));
