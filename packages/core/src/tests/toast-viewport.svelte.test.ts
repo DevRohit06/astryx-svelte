@@ -6,6 +6,8 @@ import { render } from 'vitest-browser-svelte';
 import Harness from './fixtures/toast-viewport-harness.svelte';
 import EndContentHarness from './fixtures/toast-swipe-end-content.svelte';
 import RenderContentHarness from './fixtures/toast-render-content.svelte';
+import NestedViewports from './fixtures/toast-nested-viewports.svelte';
+import Toast from '$lib/components/toast/toast.svelte';
 import EffectDispatch from './fixtures/toast-effect-dispatch.svelte';
 import { __resetLiveRegionsForTest, type AnnouncePoliteness } from '$lib/hooks/use-announce.js';
 import type { ToastOptions, ToastPosition } from '$lib/components/toast/types.js';
@@ -15,11 +17,14 @@ import type { ToastOptions, ToastPosition } from '$lib/components/toast/types.js
  * short of it is measured in `port/status.md`'s case delta, from the `PORTS:`
  * marker above — this header states no count, per CLAUDE.md.
  *
- * Still without a counterpart: the viewport geometry blocks 0.5.1 added
- * (`Toast responsive layout`, `ToastViewport placement`, `ToastViewport visible
- * limit`, `Toast native motion contract`) and `Toast live-region fallback
- * semantics`. Every one of their subjects exists here — `position`, `maxVisible`
- * and the exit transition are all ported — so they are unwritten, not blocked.
+ * Still without a counterpart: the four viewport geometry and motion blocks
+ * 0.5.1 added — `Toast responsive layout`, `ToastViewport placement`,
+ * `ToastViewport visible limit` and `Toast native motion contract`. Every one of
+ * their subjects exists here (`position`, `maxVisible`, `inset` and the exit
+ * transition are all ported), so they are unwritten rather than blocked. They
+ * are also the four that assert on **computed styles**, which jsdom echoes back
+ * as the declaration and Chromium resolves — so each will need its assertions
+ * restated against resolved values rather than transcribed.
  *
  * The region-ARIA pair at the end is upstream's own 0.5.1 split: the landmark is
  * now gated on there being something to announce, so an empty viewport exposes
@@ -481,6 +486,16 @@ describe('ToastViewport region ARIA', () => {
 		// aria-modal is only valid on role="dialog"/"alertdialog"; a region must
 		// not declare it (axe: aria-allowed-attr).
 		await expect.element(region).not.toHaveAttribute('aria-modal');
+	});
+
+	it('does not duplicate the landmark for nested viewports', async () => {
+		const screen = await render(NestedViewports, { props: { options: INFO_A } });
+		(screen.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
+		await tick();
+
+		expect(
+			screen.getByRole('region', { name: 'Notifications', exact: true }).elements()
+		).toHaveLength(1);
 	});
 });
 
@@ -1109,5 +1124,41 @@ describe('Toast swipe dismissal', () => {
 		).click();
 
 		expect(onHide).toHaveBeenCalledWith('manual');
+	});
+});
+
+describe('Toast live-region fallback semantics', () => {
+	it('keeps standalone info Toast content in a polite status region', async () => {
+		await render(Toast, {
+			props: {
+				type: 'info',
+				body: 'Saved',
+				isAutoHide: false,
+				autoHideDuration: 5000,
+				onDismiss: () => {}
+			}
+		});
+
+		const visualToast = getVisualToastByText('Saved');
+		expect(visualToast).toHaveAttribute('role', 'status');
+		expect(visualToast).toHaveAttribute('aria-live', 'polite');
+		expect(visualToast).toHaveAttribute('aria-atomic', 'true');
+	});
+
+	it('keeps standalone error Toast content in an assertive alert region', async () => {
+		await render(Toast, {
+			props: {
+				type: 'error',
+				body: 'Upload failed',
+				isAutoHide: false,
+				autoHideDuration: 5000,
+				onDismiss: () => {}
+			}
+		});
+
+		const visualToast = getVisualToastByText('Upload failed');
+		expect(visualToast).toHaveAttribute('role', 'alert');
+		expect(visualToast).toHaveAttribute('aria-live', 'assertive');
+		expect(visualToast).toHaveAttribute('aria-atomic', 'true');
 	});
 });
