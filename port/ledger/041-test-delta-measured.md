@@ -131,6 +131,57 @@ and that is the part worth keeping — a regex through 223 headers would take th
 arithmetic. It is the next batch's first unit and is written into `port/todo.md` as one, not left to
 be noticed.
 
+## The gate ran three times, and the third change came from the second run
+
+Run 1 failed one stage: `status drift`, because the regenerated `port/status.md` was not yet
+committed. That is the gate working — its own message says so.
+
+Run 2, against the committed tree, passed `status drift` and failed **`test`** — and not for
+anything this batch changed. Chunks 1, 2 and 4 never printed a header, chunk 3 printed
+`Forced re-optimization of dependencies`, chunks 5–18 all passed, and the stage was killed at its
+30-minute timeout. That is the cold-cache contention `CLAUDE.md` already described, verbatim, down
+to "three of the first four": `pnpm -r build` empties the Vite optimizer cache, so **every**
+`pnpm verify` run starts the client suite cold, and four chunks launching at once all try to
+re-optimize the same directory.
+
+The documented remedy was an instruction — warm the cache by hand before gating after a build —
+which is the one thing that cannot survive being forgotten, and this run forgot it. So the remedy
+moved into `run-client-tests.mjs`: the **first chunk runs alone**, and the pool starts after it. It
+costs one chunk's parallelism in the good case and removes a 30-minute timeout in the bad one.
+Serial mode already had the property; a single-chunk run has nothing to race.
+
+It is the same shape as this batch's main change, arrived at from the other end: a rule that has to
+be remembered is a rule that will be missed, and the fix is to make the thing that enforces it
+structural.
+
+## Oracle bookkeeping
+
+Nothing. No `.stylex.ts` module, no component and no theme declaration changed, so neither class
+oracle, the CSS oracle nor the eight theme oracles had a new subject — all ran in the gate and all
+were already green. The mismatch count did not move because nothing this batch touched can move it,
+which is the honest form of that sentence rather than "0 -> 0".
+
+## What the audits caught
+
+Nothing, because three of the four have no subject here and the fourth's job is what this batch
+mechanised.
+
+`astryx-parity`, `astryx-idiom` and `astryx-surface` audit props, styles, elements, exports and the
+React→Svelte translation. This batch changed a build script, 283 test-file header comments, four
+prose documents and one test file's location. Not a line under `src/lib` moved, so there is no drift
+to find in either direction and no published symbol to sweep. Running them would have produced a
+report about the state batch 040 left, not about this change.
+
+`astryx-test-parity` is the one that applies, and its contract — a suite is as long as the one it
+ports, or names its absences — is now derived on every `status.mjs` run rather than read off a
+header. The one place it would have been pointed at is the `form-and-metadata` split, and that was
+checked directly instead: every case title in the deleted `FieldStatus` block was diffed against
+`field-status.svelte.test.ts` (28 identical, 2 the same assertions renamed), and the three affected
+suites were run — 76 cases, all passing.
+
+That is a claim, not an omission: **the next batch, which ports cases, needs this agent on every
+suite it touches.**
+
 ## Rules promoted
 
 - `CLAUDE.md` § Testing — every test file declares `PORTS:` or `NO-UPSTREAM:`; headers name dropped
@@ -141,6 +192,11 @@ be noticed.
 - `.claude/skills/track-upstream/SKILL.md` step 5b — read the case delta instead of re-deriving 283
   headers by hand; a new upstream suite still needs a decision (a file that ports it, or a
   `NO_TEST_COUNTERPART` entry).
+- `CLAUDE.md` § Commands — the cold-cache warm-up is `run-client-tests.mjs`'s job now, not the
+  reader's; the note says so, and says that driving vitest directly still has no such guard.
+- `port/todo.md` front 1 — the header count strip folds into the batch that ports each suite's
+  cases, rather than standing as a pass of its own. ~200 prose edits with no functional change, on
+  files that are reopened anyway, and the numbers can no longer corrupt the metric while they wait.
 
 ## Debts opened
 

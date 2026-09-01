@@ -64,13 +64,15 @@ them.
    overstated itself. That is the standing warning about estimating a port from reading two
    implementations against each other instead of running either.
 
-   - [ ] **Strip the stated case counts out of the suite headers.** Most still state one against the
-         `0.5.0` pin while the tree is at `0.5.2`, so they are false, and since batch 041 they are
-         also redundant — `status.md` derives the same numbers from the `PORTS:` markers on every
-         run. Nothing reads them, which is why they were left standing rather than rewritten
-         mechanically: the surrounding prose names which cases were dropped and why, and that is
-         worth keeping. A header keeps the reasons and loses the arithmetic.
-         `grep -l '0\.5\.0.* pin' packages/core/src/tests/*.ts` is the worklist.
+   - [ ] **Strip a suite header's stated case count when you touch that suite** — not as a pass of
+         its own. Most still state one against the `0.5.0` pin while the tree is at `0.5.2`, so they
+         are false, and since batch 041 they are also redundant: `status.md` derives the same numbers
+         from the `PORTS:` markers on every run, and `CLAUDE.md` forbids writing new ones. What is
+         left is ~200 prose edits with no functional change, on files that are each reopened the
+         moment their cases are ported — which is the work above this line. Folding the strip into
+         that is strictly less work for the same end state, and the numbers can no longer corrupt
+         the metric while they wait. `grep -l '0\.5\.0.* pin' packages/core/src/tests/*.ts` is the
+         worklist if it is ever wanted as one.
    - [ ] **`FieldStatus` is ported twice.** `form-and-metadata.svelte.test.ts` and
          `field-status.svelte.test.ts` carry the same seven describe blocks; the second adds
          `field-status-icon theme target` and is the fuller one. Split the first into `FormLayout`
@@ -186,7 +188,9 @@ deviation, not a task.
 - [ ] Fold the two per-file `Intl.DateTimeFormat` locale stubs into the client project's `en-US`
       config pin now that it exists, so there's one mechanism instead of three
 - [ ] Continue porting upstream `.test.tsx` suites alongside each component, case for case — the
-      count is the contract (see `status.md` for the measured gap)
+      count is the contract, and `status.md`'s case delta is where it is now kept. A new file
+      declares `PORTS:`; a new upstream suite nothing ports needs either that or a
+      `NO_TEST_COUNTERPART` entry, or the run fails
 - [ ] a11y parity checks on every `aria-*`, `role` and live region
 - [ ] SSR render with JS disabled, no hydration warnings
 

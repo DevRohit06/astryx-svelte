@@ -267,8 +267,35 @@ async function worker() {
 console.log(
 	serial
 		? '  running chunks serially (CLIENT_CHUNK_CONCURRENCY=1)\n'
-		: `  running up to ${CONCURRENCY} chunks at a time on ${os.cpus().length} core(s)\n`
+		: `  running up to ${CONCURRENCY} chunks at a time on ${os.cpus().length} core(s)` +
+				', first one alone to warm the Vite cache\n'
 );
+
+/**
+ * The first chunk runs **alone**, and only then does the pool start.
+ *
+ * On a cold Vite optimizer cache — which `pnpm -r build` leaves behind, so every
+ * `pnpm verify` run has one — four chunks launching at once all discover the
+ * cache is missing and all start `Forced re-optimization of dependencies`
+ * against the same directory. Three of the four then never print a header and
+ * hold their slots until the stage's 30-minute timeout kills the whole run,
+ * while every later chunk passes: it looks like a catastrophic regression and is
+ * contention. Each stalled chunk passes in isolation.
+ *
+ * This was a documented instruction to warm the cache by hand before gating
+ * after a build, and it cost a gate run in batch 041 to the one thing an
+ * instruction cannot do, which is be remembered. One chunk populates the cache
+ * for every process after it, so the fix is to spend the first chunk's
+ * parallelism on it — a chunk's wall clock in the good case, against a 30-minute
+ * timeout in the bad one.
+ *
+ * Serial mode already has this property, and a single-chunk run has nothing to
+ * race.
+ */
+if (!serial && chunks.length > 1) {
+	const index = cursor++;
+	results[index] = await settleChunk(index, chunks[index]);
+}
 
 await Promise.all(Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, worker));
 

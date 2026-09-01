@@ -102,13 +102,17 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   It reads as a catastrophic regression rather than as contention, and it cost
 #   a full 30-minute gate run to a background agent that was running the suite
 #   at the same time. Same rule for `pnpm verify`, which runs this.
-#   **The same contention bites the runner's own concurrency on a cold Vite cache.**
-#   It launches four chunks at once; run straight after a `pnpm -r build` — which
-#   empties the optimize cache — three of the first four raced `Forced
-#   re-optimization of dependencies`, never printed a header, and held their slots
-#   until the 30-minute stage timeout killed the run, while chunks 5-17 all passed.
-#   Nothing was wrong with the tests: each stalled chunk passes in isolation. Warm
-#   the cache (run one chunk, or the suite once) before gating after a build.
+#   **The same contention bites a cold Vite cache**, which `pnpm -r build` leaves
+#   behind — so every `pnpm verify` run has one. Four chunks launching at once all
+#   found the cache missing, all started `Forced re-optimization of dependencies`,
+#   and three of the four never printed a header and held their slots until the
+#   30-minute stage timeout killed the run, while every later chunk passed. It
+#   reads as a catastrophic regression and is contention; each stalled chunk
+#   passes in isolation. `run-client-tests.mjs` now runs its **first chunk alone**
+#   to warm the cache before starting the pool — this was an instruction to warm
+#   it by hand, and it cost a second gate run in batch 041 to the one thing an
+#   instruction cannot do. Driving vitest directly (`test:unit`, or a bare
+#   `--project=client`) still has no such guard.
 #   The client project cannot be run in one process: it dies partway through with
 #   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
 #   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a
