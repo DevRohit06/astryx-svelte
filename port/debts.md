@@ -1756,3 +1756,71 @@ The whole workbench is gone (`ledger/029`), and with it the two imports, `build:
 does — its core `build` is `babel + tsc + css + umd` and produces no app at all, and its
 `theme-neutral` takes core as a **peer** dependency. Nothing in this repo now reaches from core
 into a package that builds after it.
+
+### `DateInput`'s touch surface positions itself from a measurement the sheet has not settled
+
+- **units:** DateInput, MonthScroller, Wheel, MonthYearWheels
+- **kind:** suspected-upstream-bug
+- **retires:** when the calendar opens on its own month and a wheel commits only the row it rests
+  on, under load, in a real browser — at which point the five cases named below are ported
+
+Found by porting `DateInput/DateInputTouch.test.tsx`'s DOM half to real Chromium (batch 044). Five
+of upstream's cases cannot be made to pass, and the reason is not the harness.
+
+**The calendar opens three months early.** Opened on August 2026 the header reads May 2026; opened
+on May 2027 it reads February 2027. Three months is exactly `OVERSCAN`. The header is _stable_ at
+the wrong month rather than still arriving — the wait holds until it stops changing across a frame
+— and the document holds exactly one dialog, one scroller and one title, so it is not a stale
+render from an earlier case.
+
+**A wheel commits a row it is only passing.** Tapping January reads January 2025; tapping 2025 on
+the year wheel reads December 2025. Instrumented at the moment of failure the year wheel sits on
+row 1 of 2024–2028 and selects row 1, having been parked on row 2 with the header reading 2026
+immediately before the tap. The tap is gated on both wheels being _parked_ — scroll position
+agreeing with the selected row, which is the predicate `Wheel`'s own park effect uses.
+
+**One suspected cause.** `MonthScroller` positions once from `$effect.pre`, latched by
+`hasPositioned` so a later resize cannot yank the user back, and `Wheel` parks and commits against
+`itemBlockSize()`. Both read layout that the `BottomSheet` entry animation has not finished
+producing. A latch taken against an intermediate size stays wrong; a wheel repositioned against one
+re-settles onto a neighbour.
+
+**It is not a port divergence.** `scrollOffsetForRow(initial - min, size, rtl)` and the
+`hasPositioned` guard, `Math.round(scrollTop / size)` with its disabled-row bounce,
+`toMonthIndex(parts.year, nextMonth)`, and `handleVisibleMonthChange`'s `isWheelOpen` guard are each
+character-for-character upstream's. Upstream cannot observe any of it: jsdom neither lays out nor
+scrolls, so its scroller never travels, its wheels never re-settle, and its pane size is a constant
+the test supplies through `withLayout`. The five cases exist to catch exactly this class of thing,
+which is why a port of them that passed by not scrolling would be worth nothing.
+
+**Load-sensitive**, which is the last piece of evidence and the reason it was nearly dismissed
+twice: every one of the five passes alone, and passes with its own `describe` block alone. Only a
+full-file run reproduces them. That is the same shape as a starved test chunk and it is not the same
+cause — the assertions are stable and repeatable at the wrong value, not flaky between values.
+
+The five, all in `packages/core/src/tests/date-input-touch.svelte.test.ts` and named in a note
+there:
+
+| upstream case                                                      | reads         | expects      |
+| ------------------------------------------------------------------ | ------------- | ------------ |
+| `Reset empties the field and brings the calendar home`             | May 2026      | August 2026  |
+| `clears without moving when the current month is out of range`     | February 2027 | May 2027     |
+| `ignores the calendar echo while the wheels are steering it`       | January 2025  | January 2026 |
+| `holds the month when the hidden calendar is re-snapped on reveal` | January 2025  | January 2026 |
+| `the year wheel keeps the month`                                   | December 2025 | March 2025   |
+
+### `DateInputTouch.test.tsx` repeats five cases verbatim
+
+- **units:** DateInput
+- **kind:** upstream-bug
+- **retires:** when upstream deletes the duplicated block
+
+`the year wheel keeps the month`, `is a single tab stop driven by the arrow keys`, `will not commit
+a row outside min/max`, `bounds the year wheel to the reachable range` and `the title is what closes
+them again` each appear twice in `DateInput/DateInputTouch.test.tsx` at 0.5.2 — once at the head of
+`describe('DateInput — month/year wheels')` and again at its foot, identical in body. A second copy
+asserts nothing the first does not.
+
+Ported once, per this file's own rule that upstream bugs are documented rather than replicated. The
+consequence is arithmetic: the case delta for this suite counts upstream's 136 declarations against
+ours, so it cannot reach zero while five of upstream's are copies.

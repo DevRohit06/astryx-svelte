@@ -32,13 +32,22 @@
  * the zero-failed-tests rule above governs a hang exactly as it governs a drop —
  * a chunk that reported a failed case and *then* wedged is still a real result.
  *
+ * A **crash** is the third arrival of the same class, and the one that stayed
+ * unhandled longest. A chunk killed by the OS — `0xC0000409` on Windows, a
+ * SIGSEGV or an OOM kill elsewhere — prints no summary and no error text of its
+ * own, so every pattern above misses it and the chunk was reported as a plain
+ * failure. It is a drop by the only definition that matters: zero tests failed,
+ * because the process died before it could run or report them. The caller passes
+ * it, because "no summary was parsed" is the caller's fact.
+ *
  * @param {string} output  the chunk's combined stdout+stderr, ANSI stripped
- * @param {{timedOut?: boolean}} [options]  `timedOut` when the runner killed it
+ * @param {{timedOut?: boolean, crashed?: boolean}} [options]  `timedOut` when the
+ *   runner killed it; `crashed` when it exited non-zero with no parsable summary
  * @returns {boolean}
  */
-export function isInfrastructureFailure(output, { timedOut = false } = {}) {
+export function isInfrastructureFailure(output, { timedOut = false, crashed = false } = {}) {
 	if (/Tests\s+\d+ failed/.test(output)) return false;
-	if (timedOut) return true;
+	if (timedOut || crashed) return true;
 	return (
 		/Failed to fetch dynamically imported module/.test(output) ||
 		/Cannot connect to the iframe/.test(output) ||

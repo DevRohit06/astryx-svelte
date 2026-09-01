@@ -390,7 +390,11 @@ async function settleChunk(index, chunk) {
 
 	for (let attempt = 0; attempt <= RETRIES; attempt++) {
 		if (attempt > 0) {
-			const what = timedOut ? 'wedged with no exit' : 'lost its browser';
+			const what = timedOut
+				? 'wedged with no exit'
+				: code !== 0 && !fileLine && !caseLine
+					? `crashed (exit ${code})`
+					: 'lost its browser';
 			const note = `\n  ${label} ${what}, not a case — retry ${attempt} of ${RETRIES}.\n\n`;
 			if (serial) process.stdout.write(note);
 			else banner += note;
@@ -406,9 +410,12 @@ async function settleChunk(index, chunk) {
 		caseLine = plain.match(/Tests\s+(\d+) passed\s+\((\d+)\)/);
 
 		const ok = code === 0 && fileLine && caseLine;
+		// Non-zero exit with nothing parsable: the process died rather than
+		// reported. `0xC0000409` (3221226505) is what that looks like on Windows.
+		const crashed = code !== 0 && !fileLine && !caseLine;
 		// Stop on success, and stop immediately on a *real* failure — a chunk
 		// that failed a case is never re-run, however many attempts are left.
-		if (ok || !isInfrastructureFailure(plain, { timedOut })) break;
+		if (ok || !isInfrastructureFailure(plain, { timedOut, crashed })) break;
 		// A wedge gets one hedge, not `RETRIES` of them — see `TIMEOUT_RETRIES`.
 		if (timedOut && ++timeouts > TIMEOUT_RETRIES) break;
 	}

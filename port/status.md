@@ -45,10 +45,10 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 |                            | Cases          |
 | -------------------------- | -------------- |
 | Upstream, in ported suites | 7369           |
-| Declared here              | 6478           |
-| **Short**                  | **895**        |
+| Declared here              | 6515           |
+| **Short**                  | **858**        |
 | Over, across 4 groups      | +4             |
-| Beyond upstream            | 94 in 20 files |
+| Beyond upstream            | 96 in 20 files |
 
 A ported suite may still fall short of the one it ports. That shortfall is the front’s
 worklist, and it is measured here rather than restated in each suite’s header — a header’s
@@ -65,7 +65,6 @@ per connected group.
 | `theme/defineTheme.test.ts`                                                                                                                                                              | 88       | 26   | 62    |
 | `Button/Button.test.tsx`<br>`Heading/Heading.test.tsx`<br>`StatusDot/StatusDot.test.tsx`<br>`Text/Text.test.tsx`                                                                         | 115      | 65   | 50    |
 | `DateTimeInput/DateTimeInput.test.tsx`                                                                                                                                                   | 138      | 89   | 49    |
-| `DateInput/DateInputTouch.test.tsx`                                                                                                                                                      | 136      | 88   | 48    |
 | `Selector/Selector.test.tsx`                                                                                                                                                             | 158      | 123  | 35    |
 | `Avatar/Avatar.test.tsx`                                                                                                                                                                 | 77       | 48   | 29    |
 | `NumberInput/NumberInput.test.tsx`                                                                                                                                                       | 142      | 113  | 29    |
@@ -82,6 +81,7 @@ per connected group.
 | `Center/Center.test.tsx`                                                                                                                                                                 | 24       | 13   | 11    |
 | `ContextMenu/ContextMenu.test.tsx`                                                                                                                                                       | 44       | 33   | 11    |
 | `DateInput/DateInput.test.tsx`                                                                                                                                                           | 95       | 84   | 11    |
+| `DateInput/DateInputTouch.test.tsx`                                                                                                                                                      | 136      | 125  | 11    |
 | `DropdownMenu/DropdownMenu.test.tsx`                                                                                                                                                     | 79       | 68   | 11    |
 | `PowerSearch/PowerSearch.test.tsx`                                                                                                                                                       | 32       | 21   | 11    |
 | `HoverCard/HoverCard.test.tsx`                                                                                                                                                           | 44       | 34   | 10    |

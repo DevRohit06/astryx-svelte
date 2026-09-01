@@ -97,6 +97,22 @@ describe('isInfrastructureFailure', () => {
 		).toBe(true);
 	});
 
+	it('retries a chunk the OS killed outright', () => {
+		// Batch 044's gate: two chunks exited 3221226505 (0xC0000409) mid-run with
+		// no summary and no error text of their own, so every pattern above missed
+		// them and the run failed on 17 of 19 clean chunks. A process that died
+		// before it could report is a drop, not a case.
+		expect(
+			isInfrastructureFailure(' ✓ src/tests/badge.svelte.test.ts (31 tests)\n', { crashed: true })
+		).toBe(true);
+	});
+
+	it('never retries a crash that had already failed a case', () => {
+		// Same precedence as a drop and a wedge: a red result outranks whatever
+		// killed the process afterwards.
+		expect(isInfrastructureFailure(REAL_FAILURE, { crashed: true })).toBe(false);
+	});
+
 	it('retries a chunk the runner killed for never exiting', () => {
 		// A hang arrives with no error text at all — that is what makes it its own
 		// input rather than another pattern. Output here is what a chunk had

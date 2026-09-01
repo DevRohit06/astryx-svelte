@@ -1,7 +1,9 @@
 <script lang="ts">
 	import DateInput from '$lib/components/date-input/date-input.svelte';
 	import type { DateInputProps } from '$lib/components/date-input/date-input.svelte';
-	import type { ISODateString } from '$lib/components/date-input/date-input.svelte';
+	// `date-input.svelte` re-exports its own props type but not `ISODateString`,
+	// which lives with the shared date types — the suite imports it from there too.
+	import type { ISODateString } from '$lib/utils/date-types.js';
 
 	/**
 	 * Upstream's `Controlled` from `DateInput/DateInputTouch.test.tsx`: a
