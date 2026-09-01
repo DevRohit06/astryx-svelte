@@ -200,7 +200,7 @@ deviation, not a task.
       failure, and the suite passes — but it is the idiom axis (`astryx-idiom`), not the parity one,
       and a stale read on teardown is exactly the shape that axis exists to catch. Start at
       `toast-viewport.svelte`'s `ontransitionend` → `handleExited`, and at the `{@const wrapper =
-    toastWrapperAttrs(...)}` inside the keyed `{#each}`
+toastWrapperAttrs(...)}` inside the keyed `{#each}`
 - [ ] a11y parity checks on every `aria-*`, `role` and live region
 - [ ] SSR render with JS disabled, no hydration warnings
 
