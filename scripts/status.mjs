@@ -237,6 +237,18 @@ const excusedRels = new Set(Object.keys(NO_TEST_COUNTERPART));
 // gate here rather than quietly leaving a file attributed to nothing.
 if (upstreamPresent) {
 	const errors = [];
+	// The clone must not carry a `CLAUDE.md`, because reading any file in that
+	// tree would load Meta's instructions for *their* repo as instructions for
+	// this one. CLAUDE.md has said to rename it since the clone was made, and
+	// nothing enforced it — so `track-upstream`'s pull to 0.5.2 silently restored
+	// it and it sat there for a batch. A documented rule that a routine command
+	// undoes is not a rule; this is the same lesson batch 043 paid for.
+	if (existsSync(path.join(root, 'reference/astryx-upstream/CLAUDE.md'))) {
+		errors.push(
+			'reference/astryx-upstream/CLAUDE.md exists — rename it to UPSTREAM-CLAUDE.md.' +
+				' Left in place it loads upstream’s own agent instructions into this repo.'
+		);
+	}
 	for (const f of ourTests) {
 		if (f.ports.length === 0 && !f.noUpstream) {
 			errors.push(`${f.base}: no PORTS: or NO-UPSTREAM: marker — every test file declares one`);
@@ -352,8 +364,16 @@ const TEXT_STRING = /getByText\(\s*'/g;
 // code: after a backtick-quoted `it` and after prose in comments, an options
 // object behind an identifier. All three share a shape — the metric read the
 // source more literally than the source meant it.
+//
+// And it was fixed in **one** of the two regexes. `TEXT_EXACT` learned the
+// hoisted form; `NAME_EXACT` did not, so `{name: 'Save', ...exact}` — a site
+// that is strengthened — counted as loose. It went unnoticed because no suite
+// had yet combined a string literal `name` with the shared const: the file that
+// does uses `name: label`, which `NAME_STRING` does not match at all. Batch 044
+// added two such sites and the number moved the wrong way.
 const TEXT_EXACT = /getByText\(\s*'[^']*'\s*,\s*(?:\{[^}]*exact:\s*true|exact)/g;
-const NAME_EXACT = /getBy(?:Role|LabelText)\([^)]*name:\s*'[^']*'[^)]*exact:\s*true/g;
+const NAME_EXACT =
+	/getBy(?:Role|LabelText)\([^)]*name:\s*'[^']*'[^)]*(?:exact:\s*true|\.\.\.exact)/g;
 
 let looseNameSites = 0;
 let looseNameFiles = 0;

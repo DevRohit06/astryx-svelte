@@ -41,26 +41,26 @@ import {
  *   `nativePicker` prop that routes to it, and neither is ported yet; the case
  *   lands with the module it compares against.
  *
- * The remaining **101 cases are not ported**, and none of them is dropped on
- * merit — they are upstream's DOM coverage:
+ * Upstream's remaining cases are its **DOM coverage**, and they are ported in
+ * `date-input-touch.svelte.test.ts` — the client companion to this file, which
+ * declares the same `PORTS:` suite. One upstream suite across two files is
+ * allowed here, and the case delta in `port/status.md` is computed per
+ * connected group, so the two are summed against upstream's total rather than
+ * each double-counting it.
  *
- * | upstream describe                                        | cases |
- * | -------------------------------------------------------- | ----- |
- * | `DateInput — surface selection`                           |     9 |
- * | `DateInput — field parity`                                |    15 |
- * | `DateInput — calendar surface`                            |    29 |
- * | `DateInput — a rest position between two months`          |     6 |
- * | `DateInput — month/year wheels`                           |    23 |
- * | `DateInput — nested scrollers keep their own touch gesture`|    12 |
- * | `DateInput — a mouse can drag a wheel`                     |     6 |
+ * The split is upstream's own reasoning, not a convenience: its header says the
+ * month math is pure and the scroll CSS is asserted on the style *definition*
+ * because jsdom implements none of it. Those two properties are what put those
+ * cases in the **node** project here. Everything else needs a rendered tree,
+ * and needs it in a real browser — the virtualized scroller mounts panes from a
+ * `ResizeObserver` reading a width that only exists once CSS has been applied,
+ * which is the thing upstream's `withLayout` shim fakes and the companion waits
+ * for instead.
  *
- * They belong in a `*.svelte.test.ts` client file, and porting them needs a
- * harness this file cannot supply: upstream stubs `matchMedia` per test to
- * choose the surface, shadows `HTMLElement.prototype.clientWidth` so the
- * virtualized scroller mounts panes at all, drives fake timers past
- * `SCROLL_QUIET_MS`, and polyfills `HTMLDialogElement`'s `showModal`/`close`
- * — every one of which means something different in the real Chromium the
- * client project runs. See `port/todo.md` for the follow-up.
+ * **No number is stated here for what remains.** A header's count is a contract
+ * against upstream's file at the pin, and it falsifies on the next bump; the
+ * shortfall is arithmetic over the two files' markers and lives in
+ * `port/status.md`.
  *
  * ## Two deliberate adaptations of the definition-level cases
  *

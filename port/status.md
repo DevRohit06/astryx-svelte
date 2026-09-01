@@ -14,7 +14,7 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.2                                               |
-| Ledger entries            | 44                                                                       |
+| Ledger entries            | 45                                                                       |
 
 ## Test parity
 
@@ -45,8 +45,8 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 |                            | Cases          |
 | -------------------------- | -------------- |
 | Upstream, in ported suites | 7369           |
-| Declared here              | 6425           |
-| **Short**                  | **948**        |
+| Declared here              | 6478           |
+| **Short**                  | **895**        |
 | Over, across 4 groups      | +4             |
 | Beyond upstream            | 94 in 20 files |
 
@@ -61,11 +61,11 @@ per connected group.
 
 | Suite                                                                                                                                                                                    | Upstream | Here | Short |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ---- | ----- |
-| `DateInput/DateInputTouch.test.tsx`                                                                                                                                                      | 136      | 35   | 101   |
 | `SideNav/SideNav.test.tsx`                                                                                                                                                               | 186      | 116  | 70    |
 | `theme/defineTheme.test.ts`                                                                                                                                                              | 88       | 26   | 62    |
 | `Button/Button.test.tsx`<br>`Heading/Heading.test.tsx`<br>`StatusDot/StatusDot.test.tsx`<br>`Text/Text.test.tsx`                                                                         | 115      | 65   | 50    |
 | `DateTimeInput/DateTimeInput.test.tsx`                                                                                                                                                   | 138      | 89   | 49    |
+| `DateInput/DateInputTouch.test.tsx`                                                                                                                                                      | 136      | 88   | 48    |
 | `Selector/Selector.test.tsx`                                                                                                                                                             | 158      | 123  | 35    |
 | `Avatar/Avatar.test.tsx`                                                                                                                                                                 | 77       | 48   | 29    |
 | `NumberInput/NumberInput.test.tsx`                                                                                                                                                       | 142      | 113  | 29    |
@@ -168,7 +168,7 @@ per connected group.
 
 |                                                               | Sites | Files |
 | ------------------------------------------------------------- | ----- | ----- |
-| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 2     | 1     |
+| `getByRole`/`getByLabelText` with a string `name`, no `exact` | 0     | 0     |
 | `getByText` with a string, no `exact`                         | 1     | 1     |
 
 Testing Library matches an accessible name as a whole string; Playwright matches a string

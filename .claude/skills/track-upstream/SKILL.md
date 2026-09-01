@@ -19,6 +19,18 @@ git diff --stat v<old>..v<new> -- packages/core/src
 git diff --name-status v<old>..v<new> -- packages/core/src | grep -E '^(A|D|R)'
 ```
 
+**Then re-do the rename the checkout just undid**, before reading anything in that tree:
+
+```sh
+mv -f reference/astryx-upstream/CLAUDE.md reference/astryx-upstream/UPSTREAM-CLAUDE.md
+```
+
+`CLAUDE.md` is tracked upstream, so every pull and every tag checkout restores it, and while it is
+there any read in that tree loads Meta's instructions for _their_ repo as instructions for this one.
+The 0.5.2 pull restored it and it went unnoticed for a batch. `status.mjs` now fails the gate on it,
+so the cost of forgetting is a failed gate rather than a poisoned context — but the gate runs at the
+_end_, and this step is at the start for a reason.
+
 Component directories live directly under `packages/core/src/<PascalCase>/` — there is no
 `components/` subdirectory. The same tree also holds five lowercase infrastructure directories
 (`hooks/`, `i18n/`, `theme/`, `utils/`, `__tests__/`) and loose top-level files (`index.ts`,
