@@ -79,6 +79,19 @@ catches a chunk that silently shrank the total, not one loudly misclassified. Th
 with the sample verbatim, as the file's other cases are. Every future addition needs a real run
 behind it.
 
+## The gate
+
+Green — all seven stages, on the commit that adds the missing drop signature. Eighteen chunks, no
+drop, no wedge, no retry, and the lock reclaimed the stale entry planted for it and released on
+exit, so both of its paths were exercised by the run rather than only by the check beforehand.
+
+**What that does not establish.** Every measurement here is from one Windows machine, which is the
+mistake 042's close made and the reason its conclusion survived as long as it did. `taskkill /T` is
+the only kill path tested; the POSIX process-group branch has never run. The 12-minute bound is
+sized against local chunk times, and a cold CI runner is slower. And the isolated cache's memory
+cost is still unmeasured — this batch removed the evidence that it was ever a problem, which is not
+the same as showing it is not one. CI is what arbitrates all three.
+
 ## Oracle bookkeeping
 
 None. No `.stylex.ts` module changed, and no oracle skip moved.
