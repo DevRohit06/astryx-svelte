@@ -14,7 +14,7 @@
 | Not in upstream           | none                                                                     |
 | Theme packages            | 8 — butter, chocolate, gothic, liquid-glass, matcha, neutral, stone, y2k |
 | Upstream pin              | `@astryxdesign/core` 0.5.2                                               |
-| Ledger entries            | 42                                                                       |
+| Ledger entries            | 43                                                                       |
 
 ## Test parity
 
@@ -45,8 +45,8 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 |                            | Cases          |
 | -------------------------- | -------------- |
 | Upstream, in ported suites | 7369           |
-| Declared here              | 6384           |
-| **Short**                  | **989**        |
+| Declared here              | 6400           |
+| **Short**                  | **973**        |
 | Over, across 4 groups      | +4             |
 | Beyond upstream            | 90 in 20 files |
 
@@ -66,11 +66,11 @@ per connected group.
 | `theme/defineTheme.test.ts`                                                                                                                                                              | 88       | 26   | 62    |
 | `Button/Button.test.tsx`<br>`Heading/Heading.test.tsx`<br>`StatusDot/StatusDot.test.tsx`<br>`Text/Text.test.tsx`                                                                         | 115      | 65   | 50    |
 | `DateTimeInput/DateTimeInput.test.tsx`                                                                                                                                                   | 138      | 89   | 49    |
-| `Toast/ToastViewport.test.tsx`                                                                                                                                                           | 55       | 14   | 41    |
 | `Selector/Selector.test.tsx`                                                                                                                                                             | 158      | 123  | 35    |
 | `Avatar/Avatar.test.tsx`                                                                                                                                                                 | 77       | 48   | 29    |
 | `NumberInput/NumberInput.test.tsx`                                                                                                                                                       | 142      | 113  | 29    |
 | `TabList/TabList.test.tsx`                                                                                                                                                               | 75       | 47   | 28    |
+| `Toast/ToastViewport.test.tsx`                                                                                                                                                           | 55       | 30   | 25    |
 | `AlertDialog/AlertDialog.test.tsx`                                                                                                                                                       | 36       | 12   | 24    |
 | `ButtonGroup/ButtonGroup.test.tsx`                                                                                                                                                       | 44       | 25   | 19    |
 | `Carousel/Carousel.test.tsx`                                                                                                                                                             | 37       | 18   | 19    |

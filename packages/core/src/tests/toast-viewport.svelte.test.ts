@@ -1,34 +1,49 @@
 /** PORTS: Toast/ToastViewport.test.tsx */
 
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { tick } from 'svelte';
 import { render } from 'vitest-browser-svelte';
 import Harness from './fixtures/toast-viewport-harness.svelte';
+import EndContentHarness from './fixtures/toast-swipe-end-content.svelte';
 import EffectDispatch from './fixtures/toast-effect-dispatch.svelte';
 import { __resetLiveRegionsForTest, type AnnouncePoliteness } from '$lib/hooks/use-announce.js';
-import type { ToastOptions } from '$lib/components/toast/types.js';
+import type { ToastOptions, ToastPosition } from '$lib/components/toast/types.js';
 
 /**
- * Ported from Astryx's `Toast/ToastViewport.test.tsx` at the **0.5.2** pin —
- * upstream declares **55**, and **14** are here.
+ * Ported from Astryx's `Toast/ToastViewport.test.tsx`. What is here and what is
+ * short of it is measured in `port/status.md`'s case delta, from the `PORTS:`
+ * marker above — this header states no count, per CLAUDE.md.
  *
- * **The count moved 13 -> 55 with the pin.** 0.5.1 added swipe dismissal and
- * rewrote the viewport's geometry, and the bulk of the 41 not here is its
- * `describe('Toast swipe dismissal')` block, which fires pen pointer events at
- * the `[data-type]` card and asserts on the `--_toast-swipe-*` custom
- * properties. `use-toast-gesture.ts` is ported and writes exactly those
- * properties on exactly that element, so the block is portable — it is not
- * done, not blocked.
- *
- * What is missing is the swipe-dismissal block and the viewport geometry cases
- * 0.5.1 added; `port/status.md`'s case delta carries the size of it.
+ * Still without a counterpart: the viewport geometry blocks 0.5.1 added
+ * (`Toast responsive layout`, `ToastViewport placement`, `ToastViewport visible
+ * limit`, `Toast native motion contract`) and `Toast live-region fallback
+ * semantics`. Every one of their subjects exists here — `position`, `maxVisible`
+ * and the exit transition are all ported — so they are unwritten, not blocked.
  *
  * The region-ARIA pair at the end is upstream's own 0.5.1 split: the landmark is
  * now gated on there being something to announce, so an empty viewport exposes
  * no region at all. Ours asserted the region unconditionally and timed out
- * against the gate — the header's count had expired along with its assumptions. Two cases are restated, each
- * for the reason given above it: "pauses the auto-hide timer while the window is
- * blurred", and (new in 0.3.0) "announces exactly once at dispatch".
+ * against the gate. Two cases are restated, each for the reason given above it:
+ * "pauses the auto-hide timer while the window is blurred", and (new in 0.3.0)
+ * "announces exactly once at dispatch".
+ *
+ * ## Swipe dismissal: real pointer and touch events
+ *
+ * `describe('Toast swipe dismissal')` drives `use-toast-gesture.ts`, which is
+ * spread onto the `[data-type]` card by `toast-surface.svelte` and writes the
+ * `--_toast-swipe-*` custom properties the cases read back. Upstream's
+ * `fireEvent.pointerDown(el, {...})` becomes a dispatched `PointerEvent` and its
+ * hand-built touch objects become real `Touch`/`TouchEvent`s, because Chromium
+ * implements both and jsdom implements neither — which is also what makes the
+ * three `defaultPrevented` assertions mean something here: they observe the
+ * `{passive: false}` `touchmove` listener actually taking effect rather than a
+ * flag on a synthetic object.
+ *
+ * Two things a real browser forces, both noted at the helpers below:
+ * `setPointerCapture` throws for a pointer id the compositor never saw, so it is
+ * stubbed on the prototype; and a computed `transform` is a matrix, so
+ * upstream's `not.toContain('translateX')` — which cannot fail here — is
+ * restated as a read of the matrix's own horizontal translation.
  *
  * The sibling `Toast/useToast.test.tsx` (4 cases) still lives in
  * `use-toast.svelte.test.ts`.
@@ -106,6 +121,110 @@ import type { ToastOptions } from '$lib/components/toast/types.js';
 const INFO_A: ToastOptions = { body: 'Toast A' };
 const INFO_B: ToastOptions = { body: 'Toast B' };
 const AUTO_TOAST: ToastOptions = { body: 'Auto toast', autoHideDuration: 3000 };
+const SWIPE_TOAST: ToastOptions = { body: 'Swipe toast', isAutoHide: false };
+
+/**
+ * Pointer capture, stubbed on the prototype for the swipe block.
+ *
+ * `setPointerCapture` throws `NotFoundError` in a real browser when the pointer
+ * id was never seen by the compositor, which is every id a dispatched
+ * `PointerEvent` carries. jsdom no-ops instead, so upstream's cases can assert
+ * on the calls without stubbing anything. Same shape as
+ * `bottom-sheet.svelte.test.ts`'s `stubPointerCapture`.
+ */
+let restorePointerCapture: (() => void) | undefined;
+function stubPointerCapture(): void {
+	const proto = Element.prototype;
+	const original = {
+		setPointerCapture: proto.setPointerCapture,
+		releasePointerCapture: proto.releasePointerCapture
+	};
+	proto.setPointerCapture = vi.fn();
+	proto.releasePointerCapture = vi.fn();
+	restorePointerCapture = () => {
+		proto.setPointerCapture = original.setPointerCapture;
+		proto.releasePointerCapture = original.releasePointerCapture;
+	};
+}
+
+/**
+ * Upstream's `fireEvent.pointerDown(el, {...})`, as the real event it stands
+ * for. `pointerType` defaults to `'pen'` because that is the only type the
+ * gesture accepts and the type all but one case passes.
+ */
+function pen(
+	element: HTMLElement,
+	type: 'pointerdown' | 'pointermove' | 'pointerup' | 'pointercancel',
+	init: {
+		pointerId: number;
+		clientX: number;
+		clientY: number;
+		button?: number;
+		pointerType?: string;
+	}
+): PointerEvent {
+	const event = new PointerEvent(type, {
+		bubbles: true,
+		cancelable: true,
+		pointerType: init.pointerType ?? 'pen',
+		pointerId: init.pointerId,
+		clientX: init.clientX,
+		clientY: init.clientY,
+		button: init.button ?? 0
+	});
+	element.dispatchEvent(event);
+	return event;
+}
+
+/**
+ * Upstream builds a bare `Event` and hangs `touches`/`changedTouches` on it with
+ * `Object.defineProperty`, because jsdom implements neither `Touch` nor
+ * `TouchEvent`. Chromium implements both, so these are the real thing — which
+ * also means `preventDefault()` on the `{passive: false}` `touchmove` listener
+ * is honoured rather than assumed, and that is the property three of these cases
+ * are about.
+ */
+function touch(
+	element: HTMLElement,
+	type: 'touchstart' | 'touchmove' | 'touchend' | 'touchcancel',
+	init: { clientY: number; clientX?: number; identifier?: number }
+): TouchEvent {
+	const point = new Touch({
+		identifier: init.identifier ?? 31,
+		target: element,
+		clientX: init.clientX ?? 10,
+		clientY: init.clientY
+	});
+	const settled = type === 'touchend' || type === 'touchcancel';
+	const event = new TouchEvent(type, {
+		bubbles: true,
+		cancelable: true,
+		touches: settled ? [] : [point],
+		targetTouches: settled ? [] : [point],
+		changedTouches: [point]
+	});
+	element.dispatchEvent(event);
+	return event;
+}
+
+/**
+ * The horizontal component of the card's computed transform.
+ *
+ * Upstream asserts `getComputedStyle(el).transform).not.toContain('translateX')`,
+ * which is a **string** match against jsdom's echo of the declaration. Chromium
+ * resolves a transform to a matrix, so that assertion can never fail here and
+ * would pass over a real sideways throw. Reading the matrix's translation
+ * instead checks what the case titles claim — no horizontal drift — and checks
+ * it more strictly than upstream can.
+ *
+ * It is not vacuous, which was verified rather than assumed: at the assertion
+ * point the card computes to `matrix(1, 0, 0, 1, 0, 8)` — the throw is live in
+ * the vertical component, and `m41` is the horizontal one that must stay 0.
+ */
+function horizontalDriftOf(element: HTMLElement): number {
+	const { transform } = getComputedStyle(element);
+	return transform === 'none' ? 0 : new DOMMatrix(transform).m41;
+}
 
 function renderViewport(triggers: { options?: ToastOptions; triggerLabel?: string }[]) {
 	return render(Harness, { props: { triggers } });
@@ -126,6 +245,21 @@ function completeExit(toastId: string): void {
 			})
 		);
 	}
+}
+
+/**
+ * Upstream's `getVisualToastByText`, without the `screen.getByText` step.
+ *
+ * A toast's text is on the page twice — in the card and in the singleton live
+ * region on `<body>` — so a page-wide text query is ambiguous here where
+ * upstream's is not (see the header). Walking the cards is the same lookup with
+ * the ambiguity removed: only one of the two nodes is inside a `[data-type]`.
+ */
+function getVisualToastByText(text: string): HTMLElement {
+	for (const node of document.querySelectorAll<HTMLElement>('[data-type]')) {
+		if (node.textContent?.includes(text)) return node;
+	}
+	throw new Error(`Toast visual for ${text} not found`);
 }
 
 function toastIds(): string[] {
@@ -516,5 +650,311 @@ describe('toast timer lifecycle (#3589)', () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+});
+
+describe('Toast swipe dismissal', () => {
+	beforeEach(() => {
+		stubPointerCapture();
+	});
+	afterEach(() => {
+		restorePointerCapture?.();
+		restorePointerCapture = undefined;
+	});
+
+	async function renderSwipeToast(
+		options: ToastOptions = SWIPE_TOAST,
+		position?: ToastPosition,
+		bodyText = 'Swipe toast',
+		surfaceHeight = 80,
+		dir?: 'ltr' | 'rtl'
+	) {
+		const onHide = vi.fn();
+		const screen = await render(Harness, {
+			props: { triggers: [{ options: { ...options, onHide } }], position, dir }
+		});
+		(screen.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
+		await tick();
+		const visualToast = getVisualToastByText(bodyText);
+		vi.spyOn(visualToast, 'getBoundingClientRect').mockReturnValue({
+			x: 0,
+			y: 0,
+			width: 400,
+			height: surfaceHeight,
+			top: 0,
+			right: 400,
+			bottom: surfaceHeight,
+			left: 0,
+			toJSON: () => ({})
+		} as DOMRect);
+		return { screen, visualToast, onHide };
+	}
+
+	it('dismisses on a pen swipe toward the configured block edge past the threshold', async () => {
+		const { visualToast, onHide } = await renderSwipeToast();
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 0 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 0, clientY: 60 });
+		pen(visualToast, 'pointerup', { pointerId: 7, clientX: 0, clientY: 60 });
+
+		expect(visualToast.setPointerCapture).toHaveBeenCalledWith(7);
+		expect(visualToast.releasePointerCapture).toHaveBeenCalledWith(7);
+		expect(onHide).toHaveBeenCalledWith('manual');
+		expect(onHide).toHaveBeenCalledTimes(1);
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-exit-y')).toBe('120%');
+		expect(horizontalDriftOf(visualToast)).toBe(0);
+	});
+
+	it('dismisses a fast flick below the distance threshold', async () => {
+		const { visualToast, onHide } = await renderSwipeToast(
+			SWIPE_TOAST,
+			'bottomEnd',
+			'Swipe toast',
+			400
+		);
+		// Upstream installs this spy before rendering, where React's render path
+		// happens to read no clock. Rendering into a real browser does — the two
+		// queued values were consumed before the gesture began, and the flick then
+		// measured zero elapsed time. Scoped to the gesture, the two reads it
+		// mocks are exactly the two the hook makes: `beginGesture`'s start stamp
+		// and `endGesture`'s, 20ms apart.
+		const now = vi.spyOn(Date, 'now').mockReturnValueOnce(1_000).mockReturnValueOnce(1_020);
+		try {
+			pen(visualToast, 'pointerdown', { pointerId: 8, clientX: 0, clientY: 0 });
+			pen(visualToast, 'pointermove', { pointerId: 8, clientX: 0, clientY: 60 });
+			pen(visualToast, 'pointerup', { pointerId: 8, clientX: 0, clientY: 60 });
+
+			expect(onHide).toHaveBeenCalledWith('manual');
+			expect(visualToast.style.getPropertyValue('--_toast-swipe-exit-y')).toBe('120%');
+		} finally {
+			now.mockRestore();
+		}
+	});
+
+	it('snaps back without dismissing after a short drag', async () => {
+		const { visualToast, onHide } = await renderSwipeToast();
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 0 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 0, clientY: 24 });
+		pen(visualToast, 'pointerup', { pointerId: 7, clientX: 0, clientY: 24 });
+
+		expect(onHide).not.toHaveBeenCalled();
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-y')).toBe('');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-opacity')).toBe('');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-scale')).toBe('');
+	});
+
+	it('fades and subtly scales only after accepted vertical edge swipe intent', async () => {
+		const { visualToast } = await renderSwipeToast();
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 0 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 0, clientY: -40 });
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-y')).toBe('');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-opacity')).toBe('');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-scale')).toBe('');
+		pen(visualToast, 'pointercancel', { pointerId: 7, clientX: 0, clientY: -40 });
+
+		pen(visualToast, 'pointerdown', { pointerId: 8, clientX: 0, clientY: 0 });
+		pen(visualToast, 'pointermove', { pointerId: 8, clientX: 0, clientY: 40 });
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-y')).toBe('40px');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-opacity')).toBe('0.800');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-scale')).toBe('0.990');
+	});
+
+	it('does not fade for horizontal intent and resets swipe vars on pointercancel', async () => {
+		const { visualToast, onHide } = await renderSwipeToast();
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 0 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 80, clientY: 20 });
+		expect(onHide).not.toHaveBeenCalled();
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-opacity')).toBe('');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-scale')).toBe('');
+
+		pen(visualToast, 'pointerdown', { pointerId: 8, clientX: 0, clientY: 0 });
+		pen(visualToast, 'pointermove', { pointerId: 8, clientX: 0, clientY: 40 });
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-opacity')).toBe('0.800');
+
+		pen(visualToast, 'pointercancel', { pointerId: 8, clientX: 0, clientY: 40 });
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-y')).toBe('');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-opacity')).toBe('');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-scale')).toBe('');
+	});
+
+	it('hands the opposite vertical direction back without moving the toast', async () => {
+		const { visualToast, onHide } = await renderSwipeToast(SWIPE_TOAST, 'bottomEnd');
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 100 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 0, clientY: 40 });
+		pen(visualToast, 'pointerup', { pointerId: 7, clientX: 0, clientY: 40 });
+
+		expect(onHide).not.toHaveBeenCalled();
+	});
+
+	it('keeps bottom placement dismissing downward under RTL', async () => {
+		const { visualToast, onHide } = await renderSwipeToast(
+			SWIPE_TOAST,
+			'bottomStart',
+			'Swipe toast',
+			80,
+			'rtl'
+		);
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 0 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 0, clientY: 60 });
+		pen(visualToast, 'pointerup', { pointerId: 7, clientX: 0, clientY: 60 });
+
+		expect(onHide).toHaveBeenCalledWith('manual');
+	});
+
+	it('keeps top placement dismissing upward under RTL', async () => {
+		const { visualToast, onHide } = await renderSwipeToast(
+			SWIPE_TOAST,
+			'topEnd',
+			'Swipe toast',
+			80,
+			'rtl'
+		);
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 100 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 0, clientY: 40 });
+		pen(visualToast, 'pointerup', { pointerId: 7, clientX: 0, clientY: 40 });
+
+		expect(onHide).toHaveBeenCalledWith('manual');
+	});
+
+	it('sets swipe exit to a vertical throw with no horizontal drift', async () => {
+		const { visualToast, onHide } = await renderSwipeToast(SWIPE_TOAST, 'topEnd', 'Swipe toast');
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 100 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 0, clientY: 40 });
+		pen(visualToast, 'pointerup', { pointerId: 7, clientX: 0, clientY: 40 });
+
+		expect(onHide).toHaveBeenCalledWith('manual');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-opacity')).toBe('0.700');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-scale')).toBe('0.985');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-exit-y')).toBe('calc(-1 * 120%)');
+		expect(horizontalDriftOf(visualToast)).toBe(0);
+	});
+
+	it('allows native page scrolling until touch intent matches the dismiss edge', async () => {
+		const { visualToast, onHide } = await renderSwipeToast(SWIPE_TOAST, 'topEnd', 'Swipe toast');
+
+		touch(visualToast, 'touchstart', { clientY: 100 });
+		let move = touch(visualToast, 'touchmove', { clientY: 140 });
+		expect(move.defaultPrevented).toBe(false);
+		expect(onHide).not.toHaveBeenCalled();
+
+		touch(visualToast, 'touchstart', { clientY: 100 });
+		move = touch(visualToast, 'touchmove', { clientX: 80, clientY: 104 });
+		expect(move.defaultPrevented).toBe(false);
+
+		touch(visualToast, 'touchstart', { clientY: 100 });
+		move = touch(visualToast, 'touchmove', { clientY: 40 });
+		expect(move.defaultPrevented).toBe(true);
+		touch(visualToast, 'touchend', { clientY: 40 });
+		expect(onHide).toHaveBeenCalledWith('manual');
+	});
+
+	it('resets an accepted touch gesture on native touchcancel', async () => {
+		const { visualToast, onHide } = await renderSwipeToast();
+
+		touch(visualToast, 'touchstart', { clientY: 0, identifier: 44 });
+		const move = touch(visualToast, 'touchmove', { clientY: 40, identifier: 44 });
+		expect(move.defaultPrevented).toBe(true);
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-y')).toBe('40px');
+
+		touch(visualToast, 'touchcancel', { clientY: 40, identifier: 44 });
+
+		expect(onHide).not.toHaveBeenCalled();
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-y')).toBe('');
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-opacity')).toBe('');
+	});
+
+	it('removes native touch listeners when a Toast unmounts', async () => {
+		const { screen, visualToast } = await renderSwipeToast();
+		const removeListener = vi.spyOn(visualToast, 'removeEventListener');
+
+		screen.unmount();
+
+		for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) {
+			expect(removeListener).toHaveBeenCalledWith(type, expect.any(Function));
+		}
+	});
+
+	it('resets safely on pointercancel and resumes the auto-hide timer', async () => {
+		vi.useFakeTimers();
+		try {
+			const { visualToast, onHide } = await renderSwipeToast({
+				body: 'Swipe toast',
+				autoHideDuration: 3000
+			});
+
+			pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 0 });
+			pen(visualToast, 'pointermove', { pointerId: 7, clientX: 0, clientY: 40 });
+			vi.advanceTimersByTime(10_000);
+			expect(onHide).not.toHaveBeenCalled();
+
+			pen(visualToast, 'pointercancel', { pointerId: 7, clientX: 0, clientY: 40 });
+			vi.advanceTimersByTime(3_000);
+
+			expect(onHide).toHaveBeenCalledWith('auto');
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	it('keeps horizontal pan intent and mouse drag from dismissing', async () => {
+		const { visualToast, onHide } = await renderSwipeToast();
+
+		pen(visualToast, 'pointerdown', { pointerId: 7, clientX: 0, clientY: 0 });
+		pen(visualToast, 'pointermove', { pointerId: 7, clientX: 80, clientY: 20 });
+		pen(visualToast, 'pointerup', { pointerId: 7, clientX: 220, clientY: 80 });
+		pen(visualToast, 'pointerdown', { pointerId: 8, clientX: 0, clientY: 0, pointerType: 'mouse' });
+		pen(visualToast, 'pointermove', {
+			pointerId: 8,
+			clientX: 220,
+			clientY: 0,
+			pointerType: 'mouse'
+		});
+		pen(visualToast, 'pointerup', { pointerId: 8, clientX: 220, clientY: 0, pointerType: 'mouse' });
+
+		expect(onHide).not.toHaveBeenCalled();
+	});
+
+	it('does not start a swipe from interactive descendants', async () => {
+		const onAction = vi.fn();
+		const onHide = vi.fn();
+		const screen = await render(EndContentHarness, { props: { onAction, onHide } });
+		(screen.getByText('Trigger', { exact: true }).element() as HTMLElement).click();
+		await tick();
+		const visualToast = getVisualToastByText('Swipe toast');
+
+		const targets = [
+			screen.getByRole('button', { name: 'Undo', exact: true }).element() as HTMLElement,
+			screen.getByRole('switch', { name: 'Mode', exact: true }).element() as HTMLElement
+		];
+		targets.forEach((target, index) => {
+			const pointerId = 20 + index;
+			pen(target, 'pointerdown', { pointerId, clientX: 0, clientY: 0 });
+			pen(target, 'pointermove', { pointerId, clientX: 0, clientY: 80 });
+			pen(target, 'pointerup', { pointerId, clientX: 0, clientY: 80 });
+		});
+
+		expect(onHide).not.toHaveBeenCalled();
+		expect(visualToast.style.getPropertyValue('--_toast-swipe-y')).toBe('');
+		targets[0].click();
+		expect(onAction).toHaveBeenCalledTimes(1);
+	});
+
+	it('keeps the visible dismiss button as a non-gesture alternative', async () => {
+		const { screen, onHide } = await renderSwipeToast();
+
+		(
+			screen
+				.getByRole('button', { name: 'Dismiss notification', exact: true })
+				.element() as HTMLElement
+		).click();
+
+		expect(onHide).toHaveBeenCalledWith('manual');
 	});
 });
