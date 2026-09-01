@@ -376,7 +376,6 @@ afterEach(() => {
 	__resetLiveRegionsForTest();
 });
 
-
 describe('ToastViewport placement', () => {
 	async function renderPlacement({
 		position,
@@ -459,9 +458,9 @@ describe('ToastViewport visible limit', () => {
 
 	it('keeps the five-toast default and supports an explicit one-visible cap', async () => {
 		const all = await renderMany();
-		expect(
-			all.viewport.querySelectorAll('button[aria-label="Dismiss notification"]')
-		).toHaveLength(3);
+		expect(all.viewport.querySelectorAll('button[aria-label="Dismiss notification"]')).toHaveLength(
+			3
+		);
 		all.screen.unmount();
 
 		const capped = await renderMany(1);
