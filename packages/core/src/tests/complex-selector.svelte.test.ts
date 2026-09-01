@@ -1,3 +1,5 @@
+/** PORTS: ComplexSelector/ComplexSelector.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { createRawSnippet } from 'svelte';
 import { userEvent } from 'vitest/browser';

@@ -17,7 +17,7 @@ export default {
 		'monthview',
 		'daypicker'
 	],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -148,7 +148,7 @@ export default {
 			name: 'minRangeSpan',
 			type: 'number',
 			description:
-				'Range mode: min days a range must span, both endpoints counted (2 forbids a single-day range). Default 1.'
+				'Range mode: min days a range must span, both endpoints counted (2 forbids a single-day range). Clicking the start again commits a one-day range when allowed, or cancels the in-progress selection when the minimum is longer. Default 1.'
 		},
 		{
 			name: 'focusDate',

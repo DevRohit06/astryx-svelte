@@ -19,7 +19,7 @@ export default {
 		'structured',
 		'omnibar'
 	],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{

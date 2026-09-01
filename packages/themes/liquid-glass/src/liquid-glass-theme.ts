@@ -600,7 +600,7 @@ export const liquidGlassTheme = defineTheme({
 		// and are what a person actually reads through.
 		// ================================================================
 		popover: { base: glass('regular', 'var(--radius-container)') },
-		hovercard: { base: glass('regular', 'var(--radius-container)') },
+		'hover-card': { base: glass('regular', 'var(--radius-container)') },
 		// `dropdown-menu` is the one menu container with a padding seam in the
 		// derived-var registry — i.e. the one upstream designed to take an inset
 		// from a theme — so it is the only one given one. The others keep their
@@ -727,7 +727,7 @@ export const liquidGlassTheme = defineTheme({
 		// Solid system colours rather than the accessible text stops the
 		// semantic tokens carry — a status dot is 8px of pure fill, and the
 		// darkened text variants read as mud at that size.
-		statusdot: {
+		'status-dot': {
 			'variant:accent': { backgroundColor: ['#007aff', '#0a84ff'] },
 			'variant:success': { backgroundColor: ['#34c759', '#30d158'] },
 			'variant:warning': { backgroundColor: ['#ff9500', '#ff9f0a'] },

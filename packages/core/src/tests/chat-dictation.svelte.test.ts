@@ -1,3 +1,5 @@
+/** PORTS: Chat/useChatDictation.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ChatDictationProbe from './fixtures/chat-dictation-probe.svelte';

@@ -25,7 +25,7 @@ export default {
 		'picker'
 	],
 	group: 'Typeahead',
-	category: 'Data Input',
+	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	usage: {
 		description:
@@ -104,6 +104,13 @@ export default {
 			name: 'menuWidth',
 			type: 'number',
 			description: 'Fixed dropdown width in pixels. The menu never shrinks below its anchor width.'
+		},
+		{
+			name: 'minQueryLength',
+			type: 'number',
+			description:
+				'Minimum query length before the search source is queried. Below it no search runs and the menu stays closed.',
+			default: '1'
 		},
 		{
 			name: 'emptySearchResultsText',

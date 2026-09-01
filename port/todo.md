@@ -8,13 +8,16 @@ History lives in [`ledger/`](./ledger). Deviations from upstream live in [`debts
 
 ## Current goal
 
-**Full parity with Astryx `0.5.0`**, across every package except three. Set 2026-08-20 against
+**Full parity with Astryx `0.5.2`**, across every package except three. Set 2026-08-20 against
 `0.4.5`, replacing "track each upstream release and cut a matching version" — that goal was about
 staying level with upstream's _movement_; this one is about closing the distance that predates it.
-Re-targeted 2026-08-25 when the pin moved to `0.5.0` (batch 032), which widened the distance rather
-than closing it: that release brought a new component (`Stepper`), two breaking changes, and the
-largest single-release test delta this port has tracked. The size of it is in
-[`status.md`](./status.md), not here.
+**Re-target it in the same batch the pin moves**: a goal naming a version this port no longer
+tracks is the same defect as a suite header stating a count against the wrong tag, and it went
+unnoticed for a whole release. Moved to `0.5.0` on 2026-08-25 (batch 032) and to `0.5.2` on
+2026-08-31 (batch 040, which took `0.5.1` and `0.5.2` in one pass). Each move widened the distance
+rather than closing it — `0.5.0` brought a new component (`Stepper`), two breaking changes, and the
+largest single-release test delta this port has tracked; `0.5.2` left the surface whole and moved
+what remains into the _cases_. The size of it is in [`status.md`](./status.md), not here.
 
 Out of scope, by decision: **`lab`, `charts` and `vega`**. Four of `lab`'s components
 (`CodeEditor`, `RichTextEditor`, `ThreeD`, `Sankey`) wrap React-only libraries with no drop-in
@@ -36,27 +39,85 @@ Each front is sequenced so the thing that _catches_ mistakes lands before the th
 them.
 
 1. **The test delta.** The largest and most mechanical front, and the one that protects every
-   other — and the one that keeps proving it protects more than tests. Batch 033 found three of
-   `0.5.0`'s new suites were testing **modules this port did not have** (`scrollbarGutter`,
-   `getInitialFocusDate`, `useCollator`) and a fourth caught three overlays that never reset the
-   container padding. None of that was visible to either style oracle, which read modules and
-   emitted CSS rather than call sites. Treat an unported suite as a possible missing implementation
-   until you have checked, and check with the **kebab-case** name — a camelCase grep against this
-   tree returns a false absence.
+   other — and the one that keeps proving it protects more than tests.
 
-   `status.md` counts the suites with no counterpart at all; suites that exist but fall short state
-   it in their own header, and a header that names a suite in order to disclose a gap needs the
-   `UNPORTED:` marker or it is read as coverage instead. What remains of this front is one unit:
-   the four `Layer` dismissal suites, behind the shared dismissal stack. The other,
-   `theme/generateThemeRules.test.ts`, is closed: batch 034 aligned the `generateThemeCSS` API and
-   ported it whole — and found the blocking debt had overstated itself, which is the standing
-   warning about estimating a port from reading two implementations against each other instead of
-   running either.
+   **At the 0.5.2 pin this front is case-level, and since batch 041 it is measured.** Every file
+   under `src/tests/` declares the upstream suite it ports, so `status.md` carries both halves: the
+   suites nothing ports at all, and the per-suite shortfall of the ones that do. Work the case-delta
+   table top-down; it is the worklist, and it going to zero is what finishing this front means.
+
+   Two things in it are not just cases. `Carousel`'s new keyboard-focus cases have a feature behind
+   them — `carousel.svelte` has no counterpart for focus at the scroll edges. And `ToastViewport`'s
+   swipe-dismissal block is portable today: `use-toast-gesture.ts` is ported and writes exactly the
+   properties those cases assert on.
+
+   Batch 033 found three of `0.5.0`'s new suites were testing **modules this port did not have**
+   (`scrollbarGutter`, `getInitialFocusDate`, `useCollator`) and a fourth caught three overlays that
+   never reset the container padding. None of that was visible to either style oracle, which read
+   modules and emitted CSS rather than call sites. Treat an unported suite as a possible missing
+   implementation until you have checked, and check with the **kebab-case** name — a camelCase grep
+   against this tree returns a false absence.
+
+   The two units this front used to name are both closed: the four `Layer` dismissal suites landed
+   behind the shared dismissal stack, and `theme/generateThemeRules.test.ts` closed in batch 034,
+   which aligned the `generateThemeCSS` API and ported it whole — and found the blocking debt had
+   overstated itself. That is the standing warning about estimating a port from reading two
+   implementations against each other instead of running either.
+
+   - [ ] **Strip a suite header's stated case count when you touch that suite** — not as a pass of
+         its own. Most still state one against the `0.5.0` pin while the tree is at `0.5.2`, so they
+         are false, and since batch 041 they are also redundant: `status.md` derives the same numbers
+         from the `PORTS:` markers on every run, and `CLAUDE.md` forbids writing new ones. What is
+         left is ~200 prose edits with no functional change, on files that are each reopened the
+         moment their cases are ported — which is the work above this line. Folding the strip into
+         that is strictly less work for the same end state, and the numbers can no longer corrupt
+         the metric while they wait. `grep -l '0\.5\.0.* pin' packages/core/src/tests/*.ts` is the
+         worklist if it is ever wanted as one.
+   - [ ] **`FieldStatus` is ported twice.** `form-and-metadata.svelte.test.ts` and
+         `field-status.svelte.test.ts` carry the same seven describe blocks; the second adds
+         `field-status-icon theme target` and is the fuller one. Split the first into `FormLayout`
+         and `MetadataList` files, per one file / one suite, and drop the duplicate block. Found by
+         the declared attribution in batch 041 — the group reads as _over_ upstream's count, which
+         is the shape a duplicate makes.
 
 2. **The published surface.** Settle the Layer/over-export decision as one call at a minor, then
    the `./theme` barrel renames, the `./theme/tokens` subpath keys, `reset.css` at its own subpath,
    and the Tailwind bridge. Every one is an addition to or removal from a shipped API, so they
    belong together rather than dribbled across patches.
+
+   **`astryx-surface` measured this front in batch 042**, enumerating both sides with the TypeScript
+   compiler API over all 119 of upstream's entry points rather than by grepping barrels — so a name
+   published only on `./Layer` is not mistaken for an over-export here. `port/debts.md`'s "`./theme`
+   barrel drift" entry asks for exactly this measurement instead of a figure typed into it. The
+   worklist it produced:
+
+   - [ ] **Over-exports outside every debt clause and the head rule.** `resolveTokenValue` (upstream
+         declares the identical function without `export` — the `normalizeDayOfWeek` case),
+         `getPositionTryFallbacks`, `MetadataListContextValue`, `UseIndicatorFocusRingReturn` and
+         `UseIndicatorFocusRingOptions`, the five `onMediaTokens` names (`defaultOnDarkTokens`,
+         `defaultOnLightTokens`, `resolveOnMedia`, `OnMediaOverrides`, `ResolvedOnMedia` — upstream
+         publishes `generateOnMediaCSS` as the consumer-facing door and nothing behind it), and the
+         three `*IndicatorProps` aliases for a type upstream already publishes as `IndicatorProps<F>`.
+         `FormLayoutContextValue` is the weakest of them: `setFormLayoutContext` cannot be called
+         without naming it, so either keep it under the head rule or make the context value inline
+         as upstream does
+   - [ ] **Theme barrel names absent from every barrel here**, beyond the two renames already
+         recorded: `HeadingTag`, `CoreTokenName`, `TokenName`, and `isDefinedTheme` — the last a
+         _function_, so a runtime capability rather than a type
+   - [ ] **Theme package manifests.** All eight are missing `"sideEffects": false`, which all seven
+         upstream ones carry; verify against a real bundle before choosing `false` over an explicit
+         `["**/*.css"]`, since we ship a `./theme.css` subpath. And our `.`/`./tokens` split is the
+         inversion of upstream's `.`/`./built`: the symbol sets on `.` match name for name, so
+         nothing is unreachable, but a consumer following upstream's docs to `/built` gets nothing.
+         Record the inversion or add the subpath
+   - [ ] **Retire the `tailwind-theme.css` debt** — its `retires:` condition was met by `ea4c84f`;
+         `packages/core/package.json` ships the subpath and the file is in the tarball, while the
+         entry still says "nothing here corresponds"
+   - [ ] A latent hole, not a defect today: the lint rule keeping tests out of `src/lib` matches
+         `*.{test,spec}.{js,ts}` only, so a fixture `.svelte` misfiled under `src/lib` would be
+         caught by neither it nor `package.json`'s `files` denylist. Every fixture is correctly
+         placed; the rule is narrower than the invariant it protects
+
 3. **`@astryx-svelte/build`.** Upstream's `build` package is seven files of framework-agnostic
    JavaScript — a PostCSS plugin, a Babel config and a Vite plugin — and it ships on the stable
    release train at `0.4.5`, unlike the canary packages. The only piece needing translation rather
@@ -98,6 +159,34 @@ and a release is a checkpoint on the way rather than the destination. `0.4.2` wa
 and never tagged, which is why the `0.4.5` changelog entry opens by saying so.
 
 ## Open work
+
+### Missing implementation found by the batch-042 surface sweep
+
+Each of these reads as a missing _export_, and is really a missing _feature_ — the type is absent
+because the thing it types is. None was recorded before; none is a surface-policy call.
+
+- [ ] **`Markdown`'s `sourceRanges` is not ported at all.** Upstream's
+      `parseMarkdown(source, {sourceRanges: true})` stamps every top-level block with `{start, end}`
+      character offsets (`parser.ts` — the field, and `stampSourceRanges`), and publishes
+      `SourceRange` from the root. Our `BlockNode` has no `range` and `ParseOptions` no
+      `sourceRanges`. A 0.5.x feature batch 040's pin move did not catch
+- [ ] **`MultiSelector.formatValue` is documented here and unimplemented.** Upstream declares
+      `formatValue?: (items: MultiSelectorSelectedItem[]) => string`, destructures it and calls it
+      twice; ours has no occurrence of the name. `MultiSelector.doc.mjs` documents it anyway — the
+      emitter's fallback for an unresolvable prop absorbed it, the same mechanism `debts.md`'s "22
+      documented props resolve to no declaration in core" entry describes, except this one is a real
+      gap rather than a translation. That entry's count is understated by at least one
+- [ ] **`Icon` rejects namespaced names that upstream accepts.** `icon` is typed
+      `IconName | IconType` where upstream's is `IconType | IconName | NamespacedIconName`, so
+      `<Icon icon="richtext:bold" />` is a type error here and legal upstream — even though
+      `registerIcons` already takes the key at runtime. Needs `NamespacedIconName` declared and
+      published
+- [ ] **Two of upstream's sixteen module-augmentation seams are missing**, and the union drifted with
+      each. `CardVariantMap` is absent and `CardVariant` is a **closed** union where upstream's is
+      `keyof CardVariantMap` — so a theme cannot add a variant, which
+      `selectable-card.stylex.ts` carries a comment asserting it can. `CustomTextTypes` is absent and
+      `TextType` is `BuiltinTextType | (string & {})`, which accepts any string where upstream
+      accepts only registered ones
 
 ### Core / build
 
@@ -161,7 +250,19 @@ deviation, not a task.
 - [ ] Fold the two per-file `Intl.DateTimeFormat` locale stubs into the client project's `en-US`
       config pin now that it exists, so there's one mechanism instead of three
 - [ ] Continue porting upstream `.test.tsx` suites alongside each component, case for case — the
-      count is the contract (see `status.md` for the measured gap)
+      count is the contract, and `status.md`'s case delta is where it is now kept. A new file
+      declares `PORTS:`; a new upstream suite nothing ports needs either that or a
+      `NO_TEST_COUNTERPART` entry, or the run fails
+- [ ] **`derived_inert` on a Toast's natural exit.** Svelte logs _"Reading a derived belonging to a
+      now-destroyed effect may result in stale values"_ — twice — when a toast unmounts at the end
+      of its real collapse transition. Reproduce with
+      `toast-viewport.svelte.test.ts`'s `collapses a dismissed Toast before unmounting it`, which is
+      the first case to let the transition finish on its own rather than synthesising
+      `transitionend`; that is why it was never seen before batch 042. It is a warning, not a
+      failure, and the suite passes — but it is the idiom axis (`astryx-idiom`), not the parity one,
+      and a stale read on teardown is exactly the shape that axis exists to catch. Start at
+      `toast-viewport.svelte`'s `ontransitionend` handler and the `handleExited` it calls, then at
+      the `toastWrapperAttrs` const inside the keyed `{#each}`
 - [ ] a11y parity checks on every `aria-*`, `role` and live region
 - [ ] SSR render with JS disabled, no hydration warnings
 

@@ -81,6 +81,7 @@
 	import { themeProps } from '../../internal/theme-props.js';
 	import {
 		ARC_FRACTION,
+		BOX_SIZE,
 		SIZES,
 		spinnerArcAttrs,
 		spinnerAttrs,
@@ -125,11 +126,11 @@
 	const circumference = $derived(Math.PI * metrics.diameter);
 	const arcLength = $derived(circumference * ARC_FRACTION);
 
-	const base = $derived(spinnerAttrs(hasLabel ? undefined : xstyle));
-	const wrapper = $derived(spinnerWrapperAttrs(xstyle));
+	const base = $derived(spinnerAttrs(size, shade, hasLabel, xstyle));
+	const wrapper = $derived(spinnerWrapperAttrs(size, shade, xstyle));
 	const ring = spinnerRingAttrs();
 	const track = $derived(spinnerTrackAttrs(shade));
-	const arc = $derived(spinnerArcAttrs(shade));
+	const arc = spinnerArcAttrs();
 	const theme = $derived(themeProps('spinner', { size, shade }));
 </script>
 
@@ -144,8 +145,14 @@
 		class={hasLabel ? base.class : cx(theme.class, base.class, className)}
 		style={mergeStyle(
 			base.style,
-			`width:${frameSize}px;height:${frameSize}px`,
-			hasLabel ? undefined : (styleProp as string | undefined)
+			hasLabel ? undefined : (styleProp as string | undefined),
+			// The box is sized here, after the caller's `style`: the component's own
+			// size wins over a `style="width:…"` a caller passes, exactly as it did
+			// before the geometry became themeable. What the value is made of has
+			// changed — the composed var rather than a number — so a themed diameter
+			// moves the box with the ring. The fallback is the size's own frame, for
+			// the render where no stylesheet has declared the var.
+			`width:var(${BOX_SIZE}, ${frameSize}px);height:var(${BOX_SIZE}, ${frameSize}px)`
 		)}
 	>
 		<svg

@@ -1,3 +1,5 @@
+/** PORTS: hooks/useFocusTrap.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { FOCUSABLE_SELECTOR } from '$lib/internal/focusable-selector.js';

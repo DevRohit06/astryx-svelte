@@ -1,3 +1,5 @@
+/** PORTS: Layer/useLayerDismissal.test.tsx */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { resetLayerStackForTests } from '$lib/components/layer/layer-stack.js';

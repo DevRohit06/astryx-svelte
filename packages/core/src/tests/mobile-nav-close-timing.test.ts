@@ -1,3 +1,5 @@
+/** PORTS: MobileNav/MobileNavCloseTiming.test.ts */
+
 import { describe, it, expect } from 'vitest';
 import { parseShortestDurationMs } from '$lib/components/mobile-nav/close-timing.js';
 

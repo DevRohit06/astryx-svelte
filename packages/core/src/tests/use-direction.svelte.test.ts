@@ -1,3 +1,5 @@
+/** PORTS: i18n/__tests__/useDirection.test.tsx */
+
 import { describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import UseDirectionProbe from './fixtures/use-direction-probe.svelte';

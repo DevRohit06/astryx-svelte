@@ -371,9 +371,9 @@
 	// ============= CHART GEOMETRY =============
 	// The stand-in for recharts. See the header comment.
 
-	const GREEN = 'var(--color-data-categorical-green, #22c55e)';
+	const GREEN = 'var(--color-data-categorical-green, #0B991F)';
 	const SPARK_GREEN = 'var(--color-data-categorical-green, #0B991F)';
-	const SPARK_RED = 'var(--color-data-categorical-red, #E5484D)';
+	const SPARK_RED = 'var(--color-data-categorical-red, #F5394F)';
 	const BORDER = 'var(--color-border, rgba(5, 54, 89, 0.1))';
 	const TICK_STYLE =
 		'font-size: var(--font-size-sm, 12px); fill: var(--color-text-secondary, #4E606F);';

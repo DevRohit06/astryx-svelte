@@ -1,3 +1,5 @@
+/** PORTS: Layout/__tests__/childrenAsContent.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import LayoutFixture from './fixtures/layout-fixture.svelte';

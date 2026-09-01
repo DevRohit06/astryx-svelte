@@ -1,3 +1,5 @@
+/** PORTS: PowerSearch/PowerSearchValueEditor.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import PowerSearchValueEditor from '$lib/components/power-search/power-search-value-editor.svelte';

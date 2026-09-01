@@ -1,3 +1,5 @@
+/** NO-UPSTREAM: coverage beyond upstream — the header below says why. */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import BaseTypeahead from '$lib/components/typeahead/base-typeahead.svelte';

@@ -11,6 +11,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 import { stepMarker } from './stepper.markers.stylex.js';
 import type { StepperDensity, StepperOrientation } from './stepper-context.svelte.js';
 import type { StepStatus } from './step-status.js';
@@ -496,13 +497,7 @@ const styles = stylex.create({
 			'@media (prefers-reduced-motion: reduce)': '0s'
 		},
 		transitionTimingFunction: easeVars['--ease-standard'],
-		backgroundColor: {
-			default: 'transparent',
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': colorVars['--color-overlay-hover']
-			},
-			':active': colorVars['--color-overlay-pressed']
-		}
+		backgroundColor: 'transparent'
 	},
 
 	// ===================== ON-TRACK LAYOUT =====================
@@ -543,13 +538,7 @@ const styles = stylex.create({
 			'@media (prefers-reduced-motion: reduce)': '0s'
 		},
 		transitionTimingFunction: easeVars['--ease-standard'],
-		backgroundColor: {
-			default: 'transparent',
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': colorVars['--color-overlay-hover']
-			},
-			':active': colorVars['--color-overlay-pressed']
-		}
+		backgroundColor: 'transparent'
 	},
 
 	otRowWrap: {
@@ -891,6 +880,8 @@ export function stepBodyAttrs({
 	return isClickable
 		? sx(
 				styles.buttonReset,
+				// Upstream 0.5.1: hover/pressed background moved to the shared module.
+				interactionOverlayStyles.backgroundColor,
 				focusOutlineStyles.focusVisible,
 				densityBlockStyle(density),
 				styles.densityInline(separatedDensityInline(density))
@@ -1059,7 +1050,13 @@ export function stepOtWrapAttrs({
 	const pad = isVertical ? styles.otRowPadV(space) : styles.otPadBlock(space);
 
 	return isClickable
-		? sx(styles.otInteractive, shape, pad, focusOutlineStyles.focusVisible)
+		? sx(
+				styles.otInteractive,
+				interactionOverlayStyles.backgroundColor,
+				shape,
+				pad,
+				focusOutlineStyles.focusVisible
+			)
 		: sx(shape, pad);
 }
 

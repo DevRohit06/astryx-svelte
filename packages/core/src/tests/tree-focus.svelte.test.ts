@@ -1,3 +1,5 @@
+/** PORTS: hooks/useTreeFocus.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Tree, { type TreeNode } from './fixtures/tree-focus-fixture.svelte';

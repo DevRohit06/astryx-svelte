@@ -35,8 +35,8 @@ export default {
 		vars: [
 			{
 				name: '--_popover-radius',
-				description: 'Border radius of the popover',
-				default: 'var(--radius-element)',
+				description: 'Border radius of the popover surface',
+				default: 'var(--radius-container)',
 				private: true
 			}
 		],

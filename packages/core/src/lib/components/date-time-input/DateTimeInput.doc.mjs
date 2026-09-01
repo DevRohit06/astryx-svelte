@@ -20,7 +20,7 @@ export default {
 		'timestamp'
 	],
 	group: 'DateInput',
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -53,7 +53,7 @@ export default {
 	},
 	usage: {
 		description:
-			'DateTimeInput combines a calendar popover with a time input for selecting both a date and time in a single interaction flow. Use it for scheduling, event creation, deadline setting, or any form field that needs a specific datetime.',
+			'DateTimeInput combines date and time selection in one field. On mouse/trackpad devices it uses a calendar popover plus text time input; on coarse-pointer devices the closed control still has separate Date and Time segments, and either segment opens a bottom sheet with Date and Time sections, a swipable month calendar, and accessible time wheels. The closed date and time segments stay side by side when at least 400px is available and wrap into full-width rows below 400px, independent of viewport width. Use it for scheduling, event creation, deadline setting, or any form field that needs a specific datetime.',
 		bestPractices: [
 			{
 				guidance: true,
@@ -112,18 +112,19 @@ export default {
 				name: 'Calendar popover',
 				required: false,
 				description:
-					'A month grid that appears when the icon is clicked or the date input is focused.'
+					'A month grid that appears in a popover on desktop, or in the mobile bottom sheet on coarse-pointer devices.'
 			},
 			{
 				name: 'Time input',
 				required: true,
-				description: 'A text input for entering the time, displayed beside the date input.'
+				description:
+					"A text input for entering the time on desktop; a read-only time segment opening accessible hour/minute/second wheels on touch. The touch Date panel's Save date action advances to Time; the Time panel's Save closes the sheet."
 			},
 			{
 				name: 'Time options popover',
 				required: false,
 				description:
-					'A list of preset times at the timeOptionInterval cadence, shown when that prop is set and the time input is clicked or opened with Alt+ArrowDown.'
+					'A desktop-only list of preset times at the timeOptionInterval cadence, shown when that prop is set and the time input is clicked or opened with Alt+ArrowDown.'
 			},
 			{
 				name: 'Clear button',
@@ -233,14 +234,15 @@ export default {
 		{
 			name: 'timeIncrement',
 			type: '1 | 5 | 10 | 15 | 30',
-			description: 'Minutes to add or subtract when using arrow keys in the time input.',
+			description:
+				'Minutes to add or subtract when using arrow keys in the desktop time input. Ignored on the mobile touch sheet, where time is changed with wheels.',
 			default: '1'
 		},
 		{
 			name: 'timeOptionInterval',
 			type: '5 | 10 | 60 | 15 | 30',
 			description:
-				'Minute cadence for a dropdown of preset times on the time portion. Set it to turn the time field into a combobox listing every valid time at that cadence (60 gives a 12 AM to 11 PM list). Omitted, the time field stays a plain text input and gains no combobox semantics. Typed entry keeps working either way, so a time between two options is still reachable. Independent of timeIncrement, which governs arrow-key stepping.'
+				'Minute cadence for a dropdown of preset times on the desktop time portion. Set it to turn the desktop time field into a combobox listing every valid time at that cadence (60 gives a 12 AM to 11 PM list). Omitted, the desktop time field stays a plain text input and gains no combobox semantics. Typed entry keeps working either way, so a time between two options is still reachable. Ignored on the mobile touch sheet, where the wheels expose every hour/minute/second.'
 		},
 		{
 			name: 'hasClear',
@@ -257,7 +259,8 @@ export default {
 		{
 			name: 'timePlaceholder',
 			type: 'string',
-			description: 'Placeholder text shown in the time portion when no time is selected.',
+			description:
+				'Placeholder text shown in the time portion when no time is selected. On touch, this appears in the closed time segment before a time is chosen.',
 			default: "'Select a time'"
 		},
 		{
@@ -285,7 +288,8 @@ export default {
 		{
 			name: 'numberOfMonths',
 			type: '2 | 1',
-			description: 'Number of months displayed simultaneously in the calendar.',
+			description:
+				'Number of months displayed simultaneously in the desktop calendar popover. Ignored on the mobile touch sheet, whose Date panel always shows one swipe-paged month at a time.',
 			default: '1'
 		},
 		{

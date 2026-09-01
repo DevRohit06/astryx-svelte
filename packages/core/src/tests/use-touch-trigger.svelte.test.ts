@@ -1,3 +1,5 @@
+/** PORTS: Layer/useTouchTrigger.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { isActionTrigger } from '$lib/components/layer/use-touch-trigger.svelte.js';
 

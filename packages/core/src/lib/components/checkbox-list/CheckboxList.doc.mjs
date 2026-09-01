@@ -17,7 +17,7 @@ export default {
 		'checklist'
 	],
 	group: 'Checkbox',
-	category: 'Data Input',
+	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	theming: {
 		targets: [

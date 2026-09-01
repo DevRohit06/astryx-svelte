@@ -417,12 +417,18 @@
 	// component's own conditionals. `readonly` selects no style key — the point of
 	// the state is that it is NOT dimmed.
 	const theme = $derived(
-		themeProps('textarea', {
-			size,
-			status: status?.type ?? null,
-			disabled: isDisabled ? 'disabled' : null,
-			readonly: isReadOnly ? 'readonly' : null
-		})
+		themeProps(
+			'text-area',
+			{
+				size,
+				status: status?.type ?? null,
+				disabled: isDisabled ? 'disabled' : null,
+				readonly: isReadOnly ? 'readonly' : null
+			},
+			// `textarea` ran the compound name together; themes styling it keep
+			// working until the next major.
+			{ legacyNames: ['textarea'] }
+		)
 	);
 	const wrapperAttrs = $derived(textAreaWrapperAttrs(status?.type, isDisabled, xstyle));
 	const areaAttrs = $derived(
@@ -440,6 +446,11 @@
 	);
 	const startIconAttrs = textAreaStartIconAttrs();
 	const endSlotAttrs = textAreaEndSlotAttrs();
+	// The two painted elements inside the wrapper name themselves, so a theme can
+	// reach the control's own box and the character counter without selecting
+	// through the wrapper's element structure. Neither takes a visual prop.
+	const controlTheme = themeProps('text-area-control');
+	const counterTheme = themeProps('text-area-counter');
 	const counterAttrs = $derived(textAreaCounterAttrs(isOverLimit));
 </script>
 
@@ -500,7 +511,8 @@
 			aria-required={isEffectivelyRequired() ? 'true' : undefined}
 			aria-invalid={status?.type === 'error' || isOverLimit ? 'true' : undefined}
 			aria-busy={isBusy || undefined}
-			class={areaAttrs.class}
+			{...controlTheme}
+			class={cx(controlTheme.class, areaAttrs.class)}
 			style={areaAttrs.style}></textarea>
 		{#if isBusy || statusIcon.hasIcon}
 			<span class={endSlotAttrs.class} style={endSlotAttrs.style}>
@@ -509,7 +521,12 @@
 			</span>
 		{/if}
 		{#if maxLength != null}
-			<div id={counterID} class={counterAttrs.class} style={counterAttrs.style}>
+			<div
+				id={counterID}
+				{...counterTheme}
+				class={cx(counterTheme.class, counterAttrs.class)}
+				style={counterAttrs.style}
+			>
 				{#if isOverLimit}
 					<!-- Non-color cue so the over-limit state isn't conveyed by the red
 					     color alone (WCAG 1.4.1). Decorative — the count text and the

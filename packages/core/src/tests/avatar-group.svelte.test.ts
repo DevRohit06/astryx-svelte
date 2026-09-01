@@ -1,3 +1,5 @@
+/** PORTS: AvatarGroup/AvatarGroup.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -6,15 +8,16 @@ import AvatarGroupFixture from './fixtures/avatar-group-fixture.svelte';
 import AvatarGroupI18nFixture from './fixtures/avatar-group-i18n.svelte';
 
 /**
- * Astryx's `AvatarGroup/AvatarGroup.test.tsx`, ported case for case — **31
- * upstream cases at the 0.5.0 pin** (7 in `describe('AvatarGroup')`, 6 in
+ * Astryx's `AvatarGroup/AvatarGroup.test.tsx`, ported case for case — **33
+ * upstream cases at the 0.5.2 pin** (7 in `describe('AvatarGroup')`, 6 in
  * `describe('AvatarGroupOverflow')`, 9 in `describe('AvatarGroupOverflow —
  * hardening')`, 6 in `describe('AvatarGroup — roving focus + keyboard hint')`
  * and 3 in `describe('AvatarGroup — size cascade')`), **25 here**. There is no
  * `displayName` case, no snapshot and no no-JSX construction form, so `ref` is
  * the only React-only surface and it gets a counterpart.
  *
- * **The 6 that are not here all arrived at 0.5.0**, and none is droppable:
+ * **8 are not here.** Six arrived at 0.5.0 and two more at 0.5.1; none is
+ * droppable:
  *
  * - **The whole 3-case `AvatarGroup — size cascade` block** — the group's
  *   explicit size overriding a child's own `size` prop, the group's *default*
@@ -27,6 +30,18 @@ import AvatarGroupI18nFixture from './fixtures/avatar-group-i18n.svelte';
  *
  * All six are the same subject: the size a chip or an avatar resolves to,
  * inside a group and outside one.
+ *
+ * **The 2 added at 0.5.1** come with the group's new `shape` prop, and both
+ * would pass against this port today — the prop, the context field and the
+ * chip's `data-shape` all landed in the 0.5.2 batch:
+ *
+ * - `applies the group shape to the overflow chip, matching its avatars`
+ * - `defaults the overflow chip to circle shape with no explicit AvatarGroup
+ *   shape`
+ *
+ * (This header read "**31** upstream cases at the 0.5.0 pin … 25 here", true at
+ * that pin. The pin move to 0.5.2 is what invalidated it: a stated count is a
+ * contract against upstream's file at the *current* pin.)
  *
  * (This header read "**25** upstream cases at v0.3.0 … 25 here, none dropped",
  * true at that pin.)

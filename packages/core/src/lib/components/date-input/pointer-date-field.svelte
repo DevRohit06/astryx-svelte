@@ -13,6 +13,7 @@
 	import { parseDateInput } from '../../utils/date-parser.js';
 	import { formatSharedDate, plainDateFromISO, plainDateToISO } from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import Calendar from '../calendar/calendar.svelte';
 	import type { CalendarHandle } from '../calendar/calendar.svelte';
 	import { useCalendarConstraints } from '../calendar/use-calendar-constraints.svelte.js';
@@ -100,6 +101,7 @@
 	});
 
 	const t = useTranslator();
+	const locale = useLocale();
 	const placeholder = $derived(placeholderFromProps ?? t('@astryx.dateInput.placeholder'));
 	const resolveSize = useSize();
 	const size = $derived(resolveSize(sizeProp, 'md'));
@@ -224,7 +226,7 @@
 	function formatCommittedValue(iso: ISODateString): string {
 		return typeof format === 'function'
 			? format(iso)
-			: formatSharedDate(plainDateFromISO(iso), format);
+			: formatSharedDate(plainDateFromISO(iso), format, locale());
 	}
 
 	// Display value: the pending text while typing, otherwise the formatted
@@ -243,7 +245,9 @@
 	// parse-only: a date that parses but fails a constraint is not "invalid" here,
 	// it simply never commits.
 	const isInputValid = $derived(
-		pendingInput === null || !pendingInput.trim() ? true : parseDateInput(pendingInput) !== null
+		pendingInput === null || !pendingInput.trim()
+			? true
+			: parseDateInput(pendingInput, locale()) !== null
 	);
 
 	const popover = usePopover(() => ({
@@ -316,7 +320,7 @@
 		pendingInput = newValue;
 
 		// If the input is valid and passes constraints, update immediately.
-		const parsed = parseDateInput(newValue);
+		const parsed = parseDateInput(newValue, locale());
 		if (parsed && plainDateToISO(parsed) !== value && !constraints.isDateDisabled(parsed)) {
 			const parsedISO = plainDateToISO(parsed);
 			lastFiredValue = parsedISO;
@@ -340,7 +344,7 @@
 			return;
 		}
 
-		const parsed = parseDateInput(pendingInput);
+		const parsed = parseDateInput(pendingInput, locale());
 		if (parsed && !constraints.isDateDisabled(parsed)) {
 			const parsedISO = plainDateToISO(parsed);
 			if (parsedISO !== value) {

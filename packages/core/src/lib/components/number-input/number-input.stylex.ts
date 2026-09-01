@@ -16,6 +16,7 @@ import {
 	typeScaleVars,
 	typographyVars
 } from '../../styles/tokens.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `NumberInput/NumberInput.tsx`, where the styles are
@@ -145,13 +146,6 @@ const styles = stylex.create({
 		borderStyle: 'none',
 		color: colorVars['--color-icon-secondary'],
 		backgroundColor: colorVars['--color-background-surface'],
-		backgroundImage: {
-			default: null,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
-			},
-			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		},
 		cursor: {
 			default: 'pointer',
 			':is(:disabled,[aria-disabled="true"])': 'default'
@@ -242,6 +236,8 @@ export function numberInputStepperButtonAttrs(
 ): SvelteStyleAttrs {
 	return sx(
 		styles.numberStepperButton,
+		// Upstream 0.5.1 moved the hover/pressed overlay into the shared module.
+		interactionOverlayStyles.backgroundImage,
 		isDecrement && styles.decrementButton,
 		isStepperDisabled && styles.numberStepperButtonDisabled
 	);

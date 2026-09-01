@@ -27,7 +27,7 @@ export default {
 		targets: [
 			{
 				className: 'astryx-card',
-				visualProps: ['variant']
+				visualProps: ['variant', 'elevation']
 			}
 		],
 		vars: [
@@ -132,11 +132,6 @@ export default {
 			}
 		]
 	},
-	playground: {
-		defaults: {
-			padding: 4
-		}
-	},
 	props: [
 		{
 			name: 'width',
@@ -166,8 +161,9 @@ export default {
 		{
 			name: 'padding',
 			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
-			description: 'Internal padding using the spacing scale.',
-			default: '4'
+			description:
+				"Internal padding using the spacing scale. Omit it and the card takes the theme's card padding rather than a step, so passing a step is a decision to override the theme, not a way to restate the default.",
+			default: "the theme's card padding (spacing step 4 with no theme)"
 		},
 		{
 			name: 'variant',

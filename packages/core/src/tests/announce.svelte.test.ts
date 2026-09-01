@@ -1,3 +1,5 @@
+/** PORTS: hooks/useAnnounce.test.tsx */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useAnnounce, __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 

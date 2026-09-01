@@ -1,3 +1,5 @@
+/** PORTS: i18n/__tests__/getLocaleDirection.test.ts */
+
 import { describe, expect, test } from 'vitest';
 import { getLocaleDirection } from '$lib/i18n/get-locale-direction.js';
 

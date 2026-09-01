@@ -22,7 +22,16 @@ const styles = stylex.create({
 		fontSize: typeScaleVars['--text-supporting-size'],
 		lineHeight: typeScaleVars['--text-supporting-leading'],
 		fontWeight: fontWeightVars['--font-weight-medium'],
-		whiteSpace: 'nowrap'
+		whiteSpace: 'nowrap',
+		// A badge is one line by construction — fixed height, `nowrap` — so a
+		// label wider than the space available has to go somewhere. Without these
+		// it went *outside* its container: `nowrap` with nothing to clip it
+		// neither wraps nor truncates, it just escapes, and lands on whatever sits
+		// beside it. `minWidth: 0` matters as much as the max: as a flex item the
+		// automatic minimum size would otherwise hold the badge at its full text
+		// width and push the clamp back out again.
+		maxWidth: '100%',
+		minWidth: 0
 	}
 });
 

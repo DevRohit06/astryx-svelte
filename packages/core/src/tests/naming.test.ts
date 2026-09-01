@@ -1,3 +1,5 @@
+/** PORTS: naming.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import {
 	NAMESPACE,

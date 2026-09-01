@@ -422,7 +422,15 @@
 		maxHeight ? `max-height: ${typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight};` : ''
 	);
 
-	const theme = $derived(themeProps('codeblock', { size, language, container }));
+	const theme = $derived(
+		themeProps(
+			'code-block',
+			{ size, language, container },
+			// `codeblock` ran the compound name together; themes styling it keep
+			// working until the next major.
+			{ legacyNames: ['codeblock'] }
+		)
+	);
 	const rootAttrs = $derived(codeBlockRootAttrs(widthProp, container, xstyle));
 	const headerRowAttrs = $derived(codeBlockHeaderRowAttrs(hasLineNumbers));
 	const headerAttrs = $derived(codeBlockHeaderAttrs(canCollapse));
@@ -435,9 +443,19 @@
 	const codeAttrs = $derived(codeBlockCodeAttrs(size, isWrapped, hasLineNumbers, maxLineDigits));
 	const lineChunkAttrs = codeBlockLineChunkAttrs();
 	const lineContentAttrs = codeBlockLineContentAttrs();
-	const headerTheme = $derived(themeProps('codeblock-header', { size, language, container }));
-	const titleTheme = $derived(themeProps('codeblock-title', { size, language }));
-	const copyButtonTheme = themeProps('codeblock-copy-button');
+	const headerTheme = $derived(
+		themeProps(
+			'code-block-header',
+			{ size, language, container },
+			{ legacyNames: ['codeblock-header'] }
+		)
+	);
+	const titleTheme = $derived(
+		themeProps('code-block-title', { size, language }, { legacyNames: ['codeblock-title'] })
+	);
+	const copyButtonTheme = themeProps('code-block-copy-button', undefined, {
+		legacyNames: ['codeblock-copy-button']
+	});
 </script>
 
 {#snippet copyButton()}

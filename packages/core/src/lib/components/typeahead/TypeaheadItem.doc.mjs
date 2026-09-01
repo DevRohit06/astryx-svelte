@@ -25,7 +25,7 @@ export default {
 		'picker'
 	],
 	group: 'Typeahead',
-	category: 'Data Input',
+	category: 'Form Controls',
 	props: [
 		{
 			name: 'item',

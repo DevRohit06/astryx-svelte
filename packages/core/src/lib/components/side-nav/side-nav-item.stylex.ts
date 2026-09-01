@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { navItemStyles, type NavItemSize } from '../nav-item/nav-item.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 import {
 	colorVars,
 	durationVars,
@@ -20,12 +21,13 @@ import {
  * what `SideNavItem` layers on top — the collapsed icon-only square, the
  * truncating label, the nested-children disclosure, and the split-action row.
  *
- * The split-action shape is the one worth understanding. When an item is *both*
- * collapsible and has a primary action, the chevron cannot be a `<button>`
- * inside the `<a>` — nesting interactive elements is invalid. So the row becomes
- * a `<div>` carrying the nav-item styling, with the link/button (`splitAction`,
- * `flex: 1` for a wide target) and the chevron toggle (`expandToggle`) as
- * siblings inside it.
+ * The row-wrapper shape is the one worth understanding. When the row carries
+ * more than one control — an independent chevron toggle (collapsible *and* a
+ * primary action), consumer-supplied `actions`, or both — the extra control
+ * cannot be a `<button>` inside the `<a>`, because nesting interactive elements
+ * is invalid. So the row becomes a `<div>` carrying the nav-item styling, with
+ * the link/button (`splitAction`, `flex: 1` for a wide target), the chevron
+ * toggle (`expandToggle`) and the `actions` slot as siblings inside it.
  *
  * `styles.children` is declared upstream and applied nowhere — `childrenInner`
  * superseded it. Ported for shape parity; StyleX drops unreferenced keys, so it
@@ -55,6 +57,18 @@ const styles = stylex.create({
 		flexShrink: 0,
 		display: 'flex',
 		alignItems: 'center'
+	},
+	// Row-level secondary controls (actions slot) — siblings of the primary
+	// element at the trailing edge of the row. pointerEvents opts back in when
+	// a disabled row's navItemStyles.disabled sets pointer-events: none on the
+	// wrapper: the slot is passthrough, so each control owns its own disabled
+	// state (keyboard focus already reaches it either way).
+	actions: {
+		flexShrink: 0,
+		display: 'flex',
+		alignItems: 'center',
+		gap: spacingVars['--spacing-1'],
+		pointerEvents: 'auto'
 	},
 	children: {
 		paddingInlineStart: spacingVars['--spacing-6']
@@ -116,14 +130,10 @@ const styles = stylex.create({
 			':is(:disabled,[aria-disabled="true"])': 'default'
 		},
 		borderRadius: radiusVars['--radius-element'],
-		':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-			'@media (hover: hover)': {
-				backgroundColor: colorVars['--color-overlay-hover']
-			}
-		},
-		':active': {
-			backgroundColor: colorVars['--color-overlay-pressed']
-		}
+		// Upstream 0.5.1 gives the standalone toggle an explicit box so it keeps a
+		// full target when it sits beside an href/onClick primary.
+		height: sizeVars['--size-element-sm'],
+		width: sizeVars['--size-element-sm']
 	},
 	// Primary action element inside the split-action row (link or button).
 	// Flex:1 so it fills remaining space, giving a wide click target.
@@ -192,10 +202,18 @@ export function sideNavItemRootAttrs(xstyle?: StyleArg): SvelteStyleAttrs {
 /**
  * The expanded row: the shared nav item with selected/disabled applied.
  *
- * Two shapes of one appearance. On the split-action path the row is a plain
- * `<div>` container and its *children* take focus, so the ring belongs on them
- * and this builder must not draw it; everywhere else the row element is itself
- * the focusable control and `sideNavItemFocusableRowAttrs` is the one to use.
+ * Three shapes of one appearance, and which builder to reach for is a question
+ * about where the focus ring belongs:
+ *
+ * - `sideNavItemRowAttrs` — the row-wrapper path with an independent toggle and
+ *   no `actions`: a presentational `<div>` whose *children* are the tab stops,
+ *   so the ring belongs on each of them and this builder must not draw it.
+ * - `sideNavItemFocusableRowAttrs` — the ordinary row, where the row element is
+ *   itself the focusable control.
+ * - `sideNavItemActionsRowAttrs` — the same pill, but the ring is drawn for the
+ *   *primary only*. The wrapper is not a tab stop, so its own `:focus-visible`
+ *   would never match, and ringing on any descendant instead would light the
+ *   whole row around the chevron's or an action's own ring.
  */
 export function sideNavItemRowAttrs(
 	size: NavItemSize,
@@ -208,6 +226,8 @@ export function sideNavItemRowAttrs(
 function rowStyleArgs(size: NavItemSize, isSelected: boolean, isDisabled: boolean): StyleArg[] {
 	return [
 		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
 		navItemStyles[size],
 		isSelected && navItemStyles.selected,
 		isDisabled && navItemStyles.disabled
@@ -223,6 +243,20 @@ export function sideNavItemFocusableRowAttrs(
 	return focusOutlineProps.focusVisible(...rowStyleArgs(size, isSelected, isDisabled));
 }
 
+/**
+ * The expanded row when it carries an `actions` slot — the ring is scoped to the
+ * wrapper's first child, which is the primary link/button. Pair it with
+ * {@link sideNavItemSplitActionSuppressedAttrs} on that primary, so the UA's own
+ * ring does not paint inside this one.
+ */
+export function sideNavItemActionsRowAttrs(
+	size: NavItemSize,
+	isSelected: boolean,
+	isDisabled: boolean
+): SvelteStyleAttrs {
+	return focusOutlineProps.focusWithinFirstChild(...rowStyleArgs(size, isSelected, isDisabled));
+}
+
 /** The collapsed icon-only square — a fixed width matching the size ramp. */
 export function sideNavItemCollapsedAttrs(
 	size: NavItemSize,
@@ -233,6 +267,8 @@ export function sideNavItemCollapsedAttrs(
 	// element, so each draws the shared ring.
 	return focusOutlineProps.focusVisible(
 		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
 		navItemStyles[size],
 		styles.itemCollapsed,
 		size === 'sm' && styles.itemCollapsedSm,
@@ -250,6 +286,19 @@ export function sideNavItemLabelAttrs(): SvelteStyleAttrs {
 /** The trailing slot for badges and counts. */
 export function sideNavItemEndContentAttrs(): SvelteStyleAttrs {
 	return sx(styles.endContent);
+}
+
+/**
+ * The `actions` slot — row-level secondary controls, siblings of the primary
+ * element at the trailing edge of the row.
+ *
+ * `pointerEvents: auto` is the load-bearing half. A disabled row's
+ * `navItemStyles.disabled` sets `pointer-events: none` on the wrapper, and this
+ * slot opts back in: the content is passthrough, so each control owns its own
+ * disabled state (keyboard focus already reaches it either way).
+ */
+export function sideNavItemActionsAttrs(): SvelteStyleAttrs {
+	return sx(styles.actions);
 }
 
 /** The `0fr ↔ 1fr` grid that animates nested children open and shut. */
@@ -272,12 +321,25 @@ export const sideNavItemChevronExpandedStyle = styles.expandChevronExpanded;
 
 /** The chevron as its own button, in the split-action row. */
 export function sideNavItemExpandToggleAttrs(): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(styles.expandToggle);
+	return focusOutlineProps.focusVisible(
+		styles.expandToggle,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor
+	);
 }
 
 /** The primary link/button in the split-action row. */
 export function sideNavItemSplitActionAttrs(): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(styles.splitAction);
+}
+
+/**
+ * The same primary link/button when the row carries `actions`. The wrapper rings
+ * for this element ({@link sideNavItemActionsRowAttrs}); suppressing here is what
+ * keeps the UA's own ring from painting inside that one.
+ */
+export function sideNavItemSplitActionSuppressedAttrs(): SvelteStyleAttrs {
+	return focusOutlineProps.suppressed(styles.splitAction);
 }
 
 /** The flyout shown for a collapsed item that has children. */

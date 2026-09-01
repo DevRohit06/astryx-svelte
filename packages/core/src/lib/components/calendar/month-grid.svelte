@@ -34,6 +34,7 @@
 
 <script lang="ts">
 	import { useGridFocus } from '../../hooks/use-grid-focus.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import {
 		DATE_FORMAT_MONTH_YEAR,
 		plainDateFormat,
@@ -78,6 +79,7 @@
 		onNavigateNext
 	}: MonthGridProps = $props();
 
+	const locale = useLocale();
 	const year = $derived(month.year);
 
 	const grid = useCalendarDays(() => ({
@@ -260,7 +262,7 @@
 
 	// Month label for announcements — this pane's own month, not the combined
 	// header label.
-	const monthLabel = $derived(plainDateFormat(month, DATE_FORMAT_MONTH_YEAR));
+	const monthLabel = $derived(plainDateFormat(month, DATE_FORMAT_MONTH_YEAR, locale()));
 
 	const rootAttrs = monthGridAttrs();
 	const gridAttrs = $derived(daysGridAttrs(hasWeekNumbers));

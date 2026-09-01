@@ -1,3 +1,5 @@
+/** PORTS: theme/themeRegistry.test.ts */
+
 import { beforeEach, describe, expect, it } from 'vitest';
 import { defineTheme } from '$lib/theme/define-theme.js';
 import {

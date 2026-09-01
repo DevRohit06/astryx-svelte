@@ -102,17 +102,49 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   It reads as a catastrophic regression rather than as contention, and it cost
 #   a full 30-minute gate run to a background agent that was running the suite
 #   at the same time. Same rule for `pnpm verify`, which runs this.
-#   **The same contention bites the runner's own concurrency on a cold Vite cache.**
-#   It launches four chunks at once; run straight after a `pnpm -r build` — which
-#   empties the optimize cache — three of the first four raced `Forced
-#   re-optimization of dependencies`, never printed a header, and held their slots
-#   until the 30-minute stage timeout killed the run, while chunks 5-17 all passed.
-#   Nothing was wrong with the tests: each stalled chunk passes in isolation. Warm
-#   the cache (run one chunk, or the suite once) before gating after a build.
+#   **The run you collide with may be one nobody is watching.** `child.on('close')`
+#   was the only thing that ever resolved a chunk, so a chunk whose browser died
+#   *without* closing its vitest process never resolved — the run hung instead of
+#   failing, silently, for as long as the machine stayed up. Two such trees, six
+#   vitest processes and six headless shells between them, were found alive 16 and
+#   7 hours after the runs that spawned them, still holding this project while a
+#   later gate ran against it; that gate's failure was then written up as a memory
+#   regression in a commit both orphans predate. Nothing had killed them because
+#   nothing *could*: the "30-minute stage timeout" this file used to cite does not
+#   exist — CI caps the job at 45 minutes and locally there is no cap at all — and
+#   believing in it is why no one looked. The runner now takes a liveness-keyed
+#   lock (`node_modules/.client-run.lock`; `CLIENT_CHUNK_NO_LOCK=1` overrides) and
+#   kills any chunk that has not exited within `CLIENT_CHUNK_TIMEOUT_MS` (12 min),
+#   classifying it as a drop and re-running it **once**, since a wedge costs the
+#   whole timeout per attempt where a drop costs seconds. Before believing any
+#   diagnosis of this symptom, check for a live run — it has now been misread four
+#   times: as a cold cache, as free isolation, as a memory regression, and only
+#   then as the unbounded chunk it was.
+#   **The same contention bites the runner's own pool, and warming does not fix
+#   it.** Four chunks launching at once all print `Forced re-optimization of
+#   dependencies`, and three of the four then never print a header — they hold
+#   their slots indefinitely (see above — nothing kills them), while every
+#   later chunk passes. It reads as a catastrophic regression and is contention;
+#   each stalled chunk passes in isolation. The cause is **not** a cold cache:
+#   vitest's browser mode re-optimizes on *every* run, so the cache is never
+#   reused and "warm it first" is a no-op — batch 041 shipped that fix on that
+#   wrong diagnosis and batch 042's gate failed the same way, with chunk 1 having
+#   warmed alone and the very next process re-optimizing anyway. What actually
+#   collides is several processes writing `node_modules/.vite-temp` and renaming
+#   it into place at once — the `EPERM: rename` failure above, from inside one
+#   command. `run-client-tests.mjs` now gives each chunk its own `cacheDir`
+#   (`vite.config.ts` reads `CLIENT_CHUNK_CACHE_DIR`). Driving vitest directly
+#   still shares one cache, so two hand-started runs collide exactly as before.
+#   **Isolation moved a cost rather than removing one**, and the concurrency cap
+#   came down from 4 to 2 with it: the old cap assumed one shared optimizer, and
+#   four concurrent ones starve the box. A starved chunk does not crash — the
+#   page stops answering, `userEvent.click` lands on nothing, and a dozen
+#   unrelated cases report as assertion failures that all pass in isolation.
+#   That is the shape to recognise before believing a chunk found a regression.
 #   The client project cannot be run in one process: it dies partway through with
 #   `wrapDynamicImport` of undefined (Vite's module runner, not an assertion) and
 #   reports every later file as failed. Measured on both Windows and Ubuntu CI, at a
-#   different file each time. `scripts/run-client-tests.mjs` runs it in batches of 20
+#   different file each time. `scripts/run-client-tests.mjs` runs it in batches of 12
 #   (`CLIENT_CHUNK_SIZE` overrides) and reconciles files-run against files-on-disk, so
 #   a chunk that collected nothing fails the run instead of shrinking the total. This
 #   is what `core`'s `test` script and CI both use; a bare `--project=client` over every
@@ -183,6 +215,17 @@ does a skip whose key _starts_ matching — the list cannot rot. The published t
 but **can lag upstream's source** (Icon's px→rem move is the standing example): follow the source and
 record a self-retiring skip.
 
+**A green class oracle is not a finished migration.** The oracle compares style _keys_. When
+upstream moves a declaration out of a component into a shared module — `interactionOverlay` at
+0.5.1, applied at twenty call sites — deleting the component's own rules satisfies it whether or not
+anything applies the shared style in their place. Six modules were briefly left with **no hover or
+pressed state at all** and a completely clean oracle run; nothing failed, and the only reason it was
+caught is that the call sites had been written down as pending before the keys were removed. Any
+change that relocates a declaration needs its own check that the consumer adopts it, because the
+oracle structurally cannot supply one. Related: derive the set to migrate **from the oracle**, not
+from a consumer list — upstream had twenty adopters and forty-two of our modules referenced the same
+token, and the set that actually needed changing was neither (batch 040).
+
 ## StyleX constraints
 
 - StyleX may only be imported from `.ts` / `.stylex.ts` modules, never from a `.svelte` file. The
@@ -213,10 +256,22 @@ _probe_ fixture that runs the hooks and renders their result (a handler-returnin
 via instance `export const`, reachable through `render(...).component`). `act()` has no counterpart —
 a `$state` write flushes on its own and `expect.element` retries.
 
-Upstream suites are ported **case for case**; the count is the contract. Any dropped case is named in
-the file with its reason. **One file ports one upstream suite** — `theme.test.ts` covered fragments
-of six at once, so no count in it could be stated against any of them and the contract applied to
-not a single case; 22 already-ported cases read as unported until they were split out (batch 030).
+Upstream suites are ported **case for case**, and every file says which one it ports: a
+`PORTS: <upstream/path.test.tsx>` line in the header, or `NO-UPSTREAM:` where there is nothing
+upstream to port. `status.mjs` reads nothing else — a file with neither marker, or one naming a
+suite the current pin does not have, **fails the gate**. Any dropped case is still named in the
+file with its reason; what the header no longer states is a _number_. The shortfall against
+upstream is arithmetic over the markers and lives in `port/status.md`'s case delta, because a
+header's count is a contract against upstream's file at the pin and a version bump falsifies every
+one of them at once — when this rule landed, 203 of these files still named the `0.5.0` pin against
+a tree at `0.5.2`.
+
+**One file ports one upstream suite** — `theme.test.ts` covered fragments of six at once, so no
+count in it could be stated against any of them and the contract applied to not a single case; 22
+already-ported cases read as unported until they were split out (batch 030). A few files legitimately
+fold a family (five `Chat` message suites over one fixture) and a few suites are split across two
+files; both declare every edge, and the delta is computed per connected group so neither
+double-counts.
 
 **`getByRole(role, {name: 'X'})` is not the same assertion here as upstream.** Testing Library
 matches an accessible name as a **whole string**; the browser project's locators are Playwright's,
@@ -227,23 +282,44 @@ icon-only-control case still passed with the icon's `aria-hidden` removed and th
 regex `name` is substring-matching on both sides by construction and needs nothing. `status.md`
 counts the sites that still lack it.
 
-**The count is a contract against upstream's file at the _current pin_, so a version bump
-invalidates every header that states one** — re-derive them in the same batch, and diff the test
-delta as scope rather than as follow-up (`track-upstream` step 5b). Four headers were false at
-0.4.2, each making a real gap look accounted for, and the two Layer defects that shipped were
-exactly what the unported cases existed to catch. A dropped case's stated reason expires too:
-`button-group` carried "`DropdownMenu` is not ported" for three batches after it was.
+**A version bump is still scope, not follow-up** — diff the test delta as part of the batch that
+moves the pin (`track-upstream` step 5b). What changed is that the delta is now measured rather
+than re-typed: `status.md` recomputes every suite's shortfall from the markers on each run, so a
+bump can no longer leave a gap looking accounted for the way four false headers did at 0.4.2, where
+the two Layer defects that shipped were exactly what the unported cases existed to catch. A dropped
+case's stated _reason_ still expires and nothing checks it: `button-group` carried "`DropdownMenu`
+is not ported" for three batches after it was.
 
-**A header that names an upstream suite in order to say it is _not_ ported is read as coverage.**
-`status.mjs` attributes a suite to any file under `src/tests/` that names it — deliberately
-generous, because a false "covered" is visible the moment someone opens the file. So a header
-written to be honest about a gap closes it on paper instead: `scroll-lock.svelte.test.ts` said
-"0.5.0 also added a whole `hooks/scrollbarGutter.test.ts` beside this suite, which has no ported
-counterpart at all", and that sentence subtracted eight cases from the delta rather than adding
-them. Write `UNPORTED: <upstream/path.test.tsx>` in the header **alongside** the prose; the marker
-is what `status.mjs` reads, and it errs safe — one left behind after the suite lands overstates
-the work remaining rather than hiding it. This is the second occurrence, which is why the marker
-already existed: `layout.svelte.test.ts` understated its gap by 34 cases the same way (batch 033).
+**Attribution is declared because inferring it failed in both directions.** It used to be read off
+a file naming an upstream suite anywhere in its text, or sharing its kebab-cased basename. So a
+header written to be _honest_ about a gap closed it on paper — `scroll-lock.svelte.test.ts`'s
+sentence about `hooks/scrollbarGutter.test.ts` subtracted eight cases from the delta rather than
+adding them, and `layout.svelte.test.ts` understated its gap by 34 the same way (batch 033). An
+`UNPORTED:` marker was added to subtract those back, and it worked only where someone remembered
+it: at 0.5.2 three suites still read as covered because a file mentioned them to say they were not
+ported (`Heading` 24 cases, `theme/MediaTheme.dom` 8, `BottomSheetEdgeTint` 10) and a fourth
+because an SSR-only companion file shared its stem (`useResizable` 29). A declaration cannot be
+forgotten, because nothing else grants coverage — the failure mode is structurally gone rather
+than patched (batch 041).
+
+**A computed style read straight after mount is the `@starting-style` value, not the resting one.**
+jsdom has no transitions and no `@starting-style`, so an upstream case reads settled values
+immediately and carries no wait — port it verbatim and it asserts about the _entry animation_. Two
+stacked toasts read `padding-bottom: 0` where upstream asserts an 8px gap, and since our compiled
+CSS is byte-identical to upstream's for both classes involved, the conclusion on offer was that
+upstream ships a dead `:last-child` rule; it was the entry state. The card's
+`matrix(1, 0, 0, 1, 0, 8)` is the entry slide for the same reason, not a swipe throw. Await the
+element's animations (`getAnimations({subtree: true})`, then their `finished`) before reading
+anything transitioned — including after _driving_ a custom property, when the property being driven
+is itself in `transition-property` (batch 042).
+
+**Restating a jsdom-only assertion means restating its _scope_, not just its subject.** Upstream's
+`readFileSync` guards name one source file; the compiled sheet is the better subject here — it is
+what ships — but a page-wide scan of it answers a different question, and
+`expect(someRuleContains('scale(0.98)')).toBe(false)` fails on an unrelated component that uses it.
+Narrow to the rules that actually apply to the element under test. Related: `expectTypeOf` compiles
+to nothing, so a type-only upstream case fails `expect.requireAssertions` — keep the type half and
+make the same claim of the rendered output (batch 042).
 
 **The compiled StyleX sheet is on a browser-test page twice.** Vite's dev server injects it for
 the module graph `setup-stylex.ts` imports, and that setup file then appends its own `<style>` so
@@ -277,6 +353,33 @@ reproduce. Such a file says so at the top and mutation-checks its fixes.
   explicitly, in upstream's documented order — `{...rest}` beside an explicit handler for the same
   event is one object literal, and the last key silently wins. `ComplexSelector` shipped with a
   consumer's `onclick` discarded exactly this way (`port/ledger/026-selector-family.md`).
+- **A handler that can destroy its own block must not read that block's state at event time.**
+  React attaches nearly every handler at the **root container**, so events from an unmounted subtree
+  are unreachable and its handler simply stops running. Svelte attaches non-delegated handlers — and
+  **every spread handler**, whatever the event name — to the node itself, and a detached node keeps
+  them. So `on…={isExiting ? handler : undefined}` is not a conditional _attachment_: the ternary is
+  evaluated when the event fires, and if the handler has since destroyed the `{#each}` branch that
+  owns `isExiting`, that read is of an orphaned derived. `ToastViewport` did exactly this, and the
+  card's `opacity`/`transform` transitions — which end on the same frame as the wrapper's
+  `grid-template-rows` and bubble to the now-detached node — re-entered it twice per dismissal.
+  Svelte's `derived_inert` warning is **not dev-gated**, so it reached consumers' consoles in
+  production builds. Put the guard inside the handler and read a **source** (`exitingIds.has(id)`),
+  never a `{@const}`, a `$derived` or a prop of the block being destroyed. The same asymmetry
+  reaches pointer capture: removing a capturing element fires `lostpointercapture` _at that element_,
+  so a spread `onlostpointercapture` runs on the detached node and needs an "am I still attached?"
+  guard (batch 042).
+- **`useLayoutEffect` is `$effect`, not `$effect.pre`, whenever it _writes_ to the DOM the same
+  render creates.** React's layout effect runs **after** the commit, so the node it touches already
+  has the size and children that render gave it. `$effect.pre` runs **before** Svelte patches the
+  DOM — the node still carries its previous state. `MonthScroller` positioned its scrollport from a
+  pre-effect, so on the pass that mattered the spacer's width was still 0, the browser clamped
+  `scrollLeft` to 0, and `scroll-snap-type: mandatory` then pulled the scroller to the first mounted
+  pane. The touch calendar opened exactly `OVERSCAN` months early — three, every time the pane
+  window was not already clamped at row 0 — and looked deliberate rather than broken. Measuring
+  belongs in `$effect.pre`; positioning against what the update is about to render does not, and the
+  two sat four lines apart under one comment claiming a pre-effect was the counterpart of both.
+  Upstream's own suite cannot catch this class at all: jsdom neither lays out nor scrolls, so the
+  clamp never happens there (batch 044).
 - **A React node prop gated on state translates to a conditional _snippet_, never an `{#if}` inside
   the tag.** Upstream writes `{active === N && (…)}` for a `children`/slot prop, which hands the
   component a falsy child so nothing renders. A snippet passed by slot is always defined, so an

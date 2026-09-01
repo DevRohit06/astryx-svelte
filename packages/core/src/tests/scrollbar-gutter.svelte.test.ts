@@ -1,3 +1,5 @@
+/** PORTS: hooks/scrollbarGutter.test.ts */
+
 import { afterEach, describe, expect, it } from 'vitest';
 import { holdScrollbarGutter } from '$lib/hooks/scrollbar-gutter.js';
 

@@ -1,3 +1,5 @@
+/** PORTS: Calendar/getStandaloneShortWeekdayNames.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { getStandaloneShortWeekdayNames } from '$lib/components/calendar/get-standalone-short-weekday-names.js';
 import { standaloneShortWeekdayNamesByLocale } from '$lib/components/calendar/standalone-short-weekday-names.generated.js';

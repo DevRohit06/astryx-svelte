@@ -82,7 +82,7 @@ export default {
 	],
 	usage: {
 		description:
-			'Measures children rendered in a hidden container to determine how many fit in the available width without flickering. Uses ResizeObserver to react to container size changes. The measurement container should hold all items plus an optional overflow indicator element (identified by a data-overflow-indicator attribute).',
+			'Measures children rendered in a hidden container to determine how many fit in the available width without flickering. Uses ResizeObserver to react to container and measured-child size changes. The measurement container should hold all items plus an optional overflow indicator element (identified by a data-overflow-indicator attribute).',
 		bestPractices: [
 			{
 				guidance: true,

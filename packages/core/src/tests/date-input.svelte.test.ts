@@ -1,4 +1,6 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+/** PORTS: DateInput/DateInput.test.tsx */
+
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import { tick } from 'svelte';
@@ -61,22 +63,17 @@ import DateInputI18n from './fixtures/date-input-i18n.svelte';
  * members of their upstream describe that this file carries, for the reason
  * given above.
  *
- * **The runtime locale is pinned to `en-US` for this file.** `plainDateFormat`
- * calls `new Intl.DateTimeFormat(undefined, …)`, i.e. the *runtime default*
- * locale, and `parseDateInput` branches on `isLocaleDayFirst()`, which reads the
- * same default. Upstream's jsdom runs under Node's default ICU locale (`en-US`),
- * which is what every display-value assertion in the file spells out
- * ("January 25, 2026"); this project's Playwright Chromium resolves to `en-GB`
- * on at least one developer machine, where the identical code renders
- * "25 January 2026" and parses day-first. Pinning the default makes the
- * environment match the one upstream's assertions were written against, so they
- * survive verbatim instead of being rewritten against whichever locale the CI
- * box happens to report. Only the *default* is substituted — an explicit locale
- * argument (which is what `intl-messageformat` and `plainDate`'s timezone
- * helpers pass) still wins, so nothing else changes. No upstream case's outcome
- * differs between the two locales: every numeric date it types is unambiguous
- * (`03/15/2026` — 15 cannot be a month), so this pins the *format*, not the
- * parse.
+ * **The runtime locale is no longer stubbed, and that is the point.** This file
+ * used to substitute `Intl.DateTimeFormat` so an omitted locale resolved to
+ * `en-US`, because `plainDateFormat` formatted with
+ * `new Intl.DateTimeFormat(undefined, …)` and `parseDateInput` branched on an
+ * `isLocaleDayFirst()` that read the same host default — so "January 25, 2026"
+ * rendered as "25 January 2026" on a Chromium reporting `en-GB` or `en-IN`.
+ * Both helpers now take upstream's `locale` argument and default it to `'en'`,
+ * exactly as `useLocale()` does, so the display is host-independent on its own
+ * and the stub has nothing left to do. It is deleted rather than left inert:
+ * kept, it would hold all 84 cases green if the locale argument were ever
+ * dropped again, which is the regression this file is now positioned to catch.
  *
  * Upstream imports `getButton`/`queryButton` from `__tests__/fastRoleQueries`
  * purely for jsdom speed — the helper keeps RTL's exact accessible-name
@@ -168,22 +165,7 @@ import DateInputI18n from './fixtures/date-input-i18n.svelte';
  *   `document` amounts to.
  */
 
-const NativeDateTimeFormat = Intl.DateTimeFormat;
-
-beforeAll(() => {
-	// Returning an object from a `new` call is what makes this substitution
-	// transparent: callers get a genuine `Intl.DateTimeFormat`, only its default
-	// locale differs. The prototype is shared so `instanceof` still holds.
-	const Pinned = function (locales?: Intl.LocalesArgument, options?: Intl.DateTimeFormatOptions) {
-		return new NativeDateTimeFormat(locales ?? 'en-US', options);
-	};
-	Pinned.prototype = NativeDateTimeFormat.prototype;
-	Pinned.supportedLocalesOf = NativeDateTimeFormat.supportedLocalesOf;
-	Intl.DateTimeFormat = Pinned as unknown as typeof Intl.DateTimeFormat;
-});
-
 afterAll(() => {
-	Intl.DateTimeFormat = NativeDateTimeFormat;
 	// `Calendar.navigateTo` announces the newly visible month through the
 	// singleton live regions; drop them so the next file starts clean.
 	__resetLiveRegionsForTest();

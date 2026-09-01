@@ -1,3 +1,5 @@
+/** PORTS: utils/characters.test.ts */
+
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { characterCount, firstCharacter, truncateCharacters } from '$lib/utils/characters.js';
 

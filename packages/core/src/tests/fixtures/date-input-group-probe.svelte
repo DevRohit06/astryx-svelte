@@ -13,12 +13,20 @@
 	interface Props {
 		group: Omit<InputGroupProps, 'children'>;
 		dateInput: DateInputProps;
+		/**
+		 * `DateInputTouch.test.tsx`'s own group case wraps the date input **alone**
+		 * — no `InputGroupText`. Defaulted true so the two `DateInput.test.tsx`
+		 * cases this fixture was written for are untouched.
+		 */
+		hasText?: boolean;
 	}
 
-	const { group, dateInput }: Props = $props();
+	const { group, dateInput, hasText = true }: Props = $props();
 </script>
 
 <InputGroup {...group}>
-	<InputGroupText>Starts</InputGroupText>
+	{#if hasText}
+		<InputGroupText>Starts</InputGroupText>
+	{/if}
 	<DateInput {...dateInput} />
 </InputGroup>

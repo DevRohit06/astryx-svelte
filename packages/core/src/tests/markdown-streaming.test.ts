@@ -1,3 +1,5 @@
+/** PORTS: Markdown/streaming.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { computeBoundaries, computeSegments } from '$lib/components/markdown/streaming.js';
 

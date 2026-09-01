@@ -1,3 +1,5 @@
+/** PORTS: TextArea/TextArea.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -11,15 +13,22 @@ import BindHarness from './fixtures/text-area-bind.svelte';
 import { TIMER_BUDGET } from './timer-budget.js';
 
 /**
- * Astryx's `TextArea/TextArea.test.tsx`, ported case for case — **82** upstream
- * cases at the 0.5.0 pin, 82 here, plus one beyond upstream (`supports two-way
- * bind:value`) that pins the `$bindable` decision. **83 `it` in the file.**
+ * Astryx's `TextArea/TextArea.test.tsx`, ported case for case — **83** upstream
+ * cases at the 0.5.2 pin, 83 here, plus one beyond upstream (`supports two-way
+ * bind:value`) that pins the `$bindable` decision. **84 `it` in the file.**
  *
- * ## The count, re-derived at the 0.5.0 pin
+ * ## The count, re-derived at the 0.5.2 pin
  *
- * Upstream's file is unchanged between v0.4.5 and 0.5.0, so the 82 carries over.
- * This header read "**78** … at v0.4.1" and stayed true only until the pin
- * moved. 0.4.x added four `maxLength prop` cases with #4759 — the grapheme-count
+ * This header read "**82** … at the 0.5.0 pin" and stayed true only until the
+ * pin moved: 0.5.1 added the one-case `TextArea theme target names` describe
+ * (the deprecated `astryx-textarea` beside the current `astryx-text-area`),
+ * ported at the bottom of this file. The same release gave the two painted
+ * elements inside the wrapper their own targets — `astryx-text-area-control` on
+ * the `<textarea>` and `astryx-text-area-counter` on the counter — and wrote no
+ * case for either; neither side asserts them.
+ *
+ * Before that it read "**78** … at v0.4.1" and 0.4.x had added four `maxLength
+ * prop` cases with #4759 — the grapheme-count
  * fix — and all four are ported here, in upstream's positions: `counts
  * user-perceived characters, not code units`, `measures the over-limit state in
  * characters`, `announces zone transitions using character counts`, and `does
@@ -1190,5 +1199,16 @@ describe('TextArea readonly theme state', () => {
 		});
 		const root = screen.container.querySelector('.astryx-textarea');
 		expect(root).not.toHaveAttribute('data-readonly');
+	});
+});
+
+describe('TextArea theme target names', () => {
+	it('renders the deprecated class beside the current one', async () => {
+		const screen = await render(TextArea, {
+			props: { label: 'Notes', value: '', onChange: noop }
+		});
+		const root = screen.container.querySelector('.astryx-text-area');
+		expect(root).not.toBeNull();
+		expect(root).toHaveClass('astryx-textarea');
 	});
 });

@@ -1,3 +1,5 @@
+/** PORTS: utils/themeProps.test.ts */
+
 import { describe, it, expect } from 'vitest';
 import { themeDataAttributes, themeProps } from '$lib/internal/theme-props.js';
 

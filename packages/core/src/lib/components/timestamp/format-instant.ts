@@ -20,6 +20,7 @@
  */
 
 import { getTimeZoneParts, SHARED_DATE_FORMAT_OPTIONS } from '../../utils/plain-date.js';
+import type { Locale } from '../../i18n/types.js';
 import type { TimestampFormat } from './timestamp-format.js';
 
 /**
@@ -138,12 +139,13 @@ function getWallClock(date: Date, timeZone: string | undefined): WallClock {
 /**
  * Renders one instant in one absolute format.
  *
- * Pure: the same arguments always produce the same string for a given host
+ * Pure: the same arguments always produce the same string for the requested
  * locale (and, when no `timeZone` is given, host zone).
  */
 export function formatInstant(
 	date: Date,
 	format: InstantFormat,
+	locale: Locale,
 	{ timeZone, isTimezoneShown = false, timeZoneNameStyle = 'short' }: FormatInstantOptions = {}
 ): string {
 	const zone = timeZone === undefined ? {} : { timeZone };
@@ -151,39 +153,47 @@ export function formatInstant(
 
 	switch (format) {
 		case 'full':
-			return new Intl.DateTimeFormat(undefined, {
+			return new Intl.DateTimeFormat(locale, {
 				...FULL_OPTIONS,
 				timeZoneName: timeZoneNameStyle,
-				...zone
+				...zone,
+				calendar: 'gregory'
 			}).format(date);
 
 		case 'date':
-			return new Intl.DateTimeFormat(undefined, {
+			return new Intl.DateTimeFormat(locale, {
 				...SHARED_DATE_FORMAT_OPTIONS.date,
-				...zone
+				...zone,
+				calendar: 'gregory'
 			}).format(date);
 
 		case 'date_long':
-			return new Intl.DateTimeFormat(undefined, {
+			return new Intl.DateTimeFormat(locale, {
 				...SHARED_DATE_FORMAT_OPTIONS.date_long,
-				...zone
+				...zone,
+				calendar: 'gregory'
 			}).format(date);
 
 		case 'date_weekday':
-			return new Intl.DateTimeFormat(undefined, {
+			return new Intl.DateTimeFormat(locale, {
 				...SHARED_DATE_FORMAT_OPTIONS.date_weekday,
-				...zone
+				...zone,
+				calendar: 'gregory'
 			}).format(date);
 
 		case 'date_time':
-			return new Intl.DateTimeFormat(undefined, {
+			return new Intl.DateTimeFormat(locale, {
 				...DATE_TIME_OPTIONS,
 				...zoneName,
-				...zone
+				...zone,
+				calendar: 'gregory'
 			}).format(date);
 
 		case 'time':
-			return new Intl.DateTimeFormat(undefined, {
+			// The one Intl branch upstream leaves without `calendar: 'gregory'`, and
+			// the one where it could not show: a time-of-day rendering names no
+			// calendar-dependent field, so the option would not change a character.
+			return new Intl.DateTimeFormat(locale, {
 				...TIME_OPTIONS,
 				...zoneName,
 				...zone

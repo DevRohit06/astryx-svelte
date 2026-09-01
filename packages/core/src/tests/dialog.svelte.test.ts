@@ -1,3 +1,5 @@
+/** PORTS: Dialog/Dialog.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import { resolveDialogPositionOffsets } from '$lib/components/dialog/dialog.stylex.js';

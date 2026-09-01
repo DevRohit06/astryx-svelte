@@ -80,6 +80,15 @@ export type {
 export { syntaxTokenDefaults } from './syntax/index.js';
 export type { SyntaxTokenName } from './syntax/index.js';
 
+// The data-viz half of upstream's domain token group, and the merged view of
+// both halves — its `theme/index.ts` publishes `dataTokenDefaults`,
+// `domainTokenDefaults` and their two name types beside `syntaxTokenDefaults`,
+// so this subpath carries all of them. `dataTokenDefaults` is the single source
+// for the `--color-data-*` palette: the theme build and `<Theme>`'s runtime
+// injection both format their `:root` block from it, and never from a copy.
+export { dataTokenDefaults, domainTokenDefaults } from './domain-tokens/index.js';
+export type { DataTokenName, DomainTokenName } from './domain-tokens/index.js';
+
 // SyntaxTheme provider
 export { SyntaxTheme, useSyntaxTheme } from './syntax/index.js';
 export type { UseSyntaxThemeReturn } from './syntax/index.js';

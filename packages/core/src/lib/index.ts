@@ -433,6 +433,7 @@ export type {
 export type { CardProps } from './components/card/card.svelte';
 export type {
 	DateInputFormat,
+	DateInputNativePicker,
 	DateInputProps,
 	DateInputStatus,
 	DateInputStatusType
@@ -1178,7 +1179,9 @@ export type {
 	ToastDismissReason,
 	ToastOptions,
 	ToastDismissFn,
-	ShowToastFn
+	ShowToastFn,
+	ToastContentRenderProps,
+	ToastContentRenderFn
 } from './components/toast/types.js';
 export type { ToggleButtonProps } from './components/toggle-button/toggle-button.svelte';
 export type {
@@ -1242,7 +1245,11 @@ export type {
 	AspectRatioFit,
 	AspectRatioShape
 } from './components/aspect-ratio/aspect-ratio.stylex.js';
-export { resolveSize, type AvatarSize } from './components/avatar/avatar.stylex.js';
+export {
+	resolveSize,
+	type AvatarShape,
+	type AvatarSize
+} from './components/avatar/avatar.stylex.js';
 export {
 	useAvatarGroup,
 	type AvatarGroupContextValue

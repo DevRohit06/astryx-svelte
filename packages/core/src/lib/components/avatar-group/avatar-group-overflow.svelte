@@ -47,19 +47,25 @@
 	const group = useAvatarGroup();
 	const numericSize = $derived(group?.().numericSize ?? 36);
 	const overlap = $derived(group?.().overlap ?? 0);
+	// Outside a group there is no shape to match either, and `circle` is the
+	// default the indicator has always drawn.
+	const shape = $derived(group?.().shape ?? 'circle');
 
 	const attrs = $derived(
-		avatarGroupOverflowAttrs({ numericSize, overlap, isInteractive: onclick != null }, xstyle)
+		avatarGroupOverflowAttrs(
+			{ numericSize, overlap, shape, isInteractive: onclick != null },
+			xstyle
+		)
 	);
 	// The `{count, number}` argument means `en` renders a grouping separator
 	// ("4,912 more"), which the raw template literal never did.
 	const label = $derived(t('@astryx.avatarGroup.overflow', { count }));
-	// `size` is a documented theming axis on this target (`AvatarGroup.doc.mjs`
-	// declares `visualProps: ['size']`), so it has to reach `themeProps` — and it
-	// arrives through the group context, which makes it `$derived` rather than a
-	// mount-time `const`.
+	// `size` and `shape` are the documented theming axes on this target
+	// (`AvatarGroup.doc.mjs` declares `visualProps: ['size', 'shape']`), so both
+	// have to reach `themeProps` — and both arrive through the group context,
+	// which makes them `$derived` rather than mount-time `const`s.
 	const size = $derived(group?.().size ?? 'md');
-	const theme = $derived(themeProps('avatar-group-overflow', { size }));
+	const theme = $derived(themeProps('avatar-group-overflow', { size, shape }));
 </script>
 
 {#snippet content()}

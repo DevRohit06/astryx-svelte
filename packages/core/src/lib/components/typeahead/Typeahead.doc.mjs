@@ -22,7 +22,7 @@ export default {
 		'picker'
 	],
 	group: 'Typeahead',
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -143,6 +143,13 @@ export default {
 			type: 'number',
 			description: 'Maximum number of dropdown items to display.',
 			default: '10'
+		},
+		{
+			name: 'minQueryLength',
+			type: 'number',
+			description:
+				'Minimum query length before the search source is queried. Below it no search runs and the menu stays closed.',
+			default: '1'
 		},
 		{
 			name: 'status',

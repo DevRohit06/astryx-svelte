@@ -1,3 +1,5 @@
+/** NO-UPSTREAM: coverage beyond upstream — the header below says why. */
+
 import { describe, expect, it } from 'vitest';
 
 import CheckboxInputDocs from '$lib/components/checkbox-input/CheckboxInput.doc.mjs';

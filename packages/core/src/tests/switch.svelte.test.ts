@@ -1,3 +1,5 @@
+/** PORTS: Switch/Switch.test.tsx */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
@@ -9,14 +11,16 @@ import SwitchBind from './fixtures/switch-bind.svelte';
 import { cssIn, forcedColorsCssIn } from './forced-colors.js';
 
 /**
- * Astryx's `Switch/Switch.test.tsx`, ported case for case — **50** upstream
- * cases at the 0.5.0 pin, **50** of them here, plus one beyond upstream (`supports
+ * Astryx's `Switch/Switch.test.tsx`, ported case for case — **51** upstream
+ * cases at the 0.5.2 pin, **51** of them here, plus one beyond upstream (`supports
  * two-way bind:value`) that pins the `$bindable` decision (justified below, and
- * recorded in port/todo.md). **51 `it` in the file.** Nothing is dropped.
+ * recorded in port/todo.md). **52 `it` in the file.** Nothing is dropped.
  *
- * The count is re-derived at the 0.5.0 pin, where upstream's file stands
- * unchanged since v0.4.5. It read "**49** … at v0.4.1" and
- * stayed true only until the pin moved: 0.4.x added `drops the label gap when
+ * The count is re-derived at the 0.5.2 pin. It read "**50** … at the 0.5.0 pin"
+ * and stayed true only until the pin moved: 0.5.1 gave the control its own
+ * `astryx-switch-label` target and added the one-case `label theme target`
+ * describe for it, ported at the bottom of this file. Before that, it read
+ * "**49** … at v0.4.1", and 0.4.x had added `drops the label gap when
  * isLabelHidden so the row is only as wide as the track`, which is ported here
  * (restated only in how the second render is driven — see the case).
  *
@@ -910,5 +914,17 @@ describe('forced colors (WCAG 1.4.11)', () => {
 		expect(cssIn(on.container)).toContain('(hover: hover) and (forced-colors: none)');
 		// And the tint never leaks into the forced-colors output.
 		expect(forcedColorsCssIn(on.container)).not.toContain('color-mix');
+	});
+});
+
+describe('label theme target', () => {
+	it('names its own label so a theme can style it apart from a field label', async () => {
+		// See `CheckboxInput`: the control names the label it owns.
+		const screen = await render(Switch, {
+			props: { label: 'Wi-Fi', value: false, onChange: noop }
+		});
+		const label = screen.getByText('Wi-Fi', { exact: true }).element().closest('label');
+		expect(label).toHaveClass('astryx-field-label');
+		expect(label).toHaveClass('astryx-switch-label');
 	});
 });

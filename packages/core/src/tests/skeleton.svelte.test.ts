@@ -1,3 +1,5 @@
+/** PORTS: Skeleton/Skeleton.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Skeleton from '$lib/components/skeleton/skeleton.svelte';

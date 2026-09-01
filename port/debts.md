@@ -7,6 +7,27 @@ known debt?" with one grep. Bodies are carried verbatim from `port/todo.md`; whe
 re-verified against the tree while this file was assembled, the finding is appended as a
 `> **Re-verified …**` note rather than folded into the original text.
 
+### `NativeDateField` drops `changeAction` from its rest spread, where upstream leaks it
+
+- **units:** DateInput, NativeDateField
+- **kind:** divergence
+- **retires:** when upstream destructures `changeAction` in `NativeDateField`
+
+Upstream's `NativeDateField` destructure omits `changeAction`, so it falls into `...rest` and is
+spread onto the wrapper `<div>` — verified in both source and the published `dist/`. In React that
+is a dev warning and nothing renders.
+
+In Svelte it is not harmless. A function in a spread becomes `setAttribute('changeaction',
+String(fn))`, which puts the function's own source text into the DOM. So the faithful transcription
+produces a visibly different document from upstream's, and the divergence is the only way to match
+what upstream _renders_.
+
+`changeAction` is destructured out as `_changeAction` with a comment naming it as upstream's leak.
+Nothing else changes: this surface has no optimistic path either way — upstream reads `isLoading`
+alone. Contrast `nativePicker`, which is deliberately **not** intercepted: no upstream surface
+destructures it and it is a string, so `nativepicker="touch"` on the wrapper is byte-identical to
+what React renders. That is parity, not a leak.
+
 ### `BlogCoverArt` is not ported, so a non-release post with no `coverImage` has no cover
 
 - **units:** BlogCoverArt
@@ -670,6 +691,25 @@ the string form reads wrong
 - **retires:** never
 
 A toast is shown _imperatively_ — the caller hands content to `showToast()` as an option value, so unlike `Tooltip`/`HoverCard` there is no markup position to capture and the string branch is reachable. Same forced-snippet-translation family as `Popover`/`OverflowList`. Not exported under a public name (`ToastContent` is internal): upstream's counterpart is React's own `ReactNode`, so publishing an alias would invent API
+
+### A Toast with a `Snippet` body is not announced through the singleton live regions
+
+- **units:** Toast, ToastViewport
+- **kind:** unported
+- **retires:** never, unless a way to read a snippet's text without rendering it appears
+
+Upstream flattens the body's `ReactNode` tree to plain text with a recursive `getNodeText`
+(`ToastViewport.tsx:140-158`), walking `children` through every element, and announces the result at
+dispatch. `toastText` in `toast-viewport.svelte` is one line by comparison, and the difference is a
+limit rather than a simplification: `ToastContent` is `string | Snippet` (the entry above), and a
+snippet is an opaque function. There is no children tree to walk and no way to obtain its text
+without _rendering_ it, which would run consumer code a second time and move the announcement off
+the dispatch path that makes it exactly-once.
+
+So a string body is announced through the singleton regions and a snippet body is not — it falls
+back to the toast's own born-with-content region, which is what this port did before 0.3.0. No
+regression, but the 0.3.0 gain does not reach a snippet body. Found by `astryx-parity` in batch 042;
+the function's own doc comment had said it belonged here since it was written.
 
 ### Toast's mode resolution reads the root attribute a microtask later than upstream
 
@@ -1716,3 +1756,57 @@ The whole workbench is gone (`ledger/029`), and with it the two imports, `build:
 does — its core `build` is `babel + tsc + css + umd` and produces no app at all, and its
 `theme-neutral` takes core as a **peer** dependency. Nothing in this repo now reaches from core
 into a package that builds after it.
+
+### `MonthScroller` positioned itself before the DOM it measures against — fixed
+
+- **units:** DateInput, MonthScroller
+- **kind:** port-defect-fixed
+- **retires:** retired by the fix; kept as the account of how it was found
+
+**Fixed in batch 044.** Recorded rather than deleted, because the diagnosis took three wrong turns
+and the shape is worth keeping.
+
+Upstream positions the month scroller in a `useLayoutEffect`, which runs **after** React commits the
+DOM — so when it writes `scrollLeft`, the spacer already carries the width that same render gave it.
+This port used `$effect.pre`, which runs **before** Svelte patches the DOM. The spacer therefore
+still had its previous width — zero, on the pass that matters — and the browser clamped the write to 0.
+
+The scroller did not stay at 0, which is what made it look deliberate rather than broken. The panes
+mount an instant later at `centerRow ± OVERSCAN`, and `scroll-snap-type: mandatory` pulls the
+scrollport to the nearest snap area — the **first mounted pane**. So the touch calendar opened
+exactly `OVERSCAN` months early: three, every time the window was not already clamped at row 0.
+Opened on August it showed May; opened on May 2027 it showed February.
+
+It reached the wheels too, one step removed. The wheels derive from `monthIndex`, so a scroller on
+the wrong pane fed a wrong month back and a wheel commit then read the wrong year — which is why
+`the year wheel keeps the month` failed beside the two month cases, and why one fix closed all five.
+
+**How it was nearly missed.** All five cases pass in isolation and pass with their own block alone;
+only a full-file run reproduced them, which is the signature this repo teaches you to read as
+contention. Three explanations were adopted and dropped before the right one: a race against the
+`BottomSheet` entry animation; a stale render from an earlier case, ruled out by counting one
+dialog, one scroller and one title at the moment of failure; and an off-by-overscan in the report
+path, ruled out by reading `onVisibleMonthChange(min + row)`, which is absolute. What settled it was
+lining the two failures up and seeing the same constant — three rows, and three is the overscan.
+
+**The counterpart is not the one that shares a name.** `$effect.pre` reads like the counterpart of a
+layout effect, and it is the right home for the _measurement_ above it, which genuinely must run
+before paint. Positioning against DOM that the same update is about to create needs `$effect`, which
+runs after the patch and before paint — which is what `useLayoutEffect` actually means. Any port of
+a `useLayoutEffect` that _writes_ to the DOM it depends on has this hazard.
+
+### `DateInputTouch.test.tsx` repeats five cases verbatim
+
+- **units:** DateInput
+- **kind:** upstream-bug
+- **retires:** when upstream deletes the duplicated block
+
+`the year wheel keeps the month`, `is a single tab stop driven by the arrow keys`, `will not commit
+a row outside min/max`, `bounds the year wheel to the reachable range` and `the title is what closes
+them again` each appear twice in `DateInput/DateInputTouch.test.tsx` at 0.5.2 — once at the head of
+`describe('DateInput — month/year wheels')` and again at its foot, identical in body. A second copy
+asserts nothing the first does not.
+
+Ported once, per this file's own rule that upstream bugs are documented rather than replicated. The
+consequence is arithmetic: the case delta for this suite counts upstream's 136 declarations against
+ours, so it cannot reach zero while five of upstream's are copies.

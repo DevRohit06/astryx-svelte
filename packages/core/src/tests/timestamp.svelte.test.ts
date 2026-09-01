@@ -1,21 +1,45 @@
+/** PORTS: Timestamp/Timestamp.test.tsx */
+
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';
 import { createAttachmentKey } from 'svelte/attachments';
 import Timestamp from '$lib/components/timestamp/timestamp.svelte';
+import { formatInstant } from '$lib/components/timestamp/format-instant.js';
 import { formatTooltipLines } from '$lib/components/timestamp/tooltip-entries.js';
 import { __resetLiveRegionsForTest } from '$lib/hooks/use-announce.js';
 import TimestampI18nProbe from './fixtures/timestamp-i18n-probe.svelte';
 
 /**
- * Astryx v0.3.0's `Timestamp/Timestamp.test.tsx`, ported case for case — 69
- * upstream declarations (34 directly in `describe('Timestamp')`, 8 in
- * `describe('relative_short format')`, 5 in
+ * Astryx's `Timestamp/Timestamp.test.tsx`, ported case for case. Re-derived
+ * against the **0.5.2** pin, which declares **77**: 39 directly in
+ * `describe('Timestamp')`, 8 in `describe('relative_short format')`, 6 in
  * `describe('hover card keyboard reachability')`, 3 in
  * `describe('default hover card (no tooltipEntries)')`, 17 in
- * `describe('tooltipEntries copyable hover card')` and 2 in
- * `describe('one formatter behind both surfaces')`), 69 here, none dropped. The
- * `it.each` over the eight shared formats expands to 8, so the file runs 76.
+ * `describe('tooltipEntries copyable hover card')`, 2 in
+ * `describe('one formatter behind both surfaces')` and 2 in
+ * `describe('Timestamp pass-through props')`.
+ *
+ * **74 are here.** Two `it.each` tables expand — eight shared formats and five
+ * Gregorian-calendar formats — so the file runs 85.
+ *
+ * ## The three that are not here
+ *
+ * All three are 0.5.x additions about the *element* rest props reach, not about
+ * formatting, and behind all three is one gap: upstream's `...rest` lands on the
+ * `<time>`, this port's reaches the `<Text>` wrapper (the closed-prop-root
+ * discrepancy `port/todo.md` records for this component, and the reason
+ * `forwards ref` below is a counterpart rather than a transcription). Porting
+ * them is a decision about that discrepancy, not a transcription:
+ *
+ * - `does not put aria-expanded on the role-less hover-card trigger` — asserts
+ *   `aria-haspopup="dialog"` and no `aria-expanded` on `getByTestId('ts')
+ *   .parentElement`, which on this side is not the element `HoverCard` wires.
+ * - `describe('Timestamp pass-through props')`'s two cases — `forwards
+ *   pass-through props to the time element` pins `time.tagName === 'TIME'` for
+ *   the element carrying `data-testid`, and `keeps its own spelled-out label on
+ *   a relative timestamp` reads `aria-label` and `data-source` off that same
+ *   element.
  *
  * ## What 0.3.0 changed
  *
@@ -406,6 +430,52 @@ describe('Timestamp', () => {
 	});
 
 	// --- Standard display formats ---
+
+	it('updates absolute output when the provider locale changes', async () => {
+		// Upstream's inline `<InternationalizationProvider>` wrapper becomes
+		// `timestamp-i18n-probe.svelte`, and its `rerender` becomes the fixture's:
+		// `rerender` merges props, so passing `locale` alone keeps the rest.
+		const screen = await render(TimestampI18nProbe, {
+			props: {
+				locale: 'en-US',
+				value: '2026-01-25T12:00:00Z',
+				format: 'date_long',
+				hasTooltip: false,
+				'data-testid': 'ts'
+			}
+		});
+		await expect.element(screen.getByTestId('ts')).toHaveTextContent('January 25, 2026');
+
+		await screen.rerender({ locale: 'de-DE' });
+		await expect.element(screen.getByTestId('ts')).toHaveTextContent('25. Januar 2026');
+	});
+
+	it.each(['full', 'date', 'date_long', 'date_weekday', 'date_time'] as const)(
+		'keeps Gregorian years for the %s format under a non-Gregorian locale',
+		(format) => {
+			const value = formatInstant(new Date('2026-08-22T12:00:00Z'), format, 'th-TH', {
+				timeZone: 'UTC'
+			});
+			expect(value).toContain('2026');
+			expect(value).not.toContain('2569');
+		}
+	);
+
+	it('keeps Gregorian years in Timestamp output under a non-Gregorian locale', async () => {
+		const screen = await render(TimestampI18nProbe, {
+			props: {
+				locale: 'th-TH',
+				value: '2026-08-22T12:00:00Z',
+				format: 'date_long',
+				hasTooltip: false,
+				'data-testid': 'ts'
+			}
+		});
+
+		const el = tsIn(screen.container);
+		expect(el).toHaveTextContent('2026');
+		expect(el).not.toHaveTextContent('2569');
+	});
 
 	it('renders date format', async () => {
 		const screen = await render(Timestamp, {
@@ -1308,7 +1378,7 @@ describe('Timestamp', () => {
 				const screen = await render(Timestamp, {
 					props: { value: VALUE, format, hasTooltip: false, 'data-testid': 'ts' }
 				});
-				const [line] = formatTooltipLines(new Date(VALUE), [{ format }]);
+				const [line] = formatTooltipLines(new Date(VALUE), [{ format }], 'en');
 				expect(line.value).toBe(tsIn(screen.container).textContent);
 			}
 		);
@@ -1326,10 +1396,10 @@ describe('Timestamp', () => {
 			});
 			const date = new Date(VALUE);
 			const tzPart = (form: 'short' | 'long') =>
-				new Intl.DateTimeFormat(undefined, { timeZoneName: form })
+				new Intl.DateTimeFormat('en', { timeZoneName: form })
 					.formatToParts(date)
 					.find((p) => p.type === 'timeZoneName')?.value ?? '';
-			const [line] = formatTooltipLines(date, [{ format: 'full' }]);
+			const [line] = formatTooltipLines(date, [{ format: 'full' }], 'en');
 			expect(tsIn(screen.container).getAttribute('aria-label')).toBe(
 				line.value.replace(tzPart('short'), tzPart('long'))
 			);

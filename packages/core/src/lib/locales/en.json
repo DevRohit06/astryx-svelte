@@ -763,6 +763,50 @@
     "defaultMessage": "Choose date",
     "description": "Screen-reader-only accessible name for the DateTimeInput picker dialog. Same English-only \"date\" phrasing as the placeholder — don't add \"and time\" unless natural."
   },
+  "@astryx.dateTimeInput.pickerMode": {
+    "defaultMessage": "Date/time section",
+    "description": "Screen-reader-only label for the segmented Date/Time switch at the top of the mobile DateTimeInput bottom sheet."
+  },
+  "@astryx.dateTimeInput.dateTab": {
+    "defaultMessage": "Date",
+    "description": "Visible label for the Date segment in the mobile DateTimeInput bottom sheet."
+  },
+  "@astryx.dateTimeInput.timeTab": {
+    "defaultMessage": "Time",
+    "description": "Visible label for the Time segment in the mobile DateTimeInput bottom sheet."
+  },
+  "@astryx.dateTimeInput.openTimePicker": {
+    "defaultMessage": "Open {label}",
+    "description": "Aria label for the clock button in the mobile DateTimeInput closed time segment. `{label}` is the accessible name of the time input, for example `Meeting time`."
+  },
+  "@astryx.dateTimeInput.saveDatePicking": {
+    "defaultMessage": "Save date",
+    "description": "Primary button at the bottom of the Date panel in the mobile DateTimeInput bottom sheet. It does not close the sheet; it accepts the date step and moves to the Time panel. Use sentence case in English and title case only when appropriate for the locale."
+  },
+  "@astryx.dateTimeInput.hourWheel": {
+    "defaultMessage": "Hour",
+    "description": "Accessible name for the hour wheel in the mobile DateTimeInput bottom sheet."
+  },
+  "@astryx.dateTimeInput.minuteWheel": {
+    "defaultMessage": "Minute",
+    "description": "Accessible name for the minute wheel in the mobile DateTimeInput bottom sheet."
+  },
+  "@astryx.dateTimeInput.secondWheel": {
+    "defaultMessage": "Second",
+    "description": "Accessible name for the optional seconds wheel in the mobile DateTimeInput bottom sheet."
+  },
+  "@astryx.dateTimeInput.meridiemWheel": {
+    "defaultMessage": "AM/PM",
+    "description": "Accessible name for the AM/PM wheel in the mobile DateTimeInput bottom sheet when using 12-hour time."
+  },
+  "@astryx.dateTimeInput.meridiemAM": {
+    "defaultMessage": "AM",
+    "description": "Label for the morning half of the AM/PM wheel in the mobile DateTimeInput bottom sheet. Use the locale's concise ante-meridiem marker."
+  },
+  "@astryx.dateTimeInput.meridiemPM": {
+    "defaultMessage": "PM",
+    "description": "Label for the afternoon/evening half of the AM/PM wheel in the mobile DateTimeInput bottom sheet. Use the locale's concise post-meridiem marker."
+  },
   "@astryx.link.newTab": {
     "defaultMessage": "(opens in new tab)",
     "description": "Visually-hidden (screen-reader-only) suffix appended to a Link's accessible name when it opens in a new tab. Example: `Documentation (opens in new tab)`."

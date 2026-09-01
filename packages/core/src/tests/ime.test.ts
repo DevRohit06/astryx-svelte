@@ -1,3 +1,5 @@
+/** PORTS: utils/ime.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { isImeKeyEvent } from '$lib/utils/ime.js';
 

@@ -1,3 +1,9 @@
+/**
+ * PORTS: Chat/useChatStreamScroll.test.tsx
+ * PORTS: Chat/useChatNewMessages.test.tsx
+ * PORTS: Chat/ChatLayout.test.tsx
+ */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { flushSync } from 'svelte';
 import { userEvent } from 'vitest/browser';

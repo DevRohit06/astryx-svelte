@@ -1,3 +1,5 @@
+/** PORTS: Link/useLinkComponent.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { LinkComponentType } from '$lib/components/link/types.js';

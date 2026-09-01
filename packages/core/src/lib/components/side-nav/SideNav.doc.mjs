@@ -137,7 +137,7 @@ export default {
 			name: 'resizable',
 			type: 'boolean | ResizableConfig',
 			description:
-				'Enables a resize handle at the inline-end edge. true for defaults (260px initial, 180-480px range), or a ResizableConfig object (defaultWidth, minWidth, maxWidth, autoSaveId for localStorage persistence, onWidthChange). The handle is hidden while collapsed.',
+				'Enables a resize handle at the inline-end edge. true for defaults (260px initial, 180-480px range), or a ResizableConfig object (defaultWidth, minWidth, maxWidth, autoSaveId for localStorage persistence of width and collapse state, onWidthChange). It can also own collapse state (defaultIsCollapsed, isCollapsed + onCollapseChange); when both props carry collapse state, resizable wins and a dev warning names the conflicting keys. The handle is hidden while collapsed.',
 			default: 'false'
 		},
 		{

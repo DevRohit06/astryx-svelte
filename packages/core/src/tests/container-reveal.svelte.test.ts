@@ -1,3 +1,5 @@
+/** PORTS: hooks/useContainerReveal.test.tsx */
+
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Probe from './fixtures/container-reveal-probe.svelte';

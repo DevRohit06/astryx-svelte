@@ -20,7 +20,7 @@ export default {
 		'choicelist'
 	],
 	group: 'Radio',
-	category: 'Data Input',
+	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	playground: {
 		defaults: {

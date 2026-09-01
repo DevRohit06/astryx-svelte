@@ -294,6 +294,11 @@
 	);
 	const thumbAttrs = $derived(switchThumbAttrs(size, isOn));
 	const labelWrapperAttrs = $derived(switchLabelWrapperAttrs(size));
+
+	// See `CheckboxInput`: the control names its own label target rather than the
+	// label guessing at its placement. It reaches `FieldLabel` as `class` and
+	// composes onto the `astryx-field-label` every label already carries.
+	const labelTheme = themeProps('switch-label');
 </script>
 
 <!-- The switch control: transparent native checkbox over the track and thumb. -->
@@ -355,6 +360,7 @@
 {#snippet switchLabel()}
 	<div class={labelWrapperAttrs.class} style={labelWrapperAttrs.style}>
 		<FieldLabel
+			{...labelTheme}
 			{label}
 			inputID={id}
 			{isLabelHidden}

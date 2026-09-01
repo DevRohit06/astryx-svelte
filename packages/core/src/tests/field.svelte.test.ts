@@ -1,3 +1,8 @@
+/**
+ * PORTS: Field/Field.test.tsx
+ * PORTS: Field/FieldLabel.test.tsx
+ */
+
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAttachmentKey } from 'svelte/attachments';
 import { userEvent } from 'vitest/browser';
@@ -9,15 +14,27 @@ import FieldLabelDescriptionClick from './fixtures/field-label-description-click
 import FieldHarness from './fixtures/field-harness.svelte';
 import FormLayoutLiveDirection from './fixtures/form-layout-live-direction.svelte';
 import IconSlotProbe from './fixtures/icon-slot-probe.svelte';
+import { themeProps } from '$lib/internal/theme-props.js';
 
 /**
- * Astryx's `Field/Field.test.tsx` (33 cases at the 0.5.0 pin) and
- * `Field/FieldLabel.test.tsx` (**17** at the 0.5.0 pin), ported together because the
- * second is entirely about markup the first renders through the former. **49 of
- * upstream's 50 here**, plus one addition named below; the one absence is
+ * Astryx's `Field/Field.test.tsx` (33 cases at the 0.5.2 pin) and
+ * `Field/FieldLabel.test.tsx` (**19** at the 0.5.2 pin), ported together because the
+ * second is entirely about markup the first renders through the former. **51 of
+ * upstream's 52 here**, plus one addition named below; the one absence is
  * `Field.test.tsx`'s `forwards ref correctly`, explained under "Not ported".
  *
- * ## The count, re-derived from the tag (the previous header was wrong)
+ * ## The count, re-derived at the 0.5.2 pin
+ *
+ * This header read "`FieldLabel.test.tsx` (**17** at the 0.5.0 pin) … **49 of
+ * upstream's 50**" and stayed true only until the pin moved: 0.5.1 added the
+ * two-case `a control can name its own label target` describe, which pins the
+ * mechanism `CheckboxInput` and `Switch` use to name their own label — the
+ * control spreads its `themeProps` in and the class composes onto
+ * `astryx-field-label`, while the label itself still describes no placement of
+ * its own. Both are ported at the bottom of this file. `Field.test.tsx` is
+ * unchanged across the same span.
+ *
+ * ## The earlier re-derivation (the header before that was wrong)
  *
  * This header used to read "`Field/FieldLabel.test.tsx` (10 cases)". That suite
  * has **17**, and seven were unported and unnamed:
@@ -835,6 +852,36 @@ describe('FieldLabel', () => {
 			// The description must not live inside the <label> — nesting it there
 			// would fold it into the control's accessible name.
 			expect(description.closest('label')).toBeNull();
+		});
+	});
+
+	describe('a control can name its own label target', () => {
+		it('composes a passed target onto the field-label one', async () => {
+			// How CheckboxInput and Switch reach their label: the control spreads
+			// its own themeProps in, and both classes end up on the same element,
+			// so a theme can style every label or just this kind.
+			const screen = await render(FieldLabel, {
+				props: {
+					...themeProps('checkbox-label'),
+					label: 'Notify me',
+					inputID: 'notify-input'
+				}
+			});
+			const label = screen.getByText('Notify me', { exact: true }).element().closest('label');
+			expect(label).toHaveClass('astryx-field-label');
+			expect(label).toHaveClass('astryx-checkbox-label');
+		});
+
+		it('describes no placement of its own', async () => {
+			// The label cannot know how its caller arranged it, so it says nothing:
+			// a `data-layout` here would be a claim that is wrong for at least one
+			// caller (Field's horizontal-labels puts a label beside its control),
+			// and a consumer could set it untruthfully.
+			const screen = await render(FieldLabel, {
+				props: { label: 'Email', inputID: 'email-input' }
+			});
+			const label = screen.getByText('Email', { exact: true }).element().closest('label');
+			expect(label).not.toHaveAttribute('data-layout');
 		});
 	});
 });

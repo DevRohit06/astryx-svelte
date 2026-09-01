@@ -53,7 +53,24 @@ export default {
 		{
 			name: 'autoSaveId',
 			type: 'string',
-			description: 'Key for localStorage persistence of size across sessions.'
+			description: 'Key for localStorage persistence of size and collapse state across sessions.'
+		},
+		{
+			name: 'defaultIsCollapsed',
+			type: 'boolean',
+			description: 'Initial collapse state (uncontrolled). A persisted entry wins over it.',
+			default: 'false'
+		},
+		{
+			name: 'isCollapsed',
+			type: 'boolean',
+			description:
+				'Controlled collapse state. collapse(), expand() and a drag past the threshold then report through onCollapseChange instead of changing state internally.'
+		},
+		{
+			name: 'onCollapseChange',
+			type: '(isCollapsed: boolean) => void',
+			description: 'Called once per collapse state change, via drag or programmatically.'
 		}
 	],
 	returns: [

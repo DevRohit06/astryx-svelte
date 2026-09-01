@@ -36,8 +36,25 @@
 		href?: string;
 		/** Click handler. */
 		onclick?: (event: MouseEvent) => void;
-		/** Right-side content (badges, counts). */
+		/**
+		 * Passive right-side content only (badges, counts). Interactive
+		 * controls (icon buttons, menus) go in `actions`. `endContent`
+		 * renders inside the primary link or button.
+		 */
 		endContent?: Snippet;
+		/**
+		 * Row-level secondary controls (icon buttons, menus) rendered as siblings
+		 * of the primary element at the trailing edge of the row — after the
+		 * expand/collapse toggle, and before any nested children in DOM and focus
+		 * order. Content is passthrough: each control owns its accessible name,
+		 * keyboard behavior, and disabled state. Hidden while the SideNav rail is
+		 * collapsed.
+		 *
+		 * Controls inherit the row's control size through `SizeContext`, so an
+		 * unsized icon button comes out the same box as the built-in
+		 * expand/collapse toggle. An explicit `size` still wins.
+		 */
+		actions?: Snippet;
 		/** Sub-items for nesting. */
 		children?: Snippet;
 		/**
@@ -77,6 +94,7 @@
 	import { usePopover } from '../popover/use-popover.svelte.js';
 	import { useMenuHover } from '../../internal/use-menu-hover.svelte.js';
 	import Tooltip from '../tooltip/tooltip.svelte';
+	import SizeScope from '../../internal/size-scope.svelte';
 	import NavItemElement from './nav-item-element.svelte';
 	import {
 		EXPANDED_COLLAPSE_STATE,
@@ -98,7 +116,10 @@
 		sideNavItemFocusableRowAttrs,
 		sideNavItemPopoverGapStyle,
 		sideNavItemRowAttrs,
-		sideNavItemSplitActionAttrs
+		sideNavItemActionsRowAttrs,
+		sideNavItemActionsAttrs,
+		sideNavItemSplitActionAttrs,
+		sideNavItemSplitActionSuppressedAttrs
 	} from './side-nav-item.stylex.js';
 	import { useSideNavRenderMode } from './side-nav-render-context.svelte.js';
 
@@ -116,9 +137,12 @@
 	 *   be nothing to show. That test reads the raw `icon` prop, **not**
 	 *   `displayIcon`, so an item carrying only a `selectedIcon` disappears when
 	 *   collapsed even while selected. Upstream's condition verbatim.
-	 * - **Collapsible with a primary action** → the split-action row: a `<div>`
-	 *   carrying the nav-item styling with the link and the chevron toggle as
-	 *   siblings, because a `<button>` cannot be nested inside an `<a>`.
+	 * - **More than one row-level control** → the row wrapper: a `<div>` carrying
+	 *   the nav-item styling with the link, the chevron toggle and the `actions`
+	 *   slot as siblings, because a `<button>` cannot be nested inside an `<a>`.
+	 *   It is reached by an independent toggle (collapsible *and* a primary
+	 *   action), by `actions`, or by both, and every row-level control precedes
+	 *   the nested children group in DOM and focus order.
 	 * - **Otherwise** → a single link or button; when it is collapsible without a
 	 *   primary action, clicking it toggles the children instead of navigating.
 	 *
@@ -141,6 +165,7 @@
 		href,
 		onclick,
 		endContent,
+		actions,
 		children,
 		collapsible: itemCollapsible,
 		size = 'md',
@@ -214,6 +239,27 @@
 	// expands.
 	const hasPrimaryAction = $derived(!!href || !!onclick);
 	const hasIndependentToggle = $derived(isItemCollapsible && hasPrimaryAction && !isCollapsed);
+	const hasActions = $derived(!!actions);
+
+	// Row-wrapper path: primary element + row controls as siblings.
+	//
+	// Used when the row carries more than one control: an independent
+	// expand/collapse toggle (collapsible + href/onclick), consumer-supplied
+	// actions, or both. A <div> is the styled flex row; the primary link or
+	// button, the chevron toggle, and the actions slot render as siblings so no
+	// interactive element nests inside another, and every row-level control
+	// precedes the nested children group in DOM and focus order.
+	const hasRowWrapper = $derived(hasIndependentToggle || hasActions);
+
+	/**
+	 * Cascaded to the `actions` slot through `SizeContext` so a consumer's row
+	 * controls come out the same height as the built-in expand/collapse toggle,
+	 * the way `SideNav` already cascades one size to its footer icons. An
+	 * explicit `size` on a supplied control still wins.
+	 *
+	 * SYNC: `styles.expandToggle` carries the matching box.
+	 */
+	const ROW_CONTROL_SIZE = 'sm';
 
 	function handleClick(event: MouseEvent): void {
 		if (isDisabled) {
@@ -262,12 +308,17 @@
 		})
 	);
 	const rootAttrs = $derived(sideNavItemRootAttrs(xstyle));
-	// Two shapes of the same row appearance: `rowAttrs` for the split-action path,
-	// where the row is a plain <div> container and its children take focus (so the
-	// ring belongs on them); `focusableRowAttrs` for every other path, where the
-	// row element is itself the focusable control.
+	// Three shapes of the same row appearance: `rowAttrs` for the row-wrapper path
+	// without actions, where the row is a plain <div> container and its children
+	// take focus (so the ring belongs on them); `focusableRowAttrs` for the
+	// ordinary path, where the row element is itself the focusable control; and
+	// `actionsRowAttrs` for the same pill with the ring drawn for the primary
+	// only. The wrapper is not a tab stop, so `:focus-visible` on it would never
+	// match, and matching any descendant instead would light the whole row around
+	// the chevron's or an action's own ring.
 	const rowAttrs = $derived(sideNavItemRowAttrs(size, isSelected, isDisabled));
 	const focusableRowAttrs = $derived(sideNavItemFocusableRowAttrs(size, isSelected, isDisabled));
+	const actionsRowAttrs = $derived(sideNavItemActionsRowAttrs(size, isSelected, isDisabled));
 	const collapsedAttrs = $derived(sideNavItemCollapsedAttrs(size, isSelected, isDisabled));
 	const labelAttrs = sideNavItemLabelAttrs();
 	const endContentAttrs = sideNavItemEndContentAttrs();
@@ -279,6 +330,8 @@
 	]);
 	const expandToggleAttrs = sideNavItemExpandToggleAttrs();
 	const splitActionAttrs = sideNavItemSplitActionAttrs();
+	const splitActionSuppressedAttrs = sideNavItemSplitActionSuppressedAttrs();
+	const actionsAttrs = sideNavItemActionsAttrs();
 	const popoverSurfaceAttrs = sideNavItemPopoverSurfaceAttrs();
 	const popoverHeaderAttrs = sideNavItemPopoverHeaderAttrs();
 
@@ -299,6 +352,25 @@
 		class: cx(theme.class, focusableRowAttrs.class),
 		style: focusableRowAttrs.style
 	});
+	const actionsRowItemAttrs = $derived({
+		...theme,
+		class: cx(theme.class, actionsRowAttrs.class),
+		style: actionsRowAttrs.style
+	});
+
+	// aria-expanded/-controls stay on the primary element only when the whole row
+	// is the collapse toggle (no independent chevron button).
+	const rowPrimaryAriaProps = $derived(
+		hasIndependentToggle
+			? { 'aria-current': isSelected ? ('page' as const) : undefined }
+			: {
+					'aria-current': isSelected ? ('page' as const) : undefined,
+					'aria-disabled': isDisabled || undefined,
+					'aria-expanded': isItemCollapsible ? !isItemCollapsed : undefined,
+					'aria-controls': isItemCollapsible ? `${id}-children` : undefined
+				}
+	);
+	const rowPrimaryStyleAttrs = $derived(hasActions ? splitActionSuppressedAttrs : splitActionAttrs);
 </script>
 
 {#snippet iconSlot(slot: IconName | Snippet)}
@@ -399,13 +471,13 @@
 		class={cx(rootAttrs.class, className)}
 		style={mergeStyle(rootAttrs.style, styleProp as string | undefined)}
 	>
-		{#if hasIndependentToggle}
+		{#if hasRowWrapper}
 			<!--
-				Split-action row: the primary element and the chevron toggle as
-				siblings inside a <div> carrying the nav-item styling, because a
-				<button> cannot be nested inside an <a>.
+				Row wrapper: the primary element, the chevron toggle and the actions
+				slot as siblings inside a <div> carrying the nav-item styling, because
+				a <button> cannot be nested inside an <a>.
 			-->
-			<div data-testid={testId} {...rowItemAttrs}>
+			<div data-testid={testId} {...hasActions ? actionsRowItemAttrs : rowItemAttrs}>
 				<NavItemElement
 					{href}
 					{as}
@@ -413,26 +485,33 @@
 					onclick={handleClick}
 					attrs={{
 						...rest,
-						'aria-current': isSelected ? 'page' : undefined,
-						class: splitActionAttrs.class,
-						style: splitActionAttrs.style
+						...rowPrimaryAriaProps,
+						class: rowPrimaryStyleAttrs.class,
+						style: rowPrimaryStyleAttrs.style
 					}}
 				>
 					{@render itemContent()}
 				</NavItemElement>
-				<button
-					type="button"
-					onclick={handleToggleClick}
-					aria-label={isItemCollapsed
-						? t('@astryx.sideNavItem.expand', { label })
-						: t('@astryx.sideNavItem.collapse', { label })}
-					aria-expanded={!isItemCollapsed}
-					aria-controls="{id}-children"
-					class={expandToggleAttrs.class}
-					style={expandToggleAttrs.style}
-				>
-					<Icon icon="chevronDown" size="lg" color="inherit" xstyle={chevronXstyle} />
-				</button>
+				{#if hasIndependentToggle}
+					<button
+						type="button"
+						onclick={handleToggleClick}
+						aria-label={isItemCollapsed
+							? t('@astryx.sideNavItem.expand', { label })
+							: t('@astryx.sideNavItem.collapse', { label })}
+						aria-expanded={!isItemCollapsed}
+						aria-controls="{id}-children"
+						class={expandToggleAttrs.class}
+						style={expandToggleAttrs.style}
+					>
+						<Icon icon="chevronDown" size="lg" color="inherit" xstyle={chevronXstyle} />
+					</button>
+				{/if}
+				{#if actions}
+					<span class={actionsAttrs.class} style={actionsAttrs.style}>
+						<SizeScope value={ROW_CONTROL_SIZE}>{@render actions()}</SizeScope>
+					</span>
+				{/if}
 			</div>
 		{:else}
 			<NavItemElement

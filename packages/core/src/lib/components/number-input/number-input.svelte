@@ -141,15 +141,15 @@
 		/** `autocomplete` attribute. */
 		autoComplete?: string;
 		/**
-		 * Minimum allowed value. A validation constraint (typing below it is
-		 * rejected), the lower clamp for stepping, and the `aria-valuemin` the
-		 * spinbutton advertises.
+		 * Minimum allowed value. A smaller entry commits at this value on blur or
+		 * Enter; it is also the lower clamp for stepping, and the `aria-valuemin`
+		 * the spinbutton advertises.
 		 */
 		min?: number | null;
 		/**
-		 * Maximum allowed value. A validation constraint (typing above it is
-		 * rejected), the upper clamp for stepping, and the `aria-valuemax` the
-		 * spinbutton advertises.
+		 * Maximum allowed value. A larger entry commits at this value on blur or
+		 * Enter; it is also the upper clamp for stepping, and the `aria-valuemax`
+		 * the spinbutton advertises.
 		 */
 		max?: number | null;
 		/**
@@ -236,45 +236,6 @@
 	};
 
 	export type NumberInputProps = NumberInputPropsNonClearable | NumberInputPropsClearable;
-
-	/**
-	 * Parse and validate a string as a number, returning `null` when it fails.
-	 *
-	 * Module-private, as upstream's is. The order of the checks is upstream's and
-	 * is observable: a blank or lone `-` is rejected before `Number()` sees it,
-	 * and the integer constraint is applied before the range ones.
-	 */
-	function parseNumberInput(
-		input: string,
-		options: { min?: number | null; max?: number | null; isIntegerOnly?: boolean }
-	): number | null {
-		const trimmed = input.trim();
-		if (trimmed === '' || trimmed === '-') {
-			return null;
-		}
-
-		const num = Number(trimmed);
-		if (!Number.isFinite(num)) {
-			return null;
-		}
-
-		// Check integer constraint
-		if (options.isIntegerOnly && !Number.isInteger(num)) {
-			return null;
-		}
-
-		// Check min constraint
-		if (options.min != null && num < options.min) {
-			return null;
-		}
-
-		// Check max constraint
-		if (options.max != null && num > options.max) {
-			return null;
-		}
-
-		return num;
-	}
 
 	type StepDirection = -1 | 1;
 
@@ -385,6 +346,9 @@
 	import { isImeKeyEvent } from '../../utils/ime.js';
 	import { getInputARIA } from '../../utils/input-aria.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
+	import { formatEditableNumber } from './number-parser.js';
+	import { parseNumberInput, resolveNumberInputCommit } from './number-input-commit.js';
 	import { useInputContainer } from '../../hooks/use-input-container.svelte.js';
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
 	import InputStatusIcon from '../../hooks/input-status-icon.svelte';
@@ -416,12 +380,23 @@
 	 * `$1,234.56` at rest and the raw number on focus, and what makes the stepping
 	 * arithmetic the component's own rather than the UA's.
 	 *
-	 * `onChange` fires only for values that pass validation (`min`/`max`/
-	 * `isIntegerOnly`); an unparseable entry is held in a local pending buffer,
-	 * dims the text, announces itself to assistive technology and reverts on blur.
-	 * Stepping — arrow keys, wheel, and the optional `hasNumberSteppers` buttons —
-	 * *clamps* to `min`/`max` and no-ops at the boundary, where typing out of range
-	 * is rejected outright.
+	 * A text edit is held as a **draft** in a local pending buffer and committed at
+	 * an explicit boundary — blur or Enter — never per keystroke, so a valid
+	 * prefix of an invalid entry never commits on the way to typing it. `onChange`
+	 * fires only for a whole draft that passes validation (`min`/`max`/
+	 * `isIntegerOnly`): an unparseable one dims the text, announces itself to
+	 * assistive technology and reverts on blur, and an out-of-range one commits at
+	 * the nearest bound. Until the commit lands, `aria-valuenow` and the hidden
+	 * form input keep exposing the *committed* value, because the draft may still
+	 * be invalid. Stepping — arrow keys, wheel, and the optional
+	 * `hasNumberSteppers` buttons — *clamps* to `min`/`max` and no-ops at the
+	 * boundary.
+	 *
+	 * The draft is read by `number-parser.ts` the way a person in the ambient
+	 * locale writes a number, so a value pasted out of a spreadsheet — grouped,
+	 * signed, currency-decorated, in that reader's own digit script — round-trips;
+	 * while focused the field shows the machine number in the locale's own decimal
+	 * separator, which is exactly what the parser reads back.
 	 *
 	 * @example
 	 * ```svelte
@@ -485,6 +460,9 @@
 	const emit = $derived(onChange as (value: number | null) => void);
 
 	const t = useTranslator();
+	// A getter, so a runtime locale swap reaches the parser and the editable
+	// formatting rather than freezing at whatever the provider held on mount.
+	const locale = useLocale();
 	const resolveSize = useSize();
 	const size = $derived(resolveSize(sizeProp, 'md'));
 
@@ -552,6 +530,15 @@
 		)
 	);
 
+	/**
+	 * Upstream's `parseInput` — the field's constraints bound to one call, so the
+	 * three readers below cannot drift on which options they pass. It reads
+	 * `locale()` at call time rather than closing over a snapshot.
+	 */
+	function parseInput(text: string): number | null {
+		return parseNumberInput(text, { min, max, isIntegerOnly, locale: locale() });
+	}
+
 	const formattedValue = $derived.by(() => {
 		if (value == null) {
 			return '';
@@ -568,7 +555,7 @@
 		if (value == null) {
 			return '';
 		}
-		return isFocused ? String(value) : formattedValue;
+		return isFocused ? formatEditableNumber(value, locale()) : formattedValue;
 	});
 
 	/**
@@ -621,45 +608,59 @@
 		if (pendingInput === null || !pendingInput.trim()) {
 			return true;
 		}
-		return parseNumberInput(pendingInput, { min, max, isIntegerOnly }) !== null;
+		return parseInput(pendingInput) !== null;
 	});
 
-	/** Commit the pending text, honouring the clearable contract. Shared by blur and Enter. */
-	function commitPending(): void {
+	/**
+	 * Commit the pending text, honouring the clearable contract. Shared by blur
+	 * and Enter, which differ only in whether the draft survives the commit:
+	 * blur always ends the edit, while Enter keeps the typed text on screen
+	 * unless the commit *clamped* it, where leaving it would show a number that
+	 * was not committed.
+	 *
+	 * The whole decision — commit, clear or revert, and whether it clamped —
+	 * comes from `resolveNumberInputCommit`, which upstream shares with its live
+	 * numeric consumers rather than re-deriving here.
+	 */
+	function commitPending(trigger: 'blur' | 'Enter'): void {
 		if (pendingInput === null) {
 			return;
 		}
-		if (hasClear && pendingInput.trim() === '') {
+
+		const decision = resolveNumberInputCommit(pendingInput, {
+			min,
+			max,
+			isIntegerOnly,
+			locale: locale(),
+			hasClear: !!hasClear
+		});
+		if (trigger === 'blur' || (decision.type === 'commit' && decision.didClamp)) {
+			pendingInput = null;
+		}
+
+		if (decision.type === 'clear') {
 			// Keyboard clearing honors the clearable contract: an emptied input
 			// commits null instead of silently reverting.
-			if (value != null) {
+			if (hasClear && value != null) {
 				emit(null);
 			}
-		} else {
-			const parsed = parseNumberInput(pendingInput, { min, max, isIntegerOnly });
-			if (parsed !== null && parsed !== value) {
-				emit(parsed);
-			}
+		} else if (decision.type === 'commit' && decision.value !== value) {
+			emit(decision.value);
 		}
 	}
 
 	// Bound to `oninput`, not `onchange`: React's `onChange` on an input is the
-	// native `input` event and fires per keystroke.
+	// native `input` event and fires per keystroke. It only ever *records* the
+	// keystroke — the whole text edit stays a draft until an explicit commit
+	// boundary, so a valid prefix of an invalid entry never reaches `onChange`.
 	function handleInputChange(e: Event): void {
 		// The value can't change while showing a disabled message or while
 		// read-only (both make the field `readonly`), but guard the handler too so
-		// the pending value and onChange never fire.
+		// the pending value never changes.
 		if (isDisabled || isReadOnly) {
 			return;
 		}
-		const newValue = (e.target as HTMLInputElement).value;
-		pendingInput = newValue;
-
-		// If the input is valid, update immediately.
-		const parsed = parseNumberInput(newValue, { min, max, isIntegerOnly });
-		if (parsed !== null && parsed !== value) {
-			emit(parsed);
-		}
+		pendingInput = (e.target as HTMLInputElement).value;
 	}
 
 	function handleFocus(e: FocusEvent): void {
@@ -667,10 +668,11 @@
 		onfocus?.(e as Parameters<NonNullable<typeof onfocus>>[0]);
 	}
 
+	// Blur ends the edit and displays the resulting committed value: the commit
+	// itself clears the pending input, so the display reverts to the formatted
+	// value whether the draft committed or reverted.
 	function handleBlur(e: FocusEvent): void {
-		commitPending();
-		// Clear the pending input — the display reverts to the formatted value.
-		pendingInput = null;
+		commitPending('blur');
 		isFocused = false;
 		onblur?.(e as Parameters<NonNullable<typeof onblur>>[0]);
 	}
@@ -687,7 +689,7 @@
 		if (pendingInput.trim() === '') {
 			return null;
 		}
-		return parseNumberInput(pendingInput, { min, max, isIntegerOnly }) ?? value ?? null;
+		return parseInput(pendingInput) ?? value ?? null;
 	});
 
 	function getNextValue(direction: StepDirection): number | null {
@@ -745,9 +747,9 @@
 			return;
 		}
 		if (e.key === 'Enter') {
-			// Validate and commit on Enter. Unlike blur, `pendingInput` is *not*
-			// cleared, so the typed text stays on screen.
-			commitPending();
+			// Validate and commit on Enter. Unlike blur, `pendingInput` survives, so
+			// the typed text stays on screen — except where the commit clamped it.
+			commitPending('Enter');
 			onEnter?.();
 		}
 		onkeydown?.(e as Parameters<NonNullable<typeof onkeydown>>[0]);

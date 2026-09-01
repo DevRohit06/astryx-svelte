@@ -1,3 +1,9 @@
+/**
+ * PORTS: Chat/ChatLayout.test.tsx
+ * PORTS: Chat/ChatLayoutScrollButton.test.tsx
+ * PORTS: Chat/ChatDictationButton.test.tsx
+ */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ChatDictationButton from '$lib/components/chat/chat-dictation-button.svelte';

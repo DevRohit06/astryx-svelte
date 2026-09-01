@@ -12,6 +12,7 @@
 import { devWarn } from '../../utils/dev-warning.js';
 import { formatInstant } from './format-instant.js';
 import type { InstantFormat } from './format-instant.js';
+import type { Locale } from '../../i18n/types.js';
 
 /**
  * Formats available to a tooltip line.
@@ -176,7 +177,8 @@ function shouldShowZoneName(
  */
 export function formatTooltipLines(
 	date: Date,
-	entries: ReadonlyArray<TimestampTooltipEntry>
+	entries: ReadonlyArray<TimestampTooltipEntry>,
+	locale: Locale
 ): ReadonlyArray<TimestampTooltipLine> {
 	const resolved = entries.map((entry) => resolveTimezoneID(entry.timezoneID));
 	const hasMultipleZones = new Set(resolved.map(zoneKey)).size > 1;
@@ -188,7 +190,7 @@ export function formatTooltipLines(
 		return {
 			...(entry.label === undefined ? {} : { label: entry.label }),
 			isCopyable: entry.isCopyable ?? false,
-			value: formatInstant(date, format, {
+			value: formatInstant(date, format, locale, {
 				timeZone,
 				isTimezoneShown: shouldShowZoneName(format, hasMultipleZones, timeZone !== undefined)
 			})

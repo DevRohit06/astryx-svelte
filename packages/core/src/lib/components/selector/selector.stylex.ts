@@ -20,6 +20,7 @@ import {
 	typographyVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `Selector/Selector.tsx`, where the styles are inline in
@@ -124,13 +125,6 @@ const styles = stylex.create({
 		width: 'auto',
 		borderWidth: 0,
 		backgroundColor: 'transparent',
-		backgroundImage: {
-			default: null,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
-			},
-			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		},
 		boxShadow: {
 			default: 'none',
 			':hover:not(:focus-within):where(:not(:disabled,[aria-disabled="true"]))': {
@@ -403,6 +397,9 @@ export function selectorTriggerContainerAttrs(
 		styles.triggerContainer,
 		sizeStyles[size],
 		variant === 'ghost' && styles.triggerGhost,
+		// Upstream 0.5.1 moved the ghost trigger's hover/pressed overlay into the
+		// shared module, under the same `ghost` gate and in upstream's position.
+		variant === 'ghost' && interactionOverlayStyles.backgroundImage,
 		// A ghost trigger has no bordered wrapper of its own, so the shared ring is
 		// what makes its keyboard focus visible (#4935/#4973). `focusWithin` is
 		// `:has(:focus-visible)`, so a pointer click does not draw it.

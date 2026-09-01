@@ -1,6 +1,8 @@
+/** PORTS: Timestamp/tooltipEntries.test.ts */
+
 /**
  * Ported case-for-case from Astryx's `src/Timestamp/tooltipEntries.test.ts` at
- * the **0.5.0** pin — **45 blocks** (44 plain `it`s plus one three-row
+ * the **0.5.2** pin — **45 blocks** (44 plain `it`s plus one three-row
  * `it.each`), and all 45 are here.
  *
  * These tests must pass under ANY machine timezone. The repo pins TZ neither in
@@ -19,18 +21,31 @@
  * call site was routed through `devWarn` in the same batch. The assertions never
  * moved, because both spellings pass one formatted string.)
  *
- * 44 `it` declarations at v0.3.0, 44 here; one is an `it.each` over the shared
- * formats, so the file runs more cases than it declares.
+ * **The locale is bound once, upstream's way.** `formatTooltipLines` takes a
+ * required `locale` third argument as of 0.5.2, and upstream's own suite wraps
+ * it in a two-argument shim pinned to `'en-US'` rather than threading a literal
+ * through 45 call sites. This file does the same, so every case below stays the
+ * one it ports. It also means the shim is the *only* thing standing between
+ * these cases and the argument: drop the locale at the call site in
+ * `tooltip-entries.ts` and the zone-abbreviation cases go back to reading the
+ * host locale, which is exactly the defect this argument exists to close — the
+ * cases that catch that live in `timestamp.svelte.test.ts`, where the provider
+ * is real.
  */
 
 import { describe, expect, it, vi } from 'vitest';
 import { SHARED_DATE_FORMAT_OPTIONS } from '$lib/utils/plain-date.js';
-import { formatTooltipLines } from '$lib/components/timestamp/tooltip-entries.js';
+import { formatTooltipLines as formatTooltipLinesForLocale } from '$lib/components/timestamp/tooltip-entries.js';
+
+const formatTooltipLines = (
+	date: Parameters<typeof formatTooltipLinesForLocale>[0],
+	entries: Parameters<typeof formatTooltipLinesForLocale>[1]
+) => formatTooltipLinesForLocale(date, entries, 'en-US');
 
 /** 2026-02-19T17:00:00Z — chosen so several zones land on different dates. */
 const INSTANT = new Date('2026-02-19T17:00:00Z');
 
-const LOCAL_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+const LOCAL_ZONE = Intl.DateTimeFormat('en-US').resolvedOptions().timeZone;
 
 describe('formatTooltipLines', () => {
 	// --- Explicit zones: exact, locale-free, TZ-agnostic ---
@@ -88,12 +103,13 @@ describe('formatTooltipLines', () => {
 			// Timestamp's rendered text and DateInput's display path cannot drift.
 			// A tooltip line must come from the same bag: rebuilding the expected
 			// string from the shared constant here fails the moment this file
-			// inlines its own options again. Locale-agnostic — both sides format
-			// under whatever locale the machine has.
+			// inlines its own options again. Both sides name `'en-US'` — the locale
+			// the shim above binds — so the comparison is between the two option
+			// bags and not between two locales.
 			for (const timezoneID of ['UTC', 'Asia/Tokyo']) {
 				const [line] = formatTooltipLines(INSTANT, [{ timezoneID, format }]);
 				expect(line.value).toBe(
-					new Intl.DateTimeFormat(undefined, {
+					new Intl.DateTimeFormat('en-US', {
 						...SHARED_DATE_FORMAT_OPTIONS[format],
 						timeZone: timezoneID
 					}).format(INSTANT)

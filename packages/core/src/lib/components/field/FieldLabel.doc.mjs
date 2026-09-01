@@ -23,7 +23,7 @@ export default {
 		'hint'
 	],
 	group: 'Field',
-	category: 'Data Input',
+	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	props: [
 		{

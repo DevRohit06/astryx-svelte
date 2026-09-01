@@ -10,7 +10,7 @@ export default {
 	displayName: 'Table Body',
 	subComponentOf: 'Table',
 	description:
-		'<tbody> wrapper for children mode. Holds the data rows. A row must sit inside a section — <table> cannot contain a <tr> directly, because the HTML parser inserts an implied <tbody> when it parses server-rendered markup and React does not when it renders on the client, so rows written straight into Table mismatch on hydration. The data-driven data={...} mode renders this element itself; in children mode it is yours to supply.',
+		'<tbody> wrapper for children mode. Holds the data rows. A row must sit inside a section: <table> cannot contain a <tr> directly, because the HTML parser inserts an implied <tbody> when it parses server-rendered markup and React does not when it renders on the client, so rows written straight into Table mismatch on hydration. The data-driven data={...} mode renders this element itself; in children mode it is yours to supply.',
 	keywords: [
 		'table',
 		'datatable',

@@ -19,6 +19,7 @@
 		plainDateToday
 	} from '../../utils/plain-date.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import { useCalendarConstraints } from '../calendar/use-calendar-constraints.svelte.js';
 	import { useInputStatusIcon } from '../../hooks/use-input-status-icon.svelte.js';
 	import InputStatusIcon from '../../hooks/input-status-icon.svelte';
@@ -51,15 +52,18 @@
 		touchFooterActionOverlayAttrs,
 		touchFooterAttrs,
 		touchHeaderAttrs,
+		touchHeaderResetAttrs,
 		touchMonthArrowIconAttrs,
 		touchMonthArrowXstyle,
 		touchMonthArrowsAttrs,
 		touchPanelBeneathAttrs,
 		touchPanelOverlayAttrs,
+		touchResetButtonXstyle,
 		touchSheetBodyAttrs,
 		touchSurfaceAttrs,
 		touchTitleAttrs,
 		touchTitleChevronXstyle,
+		touchTitleTextAttrs,
 		touchWeekdayAttrs,
 		touchWeekdaysAttrs
 	} from './touch-date-field.stylex.js';
@@ -88,6 +92,10 @@
 	 * 2. Swiping is the month control, and the arrows are the backup.
 	 * 3. The title is the escape hatch. Tap it and the same box becomes a month
 	 *    wheel and a year wheel — a flick each to reach 2019 instead of forty.
+	 *
+	 * Reset is chrome, so it sits in the header beside the arrows rather than in
+	 * the footer: the footer is where the task ends, and an undo of equal weight
+	 * beside Save is a mis-tap that throws away the date just chosen.
 	 *
 	 * Internal to `DateInput`; not exported from the barrel, exactly as upstream
 	 * keeps it out of `DateInput/index.ts`.
@@ -127,6 +135,7 @@
 	}: DateInputProps = $props();
 
 	const t = useTranslator();
+	const locale = useLocale();
 	const isEffectivelyRequired = useResolvedRequired({
 		isRequired: () => isRequired,
 		isOptional: () => isOptional
@@ -260,12 +269,17 @@
 		Array.from({ length: 7 }, (_, offset) =>
 			plainDateFormat(
 				{ year: 1970, month: 1, day: 4 + ((weekStartsOn + offset) % 7) },
-				DATE_FORMAT_WEEKDAY_ONLY
+				DATE_FORMAT_WEEKDAY_ONLY,
+				locale()
 			)
 		)
 	);
 	const monthYearLabel = $derived(
-		plainDateFormat({ year: parts.year, month: parts.month, day: 1 }, DATE_FORMAT_MONTH_YEAR)
+		plainDateFormat(
+			{ year: parts.year, month: parts.month, day: 1 },
+			DATE_FORMAT_MONTH_YEAR,
+			locale()
+		)
 	);
 
 	// Formats the committed value only. A function format is called with the ISO
@@ -278,7 +292,7 @@
 		}
 		return typeof format === 'function'
 			? format(current)
-			: formatSharedDate(plainDateFromISO(current), format);
+			: formatSharedDate(plainDateFromISO(current), format, locale());
 	});
 
 	function fireChange(newValue: ISODateString | undefined): void {
@@ -476,12 +490,14 @@
 	const surfaceAttrs = touchSurfaceAttrs();
 	const headerAttrs = touchHeaderAttrs();
 	const titleAttrs = touchTitleAttrs();
+	const titleTextAttrs = touchTitleTextAttrs();
 	const monthArrowIconAttrs = touchMonthArrowIconAttrs();
 	const weekdayAttrs = touchWeekdayAttrs();
 	const bodyAttrs = touchBodyAttrs();
 	const footerAttrs = touchFooterAttrs();
 	const sheetBodyAttrs = touchSheetBodyAttrs();
 	const arrowsAttrs = $derived(touchMonthArrowsAttrs(isWheelOpen));
+	const headerResetAttrs = $derived(touchHeaderResetAttrs(isWheelOpen));
 	const weekdaysAttrs = $derived(touchWeekdaysAttrs(isWheelOpen));
 	const calendarPanelAttrs = $derived(touchPanelBeneathAttrs(isWheelOpen));
 	const wheelsPanelAttrs = $derived(touchPanelOverlayAttrs(!isWheelOpen));
@@ -513,7 +529,7 @@
 				class={titleAttrs.class}
 				style={titleAttrs.style}
 			>
-				<span>{monthYearLabel}</span>
+				<span class={titleTextAttrs.class} style={titleTextAttrs.style}>{monthYearLabel}</span>
 				<Icon
 					icon="chevronDown"
 					size="sm"
@@ -557,6 +573,30 @@
 					onclick={() => stepMonth(1)}
 					label={t('@astryx.calendar.nextMonth')}
 					icon={chevronRightIcon}
+				/>
+			</span>
+			<!--
+				Reset, past the arrows, and gone with them on the wheels: the wheels
+				choose a month, and there is no date there to put back. Hidden rather
+				than unmounted, for the arrows' reason — the corner keeps its size, so
+				the header cannot change height mid-swap.
+			-->
+			<span
+				data-action="reset"
+				inert={isWheelOpen ? true : undefined}
+				class={headerResetAttrs.class}
+				style={headerResetAttrs.style}
+			>
+				<!--
+					ghost: a filled button up here would outrank the Save that finishes
+					the task.
+				-->
+				<Button
+					variant="ghost"
+					size="sm"
+					xstyle={touchResetButtonXstyle()}
+					label={t('@astryx.dateInput.resetPicking')}
+					onclick={handleResetInSheet}
 				/>
 			</span>
 		</div>
@@ -636,13 +676,11 @@
 				class={calendarFooterAttrs.class}
 				style={calendarFooterAttrs.style}
 			>
-				<Button
-					variant="secondary"
-					size="md"
-					width="100%"
-					label={t('@astryx.dateInput.resetPicking')}
-					onclick={handleResetInSheet}
-				/>
+				<!--
+					md, not sm: it is the action a thumb reaches for, so it gets the
+					comfortable size rather than the compact one the header's ghost
+					buttons use.
+				-->
 				<Button
 					variant="primary"
 					size="md"

@@ -19,7 +19,7 @@ export default {
 		'taginput',
 		'chipinput'
 	],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
@@ -235,13 +235,21 @@ export default {
 		{
 			name: 'maxMenuItems',
 			type: 'number',
-			description: 'Maximum number of dropdown items to display.',
+			description:
+				'Maximum number of search results to display. The hasCreate entry is offered on top of them, so a menu can show one more than this.',
 			default: '10'
 		},
 		{
 			name: 'menuWidth',
 			type: 'number',
 			description: 'Fixed dropdown width in pixels. The menu never shrinks below its anchor width.'
+		},
+		{
+			name: 'minQueryLength',
+			type: 'number',
+			description:
+				'Minimum query length before the search source is queried. Below it no search runs, and the menu stays closed — unless hasCreate is set, in which case the "Create ..." entry is still offered, being derived from the typed text rather than fetched for it.',
+			default: '1'
 		},
 		{
 			name: 'emptySearchResultsText',

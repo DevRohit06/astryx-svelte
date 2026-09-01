@@ -1,3 +1,5 @@
+/** PORTS: Chat/ChatTokenizedText.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import ChatTokenizedText from '$lib/components/chat/chat-tokenized-text.svelte';

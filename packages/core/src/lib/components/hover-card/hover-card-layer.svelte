@@ -61,7 +61,7 @@
 	 * **The theme class sits on the layer container**, with the inner content span
 	 * keeping only its padding. 0.2.0 moved it there deliberately: the container
 	 * is where the background, radius and shadow live, so a theme targeting
-	 * `.astryx-hovercard` and a consumer's `class` now land on the same element —
+	 * `.astryx-hover-card` and a consumer's `class` now land on the same element —
 	 * the visual surface — instead of the theme reaching a span the consumer
 	 * cannot style. It used to sit on the inner span here, matching upstream then.
 	 */
@@ -88,7 +88,7 @@
 	role={hoverCard.role}
 	aria-label={hoverCard.label}
 	xstyle={[hoverCard.xstyle, layerAnimations[renderPlacement], xstyle]}
-	class={cx(themeProps('hovercard').class, className)}
+	class={cx(themeProps('hover-card', undefined, { legacyNames: ['hovercard'] }).class, className)}
 	style={style ?? undefined}
 >
 	<!--

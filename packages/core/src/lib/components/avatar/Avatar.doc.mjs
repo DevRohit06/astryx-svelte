@@ -25,7 +25,7 @@ export default {
 		targets: [
 			{
 				className: 'astryx-avatar',
-				visualProps: ['size']
+				visualProps: ['size', 'shape']
 			},
 			{
 				className: 'astryx-avatar-fallback',
@@ -47,6 +47,19 @@ export default {
 					'Negative inline offset applied to every avatar after the first when avatars are stacked in an AvatarGroup. Set from the group size; a more negative value tightens the stack.',
 				default: 'set at runtime from the group avatar size (px)',
 				private: true
+			},
+			{
+				name: '--_avatar-radius',
+				description:
+					'Border radius of the avatar wrapper, content, focus ring, and the AvatarGroupOverflow "+N" chip. Set per shape variant by shapeStyles.',
+				default: 'var(--radius-full)',
+				private: true
+			}
+		],
+		derived: [
+			{
+				property: 'borderRadius',
+				vars: ['--_avatar-radius']
 			}
 		]
 	},
@@ -92,7 +105,7 @@ export default {
 			{
 				guidance: false,
 				description:
-					'Force a square or custom shape. Avatars are always circular to stay consistent across the system.'
+					'Use xstyle or className to override shape. Use the shape prop instead so themes can control it globally.'
 			}
 		],
 		anatomy: [
@@ -146,6 +159,13 @@ export default {
 			description:
 				"Avatar size. Use a named size ('xsm' 20px, 'sm' 24px, 'md' 36px, 'lg' 48px, 'xl' 128px) or a numeric pixel value. Avatar shares Icon's abbreviated scale, but its tiers are larger because avatars align with media rather than glyphs. Inside an AvatarGroup the group's size wins and this prop is ignored.",
 			default: "'md'"
+		},
+		{
+			name: 'shape',
+			type: "'circle' | 'rounded' | 'square'",
+			description:
+				"Shape variant of the avatar. 'circle' (default) stays fully round. 'rounded' uses the element radius token so it matches UI corner rounding and can be set globally via theme. 'square' has no radius. Status dot positioning adapts automatically: 4-o'clock on circle, bottom-right corner on rounded/square.",
+			default: "'circle'"
 		},
 		{
 			name: 'status',

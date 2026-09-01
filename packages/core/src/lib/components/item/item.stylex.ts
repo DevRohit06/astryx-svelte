@@ -9,6 +9,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `Item/Item.tsx`.
@@ -41,14 +42,7 @@ const styles = stylex.create({
 		},
 		transitionProperty: 'background-color',
 		transitionDuration: durationVars['--duration-fast-min'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		backgroundColor: {
-			default: 'transparent',
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': colorVars['--color-overlay-hover']
-			},
-			':active': colorVars['--color-overlay-pressed']
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	highlighted: {
 		backgroundColor: colorVars['--color-overlay-hover']
@@ -209,6 +203,8 @@ export function itemRootAttrs(
 		densityStyles[density],
 		align === 'start' && styles.alignStart,
 		isInteractive && styles.interactive,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		isInteractive && interactionOverlayStyles.backgroundColor,
 		isInteractive && focusOutlineStyles.focusWithin,
 		isHighlighted && styles.highlighted,
 		isSelected && styles.selected,

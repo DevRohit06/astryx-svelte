@@ -1,3 +1,5 @@
+/** PORTS: MobileNav/MobileNavCloseVisibility.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import MobileNavProbe from './fixtures/mobile-nav-probe.svelte';

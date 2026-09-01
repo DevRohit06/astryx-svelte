@@ -1,3 +1,5 @@
+/** PORTS: Table/plugins/columnSettings/useTableColumnSettingsState.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { ColumnSettingsOption } from '$lib/components/table/plugins/column-settings/use-table-column-settings.js';

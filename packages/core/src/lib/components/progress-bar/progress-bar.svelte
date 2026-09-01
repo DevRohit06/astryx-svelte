@@ -170,9 +170,15 @@
 	const valueLabelAttrs = $derived(progressBarValueLabelAttrs(isDisabled));
 	const fill = $derived(progressBarFillAttrs(fillVariant, isIndeterminate));
 
-	const theme = $derived(themeProps('progressbar', { variant }));
-	const trackTheme = themeProps('progressbar-track');
-	const fillTheme = $derived(themeProps('progressbar-fill', { variant: fillVariant }));
+	// `progressbar` ran the compound name together; themes styling it keep
+	// working until the next major.
+	const theme = $derived(themeProps('progress-bar', { variant }, { legacyNames: ['progressbar'] }));
+	const trackTheme = themeProps('progress-bar-track', undefined, {
+		legacyNames: ['progressbar-track']
+	});
+	const fillTheme = $derived(
+		themeProps('progress-bar-fill', { variant: fillVariant }, { legacyNames: ['progressbar-fill'] })
+	);
 </script>
 
 <!--
@@ -181,15 +187,16 @@
 	visible and the label attaches once ready.
 
 	`placement` is reflected as `data-placement` (and a class) so a theme can style
-	the two cases separately on the `progressbar-mark` target; `variant` mirrors
+	the two cases separately on the `progress-bar-mark` target; `variant` mirrors
 	the fill's variant for the same reason. Both are per-mark, so they are resolved
 	here rather than once in the `<script>`.
 -->
 {#snippet markTick(pct: number, isOnFill: boolean)}
-	{@const markTheme = themeProps('progressbar-mark', {
-		variant: fillVariant,
-		placement: isOnFill ? 'fill' : 'track'
-	})}
+	{@const markTheme = themeProps(
+		'progress-bar-mark',
+		{ variant: fillVariant, placement: isOnFill ? 'fill' : 'track' },
+		{ legacyNames: ['progressbar-mark'] }
+	)}
 	{@const markAttrs = progressBarMarkAttrs(fillVariant, isOnFill, isDisabled)}
 	<!--
 		Focusable and never `aria-hidden`: a mark always stands for something

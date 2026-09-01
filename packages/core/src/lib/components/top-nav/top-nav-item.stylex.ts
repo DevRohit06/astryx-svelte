@@ -11,6 +11,7 @@ import {
 	typeScaleVars
 } from '../../styles/tokens.stylex.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `TopNav/TopNavItem.tsx` styles.
@@ -41,14 +42,7 @@ const styles = stylex.create({
 		},
 		transitionProperty: 'background-color, color',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		backgroundColor: {
-			default: 'transparent',
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': colorVars['--color-overlay-hover']
-			},
-			':active': colorVars['--color-overlay-pressed']
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	selected: {
 		color: colorVars['--color-text-primary'],
@@ -76,6 +70,8 @@ export function topNavItemDrawerAttrs(
 ): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
 		navItemStyles.item,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
 		navItemStyles[size],
 		isSelected && navItemStyles.selected,
 		isDisabled && navItemStyles.disabled,
@@ -95,6 +91,8 @@ export function topNavItemAttrs(
 ): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
 		styles.base,
+		// Upstream 0.5.1: hover/pressed background moved to the shared module.
+		interactionOverlayStyles.backgroundColor,
 		isSelected && styles.selected,
 		isDisabled && navItemStyles.disabled,
 		isIconOnly && styles.iconOnly,

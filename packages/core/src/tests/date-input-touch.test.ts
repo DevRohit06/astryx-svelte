@@ -1,3 +1,5 @@
+/** PORTS: DateInput/DateInputTouch.test.tsx */
+
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -16,42 +18,49 @@ import {
 
 /**
  * Ports the executable half of upstream's `DateInput/DateInputTouch.test.tsx`
- * at the **0.5.0** pin.
+ * at the **0.5.2** pin.
  *
- * Upstream's suite is **134 `it(` cases**. This file carries **36** of them —
- * every case that needs no DOM:
+ * Upstream's suite is **136 `it(` cases**. This file carries **35** of them —
+ * every case that needs no DOM, less one that needs a module this port does
+ * not have yet:
  *
  * - `describe('monthGeometry')` and its three nested blocks — 4 + 5 + 2 + 3 =
  *   **14 cases**, the pure month arithmetic.
- * - `describe('DateInput — scroll CSS (definition-level)')` — **22 cases**.
- *   Upstream's own header explains why these read source text rather than a
- *   rendered tree: snapping, momentum and the scroll-driven falloff are CSS a
- *   browser resolves and jsdom does not implement at all, so the assertion is
- *   on the style DEFINITION, which at least fails loudly if someone deletes
- *   the property. That reasoning survives the port unchanged, and it is why
- *   these belong in the **server** project here even though they are about
- *   CSS.
+ * - `describe('DateInput — scroll CSS (definition-level)')` — **21 of its 22
+ *   cases**. Upstream's own header explains why these read source text rather
+ *   than a rendered tree: snapping, momentum and the scroll-driven falloff are
+ *   CSS a browser resolves and jsdom does not implement at all, so the
+ *   assertion is on the style DEFINITION, which at least fails loudly if
+ *   someone deletes the property. That reasoning survives the port unchanged,
+ *   and it is why these belong in the **server** project here even though they
+ *   are about CSS.
  *
- * The remaining **98 cases are not ported**, and none of them is dropped on
- * merit — they are upstream's DOM coverage:
+ *   The one dropped case is `sizes the closed field the same on both
+ *   surfaces`, which asserts that `TouchDateField`'s `sizeStyles` block is
+ *   byte-equal to `NativeDateField`'s. 0.5.1 added `NativeDateField` and the
+ *   `nativePicker` prop that routes to it, and neither is ported yet; the case
+ *   lands with the module it compares against.
  *
- * | upstream describe                                        | cases |
- * | -------------------------------------------------------- | ----- |
- * | `DateInput — surface selection`                           |     7 |
- * | `DateInput — field parity`                                |    15 |
- * | `DateInput — calendar surface`                            |    29 |
- * | `DateInput — a rest position between two months`          |     6 |
- * | `DateInput — month/year wheels`                           |    23 |
- * | `DateInput — nested scrollers keep their own touch gesture`|    12 |
- * | `DateInput — a mouse can drag a wheel`                     |     6 |
+ * Upstream's remaining cases are its **DOM coverage**, and they are ported in
+ * `date-input-touch.svelte.test.ts` — the client companion to this file, which
+ * declares the same `PORTS:` suite. One upstream suite across two files is
+ * allowed here, and the case delta in `port/status.md` is computed per
+ * connected group, so the two are summed against upstream's total rather than
+ * each double-counting it.
  *
- * They belong in a `*.svelte.test.ts` client file, and porting them needs a
- * harness this file cannot supply: upstream stubs `matchMedia` per test to
- * choose the surface, shadows `HTMLElement.prototype.clientWidth` so the
- * virtualized scroller mounts panes at all, drives fake timers past
- * `SCROLL_QUIET_MS`, and polyfills `HTMLDialogElement`'s `showModal`/`close`
- * — every one of which means something different in the real Chromium the
- * client project runs. See `port/todo.md` for the follow-up.
+ * The split is upstream's own reasoning, not a convenience: its header says the
+ * month math is pure and the scroll CSS is asserted on the style *definition*
+ * because jsdom implements none of it. Those two properties are what put those
+ * cases in the **node** project here. Everything else needs a rendered tree,
+ * and needs it in a real browser — the virtualized scroller mounts panes from a
+ * `ResizeObserver` reading a width that only exists once CSS has been applied,
+ * which is the thing upstream's `withLayout` shim fakes and the companion waits
+ * for instead.
+ *
+ * **No number is stated here for what remains.** A header's count is a contract
+ * against upstream's file at the pin, and it falsifies on the next bump; the
+ * shortfall is arithmetic over the two files' markers and lives in
+ * `port/status.md`.
  *
  * ## Two deliberate adaptations of the definition-level cases
  *
@@ -381,20 +390,6 @@ describe('DateInput — scroll CSS (definition-level)', () => {
 		expect(footer).not.toContain('paddingInline');
 	});
 
-	it('floors the touch target without discarding the size prop', () => {
-		const source = read(TOUCH);
-		// Each size keeps its own height AND cannot render below a thumb's reach.
-		const sizeMap = source.slice(
-			source.indexOf('const sizeStyles = stylex.create('),
-			source.indexOf('const styles = stylex.create(')
-		);
-		expect(
-			sizeMap.match(
-				/minBlockSize: \{ default: null, '@media \(pointer: coarse\)': TOUCH_TARGET \}/g
-			)
-		).toHaveLength(3);
-	});
-
 	it('floors the month arrows too — Button tops out at 36px', () => {
 		const source = read(TOUCH);
 		const arrow = source.slice(
@@ -484,16 +479,14 @@ describe('DateInput — scroll CSS (definition-level)', () => {
 	});
 
 	/**
-	 * Both footer actions span the sheet. A full-width primary is the shape a
+	 * The footer action spans the sheet. A full-width primary is the shape a
 	 * phone form ends with, and it puts the target under the thumb wherever the
 	 * hand is. Read from the markup, which is where the props live.
 	 */
-	it('spans the footer with its actions', () => {
+	it('spans the footer with its action', () => {
 		const source = read(TOUCH_MARKUP);
-		// Reset + Save share the calendar's cell; Done is the wheels'. Each
-		// fills the space it is given, so the row divides evenly rather than by
-		// label length.
-		expect(source.match(/width="100%"/g)).toHaveLength(3);
+		// One per surface: Save on the calendar, Done on the wheels.
+		expect(source.match(/width="100%"/g)).toHaveLength(2);
 	});
 
 	/**
@@ -529,7 +522,7 @@ describe('DateInput — scroll CSS (definition-level)', () => {
 		expect(styles.match(/transitionTimingFunction: easeVars\['--ease-standard'\]/g)).toHaveLength(
 			1
 		);
-		expect(styles.match(/transitionTimingFunction: 'linear'/g)).toHaveLength(3);
+		expect(styles.match(/transitionTimingFunction: 'linear'/g)).toHaveLength(4);
 	});
 
 	/**
@@ -540,9 +533,9 @@ describe('DateInput — scroll CSS (definition-level)', () => {
 	it('runs the whole swap on one duration', () => {
 		const source = read(TOUCH);
 		const styles = source.slice(source.indexOf('const styles = stylex.create('));
-		// The arrows, the weekday row, the layer beneath, the layer above, and
-		// the chevron.
-		expect(styles.match(/transitionDuration: SWAP_DURATION/g)).toHaveLength(5);
+		// The arrows, Reset, the weekday row, the layer beneath, the layer above,
+		// and the chevron.
+		expect(styles.match(/transitionDuration: SWAP_DURATION/g)).toHaveLength(6);
 		// And no leftover hand-rolled timing beside them.
 		expect(styles).not.toContain('PANEL_FADE_MS');
 		expect(source).toContain("const SWAP_DURATION = durationVars['--duration-fast']");

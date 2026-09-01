@@ -1,3 +1,5 @@
+/** PORTS: Tooltip/Tooltip.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Tooltip from './fixtures/tooltip-fixture.svelte';

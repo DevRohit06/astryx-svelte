@@ -1,3 +1,5 @@
+/** PORTS: Indicator/Indicator.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { createRawSnippet, type Component } from 'svelte';
 import { render } from 'vitest-browser-svelte';

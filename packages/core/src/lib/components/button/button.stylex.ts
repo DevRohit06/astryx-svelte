@@ -14,6 +14,7 @@ import {
 } from '../../styles/tokens.stylex.js';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 import type { Elevation } from '../../internal/types.js';
 import type { ButtonGroupContextValue } from '../../internal/contexts.svelte.js';
 
@@ -174,29 +175,18 @@ const iconSizeStyles = stylex.create({
  * across every variant. The focus outline tracks the variant — destructive
  * focuses in its own negative colour.
  */
-const hoverOverlay = {
-	default: null,
-	':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-		'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
-	},
-	':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-} as const;
-
 const variants = stylex.create({
 	primary: {
 		backgroundColor: colorVars['--color-accent'],
-		color: colorVars['--color-on-accent'],
-		backgroundImage: hoverOverlay
+		color: colorVars['--color-on-accent']
 	},
 	secondary: {
 		backgroundColor: colorVars['--color-neutral'],
-		color: colorVars['--color-text-primary'],
-		backgroundImage: hoverOverlay
+		color: colorVars['--color-text-primary']
 	},
 	ghost: {
 		backgroundColor: 'transparent',
-		color: colorVars['--color-text-primary'],
-		backgroundImage: hoverOverlay
+		color: colorVars['--color-text-primary']
 	},
 	destructive: {
 		backgroundColor: colorVars['--color-error'],
@@ -204,8 +194,7 @@ const variants = stylex.create({
 		// The ring matches the variant it rings: an accent-colored outline on a
 		// red button reads as another control's focus. Only the color differs —
 		// width, style and offset come from the shared outline.
-		outlineColor: { default: null, ':focus-visible': colorVars['--color-error'] },
-		backgroundImage: hoverOverlay
+		outlineColor: { default: null, ':focus-visible': colorVars['--color-error'] }
 	}
 });
 
@@ -347,6 +336,11 @@ export function buttonRootAttrs(input: ButtonRootStyleInput): SvelteStyleAttrs {
 		styles.base,
 		sizeStyles[size],
 		isIconOnly && styles.iconOnly,
+		// Upstream 0.5.1 moved the hover/pressed overlay off each variant into the
+		// shared module. Position is upstream's: before `disabled`/`ariaDisabled`,
+		// which still need to override it, and before `variants`, which no longer
+		// carry a `backgroundImage` of their own.
+		interactionOverlayStyles.backgroundImage,
 		isDisabled && styles.disabled,
 		isAriaDisabled && styles.ariaDisabled,
 		isLink && styles.link,

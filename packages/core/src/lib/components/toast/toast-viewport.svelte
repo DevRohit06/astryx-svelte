@@ -21,7 +21,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { SvelteSet } from 'svelte/reactivity';
-	import Toast from './toast.svelte';
+	import ToastSurface from './toast-surface.svelte';
 	import { setToastContext, type ToastContextValue } from './toast-context.js';
 	import { useTranslator } from '../../i18n/use-translator.svelte.js';
 	import { useAnnounce } from '../../hooks/use-announce.js';
@@ -87,8 +87,8 @@
 	 * So a string body is announced through the singleton regions, and a snippet
 	 * body falls back to the toast's own (born-with-content) region — i.e. exactly
 	 * the behaviour this port had before, with no regression, but without the
-	 * 0.3.0 gain. **This deferral belongs in port/debts.md → Known debts, beside the
-	 * `ToastContent` entry it descends from; it is not recorded there yet.**
+	 * 0.3.0 gain. Recorded in port/debts.md, beside the `ToastContent` entry it
+	 * descends from.
 	 */
 	function toastText(body: ToastContent): string {
 		return typeof body === 'string' ? body : '';
@@ -350,15 +350,20 @@
 
 	const viewport = $derived(toastViewportAttrs(position));
 	const wrapperInner = toastWrapperInnerAttrs();
+
+	// A stack anchored to the top edge leaves upward, so its swipe-to-dismiss
+	// direction is inverted. Upstream derives the same flag for the wrapper's
+	// stacking styles, which `toastWrapperAttrs` resolves from `position` itself.
+	const isReversed = $derived(position === 'topEnd' || position === 'topStart');
 </script>
 
 {@render children?.()}
 
 <div
 	bind:this={viewportEl}
-	role="region"
-	aria-label={t('@astryx.toast.viewport')}
-	tabindex="-1"
+	role={hasToasts ? 'region' : undefined}
+	aria-label={hasToasts ? t('@astryx.toast.viewport') : undefined}
+	tabindex={hasToasts ? -1 : undefined}
 	popover={isTopLayer ? 'manual' : undefined}
 	class={viewport.class}
 	style={mergeStyle(viewport.style, insetStyle)}
@@ -368,28 +373,45 @@
 		{@const type = options.type ?? 'info'}
 		{@const isAutoHide = options.isAutoHide ?? (type === 'error' ? false : true)}
 		{@const isExiting = exitingIds.has(entry.id)}
-		{@const wrapper = toastWrapperAttrs(isExiting)}
+		{@const wrapper = toastWrapperAttrs(position, isExiting)}
 		<div
 			data-toast-id={entry.id}
 			class={wrapper.class}
 			style={wrapper.style}
-			ontransitionend={isExiting
-				? (e: TransitionEvent) => {
-						if (e.propertyName === 'grid-template-rows') {
-							handleExited(entry.id);
-						}
-					}
-				: undefined}
+			ontransitionend={(e: TransitionEvent) => {
+				// Upstream conditions the *handler* on `isExiting`
+				// (`ToastViewport.tsx:518`). Svelte evaluates that ternary at **event
+				// time**, not at render time, so writing it that way re-reads the
+				// `{@const isExiting}` above — a derived owned by this `{#each}`
+				// branch, which `handleExited` has just destroyed.
+				//
+				// It runs twice per dismissal: the card's `opacity` and `transform`
+				// transitions end on the same frame as the wrapper's
+				// `grid-template-rows` and bubble to this now-detached node, whose
+				// listener Svelte leaves attached. React never sees them — it
+				// delegates `transitionend` at the root container, which a detached
+				// subtree cannot reach. Each read logged `derived_inert`, and that
+				// warning is not dev-gated: it reached consumers' consoles.
+				//
+				// `exitingIds.has()` is a plain source read — correct after the
+				// branch is gone, and non-tracking because a DOM handler runs outside
+				// any reaction.
+				if (e.propertyName === 'grid-template-rows' && exitingIds.has(entry.id)) {
+					handleExited(entry.id);
+				}
+			}}
 		>
 			<div class={wrapperInner.class} style={wrapperInner.style}>
-				<Toast
+				<ToastSurface
 					{type}
 					body={options.body}
 					endContent={options.endContent}
 					{isAutoHide}
 					autoHideDuration={options.autoHideDuration ?? 5000}
 					{isExiting}
+					gestureDirection={isReversed ? -1 : 1}
 					onDismiss={(reason) => removeToast(entry.id, reason)}
+					renderContent={options.renderContent}
 				/>
 			</div>
 		</div>

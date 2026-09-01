@@ -18,7 +18,7 @@ export default {
 		'choicelist'
 	],
 	group: 'Radio',
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{

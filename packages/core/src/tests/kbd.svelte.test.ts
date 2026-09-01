@@ -1,3 +1,5 @@
+/** PORTS: Kbd/Kbd.test.tsx */
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Kbd from '$lib/components/kbd/kbd.svelte';

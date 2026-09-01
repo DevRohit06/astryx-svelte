@@ -13,7 +13,7 @@ export default {
 		'A prefix or suffix text element rendered inside InputGroup. Displays text or icons.',
 	keywords: ['inputgroup', 'addon', 'prefix', 'suffix', 'connected', 'grouped', 'input'],
 	group: 'Field',
-	category: 'Data Input',
+	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	props: [
 		{

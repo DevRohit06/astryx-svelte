@@ -1,3 +1,5 @@
+/** PORTS: Table/tableContextMenu.test.tsx */
+
 import { describe, expect, it, vi } from 'vitest';
 import { resolveContextActions } from '$lib/components/table/table-context-menu.svelte';
 import type { TableColumn, TablePlugin } from '$lib/components/table/table-types.js';

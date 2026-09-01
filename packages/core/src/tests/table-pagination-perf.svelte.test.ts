@@ -1,3 +1,5 @@
+/** PORTS: Table/plugins/pagination/useTablePagination-perf.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { render } from 'vitest-browser-svelte';

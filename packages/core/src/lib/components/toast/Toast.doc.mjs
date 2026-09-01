@@ -18,11 +18,44 @@ export default {
 				className: 'astryx-toast',
 				visualProps: ['type']
 			}
+		],
+		vars: [
+			{
+				name: '--_toast-slide-y',
+				description:
+					'Private block-axis offset inherited from ToastViewport for entry and exit motion',
+				default: 'var(--spacing-2)',
+				private: true
+			},
+			{
+				name: '--_toast-swipe-y',
+				description: 'Private active swipe offset along the block axis',
+				default: '0px',
+				private: true
+			},
+			{
+				name: '--_toast-swipe-exit-y',
+				description: 'Private completed-swipe exit offset',
+				default: 'var(--_toast-swipe-y)',
+				private: true
+			},
+			{
+				name: '--_toast-swipe-opacity',
+				description: 'Private opacity feedback during an accepted swipe',
+				default: '1',
+				private: true
+			},
+			{
+				name: '--_toast-swipe-scale',
+				description: 'Private scale feedback during an accepted swipe',
+				default: '1',
+				private: true
+			}
 		]
 	},
 	usage: {
 		description:
-			'Toast shows a brief, non-blocking notification to confirm an action or present temporary information. Use it for scenarios where the user needs feedback but not a decision, such as saving, deleting, or changing a status.\n\nFor production use, prefer the `useToast()` hook; it handles positioning, stacking, auto-dismiss, and deduplication via `ToastViewport`. The `Toast` component renders the visual toast element inline and is useful for previews, documentation, and static showcases where the viewport lifecycle is not needed.',
+			'Toast shows a brief, non-blocking notification to confirm an action or present temporary information. Use it for scenarios where the user needs feedback but not a decision, such as saving, deleting, or changing a status.\n\nFor production use, prefer the `useToast()` hook; it handles positioning, stacking, auto-dismiss, and deduplication via `ToastViewport`. Toasts stay within viewport and safe-area gutters, wrap long message content, and enter, exit, or swipe-dismiss toward their configured top or bottom edge. The vertical swipe uses the same spatial model as placement motion: top Toasts leave upward and bottom Toasts leave downward. Swipe waits for dominant edge-directed intent before cancelling native touch movement and reports the existing manual dismissal reason. Pen is supported as direct-contact input; mouse drag is excluded to avoid conflicting with desktop text selection, where the visible close control remains available. Set `isAutoHide: false` explicitly when an action or message must remain available. The `Toast` component renders the visual toast element inline and is useful for previews, documentation, and static showcases where the viewport lifecycle is not needed.',
 		bestPractices: [
 			{
 				guidance: true,
@@ -32,7 +65,7 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Add an undo action in the endContent slot for reversible operations like deleting an item, so the user can recover without navigating away.'
+					'Add a short undo action in the endContent slot for reversible operations. Set isAutoHide to false when the action must remain available.'
 			},
 			{
 				guidance: true,
@@ -101,13 +134,14 @@ export default {
 		{
 			name: 'autoHideDuration',
 			type: 'number',
-			description: 'Duration in ms before auto-dismiss.',
+			description: 'Duration in ms before auto-dismiss. Timed content must satisfy WCAG 2.2.1.',
 			default: '5000'
 		},
 		{
 			name: 'endContent',
 			type: 'ToastContent',
-			description: 'Content rendered at the trailing end (e.g. Undo button, link).'
+			description:
+				'Content rendered at the trailing end (e.g. Undo button, link). Keep action labels short.'
 		},
 		{
 			name: 'uniqueID',
@@ -130,6 +164,12 @@ export default {
 			type: '(reason: ToastDismissReason) => void',
 			description: 'Callback fired when the toast is dismissed.',
 			required: true
+		},
+		{
+			name: 'renderContent',
+			type: 'ToastContentRenderFn',
+			description:
+				"Replaces the content of this toast's card with your own layout. Astryx keeps the card, its astryx-toast theme target, the live-region role and auto-hide behavior, then hands the renderer the message, endContent, resolved toast settings and a dismiss callback. The custom renderer owns every control in its layout: compose the control you want and call dismiss from it. Astryx does not inject a fallback close into custom content. Per-toast: an app shares one layout by wrapping useToast and passing it on every call, while a toast raised by library code that never passes it renders as an ordinary Astryx toast. The argument is {body, endContent, type, isAutoHide, autoHideDuration, dismiss}, where type is 'info' | 'error'."
 		}
 	]
 };

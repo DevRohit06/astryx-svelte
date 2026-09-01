@@ -1,3 +1,5 @@
+/** NO-UPSTREAM: coverage beyond upstream — the header below says why. */
+
 import { describe, expect, it, vi } from 'vitest';
 import { createOptimistic } from '$lib/internal/optimistic.svelte.js';
 

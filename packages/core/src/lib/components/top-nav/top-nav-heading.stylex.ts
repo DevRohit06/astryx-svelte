@@ -22,11 +22,13 @@ import {
  * unreferenced keys, so it emits nothing and the oracle has nothing to compare,
  * exactly as upstream's `dist/` does.
  *
- * The `:has(.astryx-navicon)` selector on `paddingInlineStart` is what lets a
+ * The `:has(.astryx-nav-icon)` selector on `paddingInlineStart` is what lets a
  * `NavIcon` logo sit flush against the bar's edge while a bare image keeps its
- * inset — it reads the stable class `themeProps('navicon')` stamps. The key is
- * one of upstream's eight genuinely de-hyphenated target names, so the selector
- * only matches spelled exactly that way.
+ * inset — it reads the stable class `themeProps('nav-icon')` stamps. Upstream
+ * deprecated the run-together `navicon` onto this name, and `NavIcon` still emits
+ * the old class beside it, but the selector matches only the spelling written
+ * here — it is compiled into the atomic class, so a different spelling is a
+ * different rule.
  */
 const styles = stylex.create({
 	root: {
@@ -36,7 +38,7 @@ const styles = stylex.create({
 		minHeight: spacingVars['--spacing-8'],
 		paddingInlineStart: {
 			default: spacingVars['--spacing-2'],
-			':has(.astryx-navicon)': 0
+			':has(.astryx-nav-icon)': 0
 		},
 		paddingInlineEnd: spacingVars['--spacing-2'],
 		paddingBlock: 0,
@@ -172,7 +174,7 @@ const styles = stylex.create({
 		minHeight: spacingVars['--spacing-8'],
 		paddingInlineStart: {
 			default: spacingVars['--spacing-2'],
-			':has(.astryx-navicon)': 0
+			':has(.astryx-nav-icon)': 0
 		},
 		paddingInlineEnd: spacingVars['--spacing-2'],
 		paddingBlock: 0,

@@ -98,21 +98,34 @@ const invented = ours.filter((o) => !theirsCanon.has(canon(o)));
 
 // --- Test parity -----------------------------------------------------------
 //
-// The largest parity axis this file did not measure. CLAUDE.md makes a suite's
-// case count a contract against upstream's file at the current pin, but nothing
-// counted the suites that have no counterpart at all — so "which upstream
-// suites are unported?" lived in prose, in the one repo whose central rule is
-// that a count belongs here and nowhere else.
+// The largest parity axis, in both halves: the upstream suites nothing here
+// ports, and the per-suite shortfall of the ones something does. The second
+// half lived in 283 hand-written headers and in `todo.md`'s prose, in the one
+// repo whose central rule is that a count belongs here and nowhere else — and
+// the prose figure was out by more than a factor of two.
 //
-// Attribution, deliberately generous in one direction and strict in the other:
-// an upstream suite counts as covered when some file under
-// `packages/core/src/tests/` names it (`Foo.test.tsx` appearing anywhere in the
-// text — headers name every upstream suite they fold together) or carries its
-// kebab-cased basename. Generous, because a false "covered" is visible the
-// moment someone opens the file, whereas a false "unported" sends work at a
-// suite that already exists. What it never does is guess at case-level
-// coverage: a suite that is present but short states that in its own header,
-// which is the mechanism that already exists for it.
+// Attribution is **declared, not inferred**. Every file under
+// `packages/core/src/tests/` opens with a machine-readable head naming the
+// upstream suite it ports — `PORTS: SideNav/SideNav.test.tsx`, repeated per
+// suite for the few files that fold several — or `NO-UPSTREAM:` when it has no
+// counterpart to port. A file with neither fails the run.
+//
+// It used to be inferred, from a file naming an upstream suite anywhere in its
+// text or carrying its kebab-cased basename, and that was good enough for the
+// only question then being asked: does a counterpart exist at all. It is not
+// good enough for "how many cases short", and it was not even right for the
+// first question. Four suites read as covered by a file that names them in
+// order to say they are *not* ported (`Heading` 24 cases, `MediaTheme.dom` 8,
+// `BottomSheetEdgeTint` 10) or that merely shares their kebab stem
+// (`useResizable` 29). The `UNPORTED:` marker existed to subtract exactly that
+// first case and had to be remembered; a declaration cannot be forgotten,
+// because nothing else grants coverage.
+//
+// The delta is then arithmetic rather than prose. Where several files port one
+// suite, or one file ports several, the PORTS edges form a bipartite graph and
+// the shortfall is computed per connected component — which never double-counts
+// a file's cases and never splits a fold's.
+//
 // A bare `it`/`test` must be followed by a call paren. Only the table forms,
 // it.each and it.for, are tagged templates, so only those may be followed by a
 // backtick. The single character class this replaces accepted a backtick after
@@ -132,7 +145,21 @@ const invented = ours.filter((o) => !theirsCanon.has(canon(o)));
 // that is precisely what does.
 const testCase =
 	/(?<![\w.`])(?:it|test)(?:\.(?:each|skip|only|todo|fails|concurrent|for))?\s*\(|(?<![\w.`])(?:it|test)\.(?:each|for)\s*`/g;
-const countCases = (file) => (readFileSync(file, 'utf8').match(testCase) ?? []).length;
+const withoutCommentLines = (text) =>
+	text
+		.split('\n')
+		.filter((line) => !/^\s*(?:\/\/|\*|\/\*)/.test(line))
+		.join('\n');
+
+// Comments are stripped before counting. The lookbehind above rejects a
+// BACKTICK before `it`, which catches this repo's own prose — but upstream's
+// comments are not house-styled to backtick their identifiers, and a bare word
+// followed by a paren reads as a declaration. `Timestamp.test.tsx` says
+// "invalid on it (axe aria-allowed-attr, critical)" in a `//` comment, and it
+// counted upstream as 78 where it declares 77. Stripping is the general fix;
+// another lookbehind would only postpone the next spelling (batch 040).
+const countCases = (file) =>
+	(withoutCommentLines(readFileSync(file, 'utf8')).match(testCase) ?? []).length;
 
 /** Every `*.test.ts`/`*.test.tsx` under `dir`, recursively, as absolute paths. */
 function testFiles(dir) {
@@ -157,7 +184,7 @@ const NO_TEST_COUNTERPART = {
 	'serverSafeComponents.test.ts':
 		"guards the React Server Components boundary — no 'use client' directive in Svelte, no react-server condition, no per-component subpaths",
 	'__tests__/babelPluginAddExtensions.test.ts':
-		'guards a Babel plugin that adds file extensions during upstream\'s build; svelte-package does the inverse and this port has no such transform',
+		"guards a Babel plugin that adds file extensions during upstream's build; svelte-package does the inverse and this port has no such transform",
 	// Two more absences already recorded elsewhere, reached through a different
 	// door. Both were counted as unported for the whole 0.5.0 delta, which
 	// overstated the work remaining by 5 cases and pointed it at suites that
@@ -168,7 +195,16 @@ const NO_TEST_COUNTERPART = {
 	// serverSafeComponents.test.ts above, and every assertion in it reads a
 	// module prologue for the directive.
 	'theme/syntax/serverSafeSyntax.test.ts':
-		"guards the React Server Components boundary for the ./theme/syntax subpath — no 'use client' directive in Svelte, same reason as serverSafeComponents.test.ts"
+		"guards the React Server Components boundary for the ./theme/syntax subpath — no 'use client' directive in Svelte, same reason as serverSafeComponents.test.ts",
+	// The two performance suites. Both assert wall-clock budgets and render-count
+	// measurements of React's own memoisation; neither has a subject here. They
+	// were counted as covered by the file that names them to say so, and are
+	// recorded rather than left to that accident. Each porting file's header
+	// carries the full reasoning.
+	'Table/Table.perf.test.tsx':
+		'a performance suite: five of its cases count `renderCell` runs across a state change, which measures React.memo + areRowPropsEqual and has no counterpart here (see table.svelte.test.ts)',
+	'Markdown/parser.perf.test.ts':
+		'a performance suite: wall-clock millisecond budgets over the parser, which this repo ports no analogue of (see markdown-parser.test.ts)'
 };
 
 const upstreamTests = testFiles(upstreamRoot).map((f) => ({
@@ -176,67 +212,125 @@ const upstreamTests = testFiles(upstreamRoot).map((f) => ({
 	cases: countCases(f)
 }));
 
-const ourTestText = testFiles(path.join(root, 'packages/core/src/tests'))
+// The markers, read only out of a comment line so prose can discuss them. A
+// file declares one or more `PORTS:` or exactly one `NO-UPSTREAM:`; never both,
+// never neither.
+const PORTS = /^\s*(?:\/\*\*|\*)\s*PORTS:\s*(\S+)/gm;
+const NO_UPSTREAM = /^\s*(?:\/\*\*|\*)\s*NO-UPSTREAM\b/m;
+
+const ourTests = testFiles(path.join(root, 'packages/core/src/tests'))
 	.map((f) => ({ base: path.basename(f), text: readFileSync(f, 'utf8') }))
-	.filter((f) => !/\.d\.ts$/.test(f.base));
-const ourStems = new Set(
-	ourTestText.map((f) => f.base.replace(/\.svelte\.test\.ts$/, '').replace(/\.test\.ts$/, ''))
-);
-const namedUpstream = new Set(
-	ourTestText.flatMap((f) => f.text.match(/[A-Za-z0-9_.-]+\.test\.tsx?/g) ?? [])
-);
-
-// A header that names an upstream suite in order to say it is NOT ported was
-// being read as coverage — `layout.svelte.test.ts` understated the gap by 34
-// cases with the very sentence written to be honest about it. `UNPORTED: <path>`
-// subtracts instead, and errs safe: a marker left behind after the suite is
-// genuinely ported overstates the work remaining rather than hiding it.
-const markedUnported = new Set(
-	ourTestText.flatMap((f) =>
-		[...f.text.matchAll(/UNPORTED:\s*([A-Za-z0-9_./-]+\.test\.tsx?)/g)].map((m) =>
-			m[1].split('/').pop()
-		)
-	)
-);
-
-const kebab = (s) =>
-	s
-		.replace(/(?<=[a-z0-9])(?=[A-Z])/g, '-')
-		.replace(/(?<=[A-Z])(?=[A-Z][a-z])/g, '-')
-		.toLowerCase();
-
-const isCovered = ({ rel }) => {
-	const base = rel.split('/').pop();
-	if (markedUnported.has(base)) return false;
-	if (namedUpstream.has(base)) return true;
-	const stem = kebab(base.replace(/\.test\.tsx?$/, ''));
-	return ourStems.has(stem) || ourStems.has(stem.replace(/^use-/, ''));
-};
+	.filter((f) => !/\.d\.ts$/.test(f.base))
+	.map((f) => ({
+		base: f.base,
+		cases: (withoutCommentLines(f.text).match(testCase) ?? []).length,
+		ports: [...f.text.matchAll(PORTS)].map((m) => m[1]),
+		noUpstream: NO_UPSTREAM.test(f.text)
+	}));
 
 const upstreamSuites = upstreamTests.filter((t) => t.cases > 0);
-const covered = upstreamSuites.filter(isCovered);
-const uncovered = upstreamSuites.filter((t) => !isCovered(t));
+const suiteByRel = new Map(upstreamSuites.map((t) => [t.rel, t]));
 const excusedRels = new Set(Object.keys(NO_TEST_COUNTERPART));
-const excused = uncovered.filter((t) => excusedRels.has(t.rel));
-const unported = uncovered.filter((t) => !excusedRels.has(t.rel));
 
-// Skip hygiene, both directions — see NO_TEST_COUNTERPART above.
+// Marker hygiene, every direction. A declaration that stops matching upstream
+// is the whole point: a version bump that renames or deletes a suite fails the
+// gate here rather than quietly leaving a file attributed to nothing.
 if (upstreamPresent) {
-	const known = new Set(upstreamSuites.map((t) => t.rel));
-	const stale = [...excusedRels].filter((rel) => !known.has(rel));
-	const redundant = covered.filter((t) => excusedRels.has(t.rel)).map((t) => t.rel);
-	if (stale.length > 0 || redundant.length > 0) {
-		for (const rel of stale) {
-			console.error(`NO_TEST_COUNTERPART: '${rel}' matches no upstream suite — entry is stale`);
+	const errors = [];
+	// The clone must not carry a `CLAUDE.md`, because reading any file in that
+	// tree would load Meta's instructions for *their* repo as instructions for
+	// this one. CLAUDE.md has said to rename it since the clone was made, and
+	// nothing enforced it — so `track-upstream`'s pull to 0.5.2 silently restored
+	// it and it sat there for a batch. A documented rule that a routine command
+	// undoes is not a rule; this is the same lesson batch 043 paid for.
+	if (existsSync(path.join(root, 'reference/astryx-upstream/CLAUDE.md'))) {
+		errors.push(
+			'reference/astryx-upstream/CLAUDE.md exists — rename it to UPSTREAM-CLAUDE.md.' +
+				' Left in place it loads upstream’s own agent instructions into this repo.'
+		);
+	}
+	for (const f of ourTests) {
+		if (f.ports.length === 0 && !f.noUpstream) {
+			errors.push(`${f.base}: no PORTS: or NO-UPSTREAM: marker — every test file declares one`);
 		}
-		for (const rel of redundant) {
-			console.error(`NO_TEST_COUNTERPART: '${rel}' is covered here — entry is redundant`);
+		if (f.ports.length > 0 && f.noUpstream) {
+			errors.push(`${f.base}: carries both PORTS: and NO-UPSTREAM: — it is one or the other`);
 		}
+		for (const rel of f.ports) {
+			if (!suiteByRel.has(rel)) errors.push(`${f.base}: PORTS: '${rel}' is no upstream suite`);
+			else if (excusedRels.has(rel)) {
+				errors.push(`${f.base}: PORTS: '${rel}', which NO_TEST_COUNTERPART calls unportable`);
+			}
+		}
+	}
+	for (const rel of excusedRels) {
+		if (!suiteByRel.has(rel)) {
+			errors.push(`NO_TEST_COUNTERPART: '${rel}' matches no upstream suite — entry is stale`);
+		}
+	}
+	if (errors.length > 0) {
+		for (const e of errors) console.error(e);
 		process.exit(1);
 	}
 }
 
+const portedRels = new Set(ourTests.flatMap((f) => f.ports));
+const covered = upstreamSuites.filter((t) => portedRels.has(t.rel));
+const uncovered = upstreamSuites.filter((t) => !portedRels.has(t.rel));
+const excused = uncovered.filter((t) => excusedRels.has(t.rel));
+const unported = uncovered.filter((t) => !excusedRels.has(t.rel));
+const beyond = ourTests.filter((f) => f.noUpstream);
+
 const sumCases = (list) => list.reduce((a, t) => a + t.cases, 0);
+
+// The case delta, per connected component of the PORTS graph. One file to one
+// suite is the rule and the overwhelming majority; a fold (one file, several
+// suites) and a split (several files, one suite) both exist, and summing either
+// side alone would double-count. A component's shortfall is upstream's cases in
+// it minus ours — negative where a file carries cases upstream has no analogue
+// for, or where two files still port the same block twice.
+const parent = new Map();
+const find = (k) => {
+	while (parent.get(k) !== k) {
+		parent.set(k, parent.get(parent.get(k)));
+		k = parent.get(k);
+	}
+	return k;
+};
+const union = (a, b) => {
+	for (const k of [a, b]) if (!parent.has(k)) parent.set(k, k);
+	parent.set(find(a), find(b));
+};
+for (const f of ourTests) {
+	for (const rel of f.ports) union(`file:${f.base}`, `suite:${rel}`);
+}
+const groups = new Map();
+for (const key of parent.keys()) {
+	const g = find(key);
+	if (!groups.has(g)) groups.set(g, { suites: [], files: [] });
+	if (key.startsWith('suite:')) groups.get(g).suites.push(key.slice(6));
+	else groups.get(g).files.push(key.slice(5));
+}
+const deltas = [...groups.values()]
+	.map((g) => {
+		const upCases = g.suites.reduce((a, rel) => a + suiteByRel.get(rel).cases, 0);
+		const ourCases = g.files.reduce(
+			(a, base) => a + ourTests.find((f) => f.base === base).cases,
+			0
+		);
+		return { suites: g.suites.sort(), files: g.files.sort(), up: upCases, ours: ourCases };
+	})
+	.sort((a, b) => b.up - b.ours - (a.up - a.ours) || a.suites[0].localeCompare(b.suites[0]));
+const short = deltas.filter((d) => d.up > d.ours);
+const shortfall = short.reduce((a, d) => a + d.up - d.ours, 0);
+const declaredHere = deltas.reduce((a, d) => a + d.ours, 0);
+// The other direction, as a magnitude rather than a worklist. A group carrying
+// more cases than the suite it ports is usually benign — a restatement split in
+// two, or a case with no upstream analogue that belongs beside its suite — but
+// it is also the only shape a *duplicated* port makes, and that is how the
+// FieldStatus block turned out to be ported in two files at once.
+const over = deltas.filter((d) => d.ours > d.up);
+const overBy = over.reduce((a, d) => a + d.ours - d.up, 0);
 
 // --- Assertion strength ----------------------------------------------------
 //
@@ -262,12 +356,6 @@ const sumCases = (list) => list.reduce((a, t) => a + t.cases, 0);
 // backtick-quoted `it` — so the rule is worth stating once: a metric over
 // source has to skip prose, because the file most likely to discuss a
 // construct is the file that uses it most carefully.
-const withoutCommentLines = (text) =>
-	text
-		.split('\n')
-		.filter((line) => !/^\s*(?:\/\/|\*|\/\*)/.test(line))
-		.join('\n');
-
 const NAME_STRING = /getBy(?:Role|LabelText)\([^)]*name:\s*'/g;
 const TEXT_STRING = /getByText\(\s*'/g;
 // A site is strengthened either by an inline `{exact: true}` or by the hoisted
@@ -276,8 +364,16 @@ const TEXT_STRING = /getByText\(\s*'/g;
 // code: after a backtick-quoted `it` and after prose in comments, an options
 // object behind an identifier. All three share a shape — the metric read the
 // source more literally than the source meant it.
+//
+// And it was fixed in **one** of the two regexes. `TEXT_EXACT` learned the
+// hoisted form; `NAME_EXACT` did not, so `{name: 'Save', ...exact}` — a site
+// that is strengthened — counted as loose. It went unnoticed because no suite
+// had yet combined a string literal `name` with the shared const: the file that
+// does uses `name: label`, which `NAME_STRING` does not match at all. Batch 044
+// added two such sites and the number moved the wrong way.
 const TEXT_EXACT = /getByText\(\s*'[^']*'\s*,\s*(?:\{[^}]*exact:\s*true|exact)/g;
-const NAME_EXACT = /getBy(?:Role|LabelText)\([^)]*name:\s*'[^']*'[^)]*exact:\s*true/g;
+const NAME_EXACT =
+	/getBy(?:Role|LabelText)\([^)]*name:\s*'[^']*'[^)]*(?:exact:\s*true|\.\.\.exact)/g;
 
 let looseNameSites = 0;
 let looseNameFiles = 0;
@@ -466,11 +562,13 @@ if (upstreamPresent) {
 		''
 	);
 	push(
-		'A ported suite may still be short of upstream; that shortfall is stated in the suite’s own',
-		'header, which is the contract CLAUDE.md defines. Cases are `it`/`test` declarations, so an',
-		'`it.each` counts once rather than per row.',
+		'Attribution is declared, not inferred: every file under `src/tests/` opens with a',
+		'`PORTS: <upstream/suite.test.tsx>` marker, or `NO-UPSTREAM:` where it has no counterpart to',
+		'port. A file with neither, or one naming a suite upstream no longer has, fails this run.',
+		'Cases are `it`/`test` declarations, so an `it.each` counts once rather than per row.',
 		''
 	);
+
 	if (unported.length > 0) {
 		push('<details><summary>Unported upstream suites</summary>', '');
 		push(
@@ -486,6 +584,45 @@ if (upstreamPresent) {
 			''
 		);
 	}
+
+	push('## Case delta', '');
+	push(
+		...table([
+			['', 'Cases'],
+			['Upstream, in ported suites', String(sumCases(covered))],
+			['Declared here', String(declaredHere)],
+			['**Short**', `**${shortfall}**`],
+			['Over, across ' + over.length + ' groups', `+${overBy}`],
+			['Beyond upstream', `${sumCases(beyond)} in ${beyond.length} files`]
+		]),
+		''
+	);
+	push(
+		'A ported suite may still fall short of the one it ports. That shortfall is the front’s',
+		'worklist, and it is measured here rather than restated in each suite’s header — a header’s',
+		'own count is a contract against upstream’s file at the pin, so a version bump invalidates',
+		'every one of them at once. Cases with no upstream analogue are counted apart, never against',
+		'a suite. Where one file ports several suites, or several files one suite, the shortfall is',
+		'per connected group.',
+		''
+	);
+	if (short.length > 0) {
+		push(`<details><summary>Suites short of upstream (${short.length})</summary>`, '');
+		push(
+			...table([
+				['Suite', 'Upstream', 'Here', 'Short'],
+				...short.map((d) => [
+					d.suites.map((s) => `\`${s}\``).join('<br>'),
+					String(d.up),
+					String(d.ours),
+					String(d.up - d.ours)
+				])
+			]),
+			'',
+			'</details>',
+			''
+		);
+	}
 }
 
 push('## Assertion strength', '');
@@ -493,11 +630,11 @@ push(
 	...table([
 		['', 'Sites', 'Files'],
 		[
-			"`getByRole`/`getByLabelText` with a string `name`, no `exact`",
+			'`getByRole`/`getByLabelText` with a string `name`, no `exact`',
 			String(looseNameSites),
 			String(looseNameFiles)
 		],
-		["`getByText` with a string, no `exact`", String(looseTextSites), String(looseTextFiles)]
+		['`getByText` with a string, no `exact`', String(looseTextSites), String(looseTextFiles)]
 	]),
 	''
 );

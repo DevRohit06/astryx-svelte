@@ -18,13 +18,25 @@ export default {
 		'autosize',
 		'charlimit'
 	],
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{
-				className: 'astryx-textarea',
+				className: 'astryx-text-area',
 				visualProps: ['size', 'status'],
 				states: ['disabled', 'readonly']
+			},
+			{
+				className: 'astryx-text-area-control'
+			},
+			{
+				className: 'astryx-text-area-counter'
+			},
+			{
+				className: 'astryx-textarea',
+				visualProps: ['size', 'status'],
+				states: ['disabled', 'readonly'],
+				deprecatedFor: 'text-area'
 			}
 		],
 		vars: [

@@ -1,3 +1,5 @@
+/** PORTS: theme/expandTypeScale.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { expandTypeScale, generateTypeScaleComponents } from '$lib/theme/expand-type-scale.js';
 

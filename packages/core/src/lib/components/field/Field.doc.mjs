@@ -21,7 +21,7 @@ export default {
 		'hint'
 	],
 	group: 'Field',
-	category: 'Data Input',
+	category: 'Form Controls',
 	theming: {
 		targets: [
 			{

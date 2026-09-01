@@ -1,3 +1,5 @@
+/** NO-UPSTREAM: coverage beyond upstream — the header below says why. */
+
 import { describe, expect, it, afterEach } from 'vitest';
 import { hydrate, unmount } from 'svelte';
 import Fixture from './fixtures/tab-list-hydration-fixture.svelte';

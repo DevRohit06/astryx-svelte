@@ -23,8 +23,13 @@ export default {
 	theming: {
 		targets: [
 			{
-				className: 'astryx-statusdot',
+				className: 'astryx-status-dot',
 				visualProps: ['variant']
+			},
+			{
+				className: 'astryx-statusdot',
+				visualProps: ['variant'],
+				deprecatedFor: 'status-dot'
 			}
 		]
 	},

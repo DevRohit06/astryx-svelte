@@ -1,3 +1,5 @@
+/** PORTS: i18n/__tests__/resolve.test.ts */
+
 import { describe, expect, test, beforeEach, vi } from 'vitest';
 import { __resetForTests, resolve, resolveLocaleChain } from '$lib/i18n/resolve.js';
 import type { Catalog, MessagesByLocale, Overrides } from '$lib/i18n/types.js';

@@ -1,3 +1,5 @@
+/** PORTS: i18n/__tests__/e2e-powersearch.test.tsx */
+
 import { afterEach, describe, expect, test } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Harness from './fixtures/power-search-i18n-harness.svelte';

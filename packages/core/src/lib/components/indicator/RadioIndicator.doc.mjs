@@ -23,7 +23,7 @@ export default {
 		'swap'
 	],
 	group: 'Indicator',
-	category: 'Data Input',
+	category: 'Form Controls',
 	props: [
 		{
 			name: 'state',

@@ -1,3 +1,5 @@
+/** PORTS: hooks/computeOverflow.test.ts */
+
 import { describe, it, expect } from 'vitest';
 import { computeOverflow, type ComputeOverflowInput } from '$lib/hooks/compute-overflow.js';
 

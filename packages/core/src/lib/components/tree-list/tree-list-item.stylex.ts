@@ -10,6 +10,7 @@ import {
 } from '../../styles/tokens.stylex.js';
 import type { TreeListDensity } from './tree-list-types.js';
 import { focusOutlineProps, focusOutlineStyles } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
 
 /**
  * Ported from Astryx's `TreeList/TreeListItem.tsx` styles.
@@ -97,14 +98,7 @@ const styles = stylex.create({
 		},
 		transitionProperty: 'background-image',
 		transitionDuration: durationVars['--duration-fast'],
-		transitionTimingFunction: easeVars['--ease-standard'],
-		backgroundImage: {
-			default: null,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']})`
-			},
-			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']})`
-		}
+		transitionTimingFunction: easeVars['--ease-standard']
 	},
 	disabled: {
 		cursor: 'default',
@@ -311,6 +305,8 @@ export function treeItemContentWrapperAttrs(
 		styles.contentWrapper,
 		densityStyles[density],
 		hasInteractiveStyles && styles.interactive,
+		// Upstream 0.5.1 moved the hover/pressed overlay into the shared module.
+		hasInteractiveStyles && interactionOverlayStyles.backgroundImage,
 		hasInteractiveStyles && focusOutlineStyles.focusWithinOrPublished,
 		isDisabled && styles.disabled,
 		isSelected && styles.selected

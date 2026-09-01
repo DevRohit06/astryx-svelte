@@ -1,3 +1,4 @@
+import { useLocale } from '../../i18n/use-locale.svelte.js';
 import type { ISODateString, PlainDate } from '../../utils/date-types.js';
 import {
 	DATE_FORMAT_MONTH_YEAR,
@@ -75,6 +76,8 @@ export interface UseCalendarNavigationReturn {
 export function useCalendarNavigation(
 	options: () => UseCalendarNavigationOptions
 ): UseCalendarNavigationReturn {
+	const locale = useLocale();
+
 	// Pending focus target after month navigation.
 	let pendingFocus = $state<ISODateString | null>(null);
 
@@ -106,9 +109,11 @@ export function useCalendarNavigation(
 	const monthYearLabel = $derived.by(() => {
 		const numberOfMonths = options().numberOfMonths ?? 1;
 		if (numberOfMonths === 1) {
-			return plainDateFormat(visibleMonths[0], DATE_FORMAT_MONTH_YEAR);
+			return plainDateFormat(visibleMonths[0], DATE_FORMAT_MONTH_YEAR, locale());
 		}
-		return visibleMonths.map((m) => plainDateFormat(m, DATE_FORMAT_MONTH_YEAR)).join(' – ');
+		return visibleMonths
+			.map((m) => plainDateFormat(m, DATE_FORMAT_MONTH_YEAR, locale()))
+			.join(' – ');
 	});
 
 	function navigateMonth(delta: number, focusedDate?: ISODateString, offset?: number): void {

@@ -1,10 +1,11 @@
 import * as stylex from '@stylexjs/stylex';
 import type { StyleArg, SvelteStyleAttrs } from '../../internal/sx.js';
 import { focusOutlineProps } from '../../utils/focus-outline.stylex.js';
+import { interactionOverlayStyles } from '../../utils/interaction-overlay.stylex.js';
+import { shapeStyles, type AvatarShape } from '../avatar/avatar.stylex.js';
 import {
 	colorVars,
 	fontWeightVars,
-	radiusVars,
 	spacingVars,
 	typeScaleVars,
 	typographyVars
@@ -27,7 +28,11 @@ const styles = stylex.create({
 		display: 'inline-flex',
 		alignItems: 'center',
 		justifyContent: 'center',
-		borderRadius: radiusVars['--radius-full'],
+		// Reads the shape variant's `--_avatar-radius` (set via `shapeStyles`,
+		// shared with Avatar) so the overflow indicator matches the group's
+		// shape instead of always staying a circle. New at upstream 0.5.1,
+		// alongside Avatar's `shape` prop which is what defines the variable.
+		borderRadius: 'var(--_avatar-radius)',
 		// Use opaque background to prevent avatar bleed-through
 		backgroundColor: colorVars['--color-background-surface'],
 		color: colorVars['--color-text-secondary'],
@@ -54,15 +59,7 @@ const styles = stylex.create({
 		},
 		// Reset the UA button's block padding only; the inline padding from `base`
 		// provides the pill's breathing room and must be preserved.
-		paddingBlock: 0,
-		// Interactive overlay states layered on top via backgroundImage
-		backgroundImage: {
-			default: `linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`,
-			':hover:where(:not(:disabled,[aria-disabled="true"]))': {
-				'@media (hover: hover)': `linear-gradient(${colorVars['--color-overlay-hover']}, ${colorVars['--color-overlay-hover']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
-			},
-			':active': `linear-gradient(${colorVars['--color-overlay-pressed']}, ${colorVars['--color-overlay-pressed']}), linear-gradient(${colorVars['--color-neutral']}, ${colorVars['--color-neutral']})`
-		}
+		paddingBlock: 0
 	},
 	overlap: {
 		// Matches Avatar's own overlap rule: the first item in the row must not be
@@ -101,21 +98,32 @@ const dynamicStyles = stylex.create({
 export interface AvatarGroupOverflowAttrsOptions {
 	numericSize: number;
 	overlap: number;
+	/** The group's shape variant, which is what declares `--_avatar-radius`. */
+	shape: AvatarShape;
 	/** Renders as a `<button>`, which adds the pointer, hover and focus states. */
 	isInteractive: boolean;
 }
 
 export function avatarGroupOverflowAttrs(
-	{ numericSize, overlap, isInteractive }: AvatarGroupOverflowAttrsOptions,
+	{ numericSize, overlap, shape, isInteractive }: AvatarGroupOverflowAttrsOptions,
 	xstyle?: StyleArg
 ): SvelteStyleAttrs {
 	return focusOutlineProps.focusVisible(
 		styles.base,
 		isInteractive && styles.button,
+		// Upstream 0.5.1 moved the hover/pressed overlay into the shared module.
+		// `OnNeutral`: this button paints a neutral fill the overlays layer onto.
+		isInteractive && interactionOverlayStyles.backgroundImageOnNeutral,
 		styles.overlap,
 		dynamicStyles.size(numericSize),
 		dynamicStyles.fontSize(numericSize),
 		dynamicStyles.overlap(-overlap),
+		// `base` reads `--_avatar-radius`, and nothing else on this element declares
+		// it: the group root does not set it and a sibling Avatar sets it only on its
+		// own wrapper, so without this the "+N" chip resolves an invalid
+		// `border-radius` and renders square at every shape. Shared with Avatar so
+		// the chip is the same shape as the faces it follows.
+		shapeStyles[shape],
 		xstyle
 	);
 }

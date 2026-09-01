@@ -23,7 +23,7 @@ export default {
 		'selectmenu'
 	],
 	group: 'Selector',
-	category: 'Data Input',
+	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	props: [
 		{

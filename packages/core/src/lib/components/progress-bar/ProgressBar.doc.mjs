@@ -22,19 +22,38 @@ export default {
 	theming: {
 		targets: [
 			{
-				className: 'astryx-progressbar',
+				className: 'astryx-progress-bar',
 				visualProps: ['variant']
+			},
+			{
+				className: 'astryx-progress-bar-fill',
+				visualProps: ['variant']
+			},
+			{
+				className: 'astryx-progress-bar-track'
+			},
+			{
+				className: 'astryx-progress-bar-mark',
+				visualProps: ['variant', 'placement']
+			},
+			{
+				className: 'astryx-progressbar',
+				visualProps: ['variant'],
+				deprecatedFor: 'progress-bar'
 			},
 			{
 				className: 'astryx-progressbar-fill',
-				visualProps: ['variant']
+				visualProps: ['variant'],
+				deprecatedFor: 'progress-bar-fill'
 			},
 			{
-				className: 'astryx-progressbar-track'
+				className: 'astryx-progressbar-track',
+				deprecatedFor: 'progress-bar-track'
 			},
 			{
 				className: 'astryx-progressbar-mark',
-				visualProps: ['variant', 'placement']
+				visualProps: ['variant', 'placement'],
+				deprecatedFor: 'progress-bar-mark'
 			}
 		],
 		vars: [

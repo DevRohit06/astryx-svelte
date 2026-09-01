@@ -1,3 +1,5 @@
+/** PORTS: utils/inputAria.test.ts */
+
 import { describe, expect, it } from 'vitest';
 import { getInputARIA } from '$lib/utils/input-aria.js';
 

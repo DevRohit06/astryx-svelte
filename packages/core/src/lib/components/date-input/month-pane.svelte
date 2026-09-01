@@ -18,6 +18,7 @@
 
 <script lang="ts">
 	import { useCalendarDays } from '../calendar/use-calendar-days.svelte.js';
+	import { useLocale } from '../../i18n/use-locale.svelte.js';
 	import {
 		DATE_FORMAT_MONTH_YEAR,
 		DATE_FORMAT_WITH_WEEKDAY,
@@ -57,6 +58,7 @@
 		onDayFocus
 	}: MonthPaneProps = $props();
 
+	const locale = useLocale();
 	const parts = $derived(fromMonthIndex(monthIndex));
 
 	const grid = useCalendarDays(() => ({
@@ -69,7 +71,11 @@
 	}));
 
 	const monthLabel = $derived(
-		plainDateFormat({ year: parts.year, month: parts.month, day: 1 }, DATE_FORMAT_MONTH_YEAR)
+		plainDateFormat(
+			{ year: parts.year, month: parts.month, day: 1 },
+			DATE_FORMAT_MONTH_YEAR,
+			locale()
+		)
 	);
 
 	// Exactly one day per pane is tab-reachable, so Tab moves through the
@@ -131,7 +137,7 @@
 						type="button"
 						data-date={day.iso}
 						tabindex={day.iso === tabbableISO ? 0 : -1}
-						aria-label={plainDateFormat(day.date, DATE_FORMAT_WITH_WEEKDAY)}
+						aria-label={plainDateFormat(day.date, DATE_FORMAT_WITH_WEEKDAY, locale())}
 						aria-disabled={isDisabled || undefined}
 						aria-current={isToday ? 'date' : undefined}
 						onclick={() => {

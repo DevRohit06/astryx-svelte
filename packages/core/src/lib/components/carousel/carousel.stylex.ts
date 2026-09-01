@@ -46,13 +46,7 @@ const styles = stylex.create({
 			'@media (prefers-reduced-motion: reduce)': 'auto'
 		},
 		scrollbarWidth: 'none',
-		maskImage: 'none',
-		transitionProperty: 'mask-image',
-		transitionDuration: {
-			default: durationVars['--duration-medium'],
-			'@media (prefers-reduced-motion: reduce)': '0ms'
-		},
-		transitionTimingFunction: easeVars['--ease-standard']
+		maskImage: 'none'
 	},
 	fadeStart: {
 		maskImage: `linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 2px, black ${spacingVars['--spacing-1']})`

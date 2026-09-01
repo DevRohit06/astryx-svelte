@@ -288,8 +288,19 @@ in the file with its reason**. These do not:
 2. **`slider.svelte.test.ts` — 32 of 46**, header says "nothing dropped, nothing added." 13 unnamed
    drops on a pointer-capture/keyboard control whose interaction path already diverges from
    upstream's.
-3. **`plain-date.test.ts` — 4 drops, no header at all.** All four are `plainDateFormat` shape cases,
-   the function behind this repo's own documented runtime-locale hazard.
+3. ~~**`plain-date.test.ts` — 4 drops, no header at all.**~~ **Closed in batch 040**, and the "4"
+   was wrong at the 0.5.2 pin: re-derived, upstream declares 87 and this file had 72, so **15**
+   were missing — 5 `plainDateFormat` locale/calendar cases, 5 `formatSharedDate` cases, and a whole
+   5-case `plainDateDiffDays` block that was absent for no locale reason at all. The runtime-locale
+   hazard behind them is fixed rather than worked around: `plainDateFormat` and `formatSharedDate`
+   now take upstream's `locale: Locale = 'en'` (the Gregorian calendar default was missing too), and
+   `date-parser.ts`'s `isLocaleDayFirst`/`parseDateInput` had the identical gap. The file is 87 of
+   87 and now has a header. `date-parser.test.ts` gained 5 more for the same reason and is 38 of 38.
+
+   Two `Intl.DateTimeFormat` stubs in the DateInput suites were deleted with the fix: they resolved
+   an omitted locale to `en-US`, so they would have kept 173 cases green if the locale argument were
+   ever dropped again — masking the defect rather than testing it.
+
 4. **`form-and-metadata.svelte.test.ts`** — claims FieldStatus is "upstream's 31"; it is 34. Its
    FormLayout block is 12 of 17 with only 3 snapshots named.
 

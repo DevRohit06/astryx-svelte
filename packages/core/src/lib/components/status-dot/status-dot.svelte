@@ -69,7 +69,9 @@
 
 	const attrs = $derived(statusDotAttrs(variant, isPulsing, xstyle));
 	const iconAttrs = statusDotIconAttrs();
-	const theme = $derived(themeProps('statusdot', { variant }));
+	// `statusdot` ran the compound name together; themes styling it keep working
+	// until the next major.
+	const theme = $derived(themeProps('status-dot', { variant }, { legacyNames: ['statusdot'] }));
 </script>
 
 {#snippet dot()}

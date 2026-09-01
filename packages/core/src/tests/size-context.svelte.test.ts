@@ -1,3 +1,5 @@
+/** PORTS: SizeContext/SizeContext.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import type { ElementSize } from '$lib/internal/contexts.svelte.js';

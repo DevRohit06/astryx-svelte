@@ -1,3 +1,5 @@
+/** PORTS: BottomSheet/snapOffsets.test.ts */
+
 /**
  * Ported from Astryx's `BottomSheet/snapOffsets.test.ts`, all **34** cases at the
  * 0.5.0 pin. Nothing is dropped.

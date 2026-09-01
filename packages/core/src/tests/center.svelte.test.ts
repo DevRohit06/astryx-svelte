@@ -1,3 +1,5 @@
+/** PORTS: Center/Center.test.tsx */
+
 import { describe, expect, it } from 'vitest';
 import { render } from 'vitest-browser-svelte';
 import Center from '$lib/components/center/center.svelte';
