@@ -64,9 +64,7 @@
 	import {
 		chatToolCallNameAttrs,
 		chatToolCallLabelAttrs,
-		chatToolCallStatusCircleAttrs,
 		chatToolCallStatusIconAttrs,
-		chatToolCallStatusInnerAttrs,
 		chatToolCallToggleRowAttrs,
 		chatToolCallChevronExpandedStyle,
 		chatToolCallChevronTransitionStyle,
@@ -167,8 +165,6 @@
 	const groupIcon = $derived(chatToolCallsGroupIconAttrs());
 	const groupLabel = $derived(chatToolCallsGroupLabelAttrs());
 	const statusIcon = $derived(chatToolCallStatusIconAttrs(latestStatus));
-	const statusCircle = $derived(chatToolCallStatusCircleAttrs());
-	const statusInner = $derived(chatToolCallStatusInnerAttrs());
 	const nameAttrs = $derived(chatToolCallNameAttrs());
 	const labelAttrs = $derived(chatToolCallLabelAttrs());
 	const countAttrs = $derived(chatToolCallsCountAttrs());
@@ -219,10 +215,7 @@
 					{#if latestStatus === 'running' || latestStatus === 'pending'}
 						<Spinner size="sm" shade="subtle" />
 					{:else}
-						<span class={statusCircle.class} style={statusCircle.style}></span>
-						<span class={statusInner.class} style={statusInner.style}>
-							<Icon icon={STATUS_ICON_NAMES[latestStatus] ?? 'check'} size="xsm" color="inherit" />
-						</span>
+						<Icon icon={STATUS_ICON_NAMES[latestStatus] ?? 'success'} size="xsm" color="inherit" />
 					{/if}
 				</span>
 				<span class={nameAttrs.class} style={nameAttrs.style}>{latestCall.name}</span>

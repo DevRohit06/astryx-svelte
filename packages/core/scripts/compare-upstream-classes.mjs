@@ -3957,8 +3957,6 @@ const CASES = [
 			['styles.callRow'],
 			['styles.callRow', 'styles.callRowClickable'],
 			['styles.callRow', 'styles.callRowToggle'],
-			['styles.statusIconCircle'],
-			['styles.statusIconInner'],
 			['styles.callName'],
 			['styles.callLabel'],
 			['styles.stats'],

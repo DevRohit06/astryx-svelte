@@ -19,8 +19,8 @@
 	export const STATUS_ICON_NAMES: Record<ChatToolCallStatus, IconName | null> = {
 		pending: 'clock',
 		running: null,
-		complete: 'check',
-		error: 'close'
+		complete: 'success',
+		error: 'error'
 	};
 </script>
 
@@ -43,9 +43,7 @@
 		chatToolCallNodePillStyle,
 		chatToolCallRowAttrs,
 		chatToolCallStatsAttrs,
-		chatToolCallStatusCircleAttrs,
-		chatToolCallStatusIconAttrs,
-		chatToolCallStatusInnerAttrs
+		chatToolCallStatusIconAttrs
 	} from './chat-tool-calls.stylex.js';
 
 	/**
@@ -78,8 +76,6 @@
 
 	const rowAttrs = $derived(chatToolCallRowAttrs(hasDetail));
 	const statusIcon = $derived(chatToolCallStatusIconAttrs(status));
-	const statusCircle = $derived(chatToolCallStatusCircleAttrs());
-	const statusInner = $derived(chatToolCallStatusInnerAttrs());
 	const nameAttrs = $derived(chatToolCallNameAttrs());
 	const labelAttrs = $derived(chatToolCallLabelAttrs());
 	const statsAttrs = $derived(chatToolCallStatsAttrs());
@@ -121,10 +117,7 @@
 			{#if status === 'running' || status === 'pending'}
 				<Spinner size="sm" shade="subtle" />
 			{:else}
-				<span class={statusCircle.class} style={statusCircle.style}></span>
-				<span class={statusInner.class} style={statusInner.style}>
-					<Icon icon={STATUS_ICON_NAMES[status] ?? 'check'} size="xsm" color="inherit" />
-				</span>
+				<Icon icon={STATUS_ICON_NAMES[status] ?? 'success'} size="xsm" color="inherit" />
 			{/if}
 			{#if status === 'error' && call.errorMessage != null}
 				<!--
