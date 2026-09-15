@@ -163,7 +163,9 @@ describe('generateOnMediaCSS', () => {
 				}
 			})
 		);
-		expect(css).toContain(':is([data-astryx-media="dark"]) :is(.astryx-button.secondary)');
+		expect(css).toContain(
+			':is([data-astryx-media="dark"]) :is(.astryx-button[data-variant="secondary"])'
+		);
 		expect(css).toContain('background-color: color-mix(in srgb, white 20%, transparent)');
 	});
 

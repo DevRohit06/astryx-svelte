@@ -1361,7 +1361,12 @@ export type {
 	DividerVariantMap
 } from './components/divider/divider.stylex.js';
 export type { GridAlignment, GridColumns } from './components/grid/grid.stylex.js';
-export type { HeadingLevel, HeadingType } from './components/heading/heading.stylex.js';
+export type {
+	BuiltinHeadingType,
+	HeadingLevel,
+	HeadingType,
+	HeadingTypeMap
+} from './components/heading/heading.stylex.js';
 export type { IconColor, IconSize } from './components/icon/icon.stylex.js';
 export {
 	addAnchorName,

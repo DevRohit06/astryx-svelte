@@ -1,6 +1,6 @@
 <script lang="ts" module>
 	import type { Snippet } from 'svelte';
-	import type { KeyboardEventHandler } from 'svelte/elements';
+	import type { HTMLInputAttributes, KeyboardEventHandler } from 'svelte/elements';
 	import type { BaseProps } from '../../base-props.js';
 	import type { SizeValue } from '../../internal/types.js';
 	import type { InputStatus, InputStatusType } from '../field/types.js';
@@ -125,6 +125,16 @@
 		hasAutoFocus?: boolean;
 		/** `name` attribute, for form submission. */
 		htmlName?: string;
+		/**
+		 * The native `autocomplete` attribute, forwarded to the control unchanged.
+		 * The value stays controlled regardless — this only hints the browser or
+		 * password manager's suggestion behaviour (`'off'` for a session-scoped
+		 * field that must not reuse a prior value, say).
+		 *
+		 * Lowercase because it is forwarded to the element; upstream names it
+		 * `autoComplete`.
+		 */
+		autocomplete?: HTMLInputAttributes['autocomplete'];
 		/** Called when Enter is pressed in the input. */
 		onEnter?: () => void;
 		/**
@@ -190,6 +200,7 @@
 		changeAction,
 		isLoading = false,
 		placeholder,
+		autocomplete,
 		width,
 		labelTooltip,
 		hasClear = false,
@@ -360,6 +371,7 @@
 			{type}
 			value={optimistic.current}
 			{placeholder}
+			{autocomplete}
 			oninput={handleChange}
 			onkeydown={onEnter || onkeydown ? handleKeyDown : undefined}
 			disabled={isDisabled && !showsDisabledMessage}

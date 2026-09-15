@@ -328,7 +328,10 @@ describe('generateThemeCss', () => {
 	});
 
 	it('keys component overrides off the stable class themeProps renders', () => {
-		expect(css).toContain('.astryx-button.destructive {');
+		// Since upstream 0.6.0 the axis is carried in the selector: the generated
+		// rule targets the reflected attribute, not the bare `destructive` class
+		// that `themeProps` still emits beside it through the 0.7.0 window.
+		expect(css).toContain('.astryx-button[data-variant="destructive"] {');
 	});
 
 	it('emits a pseudo-class block as a second rule on the same selector', () => {

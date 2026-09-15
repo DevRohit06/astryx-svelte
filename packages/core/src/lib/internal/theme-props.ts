@@ -7,8 +7,10 @@ import { stableClassName } from './naming.js';
  * classes derived from its visual props, and reflects those props as data
  * attributes so consumers can target stable selectors instead of collision-prone
  * bare class names. Theme packages compile their overrides against exactly these
- * selectors — `.astryx-button.destructive { … }` — so this is load-bearing for
- * theming, not cosmetic.
+ * selectors — `.astryx-button[data-variant="destructive"] { … }` — so this is
+ * load-bearing for theming, not cosmetic. The bare `destructive` class is still
+ * emitted beside it, deprecated by upstream 0.6.0 and kept by 0.6.1 (#6126)
+ * through the 0.7.0 removal window.
  *
  * The only change from upstream is `className` → `class`, since that is what
  * Svelte spreads onto an element.
@@ -19,11 +21,26 @@ export type ClassProps = Record<string, ClassValue>;
 export type ThemeDataAttributes = Record<`data-${string}`, string | undefined>;
 export type ThemeProps = { class: string } & ThemeDataAttributes;
 
-function toDataAttributeName(prop: string): `data-${string}` {
+/**
+ * The data attribute a visual prop reflects onto. Exported because
+ * `parseStyleKey` builds its selector suffix from the same rule, and upstream
+ * 0.6.0 made that sharing explicit rather than duplicating the transform.
+ *
+ * Module-level only: upstream does not add it to `utils/index.ts`, so neither
+ * do we.
+ */
+export function themeDataAttributeName(prop: string): `data-${string}` {
 	return `data-${prop.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`;
 }
 
-function classTokenForPropValue(prop: string, value: string): string {
+/**
+ * The bare prop/state class a visual prop used to compile to.
+ *
+ * 0.6.0 removed these; 0.6.1 (#6126) put them back for a deprecation window
+ * that closes at 0.7.0, so they are still emitted. `parseStyleKey` no longer
+ * targets them — a generated theme rule selects the data attribute instead.
+ */
+function legacyClassTokenForPropValue(prop: string, value: string): string {
 	// CSS classes can't start with a digit — prefix with the prop name so
 	// `level={1}` becomes `level-1` rather than an invalid `1`.
 	return /^\d/.test(value) ? `${prop}-${value}` : value;
@@ -35,7 +52,7 @@ function buildClassName(component: string, props?: ClassProps): string {
 	if (props) {
 		for (const [prop, value] of Object.entries(props)) {
 			if (value == null) continue;
-			classes.push(classTokenForPropValue(prop, String(value)));
+			classes.push(legacyClassTokenForPropValue(prop, String(value)));
 		}
 	}
 
@@ -53,7 +70,7 @@ export function themeDataAttributes(props?: ClassProps): ThemeDataAttributes {
 	if (props) {
 		for (const [prop, value] of Object.entries(props)) {
 			if (value == null) continue;
-			attrs[toDataAttributeName(prop)] = String(value);
+			attrs[themeDataAttributeName(prop)] = String(value);
 		}
 	}
 

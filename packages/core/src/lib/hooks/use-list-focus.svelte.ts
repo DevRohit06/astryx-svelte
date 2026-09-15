@@ -98,19 +98,6 @@ export interface UseListFocusOptions {
 	 */
 	hasHomeEnd?: boolean;
 
-	/**
-	 * @deprecated Direction is auto-detected from the container's computed
-	 * `direction` — omit this. The explicit override is redundant (there's no
-	 * valid reason to force RTL arrows in an LTR context) and will be removed in
-	 * an upcoming major.
-	 *
-	 * When set, forces whether the list is right-to-left: ArrowLeft/ArrowRight
-	 * are swapped so horizontal navigation follows visual direction. When
-	 * omitted (preferred), the direction is auto-detected from the container's
-	 * computed `direction` (read lazily on keydown, horizontal arrows only).
-	 * @default undefined (auto-detect from the container)
-	 */
-	isRtl?: boolean;
 
 	/**
 	 * Roving-tabindex ownership. When true, the hook manages a single tab stop
@@ -541,7 +528,6 @@ export function useListFocus(options: () => UseListFocusOptions = () => ({})): U
 			onEscape,
 			orientation = 'vertical',
 			hasHomeEnd = true,
-			isRtl,
 			hasCaretGuard = false
 		} = options();
 
@@ -572,14 +558,13 @@ export function useListFocus(options: () => UseListFocusOptions = () => ({})): U
 		// Resolve which keys advance vs retreat, honoring RTL for horizontal.
 		// Direction is resolved lazily — `getComputedStyle` runs only when a
 		// horizontal arrow key is actually pressed (SSR-safe, no layout thrash on
-		// unrelated keys) — and an explicit `isRtl` always wins.
+		// unrelated keys). Upstream 0.6.0 removed the `isRtl` override, so
+		// auto-detection is the only path.
 		const nextKeys: string[] = [];
 		const prevKeys: string[] = [];
 		if (horizontal) {
 			const rtl =
-				e.key === 'ArrowLeft' || e.key === 'ArrowRight'
-					? (isRtl ?? isRtlElement(container))
-					: false;
+				e.key === 'ArrowLeft' || e.key === 'ArrowRight' ? isRtlElement(container) : false;
 			nextKeys.push(rtl ? 'ArrowLeft' : 'ArrowRight');
 			prevKeys.push(rtl ? 'ArrowRight' : 'ArrowLeft');
 		}

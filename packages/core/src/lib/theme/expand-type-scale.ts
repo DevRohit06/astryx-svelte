@@ -300,9 +300,15 @@ export function generateTextColorComponents(): Record<
 	];
 
 	const rules: Record<string, Record<string, string>> = {};
-	for (const [variant, token] of COLORS) rules[variant] = { color: token };
+	// Keyed on the `color` axis, not the bare value. Upstream's
+	// `generateColorOverrides` calls `parseStyleKey('color:' + name)`, and since
+	// 0.6.0 that resolves to `[data-color="primary"]`. A bare `primary` key would
+	// resolve to `[data-primary="primary"]`, which nothing reflects — so this is
+	// load-bearing rather than cosmetic.
+	for (const [variant, token] of COLORS) rules[`color:${variant}`] = { color: token };
 
-	// Same rule set for both components — upstream emits `.astryx-text.secondary`
-	// and `.astryx-heading.secondary` alike.
+	// Same rule set for both components — upstream emits
+	// `.astryx-text[data-color="secondary"]` and the heading equivalent alike.
+	// `link` is upstream's third and is absent here; see `port/debts.md`.
 	return { heading: { ...rules }, text: { ...rules } };
 }
