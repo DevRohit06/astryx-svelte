@@ -200,6 +200,13 @@ them.
    tally counts only blocks whose target is a documented entry and that set is not the barrel's
    export list.
 
+   **The accessibility tab is new at the 0.6.1 pin.** Upstream 0.5.3 (#5713) added structured
+   accessibility requirements and per-theme colour coverage to every component doc, and renders
+   both in a dedicated tab. Batch 045 ported the contract and the prose — 103 `.doc.mjs` files
+   carry it — but nothing renders it, and `docs/src/lib/generated/types.d.ts` says so on the field.
+   The theme-coverage half needs more than a renderer: upstream measures it against **upstream's**
+   themes, so this port has to re-measure its own eight before showing any of it.
+
    **One figure is still discarded the same way:** `templates N ported / M pending`, from the same
    generator run and the same front. Identical defect, identical fix, deliberately left out of 039
    so that batch's scope kept meaning something.

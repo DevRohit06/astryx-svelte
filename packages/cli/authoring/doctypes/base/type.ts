@@ -60,10 +60,7 @@ export interface ComponentAccessibilityRequirement {
 export type ComponentAccessibilityThemeStatus = 'Pass' | 'Fail' | 'Not tested';
 
 export type ComponentAccessibilityThemeApplicability =
-	| 'Required'
-	| 'Conditional'
-	| 'Supplemental'
-	| 'Decorative';
+	'Required' | 'Conditional' | 'Supplemental' | 'Decorative';
 
 export interface ComponentAccessibilityThemeMeasurement {
 	/** Column heading, e.g. `"Rest"` or `"Spinner"`. */

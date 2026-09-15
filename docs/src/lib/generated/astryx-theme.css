@@ -161,43 +161,43 @@
 			--color-brand: #ff3e00;
 		}
 
-		.astryx-heading.primary {
+		.astryx-heading[data-color="primary"] {
 			color: var(--color-text-primary);
 		}
 
-		.astryx-heading.secondary {
+		.astryx-heading[data-color="secondary"] {
 			color: var(--color-text-secondary);
 		}
 
-		.astryx-heading.disabled {
+		.astryx-heading[data-color="disabled"] {
 			color: var(--color-text-disabled);
 		}
 
-		.astryx-heading.placeholder {
+		.astryx-heading[data-color="placeholder"] {
 			color: var(--color-text-secondary);
 		}
 
-		.astryx-heading.accent {
+		.astryx-heading[data-color="accent"] {
 			color: var(--color-text-accent);
 		}
 
-		.astryx-text.primary {
+		.astryx-text[data-color="primary"] {
 			color: var(--color-text-primary);
 		}
 
-		.astryx-text.secondary {
+		.astryx-text[data-color="secondary"] {
 			color: var(--color-text-secondary);
 		}
 
-		.astryx-text.disabled {
+		.astryx-text[data-color="disabled"] {
 			color: var(--color-text-disabled);
 		}
 
-		.astryx-text.placeholder {
+		.astryx-text[data-color="placeholder"] {
 			color: var(--color-text-secondary);
 		}
 
-		.astryx-text.accent {
+		.astryx-text[data-color="accent"] {
 			color: var(--color-text-accent);
 		}
 
@@ -206,15 +206,15 @@
 			--_button-radius: var(--radius-full);
 		}
 
-		.astryx-top-nav-item.selected {
+		.astryx-top-nav-item[data-selected="selected"] {
 			background-color: transparent;
 		}
 
-		.astryx-top-nav-item.selected:hover:where(:not(:disabled,[aria-disabled="true"])) {
+		.astryx-top-nav-item[data-selected="selected"]:hover:where(:not(:disabled,[aria-disabled="true"])) {
 			background-color: var(--color-overlay-hover);
 		}
 
-		.astryx-top-nav-item.selected:active {
+		.astryx-top-nav-item[data-selected="selected"]:active {
 			background-color: var(--color-overlay-pressed);
 		}
 
@@ -235,58 +235,58 @@
 			background-color: var(--color-accent-muted);
 		}
 
-		.astryx-pagination-dot.active {
+		.astryx-pagination-dot[data-active="active"] {
 			width: var(--spacing-7);
 			background-color: var(--color-accent);
 			border-color: var(--color-accent);
 			border-radius: var(--radius-full);
 		}
 
-		.astryx-pagination-dot.active:hover:where(:not(:disabled,[aria-disabled="true"])) {
+		.astryx-pagination-dot[data-active="active"]:hover:where(:not(:disabled,[aria-disabled="true"])) {
 			background-color: var(--color-accent);
 		}
 
-		.astryx-text.size-4xs {
+		.astryx-text[data-size="4xs"] {
 			font-size: var(--font-size-4xs);
 		}
 
-		.astryx-text.size-3xs {
+		.astryx-text[data-size="3xs"] {
 			font-size: var(--font-size-3xs);
 		}
 
-		.astryx-text.size-2xs {
+		.astryx-text[data-size="2xs"] {
 			font-size: var(--font-size-2xs);
 		}
 
-		.astryx-text.xsm {
+		.astryx-text[data-size="xsm"] {
 			font-size: var(--font-size-xs);
 		}
 
-		.astryx-text.sm {
+		.astryx-text[data-size="sm"] {
 			font-size: var(--font-size-sm);
 		}
 
-		.astryx-text.base {
+		.astryx-text[data-size="base"] {
 			font-size: var(--font-size-base);
 		}
 
-		.astryx-text.lg {
+		.astryx-text[data-size="lg"] {
 			font-size: var(--font-size-lg);
 		}
 
-		.astryx-text.xl {
+		.astryx-text[data-size="xl"] {
 			font-size: var(--font-size-xl);
 		}
 
-		.astryx-text.size-2xl {
+		.astryx-text[data-size="2xl"] {
 			font-size: var(--font-size-2xl);
 		}
 
-		.astryx-text.size-3xl {
+		.astryx-text[data-size="3xl"] {
 			font-size: var(--font-size-3xl);
 		}
 
-		.astryx-text.size-4xl {
+		.astryx-text[data-size="4xl"] {
 			font-size: var(--font-size-4xl);
 		}
 	}
