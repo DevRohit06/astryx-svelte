@@ -12,8 +12,8 @@ upstream-prs: [5177, 5395, 5484, 5547, 5586, 5627, 5671, 5673, 5693, 5713, 5769,
 `pnpm verify` does **not** pass. The class oracle reports 98 mismatches, down from the 133 the pin
 move brought, and every one is explained by an upstream feature this batch did not port. That is
 recorded as a debt with a worklist rather than papered over with skips — see "Why the oracle is red
-rather than skipped". Everything else is green: `svelte-check` 0 errors, lint clean, all 1,664
-server cases passing.
+rather than skipped". Everything else is green: `svelte-check` 0 errors across core and docs, lint
+clean across all ten packages, 1,664 server cases and 5,591 browser cases passing.
 
 **No release is cut.** The release workflow re-runs the full gate against the tag, so a tag at this
 commit could not publish; and the version scheme names the upstream release a version ports, which
@@ -154,6 +154,40 @@ diameter moves ring and frame together, and moves the arc start offset to a CSS 
 circle's own box. That is what lets the `viewBox` go: it needed the centre as a number in user
 units, which no themed diameter can supply.
 
+## What the first full gate found, and what it hid
+
+Three of seven stages failed, not the one this batch expected — which is the whole argument for
+`pnpm verify` running every stage and reporting each.
+
+- **`check` failed in `docs`, not core.** The generated registry carries `usage.accessibility` from
+  the new doc contract, and the docs site's own `UsageDoc` had no such field. Core's own check was
+  green throughout, so checking core alone would never have surfaced it.
+- **`lint` failed in `packages/cli`**, on formatting in the doctype this batch added.
+- **`test` failed at parity**, as expected — and that is the one that mattered, because
+  `core`'s `test` script is `test:node && test:client`. **The browser project never ran at all.**
+
+That last point is the finding. Three of this batch's changes are DOM changes the server suite
+structurally cannot see: FieldLabel's new wrapper element, Spinner's dropped `viewBox` and `50%`
+centring, and the two spans ChatToolCalls deleted. Run directly, the browser suite failed six
+chunks and sixteen cases. All six chunks traced to six files and none to contention, which is worth
+stating because a contention failure reads identically at the summary line.
+
+Eleven of the sixteen were generated-theme-CSS assertions carrying pre-0.6.0 selector bytes, each
+rewritten from the `defineTheme` key that produced it so the asserted axis is the axis the
+component actually reflects. Five were Spinner's, and upstream had already rewritten them with the
+same markup change — including a **new** case this port would not have thought to write: the frame
+is sized from CSS rather than from the size constant, which is the regression the old file could
+not have caught, because nothing in it tied the svg's size to the box it sits in.
+
+### A test was authoring a key its component never reflected
+
+The DateTimeInput segment case keyed a bare `lg`, and that segment reflects `data-size`. Before
+0.6.0 a bare `lg` and `size:lg` both compiled to `.lg`, so the difference did not exist and the
+assertion passed either way. Under the new contract a bare key means prop === value, so it would
+have generated `[data-lg="lg"]` — a selector matching nothing. The key is corrected rather than the
+assertion adjusted to the broken output; the contract change turned a latent authoring error into a
+visible one.
+
 ## Why the oracle is red rather than skipped
 
 The skip list exists for a key upstream declares and this port **deliberately** does not. The 98
@@ -186,6 +220,9 @@ to that family.
   and would be a false **pass** for any axis whose only reflection site is a spread.
 - `CLAUDE.md` § Commands — a shell heredoc eats backslashes in both directions; verify the bytes of
   any file written that way with `cat -A` before trusting it.
+- `CLAUDE.md` § Commands — a package's own `test` script is itself an `&&` chain, so a red stage
+  inside it hides every later one. The browser project not running is invisible at the gate's
+  summary line.
 
 ## Debts opened
 

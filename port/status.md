@@ -85,8 +85,8 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 |                            | Cases          |
 | -------------------------- | -------------- |
 | Upstream, in ported suites | 7683           |
-| Declared here              | 6516           |
-| **Short**                  | **1207**       |
+| Declared here              | 6517           |
+| **Short**                  | **1206**       |
 | Over, across 9 groups      | +40            |
 | Beyond upstream            | 96 in 20 files |
 
@@ -157,7 +157,6 @@ per connected group.
 | `hooks/useScrollLock.test.ts`                                                                                                                                                            | 12       | 6    | 6     |
 | `Layout/__tests__/contentWidth.test.tsx`                                                                                                                                                 | 12       | 6    | 6     |
 | `PowerSearch/PowerSearchValueEditor.test.tsx`                                                                                                                                            | 20       | 14   | 6     |
-| `Spinner/Spinner.test.tsx`                                                                                                                                                               | 30       | 24   | 6     |
 | `Table/plugins/selection/useTableSelection.test.tsx`                                                                                                                                     | 24       | 18   | 6     |
 | `Toast/ToastViewport.test.tsx`                                                                                                                                                           | 61       | 55   | 6     |
 | `BottomSheet/BottomSheetPanel.test.tsx`                                                                                                                                                  | 12       | 7    | 5     |
@@ -169,6 +168,7 @@ per connected group.
 | `hooks/useFocusTrap.test.tsx`                                                                                                                                                            | 22       | 17   | 5     |
 | `Item/Item.test.tsx`                                                                                                                                                                     | 50       | 45   | 5     |
 | `Layout/Layout.test.tsx`<br>`Layout/__tests__/edgeCompensation.test.tsx`                                                                                                                 | 39       | 34   | 5     |
+| `Spinner/Spinner.test.tsx`                                                                                                                                                               | 30       | 25   | 5     |
 | `TextInput/TextInput.test.tsx`                                                                                                                                                           | 80       | 75   | 5     |
 | `Timestamp/Timestamp.test.tsx`                                                                                                                                                           | 79       | 74   | 5     |
 | `Token/Token.test.tsx`                                                                                                                                                                   | 47       | 42   | 5     |

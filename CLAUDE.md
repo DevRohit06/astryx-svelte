@@ -74,6 +74,16 @@ pnpm verify        # the gate: every stage runs and every result reports, then p
                    #   `tail`'s exit code, so a run that failed 3 of 7 stages reads as a clean pass
                    #   — the same hazard as the && chain, reached from the other direction. Write to
                    #   a file and grep the file (batch 032).
+#   **The `&&` hazard recurs INSIDE a stage.** `core`'s `test` script is
+#   `test:node && test:client`, so a red node stage means the browser project
+#   never runs — and the gate's summary says only `FAIL test (exit 1)`, which
+#   reads identically to a browser failure. Batch 045 sat on a known-red parity
+#   stage and nearly shipped three DOM changes unexercised; run directly, the
+#   browser suite failed six chunks. **Whenever a node-side stage is red for a
+#   reason you have accepted, run `test:client` on its own before believing the
+#   tree is otherwise sound.** Same for the gate's own stages: 045's first full
+#   run failed three, and two were in `docs` and `cli` while core was green, so
+#   per-package checks would not have found them (batch 045).
 pnpm verify --fast # skips the whole test stage — the browser suite (real Chromium, thousands of
                    #   cases), the node suites, the CLI's own checks and the theme oracles. Use it
                    #   for a quick read *between* commits, never as a batch's gate. Batch 029 was
