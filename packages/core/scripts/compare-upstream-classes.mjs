@@ -676,6 +676,11 @@ const CASES = [
 		upstreamFile: 'Field/FieldLabel.js',
 		inline: [
 			['styles.optionalRequired'],
+			// The label/description wrapper #5673 added. Two arms: a visible group
+			// is a flex column, a hidden one is `display: contents` so it takes no
+			// slot in the caller's layout.
+			['styles.labelGroup'],
+			['styles.labelGroup', 'styles.labelGroupHidden'],
 			['styles.description'],
 			['styles.description', 'styles.descriptionClickable'],
 			['styles.description', 'styles.srOnly'],
@@ -3568,18 +3573,22 @@ const CASES = [
 		inline: [['treeStyles.expanderButton'], ['treeStyles.leafSpacer'], ['treeStyles.headerCell']]
 	},
 	{
-		// Both modes at once, and the split is the smallest illustration of the rule
-		// in the whole list. `styles.dot` is a **function style** — its colour is an
-		// argument — so the compiler cannot fold it and `dist/` keeps it as an
-		// object (with the `--x-backgroundColor` custom property the dynamic value
-		// rides on). `styles.wrap` reaches exactly one static `stylex.props` and was
-		// resolved into a literal class string.
+		// Object mode only, since 0.5.3. `styles.dot` and `styles.customIcon` are
+		// **function styles** — their colour is an argument — so the compiler cannot
+		// fold them and `dist/` keeps them as objects (with the custom property the
+		// dynamic value rides on).
 		//
-		// Upstream declares both in the hook file rather than a style module and
-		// keeps the group's name `styles`, so ours needs no rename.
+		// `styles.wrap` used to be the smallest illustration of the inline rule: it
+		// reached exactly one static `stylex.props` and was resolved into a literal
+		// class string. #5832 put `styles.customIcon(color)` beside it at that call
+		// site, and one function-style argument stops the compiler folding the whole
+		// call — so `wrap` is an object in `dist/` now and the inline claim has to
+		// go. The tell is upstream's inline list for this file printing empty.
+		//
+		// Upstream declares all three in the hook file rather than a style module
+		// and keeps the group's name `styles`, so ours needs no rename.
 		file: 'src/lib/components/table/plugins/row-status/row-status.stylex.js',
-		upstreamFile: 'Table/plugins/rowStatus/useTableRowStatus.js',
-		inline: [['styles.wrap']]
+		upstreamFile: 'Table/plugins/rowStatus/useTableRowStatus.js'
 	},
 	{
 		// Both modes at once. `headerCellRelative.base` is pushed onto a resizable

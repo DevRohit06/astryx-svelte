@@ -1,12 +1,12 @@
 <script lang="ts" module>
 	import RowStatusCellContent from './row-status-cell-content.svelte';
 	import { unwrapSlotArg } from '../../../../internal/bind-snippet.js';
-	import type { TableRowStatus } from './use-table-row-status.js';
+	import type { TableRowStatusResult } from './use-table-row-status.js';
 
 	/** What the status column's `renderCell` needs for one row. */
 	export interface RowStatusCellArg {
 		/** The row's status, or null for a row with none. */
-		status: TableRowStatus | null;
+		status: TableRowStatusResult;
 	}
 
 	/**

@@ -88,7 +88,7 @@ describe('useGridFocus roving tabindex (hasRovingTabIndex)', () => {
 	});
 
 	it('flips ArrowLeft/ArrowRight under RTL', async () => {
-		const screen = await render(Grid, { props: { seed: 1, isRtl: true } });
+		const screen = await render(Grid, { props: { seed: 1, dir: 'rtl' } });
 		const grid = screen.getByRole('grid').element();
 		screen.getByTestId('cell-1').element().focus();
 		// In RTL, ArrowLeft is "forward" (moves to the next cell in DOM order).
@@ -140,11 +140,7 @@ describe('useGridFocus RTL auto-detection (WCAG 1.3.2)', () => {
 		await expect.element(screen.getByTestId('cell-3')).toHaveFocus();
 	});
 
-	it('explicit isRtl={false} overrides a dir="rtl" container', async () => {
-		const screen = await render(Grid, { props: { seed: 1, dir: 'rtl', isRtl: false } });
-		const grid = screen.getByRole('grid').element();
-		screen.getByTestId('cell-1').element().focus();
-		keyDown(grid, { key: 'ArrowRight' });
-		await expect.element(screen.getByTestId('cell-2')).toHaveFocus();
-	});
+	// DROPPED: `explicit isRtl={false} overrides a dir="rtl" container`. Upstream
+	// 0.6.0 removed the `isRtl` option, so there is no override to assert; the
+	// auto-detection cases below are the whole contract now.
 });

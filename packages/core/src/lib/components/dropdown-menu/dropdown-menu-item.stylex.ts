@@ -26,8 +26,7 @@ const menuItemStyles = stylex.create({
 		backgroundColor: {
 			default: 'transparent',
 			':focus': colorVars['--color-overlay-hover'],
-			':active:where(:not(:disabled,[aria-disabled="true"]))':
-				colorVars['--color-overlay-pressed']
+			':active:where(:not(:disabled,[aria-disabled="true"]))': colorVars['--color-overlay-pressed']
 		},
 		border: 'none',
 		cursor: {

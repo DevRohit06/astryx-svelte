@@ -47,7 +47,7 @@ export default {
 		},
 		{
 			name: 'weight',
-			type: "'normal' | 'medium' | 'semibold' | 'bold'",
+			type: "'medium' | 'normal' | 'semibold' | 'bold'",
 			description:
 				'Explicit font-weight override. Wins over the selected visual type or heading-level default.'
 		},

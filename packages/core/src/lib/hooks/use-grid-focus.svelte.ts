@@ -92,7 +92,6 @@ export interface UseGridFocusOptions {
 	/** Callback for Page Down key (e.g., next month). */
 	onPageDown?: () => void;
 
-
 	/**
 	 * Roving-tabindex ownership. When true, the hook manages a single tab stop
 	 * across the grid: exactly one focusable cell carries `tabindex="0"` and the

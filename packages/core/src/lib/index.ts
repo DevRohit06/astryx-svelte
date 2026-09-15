@@ -1013,12 +1013,16 @@ export {
 // is a `stylex.create` function style, and StyleX may only be imported from a
 // `.ts`) and re-exported through the hook, so this list matches upstream's
 // `Table/index.ts` name for name: upstream publishes `useTableRowStatus`,
-// `UseTableRowStatusConfig` and `TableRowStatus` only — `TableRowStatusColor` is
-// module-public and unpublished on **both** sides, so it stays off this barrel.
+// `UseTableRowStatusConfig`, `TableRowStatus` and — since 0.5.3 (#5832) —
+// `TableSemanticRowStatus`. `TableRowStatusColor` is module-public and
+// unpublished on **both** sides, so it stays off this barrel. So does
+// `TableRowStatusResult`: upstream spells that union inline in `getStatus`, and
+// it is named here only because a Svelte component has to name its prop type.
 export {
 	useTableRowStatus,
 	type UseTableRowStatusConfig,
-	type TableRowStatus
+	type TableRowStatus,
+	type TableSemanticRowStatus
 } from './components/table/plugins/row-status/use-table-row-status.js';
 export {
 	useTableFiltering,

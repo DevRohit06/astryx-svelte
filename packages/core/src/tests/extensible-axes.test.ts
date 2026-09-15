@@ -331,7 +331,12 @@ async function collectDocTargets(dir: string): Promise<Map<string, DocTarget[]>>
 
 /** Parse a single object literal expression, for the guard-the-guard case. */
 function tsObjectLiteral(source: string): ts.ObjectLiteralExpression {
-	const file = ts.createSourceFile('probe.ts', `const x = ${source};`, ts.ScriptTarget.Latest, true);
+	const file = ts.createSourceFile(
+		'probe.ts',
+		`const x = ${source};`,
+		ts.ScriptTarget.Latest,
+		true
+	);
 	const statement = file.statements[0];
 	if (!ts.isVariableStatement(statement)) throw new Error('probe did not parse');
 	const initializer = statement.declarationList.declarations[0]?.initializer;

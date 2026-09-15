@@ -314,19 +314,7 @@ describe('generateThemeRules', () => {
 	it('emits a size override for every TextSize value', () => {
 		// Values are literal since 0.6.0 — no `size-` prefix on the digit-leading
 		// ones, because an attribute value may start with a digit.
-		const sizes = [
-			'4xs',
-			'3xs',
-			'2xs',
-			'xsm',
-			'sm',
-			'base',
-			'lg',
-			'xl',
-			'2xl',
-			'3xl',
-			'4xl'
-		];
+		const sizes = ['4xs', '3xs', '2xs', 'xsm', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl'];
 		for (const value of sizes) {
 			expect(
 				rules.some(

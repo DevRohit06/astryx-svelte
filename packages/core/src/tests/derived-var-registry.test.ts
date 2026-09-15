@@ -298,6 +298,13 @@ const VARS_WITHOUT_DERIVED_MAPPING = new Set([
 	// touch area would set the var rather than reach the pseudo-element.
 	'--_input-clear-hit-inset',
 	'--_input-clear-hit-content',
+	// How far an attached FieldStatus rides up behind the control, arriving at
+	// 0.6.1 (#5769) so a rounded input's corners stay covered. Field computes it
+	// from the *rendered control size* — half the element height, the largest
+	// radius CSS can actually render — so it is a measurement rather than a
+	// property a theme sets. Upstream documents it `private` and gives it no
+	// derived entry either.
+	'--_field-status-overlap',
 	// Placement and swipe lifecycle values are private Toast behavior. A theme
 	// author controls the surface transform/opacity as a whole, not these values.
 	'--_toast-slide-y',

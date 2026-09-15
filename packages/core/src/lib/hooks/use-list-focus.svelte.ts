@@ -98,7 +98,6 @@ export interface UseListFocusOptions {
 	 */
 	hasHomeEnd?: boolean;
 
-
 	/**
 	 * Roving-tabindex ownership. When true, the hook manages a single tab stop
 	 * across the items: exactly one enabled item carries `tabindex="0"` and the
@@ -563,8 +562,7 @@ export function useListFocus(options: () => UseListFocusOptions = () => ({})): U
 		const nextKeys: string[] = [];
 		const prevKeys: string[] = [];
 		if (horizontal) {
-			const rtl =
-				e.key === 'ArrowLeft' || e.key === 'ArrowRight' ? isRtlElement(container) : false;
+			const rtl = e.key === 'ArrowLeft' || e.key === 'ArrowRight' ? isRtlElement(container) : false;
 			nextKeys.push(rtl ? 'ArrowLeft' : 'ArrowRight');
 			prevKeys.push(rtl ? 'ArrowRight' : 'ArrowLeft');
 		}

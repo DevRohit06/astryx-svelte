@@ -9,6 +9,13 @@ import {
 	typographyVars
 } from '../../styles/tokens.stylex.js';
 
+/**
+ * How far the attached status box rides up under the control. Field drives the
+ * variable so a rounded input's corners stay covered; the fallback is the flat
+ * value this used to hardcode.
+ */
+const ATTACHED_OVERLAP = `var(--_field-status-overlap, ${spacingVars['--spacing-1-5']})`;
+
 const styles = stylex.create({
 	base: {
 		fontFamily: typographyVars['--font-family-body'],
@@ -19,12 +26,15 @@ const styles = stylex.create({
 	// the negative margin overlaps the input's bottom radius and the extra block
 	// padding puts the text back where it would have been.
 	attached: {
-		marginTop: `calc(-1 * ${spacingVars['--spacing-1-5']})`,
-		paddingBlockStart: `calc(${spacingVars['--spacing-1-5']} + ${spacingVars['--spacing-2']})`,
+		marginTop: `calc(-1 * ${ATTACHED_OVERLAP})`,
+		paddingBlockStart: `calc(${ATTACHED_OVERLAP} + ${spacingVars['--spacing-2']})`,
 		paddingBlockEnd: spacingVars['--spacing-2'],
 		paddingInline: spacingVars['--spacing-2'],
 		borderEndStartRadius: radiusVars['--radius-element'],
-		borderEndEndRadius: radiusVars['--radius-element']
+		borderEndEndRadius: radiusVars['--radius-element'],
+		// The overlap is visual only. Let pointer input reach the control beneath
+		// it instead of allowing the later-painted status box to steal the click.
+		pointerEvents: 'none'
 	},
 	detached: {
 		marginTop: spacingVars['--spacing-1'],

@@ -21,6 +21,17 @@ import {
  * `left:0` (`xu96u03`). Sharing would emit CSS upstream does not.
  */
 const styles = stylex.create({
+	labelGroup: {
+		display: 'flex',
+		flexDirection: 'column'
+	},
+	// A hidden label group must not take a slot in the caller's layout, or an
+	// empty box would draw the caller's gap around nothing. Dropping the wrapper
+	// box leaves the sr-only children out of flow directly under the caller, so
+	// the group occupies no space at all.
+	labelGroupHidden: {
+		display: 'contents'
+	},
 	label: {
 		display: 'flex',
 		alignItems: 'center',
@@ -92,6 +103,15 @@ export function fieldLabelAttrs(
 }
 
 /** The trailing "Optional" / "Required" run inside the label. */
+/**
+ * The wrapper around the label and its description. Rendered only when there is
+ * a description: without one, upstream leaves the label itself as the caller's
+ * flex/grid item so the caller's layout overrides keep applying to it.
+ */
+export function fieldLabelGroupAttrs(isLabelHidden: boolean): SvelteStyleAttrs {
+	return sx(styles.labelGroup, isLabelHidden && styles.labelGroupHidden);
+}
+
 export function fieldLabelStatusTextAttrs(): SvelteStyleAttrs {
 	return sx(styles.optionalRequired);
 }
