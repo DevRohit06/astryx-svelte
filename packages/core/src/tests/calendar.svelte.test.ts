@@ -1495,8 +1495,8 @@ describe('Calendar', () => {
 				}
 			});
 			const css = generateThemeCss(theme);
-			expect(css).toContain('.astryx-calendar-day.today-only');
-			expect(css).toContain('.astryx-calendar-day.today-in-range');
+			expect(css).toContain('.astryx-calendar-day[data-marker="today-only"]');
+			expect(css).toContain('.astryx-calendar-day[data-marker="today-in-range"]');
 			expect(css).toContain('box-shadow: inset 0 0 0 2px var(--color-accent)');
 			expect(css).toContain('box-shadow: inset 0 0 0 2px var(--color-text-primary)');
 		});
@@ -1576,7 +1576,7 @@ describe('Calendar', () => {
 			const css = generateThemeCss(theme);
 			expect(css).toContain('.astryx-calendar-nav {');
 			expect(css).toContain('color: var(--color-accent)');
-			expect(css).toContain('.astryx-calendar-nav.next');
+			expect(css).toContain('.astryx-calendar-nav[data-nav="next"]');
 			expect(css).toContain('background-color: var(--color-accent-muted)');
 		});
 	});

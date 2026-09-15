@@ -2206,7 +2206,7 @@ describe('Selector indicator (chevron) icon theme target', () => {
 		expect(css).toContain('.astryx-selector-indicator-icon {');
 		expect(css).toContain('width: 14px');
 		expect(css).toContain('height: 14px');
-		expect(css).toContain('.astryx-selector-indicator-icon.expanded');
+		expect(css).toContain('.astryx-selector-indicator-icon[data-state="expanded"]');
 		expect(css).toContain('color: var(--color-icon-primary)');
 	});
 });
@@ -2574,7 +2574,7 @@ describe('Selector disabled state theme target', () => {
 			}
 		});
 		const css = generateThemeCss(theme);
-		expect(css).toContain('.astryx-selector.disabled');
+		expect(css).toContain('.astryx-selector[data-disabled="disabled"]');
 		expect(css).toContain('opacity: 0.4');
 	});
 });

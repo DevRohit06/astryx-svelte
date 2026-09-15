@@ -885,7 +885,7 @@ describe('TreeList', () => {
 			const css = generateThemeCss(theme);
 			expect(css).toContain('.astryx-tree-list-chevron {');
 			expect(css).toContain('color: var(--color-accent)');
-			expect(css).toContain('.astryx-tree-list-chevron.expanded');
+			expect(css).toContain('.astryx-tree-list-chevron[data-state="expanded"]');
 			expect(css).toContain('color: var(--color-text-primary)');
 		});
 	});
@@ -943,7 +943,7 @@ describe('TreeList', () => {
 			const css = generateThemeCss(theme);
 			expect(css).toContain('.astryx-tree-list-item-label {');
 			expect(css).toContain('color: var(--color-text-primary)');
-			expect(css).toContain('.astryx-tree-list-item-label.selected');
+			expect(css).toContain('.astryx-tree-list-item-label[data-selected="selected"]');
 			expect(css).toContain('font-weight: var(--font-weight-bold)');
 		});
 	});

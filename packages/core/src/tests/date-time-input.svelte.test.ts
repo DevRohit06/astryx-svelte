@@ -1295,7 +1295,12 @@ describe('DateTimeInput', () => {
 				components: {
 					'date-time-input-date-segment': {
 						base: { blockSize: 'var(--size-element-lg)' },
-						lg: { paddingInline: 'var(--spacing-4)' }
+						// Authored on the `size` axis, not as a bare `lg`. Before 0.6.0 the
+						// two compiled to the same `.lg` class, so the distinction did not
+						// exist; now a bare key means prop === value, and this segment
+						// reflects `data-size` — a bare `lg` would target `[data-lg="lg"]`,
+						// which nothing renders.
+						'size:lg': { paddingInline: 'var(--spacing-4)' }
 					},
 					'date-time-input-time-segment': {
 						base: { blockSize: 'var(--size-element-lg)' }
@@ -1305,7 +1310,7 @@ describe('DateTimeInput', () => {
 			const css = generateThemeCss(theme);
 
 			expect(css).toContain('.astryx-date-time-input-date-segment {');
-			expect(css).toContain('.astryx-date-time-input-date-segment.lg');
+			expect(css).toContain('.astryx-date-time-input-date-segment[data-size="lg"]');
 			expect(css).toContain('.astryx-date-time-input-time-segment {');
 			expect(css).toContain('block-size: var(--size-element-lg)');
 			expect(css).toContain('padding-inline: var(--spacing-4)');
@@ -1395,7 +1400,7 @@ describe('DateTimeInput', () => {
 			const css = generateThemeCss(theme);
 
 			expect(css).toContain('.astryx-date-time-input-toggle-icon {');
-			expect(css).toContain('.astryx-date-time-input-toggle-icon.expanded');
+			expect(css).toContain('.astryx-date-time-input-toggle-icon[data-state="expanded"]');
 			expect(css).toContain('.astryx-date-time-input-clock-icon {');
 			expect(css).toContain('width: 14px');
 			expect(css).toContain('color: var(--color-icon-primary)');
