@@ -1810,3 +1810,74 @@ asserts nothing the first does not.
 Ported once, per this file's own rule that upstream bugs are documented rather than replicated. The
 consequence is arithmetic: the case delta for this suite counts upstream's 136 declarations against
 ours, so it cannot reach zero while five of upstream's are copies.
+
+### The 0.6.1 pin lands ahead of six upstream feature families
+
+- **units:** Popover, DropdownMenu, DropdownMenuSubMenu, ContextMenu, MoreMenu, Selector,
+  MultiSelector, Typeahead, BaseTypeahead, Layout, LayoutContent, Stepper, Step, Collapsible,
+  TabList, DateTimeInput, TimeInput, ToastViewport
+- **kind:** deferral
+- **retires:** when the class oracle reaches 0 mismatches against the `0.6.1` pin
+
+Batch 045 moved the pin from `0.5.2` to `0.6.1` — four upstream releases at once — and ported the
+breaking changes and the mechanical style delta. What it did **not** port is six feature families
+that upstream's `.stylex` modules declare styles for. The class oracle is the measurement, and it
+is red rather than skipped on purpose: a skip excuses a key we deliberately do not declare, and
+these are keys we intend to declare as soon as the feature behind them exists. Ninety-eight skips
+written at once would be the rot the skip list exists to prevent, and they would make a partial
+port read as a finished one.
+
+The families, with the upstream change that explains each:
+
+| Family                                    | Modules                                                                                      | Upstream             |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------- |
+| Overlay viewport fit                      | `popover`, `dropdown-menu`, `dropdown-menu-sub-menu`                                         | #5373, #5395 (0.5.3) |
+| Bottom-sheet presentation                 | `dropdown-menu`, `context-menu`, `selector`, `multi-selector` (+ `MoreMenu`, no style delta) | #5395 (0.5.3)        |
+| Read-only selection inputs                | `selector`, `multi-selector`                                                                 | #5805 (0.5.3)        |
+| Layout content-width scroll geometry      | `layout`, `layout-content`                                                                   | #6192 (0.6.0)        |
+| Stepper connector gap and narrow collapse | `stepper`, `step`                                                                            | #5495, #5659, #6097  |
+| Typeahead field geometry                  | `typeahead`, `base-typeahead`                                                                | #5682, #5555, #6179  |
+
+Four smaller items sit outside those families: `collapsible`'s `chevronPosition` (#5993, 0.6.0),
+`tab-list`'s `isFullBleed` (#3938), `date-time-input`'s `nativePicker` row (#5620), and
+`toast-viewport`'s seven row-wrapper call sites from the un-clipped shadow work (#5547).
+
+The worklist, ordered so one edit closes several modules, is in `port/todo.md`. **Until this entry
+retires, `pnpm verify` fails at the parity stage** — which is the intended state: the number is the
+front, and `port/status.md` carries it.
+
+### `useResizable` bounds are pixel numbers where upstream accepts a size expression
+
+- **units:** useResizable, Resizable, ResizeHandle, LayoutPanel
+- **kind:** divergence
+- **retires:** when `minSize`/`maxSize` accept `ResizableSize` and `Resizable/utils` ships
+
+Upstream 0.6.0 renamed `minSizePx`/`maxSizePx` to `minSize`/`maxSize` **and** widened them from a
+pixel number to `ResizableSize` — `number | '<n>px' | '<n>%' | PixelWidth | ResizablePercentSize` —
+publishing `percent()` and `pixel()` from a new `Resizable/utils` subpath. Batch 045 ported neither
+half, so this port still names the bounds `minSizePx`/`maxSizePx`.
+
+Doing the rename alone would have been worse than not doing it: a consumer following upstream's
+docs would write `minSize="50%"` against a prop typed `number`, and get a type error whose message
+points at the wrong problem. The two halves ship together or not at all.
+
+### Generated text colour rules are unconditional, and omit `link`
+
+- **units:** defineTheme, generateThemeRules, expandTypeScale
+- **kind:** divergence
+- **retires:** when colour overrides move to a gated step 4 of `generateThemeRules`
+
+Upstream emits its text/heading/link colour rules from `generateColorOverrides`, as **step 4** of
+`generateThemeRules`, gated on the theme touching `text`, `heading` or `link`. This port folds the
+same rules into `theme.components` inside `defineTheme`, **unconditionally** and for `heading` and
+`text` only.
+
+Two consequences. A theme that authors its own `text` rule for the same axis is **beaten by** the
+generated colour rule upstream and **beats it** here, because two rules at equal specificity in one
+layer are decided by source order and ours is emitted earlier. And a theme that touches `link`
+never gets `.astryx-link[data-color="*"]` rules at all — no maintained theme currently touches
+`link`, which is why nothing has caught it.
+
+Neither is visible to the theme oracle: it is keyed `selector|prop` and order-insensitive. Batch
+045 re-keyed these rules onto the `color` axis so their selector bytes match upstream's, which is
+what the 0.6.0 contract required; the placement and the missing third component are unchanged.

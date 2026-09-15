@@ -158,6 +158,16 @@ pnpm -F @astryx-svelte/core test:client   # the client project, chunked — see 
 #   `^H`. It failed *safe* - overstating the work - which is why nobody audits it.
 #   `node -e "const s=require('fs').readFileSync(F,'utf8');"` plus a scan for
 #   codepoints under 32 settles it in one command.
+#   **A shell heredoc eats backslashes, in both directions.** `cat > f <<'EOF'` is
+#   documented as literal and is not: a doubled backslash in the payload reaches
+#   the file as a single one, which turns `char === '\\'` into an
+#   unterminated string and a template `\\${x}` into a dead escape.
+#   A `python - <<'PY'` heredoc is mangled the *same* way, so repairing the file
+#   with Python fails identically unless the backslashes are built from `chr(92)`. This is CLAUDE.md's `^H` lesson
+#   reached from the other side, and it fails *loud* the moment the file is a
+#   `.ts` — but it would fail silent inside a regex or a comment. Verify with
+#   `sed -n 'N,Mp' file | cat -A` before trusting anything written that way, and
+#   prefer running the code over reading it back (batch 045).
 pnpm dev          # the docs site — the only demo surface (see below)
 pnpm -F docs generate   # regenerate the docs content registries (runs automatically on dev/build)
 ```
@@ -336,6 +346,15 @@ that — so a suite explaining its own counting could overstate the contract it 
 two upstream suites read one case higher than they declare. Only `it.each` and `it.for` are tagged
 templates; the regex now requires a call paren for everything else. If a derived count ever looks
 implausible, check the header's prose before the code (batch 033).
+
+**A guard that reads prop names off an object literal must descend into spreads.**
+`extensible-axes.test.ts` checks that every module-augmentation seam is reflected through
+`themeProps`, and it read names off the literal's _top-level_ properties only. A prop passed as
+`{ level, ...(type && { type }) }` is a `SpreadAssignment` whose `name` is undefined, so it read as
+unreflected. That direction is a false failure and gets noticed; the same blind spot is a false
+**pass** for any axis whose only reflection site is inside a spread, and nothing would have
+reported that. Widened, with the widening mutation-checked — a defensive branch no live call site
+exercises is exactly the kind that silently stops matching (batch 045).
 
 Coverage _beyond_ upstream needs a high bar: a hazard with **no upstream analogue**, which the ported
 suites structurally cannot catch — a Svelte-specific DOM or reactivity failure React cannot

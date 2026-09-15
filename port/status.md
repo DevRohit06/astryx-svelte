@@ -85,9 +85,9 @@ Cases are `it`/`test` declarations, so an `it.each` counts once rather than per 
 |                            | Cases          |
 | -------------------------- | -------------- |
 | Upstream, in ported suites | 7683           |
-| Declared here              | 6520           |
-| **Short**                  | **1205**       |
-| Over, across 11 groups     | +42            |
+| Declared here              | 6516           |
+| **Short**                  | **1207**       |
+| Over, across 9 groups      | +40            |
 | Beyond upstream            | 96 in 20 files |
 
 A ported suite may still fall short of the one it ports. That shortfall is the front’s
@@ -186,6 +186,7 @@ per connected group.
 | `CommandPalette/CommandPalette.test.tsx`                                                                                                                                                 | 22       | 19   | 3     |
 | `DropdownMenu/DropdownMenuSubMenu.test.tsx`                                                                                                                                              | 25       | 22   | 3     |
 | `FieldStatus/FieldStatus.test.tsx`                                                                                                                                                       | 36       | 33   | 3     |
+| `hooks/useListFocus.test.tsx`                                                                                                                                                            | 31       | 28   | 3     |
 | `List/List.test.tsx`                                                                                                                                                                     | 53       | 50   | 3     |
 | `MoreMenu/MoreMenu.test.tsx`                                                                                                                                                             | 24       | 21   | 3     |
 | `PowerSearch/formatFilterValue.test.ts`                                                                                                                                                  | 36       | 33   | 3     |
@@ -218,7 +219,6 @@ per connected group.
 | `Table/plugins/pagination/useTablePagination.test.tsx`                                                                                                                                   | 40       | 39   | 1     |
 | `Table/plugins/sortable/useTableSortableState.test.tsx`                                                                                                                                  | 20       | 19   | 1     |
 | `TextArea/TextArea.test.tsx`                                                                                                                                                             | 85       | 84   | 1     |
-| `theme/extensibleAxes.test.ts`                                                                                                                                                           | 4        | 3    | 1     |
 | `TimeInput/TimeInput.test.tsx`                                                                                                                                                           | 45       | 44   | 1     |
 | `Tooltip/Tooltip.test.tsx`                                                                                                                                                               | 25       | 24   | 1     |
 
