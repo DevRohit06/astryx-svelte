@@ -24,6 +24,11 @@ export default {
 	],
 	group: 'Indicator',
 	category: 'Form Controls',
+	playground: {
+		defaults: {
+			state: 'checked'
+		}
+	},
 	props: [
 		{
 			name: 'state',

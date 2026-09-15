@@ -1,6 +1,11 @@
 <script lang="ts" module>
 	import type { Snippet } from 'svelte';
-	import type { ClipboardEventHandler, FocusEventHandler, FormEventHandler } from 'svelte/elements';
+	import type {
+		ClipboardEventHandler,
+		FocusEventHandler,
+		FormEventHandler,
+		HTMLTextareaAttributes
+	} from 'svelte/elements';
 	import type { BaseProps } from '../../base-props.js';
 	import type { SizeValue } from '../../internal/types.js';
 	import type { FieldStatusVariant } from '../field-status/field-status.stylex.js';
@@ -19,9 +24,10 @@
 
 	/**
 	 * `BaseProps` is left unparameterised, as upstream leaves it — so `rest` is
-	 * typed as generic HTML attributes and `cols`/`wrap`/`autocomplete` are
-	 * deliberately absent from the public type even though they reach the
-	 * element.
+	 * typed as generic HTML attributes and `cols`/`wrap` are deliberately absent
+	 * from the public type even though they reach the element. `autocomplete`
+	 * was in that set until upstream 0.6.0 declared it explicitly; it is now a
+	 * named prop below.
 	 *
 	 * The four handlers are omitted so the narrowed redeclarations below can
 	 * replace rather than conflict with them. Upstream needs no such omit: its
@@ -156,6 +162,16 @@
 		size?: TextAreaSize;
 		/** `name` attribute, for form submission. */
 		htmlName?: string;
+		/**
+		 * The native `autocomplete` attribute, forwarded to the control unchanged.
+		 * The value stays controlled regardless — this only hints the browser or
+		 * password manager's suggestion behaviour (`'off'` for a session-scoped
+		 * field that must not reuse a prior value, say).
+		 *
+		 * Lowercase because it is forwarded to the element; upstream names it
+		 * `autoComplete`.
+		 */
+		autocomplete?: HTMLTextareaAttributes['autocomplete'];
 		onfocus?: FocusEventHandler<HTMLTextAreaElement>;
 		onblur?: FocusEventHandler<HTMLTextAreaElement>;
 	}
@@ -219,6 +235,7 @@
 		changeAction,
 		isLoading = false,
 		placeholder,
+		autocomplete,
 		rows = 3,
 		isDisabled = false,
 		isReadOnly = false,
@@ -500,6 +517,7 @@
 			{onfocus}
 			{onblur}
 			{placeholder}
+			{autocomplete}
 			{rows}
 			disabled={isDisabled && !showsDisabledMessage}
 			aria-disabled={showsDisabledMessage ? 'true' : undefined}

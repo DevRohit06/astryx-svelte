@@ -8,7 +8,7 @@ History lives in [`ledger/`](./ledger). Deviations from upstream live in [`debts
 
 ## Current goal
 
-**Full parity with Astryx `0.5.2`**, across every package except three. Set 2026-08-20 against
+**Full parity with Astryx `0.6.1`**, across every package except three. Set 2026-08-20 against
 `0.4.5`, replacing "track each upstream release and cut a matching version" — that goal was about
 staying level with upstream's _movement_; this one is about closing the distance that predates it.
 **Re-target it in the same batch the pin moves**: a goal naming a version this port no longer
@@ -17,7 +17,10 @@ unnoticed for a whole release. Moved to `0.5.0` on 2026-08-25 (batch 032) and to
 2026-08-31 (batch 040, which took `0.5.1` and `0.5.2` in one pass). Each move widened the distance
 rather than closing it — `0.5.0` brought a new component (`Stepper`), two breaking changes, and the
 largest single-release test delta this port has tracked; `0.5.2` left the surface whole and moved
-what remains into the _cases_. The size of it is in [`status.md`](./status.md), not here.
+what remains into the _cases_. Moved to `0.6.1` on 2026-09-15 (batch 045, which took `0.5.3`,
+`0.5.4`, `0.6.0` and `0.6.1` in one pass) — the first move to bring a **new component**
+(`ScrollableArea`), a breaking selector contract, and a class oracle deliberately left red. The
+size of all of it is in [`status.md`](./status.md), not here.
 
 Out of scope, by decision: **`lab`, `charts` and `vega`**. Four of `lab`'s components
 (`CodeEditor`, `RichTextEditor`, `ThreeD`, `Sankey`) wrap React-only libraries with no drop-in
@@ -32,6 +35,56 @@ parity; an absence that is unremarked is a gap.
 Measure it, do not describe it. [`status.md`](./status.md) now generates the test delta as well as
 the surface delta, so "how far from parity" has a number that cannot rot into prose. Progress is
 that table going to zero.
+
+### The class oracle, red on purpose
+
+`0.6.1` is the first pin this port has taken without driving the class oracle back to zero. 133
+mismatches arrived with it; batch 045 retired 35 and left 98, every one of them explained by a
+feature this port has not ported yet. They are **not** skipped — see `debts.md`, "The 0.6.1 pin
+lands ahead of six upstream feature families", for why a skip would be the wrong instrument. Until
+this front closes, `pnpm verify` fails at the parity stage and there is no release to cut.
+
+The worklist below is ordered so one edit closes several modules, and the running total is
+mismatches retired. It came out of an `astryx-oracle` sweep that traced every mismatch to the
+upstream commit that caused it, so each line names a cause rather than a symptom.
+
+- [ ] **Mechanical, cheapest first.** `selector`/`multi-selector` `outline: 'none'` on `dropdown`
+      (#5395) — worth taking _before_ the menu family so the residue there is purely
+      feature-shaped. Then `base-typeahead` (#6179, pure transcription: popover `boxSizing` +
+      `maxInlineSize`, forced-colors outline on `itemHighlighted`, `overflow: hidden` on
+      `itemContent`, a new `defaultItem`); `typeahead` (#5682/#5555, which carries a
+      `contentLane`/`endLane` DOM restructure); `step` + `stepper`'s root/horizontal/vertical
+      (#5495 `--step-connector-gap`, #5659/#6097 label ellipsis); `collapsible.triggerLabel`
+      (#5933); `toast-viewport`'s seven row-wrapper call sites (#5547)
+- [ ] **Layout content-width scroll geometry** (#6192). `layout` + `layout-content`, 10
+      mismatches, one upstream commit. The keys are mechanical; the gating
+      (`supportsInternalContentWidthAlignment`, panel presence) is a self-contained internal
+      rewrite with **no new public prop**
+- [ ] **The small independent props.** `tab-list`'s `isFullBleed` (#3938),
+      `date-time-input`/`time-input`'s `nativePicker` (#5620, #5811),
+      `collapsible`/`collapsible-group`'s `chevronPosition` (#5993 — the group carries it through
+      context, and an individual item may override), `stepper`'s `horizontalOptions` collapse
+- [ ] **`isReadOnly` on Selector and MultiSelector** (#5805). Two keys each
+      (`triggerReadOnly`, `triggerGhostReadOnly`) and two trigger call sites carrying
+      `cursor: default`
+- [ ] **Overlay viewport fit** (#5373, #5395). `popover` (12), `dropdown-menu`'s non-sheet keys,
+      `dropdown-menu-sub-menu` (5), `context-menu`'s trigger. One shared literal set — a
+      `--spacing-4` gutter, `env(safe-area-inset-*)`, `stylex.firstThatWorks` with a `100vw`/`100vh`
+      fallback — copy-pasted into four modules upstream. Only `surfaceScrollable`/`scrollable` need
+      behaviour, from `useMenuOverflow`'s ResizeObserver + MutationObserver measurement.
+      `dropdown-menu-sub-menu`'s single oracle claim must become **two** entries: upstream now
+      emits a scrollable and a non-scrollable variant of that call site
+- [ ] **Bottom-sheet presentation** (#5395). The largest: a `presentation` prop taking
+      `popover`, `bottom-sheet` or `adaptive`
+      on DropdownMenu, ContextMenu, MoreMenu, Selector and MultiSelector, plus four
+      new upstream modules (`MenuBottomSheet`, `MenuBottomSheetActionList`, `SelectorBottomSheet`,
+      `useAdaptivePresentation`) and `Selector/selectorPresentation.stylex.ts`. **`MoreMenu` gained
+      the prop with no style delta at all**, so the class oracle is silent about it — an
+      `astryx-parity` job, not an oracle one
+
+Two things the oracle structurally cannot report here, both worth carrying into whichever batch
+takes the family above: a new upstream `.stylex.ts` module shows **zero** mismatches until a case
+names it, and a prop that changes no style shows nothing ever.
 
 ### The fronts, in order
 
@@ -146,6 +199,13 @@ them.
    prose. `status.mjs` calls the generator for it rather than recomputing the rule, because the
    tally counts only blocks whose target is a documented entry and that set is not the barrel's
    export list.
+
+   **The accessibility tab is new at the 0.6.1 pin.** Upstream 0.5.3 (#5713) added structured
+   accessibility requirements and per-theme colour coverage to every component doc, and renders
+   both in a dedicated tab. Batch 045 ported the contract and the prose — 103 `.doc.mjs` files
+   carry it — but nothing renders it, and `docs/src/lib/generated/types.d.ts` says so on the field.
+   The theme-coverage half needs more than a renderer: upstream measures it against **upstream's**
+   themes, so this port has to re-measure its own eight before showing any of it.
 
    **One figure is still discarded the same way:** `templates N ported / M pending`, from the same
    generator run and the same front. Identical defect, identical fix, deliberately left out of 039

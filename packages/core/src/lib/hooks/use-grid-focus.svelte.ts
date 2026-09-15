@@ -93,20 +93,6 @@ export interface UseGridFocusOptions {
 	onPageDown?: () => void;
 
 	/**
-	 * @deprecated Direction is auto-detected from the container's computed
-	 * `direction` — omit this. The explicit override is redundant (there's no
-	 * valid reason to force RTL arrows in an LTR context) and will be removed in
-	 * an upcoming major.
-	 *
-	 * When set, forces whether the grid is right-to-left: ArrowLeft/ArrowRight
-	 * are swapped so horizontal navigation follows visual direction. When
-	 * omitted (preferred), the direction is auto-detected from the container's
-	 * computed `direction` (read lazily on keydown, horizontal arrows only).
-	 * @default undefined (auto-detect from the container)
-	 */
-	isRtl?: boolean;
-
-	/**
 	 * Roving-tabindex ownership. When true, the hook manages a single tab stop
 	 * across the grid: exactly one focusable cell carries `tabindex="0"` and the
 	 * rest `tabindex="-1"`. The tab stop is stamped on mount and repaired
@@ -431,7 +417,7 @@ export function useGridFocus(options: () => UseGridFocusOptions): UseGridFocusRe
 
 	/** Handle keyboard navigation. */
 	function handleKeyDown(e: KeyboardEvent): void {
-		const { columns, onNavigateBefore, onNavigateAfter, onPageUp, onPageDown, isRtl } = options();
+		const { columns, onNavigateBefore, onNavigateAfter, onPageUp, onPageDown } = options();
 
 		const cells = getCells();
 		if (cells.length === 0) {
@@ -452,9 +438,10 @@ export function useGridFocus(options: () => UseGridFocusOptions): UseGridFocusRe
 		// In RTL, ArrowLeft/ArrowRight are swapped so horizontal navigation
 		// follows visual direction. Vertical keys (Up/Down) are unaffected.
 		// Direction is resolved lazily — `getComputedStyle` runs only when a
-		// horizontal arrow key is actually pressed — and an explicit `isRtl` wins.
+		// horizontal arrow key is actually pressed. Upstream 0.6.0 removed the
+		// `isRtl` override, so auto-detection is the only path.
 		let key = e.key;
-		if ((key === 'ArrowLeft' || key === 'ArrowRight') && (isRtl ?? isRtlElement(container))) {
+		if ((key === 'ArrowLeft' || key === 'ArrowRight') && isRtlElement(container)) {
 			if (key === 'ArrowLeft') {
 				key = 'ArrowRight';
 			} else if (key === 'ArrowRight') {

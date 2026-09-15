@@ -8,12 +8,10 @@
 	 * carries it; that is also the element the hook reads through `listRef`, so
 	 * the placement is the same here.
 	 *
-	 * `isRtl` stays `undefined` unless a case passes it, which is what makes the
-	 * auto-detection branch the one under test.
 	 */
-	const { dir, isRtl }: { dir?: 'ltr' | 'rtl'; isRtl?: boolean } = $props();
+	const { dir }: { dir?: 'ltr' | 'rtl' } = $props();
 
-	const list = useListFocus(() => ({ orientation: 'horizontal', isRtl }));
+	const list = useListFocus(() => ({ orientation: 'horizontal' }));
 
 	const items = ['One', 'Two', 'Three'];
 </script>

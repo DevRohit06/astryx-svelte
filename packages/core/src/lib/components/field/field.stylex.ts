@@ -1,7 +1,7 @@
 import * as stylex from '@stylexjs/stylex';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import type { SizeValue } from '../../internal/types.js';
-import { borderVars, spacingVars } from '../../styles/tokens.stylex.js';
+import { borderVars, sizeVars, spacingVars } from '../../styles/tokens.stylex.js';
 
 /**
  * Ported from Astryx's `Field/Field.tsx`.
@@ -9,7 +9,14 @@ import { borderVars, spacingVars } from '../../styles/tokens.stylex.js';
 const styles = stylex.create({
 	container: {
 		display: 'flex',
-		flexDirection: 'column'
+		flexDirection: 'column',
+		// The Field root owns the local stacking boundary: the input wrapper's
+		// z-index (1, above the attached status box) and the attached status layer
+		// (-1) order parts inside this surface only. Without it, detached/tooltip
+		// fields — whose input wrapper renders outside the attached-status wrapper
+		// — compete with page-level stacking, and a focused input painted above
+		// the sticky AppShell header (#5689).
+		isolation: 'isolate'
 	},
 	containerGap: {
 		gap: spacingVars['--spacing-1']
@@ -26,7 +33,21 @@ const styles = stylex.create({
 	inputStatusWrapper: {
 		display: 'flex',
 		flexDirection: 'column',
-		isolation: 'isolate'
+		isolation: 'isolate',
+		// Extend an attached FieldStatus behind the lower half of the control.
+		// Half-height is the maximum effective corner radius CSS can render, even
+		// when a theme uses a pill value such as --radius-full (9999px).
+		'--_field-status-overlap': {
+			default: `calc(${sizeVars['--size-element-md']} / 2)`,
+			':has(> [data-size="sm"])': `calc(${sizeVars['--size-element-sm']} / 2)`,
+			':has(> [data-size="lg"])': `calc(${sizeVars['--size-element-lg']} / 2)`
+		}
+	},
+	attachedStatusLayer: {
+		// Keep the overlapping background below both Astryx inputs and custom
+		// controls. The isolated wrapper contains this negative stacking layer.
+		position: 'relative',
+		zIndex: -1
 	}
 });
 
@@ -68,3 +89,10 @@ export function fieldHorizontalLabelAlignAttrs(): SvelteStyleAttrs {
 export function fieldInputStatusWrapperAttrs(): SvelteStyleAttrs {
 	return sx(styles.inputStatusWrapper);
 }
+
+/**
+ * The attached status box's own layer, handed to `FieldStatus` as an `xstyle`.
+ * It rides *behind* the control, which only works inside the isolated wrapper
+ * above.
+ */
+export const fieldAttachedStatusLayer: StyleArg = styles.attachedStatusLayer;

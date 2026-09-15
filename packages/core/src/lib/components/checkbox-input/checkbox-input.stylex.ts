@@ -1,4 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
+import { rtlStyles } from '../../utils/rtl.stylex.js';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import {
 	colorVars,
@@ -41,6 +42,12 @@ const styles = stylex.create({
 	},
 	input: {
 		position: 'absolute',
+		// The block anchor is unconditional; the inline half comes from
+		// `rtlStyles.centerInline('-50%')` at the call site, which pairs a physical
+		// `left: 50%` with a physical translate so the pair centres identically in
+		// both directions. A logical anchor here would flip under RTL while the
+		// translate did not, leaving the hit area off by its own width.
+		top: '50%',
 		margin: 0,
 		padding: 0,
 		opacity: 0,
@@ -48,26 +55,15 @@ const styles = stylex.create({
 			default: 'pointer',
 			':is(:disabled,[aria-disabled="true"])': 'default'
 		},
-		zIndex: 1,
-		minInlineSize: {
-			default: null,
-			'@media (pointer: coarse)': '24px'
-		},
-		minBlockSize: {
-			default: null,
-			'@media (pointer: coarse)': '24px'
-		},
-		insetBlockStart: {
-			default: null,
-			'@media (pointer: coarse)': '50%'
-		},
-		insetInlineStart: {
-			default: null,
-			'@media (pointer: coarse)': '50%'
-		},
-		transform: {
-			default: null,
-			'@media (pointer: coarse)': 'translate(-50%, -50%)'
+		zIndex: 1
+	},
+	// Coarse pointers get a 24px minimum hit area. Split out of `input` by
+	// upstream 0.5.3 so the media query is declared once rather than smeared
+	// across five conditional declarations.
+	inputCoarse: {
+		'@media (pointer: coarse)': {
+			minInlineSize: 24,
+			minBlockSize: 24
 		}
 	},
 	inputDisabled: {
@@ -79,10 +75,11 @@ const styles = stylex.create({
 	indicatorSlot: {
 		display: 'contents'
 	},
+	// No gap of its own: #5673 moved the label/description spacing into
+	// `FieldLabel`'s own group wrapper, so declaring it here too would double it.
 	labelWrapper: {
 		display: 'flex',
-		flexDirection: 'column',
-		gap: spacingVars['--spacing-0-5']
+		flexDirection: 'column'
 	},
 	// Declared by upstream but never applied — the description is rendered by
 	// `FieldLabel`, not here. Kept so the authored surface matches source; it is
@@ -162,7 +159,13 @@ export function checkboxWrapperAttrs(size: CheckboxInputSize): SvelteStyleAttrs 
  * clickable — upstream passes `wrapperSizeStyles[size]` here too.
  */
 export function checkboxInputAttrs(size: CheckboxInputSize, isDisabled: boolean): SvelteStyleAttrs {
-	return sx(styles.input, wrapperSizeStyles[size], isDisabled && styles.inputDisabled);
+	return sx(
+		styles.input,
+		rtlStyles.centerInline('-50%'),
+		styles.inputCoarse,
+		wrapperSizeStyles[size],
+		isDisabled && styles.inputDisabled
+	);
 }
 
 /**

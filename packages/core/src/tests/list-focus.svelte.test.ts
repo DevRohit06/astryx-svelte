@@ -117,7 +117,7 @@ describe('useListFocus disabled-item skipping', () => {
 
 // ---------------------------------------------------------------------------
 // Roving-tabindex mode + composite navigation behaviors.
-// These exercise the opt-in `hasRovingTabIndex`, `isRtl`, `orientation: 'both'`,
+// These exercise the opt-in `hasRovingTabIndex`, `orientation: 'both'`,
 // `hasCaretGuard`, and shortcut-passthrough behaviors.
 // ---------------------------------------------------------------------------
 
@@ -179,14 +179,12 @@ describe('useListFocus roving tabindex (hasRovingTabIndex)', () => {
 		await expect.element(screen.getByTestId('A')).toHaveFocus();
 	});
 
-	it('flips ArrowLeft/ArrowRight under RTL', async () => {
-		const screen = await render(Toolbar, { props: { isRtl: true } });
-		const toolbar = screen.getByRole('toolbar').element();
-		screen.getByTestId('A').element().focus();
-		// In RTL, ArrowLeft is "forward".
-		keyDown(toolbar, { key: 'ArrowLeft' });
-		await expect.element(screen.getByTestId('B')).toHaveFocus();
-	});
+	// DROPPED (2 more, in the auto-detection block below): `explicit
+	// isRtl={false} overrides a dir="rtl" container` and `explicit isRtl={true}
+	// flips arrows without a dir attribute` — same removal, same reason.
+	// DROPPED: `flips ArrowLeft/ArrowRight under RTL`. It drove the roving
+	// toolbar through the `isRtl` option, which upstream 0.6.0 removed; upstream
+	// deleted this case with it and tests RTL only through auto-detection below.
 
 	it('orientation "both" navigates with all four arrows', async () => {
 		const screen = await render(Toolbar, { props: { orientation: 'both' } });
@@ -315,22 +313,6 @@ describe('useListFocus RTL auto-detection (WCAG 1.3.2)', () => {
 		const menu = screen.getByRole('menu').element();
 		screen.getByTestId('One').element().focus();
 		keyDown(menu, { key: 'ArrowRight' });
-		await expect.element(screen.getByTestId('Two')).toHaveFocus();
-	});
-
-	it('explicit isRtl={false} overrides a dir="rtl" container', async () => {
-		const screen = await render(HorizontalMenu, { props: { dir: 'rtl', isRtl: false } });
-		const menu = screen.getByRole('menu').element();
-		screen.getByTestId('One').element().focus();
-		keyDown(menu, { key: 'ArrowRight' });
-		await expect.element(screen.getByTestId('Two')).toHaveFocus();
-	});
-
-	it('explicit isRtl={true} flips arrows without a dir attribute', async () => {
-		const screen = await render(HorizontalMenu, { props: { isRtl: true } });
-		const menu = screen.getByRole('menu').element();
-		screen.getByTestId('One').element().focus();
-		keyDown(menu, { key: 'ArrowLeft' });
 		await expect.element(screen.getByTestId('Two')).toHaveFocus();
 	});
 });

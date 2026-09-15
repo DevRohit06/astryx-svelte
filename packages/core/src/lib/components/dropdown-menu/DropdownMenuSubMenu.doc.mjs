@@ -69,7 +69,8 @@ export default {
 		{
 			name: 'menuWidth',
 			type: 'number | string',
-			description: 'Fixed flyout width. Defaults to sizing to its content (min 160px).'
+			description:
+				'Minimum flyout width. The flyout may grow for its content, but it is capped to the available viewport space. Defaults to intrinsic sizing (min 160px).'
 		},
 		{
 			name: 'onOpenChange',

@@ -23,6 +23,14 @@ export default {
 		'subtitle'
 	],
 	category: 'Content',
+	theming: {
+		targets: [
+			{
+				className: 'astryx-heading',
+				visualProps: ['level', 'color', 'type', 'weight']
+			}
+		]
+	},
 	props: [
 		{
 			name: 'level',
@@ -35,7 +43,13 @@ export default {
 			name: 'type',
 			type: "'display-1' | 'display-2' | 'display-3'",
 			description:
-				'Display type variant. Overrides the visual styling from `level` with display-scale sizing (larger, lighter weight, tighter line-height). The `level` still determines the HTML element for accessibility. Use for hero banners, marketing headlines, and data callouts.'
+				'Display type variant. Overrides the visual styling from `level` with display-scale sizing (larger, lighter weight, tighter line-height). Themes may add custom visual types. The `level` still determines the HTML element for accessibility. Use for hero banners, marketing headlines, and data callouts.'
+		},
+		{
+			name: 'weight',
+			type: "'medium' | 'normal' | 'semibold' | 'bold'",
+			description:
+				'Explicit font-weight override. Wins over the selected visual type or heading-level default.'
 		},
 		{
 			name: 'children',

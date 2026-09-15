@@ -27,6 +27,13 @@ export default {
 	group: 'Navigation',
 	category: 'Navigation',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			collapsible: {
+				isCollapsed: false
+			}
+		}
+	},
 	props: [
 		{
 			name: 'collapsible',

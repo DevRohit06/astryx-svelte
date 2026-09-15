@@ -2,6 +2,7 @@ import * as stylex from '@stylexjs/stylex';
 import { sx, type SvelteStyleAttrs } from '../../../../internal/sx.js';
 import { colorVars, radiusVars, spacingVars } from '../../../../styles/tokens.stylex.js';
 import { focusOutlineProps } from '../../../../utils/focus-outline.stylex.js';
+import type { TableColumnAlign } from '../../table-types.js';
 
 /**
  * Ported from the styles declared in Astryx's
@@ -30,6 +31,16 @@ const sortStyles = stylex.create({
 		textAlign: 'inherit',
 		borderRadius: radiusVars['--radius-inner']
 	},
+	// The button fills the cell, so the `text-align` the column's `align` puts on
+	// the <th> cannot position its contents. Mirror the column alignment onto the
+	// main axis, or an `align: 'end'` numeric column ends up with a left-hugging
+	// header over right-aligned figures.
+	buttonAlignCenter: {
+		justifyContent: 'center'
+	},
+	buttonAlignEnd: {
+		justifyContent: 'flex-end'
+	},
 	iconWrapperUnsorted: {
 		display: 'inline-flex',
 		opacity: {
@@ -51,8 +62,15 @@ const sortStyles = stylex.create({
 });
 
 /** The full-bleed button that makes a sortable header clickable. */
-export function sortButtonAttrs(): SvelteStyleAttrs {
-	return focusOutlineProps.focusVisible(sortStyles.button);
+export function sortButtonAttrs(align?: TableColumnAlign): SvelteStyleAttrs {
+	return focusOutlineProps.focusVisible(
+		sortStyles.button,
+		align === 'end'
+			? sortStyles.buttonAlignEnd
+			: align === 'center'
+				? sortStyles.buttonAlignCenter
+				: null
+	);
 }
 
 /** The icon wrapper — dimmed until hover/focus while the column is unsorted. */

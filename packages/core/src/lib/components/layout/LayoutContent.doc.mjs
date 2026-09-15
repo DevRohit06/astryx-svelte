@@ -10,17 +10,7 @@ export default {
 	displayName: 'Layout Content',
 	subComponentOf: 'Layout',
 	description: 'Scrollable main content area.',
-	keywords: [
-		'layout',
-		'container',
-		'content',
-		'flex',
-		'box',
-		'wrapper',
-		'scaffold',
-		'page',
-		'shell'
-	],
+	keywords: ['layout', 'container', 'content', 'flex', 'box', 'wrapper', 'page', 'regions'],
 	group: 'Layout',
 	category: 'Layout',
 	isHiddenFromOverview: true,
@@ -39,7 +29,8 @@ export default {
 		{
 			name: 'isScrollable',
 			type: 'boolean',
-			description: 'Enable scrollable overflow.',
+			description:
+				'Enable scrollable overflow. With arithmetic contentWidth values, the scrollport spans through every open side while context-aware insets keep children aligned.',
 			default: 'true'
 		},
 		{

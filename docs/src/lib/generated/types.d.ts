@@ -58,9 +58,42 @@ export interface AnatomyElement {
 	description: string;
 }
 
+export interface AccessibilityRequirement {
+	name: string;
+	description: string;
+	category?: 'Color contrast' | 'Keyboard' | 'Semantics' | 'Content';
+	criterion?: string;
+	requirement?: string;
+	states?: string[];
+}
+
 export interface UsageDoc {
 	description: string;
 	bestPractices?: BestPractice[];
+	/**
+	 * Deliberately unrendered, for now. Upstream 0.5.3 (#5713) added structured
+	 * accessibility requirements and per-theme colour coverage, and renders both
+	 * in a dedicated Accessibility tab on its component pages. This port has no
+	 * such tab, so the data is carried but not shown — an entry on the docs-site
+	 * front in `port/todo.md`, not an oversight.
+	 *
+	 * It is declared rather than dropped because the generator already emits it:
+	 * the prose is upstream's, verbatim, and the alternative is a field the
+	 * registry carries with no type to describe it.
+	 */
+	accessibility?: AccessibilityRequirement[];
+	/**
+	 * Verified colour-accessibility coverage per bundled theme. Unrendered for
+	 * the same reason as `accessibility` above, and additionally because the
+	 * coverage upstream ships is measured against *upstream's* themes — this
+	 * port would have to re-measure its own before showing any of it.
+	 *
+	 * Left loosely typed: nothing here reads into it, and a full transcription of
+	 * upstream's five nested shapes would be five more declarations with no
+	 * reader. The CLI doctype at `packages/cli/authoring/doctypes/base/type.ts`
+	 * carries the complete contract.
+	 */
+	accessibilityThemeCoverage?: unknown[];
 	/**
 	 * Deliberately unrendered: upstream ships `component-detail/Anatomy.tsx` and
 	 * imports it nowhere, so the anatomy in `.doc.mjs` appears on no upstream

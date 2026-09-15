@@ -110,7 +110,11 @@ const ENUMERATED_IN_PROSE = new Set(['IconName']);
  * `Selector` and `Typeahead`'s `startIcon`, `Toast.onDismiss` and
  * `Toolbar.dividers`. Each is the same inherited bargain as its already-listed
  * sibling (`ComplexSelector.startIcon`, `Toast.onHide`, `Section.dividers`), not a
- * new kind of debt. The fix lives in
+ * new kind of debt. 0.5.3's `#5832` did it once more: `useTableRowStatus.getStatus`
+ * became a two-branch union whose custom arm reaches `TableRowStatusColor`, and
+ * upstream's own prose for it enumerates the legal *icon* names but not the legal
+ * colour names — so the description cannot carry the exemption and the composite
+ * type cannot inline it. Reason 2 above, arriving with a pin. The fix lives in
  * `docs/scripts/lib/props-types.mjs`'s `renderType` and is recorded in
  * `port/debts.md`; upstream's own `ENUMERATED_IN_PROSE` above is left at its one
  * entry, because widening it would be divergence rather than porting.
@@ -154,6 +158,7 @@ const PORT_DOC_TYPE_DEBT = new Set([
 	'Tokenizer.startIcon',
 	'Toolbar.dividers',
 	'Typeahead.startIcon',
+	'useTableRowStatus.getStatus',
 	'useTableSortable.onSortChange'
 ]);
 

@@ -42,6 +42,23 @@ export default {
 				description:
 					'Use FieldStatus for general alerts or page-level notices; use Banner or Toast instead.'
 			}
+		],
+		anatomy: [
+			{
+				name: 'Message box',
+				required: true,
+				description: 'Painted container for the validation feedback.'
+			},
+			{
+				name: 'Detached icon',
+				required: false,
+				description: 'Leading status glyph shown only by the detached variant.'
+			},
+			{
+				name: 'Message text',
+				required: true,
+				description: 'Text describing the validation status.'
+			}
 		]
 	},
 	props: [

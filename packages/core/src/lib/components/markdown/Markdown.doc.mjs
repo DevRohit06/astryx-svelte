@@ -61,6 +61,55 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Document',
+				required: true,
+				description: 'Root container for block or inline Markdown content.'
+			},
+			{
+				name: 'Heading',
+				required: false,
+				description: 'Rendered heading block; a custom heading renderer replaces the default part.'
+			},
+			{
+				name: 'Paragraph',
+				required: false,
+				description:
+					'Rendered paragraph block; a custom paragraph renderer replaces the default part.'
+			},
+			{
+				name: 'List',
+				required: false,
+				description: 'Ordered, unordered, or task-list block rendered from Markdown items.'
+			},
+			{
+				name: 'Code block',
+				required: false,
+				description: 'Fenced code block; a custom code renderer replaces the default part.'
+			},
+			{
+				name: 'Blockquote',
+				required: false,
+				description: 'Quoted block; a custom blockquote renderer replaces the default part.'
+			},
+			{
+				name: 'Table',
+				required: false,
+				description: 'Scrollable table block rendered from Markdown rows and columns.'
+			},
+			{
+				name: 'Divider',
+				required: false,
+				description: 'Horizontal rule block; a custom hr renderer replaces the default part.'
+			},
+			{
+				name: 'Image',
+				required: false,
+				description:
+					'Block image or unsafe-URL fallback; a custom image renderer replaces a safe default image.'
+			}
+		],
 		description:
 			'Renders a markdown string as Astryx-styled components. Use Markdown for user-generated content, AI responses, and documentation; it handles headings, lists, tables, code blocks, and citations with consistent styling.',
 		bestPractices: [

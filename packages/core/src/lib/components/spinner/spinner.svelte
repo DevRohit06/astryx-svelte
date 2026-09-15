@@ -122,7 +122,6 @@
 
 	const metrics = $derived(SIZES[size]);
 	const frameSize = $derived(metrics.diameter + metrics.border * 2);
-	const centre = $derived(frameSize / 2);
 	const circumference = $derived(Math.PI * metrics.diameter);
 	const arcLength = $derived(circumference * ARC_FRACTION);
 
@@ -159,26 +158,24 @@
 			{@attach syncRotationPhase}
 			width={frameSize}
 			height={frameSize}
-			viewBox="0 0 {frameSize} {frameSize}"
 			aria-hidden="true"
 			class={ring.class}
 			style={ring.style}
 		>
 			<circle
-				cx={centre}
-				cy={centre}
+				cx="50%"
+				cy="50%"
 				r={metrics.diameter / 2}
 				stroke-width={metrics.border}
 				class={track.class}
 				style={track.style}
 			></circle>
 			<circle
-				cx={centre}
-				cy={centre}
+				cx="50%"
+				cy="50%"
 				r={metrics.diameter / 2}
 				stroke-width={metrics.border}
 				stroke-dasharray="{arcLength} {circumference - arcLength}"
-				transform="rotate(-90 {centre} {centre})"
 				class={arc.class}
 				style={arc.style}
 			></circle>

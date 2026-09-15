@@ -10,20 +10,19 @@ export default {
 	displayName: 'Layout Header',
 	subComponentOf: 'Layout',
 	description: 'Top bar for page titles, app bars, and toolbars.',
-	keywords: [
-		'layout',
-		'container',
-		'content',
-		'flex',
-		'box',
-		'wrapper',
-		'scaffold',
-		'page',
-		'shell'
-	],
+	keywords: ['layout', 'container', 'content', 'flex', 'box', 'wrapper', 'page', 'regions'],
 	group: 'Layout',
 	category: 'Layout',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			children: 'Page Title',
+			hasDivider: true
+		},
+		wrapper: {
+			component: 'Layout'
+		}
+	},
 	props: [
 		{
 			name: 'children',
@@ -45,6 +44,12 @@ export default {
 			name: 'label',
 			type: 'string',
 			description: 'Accessible label for the landmark element.'
+		},
+		{
+			name: 'paddingBlockEnd',
+			type: '0 | 0.5 | 1 | 1.5 | 2 | 3 | 4 | 5 | 6 | 8 | 10',
+			description:
+				'Block-end (bottom) padding, using the spacing scale. Overrides padding on that edge only; paddingBlockEnd={0} docks the last child on the header bottom edge.'
 		},
 		{
 			name: 'role',

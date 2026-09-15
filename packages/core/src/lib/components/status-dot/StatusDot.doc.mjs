@@ -34,6 +34,18 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Dot',
+				required: true,
+				description: 'Painted status dot that carries the selected semantic variant.'
+			},
+			{
+				name: 'Status icon',
+				required: false,
+				description: 'Optional caller-supplied icon rendered inside the dot.'
+			}
+		],
 		description:
 			'A small colored dot that communicates status like online/offline presence or severity levels. Supports five semantic variants and an optional pulse animation. Always pair with a visible text label, as color alone should not carry meaning.',
 		bestPractices: [

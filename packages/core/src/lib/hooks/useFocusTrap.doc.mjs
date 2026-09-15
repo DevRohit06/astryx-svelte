@@ -53,7 +53,7 @@ export default {
 	],
 	usage: {
 		description:
-			'Traps focus within a container element following the WAI-ARIA dialog focus trap pattern. Listens to focus events on the document and redirects focus back into the container if it escapes via keyboard navigation. Handles both Tab and Shift+Tab wrapping. When the trap deactivates or unmounts, focus is restored to the element that was focused before activation, unless focus was already moved elsewhere. Mouse clicks outside the container are not intercepted; use a light-dismiss handler for that.',
+			'Traps focus within a container element following the WAI-ARIA dialog focus trap pattern. Listens to focus events on the document and redirects focus back into the container if it escapes via keyboard navigation. Handles both Tab and Shift+Tab wrapping. When the trap deactivates or unmounts, focus is restored to the element that was focused before activation, unless focus was already moved elsewhere or never entered the trap (so popups that keep focus on their trigger, like comboboxes, are unaffected). Mouse clicks outside the container are not intercepted; use a light-dismiss handler for that.',
 		bestPractices: [
 			{
 				guidance: true,

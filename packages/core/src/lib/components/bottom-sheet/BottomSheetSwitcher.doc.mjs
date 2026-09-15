@@ -12,6 +12,25 @@ export default {
 	group: 'BottomSheet',
 	category: 'Overlay',
 	usage: {
+		anatomy: [
+			{
+				name: 'Shared dialog',
+				required: true,
+				description:
+					'One native dialog that owns modality, focus, dismissal, and lifecycle for the complete flow.'
+			},
+			{
+				name: 'Sheet panels',
+				required: true,
+				description:
+					'Direct BottomSheet children; exactly one is interactive while a previous panel may remain visible and inert during a handoff.'
+			},
+			{
+				name: 'Scrim',
+				required: false,
+				description: 'Native dialog backdrop shown by the default scrim-backed modal presentation.'
+			}
+		],
 		description:
 			"Coordinates a multi-step bottom-sheet flow in one shared dialog; set activeSheet to a nested BottomSheet's sheetId to open or switch steps, and to null to close.",
 		bestPractices: [
@@ -21,9 +40,19 @@ export default {
 					'Use when each step depends on the previous one and only one step needs attention at a time.'
 			},
 			{
+				guidance: true,
+				description:
+					'Give every child a unique sheetId and non-empty label, choose its purpose to match dismissal requirements, and follow the WAI-ARIA Dialog (Modal) pattern for scrim-backed flows: https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/.'
+			},
+			{
 				guidance: false,
 				description:
 					"Don't split information across sheets when people need to compare it; use a full-page layout that keeps the relevant content visible together instead."
+			},
+			{
+				guidance: false,
+				description:
+					"Don't use the switcher when multiple panels must stay interactive or visible together; activeSheet intentionally selects one interactive step."
 			}
 		]
 	},
@@ -34,6 +63,17 @@ export default {
 		overlay: true
 	},
 	props: [
+		{
+			name: 'ref',
+			type: 'HTMLDialogElement | null',
+			description: 'Ref forwarded to the one shared native dialog.'
+		},
+		{
+			name: 'oncancel',
+			type: 'EventHandler<Event, T> | null',
+			description:
+				'Called before the switcher handles a native dialog cancel request. Calling preventDefault() keeps the controlled flow open.'
+		},
 		{
 			name: 'activeSheet',
 			type: 'string | null',

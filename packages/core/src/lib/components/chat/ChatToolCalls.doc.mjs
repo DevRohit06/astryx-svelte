@@ -73,7 +73,7 @@ export default {
 				name: 'Status icon',
 				required: true,
 				description:
-					'A colored circle with a check, cross, or spinner indicating whether the call is pending, running, complete, or errored.'
+					'A themed semantic success/error icon, or a spinner while the call is pending or running.'
 			},
 			{
 				name: 'Tool name',
@@ -111,6 +111,26 @@ export default {
 					'A wrench icon with a call count, shown when multiple calls are present. Clicking toggles between the summary and the full list.'
 			}
 		]
+	},
+	playground: {
+		defaults: {
+			calls: [
+				{
+					name: 'read_file',
+					status: 'complete',
+					target: 'Button.tsx',
+					duration: '120ms'
+				},
+				{
+					name: 'run_tests',
+					status: 'complete',
+					target: 'yarn test',
+					duration: '1.2s',
+					additions: 12,
+					deletions: 3
+				}
+			]
+		}
 	},
 	props: [
 		{

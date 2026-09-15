@@ -54,6 +54,13 @@ export default {
 				private: true
 			},
 			{
+				name: '--_field-status-overlap',
+				description:
+					'Amount an attached FieldStatus extends behind the lower half of the control. Set from the rendered control size.',
+				default: 'calc(var(--size-element-md) / 2)',
+				private: true
+			},
+			{
 				name: '--_input-clear-hit-inset',
 				description:
 					"Outset of the clear (✕) button's invisible hit area, applied to a ::after overlay. 0 on a fine pointer; negative on a coarse one, which grows the 20px button to the 24px touch target without changing what is drawn.",

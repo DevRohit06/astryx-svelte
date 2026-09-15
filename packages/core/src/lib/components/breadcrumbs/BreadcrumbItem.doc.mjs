@@ -26,6 +26,10 @@ export default {
 	group: 'Breadcrumbs',
 	category: 'Navigation',
 	isHiddenFromOverview: true,
+	usage: {
+		description:
+			'BreadcrumbItem represents one destination, action, current location, or sibling-menu trigger inside a Breadcrumbs trail.'
+	},
 	props: [
 		{
 			name: 'children',
@@ -46,8 +50,8 @@ export default {
 		{
 			name: 'isCurrent',
 			type: 'boolean',
-			description: 'Marks this item as the current page, applying aria-current="page".',
-			default: 'false'
+			description:
+				'Marks this item as the current page, applying aria-current="page". When omitted, the last item is auto-detected if no item is explicitly current; pass false to opt out.'
 		},
 		{
 			name: 'startIcon',

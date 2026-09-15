@@ -15,6 +15,12 @@ export default {
 	group: 'Navigation',
 	category: 'Navigation',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			superheading: 'Acme Suite',
+			heading: 'Acme Console'
+		}
+	},
 	props: [
 		{
 			name: 'logo',

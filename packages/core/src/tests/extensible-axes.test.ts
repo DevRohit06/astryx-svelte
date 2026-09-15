@@ -226,6 +226,34 @@ function collectExtensibleAxes(files: string[], propMaps: Set<string>): Extensib
 }
 
 /** Every `themeProps('name', {...})` site, as class -> the prop keys it passes. */
+/**
+ * Every prop name an object literal passed to `themeProps` reflects, descending
+ * into spreads.
+ *
+ * A conditional spread — `{ level, ...(type && { type }) }` — is a
+ * `SpreadAssignment` whose `name` is undefined, so reading names off the
+ * top-level properties alone reported the prop as unreflected. That is a
+ * false *failure* here, but the same blind spot would be a false *pass* for any
+ * axis whose only reflection site is inside a spread, which is why it is fixed
+ * rather than worked around at the call site.
+ */
+function collectKeys(literal: ts.ObjectLiteralExpression, into: Set<string>): void {
+	for (const prop of literal.properties) {
+		if (ts.isSpreadAssignment(prop)) {
+			const visit = (node: ts.Node): void => {
+				if (ts.isObjectLiteralExpression(node)) collectKeys(node, into);
+				else ts.forEachChild(node, visit);
+			};
+			visit(prop.expression);
+			continue;
+		}
+		const name = prop.name;
+		if (name != null && (ts.isIdentifier(name) || ts.isStringLiteralLike(name))) {
+			into.add(name.text);
+		}
+	}
+}
+
 function collectThemePropsSites(files: string[]): Map<string, Set<string>> {
 	const sites = new Map<string, Set<string>>();
 	for (const file of files) {
@@ -240,12 +268,7 @@ function collectThemePropsSites(files: string[]): Map<string, Set<string>> {
 					const cls = stableClassName(nameArg.text);
 					const keys = sites.get(cls) ?? new Set<string>();
 					if (propsArg != null && ts.isObjectLiteralExpression(propsArg)) {
-						for (const prop of propsArg.properties) {
-							const name = prop.name;
-							if (name != null && (ts.isIdentifier(name) || ts.isStringLiteralLike(name))) {
-								keys.add(name.text);
-							}
-						}
+						collectKeys(propsArg, keys);
 					}
 					sites.set(cls, keys);
 				}
@@ -306,6 +329,23 @@ async function collectDocTargets(dir: string): Promise<Map<string, DocTarget[]>>
 	return byDir;
 }
 
+/** Parse a single object literal expression, for the guard-the-guard case. */
+function tsObjectLiteral(source: string): ts.ObjectLiteralExpression {
+	const file = ts.createSourceFile(
+		'probe.ts',
+		`const x = ${source};`,
+		ts.ScriptTarget.Latest,
+		true
+	);
+	const statement = file.statements[0];
+	if (!ts.isVariableStatement(statement)) throw new Error('probe did not parse');
+	const initializer = statement.declarationList.declarations[0]?.initializer;
+	if (initializer == null || !ts.isObjectLiteralExpression(initializer)) {
+		throw new Error('probe is not an object literal');
+	}
+	return initializer;
+}
+
 // ---------------------------------------------------------------------------
 
 const files = sourceFilesUnder(LIB_DIR);
@@ -326,6 +366,20 @@ describe('extensible prop axes are reachable by a theme', () => {
 		// pass on an empty list.
 		expect(axes.length).toBeGreaterThan(10);
 		expect(axes.map((a) => a.mapName)).toContain('ButtonVariantMap');
+	});
+
+	it('reads prop names out of a spread, not just direct properties', () => {
+		// No component currently reflects through a conditional spread, so this
+		// branch of `collectKeys` has no live caller to prove it. Left unproven it
+		// is the shape of guard that fails *open*: an axis whose only reflection
+		// site is inside a spread would read as unreflected here, or — once the
+		// walk is widened — could silently stop matching again with nothing to
+		// notice. `heading` reflected `type` through exactly such a spread until
+		// this batch.
+		const literal = tsObjectLiteral(`{ level, ...(type && { type }), ...rest }`);
+		const keys = new Set<string>();
+		collectKeys(literal, keys);
+		expect([...keys].sort()).toEqual(['level', 'type']);
 	});
 
 	it.each(axes.map((a) => [`${a.dir}.${a.prop} (${a.mapName})`, a] as const))(

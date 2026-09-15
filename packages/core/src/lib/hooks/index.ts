@@ -48,13 +48,6 @@ export {
 	type UseFocusTrapReturn
 } from './use-focus-trap.svelte.js';
 
-/**
- * @deprecated Import from `@astryx-svelte/core/utils` instead — this is a pure
- * predicate, not a hook. Re-exported here for one release so consumers can move;
- * will be removed in an upcoming major.
- */
-export { isImeKeyEvent } from '../utils/ime.js';
-
 export {
 	useGridFocus,
 	type UseGridFocusOptions,

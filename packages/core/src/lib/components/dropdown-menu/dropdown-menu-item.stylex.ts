@@ -25,7 +25,8 @@ const menuItemStyles = stylex.create({
 		// keyboard-focused row highlighted at the same time as the hovered one.
 		backgroundColor: {
 			default: 'transparent',
-			':focus': colorVars['--color-overlay-hover']
+			':focus': colorVars['--color-overlay-hover'],
+			':active:where(:not(:disabled,[aria-disabled="true"]))': colorVars['--color-overlay-pressed']
 		},
 		border: 'none',
 		cursor: {

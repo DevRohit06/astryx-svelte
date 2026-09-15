@@ -30,6 +30,17 @@ export default {
 	],
 	group: 'Chat',
 	category: 'Chat',
+	playground: {
+		defaults: {
+			sender: 'assistant'
+		},
+		wrapper: {
+			component: 'Stack',
+			props: {
+				width: 480
+			}
+		}
+	},
 	props: [
 		{
 			name: 'sender',

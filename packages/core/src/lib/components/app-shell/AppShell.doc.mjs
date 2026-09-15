@@ -42,7 +42,7 @@ export default {
 	},
 	usage: {
 		description:
-			'The outermost layout for an application. Provides slots for top navigation, side navigation, banners, and main content. Use it as the root wrapper for every page. It handles responsive mobile navigation and skip-to-content automatically. Configure side nav collapse on SideNav with its collapsible prop.',
+			'AppShell is the page shell for an application. It provides slots for top navigation, side navigation, banners, and main content. Use it as the root wrapper for every page. It handles responsive mobile navigation and skip-to-content automatically. Configure side nav collapse on SideNav with its collapsible prop.',
 		bestPractices: [
 			{
 				guidance: true,
@@ -79,6 +79,12 @@ export default {
 			}
 		],
 		anatomy: [
+			{
+				name: 'Page shell',
+				required: true,
+				description:
+					'Outermost application frame that owns page-level navigation, responsive shell behavior, and the main content landmark.'
+			},
 			{
 				name: 'Skip link',
 				required: true,
@@ -150,7 +156,7 @@ export default {
 			name: 'mobileNav',
 			type: 'false | MobileNavConfig | Snippet',
 			description:
-				"Mobile navigation configuration. Accepts false (disable), a config object (tune auto behavior), or ReactNode (full custom drawer). The config object is {hasToggle?: boolean, isOpen?: boolean, onOpenChange?: (isOpen: boolean) => void, content?: ReactNode, breakpoint?: 'sm' | 'md' | 'lg' | 'none', defaultIsMobile?: boolean}; breakpoint defaults to 'md'."
+				"Mobile navigation configuration. Accepts false (disable), a config object (tune auto behavior), or ReactNode (full custom drawer). The config object is {hasToggle?: boolean, isOpen?: boolean, onOpenChange?: (isOpen: boolean) => void, content?: ReactNode, breakpoint?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'none', defaultIsMobile?: boolean}; breakpoint defaults to 'md', resolves through the nearest Theme's widthBreakpoints, and switches to the wider layout at equality. 'none' is always non-mobile and ignores defaultIsMobile."
 		},
 		{
 			name: 'banner',

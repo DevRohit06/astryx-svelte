@@ -55,10 +55,40 @@ export interface TableRowStatus {
 	label: string;
 }
 
+/**
+ * Semantic row outcome resolved through the active theme, added by upstream
+ * 0.5.3 (#5832) to separate a themed outcome from a hand-coloured marker.
+ *
+ * `color` and `icon` are `never` so the two shapes stay mutually exclusive at
+ * the type level: a semantic status names the outcome and lets the theme pick
+ * both the glyph and its colour.
+ */
+export interface TableSemanticRowStatus {
+	/** The outcome. Resolves to the same-named icon and icon colour. */
+	status: 'success' | 'warning' | 'error';
+	color?: never;
+	icon?: never;
+	/**
+	 * Accessible name for the status, announced to assistive technology and
+	 * shown in a tooltip on hover.
+	 */
+	label: string;
+}
+
+/** What `getStatus` may return: a custom marker, a semantic outcome, or nothing. */
+export type TableRowStatusResult =
+	(TableRowStatus & { status?: never }) | TableSemanticRowStatus | null;
+
 /** Configuration for {@link useTableRowStatus}. */
 export interface UseTableRowStatusConfig<T extends Record<string, unknown>> {
 	/**
 	 * Derive the status indicator for a row. Return `null` for no indicator.
+	 *
+	 * Either a **custom marker** — `color` (one of `'accent' | 'success' |
+	 * 'error' | 'warning' | 'red' | 'orange' | 'green' | 'yellow' | 'blue' |
+	 * 'gray'`, or a raw CSS colour) with an optional `icon` — or a **semantic
+	 * outcome**, `status: 'success' | 'warning' | 'error'`, which the active
+	 * theme resolves to both glyph and colour. The two cannot be combined.
 	 *
 	 * @example
 	 * ```ts
@@ -66,7 +96,7 @@ export interface UseTableRowStatusConfig<T extends Record<string, unknown>> {
 	 *   row.hasError ? { color: 'error', icon: 'error', label: 'Error' } : null
 	 * ```
 	 */
-	getStatus: (item: T) => TableRowStatus | null;
+	getStatus: (item: T) => TableRowStatusResult;
 }
 
 // The status column holds a small centered dot (or an icon when provided).

@@ -36,6 +36,20 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Grid container',
+				required: true,
+				description:
+					'Two-dimensional layout container that arranges caller-supplied items in rows and columns.'
+			},
+			{
+				name: 'Spanning item',
+				required: false,
+				description:
+					"Optional GridSpan wrapper that changes one item's column or row participation."
+			}
+		],
 		description:
 			'A CSS grid layout container for arranging children in rows and columns. Use Grid for card galleries, dashboards, and any multi-column layout. Supports fixed column counts and responsive columns that reflow based on available width.',
 		bestPractices: [
@@ -68,6 +82,12 @@ export default {
 					'Track templates use CSS-variable indirection (not raw inline styles), so `xstyle` overrides of `gridTemplateColumns` (including inside `@media` queries) take effect.'
 			}
 		]
+	},
+	playground: {
+		defaults: {
+			columns: 3,
+			gap: 2
+		}
 	},
 	props: [
 		{

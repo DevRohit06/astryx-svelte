@@ -49,7 +49,8 @@ export default {
 		{
 			name: 'label',
 			type: 'string',
-			description: 'Step label text.',
+			description:
+				'Step label text. Kept to a single line and ellipsized when the step is narrower than the label, so a row of horizontal steps stays the same height and the track under them stays straight. The full string is still read out as part of the step, so a truncated label costs nothing in the accessible name — but short labels survive narrow layouts better.',
 			required: true
 		},
 		{
@@ -61,7 +62,7 @@ export default {
 			name: 'children',
 			type: 'Snippet',
 			description:
-				'Content rendered below the label and description. Useful in vertical steppers for form fields or detailed step content.'
+				'Content rendered below the label and description. Useful in vertical steppers for form fields or detailed step content. In a compact horizontal Stepper, the content remains mounted to preserve local state while it is hidden with the expanded step details.'
 		},
 		{
 			name: 'status',

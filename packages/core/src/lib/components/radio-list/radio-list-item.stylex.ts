@@ -1,4 +1,5 @@
 import * as stylex from '@stylexjs/stylex';
+import { rtlStyles } from '../../utils/rtl.stylex.js';
 import { sx, type StyleArg, type SvelteStyleAttrs } from '../../internal/sx.js';
 import { indicatorScope } from '../indicator/indicator.markers.stylex.js';
 import type { RadioListSize } from './radio-list-context.svelte.js';
@@ -29,6 +30,12 @@ const styles = stylex.create({
 	},
 	input: {
 		position: 'absolute',
+		// The block anchor is unconditional; the inline half comes from
+		// `rtlStyles.centerInline('-50%')` at the call site, which pairs a physical
+		// `left: 50%` with a physical translate so the pair centres identically in
+		// both directions. A logical anchor here would flip under RTL while the
+		// translate did not, leaving the hit area off by its own width.
+		top: '50%',
 		margin: 0,
 		padding: 0,
 		opacity: 0,
@@ -36,26 +43,15 @@ const styles = stylex.create({
 			default: 'pointer',
 			':is(:disabled,[aria-disabled="true"])': 'default'
 		},
-		zIndex: 1,
-		minInlineSize: {
-			default: null,
-			'@media (pointer: coarse)': '24px'
-		},
-		minBlockSize: {
-			default: null,
-			'@media (pointer: coarse)': '24px'
-		},
-		insetBlockStart: {
-			default: null,
-			'@media (pointer: coarse)': '50%'
-		},
-		insetInlineStart: {
-			default: null,
-			'@media (pointer: coarse)': '50%'
-		},
-		transform: {
-			default: null,
-			'@media (pointer: coarse)': 'translate(-50%, -50%)'
+		zIndex: 1
+	},
+	// Coarse pointers get a 24px minimum hit area. Split out of `input` by
+	// upstream 0.5.3 so the media query is declared once rather than smeared
+	// across five conditional declarations.
+	inputCoarse: {
+		'@media (pointer: coarse)': {
+			minInlineSize: 24,
+			minBlockSize: 24
 		}
 	},
 	inputDisabled: {
@@ -128,7 +124,13 @@ export function radioWrapperAttrs(size: RadioListSize): SvelteStyleAttrs {
 
 /** The transparent `<input type="radio">` overlaid on the circle. */
 export function radioInputAttrs(size: RadioListSize, isDisabled: boolean): SvelteStyleAttrs {
-	return sx(styles.input, wrapperSizeStyles[size], isDisabled && styles.inputDisabled);
+	return sx(
+		styles.input,
+		rtlStyles.centerInline('-50%'),
+		styles.inputCoarse,
+		wrapperSizeStyles[size],
+		isDisabled && styles.inputDisabled
+	);
 }
 
 /**

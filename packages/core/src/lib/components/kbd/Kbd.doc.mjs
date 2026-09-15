@@ -28,6 +28,18 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Shortcut',
+				required: true,
+				description: 'Group that presents the complete keyboard shortcut and its accessible name.'
+			},
+			{
+				name: 'Key badge',
+				required: true,
+				description: 'Painted key badge rendered once for each key in the shortcut.'
+			}
+		],
 		description:
 			'Renders a keyboard shortcut as styled key badges. Use Kbd in tooltips, menus, and help text to show key combinations.',
 		bestPractices: [

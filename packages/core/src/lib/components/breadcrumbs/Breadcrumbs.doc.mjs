@@ -91,6 +91,11 @@ export default {
 					'Let the trail grow beyond 5 levels. If you need more, consider simplifying the page hierarchy instead.'
 			},
 			{
+				guidance: true,
+				description:
+					'The built-in slash separator mirrors automatically in RTL. For a custom separator, leave Unicode-mirrored angle quotes such as › alone; mirror arrows and Icon separators once with rtlStyles.mirror.'
+			},
+			{
 				guidance: false,
 				description:
 					'Mirror a separator the bidi algorithm already mirrors. An angle-quote glyph such as › is Bidi_Mirrored, so it flips under RTL on its own and rtlStyles.mirror would flip it back. An arrow glyph such as → and any Icon separator are not, so those do need rtlStyles.mirror through xstyle.'
@@ -130,7 +135,8 @@ export default {
 		{
 			name: 'separator',
 			type: 'string | Snippet',
-			description: 'Separator rendered between breadcrumb items.',
+			description:
+				'Separator rendered between breadcrumb items. The built-in slash mirrors automatically in RTL.',
 			default: "'/'"
 		},
 		{

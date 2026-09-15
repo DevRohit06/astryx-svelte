@@ -47,6 +47,11 @@ export default {
 			{
 				guidance: false,
 				description:
+					'Do not pass custom text that disagrees with `count`; `count` continues to provide the accessible label.'
+			},
+			{
+				guidance: false,
+				description:
 					'Do not use long labels inside the indicator; place longer participant details next to the group instead.'
 			}
 		],
@@ -99,7 +104,7 @@ export default {
 		{
 			name: 'xstyle',
 			type: 'StyleArg',
-			description: 'StyleX styles for layout customization.'
+			description: 'stylex.create() value — not an inline style object.'
 		}
 	]
 };

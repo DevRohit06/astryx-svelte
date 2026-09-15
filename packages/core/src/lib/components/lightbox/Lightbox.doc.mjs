@@ -30,6 +30,43 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Viewer overlay',
+				required: true,
+				description: 'Full-viewport dialog overlay that contains the active media and controls.'
+			},
+			{
+				name: 'Media',
+				required: true,
+				description: 'Active image or video presented inside the viewer.'
+			},
+			{
+				name: 'Close button',
+				required: true,
+				description: 'Button that closes the viewer.'
+			},
+			{
+				name: 'Previous button',
+				required: false,
+				description: 'Gallery button that moves to the previous media item.'
+			},
+			{
+				name: 'Next button',
+				required: false,
+				description: 'Gallery button that moves to the next media item.'
+			},
+			{
+				name: 'Caption',
+				required: false,
+				description: 'Caller-provided caption displayed below the active media.'
+			},
+			{
+				name: 'Counter',
+				required: false,
+				description: 'Current position and total shown in gallery mode.'
+			}
+		],
 		description:
 			'A fullscreen overlay for viewing images and videos at full resolution. Supports single-item and gallery modes with prev/next navigation, optional zoom and pan for images, and native video controls.',
 		bestPractices: [

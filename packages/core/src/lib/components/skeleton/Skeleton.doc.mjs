@@ -28,6 +28,13 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Placeholder',
+				required: true,
+				description: 'Painted shape that stands in for content while it loads.'
+			}
+		],
 		description:
 			'An animated shimmer placeholder that previews the shape of content while it loads. Use it to build loading screens that match the layout of the real content. For content with unknown dimensions, use Spinner instead.',
 		bestPractices: [

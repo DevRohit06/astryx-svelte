@@ -60,6 +60,10 @@ const styles = stylex.create({
 		alignItems: 'center',
 		justifyContent: 'center'
 	},
+	// A raw CSS colour the palette does not name. Icon has no matching
+	// `IconColor`, so it renders `color="inherit"` and takes the colour from this
+	// wrapper instead.
+	customIcon: (color: string) => ({ color }),
 	dot: (color: string) => ({
 		width: '8px',
 		height: '8px',
@@ -69,9 +73,13 @@ const styles = stylex.create({
 	})
 });
 
-/** The centring wrapper around the status dot or icon. */
-export function rowStatusWrapAttrs(): SvelteStyleAttrs {
-	return sx(styles.wrap);
+/**
+ * The centring wrapper around the status dot or icon. A `customColor` is spent
+ * here, not on the Icon, because it is a raw CSS colour with no `IconColor`
+ * counterpart — the icon inherits it.
+ */
+export function rowStatusWrapAttrs(customColor?: string): SvelteStyleAttrs {
+	return sx(styles.wrap, customColor != null && styles.customIcon(customColor));
 }
 
 /** The status dot itself, painted with the resolved colour. */

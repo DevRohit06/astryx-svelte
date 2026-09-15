@@ -84,6 +84,39 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Progress bar',
+				required: true,
+				description: 'Container arranging the label row and progress track.'
+			},
+			{
+				name: 'Label',
+				required: true,
+				description:
+					'Text naming the operation, optionally hidden visually while remaining accessible.'
+			},
+			{
+				name: 'Value text',
+				required: false,
+				description: 'Formatted determinate value shown beside the label when requested.'
+			},
+			{
+				name: 'Track',
+				required: true,
+				description: 'Remaining-progress rail that carries the progressbar semantics.'
+			},
+			{
+				name: 'Fill',
+				required: true,
+				description: 'Painted segment showing completed progress or indeterminate movement.'
+			},
+			{
+				name: 'Mark',
+				required: false,
+				description: 'Labeled target tick positioned on a determinate track.'
+			}
+		],
 		description:
 			"A horizontal bar showing the completion progress of a task. Use it for operations where the duration is known, or as an animated indicator when progress can't be calculated. Supports semantic color variants, value labels, and custom formatting.",
 		bestPractices: [

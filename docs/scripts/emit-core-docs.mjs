@@ -87,7 +87,27 @@ const HEADER =
 // dropped — taken the first time it appears. Every one of these matched
 // upstream's authored keys exactly when the emitter was written.
 
-const USAGE_FIELDS = new Set(['description', 'bestPractices', 'anatomy']);
+// `accessibility` and `accessibilityThemeCoverage` arrived with upstream 0.5.3
+// (#5713, "structured accessibility requirements and theme coverage support to
+// component documentation"). Both are declared in this port's own CLI contract
+// at `packages/cli/authoring/doctypes/base/type.ts`, so they are emitted rather
+// than dropped.
+const USAGE_FIELDS = new Set([
+	'description',
+	'bestPractices',
+	'accessibility',
+	'accessibilityThemeCoverage',
+	'anatomy'
+]);
+const ACCESSIBILITY_FIELDS = new Set([
+	'name',
+	'description',
+	'category',
+	'criterion',
+	'requirement',
+	'states'
+]);
+const A11Y_COVERAGE_FIELDS = new Set(['theme', 'tables', 'notMeasured']);
 const BEST_PRACTICE_FIELDS = new Set(['guidance', 'description']);
 const ANATOMY_FIELDS = new Set(['name', 'required', 'description']);
 const THEMING_FIELDS = new Set(['container', 'targets', 'vars', 'derived']);
@@ -144,6 +164,12 @@ function usageDoc(usage, where) {
 	assertDeclared(usage, USAGE_FIELDS, `${where} usage`);
 	for (const practice of usage.bestPractices ?? []) {
 		assertDeclared(practice, BEST_PRACTICE_FIELDS, `${where} usage.bestPractices[]`);
+	}
+	for (const requirement of usage.accessibility ?? []) {
+		assertDeclared(requirement, ACCESSIBILITY_FIELDS, `${where} usage.accessibility[]`);
+	}
+	for (const coverage of usage.accessibilityThemeCoverage ?? []) {
+		assertDeclared(coverage, A11Y_COVERAGE_FIELDS, `${where} usage.accessibilityThemeCoverage[]`);
 	}
 	for (const element of usage.anatomy ?? []) {
 		assertDeclared(element, ANATOMY_FIELDS, `${where} usage.anatomy[]`);
@@ -426,6 +452,7 @@ const UPSTREAM_EXAMPLES_NOT_PORTED = new Set([
 	'InternationalizationProvider',
 	'Markdown',
 	'Outline',
+	'useResizable',
 	'useTableRowExpansion',
 	'useTableSelection',
 	'useTableTreeData'

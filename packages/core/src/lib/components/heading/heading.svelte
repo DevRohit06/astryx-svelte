@@ -9,6 +9,7 @@
 		TextWrap,
 		WordBreak
 	} from '../text/text.stylex.js';
+	import type { TextWeight } from '../text/text.stylex.js';
 	import type { HeadingLevel, HeadingType } from './heading.stylex.js';
 
 	export interface HeadingProps extends BaseProps<HTMLHeadingElement> {
@@ -19,6 +20,12 @@
 		 * decides the element, so the document outline is unaffected.
 		 */
 		type?: HeadingType;
+		/**
+		 * Explicit font-weight override. The active theme controls the numeric
+		 * value behind each name. When omitted, the selected visual type or the
+		 * heading level supplies the default.
+		 */
+		weight?: TextWeight;
 		/**
 		 * Sets `aria-level` when the visual hierarchy and the document outline
 		 * legitimately disagree — a sidebar heading reused across pages, say.
@@ -62,6 +69,7 @@
 	const {
 		level,
 		type,
+		weight,
 		accessibilityLevel,
 		color = 'primary',
 		display = 'block',
@@ -100,6 +108,7 @@
 			{
 				level,
 				type,
+				weight,
 				color,
 				display: resolvedDisplay,
 				maxLines,
@@ -112,7 +121,7 @@
 			xstyle
 		)
 	);
-	const theme = $derived(themeProps('heading', { level, color, ...(type && { type }) }));
+	const theme = $derived(themeProps('heading', { level, color, type, weight }));
 </script>
 
 {#snippet truncatedFullText()}

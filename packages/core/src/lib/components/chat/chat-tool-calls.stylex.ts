@@ -144,17 +144,6 @@ const styles = stylex.create({
 		height: '16px',
 		borderRadius: radiusVars['--radius-full']
 	},
-	statusIconCircle: {
-		position: 'absolute',
-		inset: 0,
-		borderRadius: 'inherit',
-		backgroundColor: 'currentColor',
-		opacity: 0.15
-	},
-	statusIconInner: {
-		position: 'relative',
-		display: 'inline-flex'
-	},
 	callName: {
 		fontSize: typeScaleVars['--text-supporting-size'],
 		lineHeight: typeScaleVars['--text-supporting-leading'],
@@ -305,14 +294,6 @@ export function chatToolCallToggleRowAttrs(): SvelteStyleAttrs {
 
 export function chatToolCallStatusIconAttrs(status: ChatToolCallStatus): SvelteStyleAttrs {
 	return sx(styles.statusIcon, STATUS_STYLES[status]);
-}
-
-export function chatToolCallStatusCircleAttrs(): SvelteStyleAttrs {
-	return sx(styles.statusIconCircle);
-}
-
-export function chatToolCallStatusInnerAttrs(): SvelteStyleAttrs {
-	return sx(styles.statusIconInner);
 }
 
 export function chatToolCallNameAttrs(): SvelteStyleAttrs {

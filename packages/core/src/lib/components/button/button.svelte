@@ -146,6 +146,11 @@
 		isDisabled || (groupValue?.isDisabled ?? false) || (isLoadingState && !isInterruptible)
 	);
 
+	// Dimming is narrower than inactivity: a loading button is busy rather than
+	// unavailable, so it takes the non-interactive treatment without the 0.5
+	// opacity. Upstream's `visuallyDisabled`.
+	const visuallyDisabled = $derived(isDisabled || (groupValue?.isDisabled ?? false));
+
 	// Disabled links are an accessibility anti-pattern — fall back to <button>.
 	const renderAsLink = $derived(href != null && !buttonDisabled);
 
@@ -183,7 +188,8 @@
 			variant,
 			size,
 			isIconOnly,
-			isDisabled: buttonDisabled,
+			isInactive: buttonDisabled,
+			isDisabled: visuallyDisabled,
 			isAriaDisabled: useAriaDisabled,
 			isLink: renderAsLink,
 			width,

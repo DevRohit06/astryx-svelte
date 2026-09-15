@@ -10,17 +10,7 @@ export default {
 	displayName: 'Layout Footer',
 	subComponentOf: 'Layout',
 	description: 'Bottom bar for action bars, pagination, and status bars.',
-	keywords: [
-		'layout',
-		'container',
-		'content',
-		'flex',
-		'box',
-		'wrapper',
-		'scaffold',
-		'page',
-		'shell'
-	],
+	keywords: ['layout', 'container', 'content', 'flex', 'box', 'wrapper', 'page', 'regions'],
 	group: 'Layout',
 	category: 'Layout',
 	isHiddenFromOverview: true,

@@ -48,11 +48,20 @@ const styles = stylex.create({
 		scrollbarWidth: 'none',
 		maskImage: 'none'
 	},
+	// A single-edge fade names a physical direction, so it has to be mirrored
+	// under RTL — the faded edge is the *scroll* start, which swaps sides.
+	// `fadeBoth` is symmetric and needs no arm.
 	fadeStart: {
-		maskImage: `linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 2px, black ${spacingVars['--spacing-1']})`
+		maskImage: {
+			default: `linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 2px, black ${spacingVars['--spacing-1']})`,
+			':is([dir="rtl"] *)': `linear-gradient(to left, transparent 0%, rgba(0,0,0,0.3) 2px, black ${spacingVars['--spacing-1']})`
+		}
 	},
 	fadeEnd: {
-		maskImage: `linear-gradient(to left, transparent 0%, rgba(0,0,0,0.3) 2px, black ${spacingVars['--spacing-1']})`
+		maskImage: {
+			default: `linear-gradient(to left, transparent 0%, rgba(0,0,0,0.3) 2px, black ${spacingVars['--spacing-1']})`,
+			':is([dir="rtl"] *)': `linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 2px, black ${spacingVars['--spacing-1']})`
+		}
 	},
 	fadeBoth: {
 		maskImage: `linear-gradient(to right, transparent 0%, rgba(0,0,0,0.3) 2px, black ${spacingVars['--spacing-1']}, black calc(100% - ${spacingVars['--spacing-1']}), rgba(0,0,0,0.3) calc(100% - 2px), transparent 100%)`

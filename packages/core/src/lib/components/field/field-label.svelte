@@ -81,6 +81,7 @@
 	import {
 		fieldLabelAttrs,
 		fieldLabelDescriptionAttrs,
+		fieldLabelGroupAttrs,
 		fieldLabelStatusTextAttrs
 	} from './field-label.stylex.js';
 
@@ -191,38 +192,52 @@
 	const descriptionAttrs = $derived(
 		fieldLabelDescriptionAttrs(isLabelHidden, forwardsDescriptionClick)
 	);
+	const groupAttrs = $derived(fieldLabelGroupAttrs(isLabelHidden));
 </script>
 
-<!--
+{#snippet labelElement()}
+	<!--
 	A group label (e.g. for a radiogroup) must not be a literal `<label>`
 	element: a `<label>` semantically names a single form control and can't be
 	associated with a group. Render it as a `<span>` instead, keeping all the
 	label styling and slots. The group references it via `aria-labelledby`.
 -->
-<svelte:element
-	this={isGroupLabel ? 'span' : 'label'}
-	id={labelID}
-	for={isGroupLabel ? undefined : inputID}
-	{...rest}
-	{...theme}
-	class={cx(theme.class, attrs.class, className)}
-	style={mergeStyle(attrs.style, styleProp as string | undefined)}
->
-	{#if labelIcon}{@render labelIcon()}{/if}{label}{#if statusText}<span
-			class={statusTextAttrs.class}
-			style={statusTextAttrs.style}><span aria-hidden="true">{separator}</span>{statusText}</span
-		>{/if}{#if labelTooltip}<Tooltip content={labelTooltip} placement="above">
-			<Icon icon="info" size="sm" color="inherit" />
-		</Tooltip>{/if}
-</svelte:element>
-{#if description}
-	<span
-		bind:this={descriptionEl}
-		id={descriptionID}
-		{...descriptionClick}
-		class={descriptionAttrs.class}
-		style={descriptionAttrs.style}
+	<svelte:element
+		this={isGroupLabel ? 'span' : 'label'}
+		id={labelID}
+		for={isGroupLabel ? undefined : inputID}
+		{...rest}
+		{...theme}
+		class={cx(theme.class, attrs.class, className)}
+		style={mergeStyle(attrs.style, styleProp as string | undefined)}
 	>
-		{#if typeof description === 'function'}{@render description()}{:else}{description}{/if}
-	</span>
+		{#if labelIcon}{@render labelIcon()}{/if}{label}{#if statusText}<span
+				class={statusTextAttrs.class}
+				style={statusTextAttrs.style}><span aria-hidden="true">{separator}</span>{statusText}</span
+			>{/if}{#if labelTooltip}<Tooltip content={labelTooltip} placement="above">
+				<Icon icon="info" size="sm" color="inherit" />
+			</Tooltip>{/if}
+	</svelte:element>
+{/snippet}
+
+<!--
+	Without a description the label itself stays the caller's flex/grid item, so
+	the caller's layout overrides keep applying to it — upstream returns the bare
+	element on that branch rather than always wrapping.
+-->
+{#if description}
+	<div class={groupAttrs.class} style={groupAttrs.style}>
+		{@render labelElement()}
+		<span
+			bind:this={descriptionEl}
+			id={descriptionID}
+			{...descriptionClick}
+			class={descriptionAttrs.class}
+			style={descriptionAttrs.style}
+		>
+			{#if typeof description === 'function'}{@render description()}{:else}{description}{/if}
+		</span>
+	</div>
+{:else}
+	{@render labelElement()}
 {/if}

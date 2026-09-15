@@ -29,7 +29,8 @@ export default {
 				className: 'astryx-popover'
 			},
 			{
-				className: 'astryx-popover-surface'
+				className: 'astryx-popover-surface',
+				deprecatedFor: 'popover'
 			}
 		],
 		vars: [
@@ -61,6 +62,11 @@ export default {
 					'Provide a clear way to close: either by clicking outside or with an explicit close button.'
 			},
 			{
+				guidance: true,
+				description:
+					'Theme the painted surface through popover. Existing popover-surface overrides remain supported for compatibility, while new themes use the canonical target.'
+			},
+			{
 				guidance: false,
 				description:
 					'Nest popovers inside other popovers; it creates confusing focus and navigation.'
@@ -68,29 +74,36 @@ export default {
 			{
 				guidance: false,
 				description:
-					'Use a popover for content that requires heavy user input; use a Dialog instead.'
+					"Assume input complexity alone determines the presentation; evaluate the task's focus, space, and interaction requirements."
 			},
 			{
 				guidance: false,
 				description:
-					'Put too much content in a popover; if it needs scrolling, use a Dialog instead.'
+					'Assume scrolling alone means Popover is the wrong component; a bounded Popover may scroll while a focused anchored interaction remains appropriate.'
 			}
 		],
 		anatomy: [
 			{
-				name: 'Header',
+				name: 'Trigger element',
 				required: true,
-				description: 'Contains the title, optional subheader, and close button.'
+				description:
+					'Caller-supplied or externally referenced control that anchors and toggles the popover.'
 			},
 			{
-				name: 'Body',
+				name: 'Popover surface',
 				required: true,
-				description: 'Main content area of the popover.'
+				description:
+					'Painted surface owned by Popover. Theme it through the canonical popover target; popover-surface remains supported as a deprecated compatibility alias.'
 			},
 			{
-				name: 'Trigger Element',
+				name: 'Popover content',
 				required: true,
-				description: 'The button or link that toggles the popover open.'
+				description: 'Caller-supplied content rendered inside the surface.'
+			},
+			{
+				name: 'Fallback close control',
+				required: false,
+				description: 'Keyboard-reachable close affordance appended by usePopover when enabled.'
 			}
 		]
 	},
@@ -144,7 +157,8 @@ export default {
 		{
 			name: 'width',
 			type: 'number | string',
-			description: 'Width of the popover container.',
+			description:
+				'Width of the popover container. The layer still caps to the viewport with alignment-aware safe-area gutters before scrolling long content.',
 			default: "'auto'"
 		},
 		{
@@ -182,7 +196,7 @@ export default {
 			name: 'hasAutoFocus',
 			type: 'boolean',
 			description:
-				'Whether to auto-focus the first focusable element when the popover opens. Set to false for inline showcases or documentation previews.',
+				'Whether to move focus into the popover when it opens. Focus enters the first genuine content control; dialogs with none fall back to the labeled surface. The generated fallback close control stays hidden until reached through keyboard navigation. Set to false for input-owned focus, inline showcases, or documentation previews.',
 			default: 'true'
 		},
 		{

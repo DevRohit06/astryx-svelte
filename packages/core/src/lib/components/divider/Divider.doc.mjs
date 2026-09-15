@@ -19,6 +19,23 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Divider group',
+				required: true,
+				description: 'Separator group that arranges one or two rules around an optional label.'
+			},
+			{
+				name: 'Rule',
+				required: true,
+				description: 'Painted line segment; a second segment renders when a label is present.'
+			},
+			{
+				name: 'Label',
+				required: false,
+				description: 'Optional content displayed between two rule segments.'
+			}
+		],
 		description:
 			'A visual separator that divides content into distinct sections. Use to create clear boundaries between groups of related content, or to demarcate interactive regions within a layout.',
 		bestPractices: [

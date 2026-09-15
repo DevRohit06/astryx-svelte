@@ -47,7 +47,7 @@
 	const t = useTranslator();
 	const ariaLabel = $derived(buildAriaLabel(t, column, direction, rank, config().sort.length));
 
-	const buttonAttrs = sortButtonAttrs();
+	const buttonAttrs = $derived(sortButtonAttrs(column.align));
 	const rankAttrs = sortRankAttrs();
 	const iconAttrs = $derived(sortIconWrapperAttrs(direction != null));
 

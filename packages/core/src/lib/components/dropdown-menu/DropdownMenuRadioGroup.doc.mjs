@@ -25,6 +25,22 @@ export default {
 	group: 'DropdownMenu',
 	category: 'Action',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			value: 'newest',
+			label: 'Sort by'
+		},
+		wrapper: {
+			component: 'DropdownMenu',
+			props: {
+				button: {
+					label: 'Sort'
+				},
+				presentation: 'popover',
+				isMenuOpen: true
+			}
+		}
+	},
 	props: [
 		{
 			name: 'value',

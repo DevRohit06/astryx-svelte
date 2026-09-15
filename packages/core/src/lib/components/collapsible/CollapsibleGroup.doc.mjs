@@ -62,6 +62,13 @@ export default {
 				"Row density controlling trigger and content block padding on the group's items. Defaults to 'balanced' when dividers are shown; otherwise items keep their default unpadded look."
 		},
 		{
+			name: 'chevronPosition',
+			type: "'start' | 'end'",
+			description:
+				"Logical position shared by the group's direct Collapsible items. `end` is the default trailing indicator; `start` is a leading disclosure arrow that points inward when collapsed (mirrored under RTL) and down when expanded. An individual Collapsible can still override it.",
+			default: "'end'"
+		},
+		{
 			name: 'children',
 			type: 'Snippet',
 			description: 'Collapsible instances to coordinate.',
