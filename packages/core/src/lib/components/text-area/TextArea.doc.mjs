@@ -57,6 +57,70 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Label',
+				required: true,
+				description: 'Text identifying the multi-line field.'
+			},
+			{
+				name: 'Description',
+				required: false,
+				description: 'Helper text between the label and the input.'
+			},
+			{
+				name: 'Input container',
+				required: true,
+				description: 'Painted boundary containing the text area and its overlays.'
+			},
+			{
+				name: 'Text area',
+				required: true,
+				description: 'Multi-line control that displays and edits the value.'
+			},
+			{
+				name: 'Placeholder',
+				required: false,
+				description: 'Hint text shown inside the empty text area.'
+			},
+			{
+				name: 'Start icon',
+				required: false,
+				description:
+					'Astryx Icon rendered at the start when startIcon is a semantic name or icon component.'
+			},
+			{
+				name: 'Custom start content',
+				required: false,
+				description: 'Caller-provided ReactNode rendered at the start instead of an Astryx Icon.'
+			},
+			{
+				name: 'Spinner',
+				required: false,
+				description: 'Loading indicator shown at the end of the input container.'
+			},
+			{
+				name: 'Status icon',
+				required: false,
+				description: 'Error, warning, or success icon shown inside the input.'
+			},
+			{
+				name: 'Character counter',
+				required: false,
+				description: 'Current and maximum character counts shown inside the input container.'
+			},
+			{
+				name: 'Field status message',
+				required: false,
+				description:
+					'Attached or detached error, warning, or success message associated with the field.'
+			},
+			{
+				name: 'Tooltip status message',
+				required: false,
+				description: 'Tooltip surface presenting the status message for the tooltip variant.'
+			}
+		],
 		description:
 			'TextArea is a multi-line text input for collecting longer-form content like comments, descriptions, or messages. Use it when the expected input spans multiple lines. For shorter, single-line values, use TextInput.',
 		bestPractices: [
@@ -266,6 +330,12 @@ export default {
 			name: 'onblur',
 			type: 'FocusEventHandler<HTMLTextAreaElement>',
 			description: 'Callback fired when the textarea loses focus.'
+		},
+		{
+			name: 'autoComplete',
+			type: 'string',
+			description:
+				'The native autocomplete attribute, forwarded to the textarea unchanged. Does not affect the controlled value.'
 		},
 		{
 			name: 'xstyle',

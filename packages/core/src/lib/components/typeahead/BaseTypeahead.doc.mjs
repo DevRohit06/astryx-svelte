@@ -10,7 +10,7 @@ export default {
 	displayName: 'Base Typeahead',
 	subComponentOf: 'Typeahead',
 	description:
-		'Unstyled combobox engine providing input, search, keyboard navigation, and dropdown. No wrapper div, no border styling, no token rendering. Used by Typeahead and Tokenizer for custom compositions.',
+		'Composable combobox engine providing a bare input, search, keyboard navigation, and a styled result dropdown. It renders no input wrapper, border, or selected-value token. Typeahead and Tokenizer compose it for standard fields.',
 	keywords: [
 		'typeahead',
 		'autocomplete',
@@ -28,18 +28,70 @@ export default {
 	category: 'Form Controls',
 	isHiddenFromOverview: true,
 	usage: {
+		anatomy: [
+			{
+				name: 'Input',
+				required: true,
+				description:
+					'Bare combobox input. The caller supplies its visible field chrome and accessible name.'
+			},
+			{
+				name: 'Loading status',
+				required: false,
+				description:
+					'Named Spinner shown beside the input while an asynchronous source is pending, unless a composed owner takes over the busy indicator lane.'
+			},
+			{
+				name: 'Dropdown',
+				required: false,
+				description: 'Anchored listbox surface containing current search or bootstrap results.'
+			},
+			{
+				name: 'Empty state',
+				required: false,
+				description: 'Disabled listbox option shown after a completed search returns no results.'
+			},
+			{
+				name: 'Result group heading',
+				required: false,
+				description: 'Visible label for a group of result options.'
+			},
+			{
+				name: 'Result row',
+				required: false,
+				description:
+					'Option wrapper that owns highlight, selection, pointer, and keyboard behavior.'
+			},
+			{
+				name: 'Default item content',
+				required: false,
+				description:
+					'TypeaheadItem label and optional supporting content rendered inside a result row.'
+			},
+			{
+				name: 'Caller-rendered item content',
+				required: false,
+				description:
+					'Caller content supplied through renderItem or item.element inside the stable result row.'
+			},
+			{
+				name: 'Selected result state',
+				required: false,
+				description: 'Selected row weight and trailing check shown when a result matches value.'
+			}
+		],
 		description:
-			'Unstyled combobox engine providing input, search, keyboard navigation, and dropdown. No wrapper div, no border styling, no token rendering. Used by Typeahead and Tokenizer for custom compositions.',
+			'Composable combobox engine providing a bare input, search, keyboard navigation, and a styled result dropdown. It renders no input wrapper, border, or selected-value token. Typeahead and Tokenizer compose it for standard fields.',
 		bestPractices: [
 			{
 				guidance: true,
 				description:
-					'Use Typeahead or Tokenizer for standard fields; they wrap BaseTypeahead with the wrapper div, border styling, and token rendering it intentionally omits.'
+					'Use Typeahead or Tokenizer for standard fields; they wrap BaseTypeahead with input chrome and selected-value rendering it intentionally omits.'
 			},
 			{
 				guidance: true,
 				description:
-					'Provide your own wrapper div with border and layout when composing directly, since BaseTypeahead renders no visual chrome of its own.'
+					'Provide your own visible label or aria-label and custom input wrapper so the bare combobox has an accessible name, focus treatment, border, and layout.'
 			},
 			{
 				guidance: true,
@@ -49,12 +101,17 @@ export default {
 			{
 				guidance: false,
 				description:
-					"Expect a wrapper div, border, or token rendering. BaseTypeahead is an engine only; all visual chrome is the caller's responsibility."
+					'Expect input chrome or selected-value rendering. BaseTypeahead is an engine; the caller owns those visible parts.'
 			},
 			{
 				guidance: false,
 				description:
 					'Use BaseTypeahead when Typeahead or Tokenizer would suffice; the extra wrapper and styling work is only justified for truly custom compositions.'
+			},
+			{
+				guidance: false,
+				description:
+					'Treat Escape as cancellation of pending source work. It hides the current popup, but a late response can reopen it.'
 			}
 		]
 	},
@@ -86,7 +143,7 @@ export default {
 			name: 'placeholder',
 			type: 'string',
 			description: 'Input placeholder text.',
-			default: "'Search...'"
+			default: "'Search…'"
 		},
 		{
 			name: 'hasEntriesOnFocus',
@@ -103,7 +160,7 @@ export default {
 		{
 			name: 'menuWidth',
 			type: 'number',
-			description: 'Fixed dropdown width in pixels. The menu never shrinks below its anchor width.'
+			description: 'Requested dropdown width in pixels before viewport clamping.'
 		},
 		{
 			name: 'minQueryLength',
@@ -125,6 +182,13 @@ export default {
 			default: 'false'
 		},
 		{
+			name: 'isFocusableDisabled',
+			type: 'boolean',
+			description:
+				'Keep a disabled input focusable with aria-disabled and readOnly so a caller-owned disabled reason remains discoverable. It blocks text entry, but when applied after results are already open, Enter can still select the highlighted option.',
+			default: 'false'
+		},
+		{
 			name: 'hasAutoFocus',
 			type: 'boolean',
 			description: 'Auto-focus the input on mount.',
@@ -138,6 +202,12 @@ export default {
 			default: '150'
 		},
 		{
+			name: 'size',
+			type: "'sm' | 'md' | 'lg'",
+			description: 'Size used to scale dropdown option padding.',
+			default: "'md'"
+		},
+		{
 			name: 'anchorRef',
 			type: 'HTMLElement | null',
 			description:
@@ -147,6 +217,18 @@ export default {
 			name: 'inputXStyle',
 			type: 'StyleArg',
 			description: 'Additional StyleX styles for the input element.'
+		},
+		{
+			name: 'xstyle',
+			type: 'StyleArg',
+			description:
+				'Standard BaseProps StyleX styles applied to the input. Must be a stylex.create() value, not an inline style object.'
+		},
+		{
+			name: 'inputTabIndex',
+			type: 'number',
+			description:
+				'Legacy input-specific alias for native tabIndex. When provided, it takes precedence; otherwise native tabIndex is preserved.'
 		},
 		{
 			name: 'onKeyDown',
@@ -167,12 +249,20 @@ export default {
 		{
 			name: 'inputId',
 			type: 'string',
-			description: 'ID for the input element (for label association).'
+			description:
+				'Legacy input-specific alias for native id. When provided, it takes precedence; otherwise native id is preserved.'
 		},
 		{
 			name: 'ariaDescribedBy',
 			type: 'string',
-			description: 'Additional aria-describedby IDs.'
+			description:
+				'Legacy input-specific alias for native aria-describedby. When provided, it takes precedence; otherwise the native attribute is preserved.'
+		},
+		{
+			name: 'ariaLabelledBy',
+			type: 'string',
+			description:
+				'Legacy input-specific alias for native aria-labelledby. When provided, it takes precedence; otherwise the native attribute is preserved.'
 		}
 	]
 };

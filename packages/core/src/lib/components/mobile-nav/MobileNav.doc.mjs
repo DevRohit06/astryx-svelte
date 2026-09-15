@@ -31,6 +31,38 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Navigation overlay',
+				required: true,
+				description: 'Full-viewport dialog overlay that hosts the mobile navigation drawer.'
+			},
+			{
+				name: 'Drawer',
+				required: true,
+				description: 'Painted panel that slides in from the resolved viewport edge.'
+			},
+			{
+				name: 'Header',
+				required: true,
+				description: 'Fixed row containing optional header content and the close button.'
+			},
+			{
+				name: 'Content',
+				required: true,
+				description: 'Scrollable region containing the navigation content.'
+			},
+			{
+				name: 'Close button',
+				required: true,
+				description: 'Button that closes the navigation drawer.'
+			},
+			{
+				name: 'Toggle button',
+				required: false,
+				description: 'AppShell-aware Button that opens or closes the drawer on mobile viewports.'
+			}
+		],
 		description:
 			'A slide-out drawer for mobile navigation. MobileNav is the mobile counterpart to SideNav and accepts the same children. Use it on narrow viewports where a persistent sidebar is not practical. Inside AppShell, use MobileNavToggle as the trigger; it reads state from context automatically.',
 		bestPractices: [

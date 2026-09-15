@@ -25,6 +25,31 @@ export default {
 	group: 'Tabs',
 	category: 'Navigation',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			label: 'More',
+			options: [
+				{
+					value: 'settings',
+					label: 'Settings'
+				},
+				{
+					value: 'integrations',
+					label: 'Integrations'
+				},
+				{
+					value: 'billing',
+					label: 'Billing'
+				}
+			]
+		},
+		wrapper: {
+			component: 'TabList',
+			props: {
+				value: 'overview'
+			}
+		}
+	},
 	props: [
 		{
 			name: 'label',

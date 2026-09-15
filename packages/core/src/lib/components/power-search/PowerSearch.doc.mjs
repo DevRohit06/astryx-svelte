@@ -53,6 +53,63 @@ export default {
 			}
 		]
 	},
+	playground: {
+		defaults: {
+			config: {
+				name: 'IssueSearch',
+				fields: [
+					{
+						key: 'status',
+						label: 'Status',
+						defaultOperator: 'is',
+						operators: [
+							{
+								key: 'is',
+								label: 'is',
+								value: {
+									type: 'enum',
+									values: [
+										{
+											value: 'open',
+											label: 'Open'
+										},
+										{
+											value: 'closed',
+											label: 'Closed'
+										}
+									]
+								}
+							}
+						]
+					},
+					{
+						key: 'title',
+						label: 'Title',
+						defaultOperator: 'contains',
+						operators: [
+							{
+								key: 'contains',
+								label: 'contains',
+								value: {
+									type: 'string'
+								}
+							}
+						]
+					}
+				]
+			},
+			filters: [
+				{
+					field: 'status',
+					operator: 'is',
+					value: {
+						type: 'enum',
+						value: 'open'
+					}
+				}
+			]
+		}
+	},
 	props: [
 		{
 			name: 'config',

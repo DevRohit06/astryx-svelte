@@ -75,7 +75,8 @@ export default {
 		{
 			name: 'resizable',
 			type: 'ResizableProps',
-			description: 'Resize props from useResizable: connects handle to panel.',
+			description:
+				"Resize props from useResizable: connects handle to panel. Carries the region's axis ('horizontal' | 'vertical'), which must match this handle's direction.",
 			required: true
 		},
 		{

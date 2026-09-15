@@ -27,6 +27,63 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Group',
+				required: true,
+				description: 'Container for the labeled checkbox group.'
+			},
+			{
+				name: 'Group label',
+				required: true,
+				description: 'Text identifying what the checkbox options represent.'
+			},
+			{
+				name: 'Description',
+				required: false,
+				description: 'Helper text below the group label.'
+			},
+			{
+				name: 'Options list',
+				required: true,
+				description: 'List containing the available checkbox options.'
+			},
+			{
+				name: 'Option row',
+				required: true,
+				description: 'Selectable row containing one option.'
+			},
+			{
+				name: 'Checkbox',
+				required: true,
+				description: 'Selection indicator for an option.'
+			},
+			{
+				name: 'Option label',
+				required: true,
+				description: 'Primary content identifying an option.'
+			},
+			{
+				name: 'Option description',
+				required: false,
+				description: 'Secondary text below an option label.'
+			},
+			{
+				name: 'End content',
+				required: false,
+				description: 'Caller-provided content at the end of an option row.'
+			},
+			{
+				name: 'Spinner',
+				required: false,
+				description: 'Loading indicator shown inside the pending checkbox.'
+			},
+			{
+				name: 'Status message',
+				required: false,
+				description: 'Error, warning, or success message below the group.'
+			}
+		],
 		description:
 			'CheckboxList shows a small group of checkboxes so users can turn several options on or off at once. Place it in settings pages, filter panels, or forms where every choice should be visible without scrolling. For a single standalone checkbox (like "I agree to the terms"), use CheckboxInput instead. If only one option can be picked, use RadioList. If the list is long enough to need searching or scrolling, use MultiSelector instead.',
 		bestPractices: [

@@ -29,6 +29,20 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Outer chrome',
+				required: true,
+				description:
+					'Section-owned container that supplies the toolbar surface, padding, and selected divider edges.'
+			},
+			{
+				name: 'Toolbar',
+				required: true,
+				description:
+					'Named toolbar row that owns toolbar semantics and the start, optional center, and end layout.'
+			}
+		],
 		description:
 			'Toolbar is a horizontal bar with left, center, and right areas. Use it for contextual actions within a content area (above a table, inside a card, or in a panel), not as a page-level header. Set the size once on the toolbar and all buttons, inputs, and tabs inside it match automatically.',
 		bestPractices: [

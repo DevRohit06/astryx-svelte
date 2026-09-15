@@ -103,34 +103,95 @@ export default {
 		],
 		anatomy: [
 			{
-				name: 'Column Header',
+				name: 'Table',
 				required: true,
-				description: 'Displays titles, sorting controls, and bulk selection.'
+				description: 'Semantic table element that groups the table sections, rows, and cells.'
 			},
 			{
-				name: 'Body Rows',
+				name: 'Scroll region',
 				required: true,
-				description: 'Rows with consistent data structure.'
+				description:
+					'Keyboard-focusable outer region that scrolls horizontally when the columns overflow.'
 			},
 			{
-				name: 'Footer',
+				name: 'Header section',
 				required: false,
-				description: 'Displays summary or totals.'
+				description:
+					'Column-heading section generated when data-driven columns are present or supplied with TableHeader in children mode.'
 			},
 			{
-				name: 'Top Bar',
+				name: 'Column header cell',
 				required: false,
-				description: 'Contains title, toolbar, and filters.'
+				description:
+					'Cell that identifies one column and may contain sorting or bulk-selection controls.'
 			},
 			{
-				name: 'Bottom Bar',
+				name: 'Sort control',
 				required: false,
-				description: 'Contains pagination controls.'
+				description:
+					"Button that wraps a sortable column label and changes that column's sort direction."
 			},
 			{
-				name: 'Support Panels',
+				name: 'Sort indicator glyph',
 				required: false,
-				description: 'Displays row details in a side panel.'
+				description: 'Directional symbol rendered by Icon inside a Sort control.'
+			},
+			{
+				name: 'Sort priority',
+				required: false,
+				description: 'Number shown for a sorted column when multi-column sorting is active.'
+			},
+			{
+				name: 'Selection control',
+				required: false,
+				description:
+					'CheckboxInput rendered in the header and selectable body rows by the selection plugin.'
+			},
+			{
+				name: 'Body section',
+				required: true,
+				description:
+					'Section containing data rows or the current empty state; data-driven mode renders it automatically.'
+			},
+			{
+				name: 'Row',
+				required: false,
+				description:
+					'Repeated TableRow that groups cells in a standard header, body, or footer row.'
+			},
+			{
+				name: 'Cell',
+				required: false,
+				description:
+					'TableCell containing one value or caller-provided content in a standard body or footer row.'
+			},
+			{
+				name: 'Default empty state',
+				required: false,
+				description:
+					'Compact EmptyState shown for an empty data array unless it is replaced or disabled.'
+			},
+			{
+				name: 'Expansion control',
+				required: false,
+				description: 'Button in a leading cell that expands or collapses one expandable row.'
+			},
+			{
+				name: 'Expansion glyph',
+				required: false,
+				description: 'Directional symbol rendered by Icon inside an Expansion control.'
+			},
+			{
+				name: 'Expanded detail panel',
+				required: false,
+				description:
+					'Detail row and spanning cell rendered below an expanded row around caller-provided content.'
+			},
+			{
+				name: 'Footer section',
+				required: false,
+				description:
+					'Optional summary or totals section supplied with TableFooter in children mode.'
 			}
 		]
 	},

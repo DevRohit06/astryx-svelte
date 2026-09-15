@@ -31,19 +31,19 @@ export default {
 			{
 				name: '--spinner-diameter',
 				description:
-					"Diameter of the drawn ring. Set it on a size-variant target to retheme what each named size resolves to, e.g. spinner: { 'size:xl': { '--spinner-diameter': '2.5rem' } }. The rendered box is this plus the stroke width on each side, and follows automatically. Any length works — rem, em and calc() are resolved before the ring is drawn.",
+					"Diameter of the drawn ring. Set it on a size-variant target to retheme what each named size resolves to, e.g. spinner: { 'size:xl': { '--spinner-diameter': '2.5rem' } }. The rendered box is this plus the stroke width on each side, and follows automatically. Any length works: rem, em and calc() are resolved before the ring is drawn.",
 				default: '10px (sm), 14px (md), 18px (lg), 28px (xl)'
 			},
 			{
 				name: '--spinner-stroke-width',
 				description:
-					'Stroke width of both circles the ring is drawn from — the moving arc and the track behind it. Set it per size alongside the diameter. One stroke width drives both, so 0 is honoured as a zero-width stroke and paints nothing at all rather than falling back to the default — for an arc with no track behind it, set --spinner-track-color to transparent instead.',
+					'Stroke width of both circles the ring is drawn from: the moving arc and the track behind it. Set it per size alongside the diameter. One stroke width drives both, so 0 is honoured as a zero-width stroke and paints nothing at all rather than falling back to the default; for an arc with no track behind it, set --spinner-track-color to transparent instead.',
 				default: '2px (sm), 3px (md), 3px (lg), 4px (xl)'
 			},
 			{
 				name: '--spinner-color',
 				description:
-					"Color of the moving arc. Defaults to the shade's token, so set it on a shade-variant target to retheme one shade — spinner: { 'shade:subtle': { '--spinner-color': 'var(--color-text-tertiary)' } } — or on the base target to retheme all four. Accepts any color notation, including var(), color-mix() and currentColor.",
+					"Color of the moving arc. Defaults to the shade's token, so set it on a shade-variant target to retheme one shade (spinner: { 'shade:subtle': { '--spinner-color': 'var(--color-text-tertiary)' } }), or on the base target to retheme all four. Accepts any color notation, including var(), color-mix() and currentColor.",
 				default:
 					'var(--color-accent) (default), var(--color-text-secondary) (subtle), var(--color-on-dark) (onMedia), currentColor (inherit)'
 			},
@@ -85,7 +85,7 @@ export default {
 		{
 			name: 'size',
 			type: "'sm' | 'md' | 'lg' | 'xl'",
-			description: 'Spinner size — ring diameter (10px, 14px, 18px, 28px).',
+			description: 'Spinner size: ring diameter (10px, 14px, 18px, 28px).',
 			default: "'md'"
 		},
 		{

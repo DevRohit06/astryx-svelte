@@ -75,13 +75,6 @@ export default {
 			description: 'Callback for Page Down key (e.g., navigate to next month in calendars).'
 		},
 		{
-			name: 'options.isRtl',
-			type: 'boolean',
-			description:
-				'Swap ArrowLeft/ArrowRight so horizontal navigation follows visual direction in right-to-left contexts. When omitted, auto-detected from the container computed direction on keydown.',
-			default: "undefined (auto-detect from the container's computed direction)"
-		},
-		{
 			name: 'options.hasRovingTabIndex',
 			type: 'boolean',
 			description:

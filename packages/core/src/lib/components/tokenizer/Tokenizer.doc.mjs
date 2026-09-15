@@ -99,6 +99,11 @@ export default {
 				description: 'The search results list that appears below the input as the user types.'
 			},
 			{
+				name: 'Spinner',
+				required: false,
+				description: 'Loading indicator shown at the end of the field while a search is in flight.'
+			},
+			{
 				name: 'End content',
 				required: false,
 				description:
@@ -111,6 +116,22 @@ export default {
 					'A button that removes all selected tokens at once. Shown when hasClear is true and tokens are present.'
 			}
 		]
+	},
+	playground: {
+		defaults: {
+			label: 'Tags',
+			placeholder: 'Search...',
+			value: [
+				{
+					id: '1',
+					label: 'Design'
+				},
+				{
+					id: '2',
+					label: 'Engineering'
+				}
+			]
+		}
 	},
 	props: [
 		{

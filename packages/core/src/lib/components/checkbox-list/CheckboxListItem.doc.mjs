@@ -27,14 +27,14 @@ export default {
 			name: 'label',
 			type: 'string | Snippet',
 			description:
-				'Primary text label for the item. A plain string names the checkbox automatically; a rich (ReactNode) label should be paired with aria-label so screen readers get a concise name.',
+				'Primary text label for the item. Rich labels may contain links or buttons, which keep their own behavior without toggling the item. A ReactNode label names the checkbox from its visible text; pass aria-label only when that text is absent, or include all visible label words in the override.',
 			required: true
 		},
 		{
 			name: 'aria-label',
 			type: 'string',
 			description:
-				'Plain-text accessible name for the checkbox when label is a ReactNode. Applied to the checkbox control. Without it, rich-label items all announce as the generic "Checkbox" to screen readers.'
+				'Plain-text accessible name for the checkbox, replacing the one derived from label. Applied to the checkbox control. Use it when a rich label has no visible text; otherwise the value must retain every visible label word.'
 		},
 		{
 			name: 'value',
@@ -44,7 +44,8 @@ export default {
 		{
 			name: 'description',
 			type: 'string',
-			description: 'Secondary text below the label.'
+			description:
+				"Secondary content below the label. String or ReactNode. Exposed as the checkbox's accessible description through aria-describedby, so assistive technology can tell it is the explanation for that choice."
 		},
 		{
 			name: 'endContent',

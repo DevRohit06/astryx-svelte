@@ -32,7 +32,7 @@ export default {
 	},
 	usage: {
 		description:
-			'TimeInput lets users enter a time of day and converts it to a standard format. It also allows users to adjust times using the arrow keys. Use it in forms, scheduling flows, or any interface where users need to select a specific time.',
+			"TimeInput uses a browser/OS time picker on coarse pointers by default and Astryx's typed field on fine pointers. It converts values to a standard format and supports arrow-key adjustment on the typed surface. Use it in forms, scheduling flows, or any interface where users need to select a specific time.",
 		bestPractices: [
 			{
 				guidance: true,
@@ -84,12 +84,14 @@ export default {
 			{
 				name: 'Clock icon',
 				required: false,
-				description: 'A leading clock icon that identifies the field as a time input.'
+				description:
+					'A leading clock icon that identifies the field and opens the browser/OS picker in native mode.'
 			},
 			{
-				name: 'Text input',
+				name: 'Time control',
 				required: true,
-				description: 'The editable text field where users type or see the formatted time.'
+				description:
+					'A real input type=time in native modes, or Astryx\'s editable text field for fine pointers, nativePicker="never", seconds, and custom increments.'
 			},
 			{
 				name: 'Clear button',
@@ -212,6 +214,13 @@ export default {
 			description:
 				'Number of minutes to add or subtract when the user presses the up or down arrow key.',
 			default: '1'
+		},
+		{
+			name: 'nativePicker',
+			type: "'touch' | 'always' | 'never'",
+			description:
+				"Which surface selects the time. 'touch' (the default) uses the browser/OS input type=time on a coarse pointer and Astryx's typed field on a fine pointer; 'always' requests the native control on every pointer; 'never' keeps Astryx's typed field everywhere. Native mode forwards min/max and enforces them on commit. hasSeconds or increment other than 1 automatically retains the typed field because iOS has no seconds wheel and treats step as validation rather than picker cadence. hourFormat formats the closed value; the open OS picker follows the device locale.",
+			default: "'touch'"
 		},
 		{
 			name: 'placeholder',

@@ -27,6 +27,19 @@ export default {
 	group: 'Layout',
 	category: 'Layout',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			columns: 2,
+			children: 'Spans 2 columns'
+		},
+		wrapper: {
+			component: 'Grid',
+			props: {
+				columns: 3,
+				gap: 2
+			}
+		}
+	},
 	props: [
 		{
 			name: 'columns',

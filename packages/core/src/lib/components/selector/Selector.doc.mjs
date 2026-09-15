@@ -27,7 +27,7 @@ export default {
 			{
 				className: 'astryx-selector',
 				visualProps: ['variant', 'size', 'status'],
-				states: ['disabled']
+				states: ['disabled', 'readonly']
 			},
 			{
 				className: 'astryx-selector-option'
@@ -95,6 +95,11 @@ export default {
 					'Use variant="ghost" when a selector sits in a toolbar with ghost buttons. If validation status is needed there, prefer statusVariant="tooltip" so the toolbar height stays compact.'
 			},
 			{
+				guidance: true,
+				description:
+					'Use presentation="adaptive" when the selector should become a bottom sheet on compact touch screens.'
+			},
+			{
 				guidance: false,
 				description:
 					'Use for action menus; use Dropdown Menu for triggering commands or navigation.'
@@ -125,36 +130,137 @@ export default {
 		],
 		anatomy: [
 			{
-				name: 'Label',
+				name: 'Field',
 				required: false,
-				description: 'Text label displayed above the selector.'
+				description:
+					'Standalone Field shell that provides the label and optional supporting content; omitted inside InputGroup.'
 			},
 			{
-				name: 'Placeholder',
-				required: false,
-				description: 'Hint text shown when no value is selected.'
-			},
-			{
-				name: 'Description',
-				required: false,
-				description: 'Helper text providing additional context.'
-			},
-			{
-				name: 'Left Icon',
-				required: false,
-				description: 'Icon displayed to the left of the selected value.'
-			},
-			{
-				name: 'Value',
+				name: 'Trigger',
 				required: true,
-				description: 'The currently selected item displayed in the selector.'
+				description:
+					'Painted control that displays the current selection or placeholder and opens the selection surface when editable.'
 			},
 			{
-				name: 'List',
-				required: true,
-				description: 'The dropdown list of selectable options.'
+				name: 'Icon-rendered start icon',
+				required: false,
+				description: 'Optional leading semantic icon or icon component rendered through Icon.'
+			},
+			{
+				name: 'Caller-rendered start content',
+				required: false,
+				description:
+					'Optional arbitrary React content rendered directly at the start of the trigger.'
+			},
+			{
+				name: 'Trigger clear button',
+				required: false,
+				description: 'Shared clear action that removes the selected value when hasClear is enabled.'
+			},
+			{
+				name: 'Status icon',
+				required: false,
+				description:
+					'Status glyph shown in place of the disclosure indicator for attached or tooltip status.'
+			},
+			{
+				name: 'Indicator icon',
+				required: false,
+				description:
+					'Trailing chevron shown when status presentation does not replace it; reflects collapsed or expanded state.'
+			},
+			{
+				name: 'Search row',
+				required: false,
+				description: 'Panel header with a borderless search input and optional clear action.'
+			},
+			{
+				name: 'Search icon',
+				required: false,
+				description: 'Leading magnifier rendered through Icon inside the search row.'
+			},
+			{
+				name: 'Search clear button',
+				required: false,
+				description: 'Shared clear action shown in the search row while a query is present.'
+			},
+			{
+				name: 'Option row',
+				required: false,
+				description: 'Selectable row for one supplied option.'
+			},
+			{
+				name: 'SelectorOption-rendered content',
+				required: false,
+				description:
+					'Option content rendered with SelectorOption, either by the default renderer or by renderOption when it returns SelectorOption.'
+			},
+			{
+				name: 'Bare caller-rendered option content',
+				required: false,
+				description:
+					'Arbitrary content returned directly by renderOption without opting into SelectorOption.'
+			},
+			{
+				name: 'Option selection indicator',
+				required: false,
+				description:
+					'Resolved selection mark rendered for each option in its checked or unchecked state.'
+			},
+			{
+				name: 'Option divider',
+				required: false,
+				description:
+					'Divider supplied in the public options data to separate adjacent option groups.'
+			},
+			{
+				name: 'Section heading',
+				required: false,
+				description: 'Visible heading for a labeled group of option rows.'
+			},
+			{
+				name: 'Empty state',
+				required: false,
+				description:
+					'Message shown when the shared panel content has no options or no search matches.'
+			},
+			{
+				name: 'Pointer popup',
+				required: false,
+				description:
+					'Anchored painted surface that hosts the shared panel content for popover presentation.'
+			},
+			{
+				name: 'Touch sheet heading',
+				required: false,
+				description: 'Heading above the shared panel content in bottom-sheet presentation.'
+			},
+			{
+				name: 'Touch sheet',
+				required: false,
+				description:
+					'BottomSheet surface that hosts the same panel content for bottom-sheet presentation.'
 			}
 		]
+	},
+	playground: {
+		defaults: {
+			label: 'Fruit',
+			options: [
+				{
+					value: 'apple',
+					label: 'Apple'
+				},
+				{
+					value: 'orange',
+					label: 'Orange'
+				},
+				{
+					value: 'banana',
+					label: 'Banana'
+				}
+			]
+		}
 	},
 	props: [
 		{
@@ -240,6 +346,13 @@ export default {
 			default: 'false'
 		},
 		{
+			name: 'isReadOnly',
+			type: 'boolean',
+			description:
+				'Makes the selector read-only: the selected value stays visible, focusable, and included in form submission, and retains its combobox identity with aria-readonly. The selection surface, clear action, and disclosure indicator are removed. Unlike isDisabled, the control is not dimmed. isDisabled takes precedence when both are set.',
+			default: 'false'
+		},
+		{
 			name: 'htmlName',
 			type: 'string',
 			description:
@@ -304,6 +417,13 @@ export default {
 			description:
 				'Which edge of the option row carries the selected mark. start reserves a mark column ahead of every label so they stay aligned, the way a native menu does; end is the house convention shared with Typeahead and CommandPalette.',
 			default: "'end'"
+		},
+		{
+			name: 'presentation',
+			type: "'popover' | 'bottom-sheet' | 'adaptive'",
+			description:
+				'How the option list is presented. adaptive uses a bottom sheet on compact touch screens and an anchored popover otherwise.',
+			default: "'popover'"
 		},
 		{
 			name: 'width',

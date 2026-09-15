@@ -113,6 +113,11 @@ export default {
 			}
 		]
 	},
+	playground: {
+		defaults: {
+			body: 'Changes saved'
+		}
+	},
 	props: [
 		{
 			name: 'body',

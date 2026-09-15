@@ -28,6 +28,39 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Trigger button',
+				required: true,
+				description: 'Icon-only Button that provides the visible overflow-menu entry point.'
+			},
+			{
+				name: 'Icon-resolved trigger icon',
+				required: false,
+				description: 'Default semantic three-dot artwork resolved from the active Icon registry.'
+			},
+			{
+				name: 'Caller-rendered trigger content',
+				required: false,
+				description: 'Arbitrary React content supplied directly as the trigger icon override.'
+			},
+			{
+				name: 'Menu surface',
+				required: true,
+				description: 'DropdownMenu panel that also carries MoreMenu’s current public target.'
+			},
+			{
+				name: 'Pointer action row',
+				required: false,
+				description:
+					'Action or nested-action trigger row rendered by DropdownMenu in the anchored presentation.'
+			},
+			{
+				name: 'Touch action row',
+				required: false,
+				description: 'ListItem button rendered by DropdownMenu in the BottomSheet presentation.'
+			}
+		],
 		description:
 			"MoreMenu is a three-dot button that opens a list of actions. Use it for secondary actions that don't need to be always visible, like in table rows, card headers, or toolbars.",
 		bestPractices: [
@@ -40,6 +73,11 @@ export default {
 				guidance: true,
 				description:
 					'Use dividers or sections to group related actions when the menu has many items.'
+			},
+			{
+				guidance: true,
+				description:
+					'Use `presentation="adaptive"` when the visible overflow trigger should open a thumb-reachable BottomSheet on compact touch devices.'
 			},
 			{
 				guidance: false,
@@ -115,6 +153,13 @@ export default {
 			description:
 				"Alignment along the placement axis. Use 'end' to align the menu with the trigger's trailing edge, which is usually what an overflow menu wants.",
 			default: "'start'"
+		},
+		{
+			name: 'presentation',
+			type: "'popover' | 'bottom-sheet' | 'adaptive'",
+			description:
+				'Presentation policy forwarded to DropdownMenu. `adaptive` keeps the anchored popover on pointer-based layouts and uses a BottomSheet at 768px and below when the primary pointer is coarse.',
+			default: "'popover'"
 		},
 		{
 			name: 'onOpenChange',

@@ -26,12 +26,19 @@ export default {
 	theming: {
 		targets: [
 			{
+				className: 'astryx-banner-frame',
+				visualProps: ['container', 'elevation']
+			},
+			{
 				className: 'astryx-banner',
 				visualProps: ['container', 'status']
 			},
 			{
 				className: 'astryx-banner-icon',
 				visualProps: ['status']
+			},
+			{
+				className: 'astryx-banner-description'
 			},
 			{
 				className: 'astryx-banner-content',
@@ -91,7 +98,7 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Set collapsible={false} when the user needs the content to act on the message, like the list of fields that failed validation. Keep the default toggle when the detail is long enough to bury the banner’s own message.'
+					"Set collapsible={false} when the user needs the content to act on the message, like the list of fields that failed validation. Keep the default toggle when the detail is long enough to bury the banner's own message."
 			},
 			{
 				guidance: true,
@@ -105,6 +112,18 @@ export default {
 			}
 		],
 		anatomy: [
+			{
+				name: 'Banner frame',
+				required: true,
+				description:
+					'Outer frame that groups the status surface and optional content surface. It carries whole-banner elevation and, for elevated card banners, the radius that shapes that silhouette.'
+			},
+			{
+				name: 'Status surface',
+				required: true,
+				description:
+					'The primary painted surface. It communicates status and contains the icon, title, description, actions, and controls.'
+			},
 			{
 				name: 'Icon',
 				required: true,
@@ -131,10 +150,10 @@ export default {
 				description: 'Lets the user close the banner. Enabled by setting isDismissable.'
 			},
 			{
-				name: 'Content',
+				name: 'Content surface',
 				required: false,
 				description:
-					'Extra detail below the banner header, like a list of errors. Sits behind an expand/collapse toggle by default; set collapsible={false} to keep it visible.'
+					'Secondary surface for extra detail below the status surface, like a list of errors. Sits behind an expand/collapse toggle by default; set collapsible={false} to keep it visible.'
 			}
 		]
 	},

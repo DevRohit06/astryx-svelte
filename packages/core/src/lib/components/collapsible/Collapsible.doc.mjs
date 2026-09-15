@@ -96,7 +96,8 @@ export default {
 			{
 				name: 'Chevron',
 				required: false,
-				description: 'Animated arrow that rotates to show open or closed state.'
+				description:
+					'Animated disclosure arrow. It follows the label by default; chevronPosition="start" moves it ahead of the label, points inward when collapsed (mirrored under RTL), and turns down when expanded.'
 			},
 			{
 				name: 'Content',
@@ -144,6 +145,13 @@ export default {
 			name: 'onOpenChange',
 			type: '(isOpen: boolean) => void',
 			description: 'Callback invoked when the open state changes.'
+		},
+		{
+			name: 'chevronPosition',
+			type: "'start' | 'end'",
+			description:
+				"Logical position of Collapsible's disclosure chevron. `end` (default) follows the label, pointing down when collapsed and up when expanded. `start` precedes the label, pointing inward toward content when collapsed (mirrored under RTL) and down when expanded. Inside a CollapsibleGroup this defaults to the group's chevronPosition.",
+			default: "'end'"
 		},
 		{
 			name: 'value',

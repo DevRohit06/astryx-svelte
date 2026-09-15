@@ -27,6 +27,18 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Section container',
+				required: true,
+				description: 'Painted container that groups a page region.'
+			},
+			{
+				name: 'Consumer content',
+				required: false,
+				description: 'Caller-provided content rendered inside the section container.'
+			}
+		],
 		description:
 			'Section is the correct way to create page regions and group related content on a page. Use it for settings groups, form sections, sidebar areas, or any time you need visual separation between parts of a page. If you are tempted to use a Card for a page section, use Section instead.',
 		bestPractices: [

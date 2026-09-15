@@ -24,7 +24,7 @@ export default {
 		targets: [
 			{
 				className: 'astryx-heading',
-				visualProps: ['level', 'color', 'type']
+				visualProps: ['level', 'color', 'type', 'weight']
 			},
 			{
 				className: 'astryx-text',
@@ -33,6 +33,26 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Text',
+				required: true,
+				description:
+					'Polymorphic text element that renders the supplied content with themed typography.'
+			},
+			{
+				name: 'Heading',
+				required: false,
+				description:
+					'Referenced Heading member that renders the supplied content as a semantic h1–h6 element.'
+			},
+			{
+				name: 'Truncation tooltip',
+				required: false,
+				description:
+					'Tooltip-owned surface available only when Text or Heading is measured as truncated and truncation tooltips are enabled.'
+			}
+		],
 		description:
 			'Text renders styled body text and headings from the theme. Use Text with a semantic type for body copy, labels, and captions, and Heading for section titles that output the correct h1–h6 element.',
 		bestPractices: [

@@ -67,6 +67,58 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Tree list',
+				required: true,
+				description: 'Container that presents the hierarchical tree.'
+			},
+			{
+				name: 'Header',
+				required: false,
+				description: 'Caller-provided content that visibly names the tree.'
+			},
+			{
+				name: 'Item',
+				required: true,
+				description: 'Painted row for one node in the hierarchy.'
+			},
+			{
+				name: 'Chevron',
+				required: false,
+				description: 'Expand and collapse control rendered for an Item with children.'
+			},
+			{
+				name: 'Chevron glyph',
+				required: false,
+				description: 'Directional symbol rendered by Icon inside a Chevron.'
+			},
+			{
+				name: 'Item label',
+				required: true,
+				description: 'Primary content that identifies an Item.'
+			},
+			{
+				name: 'Item description',
+				required: false,
+				description: 'Secondary text rendered below an Item label.'
+			},
+			{
+				name: 'Start content',
+				required: false,
+				description: 'Caller-provided content rendered before an Item label.'
+			},
+			{
+				name: 'End content',
+				required: false,
+				description: 'Caller-provided content rendered after an Item label.'
+			},
+			{
+				name: 'Guide',
+				required: false,
+				description: 'Connector line that shows parent-child relationships.'
+			}
+		],
 		description:
 			'An expandable tree structure for displaying hierarchical data with branch connector lines. Use it for file explorers, nested category browsers, or any interface that visualizes parent-child relationships.',
 		bestPractices: [

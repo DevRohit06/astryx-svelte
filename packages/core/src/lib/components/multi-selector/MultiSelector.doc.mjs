@@ -26,7 +26,7 @@ export default {
 			{
 				className: 'astryx-multi-selector',
 				visualProps: ['variant', 'size', 'status'],
-				states: ['disabled']
+				states: ['disabled', 'readonly']
 			},
 			{
 				className: 'astryx-multi-selector-clear-icon',
@@ -56,6 +56,109 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Field',
+				required: false,
+				description:
+					'Standalone Field shell that provides the label and optional supporting content; omitted inside InputGroup.'
+			},
+			{
+				name: 'Trigger',
+				required: true,
+				description:
+					'Painted control that displays the current selection or placeholder and opens the selection surface when editable.'
+			},
+			{
+				name: 'Icon-rendered start icon',
+				required: false,
+				description: 'Optional leading semantic icon or icon component rendered through Icon.'
+			},
+			{
+				name: 'Caller-rendered start content',
+				required: false,
+				description:
+					'Optional arbitrary React content rendered directly at the start of the trigger.'
+			},
+			{
+				name: 'Trigger clear button',
+				required: false,
+				description:
+					'Shared clear action that removes every selected value when hasClear is enabled.'
+			},
+			{
+				name: 'Status icon',
+				required: false,
+				description:
+					'Status glyph shown in place of the disclosure indicator for attached or tooltip status.'
+			},
+			{
+				name: 'Indicator icon',
+				required: false,
+				description:
+					'Trailing chevron shown when status presentation does not replace it; reflects collapsed or expanded state.'
+			},
+			{
+				name: 'Search row',
+				required: false,
+				description: 'Panel header with a borderless search input and optional clear action.'
+			},
+			{
+				name: 'Search icon',
+				required: false,
+				description: 'Leading magnifier rendered through Icon inside the search row.'
+			},
+			{
+				name: 'Search clear button',
+				required: false,
+				description: 'Shared clear action shown in the search row while a query is present.'
+			},
+			{
+				name: 'Option row',
+				required: false,
+				description: 'Selectable row for an option or the optional select-all choice.'
+			},
+			{
+				name: 'Option checkbox indicator',
+				required: false,
+				description:
+					'CheckboxInput indicator that presents each row’s selected, unselected, or indeterminate state.'
+			},
+			{
+				name: 'Option divider',
+				required: false,
+				description:
+					'Divider supplied in the public options data to separate adjacent option groups.'
+			},
+			{
+				name: 'Section heading',
+				required: false,
+				description: 'Visible heading for a labeled group of option rows.'
+			},
+			{
+				name: 'Empty state',
+				required: false,
+				description:
+					'Message shown when the shared panel content has no options or no search matches.'
+			},
+			{
+				name: 'Pointer popup',
+				required: false,
+				description:
+					'Anchored painted surface that hosts the shared panel content for popover presentation.'
+			},
+			{
+				name: 'Touch sheet heading',
+				required: false,
+				description: 'Heading above the shared panel content in bottom-sheet presentation.'
+			},
+			{
+				name: 'Touch sheet',
+				required: false,
+				description:
+					'BottomSheet surface that hosts the same panel content for bottom-sheet presentation.'
+			}
+		],
 		description:
 			'A checkbox dropdown for selecting multiple values from a list. Selected items can display as a count, labels, or badges. Use it for filtering or when presenting a finite set of options where multiple choices are needed.',
 		bestPractices: [
@@ -88,6 +191,11 @@ export default {
 					'Use variant="ghost" when a multi-selector sits in a toolbar with ghost buttons. If validation status is needed there, prefer statusVariant="tooltip" so the toolbar height stays compact.'
 			},
 			{
+				guidance: true,
+				description:
+					'Use presentation="adaptive" when the multi-selector should become a bottom sheet on compact touch screens.'
+			},
+			{
 				guidance: false,
 				description: 'Use for single-value selection; use Selector instead.'
 			},
@@ -101,6 +209,26 @@ export default {
 					'Wrap a disabled MultiSelector in Tooltip to explain why it is disabled; disabled triggers swallow the hover events the wrapper needs. Use the disabledMessage prop instead.'
 			}
 		]
+	},
+	playground: {
+		defaults: {
+			label: 'Fruit',
+			options: [
+				{
+					value: 'apple',
+					label: 'Apple'
+				},
+				{
+					value: 'orange',
+					label: 'Orange'
+				},
+				{
+					value: 'banana',
+					label: 'Banana'
+				}
+			],
+			value: []
+		}
 	},
 	props: [
 		{
@@ -213,6 +341,13 @@ export default {
 			description: 'Disables the selector.'
 		},
 		{
+			name: 'isReadOnly',
+			type: 'boolean',
+			description:
+				'Makes the selector read-only: the selected values stay visible, focusable, and included in form submission, and retain their combobox identity with aria-readonly. The selection surface, clear action, and disclosure indicator are removed. Unlike isDisabled, the control is not dimmed. isDisabled takes precedence when both are set.',
+			default: 'false'
+		},
+		{
 			name: 'htmlName',
 			type: 'string',
 			description:
@@ -273,6 +408,13 @@ export default {
 			description:
 				'Which edge of the option row carries the checkbox. end pushes it to the far edge of the row, including on the select-all row.',
 			default: "'start'"
+		},
+		{
+			name: 'presentation',
+			type: "'popover' | 'bottom-sheet' | 'adaptive'",
+			description:
+				'How the option list is presented. adaptive uses a bottom sheet on compact touch screens and an anchored popover otherwise.',
+			default: "'popover'"
 		},
 		{
 			name: 'width',

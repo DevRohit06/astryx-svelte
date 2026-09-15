@@ -27,6 +27,12 @@ export default {
 				visualProps: ['orientation', 'indicatorPosition']
 			},
 			{
+				className: 'astryx-stepper-frame'
+			},
+			{
+				className: 'astryx-stepper-summary'
+			},
+			{
 				className: 'astryx-step',
 				visualProps: ['progress', 'status']
 			},
@@ -35,10 +41,26 @@ export default {
 				visualProps: ['progress', 'status']
 			},
 			{
+				className: 'astryx-step-label',
+				visualProps: ['progress', 'status', 'disabled']
+			},
+			{
+				className: 'astryx-step-description',
+				visualProps: ['progress', 'status']
+			},
+			{
 				className: 'astryx-step-bar'
 			},
 			{
 				className: 'astryx-step-connector'
+			}
+		],
+		vars: [
+			{
+				name: '--step-connector-gap',
+				description:
+					'Gap a connector leaves where it meets the indicator, spent on the side facing it. Applies to the on-track layouts, whose connector is drawn as one segment either side of the node; 0 leaves the track running unbroken through it.',
+				default: '0px'
 			}
 		]
 	},
@@ -54,7 +76,12 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Use the vertical orientation for narrow containers or when steps have longer descriptions.'
+					'Use the vertical orientation when steps carry longer descriptions. A horizontal stepper handles narrow containers itself: once the frame gives each step less than horizontalOptions.minimumStepWidth (112px by default) it drops the labels for a segmented track and uses the configured collapsedVariant beneath it.'
+			},
+			{
+				guidance: true,
+				description:
+					"Set horizontalOptions.collapsedVariant to 'withLabel' when the page already supplies Back/Continue, or to 'hiddenLabel' when surrounding UI owns both the current-step heading and navigation and only a bare progress track is needed."
 			},
 			{
 				guidance: true,
@@ -79,10 +106,40 @@ export default {
 		],
 		anatomy: [
 			{
+				name: 'Stepper',
+				required: true,
+				description:
+					'The ordered list holding the steps. Owns the orientation and the indicator placement the whole flow is laid out on.'
+			},
+			{
+				name: 'Frame',
+				required: true,
+				description:
+					'The layout frame that groups the ordered steps with the optional compact summary shown at narrow widths.'
+			},
+			{
+				name: 'Compact summary',
+				required: false,
+				description:
+					'The optional row a horizontal Stepper adds directly beneath the track once it is too narrow to label every step. horizontalOptions.collapsedVariant chooses a label with Previous/Next controls, the label alone, or no row for a bare progress track. The on-track layout keeps its indicators on the rail instead of repeating the active indicator beside the label. Every step keeps its name in the accessible sequence at any width.'
+			},
+			{
+				name: 'Step',
+				required: true,
+				description:
+					'One step in the flow, and the element carrying its status. Wraps the indicator, label, description, and the track segments belonging to it.'
+			},
+			{
 				name: 'Progress bar',
 				required: true,
 				description:
-					'A 4px segmented bar per step. Filled for completed and active steps. Advancing one step grows the fill along the track it just covered, so the movement reads as progress rather than a bar changing color. Every other change applies at once: going back, jumping forward by more than one step, mounting mid-flow, and any change at all under prefers-reduced-motion. Where a span is drawn by more than one segment — the on-track layouts split it between two steps, three when a content slot sits between them — the segments run in track order at one constant speed, so the fill reads as a single line growing rather than pieces lighting in turn.'
+					'A 4px segmented bar per step. Filled for completed and active steps. Advancing one step grows the fill along the track it just covered, so the movement reads as progress rather than a bar changing color. Every other change applies at once: going back, jumping forward by more than one step, mounting mid-flow, and any change at all under prefers-reduced-motion. Where a span is drawn by more than one segment (the on-track layouts split it between two steps, three when a content slot sits between them), the segments run in track order at one constant speed, so the fill reads as a single line growing rather than pieces lighting in turn.'
+			},
+			{
+				name: 'Connector',
+				required: false,
+				description:
+					'The track drawn between indicators in the on-track layouts. Each connector paints an unfilled line and, over it, the accent fill covering the progress made. How many pieces a connector is drawn from is an implementation detail of the layout, not a themeable part; use --step-connector-gap to hold the track off the indicator.'
 			},
 			{
 				name: 'Indicator',
@@ -131,7 +188,7 @@ export default {
 			name: 'onStepClick',
 			type: '(index: number) => void',
 			description:
-				'Called when a step is clicked. Enables non-linear navigation. All non-disabled steps become clickable, including not-started steps.'
+				'Called when a step is clicked or a compact summary control is used. Enables non-linear navigation. All non-disabled steps become clickable until a horizontal Stepper collapses, when navigation moves to summary controls that skip disabled steps.'
 		},
 		{
 			name: 'label',
@@ -151,6 +208,13 @@ export default {
 			type: "'separated' | 'on-track'",
 			description: 'Position of step indicators relative to the connector track.',
 			default: "'separated'"
+		},
+		{
+			name: 'horizontalOptions',
+			type: "{ minimumStepWidth: number; collapsedVariant: 'withLabelAndControls' | 'withLabel' | 'hiddenLabel' }",
+			description:
+				'Options for horizontal collapse. minimumStepWidth is the per-step threshold in pixels. collapsedVariant selects a label with controls, the label alone, or a bare progress track with no compact row. Controls appear only for withLabelAndControls when onStepClick is set, and every step keeps its accessible name.',
+			default: "{ minimumStepWidth: 112, collapsedVariant: 'withLabelAndControls' }"
 		},
 		{
 			name: 'xstyle',

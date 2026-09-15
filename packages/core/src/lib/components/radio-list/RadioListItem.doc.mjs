@@ -39,8 +39,15 @@ export default {
 		{
 			name: 'label',
 			type: 'string',
-			description: 'Label text for the radio item.',
+			description:
+				'Primary label for the radio item. Rich labels may contain links or buttons, which keep their own behavior without selecting the item. The label text names the radio; use aria-label only when that text is absent, or retain every visible label word in the override.',
 			required: true
+		},
+		{
+			name: 'aria-label',
+			type: 'string | null',
+			description:
+				'Plain-text accessible name for the radio, applied to the control rather than the row. It overrides the name derived from the label. Use it when a rich label has no visible text; otherwise retain every visible label word.'
 		},
 		{
 			name: 'value',
@@ -51,7 +58,8 @@ export default {
 		{
 			name: 'description',
 			type: 'string',
-			description: 'Description text displayed below the label.'
+			description:
+				'Secondary content displayed below the label. Links and buttons keep their own click behaviour — the row only delegates clicks from its non-interactive surface to the radio.'
 		},
 		{
 			name: 'isDisabled',

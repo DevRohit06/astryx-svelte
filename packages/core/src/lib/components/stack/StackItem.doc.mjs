@@ -27,6 +27,18 @@ export default {
 	group: 'Layout',
 	category: 'Layout',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			size: 'fill'
+		},
+		wrapper: {
+			component: 'HStack',
+			props: {
+				gap: 2,
+				width: 300
+			}
+		}
+	},
 	props: [
 		{
 			name: 'size',

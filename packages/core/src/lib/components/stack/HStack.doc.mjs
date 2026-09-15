@@ -27,6 +27,11 @@ export default {
 	group: 'Layout',
 	category: 'Layout',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			gap: 2
+		}
+	},
 	props: [
 		{
 			name: 'gap',

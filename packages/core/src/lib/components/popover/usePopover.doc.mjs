@@ -44,7 +44,8 @@ export default {
 		{
 			name: 'hasAutoFocus',
 			type: 'boolean',
-			description: 'Whether to automatically focus the first focusable element when opened.',
+			description:
+				'Whether to focus the first genuine content control when opened. Dialogs with none fall back to the labeled surface; the generated close control is excluded from initial focus.',
 			default: 'true'
 		},
 		{
@@ -84,6 +85,12 @@ export default {
 			type: 'boolean',
 			description: 'Whether to apply the default popover surface background, radius, and shadow.',
 			default: 'true'
+		},
+		{
+			name: 'surfaceTarget',
+			type: 'string',
+			description:
+				'Optional component-owned refinement target on the painted surface, without the astryx- prefix. Use and document one when a direct hook composition needs distinct theme reachability. Do not use popover-surface; it is a deprecated compatibility alias of the canonical popover target.'
 		}
 	],
 	returns: [
@@ -143,7 +150,7 @@ export default {
 	],
 	usage: {
 		description:
-			'Headless hook for click-triggered popovers with focus trapping. Combines useLayer with useFocusTrap, auto-focus, light dismiss, Escape handling, and an optional hidden close button for accessible dialog-like popover behavior. Use for custom interactive floating content that needs keyboard navigation.',
+			'Headless hook for click-triggered popovers with focus trapping. Combines useLayer with useFocusTrap, auto-focus, light dismiss, Escape handling, and an optional hidden close button for accessible dialog-like popover behavior. Every painted surface emits the canonical popover target and deprecated popover-surface compatibility alias. A custom composition needing a distinct stable seam should pass and document its own surfaceTarget.',
 		bestPractices: [
 			{
 				guidance: true,
@@ -154,6 +161,16 @@ export default {
 				guidance: true,
 				description:
 					'Prefer the Popover component for standard trigger-content pairs; use the hook for custom trigger patterns.'
+			},
+			{
+				guidance: true,
+				description:
+					'Use popover as the broad surface target. Popover-surface remains supported compatibility output, but new theme source uses the canonical key.'
+			},
+			{
+				guidance: true,
+				description:
+					'When a custom composition needs its own theme refinement, pass and document an owned surfaceTarget such as selector-popup. It refines the Popover surface rather than creating another anatomy part.'
 			},
 			{
 				guidance: false,

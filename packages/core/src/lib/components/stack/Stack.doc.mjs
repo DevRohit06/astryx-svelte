@@ -36,6 +36,23 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Stack container',
+				required: true,
+				description: 'Layout container that arranges content along one flex axis.'
+			},
+			{
+				name: 'Item',
+				required: false,
+				description: 'Optional StackItem wrapper that controls one item in the stack.'
+			},
+			{
+				name: 'Content',
+				required: false,
+				description: 'Caller-supplied content rendered by a Stack or StackItem.'
+			}
+		],
 		description:
 			'Stack arranges items in a row or column with consistent spacing. Use the gap prop to control the space between items.',
 		bestPractices: [
@@ -54,6 +71,12 @@ export default {
 					'Nest stacks inside stacks; try wrap="wrap" first to let items flow to the next line.'
 			}
 		]
+	},
+	playground: {
+		defaults: {
+			direction: 'horizontal',
+			gap: 2
+		}
 	},
 	props: [
 		{

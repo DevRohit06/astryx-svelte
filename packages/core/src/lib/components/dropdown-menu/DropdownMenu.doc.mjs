@@ -24,7 +24,8 @@ export default {
 	theming: {
 		targets: [
 			{
-				className: 'astryx-dropdown-menu'
+				className: 'astryx-dropdown-menu',
+				visualProps: ['presentation']
 			},
 			{
 				className: 'astryx-dropdown-menu-item',
@@ -71,6 +72,98 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Trigger button',
+				required: true,
+				description: 'Button that opens and closes the selected menu presentation.'
+			},
+			{
+				name: 'Trigger indicator icon',
+				required: false,
+				description:
+					'Optional trailing chevron shown by a labeled trigger when hasChevron is enabled.'
+			},
+			{
+				name: 'Pointer menu surface',
+				required: false,
+				description: 'Anchored top-level or nested menu panel used by the pointer presentation.'
+			},
+			{
+				name: 'Pointer action row',
+				required: false,
+				description: 'Action, selectable option, or submenu trigger row in an anchored menu.'
+			},
+			{
+				name: 'Icon-rendered item icon',
+				required: false,
+				description:
+					'Optional semantic or component icon rendered through Icon at the start of an action row.'
+			},
+			{
+				name: 'Caller-rendered item start content',
+				required: false,
+				description:
+					'Optional arbitrary React content rendered directly at the start of an action row.'
+			},
+			{
+				name: 'Checkbox indicator',
+				required: false,
+				description: 'Decorative shared checkbox indicator for a checkbox action row.'
+			},
+			{
+				name: 'Radio indicator',
+				required: false,
+				description: 'Decorative shared radio indicator with an additional menu-owned target.'
+			},
+			{
+				name: 'Pointer section heading',
+				required: false,
+				description: 'Heading that labels a data-driven section in an anchored menu.'
+			},
+			{
+				name: 'Pointer divider',
+				required: false,
+				description: 'Divider between groups in an anchored menu.'
+			},
+			{
+				name: 'Pointer submenu indicator icon',
+				required: false,
+				description: 'Trailing chevron that identifies an action row as a nested flyout trigger.'
+			},
+			{
+				name: 'Touch sheet frame',
+				required: false,
+				description:
+					'BottomSheet panel, content area, handle, and optional scrim that host touch actions.'
+			},
+			{
+				name: 'Touch menu surface',
+				required: false,
+				description: 'Menu-owned content panel rendered inside the touch sheet frame.'
+			},
+			{
+				name: 'Touch heading',
+				required: false,
+				description: 'Current action-sheet title, updated when a nested action view is opened.'
+			},
+			{
+				name: 'Touch action list',
+				required: false,
+				description: 'Spacious List that groups actions in the touch presentation.'
+			},
+			{
+				name: 'Touch action row',
+				required: false,
+				description:
+					'ListItem button used for an action or drill-in entry in the touch presentation.'
+			},
+			{
+				name: 'Touch divider',
+				required: false,
+				description: 'Divider between action groups in the touch presentation.'
+			}
+		],
 		description:
 			'A dropdown menu that displays a list of actionable items in a popup triggered by a button. Use to present action options as a next step in a process, or to offer contextual actions without cluttering the interface.',
 		bestPractices: [
@@ -83,6 +176,31 @@ export default {
 				guidance: true,
 				description:
 					'Use sections and dividers to group related actions when the menu has many items.'
+			},
+			{
+				guidance: true,
+				description:
+					'For a short, flat action set, use presentation="bottom-sheet" when product policy calls for a modal touch surface.'
+			},
+			{
+				guidance: true,
+				description:
+					'Use presentation="adaptive" when the same short action set should remain anchored on pointer layouts and become a BottomSheet on compact coarse-pointer layouts.'
+			},
+			{
+				guidance: true,
+				description:
+					'For a hierarchy that cannot fit as adjacent flyouts on a compact touch surface, a product may explicitly use a drill-in interaction with a Back action.'
+			},
+			{
+				guidance: true,
+				description:
+					'Choose presentation explicitly in product code. A compact, coarse-pointer, hover-free media query is one useful policy, but DropdownMenu does not impose a universal device breakpoint.'
+			},
+			{
+				guidance: true,
+				description:
+					'When the content is no longer a short list of immediate actions, reevaluate the interaction and choose a component that matches the actual task; content traits alone do not determine the component.'
 			},
 			{
 				guidance: false,
@@ -100,15 +218,23 @@ export default {
 			button: {
 				label: 'Actions'
 			},
+			presentation: 'popover',
 			items: [
 				{
-					label: 'Edit'
+					label: 'Edit project',
+					icon: 'wrench'
 				},
 				{
-					label: 'Duplicate'
+					label: 'Duplicate project',
+					icon: 'copy'
 				},
 				{
-					label: 'Delete'
+					label: 'Share project',
+					icon: 'externalLink'
+				},
+				{
+					label: 'Archive project',
+					icon: 'stop'
 				}
 			]
 		}
@@ -128,9 +254,17 @@ export default {
 			required: true
 		},
 		{
+			name: 'presentation',
+			type: "'popover' | 'bottom-sheet' | 'adaptive'",
+			description:
+				"Presentation surface for data-driven items. 'popover' stays anchored, 'bottom-sheet' always renders the actions in a modal BottomSheet, and 'adaptive' uses a BottomSheet on compact coarse-pointer layouts while remaining anchored elsewhere. Compound children currently support popover only.",
+			default: "'popover'"
+		},
+		{
 			name: 'isMenuOpen',
 			type: 'boolean',
-			description: 'Controlled open state for the menu.'
+			description:
+				'Controlled open state for the menu. Mounting with true renders the menu open without moving focus into it; focus moves to the first item only when the menu opens after mount.'
 		},
 		{
 			name: 'onOpenChange',
@@ -140,32 +274,28 @@ export default {
 		{
 			name: 'menuWidth',
 			type: 'number | string',
-			description: 'Custom menu width; defaults to matching the trigger button width.'
+			description:
+				'Minimum width for the popover presentation. Length values may grow for content; intrinsic and CSS-wide keywords select the preferred inline size. Every form is capped to the available viewport space. Defaults to matching the trigger width up to that cap.'
 		},
 		{
 			name: 'placement',
 			type: "'below' | 'above' | 'end' | 'start'",
 			description:
-				"Position placement relative to the trigger. Logical: start/end resolve against the menu's own inherited direction (RTL mirrors).",
+				"Popover placement relative to the trigger. Ignored by the bottom-sheet presentation. Logical: start/end resolve against the menu's own inherited direction (RTL mirrors).",
 			default: "'below'"
 		},
 		{
 			name: 'alignment',
 			type: "'end' | 'start' | 'center'",
 			description:
-				"Alignment along the placement axis. Logical: start/end follow the menu's own inherited direction (RTL mirrors).",
+				"Popover alignment along the placement axis. Ignored by the bottom-sheet presentation. Logical: start/end follow the menu's own inherited direction (RTL mirrors).",
 			default: "'start'"
 		},
 		{
 			name: 'onClick',
 			type: '() => void',
-			description: 'Callback fired when the trigger button is clicked.'
-		},
-		{
-			name: 'placement',
-			type: "'below' | 'above' | 'end' | 'start'",
-			description: 'Position placement for the menu popover relative to the trigger button.',
-			default: "'below'"
+			description:
+				'Callback fired for accepted trigger activation. The trailing click from the same press that light-dismissed the menu is ignored.'
 		},
 		{
 			name: 'hasChevron',

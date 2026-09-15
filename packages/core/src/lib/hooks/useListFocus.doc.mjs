@@ -65,13 +65,6 @@ export default {
 			default: 'true'
 		},
 		{
-			name: 'options.isRtl',
-			type: 'boolean',
-			description:
-				'Whether the list is in a right-to-left context. When true, ArrowLeft/ArrowRight are swapped for horizontal navigation so it follows visual direction. When omitted, auto-detected from the container computed direction on keydown.',
-			default: "undefined (auto-detect from the container's computed direction)"
-		},
-		{
 			name: 'options.hasRovingTabIndex',
 			type: 'boolean',
 			description:

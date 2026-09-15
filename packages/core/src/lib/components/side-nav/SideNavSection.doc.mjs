@@ -26,6 +26,11 @@ export default {
 	group: 'Navigation',
 	category: 'Navigation',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			title: 'Workspace'
+		}
+	},
 	props: [
 		{
 			name: 'title',

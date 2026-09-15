@@ -21,6 +21,13 @@ export default {
 	usage: {
 		description:
 			'Icons are small visual symbols that represent actions, objects, or concepts. They improve scannability and reinforce meaning alongside text. Supports both direct SVG components and semantic icon names that adapt to the active theme.',
+		anatomy: [
+			{
+				name: 'Glyph',
+				required: true,
+				description: 'Visual symbol rendered for the selected icon.'
+			}
+		],
 		bestPractices: [
 			{
 				guidance: true,

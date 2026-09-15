@@ -53,7 +53,7 @@ export default {
 	},
 	usage: {
 		description:
-			'DateTimeInput combines date and time selection in one field. On mouse/trackpad devices it uses a calendar popover plus text time input; on coarse-pointer devices the closed control still has separate Date and Time segments, and either segment opens a bottom sheet with Date and Time sections, a swipable month calendar, and accessible time wheels. The closed date and time segments stay side by side when at least 400px is available and wrap into full-width rows below 400px, independent of viewport width. Use it for scheduling, event creation, deadline setting, or any form field that needs a specific datetime.',
+			'DateTimeInput combines date and time selection in one field. With nativePicker="touch" (the default), mouse/trackpad devices use Astryx typed fields and popovers, while coarse-pointer devices use browser/OS date and time controls in the same two-segment field. nativePicker="always" uses both native controls on every pointer; nativePicker="never" keeps Astryx\'s own surfaces — pointer fields on fine pointers and the coordinated Date/Time bottom sheet on coarse pointers. The closed segments stay side by side when at least 400px is available and wrap into full-width rows below 400px, independent of viewport width. Use it for scheduling, event creation, deadline setting, or any form field that needs a specific datetime.',
 		bestPractices: [
 			{
 				guidance: true,
@@ -101,30 +101,31 @@ export default {
 				name: 'Date input',
 				required: true,
 				description:
-					'A text input where the user can type a date. Clicking opens a calendar popover.'
+					'A typed date field with calendar popover on the fine-pointer Astryx surface, a real input type=date in native modes, or a read-only segment opening the Astryx touch sheet when nativePicker is never on a coarse pointer.'
 			},
 			{
 				name: 'Calendar icon',
 				required: true,
-				description: 'A button that opens the calendar popover.'
+				description:
+					'A button that opens the active date surface: the platform picker, Astryx calendar popover, or Astryx touch sheet.'
 			},
 			{
-				name: 'Calendar popover',
+				name: 'Date picker',
 				required: false,
 				description:
-					'A month grid that appears in a popover on desktop, or in the mobile bottom sheet on coarse-pointer devices.'
+					'The browser/OS picker in native modes, an Astryx month-grid popover on a fine pointer, or the Date panel of the Astryx bottom sheet on a coarse pointer with nativePicker="never".'
 			},
 			{
 				name: 'Time input',
 				required: true,
 				description:
-					"A text input for entering the time on desktop; a read-only time segment opening accessible hour/minute/second wheels on touch. The touch Date panel's Save date action advances to Time; the Time panel's Save closes the sheet."
+					'A real input type=time for the default minute-precision native mode, a text/combobox time field when seconds, custom increments, or preset options are requested, or a read-only segment opening accessible time wheels when nativePicker is never on a coarse pointer.'
 			},
 			{
 				name: 'Time options popover',
 				required: false,
 				description:
-					'A desktop-only list of preset times at the timeOptionInterval cadence, shown when that prop is set and the time input is clicked or opened with Alt+ArrowDown.'
+					"A list of preset times at the timeOptionInterval cadence. Setting the prop retains Astryx's text/combobox time field even when nativePicker otherwise selects native controls; the Astryx touch sheet uses wheels instead."
 			},
 			{
 				name: 'Clear button',
@@ -222,7 +223,8 @@ export default {
 		{
 			name: 'hasSeconds',
 			type: 'boolean',
-			description: 'Include seconds in the time portion.',
+			description:
+				"Include seconds in the time portion. Keeps Astryx's time field even when nativePicker selects native surfaces, because iOS has no seconds wheel.",
 			default: 'false'
 		},
 		{
@@ -235,14 +237,14 @@ export default {
 			name: 'timeIncrement',
 			type: '1 | 5 | 10 | 15 | 30',
 			description:
-				'Minutes to add or subtract when using arrow keys in the desktop time input. Ignored on the mobile touch sheet, where time is changed with wheels.',
+				"Minute step for arrow keys in Astryx's typed time field. A non-default value keeps the Astryx time field in nativePicker modes because iOS treats native step as validation, not picker cadence. Ignored by the Astryx touch sheet, which uses wheels.",
 			default: '1'
 		},
 		{
 			name: 'timeOptionInterval',
 			type: '5 | 10 | 60 | 15 | 30',
 			description:
-				'Minute cadence for a dropdown of preset times on the desktop time portion. Set it to turn the desktop time field into a combobox listing every valid time at that cadence (60 gives a 12 AM to 11 PM list). Omitted, the desktop time field stays a plain text input and gains no combobox semantics. Typed entry keeps working either way, so a time between two options is still reachable. Ignored on the mobile touch sheet, where the wheels expose every hour/minute/second.'
+				"Minute cadence for the preset-time combobox on Astryx's fine-pointer time field. Setting it keeps that Astryx time field even in nativePicker modes because the OS picker has no equivalent preset list. The Astryx touch sheet uses wheels."
 		},
 		{
 			name: 'hasClear',
@@ -289,15 +291,22 @@ export default {
 			name: 'numberOfMonths',
 			type: '2 | 1',
 			description:
-				'Number of months displayed simultaneously in the desktop calendar popover. Ignored on the mobile touch sheet, whose Date panel always shows one swipe-paged month at a time.',
+				"Number of months displayed simultaneously in Astryx's pointer calendar popover. Ignored by native date controls and the mobile touch sheet, whose Date panel always shows one swipe-paged month at a time.",
 			default: '1'
 		},
 		{
 			name: 'weekStartsOn',
 			type: "0 | 6 | 2 | 4 | 1 | 3 | 5 | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat'",
 			description:
-				'First day of week in the calendar. A number (0 = Sunday to 6 = Saturday) or a three-letter day name.',
+				'First day of week in Astryx calendars. A number (0 = Sunday to 6 = Saturday) or a three-letter day name. Ignored by native date controls.',
 			default: '0'
+		},
+		{
+			name: 'nativePicker',
+			type: "'touch' | 'always' | 'never'",
+			description:
+				"Which surfaces draw the date and time pickers. 'touch' (the default) uses browser/OS controls on a coarse primary pointer; 'always' uses them wherever input type=date/time are supported; 'never' keeps Astryx's own surfaces everywhere. The native time control is used only for the default minute-precision contract: hasSeconds, non-default timeIncrement, or timeOptionInterval retain Astryx's time field because iOS cannot express them faithfully. Use 'never' when numberOfMonths, weekStartsOn, or visible dateConstraints behavior matters. Constraints are enforced on commit; min/max are forwarded as hints. hourFormat formats the closed time, while the OS picker follows the user's locale.",
+			default: "'touch'"
 		},
 		{
 			name: 'width',

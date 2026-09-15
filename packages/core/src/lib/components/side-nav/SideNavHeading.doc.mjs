@@ -27,6 +27,12 @@ export default {
 	group: 'Navigation',
 	category: 'Navigation',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			heading: 'Acme Console',
+			subheading: 'Production'
+		}
+	},
 	props: [
 		{
 			name: 'heading',

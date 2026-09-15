@@ -14,6 +14,27 @@ export default {
 	keywords: ['topnav', 'navbar', 'appbar', 'header', 'toolbar', 'navigation', 'menubar', 'topbar'],
 	group: 'Navigation',
 	category: 'Navigation',
+	playground: {
+		defaults: {
+			label: 'Products',
+			items: [
+				{
+					title: 'Analytics',
+					description: 'Usage metrics and trends',
+					href: '#'
+				},
+				{
+					title: 'Automation',
+					description: 'Workflows and rules',
+					href: '#'
+				},
+				{
+					title: 'Billing',
+					href: '#'
+				}
+			]
+		}
+	},
 	props: [
 		{
 			name: 'label',

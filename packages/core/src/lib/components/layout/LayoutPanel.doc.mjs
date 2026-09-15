@@ -10,20 +10,27 @@ export default {
 	displayName: 'Layout Panel',
 	subComponentOf: 'Layout',
 	description: 'Sidebar for navigation, settings, or inspector panels.',
-	keywords: [
-		'layout',
-		'container',
-		'content',
-		'flex',
-		'box',
-		'wrapper',
-		'scaffold',
-		'page',
-		'shell'
-	],
+	keywords: ['layout', 'container', 'content', 'flex', 'box', 'wrapper', 'page', 'regions'],
 	group: 'Layout',
 	category: 'Layout',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			children: 'Panel Content',
+			hasDivider: true,
+			width: 200
+		},
+		wrapper: {
+			component: 'Layout',
+			props: {
+				content: {
+					__element: 'LayoutContent',
+					props: {},
+					children: 'Main content area'
+				}
+			}
+		}
+	},
 	props: [
 		{
 			name: 'children',
@@ -68,7 +75,7 @@ export default {
 			name: 'resizable',
 			type: 'ResizableProps',
 			description:
-				'Resize props from useResizable(). When provided, the hook drives the panel width and a ResizeHandle should be placed adjacent to the panel.'
+				"Resize props from useResizable(). When provided, the hook drives the panel width and a ResizeHandle should be placed adjacent to the panel. Carries the region's axis ('horizontal' | 'vertical'), which must match the adjacent ResizeHandle's direction."
 		}
 	]
 };

@@ -31,6 +31,15 @@ export default {
 	group: 'Chat',
 	category: 'Chat',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			token: {
+				value: '@astryx',
+				label: '@astryx',
+				variant: 'blue'
+			}
+		}
+	},
 	props: [
 		{
 			name: 'token',

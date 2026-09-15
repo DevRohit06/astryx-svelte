@@ -181,7 +181,8 @@ export default {
 		{
 			name: 'onEnter',
 			type: '() => void',
-			description: 'Callback fired when the user presses the Enter key.'
+			description:
+				'Callback fired when the user presses the Enter key. IME-safe: Enter used to commit a Japanese/Chinese/Korean conversion does not fire it.'
 		},
 		{
 			name: 'onkeydown',
@@ -265,6 +266,12 @@ export default {
 			type: 'SizeValue',
 			description:
 				'Width of the field (number = pixels, string used as-is, e.g. "100%"). Sizes the whole field (label, control, and status) so they stay aligned.'
+		},
+		{
+			name: 'autoComplete',
+			type: 'string',
+			description:
+				'The native autocomplete attribute, forwarded to the input unchanged. Does not affect the controlled value.'
 		}
 	]
 };

@@ -10,7 +10,7 @@ export default {
 	displayName: 'Chat Composer',
 	subComponentOf: 'Chat',
 	description:
-		'Layout shell for a chat composer. Arranges named slots (drawer, header, input, footer, send) with page-radius container, hover/focus shadows, and concentric inner radius for child elements.',
+		'Layout shell for a chat composer. Arranges named slots (drawer, header, input, footer, send) with page-radius container, elevation, a keyboard-only editor focus ring, and concentric inner radius for child elements.',
 	keywords: [
 		'chat',
 		'message',
@@ -88,7 +88,7 @@ export default {
 			name: 'elevation',
 			type: "'none' | 'low'",
 			description:
-				"Resting elevation of the composer body. `low` (the default) keeps today's raised look: low at rest, bumping to med on hover / focus. `none` flattens it and draws a border with the same rest / hover / focus treatment as a text input (emphasized border → accent on focus, matching inset rings).",
+				"Resting elevation of the composer body. `low` (the default) keeps today's raised look: low at rest, bumping to med on hover / focus. `none` flattens it and draws a border. Keyboard focus in the editor adds the shared focus ring in either presentation; pointer focus does not add that ring.",
 			default: "'low'"
 		},
 		{

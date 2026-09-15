@@ -36,17 +36,22 @@ export default {
 			{
 				guidance: true,
 				description:
-					'Use axis="horizontal" or axis="vertical" when you only need one direction. Both axes is the default but not always needed.'
+					'Use a single-axis value only in horizontal writing, or after verifying the active writing mode. In vertical writing, the current implementation follows flex main/cross axes rather than the physical prop names.'
 			},
 			{
 				guidance: true,
 				description:
-					'Set a height when centering vertically. Center needs a defined height to know what space to center within.'
+					'In horizontal writing, give Center height when using axis="vertical"; centering needs available space on the selected flex axis.'
 			},
 			{
 				guidance: true,
 				description:
 					'Use isInline to center small elements like icons or badges within a line of text without breaking the text flow.'
+			},
+			{
+				guidance: true,
+				description:
+					'Keep semantic structure and accessible names on the content. Center is a layout-only container and does not add a role or label.'
 			},
 			{
 				guidance: false,
@@ -74,11 +79,18 @@ export default {
 			}
 		]
 	},
+	playground: {
+		defaults: {
+			width: 240,
+			height: 120
+		}
+	},
 	props: [
 		{
 			name: 'axis',
 			type: "'horizontal' | 'vertical' | 'both'",
-			description: 'Which direction(s) to center.',
+			description:
+				'Which Center mode to use. In horizontal writing, "horizontal" centers the flex main/inline axis and "vertical" centers the cross/block axis. In vertical writing, current single-axis behavior follows those logical flex axes rather than the physical names; "both" still centers both axes.',
 			default: "'both'"
 		},
 		{
@@ -111,37 +123,37 @@ export default {
 			name: 'paddingInline',
 			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
-				'Inline (horizontal) padding, using the spacing scale. Overrides padding on the inline axis when both are set.'
+				'Logical inline-axis padding, using the spacing scale. Overrides padding on the inline axis when both are set.'
 		},
 		{
 			name: 'paddingInlineStart',
 			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
-				'Inline-start padding, using the spacing scale (left in LTR, right in RTL). Overrides paddingInline and padding on that edge only.'
+				'Logical inline-start padding, using the spacing scale. Its resolved physical edge depends on writing mode and direction. Overrides paddingInline and padding on that edge only.'
 		},
 		{
 			name: 'paddingInlineEnd',
 			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
-				'Inline-end padding, using the spacing scale (right in LTR, left in RTL). Overrides paddingInline and padding on that edge only.'
+				'Logical inline-end padding, using the spacing scale. Its resolved physical edge depends on writing mode and direction. Overrides paddingInline and padding on that edge only.'
 		},
 		{
 			name: 'paddingBlock',
 			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
-				'Block (vertical) padding, using the spacing scale. Overrides padding on the block axis when both are set.'
+				'Logical block-axis padding, using the spacing scale. Overrides padding on the block axis when both are set.'
 		},
 		{
 			name: 'paddingBlockStart',
 			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
-				'Block-start (top) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.'
+				'Logical block-start padding, using the spacing scale. Its resolved physical edge depends on writing mode. Overrides paddingBlock and padding on that edge only.'
 		},
 		{
 			name: 'paddingBlockEnd',
 			type: '0 | 6 | 2 | 4 | 0.5 | 1 | 1.5 | 3 | 5 | 8 | 10',
 			description:
-				'Block-end (bottom) padding, using the spacing scale. Overrides paddingBlock and padding on that edge only.'
+				'Logical block-end padding, using the spacing scale. Its resolved physical edge depends on writing mode. Overrides paddingBlock and padding on that edge only.'
 		},
 		{
 			name: 'isInline',

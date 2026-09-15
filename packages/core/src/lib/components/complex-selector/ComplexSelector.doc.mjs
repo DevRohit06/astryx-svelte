@@ -27,6 +27,40 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Field',
+				required: true,
+				description: 'Field shell that provides the label and optional supporting field content.'
+			},
+			{
+				name: 'Trigger',
+				required: true,
+				description: 'Control that displays the current value or placeholder and opens the popup.'
+			},
+			{
+				name: 'Icon-rendered start icon',
+				required: false,
+				description: 'Optional leading semantic icon or icon component rendered through Icon.'
+			},
+			{
+				name: 'Caller-rendered start content',
+				required: false,
+				description:
+					'Optional arbitrary React content rendered directly at the start of the trigger.'
+			},
+			{
+				name: 'Indicator icon',
+				required: true,
+				description: 'Trailing chevron that rotates to reflect whether the popup is open.'
+			},
+			{
+				name: 'Popup',
+				required: true,
+				description:
+					'Mounted dialog surface that is painted and shown while open and hidden while closed.'
+			}
+		],
 		description:
 			'Use ComplexSelector when a selection needs richer custom content than a Selector option row. It is intentionally one component: ComplexSelector owns the field, trigger, popover, focus restore, and changeAction flow, while the content render prop owns the selector-specific accessible structure.',
 		bestPractices: [

@@ -25,6 +25,19 @@ export default {
 	group: 'DropdownMenu',
 	category: 'Action',
 	isHiddenFromOverview: true,
+	playground: {
+		defaults: {
+			value: 'option-1',
+			label: 'Option 1'
+		},
+		wrapper: {
+			component: 'DropdownMenuRadioGroup',
+			props: {
+				value: 'option-1',
+				label: 'Radio group'
+			}
+		}
+	},
 	props: [
 		{
 			name: 'value',

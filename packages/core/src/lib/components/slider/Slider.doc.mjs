@@ -29,6 +29,64 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Label',
+				required: true,
+				description: 'Text identifying the numeric setting controlled by the slider.'
+			},
+			{
+				name: 'Description',
+				required: false,
+				description: 'Helper text between the label and the slider control.'
+			},
+			{
+				name: 'Slider',
+				required: true,
+				description: 'Control row containing the track, thumb or thumbs, and optional text value.'
+			},
+			{
+				name: 'Track',
+				required: true,
+				description: 'Background rail representing the available numeric range.'
+			},
+			{
+				name: 'Filled range',
+				required: true,
+				description:
+					'Accent segment from the minimum to a single value, or between two range values.'
+			},
+			{
+				name: 'Tick mark',
+				required: false,
+				description: 'Position marker supplied through the marks collection.'
+			},
+			{
+				name: 'Mark label',
+				required: false,
+				description: 'Optional text displayed beside a tick mark.'
+			},
+			{
+				name: 'Thumb',
+				required: true,
+				description: 'Draggable value indicator; range mode renders a minimum and maximum thumb.'
+			},
+			{
+				name: 'Value display',
+				required: false,
+				description: 'Formatted current value shown beside the slider when valueDisplay is text.'
+			},
+			{
+				name: 'Value tooltip',
+				required: false,
+				description: 'Formatted current value shown in a tooltip when valueDisplay is tooltip.'
+			},
+			{
+				name: 'Status message',
+				required: false,
+				description: 'Error, warning, or success message below the slider.'
+			}
+		],
 		description:
 			'A draggable control for selecting a numeric value or range within defined bounds. Supports single value and range selection, tick marks, custom value formatting, and vertical orientation. Use it when users need to explore a continuous range, such as volume, price, or percentage.',
 		bestPractices: [

@@ -44,6 +44,47 @@ export default {
 		]
 	},
 	usage: {
+		anatomy: [
+			{
+				name: 'Trigger area',
+				required: true,
+				description:
+					'Caller-provided region that accepts right-click, keyboard context-menu, and long-press input.'
+			},
+			{
+				name: 'Pointer menu surface',
+				required: false,
+				description: 'Cursor-positioned menu panel used by the pointer presentation.'
+			},
+			{
+				name: 'Pointer action row',
+				required: false,
+				description:
+					'DropdownMenu-owned action, selectable option, or submenu row in the pointer presentation.'
+			},
+			{
+				name: 'Touch sheet frame',
+				required: false,
+				description:
+					'BottomSheet panel, content area, handle, and optional scrim that host touch actions.'
+			},
+			{
+				name: 'Touch menu surface',
+				required: false,
+				description: 'ContextMenu-owned content panel rendered inside the touch sheet frame.'
+			},
+			{
+				name: 'Touch action list',
+				required: false,
+				description: 'Spacious List that groups data-driven touch actions.'
+			},
+			{
+				name: 'Touch action row',
+				required: false,
+				description:
+					'ListItem button used for a data-driven action or drill-in entry in the touch presentation.'
+			}
+		],
 		description:
 			'A right-click context menu that appears at the cursor position. Use to provide contextual actions for specific elements or regions without cluttering the UI with visible buttons.',
 		bestPractices: [
@@ -60,7 +101,17 @@ export default {
 			{
 				guidance: true,
 				description:
+					'Use `presentation="adaptive"` when right-click should remain cursor-positioned on desktop while long-press opens a reachable BottomSheet on compact touch devices.'
+			},
+			{
+				guidance: true,
+				description:
 					'Ensure all context menu actions are also accessible via other UI elements for keyboard-only users.'
+			},
+			{
+				guidance: true,
+				description:
+					'Keep a visible MoreMenu or equivalent trigger for important mobile actions; long-press must not be the only route.'
 			},
 			{
 				guidance: false,
@@ -103,7 +154,7 @@ export default {
 			name: 'items',
 			type: 'DropdownMenuOption[]',
 			description:
-				'Array of menu entries. Each entry is one of: an action item `{label, onClick?, icon?, isDisabled?, variant?}` (variant `"destructive"` renders it in the error color), a divider `{type: "divider"}`, or a section `{type: "section", title?, items: [...action items]}`.',
+				'Array of menu entries. Each entry is one of: an action item `{label, onClick?, icon?, isDisabled?, variant?, items?}` (nested `items` open a flyout in popover presentation and drill into a new view in bottom-sheet presentation; variant `"destructive"` renders it in the error color), a divider `{type: "divider"}`, or a section `{type: "section", title?, items: [...action items]}`.',
 			required: true
 		},
 		{
@@ -134,6 +185,13 @@ export default {
 			name: 'onOpenChange',
 			type: '(isOpen: boolean) => void',
 			description: 'Callback fired when the menu opens or closes.'
+		},
+		{
+			name: 'presentation',
+			type: "'popover' | 'bottom-sheet' | 'adaptive'",
+			description:
+				'Presentation policy. `popover` opens at the pointer position, `bottom-sheet` always uses an action sheet, and `adaptive` uses the BottomSheet at 768px and below when the primary pointer is coarse.',
+			default: "'popover'"
 		},
 		{
 			name: 'isDisabled',

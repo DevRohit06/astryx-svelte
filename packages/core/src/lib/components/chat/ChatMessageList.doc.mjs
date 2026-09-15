@@ -31,6 +31,14 @@ export default {
 	group: 'Chat',
 	category: 'Chat',
 	isHiddenFromOverview: true,
+	playground: {
+		wrapper: {
+			component: 'Stack',
+			props: {
+				width: 480
+			}
+		}
+	},
 	props: [
 		{
 			name: 'children',
