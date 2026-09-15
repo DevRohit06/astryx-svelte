@@ -34,7 +34,8 @@ const styles = stylex.create({
 	root: {
 		display: 'flex',
 		flexDirection: 'column',
-		position: 'relative'
+		position: 'relative',
+		overflow: 'clip'
 	},
 	variantWash: {
 		backgroundColor: colorVars['--color-background-body']

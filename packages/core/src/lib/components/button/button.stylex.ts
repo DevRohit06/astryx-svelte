@@ -87,17 +87,23 @@ const styles = stylex.create({
 	pressable: {
 		transform: {
 			default: 'scale(1)',
-			':active': 'scale(0.98)'
+			':active:where(:not(:disabled,[aria-disabled="true"]))': 'scale(0.98)'
 		}
 	},
-	disabled: {
+	// Upstream 0.5.3 split the old `disabled` group in two. `inactive` is the
+	// non-interactive treatment and covers a *loading* button as well as a
+	// disabled one; `disabled` is the dimming, which a loading button must not
+	// take — it is busy, not unavailable.
+	inactive: {
 		cursor: 'default',
-		opacity: 0.5,
 		backgroundImage: 'none',
 		transform: {
 			default: 'none',
 			':active': 'none'
 		}
+	},
+	disabled: {
+		opacity: 0.5
 	},
 	ariaDisabled: {
 		// The variants' hover treatment already steps aside for
@@ -301,6 +307,15 @@ export interface ButtonRootStyleInput {
 	variant: ButtonVariant;
 	size: ButtonSize;
 	isIconOnly: boolean;
+	/**
+	 * The non-interactive treatment: disabled, in a disabled group, or loading
+	 * without `isInterruptible`. Upstream's `buttonDisabled`.
+	 */
+	isInactive: boolean;
+	/**
+	 * The dimmed treatment: disabled or in a disabled group, but *not* merely
+	 * loading. Upstream's `visuallyDisabled`.
+	 */
 	isDisabled: boolean;
 	/**
 	 * Whether the button is disabled via `aria-disabled` rather than the native
@@ -322,6 +337,7 @@ export function buttonRootAttrs(input: ButtonRootStyleInput): SvelteStyleAttrs {
 		variant,
 		size,
 		isIconOnly,
+		isInactive,
 		isDisabled,
 		isAriaDisabled,
 		isLink,
@@ -341,6 +357,7 @@ export function buttonRootAttrs(input: ButtonRootStyleInput): SvelteStyleAttrs {
 		// which still need to override it, and before `variants`, which no longer
 		// carry a `backgroundImage` of their own.
 		interactionOverlayStyles.backgroundImage,
+		isInactive && styles.inactive,
 		isDisabled && styles.disabled,
 		isAriaDisabled && styles.ariaDisabled,
 		isLink && styles.link,
